@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +21,8 @@ const CalculatorTool = () => {
   const [bmr, setBmr] = useState<number | null>(null);
   const [tee, setTee] = useState<number | null>(null);
   const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(null);
+
+  const [activeTab, setActiveTab] = useState('calculator');
 
   const calculateBMR = () => {
     if (!age || !weight || !height) {
@@ -57,6 +58,9 @@ const CalculatorTool = () => {
       protein: Math.round((calculatedTee * proteinPercent) / 4), // 4 calories per gram of protein
       fat: Math.round((calculatedTee * fatPercent) / 9), // 9 calories per gram of fat
     });
+    
+    // After calculations are done, switch to results tab
+    setActiveTab('results');
   };
 
   return (
@@ -68,7 +72,7 @@ const CalculatorTool = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="calculator" className="w-full">
+        <Tabs value={activeTab} defaultValue="calculator" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="calculator">Calculadora</TabsTrigger>
             <TabsTrigger value="macros">Macronutrientes</TabsTrigger>
