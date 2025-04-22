@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Save, FileText } from 'lucide-react';
+import { DEFAULT_MEAL_DISTRIBUTION, MEAL_NAMES, calculateMealDistribution } from '@/utils/mealPlanUtils';
 
 interface MealDistribution {
   [key: string]: {
@@ -20,54 +20,6 @@ interface MealDistribution {
     suggestions: string[];
   };
 }
-
-// Food suggestions based on macros
-const foodSuggestions = {
-  highProtein: [
-    "Peito de frango", "Atum", "Ovos", "Whey protein", "Iogurte grego", 
-    "Queijo cottage", "Peito de peru", "Tofu", "Lentilhas", "Salmão"
-  ],
-  highCarbs: [
-    "Arroz integral", "Batata doce", "Aveia", "Banana", "Pão integral",
-    "Macarrão integral", "Quinoa", "Milho", "Feijão", "Laranja"
-  ],
-  highFat: [
-    "Abacate", "Azeite", "Castanhas", "Amendoim", "Sementes de chia",
-    "Sementes de linhaça", "Coco", "Chocolate amargo", "Manteiga", "Queijos"
-  ],
-  balanced: [
-    "Granola", "Iogurte", "Frutas variadas", "Pão com ovo", "Wrap de frango",
-    "Sanduíche natural", "Arroz com frango e legumes", "Salada com grãos"
-  ]
-};
-
-// Function to get food suggestions based on macro distribution
-const getSuggestionsForMeal = (protein: number, carbs: number, fat: number) => {
-  const total = protein + carbs + fat;
-  const proteinPercent = (protein / total) * 100;
-  const carbsPercent = (carbs / total) * 100;
-  const fatPercent = (fat / total) * 100;
-  
-  let suggestions: string[] = [];
-  
-  if (proteinPercent > 40) {
-    suggestions = [...suggestions, ...foodSuggestions.highProtein.slice(0, 3)];
-  }
-  
-  if (carbsPercent > 40) {
-    suggestions = [...suggestions, ...foodSuggestions.highCarbs.slice(0, 3)];
-  }
-  
-  if (fatPercent > 30) {
-    suggestions = [...suggestions, ...foodSuggestions.highFat.slice(0, 2)];
-  }
-  
-  if (suggestions.length < 4) {
-    suggestions = [...suggestions, ...foodSuggestions.balanced.slice(0, 4 - suggestions.length)];
-  }
-  
-  return suggestions;
-};
 
 const MealPlanGenerator = () => {
   const { toast } = useToast();
@@ -89,63 +41,19 @@ const MealPlanGenerator = () => {
 
   const [totalMealPercent, setTotalMealPercent] = useState(100);
   
-  // Default meal distribution
-  const initialDistribution: MealDistribution = {
-    meal1: {
-      name: "Café da manhã",
-      percent: 20,
+  // Initial meal distribution based on our utility
+  const initialDistribution: MealDistribution = {};
+  DEFAULT_MEAL_DISTRIBUTION.forEach((percent, index) => {
+    initialDistribution[`meal${index + 1}`] = {
+      name: MEAL_NAMES[index],
+      percent: percent * 100,
       calories: 0,
       protein: 0,
       carbs: 0,
       fat: 0,
       suggestions: [],
-    },
-    meal2: {
-      name: "Lanche da manhã",
-      percent: 10,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      suggestions: [],
-    },
-    meal3: {
-      name: "Almoço",
-      percent: 30,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      suggestions: [],
-    },
-    meal4: {
-      name: "Lanche da tarde",
-      percent: 10,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      suggestions: [],
-    },
-    meal5: {
-      name: "Jantar",
-      percent: 25,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      suggestions: [],
-    },
-    meal6: {
-      name: "Ceia",
-      percent: 5,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      suggestions: [],
-    },
-  };
+    };
+  });
 
   const [mealDistribution, setMealDistribution] = useState<MealDistribution>(initialDistribution);
 
@@ -153,26 +61,29 @@ const MealPlanGenerator = () => {
   useEffect(() => {
     if (!consultationData) return;
     
+    const distributionArray = Object.keys(mealDistribution).map(
+      mealKey => mealDistribution[mealKey].percent / 100
+    );
+    
+    const { meals } = calculateMealDistribution(
+      consultationData.results.get, 
+      consultationData.objective,
+      distributionArray
+    );
+    
     const updatedDistribution = { ...mealDistribution };
     
-    // Calculate calories and macros for each meal
-    for (const meal in updatedDistribution) {
-      const mealPercent = updatedDistribution[meal].percent / 100;
-      
-      const calories = Math.round(consultationData.results.get * mealPercent);
-      const protein = Math.round(consultationData.results.macros.protein * mealPercent);
-      const carbs = Math.round(consultationData.results.macros.carbs * mealPercent);
-      const fat = Math.round(consultationData.results.macros.fat * mealPercent);
-      
-      updatedDistribution[meal] = {
-        ...updatedDistribution[meal],
-        calories,
-        protein,
-        carbs,
-        fat,
-        suggestions: getSuggestionsForMeal(protein, carbs, fat)
+    meals.forEach((meal, index) => {
+      const mealKey = `meal${index + 1}`;
+      updatedDistribution[mealKey] = {
+        ...updatedDistribution[mealKey],
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.cho,
+        fat: meal.fat,
+        suggestions: meal.foodSuggestions
       };
-    }
+    });
     
     setMealDistribution(updatedDistribution);
     
@@ -191,8 +102,8 @@ const MealPlanGenerator = () => {
         return prev;
       }
       
-      // Update the meal's percentage
-      const updated = {
+      // Create updated distribution
+      const updatedDistribution = {
         ...prev,
         [mealKey]: {
           ...prev[mealKey],
@@ -200,19 +111,32 @@ const MealPlanGenerator = () => {
         }
       };
       
-      // Recalculate calories and macros
-      const mealPercent = newPercent / 100;
-      updated[mealKey].calories = Math.round(consultationData.results.get * mealPercent);
-      updated[mealKey].protein = Math.round(consultationData.results.macros.protein * mealPercent);
-      updated[mealKey].carbs = Math.round(consultationData.results.macros.carbs * mealPercent);
-      updated[mealKey].fat = Math.round(consultationData.results.macros.fat * mealPercent);
-      updated[mealKey].suggestions = getSuggestionsForMeal(
-        updated[mealKey].protein, 
-        updated[mealKey].carbs,
-        updated[mealKey].fat
+      // Get array of percentages for recalculating
+      const distributionArray = Object.keys(updatedDistribution).map(
+        key => updatedDistribution[key].percent / 100
       );
       
-      return updated;
+      // Recalculate macros for all meals
+      const { meals } = calculateMealDistribution(
+        consultationData.results.get, 
+        consultationData.objective,
+        distributionArray
+      );
+      
+      // Update all meal values
+      meals.forEach((meal, index) => {
+        const currMealKey = `meal${index + 1}`;
+        updatedDistribution[currMealKey] = {
+          ...updatedDistribution[currMealKey],
+          calories: meal.calories,
+          protein: meal.protein,
+          carbs: meal.cho,
+          fat: meal.fat,
+          suggestions: meal.foodSuggestions
+        };
+      });
+      
+      return updatedDistribution;
     });
     
     // Update total percentage

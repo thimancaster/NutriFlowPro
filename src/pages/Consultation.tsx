@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,60 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-
-const activityFactors = {
-  sedentário: 1.2,
-  moderado: 1.55,
-  alto: 1.9,
-};
-
-const TmbFormula = {
-  // Harris-Benedict formula
-  default: {
-    M: (weight: number, height: number, age: number) => 66.5 + (13.75 * weight) + (5.003 * height) - (6.775 * age),
-    F: (weight: number, height: number, age: number) => 655.1 + (9.563 * weight) + (1.85 * height) - (4.676 * age)
-  },
-  // Mifflin-St Jeor formula (for obese)
-  obeso: {
-    M: (weight: number, height: number, age: number) => (10 * weight) + (6.25 * height) - (5 * age) + 5,
-    F: (weight: number, height: number, age: number) => (10 * weight) + (6.25 * height) - (5 * age) - 161
-  },
-  // Katch-McArdle formula (for athletes)
-  atleta: {
-    M: (weight: number, height: number, age: number, bodyFat = 15) => 370 + (21.6 * (weight * (1 - (bodyFat / 100)))),
-    F: (weight: number, height: number, age: number, bodyFat = 20) => 370 + (21.6 * (weight * (1 - (bodyFat / 100))))
-  }
-};
-
-const calculateMacros = (totalCalories: number, objective: string) => {
-  let protein = 0;
-  let carbs = 0; 
-  let fat = 0;
-  
-  switch (objective) {
-    case 'emagrecimento':
-      protein = (totalCalories * 0.35) / 4; // 35% protein
-      fat = (totalCalories * 0.35) / 9; // 35% fat
-      carbs = (totalCalories * 0.3) / 4; // 30% carbs
-      break;
-    case 'manutenção':
-      protein = (totalCalories * 0.3) / 4; // 30% protein
-      fat = (totalCalories * 0.3) / 9; // 30% fat
-      carbs = (totalCalories * 0.4) / 4; // 40% carbs
-      break;
-    case 'hipertrofia':
-      protein = (totalCalories * 0.3) / 4; // 30% protein
-      fat = (totalCalories * 0.2) / 9; // 20% fat
-      carbs = (totalCalories * 0.5) / 4; // 50% carbs
-      break;
-    default:
-      protein = (totalCalories * 0.3) / 4;
-      fat = (totalCalories * 0.3) / 9;
-      carbs = (totalCalories * 0.4) / 4;
-  }
-  
-  return { protein: Math.round(protein), carbs: Math.round(carbs), fat: Math.round(fat) };
-};
+import { 
+  activityFactors, 
+  calculateTMB, 
+  calcGET, 
+  calculateMacros 
+} from '@/utils/nutritionCalculations';
 
 const Consultation = () => {
   const { toast } = useToast();
@@ -99,36 +50,38 @@ const Consultation = () => {
     const { weight, height, age, sex, objective, profile, activityLevel } = formData;
     
     if (weight && height && age) {
-      const weightNum = parseFloat(weight);
-      const heightNum = parseFloat(height);
-      const ageNum = parseInt(age);
-      
-      // Calculate TMB based on profile
-      let tmb = 0;
-      
-      if (profile === 'obeso') {
-        tmb = TmbFormula.obeso[sex as 'M' | 'F'](weightNum, heightNum, ageNum);
-      } else if (profile === 'atleta') {
-        tmb = TmbFormula.atleta[sex as 'M' | 'F'](weightNum, heightNum, ageNum);
-      } else {
-        tmb = TmbFormula.default[sex as 'M' | 'F'](weightNum, heightNum, ageNum);
+      try {
+        const weightNum = parseFloat(weight);
+        const heightNum = parseFloat(height);
+        const ageNum = parseInt(age);
+        
+        // Calculate TMB using our utility function
+        const tmb = calculateTMB(
+          weightNum,
+          heightNum,
+          ageNum,
+          sex as 'M' | 'F',
+          profile as 'magro' | 'obeso' | 'atleta'
+        );
+        
+        // Get activity factor
+        const fa = activityFactors[activityLevel as keyof typeof activityFactors];
+        
+        // Calculate GET
+        const get = calcGET(tmb, fa);
+        
+        // Calculate macros
+        const macros = calculateMacros(get, objective);
+        
+        setResults({
+          tmb: Math.round(tmb),
+          fa,
+          get: Math.round(get),
+          macros
+        });
+      } catch (error) {
+        console.error('Error calculating results:', error);
       }
-      
-      // Get activity factor
-      const fa = activityFactors[activityLevel as keyof typeof activityFactors];
-      
-      // Calculate GET
-      const get = tmb * fa;
-      
-      // Calculate macros
-      const macros = calculateMacros(get, objective);
-      
-      setResults({
-        tmb: Math.round(tmb),
-        fa,
-        get: Math.round(get),
-        macros
-      });
     }
   }, [formData]);
   
@@ -137,7 +90,7 @@ const Consultation = () => {
     
     const consultationData = {
       ...formData,
-      ...results
+      results
     };
     
     console.log('Consultation data:', consultationData);
