@@ -27,10 +27,15 @@ const Dashboard = () => {
         <h2 className="text-2xl md:text-3xl font-bold mb-4">Bem-vindo ao NutriFlow Pro</h2>
         <p className="text-lg opacity-90 mb-6 max-w-2xl">O sistema completo para nutricionistas que desejam otimizar seus processos e entregar resultados excepcionais para seus pacientes.</p>
         <div className="flex flex-wrap gap-3">
-          <Button className="bg-white text-nutri-blue hover:bg-opacity-90">Iniciar Agora</Button>
           <Button 
             variant="outline" 
-            className="text-nutri-blue border-nutri-blue hover:bg-nutri-blue hover:text-white"
+            className="text-white border-white hover:bg-white hover:text-nutri-blue"
+          >
+            Iniciar Agora
+          </Button>
+          <Button 
+            variant="outline" 
+            className="text-white border-white hover:bg-white hover:text-nutri-blue"
           >
             Conhecer Recursos
           </Button>
