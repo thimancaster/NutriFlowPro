@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import PatientForm from '@/components/PatientForm';
@@ -9,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, User, FileText, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useUserSubscription } from "@/hooks/useUserSubscription";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,8 @@ const Patients = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Mock patients data
+  const { data: subscription, isLoading: subscriptionLoading } = useUserSubscription();
+
   const patients = [
     { id: 1, name: 'Ana Silva', age: 34, lastConsultation: '15/04/2025', status: 'Em andamento' },
     { id: 2, name: 'Carlos Santos', age: 42, lastConsultation: '14/04/2025', status: 'Novo' },
@@ -37,11 +38,12 @@ const Patients = () => {
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  const isUnlimited = subscription?.isPremium || subscription?.role === "admin";
+
   const handleNewPatient = () => {
-    const isFreeUser = true; // Mock: this would come from user data
     const patientCount = patients.length;
     
-    if (isFreeUser && patientCount >= 2) {
+    if (!isUnlimited && patientCount >= 2) {
       setShowUpgradeDialog(true);
     } else {
       setSelectedTab("new");
@@ -85,7 +87,11 @@ const Patients = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90" onClick={handleNewPatient}>
+              <Button
+                className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
+                onClick={handleNewPatient}
+                disabled={subscriptionLoading}
+              >
                 <Plus className="h-4 w-4 mr-2" /> Novo Paciente
               </Button>
             </div>
