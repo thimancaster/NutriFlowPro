@@ -1,10 +1,4 @@
 
-/**
- * Unit tests for nutrition calculation functions
- * 
- * Note: To run these tests, you would need to set up Vitest or Jest in your project
- */
-
 import { 
   tmbMagrasMulheres, 
   tmbMagrosHomens, 
@@ -15,8 +9,7 @@ import {
   validateInputs
 } from '../utils/nutritionCalculations';
 
-// Test TMB calculations for lean women
-describe('tmbMagrasMulheres', () => {
+describe('TMB Calculations for Lean Women', () => {
   it('calculates correctly for normal values', () => {
     expect(tmbMagrasMulheres(60, 165, 30)).toBeCloseTo(1378.5);
   });
@@ -28,8 +21,7 @@ describe('tmbMagrasMulheres', () => {
   });
 });
 
-// Test TMB calculations for lean men
-describe('tmbMagrosHomens', () => {
+describe('TMB Calculations for Lean Men', () => {
   it('calculates correctly for normal values', () => {
     expect(tmbMagrosHomens(70, 175, 30)).toBeCloseTo(1697);
   });
@@ -41,8 +33,7 @@ describe('tmbMagrosHomens', () => {
   });
 });
 
-// Test TMB calculations for obese women
-describe('tmbObesasMulheres', () => {
+describe('TMB Calculations for Obese Women', () => {
   it('calculates correctly for normal values', () => {
     expect(tmbObesasMulheres(80, 165, 30)).toBeCloseTo(1281.25);
   });
@@ -54,8 +45,7 @@ describe('tmbObesasMulheres', () => {
   });
 });
 
-// Test TMB calculations for obese men
-describe('tmbObesosHomens', () => {
+describe('TMB Calculations for Obese Men', () => {
   it('calculates correctly for normal values', () => {
     expect(tmbObesosHomens(90, 175, 30)).toBeCloseTo(1781.25);
   });
@@ -67,8 +57,7 @@ describe('tmbObesosHomens', () => {
   });
 });
 
-// Test GET calculations
-describe('calcGET', () => {
+describe('GET Calculations', () => {
   it('calculates correctly with various activity factors', () => {
     expect(calcGET(1500, 1.2)).toBeCloseTo(1800);
     expect(calcGET(1500, 1.55)).toBeCloseTo(2325);
@@ -81,32 +70,30 @@ describe('calcGET', () => {
   });
 });
 
-// Test macros calculations
-describe('calculateMacros', () => {
+describe('Macros Calculations', () => {
   it('calculates maintenance macros correctly', () => {
     const macros = calculateMacros(2000, 'manutenção');
-    expect(macros.protein).toBe(150); // (2000 * 0.3) / 4 = 150
-    expect(macros.carbs).toBe(200);   // (2000 * 0.4) / 4 = 200
-    expect(macros.fat).toBe(67);      // (2000 * 0.3) / 9 ≈ 67
+    expect(macros.protein).toBe(150);
+    expect(macros.carbs).toBe(200);
+    expect(macros.fat).toBe(67);
   });
 
   it('calculates weight loss macros correctly', () => {
     const macros = calculateMacros(2000, 'emagrecimento');
-    expect(macros.protein).toBe(175); // (2000 * 0.35) / 4 = 175
-    expect(macros.carbs).toBe(150);   // (2000 * 0.3) / 4 = 150
-    expect(macros.fat).toBe(78);      // (2000 * 0.35) / 9 ≈ 78
+    expect(macros.protein).toBe(175);
+    expect(macros.carbs).toBe(150);
+    expect(macros.fat).toBe(78);
   });
 
   it('calculates muscle gain macros correctly', () => {
     const macros = calculateMacros(2000, 'hipertrofia');
-    expect(macros.protein).toBe(150); // (2000 * 0.3) / 4 = 150
-    expect(macros.carbs).toBe(250);   // (2000 * 0.5) / 4 = 250
-    expect(macros.fat).toBe(44);      // (2000 * 0.2) / 9 ≈ 44
+    expect(macros.protein).toBe(150);
+    expect(macros.carbs).toBe(250);
+    expect(macros.fat).toBe(44);
   });
 });
 
-// Test input validation
-describe('validateInputs', () => {
+describe('Input Validation', () => {
   it('returns true for valid inputs', () => {
     expect(validateInputs(70, 175, 30)).toBe(true);
   });
