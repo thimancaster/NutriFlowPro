@@ -4,29 +4,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from "@/components/ui/use-toast";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useToast } from "@/hooks/use-toast";
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const PatientForm = () => {
   const { toast } = useToast();
+  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    phone: '',
-    birthdate: '',
-    gender: '',
-    height: '',
-    weight: '',
-    objectives: '',
-    allergies: '',
-    medicalConditions: '',
-    dietaryRestrictions: ''
+    sex: '',
+    objective: '',
+    profile: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -37,7 +36,22 @@ const PatientForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form data submitted:', formData);
+    
+    if (!birthDate) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Por favor, selecione a data de nascimento.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const patientData = {
+      ...formData,
+      birthDate,
+    };
+    
+    console.log('Form data submitted:', patientData);
     
     toast({
       title: "Paciente cadastrado",
@@ -47,17 +61,11 @@ const PatientForm = () => {
     // Reset form
     setFormData({
       name: '',
-      email: '',
-      phone: '',
-      birthdate: '',
-      gender: '',
-      height: '',
-      weight: '',
-      objectives: '',
-      allergies: '',
-      medicalConditions: '',
-      dietaryRestrictions: ''
+      sex: '',
+      objective: '',
+      profile: '',
     });
+    setBirthDate(undefined);
   };
 
   return (
@@ -71,153 +79,105 @@ const PatientForm = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Informações Pessoais</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Nome Completo*</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  value={formData.email} 
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">Telefone*</Label>
-                <Input 
-                  id="phone" 
-                  name="phone" 
-                  value={formData.phone} 
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <Label htmlFor="birthdate">Data de Nascimento*</Label>
-                <Input 
-                  id="birthdate" 
-                  name="birthdate" 
-                  type="date" 
-                  value={formData.birthdate} 
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Informações Físicas</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="gender">Sexo*</Label>
-                <Select 
-                  value={formData.gender} 
-                  onValueChange={(value) => handleSelectChange('gender', value)}
-                >
-                  <SelectTrigger id="gender">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Masculino</SelectItem>
-                    <SelectItem value="female">Feminino</SelectItem>
-                    <SelectItem value="other">Outro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-1.5">
-                <Label htmlFor="height">Altura (cm)*</Label>
-                <Input 
-                  id="height" 
-                  name="height" 
-                  type="number" 
-                  value={formData.height} 
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <Label htmlFor="weight">Peso (kg)*</Label>
-                <Input 
-                  id="weight" 
-                  name="weight" 
-                  type="number" 
-                  value={formData.weight} 
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Informações Nutricionais</h3>
-            
-            <div className="space-y-1.5">
-              <Label htmlFor="objectives">Objetivos</Label>
-              <Textarea 
-                id="objectives" 
-                name="objectives" 
-                value={formData.objectives} 
-                onChange={handleChange} 
-                placeholder="Perda de peso, ganho de massa muscular, etc."
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo*</Label>
+              <Input 
+                id="name" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleChange}
+                required 
               />
             </div>
             
-            <div className="space-y-1.5">
-              <Label htmlFor="allergies">Alergias Alimentares</Label>
-              <Textarea 
-                id="allergies" 
-                name="allergies" 
-                value={formData.allergies} 
-                onChange={handleChange} 
-                placeholder="Liste alergias conhecidas, se houver"
-              />
+            <div className="space-y-2">
+              <Label>Sexo*</Label>
+              <RadioGroup 
+                value={formData.sex} 
+                onValueChange={(value) => handleSelectChange('sex', value)}
+                required
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="M" id="sex-m" />
+                  <Label htmlFor="sex-m">Masculino</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="F" id="sex-f" />
+                  <Label htmlFor="sex-f">Feminino</Label>
+                </div>
+              </RadioGroup>
             </div>
             
-            <div className="space-y-1.5">
-              <Label htmlFor="medicalConditions">Condições Médicas</Label>
-              <Textarea 
-                id="medicalConditions" 
-                name="medicalConditions" 
-                value={formData.medicalConditions} 
-                onChange={handleChange} 
-                placeholder="Diabetes, hipertensão, etc., se aplicável"
-              />
+            <div className="space-y-2">
+              <Label htmlFor="birthdate">Data de Nascimento*</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !birthDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {birthDate ? format(birthDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={birthDate}
+                    onSelect={setBirthDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             
-            <div className="space-y-1.5">
-              <Label htmlFor="dietaryRestrictions">Restrições Alimentares</Label>
-              <Textarea 
-                id="dietaryRestrictions" 
-                name="dietaryRestrictions" 
-                value={formData.dietaryRestrictions} 
-                onChange={handleChange} 
-                placeholder="Vegetariano, sem glúten, etc."
-              />
+            <div className="space-y-2">
+              <Label htmlFor="objective">Objetivo*</Label>
+              <Select 
+                value={formData.objective} 
+                onValueChange={(value) => handleSelectChange('objective', value)}
+              >
+                <SelectTrigger id="objective">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                  <SelectItem value="manutenção">Manutenção</SelectItem>
+                  <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-          
-          <div className="space-y-1.5 pt-2">
-            <p className="text-sm text-gray-500">* Campos obrigatórios</p>
+            
+            <div className="space-y-2">
+              <Label>Perfil*</Label>
+              <RadioGroup 
+                value={formData.profile} 
+                onValueChange={(value) => handleSelectChange('profile', value)}
+                required
+                className="flex flex-col space-y-1"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="magro" id="profile-magro" />
+                  <Label htmlFor="profile-magro">Magro</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="obeso" id="profile-obeso" />
+                  <Label htmlFor="profile-obeso">Obeso</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="atleta" id="profile-atleta" />
+                  <Label htmlFor="profile-atleta">Atleta</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
           
           <CardFooter className="px-0 pt-2 pb-0 flex justify-end">

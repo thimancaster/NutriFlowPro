@@ -2,17 +2,27 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import PatientForm from '@/components/PatientForm';
-import PatientHistory from '@/components/PatientHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, User, FileText, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Patients = () => {
   const [selectedTab, setSelectedTab] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState<number | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Mock patients data
   const patients = [
@@ -27,9 +37,19 @@ const Patients = () => {
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  const handleNewPatient = () => {
+    const isFreeUser = true; // Mock: this would come from user data
+    const patientCount = patients.length;
+    
+    if (isFreeUser && patientCount >= 2) {
+      setShowUpgradeDialog(true);
+    } else {
+      setSelectedTab("new");
+    }
+  };
+  
   const handlePatientSelect = (patientId: number) => {
-    setSelectedPatient(patientId);
-    setSelectedTab("history");
+    navigate(`/patient-history/${patientId}`);
   };
 
   return (
@@ -49,12 +69,9 @@ const Patients = () => {
         </div>
         
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="bg-white rounded-xl shadow-lg p-6">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-100 p-1">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1">
             <TabsTrigger value="list" className="data-[state=active]:bg-white data-[state=active]:text-nutri-blue">Lista de Pacientes</TabsTrigger>
             <TabsTrigger value="new" className="data-[state=active]:bg-white data-[state=active]:text-nutri-green">Novo Paciente</TabsTrigger>
-            <TabsTrigger value="history" disabled={selectedPatient === null} className="data-[state=active]:bg-white data-[state=active]:text-nutri-teal">
-              Histórico
-            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="list">
@@ -68,7 +85,7 @@ const Patients = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90" onClick={() => setSelectedTab("new")}>
+              <Button className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90" onClick={handleNewPatient}>
                 <Plus className="h-4 w-4 mr-2" /> Novo Paciente
               </Button>
             </div>
@@ -140,29 +157,57 @@ const Patients = () => {
           <TabsContent value="new">
             <PatientForm />
           </TabsContent>
-          
-          <TabsContent value="history">
-            {selectedPatient !== null && (
-              <>
-                <div className="mb-6">
-                  <Button 
-                    variant="outline" 
-                    className="mb-4 border-nutri-blue text-nutri-blue hover:bg-blue-50"
-                    onClick={() => setSelectedTab("list")}
-                  >
-                    Voltar para lista
-                  </Button>
-                  <h2 className="text-xl font-medium flex items-center">
-                    <FileText className="h-5 w-5 mr-2 text-nutri-blue" />
-                    Histórico de {patients.find(p => p.id === selectedPatient)?.name}
-                  </h2>
-                </div>
-                <PatientHistory />
-              </>
-            )}
-          </TabsContent>
         </Tabs>
       </div>
+
+      {/* Upgrade Dialog */}
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Limite de Pacientes Atingido</DialogTitle>
+            <DialogDescription className="text-center">
+              Você já atingiu o limite de 2 pacientes no plano gratuito.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col space-y-4 items-center pt-4">
+            <img 
+              src="https://lovable.dev/opengraph-image-p98pqg.png" 
+              alt="Upgrade" 
+              className="h-32 mx-auto"
+            />
+            <div className="text-center">
+              <p className="mb-2">Atualize para o plano premium para:</p>
+              <ul className="text-sm text-gray-600 text-left space-y-1">
+                <li>• Cadastrar pacientes ilimitados</li>
+                <li>• Acessar recursos avançados</li>
+                <li>• Gerar relatórios personalizados</li>
+                <li>• Suporte prioritário</li>
+              </ul>
+            </div>
+            <div className="flex gap-4 w-full">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowUpgradeDialog(false)}
+              >
+                Não agora
+              </Button>
+              <Button 
+                className="flex-1 bg-nutri-blue hover:bg-nutri-blue-dark"
+                onClick={() => {
+                  setShowUpgradeDialog(false);
+                  toast({
+                    title: "Upgrade iniciado",
+                    description: "Redirecionando para a página de pagamento...",
+                  });
+                }}
+              >
+                Fazer Upgrade
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
