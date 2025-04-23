@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 // Default meal distribution percentages
 export const DEFAULT_MEAL_DISTRIBUTION = [0.25, 0.15, 0.20, 0.10, 0.20, 0.10];
 
@@ -94,6 +96,7 @@ export async function saveMealPlan(consultationId: string, meals: any[], totalMa
     const { data, error } = await supabase
       .from('meal_plans')
       .insert({
+        consultation_id: consultationId,
         meals,
         total_calories: totalMacros.totalCalories,
         total_protein: totalMacros.totalProtein,
@@ -102,20 +105,21 @@ export async function saveMealPlan(consultationId: string, meals: any[], totalMa
         date: new Date().toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     
     return {
       success: true,
       data,
-      message: 'Meal plan saved successfully'
+      message: 'Plano alimentar salvo com sucesso'
     };
   } catch (error) {
     console.error('Error saving meal plan:', error);
     return {
       success: false,
-      message: 'Failed to save meal plan'
+      message: 'Falha ao salvar plano alimentar'
     };
   }
 }
+
