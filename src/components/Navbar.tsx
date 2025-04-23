@@ -1,14 +1,19 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Apple, Calculator, Users, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
   };
 
   return (
@@ -40,7 +45,11 @@ const Navbar = () => {
               <FileText className="h-4 w-4 mr-2" />
               Planos Alimentares
             </Link>
-            <Button variant="default" className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 ml-2">
+            <Button 
+              variant="default" 
+              className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 ml-2"
+              onClick={handleLoginClick}
+            >
               Entrar
             </Button>
           </div>
@@ -95,6 +104,10 @@ const Navbar = () => {
             <Button
               variant="default"
               className="w-full mt-4 bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
+              onClick={() => {
+                navigate('/login');
+                toggleMenu();
+              }}
             >
               Entrar
             </Button>

@@ -17,14 +17,14 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
       <div className="flex flex-wrap gap-3">
         <Button 
           variant="outline" 
-          className="text-white border-white hover:bg-white hover:text-nutri-blue transition-colors duration-200"
+          className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-colors duration-200"
           onClick={() => navigate('/calculator')}>
           Iniciar Agora
         </Button>
         <Button 
           variant="outline"
-          className="text-white border-white hover:bg-white hover:text-nutri-blue transition-colors duration-200"
-          onClick={() => navigate('/patients')}>
+          className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-colors duration-200"
+          onClick={() => navigate('/recursos')}>
           Conhecer Recursos
         </Button>
       </div>

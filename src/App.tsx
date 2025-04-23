@@ -16,6 +16,7 @@ import Onboarding from "./pages/Onboarding";
 import Consultation from "./pages/Consultation";
 import MealPlanGenerator from "./pages/MealPlanGenerator";
 import PatientHistory from "./pages/PatientHistory";
+import Recursos from "./pages/Recursos";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/calculator" element={<Calculator />} />
           <Route path="/patients" element={<Patients />} />
           <Route path="/meal-plans" element={<MealPlans />} />
+          <Route path="/recursos" element={<Recursos />} />
           
           {/* Patient and Consultation Routes */}
           <Route path="/patient-history/:patientId" element={<PatientHistory />} />
