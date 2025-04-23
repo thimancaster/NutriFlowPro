@@ -1,31 +1,94 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Heart } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
-const DashboardTestimonials: React.FC = () => (
-  <Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
-    <CardHeader>
-      <CardTitle className="flex items-center">
-        <Heart className="h-5 w-5 text-red-500 mr-2" /> Depoimentos de Usuários
-      </CardTitle>
-      <CardDescription>O que os nutricionistas estão dizendo sobre o NutriFlow Pro</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="italic text-gray-600">"O NutriFlow Pro transformou minha clínica! Consigo gerenciar meus pacientes e criar planos alimentares em uma fração do tempo que costumava gastar."</p>
-          <p className="mt-2 font-medium">Dra. Camila Mendes</p>
-          <p className="text-sm text-gray-500">Nutricionista Clínica</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="italic text-gray-600">"Meus pacientes adoram os planos alimentares detalhados e personalizados. O sistema é intuitivo e economiza muito do meu tempo."</p>
-          <p className="mt-2 font-medium">Dr. Roberto Almeida</p>
-          <p className="text-sm text-gray-500">Nutricionista Esportivo</p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+}
+
+const DashboardTestimonials: React.FC = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { data: testimonials = [] } = useQuery<Testimonial[]>({
+    queryKey: ['testimonials'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('testimonials')
+        .select('*')
+        .eq('approved', true);
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os depoimentos",
+          variant: "destructive",
+        });
+        return [];
+      }
+
+      return data;
+    },
+  });
+
+  const handleAddTestimonial = () => {
+    navigate('/add-testimonial');
+  };
+
+  return (
+    <Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Heart className="h-5 w-5 text-red-500 mr-2" /> Depoimentos de Usuários
+          </div>
+          <Button 
+            variant="outline" 
+            className="text-nutri-blue hover:bg-nutri-blue hover:text-white transition-colors"
+            onClick={handleAddTestimonial}
+          >
+            Adicionar Depoimento
+          </Button>
+        </CardTitle>
+        <CardDescription>O que os nutricionistas estão dizendo sobre o NutriFlow Pro</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel
+          opts={{
+            align: "center",
+            loop: true,
+          }}
+          className="w-full"
+        >
+          <CarouselContent>
+            {testimonials.map((testimonial) => (
+              <CarouselItem key={testimonial.id} className="md:basis-1/2">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <p className="italic text-gray-600 mb-4">&quot;{testimonial.content}&quot;</p>
+                  <p className="font-medium text-nutri-blue">{testimonial.name}</p>
+                  <p className="text-sm text-gray-500">{testimonial.role}</p>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <div className="hidden md:flex">
+            <CarouselPrevious className="-left-4" />
+            <CarouselNext className="-right-4" />
+          </div>
+        </Carousel>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default DashboardTestimonials;
