@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Default meal distribution percentages
@@ -122,4 +121,3 @@ export async function saveMealPlan(consultationId: string, meals: any[], totalMa
     };
   }
 }
-
