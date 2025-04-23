@@ -45,7 +45,6 @@ const Consultation = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  // Calculate results whenever form data changes
   useEffect(() => {
     const { weight, height, age, sex, objective, profile, activityLevel } = formData;
     
@@ -55,7 +54,6 @@ const Consultation = () => {
         const heightNum = parseFloat(height);
         const ageNum = parseInt(age);
         
-        // Calculate TMB using our utility function
         const tmb = calculateTMB(
           weightNum,
           heightNum,
@@ -64,13 +62,10 @@ const Consultation = () => {
           profile as 'magro' | 'obeso' | 'atleta'
         );
         
-        // Get activity factor
         const fa = activityFactors[activityLevel as keyof typeof activityFactors];
         
-        // Calculate GET
         const get = calcGET(tmb, fa);
         
-        // Calculate macros
         const macros = calculateMacros(get, objective);
         
         setResults({
@@ -85,7 +80,7 @@ const Consultation = () => {
     }
   }, [formData]);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const consultationData = {
@@ -100,7 +95,6 @@ const Consultation = () => {
       description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
     });
     
-    // Navigate to meal plan generation
     navigate('/meal-plan-generator', { state: { consultation: consultationData } });
   };
   

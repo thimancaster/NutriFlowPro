@@ -1,6 +1,4 @@
 
-import { calculateMacros } from './nutritionCalculations';
-
 // Default meal distribution percentages
 export const DEFAULT_MEAL_DISTRIBUTION = [0.25, 0.15, 0.20, 0.10, 0.20, 0.10];
 
@@ -19,7 +17,6 @@ export function calculateMealDistribution(
   objective: string = 'manutenção',
   mealDistribution: number[] = DEFAULT_MEAL_DISTRIBUTION
 ) {
-  const totalMacros = calculateMacros(get, objective);
   const meals = [];
   
   for (let i = 0; i < mealDistribution.length; i++) {
@@ -27,9 +24,9 @@ export function calculateMealDistribution(
     const mealCalories = Math.round(get * mealPercent);
     
     // Calculate macros for this meal
-    const choPerMeal = Math.round((mealCalories * totalMacros.carbs) / get);
-    const protPerMeal = Math.round((mealCalories * totalMacros.protein) / get);
-    const fatPerMeal = Math.round((mealCalories * totalMacros.fat) / get);
+    const choPerMeal = Math.round((mealCalories * 0.50) / 4);
+    const protPerMeal = Math.round((mealCalories * 0.20) / 4);
+    const fatPerMeal = Math.round((mealCalories * 0.30) / 9);
     
     // Generate food suggestions
     const foodSuggestions = generateFoodSuggestions(choPerMeal, protPerMeal, fatPerMeal, i);
@@ -48,91 +45,70 @@ export function calculateMealDistribution(
   
   return {
     meals,
-    totalMacros
+    totalCalories: get,
+    totalProtein: meals.reduce((acc, meal) => acc + meal.protein, 0),
+    totalCarbs: meals.reduce((acc, meal) => acc + meal.cho, 0),
+    totalFats: meals.reduce((acc, meal) => acc + meal.fat, 0)
   };
 }
 
-// Food suggestions database simplified for demo
-const foodDatabase = {
-  highProtein: [
-    "Peito de frango", "Atum", "Ovos", "Whey protein", "Iogurte grego", 
-    "Queijo cottage", "Peito de peru", "Tofu", "Lentilhas", "Salmão"
-  ],
-  highCarbs: [
-    "Arroz integral", "Batata doce", "Aveia", "Banana", "Pão integral",
-    "Macarrão integral", "Quinoa", "Milho", "Feijão", "Laranja"
-  ],
-  highFat: [
-    "Abacate", "Azeite", "Castanhas", "Amendoim", "Sementes de chia",
-    "Sementes de linhaça", "Coco", "Chocolate amargo", "Manteiga", "Queijos"
-  ],
-  breakfast: [
-    "Iogurte com granola", "Ovos mexidos", "Torrada integral com abacate", 
-    "Tapioca com queijo", "Smoothie de frutas", "Panquecas proteicas"
-  ],
-  snacks: [
-    "Mix de castanhas", "Barra de proteína", "Frutas", "Iogurte", 
-    "Shake proteico", "Omelete pequeno"
-  ],
-  lunch: [
-    "Frango grelhado com legumes", "Salmão com salada", "Arroz, feijão e carne magra", 
-    "Bowl de quinoa com legumes", "Wrap de frango", "Salada com atum"
-  ],
-  dinner: [
-    "Omelete de vegetais", "Sopa de legumes com frango", "Peixe com legumes", 
-    "Salada proteica", "Tofu grelhado com legumes", "Carne magra com vegetais"
-  ]
-};
-
 // Generate food suggestions based on macros and meal number
 function generateFoodSuggestions(carbs: number, protein: number, fat: number, mealIndex: number): string[] {
+  // This is a simplified version. In a real app, you'd have a database of foods
   const suggestions = [];
   const total = carbs + protein + fat;
   const carbsPercent = (carbs / total) * 100;
   const proteinPercent = (protein / total) * 100;
   const fatPercent = (fat / total) * 100;
   
-  // Add appropriate suggestions based on meal time
+  // Example suggestions based on meal time
   if (mealIndex === 0) { // Breakfast
-    suggestions.push(...getRandomElements(foodDatabase.breakfast, 2));
+    suggestions.push(
+      "Ovos mexidos",
+      "Pão integral",
+      "Iogurte com granola",
+      "Frutas frescas"
+    );
   } else if (mealIndex === 2 || mealIndex === 4) { // Lunch or dinner
-    suggestions.push(...getRandomElements(foodDatabase.lunch, 2));
+    suggestions.push(
+      "Frango grelhado",
+      "Arroz integral",
+      "Legumes cozidos",
+      "Salada verde"
+    );
   } else { // Snacks
-    suggestions.push(...getRandomElements(foodDatabase.snacks, 2));
+    suggestions.push(
+      "Mix de castanhas",
+      "Frutas",
+      "Iogurte",
+      "Barra de proteína"
+    );
   }
   
-  // Add specific macronutrient-focused foods
-  if (proteinPercent > 30) {
-    suggestions.push(...getRandomElements(foodDatabase.highProtein, 2));
-  }
-  
-  if (carbsPercent > 40) {
-    suggestions.push(...getRandomElements(foodDatabase.highCarbs, 1));
-  }
-  
-  if (fatPercent > 30) {
-    suggestions.push(...getRandomElements(foodDatabase.highFat, 1));
-  }
-  
-  // Return unique suggestions
-  return [...new Set(suggestions)].slice(0, 4);
-}
-
-// Helper to get random elements from array
-function getRandomElements(array: string[], count: number): string[] {
-  const shuffled = [...array].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  return suggestions;
 }
 
 // Save meal plan to database
 export async function saveMealPlan(consultationId: string, meals: any[], totalMacros: any) {
   try {
-    // This would be implemented with actual database calls
-    console.log('Saving meal plan for consultation:', consultationId);
+    const { data, error } = await supabase
+      .from('meal_plans')
+      .insert({
+        meals,
+        total_calories: totalMacros.totalCalories,
+        total_protein: totalMacros.totalProtein,
+        total_carbs: totalMacros.totalCarbs,
+        total_fats: totalMacros.totalFats,
+        date: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
     
-    // Return success
     return {
       success: true,
+      data,
       message: 'Meal plan saved successfully'
     };
   } catch (error) {

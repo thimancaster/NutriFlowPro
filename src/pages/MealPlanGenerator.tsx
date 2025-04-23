@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,7 +108,7 @@ const MealPlanGenerator = () => {
         ...prev,
         [mealKey]: {
           ...prev[mealKey],
-          percent: newPercent
+          percent: newValue[0]
         }
       };
       
