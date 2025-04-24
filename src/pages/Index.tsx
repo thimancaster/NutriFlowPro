@@ -1,13 +1,11 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
 import Dashboard from '@/components/Dashboard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between mb-10">
           <div>

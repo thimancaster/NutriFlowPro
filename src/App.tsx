@@ -17,6 +17,7 @@ import Onboarding from "./pages/Onboarding";
 import Consultation from "./pages/Consultation";
 import MealPlanGenerator from "./pages/MealPlanGenerator";
 import PatientHistory from "./pages/PatientHistory";
+import PatientAnthropometry from "./pages/PatientAnthropometry";
 import Recursos from "./pages/Recursos";
 import AddTestimonial from "./pages/AddTestimonial";
 
@@ -45,6 +46,7 @@ const App = () => {
             
             {/* Patient and Consultation Routes */}
             <Route path="/patient-history/:patientId" element={<PatientHistory />} />
+            <Route path="/patient-anthropometry/:patientId" element={<PatientAnthropometry />} />
             <Route path="/consultation" element={<Consultation />} />
             <Route 
               path="/meal-plan-generator" 
