@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,29 @@ const AnthropometryForm: React.FC<AnthropometryFormProps> = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [form, setForm] = useState<Partial<Tables<'anthropometry'>['Insert']>>({
+  type AnthropometryInsertType = {
+    user_id?: string;
+    patient_id?: string;
+    date?: string;
+    weight: number | null;
+    height: number | null;
+    triceps: number | null;
+    subscapular: number | null;
+    suprailiac: number | null;
+    abdominal: number | null;
+    thigh: number | null;
+    chest: number | null;
+    waist: number | null;
+    hip: number | null;
+    arm: number | null;
+    calf: number | null;
+    imc?: number | null;
+    rcq?: number | null;
+    body_fat_pct?: number | null;
+    lean_mass_kg?: number | null;
+  };
+  
+  const [form, setForm] = useState<AnthropometryInsertType>({
     weight: null,
     height: null,
     triceps: null,

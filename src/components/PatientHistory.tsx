@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -66,7 +67,7 @@ const PatientHistory = () => {
       <Card className="mb-8 nutri-card border-none shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl font-bold">{patient.name}</CardTitle>
+            <CardTitle className="text-2xl font-bold">{patient?.name}</CardTitle>
             <Button onClick={() => navigate('/patients')}>Voltar para Pacientes</Button>
           </div>
           <CardDescription>
@@ -76,16 +77,16 @@ const PatientHistory = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <span className="font-semibold">Email:</span> {patient.email}
+              <span className="font-semibold">Email:</span> {patient?.email}
             </div>
             <div>
-              <span className="font-semibold">Telefone:</span> {patient.phone}
+              <span className="font-semibold">Telefone:</span> {patient?.phone}
             </div>
             <div>
-              <span className="font-semibold">Data de Nascimento:</span> {patient.birth_date}
+              <span className="font-semibold">Data de Nascimento:</span> {patient?.birth_date}
             </div>
             <div>
-              <span className="font-semibold">Gênero:</span> {patient.gender}
+              <span className="font-semibold">Gênero:</span> {patient?.gender}
             </div>
           </div>
         </CardContent>
