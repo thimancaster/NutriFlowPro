@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Tables } from '@/integrations/supabase/types';
+import MeasurementsInputGrid from './MeasurementsInputGrid';
+import MetricsDisplay from './MetricsDisplay';
+import PatientHeader from './PatientHeader';
 
 interface AnthropometryFormProps {
   patientId: string;
@@ -14,23 +16,23 @@ interface AnthropometryFormProps {
   patientGender?: string;
 }
 
-const AnthropometryForm: React.FC<AnthropometryFormProps> = ({ 
-  patientId, 
-  patientName = "", 
-  patientAge = 30, 
-  patientGender = "female" 
+type AnthropometryInsertType = Partial<Tables<"anthropometry">> & {
+  user_id?: string;
+  patient_id: string;
+  date?: string;
+  weight: number | null;
+  height: number | null;
+};
+
+const AnthropometryForm: React.FC<AnthropometryFormProps> = ({
+  patientId,
+  patientName = "",
+  patientAge = 30,
+  patientGender = "female"
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  type AnthropometryInsertType = Partial<Tables<"anthropometry">> & {
-    user_id?: string;
-    patient_id: string;
-    date?: string;
-    weight: number | null;
-    height: number | null;
-  };
-  
+
   const [form, setForm] = useState<AnthropometryInsertType>({
     patient_id: patientId,
     weight: null,
@@ -157,54 +159,13 @@ const AnthropometryForm: React.FC<AnthropometryFormProps> = ({
         <CardTitle>Nova Avaliação Antropométrica</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
-          {patientName && (
-            <p className="text-lg font-medium">Paciente: <span className="text-nutri-blue">{patientName}</span></p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {measurementFields.map((field) => (
-            <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="text-sm font-medium mb-1">
-                {field.label}
-              </label>
-              <Input
-                id={field.name}
-                name={field.name}
-                type="number"
-                step="any"
-                value={form[field.name as keyof typeof form] || ''}
-                onChange={handleChange}
-                placeholder={`Digite o ${field.label.toLowerCase()}`}
-                className="mb-4"
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h3 className="font-medium mb-3">Resultados Calculados</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-3 bg-white rounded-md shadow-sm">
-              <p className="text-sm text-gray-500">IMC</p>
-              <p className="font-bold text-lg">{metrics.imc || '-'}</p>
-            </div>
-            <div className="p-3 bg-white rounded-md shadow-sm">
-              <p className="text-sm text-gray-500">RCQ</p>
-              <p className="font-bold text-lg">{metrics.rcq || '-'}</p>
-            </div>
-            <div className="p-3 bg-white rounded-md shadow-sm">
-              <p className="text-sm text-gray-500">% Gordura</p>
-              <p className="font-bold text-lg">{metrics.bodyFatPct || '-'}%</p>
-            </div>
-            <div className="p-3 bg-white rounded-md shadow-sm">
-              <p className="text-sm text-gray-500">Massa Magra</p>
-              <p className="font-bold text-lg">{metrics.leanMassKg || '-'} kg</p>
-            </div>
-          </div>
-        </div>
-
+        <PatientHeader patientName={patientName} />
+        <MeasurementsInputGrid
+          fields={measurementFields}
+          values={form}
+          onChange={handleChange}
+        />
+        <MetricsDisplay metrics={metrics} />
         <div className="flex justify-end">
           <Button onClick={handleSubmit} className="bg-nutri-green hover:bg-nutri-green-dark">
             Salvar Avaliação
