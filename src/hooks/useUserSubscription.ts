@@ -2,7 +2,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Fetches subscription info for the current user
 export const useUserSubscription = () => {
   return useQuery({
     queryKey: ["subscription-status"],
