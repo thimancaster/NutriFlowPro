@@ -1,34 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import { Tables } from '@/integrations/supabase/types';
 
-type AnthropometryData = {
-  id: string;
-  user_id: string;
-  patient_id: string;
-  date: string;
-  weight: number | null;
-  height: number | null;
-  triceps: number | null;
-  subscapular: number | null;
-  suprailiac: number | null;
-  abdominal: number | null;
-  thigh: number | null;
-  chest: number | null;
-  waist: number | null;
-  hip: number | null;
-  arm: number | null;
-  calf: number | null;
-  body_fat_pct: number | null;
-  lean_mass_kg: number | null;
-  imc: number | null;
-  rcq: number | null;
-  created_at: string | null;
-};
+type AnthropometryData = Tables<"anthropometry">;
 
 const AnthropometryHistory: React.FC<{ patientId: string }> = ({ patientId }) => {
   const [measurements, setMeasurements] = useState<AnthropometryData[]>([]);
