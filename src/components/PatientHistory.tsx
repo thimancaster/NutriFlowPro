@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, CheckCircle, User, Ruler4 } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, User, Ruler } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -134,7 +134,6 @@ const PatientHistory = () => {
           </CardContent>
         </Card>
         
-        {/* Add new card for Anthropometry */}
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/patient-anthropometry/${patientId}`)}>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Antropometria</CardTitle>
@@ -142,7 +141,7 @@ const PatientHistory = () => {
           <CardContent>
             <div className="flex items-center text-nutri-blue">
               <div className="bg-blue-100 p-2 rounded-full mr-3">
-                <Ruler4 className="h-4 w-4 text-nutri-blue" />
+                <Ruler className="h-4 w-4 text-nutri-blue" />
               </div>
               <span>Avaliação Antropométrica</span>
             </div>

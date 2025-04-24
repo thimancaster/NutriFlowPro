@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { Tables } from '@/integrations/supabase/types';
 
 interface AnthropometryFormProps {
   patientId: string;
@@ -23,65 +23,53 @@ const AnthropometryForm: React.FC<AnthropometryFormProps> = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [form, setForm] = useState({
-    weight: '',
-    height: '',
-    triceps: '',
-    subscapular: '',
-    suprailiac: '',
-    abdominal: '',
-    thigh: '',
-    chest: '',
-    waist: '',
-    hip: '',
-    arm: '',
-    calf: ''
+  const [form, setForm] = useState<Partial<Tables<'anthropometry'>['Insert']>>({
+    weight: null,
+    height: null,
+    triceps: null,
+    subscapular: null,
+    suprailiac: null,
+    abdominal: null,
+    thigh: null,
+    chest: null,
+    waist: null,
+    hip: null,
+    arm: null,
+    calf: null
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value === '' ? '' : parseFloat(value) }));
+    setForm(prev => ({ ...prev, [name]: value === '' ? null : parseFloat(value) }));
   };
 
   const calculateMetrics = () => {
     if (!form.weight || !form.height || !form.waist || !form.hip) {
-      return { imc: 0, rcq: 0, bodyFatPct: 0, leanMassKg: 0 };
+      return { imc: null, rcq: null, bodyFatPct: null, leanMassKg: null };
     }
     
-    const height = parseFloat(form.height as string) / 100; // Convert to meters
-    const weight = parseFloat(form.weight as string);
-    const waist = parseFloat(form.waist as string);
-    const hip = parseFloat(form.hip as string);
+    const height = form.height / 100; // Convert to meters
+    const sumFolds = (form.triceps || 0) + (form.subscapular || 0) + (form.suprailiac || 0) + 
+                     (form.abdominal || 0) + (form.thigh || 0) + (form.chest || 0);
     
-    const imc = weight / (height * height);
-    const rcq = waist / hip;
+    const imc = form.weight / (height * height);
+    const rcq = form.waist / form.hip;
     
-    // Calculate body fat percentage based on available skinfolds
-    let sumFolds = 0;
-    let validFolds = 0;
-    
-    ['triceps', 'subscapular', 'suprailiac', 'abdominal', 'thigh', 'chest'].forEach(fold => {
-      const value = parseFloat(form[fold as keyof typeof form] as string);
-      if (!isNaN(value)) {
-        sumFolds += value;
-        validFolds++;
-      }
-    });
-    
-    // Simplified formula (example) - would normally use gender-specific formulas
-    const bodyFatPct = validFolds >= 3
+    const bodyFatPct = sumFolds > 0
       ? patientGender === 'male'
         ? 0.29288 * sumFolds - 0.0005 * Math.pow(sumFolds, 2) + 0.15845 * patientAge - 5.76377
         : 0.29669 * sumFolds - 0.00043 * Math.pow(sumFolds, 2) + 0.02963 * patientAge + 1.4072
-      : 0;
+      : null;
     
-    const leanMassKg = weight * (1 - bodyFatPct / 100);
+    const leanMassKg = bodyFatPct !== null 
+      ? form.weight * (1 - bodyFatPct / 100)
+      : null;
     
     return { 
       imc: parseFloat(imc.toFixed(2)), 
       rcq: parseFloat(rcq.toFixed(2)), 
-      bodyFatPct: parseFloat(bodyFatPct.toFixed(2)), 
-      leanMassKg: parseFloat(leanMassKg.toFixed(2))
+      bodyFatPct: bodyFatPct !== null ? parseFloat(bodyFatPct.toFixed(2)) : null, 
+      leanMassKg: leanMassKg !== null ? parseFloat(leanMassKg.toFixed(2)) : null
     };
   };
 

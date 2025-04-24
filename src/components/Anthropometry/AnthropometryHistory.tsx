@@ -1,29 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import { Tables } from '@/integrations/supabase/types';
 
-interface AnthropometryData {
-  id: string;
-  date: string;
-  weight: number;
-  height: number;
-  imc: number;
-  body_fat_pct: number;
-  lean_mass_kg: number;
-  waist?: number;
-  hip?: number;
-  rcq?: number;
-}
+type AnthropometryData = Tables<'anthropometry'>['Row'];
 
-interface AnthropometryHistoryProps {
-  patientId: string;
-}
-
-const AnthropometryHistory: React.FC<AnthropometryHistoryProps> = ({ patientId }) => {
+const AnthropometryHistory: React.FC<{ patientId: string }> = ({ patientId }) => {
   const [measurements, setMeasurements] = useState<AnthropometryData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -72,7 +57,6 @@ const AnthropometryHistory: React.FC<AnthropometryHistoryProps> = ({ patientId }
     date: formatDate(item.date),
   }));
 
-  // Helper function to calculate change
   const calculateChange = (metric: keyof AnthropometryData) => {
     if (measurements.length < 2) return null;
     
@@ -91,14 +75,13 @@ const AnthropometryHistory: React.FC<AnthropometryHistoryProps> = ({ patientId }
     };
   };
 
-  // Get changes for main metrics
   const weightChange = calculateChange('weight');
   const bodyFatChange = calculateChange('body_fat_pct');
   const imcChange = calculateChange('imc');
 
   return (
     <Card className="border-none shadow-lg">
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle>Histórico Antropométrico</CardTitle>
       </CardHeader>
       <CardContent>

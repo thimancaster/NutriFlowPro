@@ -9,6 +9,86 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      anthropometry: {
+        Row: {
+          abdominal: number | null
+          arm: number | null
+          body_fat_pct: number | null
+          calf: number | null
+          chest: number | null
+          created_at: string | null
+          date: string
+          height: number | null
+          hip: number | null
+          id: string
+          imc: number | null
+          lean_mass_kg: number | null
+          patient_id: string
+          rcq: number | null
+          subscapular: number | null
+          suprailiac: number | null
+          thigh: number | null
+          triceps: number | null
+          user_id: string
+          waist: number | null
+          weight: number | null
+        }
+        Insert: {
+          abdominal?: number | null
+          arm?: number | null
+          body_fat_pct?: number | null
+          calf?: number | null
+          chest?: number | null
+          created_at?: string | null
+          date?: string
+          height?: number | null
+          hip?: number | null
+          id?: string
+          imc?: number | null
+          lean_mass_kg?: number | null
+          patient_id: string
+          rcq?: number | null
+          subscapular?: number | null
+          suprailiac?: number | null
+          thigh?: number | null
+          triceps?: number | null
+          user_id: string
+          waist?: number | null
+          weight?: number | null
+        }
+        Update: {
+          abdominal?: number | null
+          arm?: number | null
+          body_fat_pct?: number | null
+          calf?: number | null
+          chest?: number | null
+          created_at?: string | null
+          date?: string
+          height?: number | null
+          hip?: number | null
+          id?: string
+          imc?: number | null
+          lean_mass_kg?: number | null
+          patient_id?: string
+          rcq?: number | null
+          subscapular?: number | null
+          suprailiac?: number | null
+          thigh?: number | null
+          triceps?: number | null
+          user_id?: string
+          waist?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anthropometry_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           created_at: string | null
