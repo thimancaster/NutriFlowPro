@@ -20,6 +20,7 @@ import PatientAnthropometry from "./pages/PatientAnthropometry";
 import Recursos from "./pages/Recursos";
 import AddTestimonial from "./pages/AddTestimonial";
 import Subscription from "./pages/Subscription";
+import Settings from "./pages/Settings";
 
 const App = () => {
   const { data: subscription } = useUserSubscription();
@@ -54,6 +55,7 @@ const App = () => {
               element={subscription?.isPremium ? <MealPlanGenerator /> : <div>Upgrade Required</div>} 
             />
             <Route path="/meal-plan/:consultationId" element={<Index />} /> {/* Placeholder */}
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
           {/* Fallback */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Apple, Calculator, Users, FileText, LogOut, Star } from 'lucide-react';
+import { Menu, X, Apple, Calculator, Users, FileText, LogOut, Star, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -89,6 +89,10 @@ const Navbar = () => {
                   <Star className="h-4 w-4 mr-2" />
                   Planos
                 </Link>
+                <Link to="/settings" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações
+                </Link>
                 <Button 
                   variant="outline" 
                   className="border-red-400 text-red-500 hover:bg-red-50"
@@ -127,7 +131,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg animate-fade-in">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
