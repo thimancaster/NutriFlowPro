@@ -9,7 +9,7 @@ interface MeasurementField {
 
 interface MeasurementsInputGridProps {
   fields: MeasurementField[];
-  values: Record<string, number | null>;
+  values: Record<string, number | null | string>; // Updated to accept string values as well
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -30,7 +30,7 @@ const MeasurementsInputGrid: React.FC<MeasurementsInputGridProps> = ({
             name={field.name}
             type="number"
             step="any"
-            value={values[field.name] || ''}
+            value={typeof values[field.name] === 'number' || values[field.name] === null ? values[field.name] || '' : ''}
             onChange={onChange}
             placeholder={`Digite o ${field.label.toLowerCase()}`}
             className="mb-4"
