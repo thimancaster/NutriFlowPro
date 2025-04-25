@@ -1,12 +1,33 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Apple, Calculator, Users, FileText } from 'lucide-react';
+import { Menu, X, Apple, Calculator, Users, FileText, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsAuthenticated(!!session);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -14,6 +35,24 @@ const Navbar = () => {
 
   const handleLoginClick = () => {
     navigate('/login');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        title: "Erro ao fazer logout",
+        description: "Ocorreu um erro ao tentar desconectar.",
+        variant: "destructive"
+      });
+    }
+    toggleMenu();
   };
 
   return (
@@ -29,29 +68,42 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
-              <FileText className="h-4 w-4 mr-2" />
-              Dashboard
-            </Link>
-            <Link to="/patients" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
-              <Users className="h-4 w-4 mr-2" />
-              Pacientes
-            </Link>
-            <Link to="/calculator" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
-              <Calculator className="h-4 w-4 mr-2" />
-              Calculadora
-            </Link>
-            <Link to="/meal-plans" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
-              <FileText className="h-4 w-4 mr-2" />
-              Planos Alimentares
-            </Link>
-            <Button 
-              variant="default" 
-              className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 ml-2"
-              onClick={handleLoginClick}
-            >
-              Entrar
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Link to="/" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Link>
+                <Link to="/patients" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
+                  <Users className="h-4 w-4 mr-2" />
+                  Pacientes
+                </Link>
+                <Link to="/calculator" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Calculadora
+                </Link>
+                <Link to="/meal-plans" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Planos Alimentares
+                </Link>
+                <Button 
+                  variant="outline" 
+                  className="border-red-400 text-red-500 hover:bg-red-50"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <Button 
+                variant="default" 
+                className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
+                onClick={handleLoginClick}
+              >
+                Entrar
+              </Button>
+            )}
           </div>
           
           <div className="flex md:hidden items-center">
@@ -69,48 +121,61 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg animate-fade-in">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link
-              to="/"
-              className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
-              onClick={toggleMenu}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Dashboard
-            </Link>
-            <Link
-              to="/patients"
-              className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
-              onClick={toggleMenu}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Pacientes
-            </Link>
-            <Link
-              to="/calculator"
-              className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
-              onClick={toggleMenu}
-            >
-              <Calculator className="h-4 w-4 mr-2" />
-              Calculadora
-            </Link>
-            <Link
-              to="/meal-plans"
-              className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
-              onClick={toggleMenu}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Planos Alimentares
-            </Link>
-            <Button
-              variant="default"
-              className="w-full mt-4 bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
-              onClick={() => {
-                navigate('/login');
-                toggleMenu();
-              }}
-            >
-              Entrar
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
+                  onClick={toggleMenu}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Link>
+                <Link
+                  to="/patients"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
+                  onClick={toggleMenu}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Pacientes
+                </Link>
+                <Link
+                  to="/calculator"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
+                  onClick={toggleMenu}
+                >
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Calculadora
+                </Link>
+                <Link
+                  to="/meal-plans"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
+                  onClick={toggleMenu}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Planos Alimentares
+                </Link>
+                <Button
+                  variant="outline" 
+                  className="w-full mt-4 border-red-400 text-red-500 hover:bg-red-50"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="default"
+                className="w-full mt-4 bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
+                onClick={() => {
+                  navigate('/login');
+                  toggleMenu();
+                }}
+              >
+                Entrar
+              </Button>
+            )}
           </div>
         </div>
       )}

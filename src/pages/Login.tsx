@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -18,26 +19,28 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Mock login for now. This will be replaced with actual authentication
-      if (email && password) {
+      // Use Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
         // Success
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo de volta ao NutriFlow Pro!",
         });
-        navigate('/onboarding');
-      } else {
-        // Error
-        toast({
-          title: "Erro ao fazer login",
-          description: "Verifique seu email e senha e tente novamente.",
-          variant: "destructive",
-        });
+        navigate('/');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
-        description: "Ocorreu um problema ao tentar fazer login.",
+        description: error.message || "Verifique seu email e senha e tente novamente.",
         variant: "destructive",
       });
     } finally {

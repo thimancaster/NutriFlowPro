@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -31,26 +32,49 @@ const Signup = () => {
     }
 
     try {
-      // Mock signup for now
-      if (email && password && name) {
-        // Success
+      // Use Supabase authentication
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        // Create a profile for the new user
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            { 
+              id: data.user.id,
+              name,
+              email
+            }
+          ]);
+
+        if (profileError) {
+          throw profileError;
+        }
+        
         toast({
           title: "Conta criada com sucesso",
           description: "Bem-vindo ao NutriFlow Pro!",
         });
-        navigate('/onboarding');
-      } else {
-        // Error
-        toast({
-          title: "Erro ao criar conta",
-          description: "Por favor, preencha todos os campos obrigatórios.",
-          variant: "destructive",
-        });
+        
+        // Navigate to the dashboard
+        navigate('/');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro ao criar conta",
-        description: "Ocorreu um problema ao tentar criar sua conta.",
+        description: error.message || "Ocorreu um problema ao tentar criar sua conta.",
         variant: "destructive",
       });
     } finally {

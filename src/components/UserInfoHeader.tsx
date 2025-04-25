@@ -1,42 +1,59 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
-const UserInfoHeader = () => {
-  const { data: userData } = useQuery({
-    queryKey: ['userData'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-      return userProfile;
-    }
-  });
+interface UserProfile {
+  id: string;
+  name: string | null;
+  crn: string | null;
+  email: string;
+}
 
-  // Note: You'll want to implement patient selection logic in a more comprehensive way
-  const currentPatient = null; 
+const UserInfoHeader = () => {
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) return;
+        
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (profile) {
+          setUserProfile(profile as UserProfile);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, []);
+
+  // Loading state
+  if (!userProfile) {
+    return (
+      <div className="bg-blue-50 p-4 flex justify-between items-center animate-pulse">
+        <div className="h-6 bg-blue-200 rounded w-64"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-blue-50 p-4 flex justify-between items-center">
       <div className="flex items-center space-x-4">
-        {userData && (
-          <>
-            <div>
-              <span className="font-bold">Nutricionista:</span> {userData.name}
-              {userData.crn && <Badge variant="secondary" className="ml-2">CRN: {userData.crn}</Badge>}
-            </div>
-            {currentPatient && (
-              <div>
-                <span className="font-bold">Paciente:</span> {currentPatient.name}
-              </div>
-            )}
-          </>
-        )}
+        <div>
+          <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
+          {userProfile.crn && <Badge variant="secondary" className="ml-2">CRN: {userProfile.crn}</Badge>}
+        </div>
       </div>
     </div>
   );
