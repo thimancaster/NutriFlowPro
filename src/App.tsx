@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import PatientHistory from "./pages/PatientHistory";
 import PatientAnthropometry from "./pages/PatientAnthropometry";
 import Recursos from "./pages/Recursos";
 import AddTestimonial from "./pages/AddTestimonial";
+import Subscription from "./pages/Subscription";
 
 const App = () => {
   const { data: subscription } = useUserSubscription();
@@ -34,6 +34,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/subscription" element={<Subscription />} />
           
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

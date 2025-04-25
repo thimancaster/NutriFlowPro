@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Apple, Calculator, Users, FileText, LogOut } from 'lucide-react';
+import { Menu, X, Apple, Calculator, Users, FileText, LogOut, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -86,6 +85,10 @@ const Navbar = () => {
                   <FileText className="h-4 w-4 mr-2" />
                   Planos Alimentares
                 </Link>
+                <Link to="/subscription" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
+                  <Star className="h-4 w-4 mr-2" />
+                  Planos
+                </Link>
                 <Button 
                   variant="outline" 
                   className="border-red-400 text-red-500 hover:bg-red-50"
@@ -96,13 +99,20 @@ const Navbar = () => {
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="default" 
-                className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
-                onClick={handleLoginClick}
-              >
-                Entrar
-              </Button>
+              <>
+                <Button 
+                  variant="default" 
+                  className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
+                  onClick={handleLoginClick}
+                >
+                  Entrar
+                </Button>
+                <Link to="/subscription">
+                  <Button variant="outline" className="border-nutri-green text-nutri-green hover:bg-nutri-green hover:text-white">
+                    Ver Planos
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
           
@@ -155,6 +165,14 @@ const Navbar = () => {
                   <FileText className="h-4 w-4 mr-2" />
                   Planos Alimentares
                 </Link>
+                <Link
+                  to="/subscription"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
+                  onClick={toggleMenu}
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Planos
+                </Link>
                 <Button
                   variant="outline" 
                   className="w-full mt-4 border-red-400 text-red-500 hover:bg-red-50"
@@ -165,16 +183,18 @@ const Navbar = () => {
                 </Button>
               </>
             ) : (
-              <Button
-                variant="default"
-                className="w-full mt-4 bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
-                onClick={() => {
-                  navigate('/login');
-                  toggleMenu();
-                }}
-              >
-                Entrar
-              </Button>
+              <>
+                <Button
+                  variant="default"
+                  className="w-full mt-4 bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
+                  onClick={() => {
+                    navigate('/login');
+                    toggleMenu();
+                  }}
+                >
+                  Entrar
+                </Button>
+              </>
             )}
           </div>
         </div>
