@@ -1,14 +1,17 @@
 
-import { createRoot } from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import App from './App.tsx'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import { seedTestimonials } from './utils/seedTestimonials';
 
-// Create a client
-const queryClient = new QueryClient()
+// Seed testimonials when the app starts in development
+if (import.meta.env.DEV) {
+  seedTestimonials().catch(console.error);
+}
 
-createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={queryClient}>
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
     <App />
-  </QueryClientProvider>
+  </React.StrictMode>,
 );

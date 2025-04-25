@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Heart } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
@@ -23,10 +23,13 @@ const DashboardTestimonials: React.FC = () => {
   const { data: testimonials = [] } = useQuery<Testimonial[]>({
     queryKey: ['testimonials'],
     queryFn: async () => {
+      // Update to fetch random testimonials with limit
       const { data, error } = await supabase
         .from('testimonials')
         .select('*')
-        .eq('approved', true);
+        .eq('approved', true)
+        .order('random()')  // This orders the results randomly
+        .limit(5);          // Limit to 5 testimonials for better UI
 
       if (error) {
         toast({
