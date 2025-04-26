@@ -59,7 +59,7 @@ const Consultation = () => {
             ...prev, 
             age: age.toString(),
             sex: patientData.gender === 'female' ? 'F' : 'M',
-            objective: patientData.objective || 'manutenção'
+            objective: patientData.goals?.objective || 'manutenção'
           }));
         }
         return;
@@ -92,7 +92,7 @@ const Consultation = () => {
               ...prev, 
               age: age.toString(),
               sex: data.gender === 'female' ? 'F' : 'M',
-              objective: data.objective || 'manutenção'
+              objective: data.goals?.objective || 'manutenção'
             }));
           }
         } catch (error: any) {
