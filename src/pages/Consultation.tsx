@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -16,6 +17,21 @@ import {
   calcGET, 
   calculateMacros 
 } from '@/utils/nutritionCalculations';
+import { Json } from '@/integrations/supabase/types';
+
+// Helper function to safely extract objective from goals
+const getObjectiveFromGoals = (goals: Json | null): string => {
+  if (!goals) return 'manutenção';
+  
+  if (typeof goals === 'object' && goals !== null && 'objective' in goals) {
+    const objective = goals.objective;
+    if (typeof objective === 'string') {
+      return objective;
+    }
+  }
+  
+  return 'manutenção';
+};
 
 const Consultation = () => {
   const { toast } = useToast();
@@ -59,7 +75,7 @@ const Consultation = () => {
             ...prev, 
             age: age.toString(),
             sex: patientData.gender === 'female' ? 'F' : 'M',
-            objective: patientData.goals?.objective || 'manutenção'
+            objective: getObjectiveFromGoals(patientData.goals)
           }));
         }
         return;
@@ -92,7 +108,7 @@ const Consultation = () => {
               ...prev, 
               age: age.toString(),
               sex: data.gender === 'female' ? 'F' : 'M',
-              objective: data.goals?.objective || 'manutenção'
+              objective: getObjectiveFromGoals(data.goals)
             }));
           }
         } catch (error: any) {
