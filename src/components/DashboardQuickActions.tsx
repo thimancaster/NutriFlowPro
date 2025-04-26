@@ -11,11 +11,7 @@ const DashboardQuickActions: React.FC = () => {
   const { toast } = useToast();
   
   const handleUpgrade = () => {
-    toast({
-      title: "Upgrade iniciado",
-      description: "Redirecionando para a página de pagamento...",
-    });
-    // In a real app, this would redirect to a payment page
+    navigate('/subscription');
   };
 
   return (

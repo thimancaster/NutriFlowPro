@@ -17,6 +17,7 @@ interface Patient {
   address: string;
   notes: string;
   created_at: string;
+  objective?: string;
 }
 
 const PatientHistory = () => {
@@ -62,6 +63,18 @@ const PatientHistory = () => {
     return <div>Carregando informações do paciente...</div>;
   }
 
+  // Calculate age from birth_date
+  let age = null;
+  if (patient.birth_date) {
+    const birthDate = new Date(patient.birth_date);
+    const today = new Date();
+    age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="mb-8 nutri-card border-none shadow-lg">
@@ -75,6 +88,23 @@ const PatientHistory = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap gap-3 mb-3">
+            {age !== null && (
+              <div className="bg-blue-50 rounded-full px-3 py-1 text-sm text-blue-700">
+                {age} anos
+              </div>
+            )}
+            {patient.gender && (
+              <div className="bg-purple-50 rounded-full px-3 py-1 text-sm text-purple-700">
+                {patient.gender === 'female' ? 'Feminino' : 'Masculino'}
+              </div>
+            )}
+            {patient.objective && (
+              <div className="bg-green-50 rounded-full px-3 py-1 text-sm text-green-700">
+                <span className="font-medium">Objetivo:</span> {patient.objective}
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <span className="font-semibold">Email:</span> {patient?.email}
@@ -107,7 +137,10 @@ const PatientHistory = () => {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate(`/consultation?patientId=${patientId}`)}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Plano Alimentar</CardTitle>
           </CardHeader>

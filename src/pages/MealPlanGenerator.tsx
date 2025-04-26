@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Save, FileText } from 'lucide-react';
 import { DEFAULT_MEAL_DISTRIBUTION, MEAL_NAMES, calculateMealDistribution } from '@/utils/mealPlanUtils';
+import PatientHeader from '@/components/Anthropometry/PatientHeader';
 
 interface MealDistribution {
   [key: string]: {
@@ -27,6 +28,7 @@ const MealPlanGenerator = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const consultationData = location.state?.consultation;
+  const patientData = location.state?.patient;
   
   // Ensure we have the data
   useEffect(() => {
@@ -146,15 +148,19 @@ const MealPlanGenerator = () => {
 
   const handleSaveMealPlan = () => {
     // Here you would save the meal plan to your database
-    console.log('Saving meal plan:', { mealDistribution, consultationData });
+    console.log('Saving meal plan:', { mealDistribution, consultationData, patientData });
     
     toast({
       title: "Plano alimentar salvo",
-      description: "O plano alimentar foi salvo com sucesso.",
+      description: "O plano alimentar foi salvo com sucesso."
     });
     
     // Navigate to patient history or dashboard
-    navigate('/');
+    if (patientData?.id) {
+      navigate(`/patient-history/${patientData.id}`);
+    } else {
+      navigate('/');
+    }
   };
 
   if (!consultationData) {
@@ -194,6 +200,15 @@ const MealPlanGenerator = () => {
             </div>
           </div>
         </div>
+        
+        {patientData && (
+          <PatientHeader 
+            patientName={patientData.name}
+            patientAge={consultationData.age ? parseInt(consultationData.age) : undefined}
+            patientGender={patientData.gender}
+            patientObjective={consultationData.objective}
+          />
+        )}
         
         <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

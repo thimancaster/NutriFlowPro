@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -7,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import PatientHeader from '@/components/Anthropometry/PatientHeader';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   activityFactors, 
   calculateTMB, 
@@ -18,7 +20,12 @@ import {
 const Consultation = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   
+  const patientData = location.state?.patientData;
+  const repeatConsultation = location.state?.repeatConsultation;
+  
+  const [patient, setPatient] = useState<any>(null);
   const [formData, setFormData] = useState({
     weight: '',
     height: '',
@@ -35,6 +42,84 @@ const Consultation = () => {
     get: 0,
     macros: { protein: 0, carbs: 0, fat: 0 }
   });
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+      if (patientData) {
+        setPatient(patientData);
+        if (patientData.birth_date) {
+          const birthDate = new Date(patientData.birth_date);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          setFormData(prev => ({ 
+            ...prev, 
+            age: age.toString(),
+            sex: patientData.gender === 'female' ? 'F' : 'M',
+            objective: patientData.objective || 'manutenção'
+          }));
+        }
+        return;
+      }
+      
+      const urlParams = new URLSearchParams(location.search);
+      const patientId = urlParams.get('patientId');
+      
+      if (patientId) {
+        try {
+          const { data, error } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('id', patientId)
+            .single();
+          
+          if (error) throw error;
+          
+          setPatient(data);
+          
+          if (data.birth_date) {
+            const birthDate = new Date(data.birth_date);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            setFormData(prev => ({ 
+              ...prev, 
+              age: age.toString(),
+              sex: data.gender === 'female' ? 'F' : 'M',
+              objective: data.objective || 'manutenção'
+            }));
+          }
+        } catch (error: any) {
+          console.error('Error fetching patient:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar os dados do paciente.",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+    
+    fetchPatient();
+    
+    if (repeatConsultation) {
+      setFormData(prev => ({
+        ...prev,
+        weight: repeatConsultation.weight?.toString() || '',
+        height: repeatConsultation.height?.toString() || '',
+        sex: repeatConsultation.sex || 'M',
+        objective: repeatConsultation.objective || 'manutenção',
+        profile: repeatConsultation.profile || 'magro',
+        activityLevel: repeatConsultation.activityLevel || 'moderado'
+      }));
+    }
+  }, [location, patientData, repeatConsultation, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -95,7 +180,16 @@ const Consultation = () => {
       description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
     });
     
-    navigate('/meal-plan-generator', { state: { consultation: consultationData } });
+    if (patient?.id) {
+      try {
+        // Here you would save the consultation to the database
+        // For now, we'll just navigate to the meal plan generator
+      } catch (error) {
+        console.error('Error saving consultation:', error);
+      }
+    }
+    
+    navigate('/meal-plan-generator', { state: { consultation: consultationData, patient } });
   };
   
   return (
@@ -103,6 +197,15 @@ const Consultation = () => {
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Nova Consulta</h1>
+        
+        {patient && (
+          <PatientHeader 
+            patientName={patient.name}
+            patientAge={formData.age ? parseInt(formData.age) : undefined}
+            patientGender={patient.gender}
+            patientObjective={formData.objective}
+          />
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">

@@ -23,6 +23,8 @@ const PatientForm = () => {
     sex: '',
     objective: '',
     profile: '',
+    email: '',
+    phone: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +66,8 @@ const PatientForm = () => {
       sex: '',
       objective: '',
       profile: '',
+      email: '',
+      phone: '',
     });
     setBirthDate(undefined);
   };
@@ -88,6 +92,29 @@ const PatientForm = () => {
                 onChange={handleChange}
                 required 
               />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  name="email"
+                  type="email"
+                  value={formData.email} 
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input 
+                  id="phone" 
+                  name="phone"
+                  value={formData.phone} 
+                  onChange={handleChange}
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -144,6 +171,7 @@ const PatientForm = () => {
               <Select 
                 value={formData.objective} 
                 onValueChange={(value) => handleSelectChange('objective', value)}
+                required
               >
                 <SelectTrigger id="objective">
                   <SelectValue placeholder="Selecione" />
