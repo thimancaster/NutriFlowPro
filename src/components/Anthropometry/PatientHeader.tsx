@@ -6,17 +6,19 @@ interface PatientHeaderProps {
   patientAge?: number;
   patientGender?: string;
   patientObjective?: string;
+  className?: string;
 }
 
 const PatientHeader: React.FC<PatientHeaderProps> = ({ 
   patientName, 
   patientAge, 
   patientGender, 
-  patientObjective 
+  patientObjective,
+  className = ''
 }) => {
   return (
-    <div className="mb-6">
-      <div className="bg-blue-50 p-4 rounded-lg">
+    <div className={`mb-6 ${className}`}>
+      <div className="bg-blue-50 p-4 rounded-lg shadow-sm">
         {patientName && (
           <p className="text-lg font-medium">
             Paciente: <span className="text-nutri-blue">{patientName}</span>
