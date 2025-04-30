@@ -1,9 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { Star, Crown } from 'lucide-react';
+import { Star, Crown, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -13,11 +14,12 @@ interface UserProfile {
 }
 
 const UserInfoHeader = () => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const { data: subscription, refetchSubscription } = useUserSubscription();
+  const { data: subscription, refetchSubscription, isLoading } = useUserSubscription();
+  const isPremium = subscription?.isPremium;
+  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
   
   useEffect(() => {
-    // Force refetch subscription data when component mounts
+    // Força renovação dos dados da assinatura quando o componente monta
     refetchSubscription();
     
     const fetchUserProfile = async () => {
@@ -25,6 +27,11 @@ const UserInfoHeader = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) return;
+        
+        // Verificar se o usuário atual é um dos emails premium definidos
+        if (user.email === 'thimancaster@hotmail.com' || user.email === 'thiago@nutriflowpro.com') {
+          console.log("Usuário premium detectado pelo email:", user.email);
+        }
         
         const { data: profile } = await supabase
           .from('users')
@@ -36,15 +43,15 @@ const UserInfoHeader = () => {
           setUserProfile(profile as UserProfile);
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Erro ao buscar perfil do usuário:', error);
       }
     };
     
     fetchUserProfile();
   }, [refetchSubscription]);
 
-  // Loading state
-  if (!userProfile) {
+  // Estado de carregamento
+  if (isLoading || !userProfile) {
     return (
       <div className="bg-blue-50 p-4 flex justify-between items-center animate-pulse">
         <div className="h-6 bg-blue-200 rounded w-64"></div>
@@ -53,7 +60,7 @@ const UserInfoHeader = () => {
   }
 
   return (
-    <div className={`p-4 flex justify-between items-center ${subscription?.isPremium 
+    <div className={`p-4 flex justify-between items-center ${isPremium 
       ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' 
       : 'bg-blue-50'}`}>
       <div className="flex items-center space-x-4">
@@ -61,7 +68,7 @@ const UserInfoHeader = () => {
           <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
           {userProfile.crn && <Badge variant="secondary" className="ml-2">CRN: {userProfile.crn}</Badge>}
           
-          {subscription?.isPremium && (
+          {isPremium && (
             <Badge 
               variant="outline" 
               className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm"
@@ -73,14 +80,21 @@ const UserInfoHeader = () => {
         </div>
       </div>
       
-      {!subscription?.isPremium && (
-        <a 
-          href="/subscription" 
+      {!isPremium && (
+        <Link 
+          to="/subscription" 
           className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center"
         >
           <Star className="h-4 w-4 mr-1" />
           Upgrade para Premium
-        </a>
+        </Link>
+      )}
+
+      {isPremium && (
+        <div className="text-sm text-amber-700 flex items-center">
+          <Shield className="h-4 w-4 mr-1 text-amber-500" />
+          Benefícios Premium Ativos
+        </div>
       )}
     </div>
   );

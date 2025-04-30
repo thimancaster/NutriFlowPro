@@ -12,22 +12,23 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { Home, Star, Crown } from 'lucide-react';
+import { Home, Star, Crown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, user } = useAuthState();
   const { data: subscription, refetchSubscription } = useUserSubscription();
   const location = useLocation();
+  const isPremium = subscription?.isPremium;
 
-  // When the route changes, refetch subscription data
+  // Quando a rota muda, buscar novamente os dados da assinatura
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       refetchSubscription();
     }
-  }, [isAuthenticated, user, refetchSubscription]);
+  }, [isAuthenticated, user, refetchSubscription, location.pathname]);
 
-  // Show loading while checking authentication
+  // Mostrar carregamento enquanto verifica autenticação
   if (isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -36,16 +37,16 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirecionar para login se não estiver autenticado
   if (isAuthenticated === false) {
     return <Navigate to="/login" replace />;
   }
 
-  // Generate breadcrumbs based on the current path
+  // Gerar breadcrumbs baseado no caminho atual
   const generateBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(x => x);
     
-    // Map paths to more readable names
+    // Mapear caminhos para nomes mais legíveis
     const pathMap: {[key: string]: string} = {
       'calculator': 'Calculadora',
       'patients': 'Pacientes',
@@ -60,7 +61,7 @@ const ProtectedRoute = () => {
       'subscription': 'Assinatura'
     };
     
-    // Don't show breadcrumbs on home page
+    // Não mostrar breadcrumbs na página inicial
     if (paths.length === 0) return null;
     
     return (
@@ -74,7 +75,7 @@ const ProtectedRoute = () => {
           </BreadcrumbItem>
           
           {paths.map((path, index) => {
-            // Skip numeric parts (usually ids)
+            // Pular partes numéricas (geralmente ids)
             if (!isNaN(Number(path))) return null;
             
             const displayPath = pathMap[path] || path;
@@ -97,13 +98,13 @@ const ProtectedRoute = () => {
           })}
           
           {/* Premium Badge */}
-          {subscription?.isPremium && (
+          {isPremium && (
             <div className="ml-auto">
               <Badge 
                 variant="outline" 
-                className="bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm"
+                className="bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm animate-pulse"
               >
-                <Crown className="h-3 w-3 mr-1 text-amber-500 fill-yellow-400" />
+                <Sparkles className="h-3 w-3 mr-1 text-amber-500 fill-yellow-400" />
                 Premium
               </Badge>
             </div>
@@ -114,8 +115,8 @@ const ProtectedRoute = () => {
   };
 
   return (
-    <div className={`min-h-screen ${subscription?.isPremium ? 'bg-gradient-to-b from-amber-50 to-gray-50' : 'bg-gray-50'}`}>
-      {subscription?.isPremium && (
+    <div className={`min-h-screen ${isPremium ? 'bg-gradient-to-b from-amber-50 to-gray-50' : 'bg-gray-50'}`}>
+      {isPremium && (
         <div className="h-1 bg-gradient-to-r from-amber-300 to-yellow-400"></div>
       )}
       <Navbar />

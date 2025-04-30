@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Apple, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from '@tanstack/react-query';
+import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,12 +17,25 @@ const Login = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Verificar se já está autenticado
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // Se já estiver autenticado, redireciona para a página inicial
+        navigate('/');
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Use Supabase authentication
+      // Usar Supabase authentication
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -32,14 +46,33 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Force invalidate any cached subscription data
-        queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
+        // Forçar invalidação de qualquer dado de assinatura em cache
+        await queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
         
-        // Success
+        // Forçar pré-carregamento de dados de assinatura para evitar problemas de cache
+        await queryClient.prefetchQuery({
+          queryKey: [SUBSCRIPTION_QUERY_KEY, data.user.id],
+          queryFn: async () => {
+            const { data: subData } = await supabase
+              .from("subscribers")
+              .select("is_premium, role, email, subscription_start, subscription_end")
+              .eq("user_id", data.user.id)
+              .maybeSingle();
+            
+            // Log para verificar se os dados de assinatura estão sendo carregados corretamente
+            console.log("Dados de assinatura carregados:", subData);
+            
+            return subData;
+          },
+          staleTime: 0 // Sem cache
+        });
+        
+        // Sucesso
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo de volta ao NutriFlow Pro!",
         });
+        
         navigate('/');
       }
     } catch (error: any) {
@@ -48,6 +81,7 @@ const Login = () => {
         description: error.message || "Verifique seu email e senha e tente novamente.",
         variant: "destructive",
       });
+      console.error("Erro no login:", error);
     } finally {
       setIsLoading(false);
     }
