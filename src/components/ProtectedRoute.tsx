@@ -36,12 +36,15 @@ const ProtectedRoute = () => {
       refetchSubscription();
     }
   }, [isAuthenticated, user, refetchSubscription, location.pathname]);
-
-  // Debug para verificar o status de autenticação
+  
+  // Efeito para verificar autenticação e redirecionar para login se não estiver autenticado
   useEffect(() => {
-    console.log("Estado de autenticação em ProtectedRoute:", { isAuthenticated, user, authLoading });
-    console.log("Status premium:", isPremium);
-  }, [isAuthenticated, user, authLoading, isPremium]);
+    // Se não estiver carregando e não estiver autenticado, redirecionar para login
+    if (!authLoading && isAuthenticated === false) {
+      console.log("Usuário não autenticado, redirecionando para login");
+      navigate('/login', { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Mostrar carregamento enquanto verifica autenticação
   if (authLoading) {
@@ -59,8 +62,8 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Se ainda estiver indeterminado (null), mostrar carregamento
-  if (isAuthenticated === null) {
+  // Se ainda estiver indeterminado (null) ou não estiver autenticado, mostrar carregamento
+  if (isAuthenticated !== true) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>

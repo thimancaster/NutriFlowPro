@@ -16,12 +16,12 @@ const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuthState();
 
-  // Verificar se já está autenticado
+  // Verificar se já está autenticado e redirecionar para a página inicial
   useEffect(() => {
-    // Verificação de redirecionamento apenas quando temos certeza do estado
+    // Verificação estrita: se isAuthenticated for true, redirecionar imediatamente
     if (isAuthenticated === true) {
-      console.log("Sessão existente detectada, redirecionando para a página inicial");
-      navigate('/');
+      console.log("Usuário já autenticado, redirecionando para a página inicial");
+      navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

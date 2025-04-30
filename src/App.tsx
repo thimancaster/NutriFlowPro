@@ -42,13 +42,12 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
+            {/* Public Routes - Apenas login, cadastro e recuperação de senha são públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/subscription" element={<Subscription />} />
             
-            {/* Protected Routes */}
+            {/* Protected Routes - Todas as rotas incluindo a página de assinatura agora são protegidas */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Index />} />
               <Route path="/calculator" element={<Calculator />} />
@@ -56,6 +55,7 @@ const App = () => {
               <Route path="/meal-plans" element={<MealPlans />} />
               <Route path="/recursos" element={<Recursos />} />
               <Route path="/add-testimonial" element={<AddTestimonial />} />
+              <Route path="/subscription" element={<Subscription />} />
               
               {/* Patient and Consultation Routes */}
               <Route path="/patient-history/:patientId" element={<PatientHistory />} />
@@ -66,7 +66,7 @@ const App = () => {
               <Route path="/settings" element={<Settings />} />
             </Route>
 
-            {/* Fallback */}
+            {/* Redirecionar qualquer rota desconhecida para login se não autenticado */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
