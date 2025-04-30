@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -23,10 +23,33 @@ export const useAuthState = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Função para atualizar estado de autenticação de forma consistente
+  const updateAuthState = useCallback((session: Session | null) => {
+    console.log("Atualizando estado de autenticação:", session ? "Autenticado" : "Não autenticado");
+    const user = session?.user || null;
+    
+    setAuthState({
+      isAuthenticated: !!session,
+      user: user,
+      session: session,
+      isLoading: false,
+    });
+
+    // Se o usuário estiver autenticado, garantir que os dados de assinatura sejam atualizados
+    if (user?.id) {
+      console.log("Usuário autenticado, verificando status de assinatura para:", user.email);
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, user.id] });
+      }, 0);
+    }
+  }, [queryClient]);
+
   useEffect(() => {
     // Configurar o listener de estado de autenticação primeiro
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Evento de autenticação:", event);
+
         if (event === 'SIGNED_OUT') {
           toast({
             title: "Sessão encerrada",
@@ -35,21 +58,15 @@ export const useAuthState = () => {
           
           // Limpar cache de assinatura ao fazer logout
           queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
+          queryClient.clear();
         } else if (event === 'SIGNED_IN') {
-          console.log("Usuário autenticado, atualizando status de assinatura");
-          
-          // Invalidar cache de assinatura ao fazer login
-          if (session?.user) {
-            queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, session.user.id] });
-          }
+          toast({
+            title: "Login realizado",
+            description: "Você foi autenticado com sucesso."
+          });
         }
 
-        setAuthState({
-          isAuthenticated: !!session,
-          user: session?.user || null,
-          session: session,
-          isLoading: false,
-        });
+        updateAuthState(session);
       }
     );
 
@@ -59,21 +76,11 @@ export const useAuthState = () => {
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
+          console.error("Erro ao obter sessão:", error);
           throw error;
         }
         
-        // Se tiver usuário autenticado, atualiza o cache de assinatura
-        if (data.session?.user) {
-          console.log("Sessão existente detectada, atualizando status de assinatura");
-          queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, data.session.user.id] });
-        }
-        
-        setAuthState({
-          isAuthenticated: !!data.session,
-          user: data.session?.user || null,
-          session: data.session,
-          isLoading: false,
-        });
+        updateAuthState(data.session);
       } catch (error) {
         console.error("Erro de autenticação:", error);
         setAuthState({
@@ -89,7 +96,7 @@ export const useAuthState = () => {
 
     // Limpar inscrição ao desmontar
     return () => subscription.unsubscribe();
-  }, [toast, queryClient]);
+  }, [toast, queryClient, updateAuthState]);
 
   return authState;
 };

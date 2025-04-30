@@ -1,20 +1,46 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { Star, Calendar, Check, ArrowRight, Crown, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuthState } from '@/hooks/useAuthState';
+
+const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
 
 const SubscriptionSettings = () => {
   const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
+  const { user } = useAuthState();
   const navigate = useNavigate();
 
   // Force refresh subscription data when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     refetchSubscription();
   }, [refetchSubscription]);
+  
+  // Verificação adicional para garantir que emails premium sejam reconhecidos
+  const isPremium = React.useMemo(() => {
+    if (!user?.email) return subscription?.isPremium || false;
+    
+    // Verificar se o email está na lista de premium, independente do que diz a assinatura
+    const isEmailPremium = PREMIUM_EMAILS.includes(user.email);
+    
+    // Log para debug
+    console.log("Email verificado:", user.email);
+    console.log("É email premium?", isEmailPremium);
+    console.log("Status de assinatura do backend:", subscription?.isPremium);
+    
+    return isEmailPremium || (subscription?.isPremium || false);
+  }, [user?.email, subscription?.isPremium]);
+
+  // Debug log to check subscription status
+  useEffect(() => {
+    console.log("Subscription status in settings:", subscription);
+    console.log("User email:", user?.email);
+    console.log("Final premium status:", isPremium);
+  }, [subscription, user?.email, isPremium]);
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'N/A';
@@ -24,11 +50,6 @@ const SubscriptionSettings = () => {
       return 'Data inválida';
     }
   };
-
-  // Debug log to check subscription status
-  React.useEffect(() => {
-    console.log("Subscription status in settings:", subscription);
-  }, [subscription]);
 
   if (isLoading) {
     return (
@@ -44,11 +65,11 @@ const SubscriptionSettings = () => {
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="mb-6">
         <h3 className="text-lg font-medium">Seu plano atual</h3>
-        <div className={`mt-4 p-4 border rounded-lg ${subscription?.isPremium ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200 shadow-inner' : 'bg-gray-50'}`}>
+        <div className={`mt-4 p-4 border rounded-lg ${isPremium ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200 shadow-inner' : 'bg-gray-50'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-lg font-semibold flex items-center ${subscription?.isPremium ? 'text-amber-800' : 'text-gray-700'}`}>
-                {subscription?.isPremium ? (
+              <p className={`text-lg font-semibold flex items-center ${isPremium ? 'text-amber-800' : 'text-gray-700'}`}>
+                {isPremium ? (
                   <>
                     <Crown className="h-5 w-5 mr-2 text-amber-500 fill-yellow-400" />
                     Plano Premium
@@ -57,7 +78,7 @@ const SubscriptionSettings = () => {
                   'Plano Gratuito'
                 )}
               </p>
-              {subscription?.isPremium ? (
+              {isPremium ? (
                 <>
                   <p className="text-sm text-amber-700 mt-1">
                     Acesso a todas as funcionalidades premium
@@ -65,11 +86,11 @@ const SubscriptionSettings = () => {
                   <div className="mt-3 space-y-1">
                     <p className="text-xs flex items-center text-amber-700">
                       <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                      <span>Início: {formatDate(subscription.subscriptionStart)}</span>
+                      <span>Início: {formatDate(subscription?.subscriptionStart)}</span>
                     </p>
                     <p className="text-xs flex items-center text-amber-700">
                       <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                      <span>Validade: {formatDate(subscription.subscriptionEnd)}</span>
+                      <span>Validade: {subscription?.subscriptionEnd ? formatDate(subscription.subscriptionEnd) : 'Sem data de expiração'}</span>
                     </p>
                   </div>
                 </>
@@ -79,7 +100,7 @@ const SubscriptionSettings = () => {
                 </p>
               )}
             </div>
-            {subscription?.isPremium ? (
+            {isPremium ? (
               <div className="h-12 w-12 rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 flex items-center justify-center shadow-md">
                 <Crown className="h-6 w-6 text-white" />
               </div>
@@ -90,7 +111,7 @@ const SubscriptionSettings = () => {
         </div>
       </div>
 
-      {subscription?.isPremium ? (
+      {isPremium ? (
         <div className="space-y-4">
           <div className="border border-green-100 bg-green-50 p-3 rounded-md">
             <h4 className="text-sm font-medium text-green-800 flex items-center">

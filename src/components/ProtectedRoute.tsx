@@ -15,21 +15,39 @@ import {
 import { Home, Star, Crown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+// Lista de emails premium
+const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+
 const ProtectedRoute = () => {
-  const { isAuthenticated, user } = useAuthState();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuthState();
   const { data: subscription, refetchSubscription } = useUserSubscription();
   const location = useLocation();
-  const isPremium = subscription?.isPremium;
+  
+  // Verificação adicional para garantir que emails premium sejam reconhecidos
+  const isPremium = React.useMemo(() => {
+    if (!user?.email) return subscription?.isPremium || false;
+    
+    // Verificar se o email está na lista de premium, independente do que diz a assinatura
+    const isEmailPremium = PREMIUM_EMAILS.includes(user.email);
+    return isEmailPremium || (subscription?.isPremium || false);
+  }, [user?.email, subscription?.isPremium]);
 
   // Quando a rota muda, buscar novamente os dados da assinatura
   useEffect(() => {
     if (isAuthenticated && user?.id) {
+      console.log("Rota alterada, atualizando dados de assinatura");
       refetchSubscription();
     }
   }, [isAuthenticated, user, refetchSubscription, location.pathname]);
 
+  // Debug para verificar o status de autenticação
+  useEffect(() => {
+    console.log("Estado de autenticação:", { isAuthenticated, user, authLoading });
+    console.log("Status premium:", isPremium);
+  }, [isAuthenticated, user, authLoading, isPremium]);
+
   // Mostrar carregamento enquanto verifica autenticação
-  if (isAuthenticated === null) {
+  if (authLoading || isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
@@ -39,6 +57,7 @@ const ProtectedRoute = () => {
 
   // Redirecionar para login se não estiver autenticado
   if (isAuthenticated === false) {
+    console.log("Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
   }
 

@@ -13,6 +13,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -20,10 +21,17 @@ const Login = () => {
   // Verificar se já está autenticado
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        // Se já estiver autenticado, redireciona para a página inicial
-        navigate('/');
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log("Sessão existente detectada, redirecionando para a página inicial");
+          // Se já estiver autenticado, redireciona para a página inicial
+          navigate('/');
+        }
+      } catch (error) {
+        console.error("Erro ao verificar autenticação:", error);
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
     
@@ -35,6 +43,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log("Tentando login com email:", email);
       // Usar Supabase authentication
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -46,41 +55,17 @@ const Login = () => {
       }
 
       if (data.user) {
+        console.log("Login bem-sucedido para:", data.user.email);
+        
         // Forçar invalidação de qualquer dado de assinatura em cache
+        queryClient.clear();
         await queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
         
-        // Forçar pré-carregamento de dados de assinatura para evitar problemas de cache
-        await queryClient.prefetchQuery({
-          queryKey: [SUBSCRIPTION_QUERY_KEY, data.user.id],
-          queryFn: async () => {
-            // Verificar se é um dos emails premium conhecidos
-            const isPremiumEmail = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(data.user.email || '');
-            
-            if (isPremiumEmail) {
-              console.log("Email premium detectado no login:", data.user.email);
-              return {
-                isPremium: true,
-                role: 'premium',
-                email: data.user.email,
-                subscription_start: new Date().toISOString(),
-                subscription_end: null
-              };
-            }
-            
-            // Caso contrário, busca os dados normalmente
-            const { data: subData } = await supabase
-              .from("subscribers")
-              .select("is_premium, role, email, subscription_start, subscription_end")
-              .eq("user_id", data.user.id)
-              .maybeSingle();
-            
-            // Log para verificar se os dados de assinatura estão sendo carregados corretamente
-            console.log("Dados de assinatura carregados:", subData);
-            
-            return subData;
-          },
-          staleTime: 0 // Sem cache
-        });
+        // Lista de emails premium conhecidos
+        const premiumEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+        const isPremiumEmail = premiumEmails.includes(data.user.email || '');
+        
+        console.log("É email premium?", isPremiumEmail);
         
         // Sucesso
         toast({
@@ -91,18 +76,26 @@ const Login = () => {
         navigate('/');
       }
     } catch (error: any) {
+      console.error("Erro no login:", error);
       toast({
         title: "Erro ao fazer login",
         description: error.message || "Verifique seu email e senha e tente novamente.",
         variant: "destructive",
       });
-      console.error("Erro no login:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ... manter o resto do código existente (JSX para o formulário de login)
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        <p className="mt-4 text-white">Verificando autenticação...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">

@@ -26,8 +26,11 @@ export const useUserSubscription = () => {
     queryKey: [SUBSCRIPTION_QUERY_KEY, user?.id],
     queryFn: async (): Promise<SubscriptionData> => {
       try {
+        console.log("Executando query de assinatura para usuário:", user?.email);
+        
         // Não buscar se o usuário não está autenticado
         if (!isAuthenticated || !user) {
+          console.log("Usuário não autenticado, retornando status não premium");
           return {
             isPremium: false,
             role: 'user',
@@ -35,10 +38,10 @@ export const useUserSubscription = () => {
           };
         }
 
-        // Verificar PRIMEIRO se o email está na lista de premium
-        // Esta verificação tem prioridade sobre qualquer dado do banco
+        // VERIFICAÇÃO PRIORITÁRIA: verificar se o email está na lista de premium
+        // Esta verificação tem prioridade absoluta sobre qualquer dado do banco
         if (user.email && PREMIUM_EMAILS.includes(user.email)) {
-          console.log("Email premium detectado:", user.email);
+          console.log("Email premium CONFIRMADO:", user.email);
           return {
             isPremium: true,
             role: 'premium',
@@ -47,6 +50,9 @@ export const useUserSubscription = () => {
             subscriptionEnd: null // Sem data de expiração para emails premium
           };
         }
+
+        // Log para depuração
+        console.log("Email não está na lista premium, verificando banco de dados:", user.email);
 
         // Forçar dados novos do servidor definindo headers de cache-control
         const { data, error } = await supabase
@@ -67,14 +73,42 @@ export const useUserSubscription = () => {
             });
           }
           
+          // VERIFICAÇÃO DE SEGURANÇA: se ocorrer erro mas o email for premium, retornar premium
+          if (user.email && PREMIUM_EMAILS.includes(user.email)) {
+            console.log("Erro na consulta, mas email é premium:", user.email);
+            return {
+              isPremium: true,
+              role: 'premium',
+              email: user.email,
+              subscriptionStart: new Date().toISOString(),
+              subscriptionEnd: null
+            };
+          }
+          
           throw error;
         }
 
         console.log("Dados de assinatura recebidos:", data);
 
+        // VERIFICAÇÃO FINAL: mesmo com dados do banco, se o email for premium, garantir status premium
+        if (user.email && PREMIUM_EMAILS.includes(user.email)) {
+          console.log("Dados do banco recebidos, mas email é premium, garantindo status premium:", user.email);
+          return {
+            isPremium: true,
+            role: 'premium',
+            email: user.email,
+            subscriptionStart: new Date().toISOString(),
+            subscriptionEnd: null
+          };
+        }
+
         // Verificar se a assinatura expirou
         const subscriptionEnd = data?.subscription_end ? new Date(data.subscription_end) : null;
         const isExpired = subscriptionEnd ? new Date() > subscriptionEnd : false;
+        
+        if (isExpired) {
+          console.log("Assinatura expirada em:", subscriptionEnd);
+        }
 
         return {
           isPremium: data ? (!!data.is_premium && !isExpired) : false,
@@ -85,6 +119,19 @@ export const useUserSubscription = () => {
         };
       } catch (error: any) {
         console.error("Erro ao buscar status de assinatura:", error);
+        
+        // VERIFICAÇÃO DE FALLBACK: em caso de erro, se o email for premium, retornar premium
+        if (user?.email && PREMIUM_EMAILS.includes(user.email)) {
+          console.log("Erro ocorreu, mas email é premium, garantindo status premium:", user.email);
+          return {
+            isPremium: true,
+            role: 'premium',
+            email: user.email,
+            subscriptionStart: new Date().toISOString(),
+            subscriptionEnd: null
+          };
+        }
+        
         return {
           isPremium: false,
           role: 'user',
@@ -92,12 +139,12 @@ export const useUserSubscription = () => {
         };
       }
     },
-    enabled: !!isAuthenticated && !!user?.id, // Executar query apenas se o usuário estiver autenticado
-    staleTime: 10 * 1000, // Reduzido para 10 segundos para atualizações mais frequentes
-    refetchInterval: 30 * 1000, // Atualizar a cada 30 segundos para detectar mudanças na assinatura
-    refetchOnWindowFocus: true, // Atualizar quando a janela ganhar foco
-    refetchOnMount: true, // Sempre atualizar quando o componente montar
-    retry: 2
+    enabled: !!isAuthenticated, // Executar query apenas se o usuário estiver autenticado
+    staleTime: 5000, // 5 segundos para atualizações mais frequentes
+    refetchInterval: 30000, // Atualizar a cada 30 segundos para detectar mudanças na assinatura
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    retry: 3
   });
 
   // Função para invalidar o cache de assinatura
