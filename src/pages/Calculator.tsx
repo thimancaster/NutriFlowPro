@@ -2,11 +2,27 @@
 import React from 'react';
 import CalculatorTool from '@/components/CalculatorTool';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Home, Calculator as CalculatorIcon, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Calculator = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center mb-4 text-sm text-gray-600">
+          <Link to="/" className="flex items-center hover:text-nutri-blue transition-colors">
+            <Home className="h-4 w-4 mr-1" />
+            <span>Início</span>
+          </Link>
+          <ChevronRight className="h-3 w-3 mx-2" />
+          <span className="font-medium text-nutri-blue flex items-center">
+            <CalculatorIcon className="h-4 w-4 mr-1" />
+            Calculadora
+          </span>
+        </div>
+        
         <motion.div 
           className="flex flex-col md:flex-row items-start justify-between mb-8 gap-6"
           initial={{ opacity: 0, y: 20 }}
@@ -29,6 +45,14 @@ const Calculator = () => {
             <div className="bg-white p-5">
               <h2 className="text-xl font-semibold mb-2">Por que calcular?</h2>
               <p className="text-gray-600">Cálculos precisos de macronutrientes e calorias são essenciais para desenvolver planos nutricionais personalizados e eficazes para seus pacientes.</p>
+              
+              <div className="mt-4">
+                <Link to="/meal-plans">
+                  <Button variant="outline" className="text-nutri-blue">
+                    Ver Planos Alimentares
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </motion.div>

@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Save, FileText } from 'lucide-react';
+import { Save, FileText, Home, Calculator, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DEFAULT_MEAL_DISTRIBUTION, MEAL_NAMES, calculateMealDistribution } from '@/utils/mealPlanUtils';
 import PatientHeader from '@/components/Anthropometry/PatientHeader';
 
@@ -35,10 +36,10 @@ const MealPlanGenerator = () => {
     if (!consultationData) {
       toast({
         title: "Dados insuficientes",
-        description: "Por favor, complete uma consulta primeiro.",
+        description: "Por favor, complete uma consulta ou cálculo nutricional primeiro.",
         variant: "destructive",
       });
-      navigate('/consultation');
+      navigate('/calculator');
     }
   }, [consultationData, navigate, toast]);
 
@@ -159,7 +160,7 @@ const MealPlanGenerator = () => {
     if (patientData?.id) {
       navigate(`/patient-history/${patientData.id}`);
     } else {
-      navigate('/');
+      navigate('/meal-plans');
     }
   };
 
@@ -167,10 +168,26 @@ const MealPlanGenerator = () => {
     return <div>Carregando...</div>;
   }
   
+  const isFromCalculator = location.state?.source === 'calculator' || !location.state?.source;
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center mb-4 text-sm text-gray-600">
+          <Link to="/" className="flex items-center hover:text-nutri-blue transition-colors">
+            <Home className="h-4 w-4 mr-1" />
+            <span>Início</span>
+          </Link>
+          <ChevronRight className="h-3 w-3 mx-2" />
+          <Link to="/calculator" className="flex items-center hover:text-nutri-blue transition-colors">
+            <Calculator className="h-4 w-4 mr-1" />
+            <span>Calculadora</span>
+          </Link>
+          <ChevronRight className="h-3 w-3 mx-2" />
+          <span className="font-medium text-nutri-blue">Plano Alimentar</span>
+        </div>
+        
         <div className="flex flex-col md:flex-row justify-between items-start mb-8">
           <div>
             <h1 className="text-3xl font-bold text-nutri-blue mb-2">Plano Alimentar</h1>
@@ -187,7 +204,7 @@ const MealPlanGenerator = () => {
                 onClick={() => navigate(-1)}
               >
                 <FileText className="h-4 w-4" />
-                Voltar para consulta
+                Voltar
               </Button>
               
               <Button 

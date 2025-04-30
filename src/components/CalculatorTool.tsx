@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 const CalculatorTool = () => {
+  const navigate = useNavigate();
   // States for form data
   const [gender, setGender] = useState('female');
   const [age, setAge] = useState('');
@@ -23,6 +27,8 @@ const CalculatorTool = () => {
   const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(null);
 
   const [activeTab, setActiveTab] = useState('calculator');
+  const [patientName, setPatientName] = useState('');
+  const [objective, setObjective] = useState('manutenção');
 
   const calculateBMR = () => {
     if (!age || !weight || !height) {
@@ -63,6 +69,43 @@ const CalculatorTool = () => {
     setActiveTab('results');
   };
 
+  const handleGenerateMealPlan = () => {
+    if (!tee || !macros) return;
+    
+    // Create consultation-like data structure to pass to meal plan generator
+    const consultationData = {
+      age: age,
+      objective: objective,
+      gender: gender,
+      weight: weight,
+      height: height,
+      activityLevel: activityLevel,
+      results: {
+        get: tee,
+        macros: {
+          protein: macros.protein,
+          carbs: macros.carbs,
+          fat: macros.fat
+        }
+      }
+    };
+    
+    // Create patient-like data structure
+    const patientData = {
+      name: patientName || "Paciente",
+      gender: gender,
+      id: Date.now().toString() // Temporary ID for demonstration
+    };
+    
+    // Navigate to meal plan generator with the data
+    navigate('/meal-plan-generator', {
+      state: {
+        consultation: consultationData,
+        patient: patientData
+      }
+    });
+  };
+
   return (
     <Card className="nutri-card w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -82,6 +125,16 @@ const CalculatorTool = () => {
           <TabsContent value="calculator" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="patientName">Nome do Paciente (opcional)</Label>
+                  <Input 
+                    id="patientName" 
+                    value={patientName} 
+                    onChange={(e) => setPatientName(e.target.value)}
+                    placeholder="Nome do paciente"
+                  />
+                </div>
+                
                 <div className="space-y-1.5">
                   <Label htmlFor="gender">Sexo</Label>
                   <Select value={gender} onValueChange={setGender}>
@@ -128,6 +181,20 @@ const CalculatorTool = () => {
                     onChange={(e) => setHeight(e.target.value)}
                     placeholder="Ex: 170"
                   />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="objective">Objetivo</Label>
+                  <Select value={objective} onValueChange={setObjective}>
+                    <SelectTrigger id="objective">
+                      <SelectValue placeholder="Selecione o objetivo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                      <SelectItem value="manutenção">Manutenção</SelectItem>
+                      <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -269,6 +336,17 @@ const CalculatorTool = () => {
                     </CardContent>
                   </Card>
                 )}
+
+                <div className="flex justify-center mt-4">
+                  <Button 
+                    onClick={handleGenerateMealPlan} 
+                    className="bg-nutri-green hover:bg-nutri-green-dark flex items-center gap-2"
+                    size="lg"
+                  >
+                    Gerar Plano Alimentar
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12">
