@@ -39,7 +39,7 @@ const ProtectedRoute = () => {
 
   // Debug para verificar o status de autenticação
   useEffect(() => {
-    console.log("Estado de autenticação:", { isAuthenticated, user, authLoading });
+    console.log("Estado de autenticação em ProtectedRoute:", { isAuthenticated, user, authLoading });
     console.log("Status premium:", isPremium);
   }, [isAuthenticated, user, authLoading, isPremium]);
 
@@ -48,14 +48,25 @@ const ProtectedRoute = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
+        <p className="ml-3 text-nutri-blue font-medium">Verificando autenticação...</p>
       </div>
     );
   }
 
-  // Redirecionar para login se não estiver autenticado
+  // Redirecionar para login APENAS quando temos certeza que não está autenticado
   if (isAuthenticated === false) {
     console.log("Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
+  }
+
+  // Se ainda estiver indeterminado (null), mostrar carregamento
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
+        <p className="ml-3 text-nutri-blue font-medium">Verificando sessão...</p>
+      </div>
+    );
   }
 
   // Gerar breadcrumbs baseado no caminho atual

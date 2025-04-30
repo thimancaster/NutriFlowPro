@@ -5,7 +5,6 @@ import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from './useUserSubscription';
-import { useNavigate } from 'react-router-dom';
 
 // Lista centralizada de emails premium
 export const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
@@ -52,13 +51,22 @@ export const useAuthState = () => {
   // Função de logout que pode ser chamada de qualquer componente
   const logout = useCallback(async () => {
     try {
+      console.log("Iniciando processo de logout");
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      console.log("Logout bem-sucedido, limpando cache");
       // Limpar o cache e estado
       queryClient.clear();
       
-      // Toast será mostrado pelo listener onAuthStateChange
+      // Forçar redirecionamento após logout
+      updateAuthState(null);
+      
+      toast({
+        title: "Sessão encerrada",
+        description: "Você foi desconectado com sucesso."
+      });
+      
       return { success: true };
     } catch (error: any) {
       console.error("Erro ao fazer logout:", error);
@@ -69,45 +77,45 @@ export const useAuthState = () => {
       });
       return { success: false, error };
     }
-  }, [queryClient, toast]);
+  }, [queryClient, toast, updateAuthState]);
 
   useEffect(() => {
     let isMounted = true;
+    
+    console.log("Inicializando hook useAuthState");
     
     // Configurar o listener de estado de autenticação primeiro
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Evento de autenticação:", event);
 
+        if (!isMounted) return;
+        
         if (event === 'SIGNED_OUT') {
-          if (isMounted) {
-            toast({
-              title: "Sessão encerrada",
-              description: "Você foi desconectado com sucesso."
-            });
-            
-            // Limpar cache de assinatura ao fazer logout
-            queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
-            queryClient.clear();
-          }
+          toast({
+            title: "Sessão encerrada",
+            description: "Você foi desconectado com sucesso."
+          });
+          
+          // Limpar cache de assinatura ao fazer logout
+          queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
+          queryClient.clear();
+          
         } else if (event === 'SIGNED_IN') {
-          if (isMounted) {
-            toast({
-              title: "Login realizado",
-              description: "Você foi autenticado com sucesso."
-            });
-          }
+          toast({
+            title: "Login realizado",
+            description: "Você foi autenticado com sucesso."
+          });
         }
 
-        if (isMounted) {
-          updateAuthState(session);
-        }
+        updateAuthState(session);
       }
     );
 
-    // Em seguida, verificar a sessão existente - apenas uma vez na montagem
-    const checkAuth = async () => {
+    // Verificação explícita da sessão atual
+    const checkExistingSession = async () => {
       try {
+        console.log("Verificando sessão existente...");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -115,8 +123,21 @@ export const useAuthState = () => {
           throw error;
         }
         
+        // Verificação adicional para garantir que a sessão é válida
+        if (data.session && data.session.user) {
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          
+          if (userError || !userData.user) {
+            console.log("Sessão inválida detectada, realizando logout");
+            await supabase.auth.signOut();
+            if (isMounted) updateAuthState(null);
+            return;
+          }
+        }
+        
         if (isMounted) {
           updateAuthState(data.session);
+          console.log("Status de autenticação após verificação:", data.session ? "Autenticado" : "Não autenticado");
         }
       } catch (error) {
         console.error("Erro de autenticação:", error);
@@ -131,10 +152,11 @@ export const useAuthState = () => {
       }
     };
 
-    checkAuth();
+    checkExistingSession();
 
     // Limpar inscrição ao desmontar
     return () => {
+      console.log("Desmontando hook useAuthState");
       isMounted = false;
       subscription.unsubscribe();
     };

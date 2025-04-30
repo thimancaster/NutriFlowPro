@@ -18,7 +18,8 @@ const Login = () => {
 
   // Verificar se já está autenticado
   useEffect(() => {
-    if (isAuthenticated) {
+    // Verificação de redirecionamento apenas quando temos certeza do estado
+    if (isAuthenticated === true) {
       console.log("Sessão existente detectada, redirecionando para a página inicial");
       navigate('/');
     }
@@ -26,6 +27,16 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha seu email e senha.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -53,6 +64,7 @@ const Login = () => {
     }
   };
 
+  // Mostrar carregamento enquanto o estado de autenticação é indeterminado
   if (authLoading) {
     return (
       <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
@@ -63,7 +75,7 @@ const Login = () => {
   }
 
   // Se já estiver autenticado, não renderiza o formulário (o useEffect acima vai redirecionar)
-  if (isAuthenticated) {
+  if (isAuthenticated === true) {
     return (
       <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>

@@ -23,12 +23,22 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
+    console.log("Botão de logout clicado");
+    
     try {
+      // Forçar fechamento do menu antes do logout
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+      
       const result = await logout();
       
       if (result.success) {
-        // O toast já é mostrado pelo hook useAuthState
-        navigate('/login');
+        console.log("Logout bem-sucedido, redirecionando para login");
+        // Forçar redirecionamento após logout
+        navigate('/login', { replace: true });
+      } else {
+        console.error("Falha no logout:", result.error);
       }
     } catch (error: any) {
       console.error("Erro ao fazer logout:", error);
@@ -38,7 +48,6 @@ const Navbar = () => {
         variant: "destructive"
       });
     }
-    toggleMenu();
   };
 
   return (
