@@ -25,6 +25,11 @@ const SubscriptionSettings = () => {
     }
   };
 
+  // Debug log to check subscription status
+  React.useEffect(() => {
+    console.log("Subscription status in settings:", subscription);
+  }, [subscription]);
+
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow animate-pulse">

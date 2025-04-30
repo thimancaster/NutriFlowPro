@@ -35,7 +35,8 @@ export const useUserSubscription = () => {
           };
         }
 
-        // Verificar primeiro se o email está na lista de premium
+        // Verificar PRIMEIRO se o email está na lista de premium
+        // Esta verificação tem prioridade sobre qualquer dado do banco
         if (user.email && PREMIUM_EMAILS.includes(user.email)) {
           console.log("Email premium detectado:", user.email);
           return {

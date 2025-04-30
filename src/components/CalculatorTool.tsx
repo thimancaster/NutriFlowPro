@@ -356,11 +356,13 @@ const CalculatorTool = () => {
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button onClick={calculateBMR} className="bg-nutri-green hover:bg-nutri-green-dark">
-          Calcular
-        </Button>
-      </CardFooter>
+      {activeTab !== 'results' && (
+        <CardFooter className="flex justify-end">
+          <Button onClick={calculateBMR} className="bg-nutri-green hover:bg-nutri-green-dark">
+            Calcular
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };
