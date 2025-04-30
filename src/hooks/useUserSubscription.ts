@@ -8,6 +8,8 @@ interface SubscriptionData {
   isPremium: boolean;
   role: string;
   email: string | null;
+  subscriptionEnd?: string | null;
+  subscriptionStart?: string | null;
 }
 
 export const useUserSubscription = () => {
@@ -29,7 +31,7 @@ export const useUserSubscription = () => {
 
         const { data, error } = await supabase
           .from("subscribers")
-          .select("is_premium, role, email")
+          .select("is_premium, role, email, subscription_start, subscription_end")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -45,7 +47,9 @@ export const useUserSubscription = () => {
         return {
           isPremium: data ? !!data.is_premium : false,
           role: data ? data.role : 'user',
-          email: data ? data.email : user.email
+          email: data ? data.email : user.email,
+          subscriptionStart: data ? data.subscription_start : null,
+          subscriptionEnd: data ? data.subscription_end : null
         };
       } catch (error: any) {
         console.error("Error fetching subscription status:", error);

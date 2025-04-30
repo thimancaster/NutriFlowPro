@@ -622,6 +622,14 @@ export type Database = {
         Args: { food_names: string[] }
         Returns: string[]
       }
+      get_subscription_status: {
+        Args: { user_id: string }
+        Returns: {
+          is_premium: boolean
+          role: string
+          email: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

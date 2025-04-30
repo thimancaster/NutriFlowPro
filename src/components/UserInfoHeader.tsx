@@ -1,8 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { Star } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -13,6 +14,7 @@ interface UserProfile {
 
 const UserInfoHeader = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { data: subscription } = useUserSubscription();
   
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -53,8 +55,25 @@ const UserInfoHeader = () => {
         <div>
           <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
           {userProfile.crn && <Badge variant="secondary" className="ml-2">CRN: {userProfile.crn}</Badge>}
+          
+          {subscription?.isPremium && (
+            <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center gap-1">
+              <Star className="h-3 w-3 text-yellow-500 fill-current" />
+              Premium
+            </Badge>
+          )}
         </div>
       </div>
+      
+      {!subscription?.isPremium && (
+        <a 
+          href="/subscription" 
+          className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center"
+        >
+          <Star className="h-4 w-4 mr-1" />
+          Upgrade para Premium
+        </a>
+      )}
     </div>
   );
 };

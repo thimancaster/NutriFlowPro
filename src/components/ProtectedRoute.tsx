@@ -12,7 +12,8 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { Home } from 'lucide-react';
+import { Home, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAuthState();
@@ -48,7 +49,8 @@ const ProtectedRoute = () => {
       'patient-history': 'Histórico',
       'patient-anthropometry': 'Antropometria',
       'settings': 'Configurações',
-      'add-testimonial': 'Adicionar Depoimento'
+      'add-testimonial': 'Adicionar Depoimento',
+      'subscription': 'Assinatura'
     };
     
     // Don't show breadcrumbs on home page
@@ -86,6 +88,16 @@ const ProtectedRoute = () => {
               </React.Fragment>
             );
           })}
+          
+          {/* Premium Badge */}
+          {subscription?.isPremium && (
+            <div className="ml-auto">
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center">
+                <Star className="h-3 w-3 mr-1 text-yellow-500 fill-current" />
+                Premium
+              </Badge>
+            </div>
+          )}
         </BreadcrumbList>
       </Breadcrumb>
     );
