@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthState } from "./useAuthState";
 import { useToast } from "./use-toast";
@@ -12,12 +12,15 @@ interface SubscriptionData {
   subscriptionStart?: string | null;
 }
 
+const SUBSCRIPTION_QUERY_KEY = "subscription-status";
+
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  return useQuery({
-    queryKey: ["subscription-status", user?.id],
+  const query = useQuery({
+    queryKey: [SUBSCRIPTION_QUERY_KEY, user?.id],
     queryFn: async (): Promise<SubscriptionData> => {
       try {
         // Don't fetch if user is not authenticated
@@ -61,7 +64,21 @@ export const useUserSubscription = () => {
       }
     },
     enabled: !!isAuthenticated && !!user?.id, // Only run query if user is authenticated
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 60 * 1000, // Reduced to 1 minute from 5 minutes
     retry: 1
   });
+
+  // Add a function to invalidate the subscription cache
+  const invalidateSubscriptionCache = () => {
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, user.id] });
+    } else {
+      queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
+    }
+  };
+
+  return {
+    ...query,
+    invalidateSubscriptionCache
+  };
 };

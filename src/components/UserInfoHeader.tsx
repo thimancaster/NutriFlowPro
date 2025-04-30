@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { Star } from 'lucide-react';
+import { Star, Crown } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -50,15 +50,18 @@ const UserInfoHeader = () => {
   }
 
   return (
-    <div className="bg-blue-50 p-4 flex justify-between items-center">
+    <div className={`p-4 flex justify-between items-center ${subscription?.isPremium ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' : 'bg-blue-50'}`}>
       <div className="flex items-center space-x-4">
         <div>
           <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
           {userProfile.crn && <Badge variant="secondary" className="ml-2">CRN: {userProfile.crn}</Badge>}
           
           {subscription?.isPremium && (
-            <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center gap-1">
-              <Star className="h-3 w-3 text-yellow-500 fill-current" />
+            <Badge 
+              variant="outline" 
+              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm"
+            >
+              <Crown className="h-3 w-3 text-amber-500 fill-yellow-400" />
               Premium
             </Badge>
           )}

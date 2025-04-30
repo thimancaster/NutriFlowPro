@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Calculator, Users, LogOut, Star, Settings } from 'lucide-react';
+import { FileText, Calculator, Users, LogOut, Star, Settings, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
 
 interface NavbarDesktopMenuProps {
   isAuthenticated: boolean;
@@ -11,6 +12,9 @@ interface NavbarDesktopMenuProps {
 }
 
 const NavbarDesktopMenu = ({ isAuthenticated, onLogin, onLogout }: NavbarDesktopMenuProps) => {
+  const { data: subscription } = useUserSubscription();
+  const isPremium = subscription?.isPremium;
+  
   return (
     <div className="hidden md:flex items-center space-x-4">
       {isAuthenticated ? (
@@ -31,10 +35,23 @@ const NavbarDesktopMenu = ({ isAuthenticated, onLogin, onLogout }: NavbarDesktop
             <FileText className="h-4 w-4 mr-2" />
             Planos Alimentares
           </Link>
-          <Link to="/subscription" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
-            <Star className="h-4 w-4 mr-2" />
-            Planos
-          </Link>
+          {isPremium ? (
+            <Link 
+              to="/subscription" 
+              className="flex items-center px-3 py-2 text-amber-700 hover:text-amber-800 font-medium"
+            >
+              <Crown className="h-4 w-4 mr-2 text-amber-500" />
+              Premium
+            </Link>
+          ) : (
+            <Link 
+              to="/subscription" 
+              className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium"
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Planos
+            </Link>
+          )}
           <Link to="/settings" className="flex items-center px-3 py-2 text-nutri-gray-dark hover:text-nutri-green font-medium">
             <Settings className="h-4 w-4 mr-2" />
             Configurações

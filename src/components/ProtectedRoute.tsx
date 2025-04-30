@@ -12,7 +12,7 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
-import { Home, Star } from 'lucide-react';
+import { Home, Star, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const ProtectedRoute = () => {
@@ -92,8 +92,11 @@ const ProtectedRoute = () => {
           {/* Premium Badge */}
           {subscription?.isPremium && (
             <div className="ml-auto">
-              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center">
-                <Star className="h-3 w-3 mr-1 text-yellow-500 fill-current" />
+              <Badge 
+                variant="outline" 
+                className="bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center shadow-sm"
+              >
+                <Crown className="h-3 w-3 mr-1 text-amber-500 fill-yellow-400" />
                 Premium
               </Badge>
             </div>
@@ -103,9 +106,11 @@ const ProtectedRoute = () => {
     );
   };
 
-  // Show the protected content if authenticated
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${subscription?.isPremium ? 'bg-gradient-to-b from-amber-50 to-gray-50' : 'bg-gray-50'}`}>
+      {subscription?.isPremium && (
+        <div className="h-1 bg-gradient-to-r from-amber-300 to-yellow-400"></div>
+      )}
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {generateBreadcrumbs()}

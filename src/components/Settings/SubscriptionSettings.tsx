@@ -3,13 +3,18 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
-import { Star, Calendar, Check, ArrowRight } from 'lucide-react';
+import { Star, Calendar, Check, ArrowRight, Crown, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const SubscriptionSettings = () => {
-  const { data: subscription, isLoading } = useUserSubscription();
+  const { data: subscription, isLoading, invalidateSubscriptionCache } = useUserSubscription();
   const navigate = useNavigate();
+
+  // Force refresh subscription data when component mounts
+  React.useEffect(() => {
+    invalidateSubscriptionCache();
+  }, [invalidateSubscriptionCache]);
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'N/A';
@@ -34,23 +39,30 @@ const SubscriptionSettings = () => {
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="mb-6">
         <h3 className="text-lg font-medium">Seu plano atual</h3>
-        <div className={`mt-4 p-4 border rounded-lg ${subscription?.isPremium ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
+        <div className={`mt-4 p-4 border rounded-lg ${subscription?.isPremium ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200 shadow-inner' : 'bg-gray-50'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-lg font-semibold ${subscription?.isPremium ? 'text-nutri-blue' : 'text-gray-700'}`}>
-                {subscription?.isPremium ? 'Plano Premium' : 'Plano Gratuito'}
+              <p className={`text-lg font-semibold flex items-center ${subscription?.isPremium ? 'text-amber-800' : 'text-gray-700'}`}>
+                {subscription?.isPremium ? (
+                  <>
+                    <Crown className="h-5 w-5 mr-2 text-amber-500 fill-yellow-400" />
+                    Plano Premium
+                  </>
+                ) : (
+                  'Plano Gratuito'
+                )}
               </p>
               {subscription?.isPremium ? (
                 <>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-amber-700 mt-1">
                     Acesso a todas as funcionalidades premium
                   </p>
                   <div className="mt-3 space-y-1">
-                    <p className="text-xs flex items-center text-gray-600">
+                    <p className="text-xs flex items-center text-amber-700">
                       <Calendar className="h-3.5 w-3.5 mr-1.5" />
                       <span>Início: {formatDate(subscription.subscriptionStart)}</span>
                     </p>
-                    <p className="text-xs flex items-center text-gray-600">
+                    <p className="text-xs flex items-center text-amber-700">
                       <Calendar className="h-3.5 w-3.5 mr-1.5" />
                       <span>Validade: {formatDate(subscription.subscriptionEnd)}</span>
                     </p>
@@ -62,7 +74,13 @@ const SubscriptionSettings = () => {
                 </p>
               )}
             </div>
-            <Star className={`h-6 w-6 ${subscription?.isPremium ? 'text-yellow-400' : 'text-gray-400'}`} />
+            {subscription?.isPremium ? (
+              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 flex items-center justify-center shadow-md">
+                <Crown className="h-6 w-6 text-white" />
+              </div>
+            ) : (
+              <Star className="h-6 w-6 text-gray-400" />
+            )}
           </div>
         </div>
       </div>
@@ -71,8 +89,8 @@ const SubscriptionSettings = () => {
         <div className="space-y-4">
           <div className="border border-green-100 bg-green-50 p-3 rounded-md">
             <h4 className="text-sm font-medium text-green-800 flex items-center">
-              <Check className="h-4 w-4 mr-1.5 text-green-600" />
-              Benefícios ativos
+              <Shield className="h-4 w-4 mr-1.5 text-green-600" />
+              Benefícios premium ativos
             </h4>
             <ul className="mt-2 space-y-2">
               <li className="text-xs text-green-700 flex items-center">
@@ -81,18 +99,22 @@ const SubscriptionSettings = () => {
               </li>
               <li className="text-xs text-green-700 flex items-center">
                 <Check className="h-3 w-3 mr-1.5" />
-                Acesso a todas funcionalidades
+                Acesso completo a todas funcionalidades avançadas
               </li>
               <li className="text-xs text-green-700 flex items-center">
                 <Check className="h-3 w-3 mr-1.5" />
-                Suporte prioritário
+                Suporte prioritário e personalizado
+              </li>
+              <li className="text-xs text-green-700 flex items-center">
+                <Check className="h-3 w-3 mr-1.5" />
+                Interface exclusiva premium
               </li>
             </ul>
           </div>
           <Button
             onClick={() => navigate('/subscription')}
             variant="outline"
-            className="w-full"
+            className="w-full border-amber-300 text-amber-800 hover:bg-amber-50"
           >
             Gerenciar assinatura
           </Button>

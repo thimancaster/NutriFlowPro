@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Users, Calculator, LogOut, Star } from 'lucide-react';
+import { FileText, Users, Calculator, LogOut, Star, Crown, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
 
 interface NavbarMobileMenuProps {
   isAuthenticated: boolean;
@@ -12,9 +13,14 @@ interface NavbarMobileMenuProps {
 
 const NavbarMobileMenu = ({ isAuthenticated, onLogout, onToggleMenu }: NavbarMobileMenuProps) => {
   const navigate = useNavigate();
+  const { data: subscription } = useUserSubscription();
+  const isPremium = subscription?.isPremium;
 
   return (
     <div className="md:hidden bg-white shadow-lg animate-fade-in">
+      {isPremium && (
+        <div className="h-1 bg-gradient-to-r from-amber-300 to-yellow-400"></div>
+      )}
       <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
         {isAuthenticated ? (
           <>
@@ -50,13 +56,32 @@ const NavbarMobileMenu = ({ isAuthenticated, onLogout, onToggleMenu }: NavbarMob
               <FileText className="h-4 w-4 mr-2" />
               Planos Alimentares
             </Link>
+            {isPremium ? (
+              <Link
+                to="/subscription"
+                className={`flex items-center px-3 py-2 rounded-md text-base font-medium bg-gradient-to-r from-amber-50 to-amber-100 text-amber-800 border-l-4 border-amber-400`}
+                onClick={onToggleMenu}
+              >
+                <Crown className="h-4 w-4 mr-2 text-amber-500" />
+                Premium
+              </Link>
+            ) : (
+              <Link
+                to="/subscription"
+                className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
+                onClick={onToggleMenu}
+              >
+                <Star className="h-4 w-4 mr-2" />
+                Planos
+              </Link>
+            )}
             <Link
-              to="/subscription"
+              to="/settings"
               className="flex items-center px-3 py-2 rounded-md text-base font-medium text-nutri-gray-dark hover:bg-nutri-gray-light hover:text-nutri-green"
               onClick={onToggleMenu}
             >
-              <Star className="h-4 w-4 mr-2" />
-              Planos
+              <Settings className="h-4 w-4 mr-2" />
+              Configurações
             </Link>
             <Button
               variant="outline" 

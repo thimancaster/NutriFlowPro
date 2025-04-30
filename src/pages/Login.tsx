@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
-import { Apple, ArrowRight, Mail } from 'lucide-react';
+import { Apple, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from '@tanstack/react-query';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +32,9 @@ const Login = () => {
       }
 
       if (data.user) {
+        // Force invalidate any cached subscription data
+        queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
+        
         // Success
         toast({
           title: "Login realizado com sucesso",
