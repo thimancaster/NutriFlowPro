@@ -28,11 +28,6 @@ const UserInfoHeader = () => {
         
         if (!user) return;
         
-        // Verificar se o usuário atual é um dos emails premium definidos
-        if (user.email === 'thimancaster@hotmail.com' || user.email === 'thiago@nutriflowpro.com') {
-          console.log("Usuário premium detectado pelo email:", user.email);
-        }
-        
         const { data: profile } = await supabase
           .from('users')
           .select('*')

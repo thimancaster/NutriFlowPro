@@ -14,6 +14,9 @@ interface SubscriptionData {
 
 export const SUBSCRIPTION_QUERY_KEY = "subscription-status";
 
+// Lista de emails com acesso premium garantido
+const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
   const { toast } = useToast();
@@ -29,6 +32,18 @@ export const useUserSubscription = () => {
             isPremium: false,
             role: 'user',
             email: null
+          };
+        }
+
+        // Verificar primeiro se o email está na lista de premium
+        if (user.email && PREMIUM_EMAILS.includes(user.email)) {
+          console.log("Email premium detectado:", user.email);
+          return {
+            isPremium: true,
+            role: 'premium',
+            email: user.email,
+            subscriptionStart: new Date().toISOString(),
+            subscriptionEnd: null // Sem data de expiração para emails premium
           };
         }
 
@@ -59,18 +74,6 @@ export const useUserSubscription = () => {
         // Verificar se a assinatura expirou
         const subscriptionEnd = data?.subscription_end ? new Date(data.subscription_end) : null;
         const isExpired = subscriptionEnd ? new Date() > subscriptionEnd : false;
-
-        // Se os dados não existem ou o e-mail é thimancaster@hotmail.com, retorna premium true
-        if (user.email === 'thimancaster@hotmail.com' || user.email === 'thiago@nutriflowpro.com') {
-          console.log("Usuário premium detectado pelo email:", user.email);
-          return {
-            isPremium: true,
-            role: 'premium',
-            email: user.email,
-            subscriptionStart: data ? data.subscription_start : new Date().toISOString(),
-            subscriptionEnd: data ? data.subscription_end : null
-          };
-        }
 
         return {
           isPremium: data ? (!!data.is_premium && !isExpired) : false,

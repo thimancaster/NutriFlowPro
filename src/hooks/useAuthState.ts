@@ -41,12 +41,6 @@ export const useAuthState = () => {
           // Invalidar cache de assinatura ao fazer login
           if (session?.user) {
             queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, session.user.id] });
-            
-            // Verificar se o usuário é premium pelo email
-            if (session.user.email === 'thimancaster@hotmail.com' || 
-                session.user.email === 'thiago@nutriflowpro.com') {
-              console.log("Usuário premium detectado pelo email:", session.user.email);
-            }
           }
         }
 
@@ -72,12 +66,6 @@ export const useAuthState = () => {
         if (data.session?.user) {
           console.log("Sessão existente detectada, atualizando status de assinatura");
           queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, data.session.user.id] });
-          
-          // Verificar se o usuário é premium pelo email
-          if (data.session.user.email === 'thimancaster@hotmail.com' || 
-              data.session.user.email === 'thiago@nutriflowpro.com') {
-            console.log("Usuário premium detectado pelo email:", data.session.user.email);
-          }
         }
         
         setAuthState({

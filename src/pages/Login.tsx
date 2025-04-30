@@ -53,6 +53,21 @@ const Login = () => {
         await queryClient.prefetchQuery({
           queryKey: [SUBSCRIPTION_QUERY_KEY, data.user.id],
           queryFn: async () => {
+            // Verificar se é um dos emails premium conhecidos
+            const isPremiumEmail = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(data.user.email || '');
+            
+            if (isPremiumEmail) {
+              console.log("Email premium detectado no login:", data.user.email);
+              return {
+                isPremium: true,
+                role: 'premium',
+                email: data.user.email,
+                subscription_start: new Date().toISOString(),
+                subscription_end: null
+              };
+            }
+            
+            // Caso contrário, busca os dados normalmente
             const { data: subData } = await supabase
               .from("subscribers")
               .select("is_premium, role, email, subscription_start, subscription_end")
@@ -87,6 +102,7 @@ const Login = () => {
     }
   };
 
+  // ... manter o resto do código existente (JSX para o formulário de login)
   return (
     <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
