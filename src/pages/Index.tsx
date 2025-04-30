@@ -2,12 +2,18 @@
 import React from 'react';
 import Dashboard from '@/components/Dashboard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { motion } from 'framer-motion';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-10">
+        <motion.div 
+          className="flex flex-col md:flex-row items-center justify-between mb-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2 text-nutri-blue">
               <span className="text-nutri-green">Nutri</span>Flow Pro
@@ -20,7 +26,7 @@ const Index = () => {
             className="w-full md:w-1/3 rounded-xl shadow-lg mt-4 md:mt-0"
             fallbackSrc="/placeholder.svg"
           />
-        </div>
+        </motion.div>
         <Dashboard />
       </div>
     </div>

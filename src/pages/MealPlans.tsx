@@ -1,14 +1,18 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
 import MealPlanGenerator from '@/components/MealPlanGenerator';
+import { motion } from 'framer-motion';
 
 const MealPlans = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8">
+        <motion.div 
+          className="flex flex-col md:flex-row items-center justify-between mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div>
             <h1 className="text-3xl font-bold mb-3 text-nutri-blue">Planos Alimentares</h1>
             <p className="text-gray-600 mb-4">Crie planos alimentares personalizados com quantidades precisas para seus pacientes.</p>
@@ -18,13 +22,23 @@ const MealPlans = () => {
             alt="Alimentos saudáveis" 
             className="w-full md:w-1/3 rounded-xl shadow-lg mt-4 md:mt-0"
           />
-        </div>
+        </motion.div>
         
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <motion.div 
+          className="bg-white rounded-xl shadow-lg p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <MealPlanGenerator />
-        </div>
+        </motion.div>
         
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div 
+          className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
           <div className="bg-white p-5 rounded-xl shadow-md">
             <h3 className="font-semibold text-lg mb-2 text-nutri-green">Personalizado</h3>
             <p className="text-gray-600">Planos alimentares adaptados às necessidades e preferências individuais de cada paciente.</p>
@@ -37,7 +51,7 @@ const MealPlans = () => {
             <h3 className="font-semibold text-lg mb-2 text-nutri-teal">Profissional</h3>
             <p className="text-gray-600">Apresentação profissional com informações nutricionais completas e detalhadas.</p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -1,19 +1,30 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthState } from "./useAuthState";
+import { useToast } from "./use-toast";
+
+interface SubscriptionData {
+  isPremium: boolean;
+  role: string;
+  email: string | null;
+}
 
 export const useUserSubscription = () => {
+  const { user, isAuthenticated } = useAuthState();
+  const { toast } = useToast();
+  
   return useQuery({
-    queryKey: ["subscription-status"],
-    queryFn: async () => {
+    queryKey: ["subscription-status", user?.id],
+    queryFn: async (): Promise<SubscriptionData> => {
       try {
-        const {
-          data: { user },
-          error: userError
-        } = await supabase.auth.getUser();
-        
-        if (userError || !user) {
-          throw userError || new Error("Usuário não autenticado");
+        // Don't fetch if user is not authenticated
+        if (!isAuthenticated || !user) {
+          return {
+            isPremium: false,
+            role: 'user',
+            email: null
+          };
         }
 
         const { data, error } = await supabase
@@ -22,23 +33,31 @@ export const useUserSubscription = () => {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          toast({
+            title: "Erro ao buscar dados da assinatura",
+            description: error.message,
+            variant: "destructive",
+          });
+          throw error;
+        }
 
         return {
           isPremium: data ? !!data.is_premium : false,
           role: data ? data.role : 'user',
           email: data ? data.email : user.email
         };
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching subscription status:", error);
         return {
           isPremium: false,
           role: 'user',
-          email: null
+          email: user?.email || null
         };
       }
     },
-    staleTime: 5 * 60 * 1000,
+    enabled: !!isAuthenticated && !!user?.id, // Only run query if user is authenticated
+    staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1
   });
 };

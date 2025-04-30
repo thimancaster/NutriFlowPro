@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface PatientHeaderProps {
   patientName: string;
@@ -17,7 +18,12 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`mb-6 ${className}`}>
+    <motion.div 
+      className={`mb-6 ${className}`}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="bg-blue-50 p-4 rounded-lg shadow-sm">
         {patientName && (
           <p className="text-lg font-medium">
@@ -42,7 +48,7 @@ const PatientHeader: React.FC<PatientHeaderProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
