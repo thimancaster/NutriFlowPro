@@ -6,37 +6,23 @@ import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from '@tanstack/react-query';
-import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
+import { useAuthState } from '@/hooks/useAuthState';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading: authLoading } = useAuthState();
 
   // Verificar se já está autenticado
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log("Sessão existente detectada, redirecionando para a página inicial");
-          // Se já estiver autenticado, redireciona para a página inicial
-          navigate('/');
-        }
-      } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
-      } finally {
-        setIsCheckingAuth(false);
-      }
-    };
-    
-    checkAuth();
-  }, [navigate]);
+    if (isAuthenticated) {
+      console.log("Sessão existente detectada, redirecionando para a página inicial");
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,27 +40,7 @@ const Login = () => {
         throw error;
       }
 
-      if (data.user) {
-        console.log("Login bem-sucedido para:", data.user.email);
-        
-        // Forçar invalidação de qualquer dado de assinatura em cache
-        queryClient.clear();
-        await queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
-        
-        // Lista de emails premium conhecidos
-        const premiumEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
-        const isPremiumEmail = premiumEmails.includes(data.user.email || '');
-        
-        console.log("É email premium?", isPremiumEmail);
-        
-        // Sucesso
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo de volta ao NutriFlow Pro!",
-        });
-        
-        navigate('/');
-      }
+      // O redirecionamento e toast acontecerão automaticamente pelo listener onAuthStateChange
     } catch (error: any) {
       console.error("Erro no login:", error);
       toast({
@@ -87,11 +53,21 @@ const Login = () => {
     }
   };
 
-  if (isCheckingAuth) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
         <p className="mt-4 text-white">Verificando autenticação...</p>
+      </div>
+    );
+  }
+
+  // Se já estiver autenticado, não renderiza o formulário (o useEffect acima vai redirecionar)
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        <p className="mt-4 text-white">Redirecionando...</p>
       </div>
     );
   }

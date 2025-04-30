@@ -1,22 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuthState } from '@/hooks/useAuthState';
 import NavbarBrand from './NavbarBrand';
 import NavbarDesktopMenu from './NavbarDesktopMenu';
 import NavbarMobileMenu from './NavbarMobileMenu';
-import { useQueryClient } from '@tanstack/react-query';
-import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, user } = useAuthState();
+  const { isAuthenticated, logout } = useAuthState();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -28,26 +24,12 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      // Invalidar cache antes do logout
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, user.id] });
+      const result = await logout();
+      
+      if (result.success) {
+        // O toast já é mostrado pelo hook useAuthState
+        navigate('/login');
       }
-      
-      // Executar logout
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso."
-      });
-      
-      // Limpar o cache completamente após o logout
-      queryClient.clear();
-      
-      // Redirecionar para login
-      navigate('/login');
     } catch (error: any) {
       console.error("Erro ao fazer logout:", error);
       toast({

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthState } from "./useAuthState";
 import { useToast } from "./use-toast";
+import { PREMIUM_EMAILS } from "./useAuthState";
 
 interface SubscriptionData {
   isPremium: boolean;
@@ -13,9 +14,6 @@ interface SubscriptionData {
 }
 
 export const SUBSCRIPTION_QUERY_KEY = "subscription-status";
-
-// Lista de emails com acesso premium garantido
-const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
 
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();

@@ -8,11 +8,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuthState } from '@/hooks/useAuthState';
 
-const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
-
 const SubscriptionSettings = () => {
   const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
-  const { user } = useAuthState();
+  const { user, isPremium: isUserPremium } = useAuthState();
   const navigate = useNavigate();
 
   // Force refresh subscription data when component mounts
@@ -20,20 +18,10 @@ const SubscriptionSettings = () => {
     refetchSubscription();
   }, [refetchSubscription]);
   
-  // Verificação adicional para garantir que emails premium sejam reconhecidos
+  // Usar a verificação centralizada do hook useAuthState
   const isPremium = React.useMemo(() => {
-    if (!user?.email) return subscription?.isPremium || false;
-    
-    // Verificar se o email está na lista de premium, independente do que diz a assinatura
-    const isEmailPremium = PREMIUM_EMAILS.includes(user.email);
-    
-    // Log para debug
-    console.log("Email verificado:", user.email);
-    console.log("É email premium?", isEmailPremium);
-    console.log("Status de assinatura do backend:", subscription?.isPremium);
-    
-    return isEmailPremium || (subscription?.isPremium || false);
-  }, [user?.email, subscription?.isPremium]);
+    return isUserPremium || (subscription?.isPremium || false);
+  }, [isUserPremium, subscription?.isPremium]);
 
   // Debug log to check subscription status
   useEffect(() => {

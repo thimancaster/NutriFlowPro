@@ -1,6 +1,5 @@
-
 import React, { useEffect } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import Navbar from './Navbar';
@@ -14,23 +13,21 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Home, Star, Crown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-// Lista de emails premium
-const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+import { PREMIUM_EMAILS } from '@/hooks/useAuthState';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, user, isLoading: authLoading } = useAuthState();
+  const { isAuthenticated, user, isLoading: authLoading, isPremium: isUserPremium } = useAuthState();
   const { data: subscription, refetchSubscription } = useUserSubscription();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Verificação adicional para garantir que emails premium sejam reconhecidos
   const isPremium = React.useMemo(() => {
     if (!user?.email) return subscription?.isPremium || false;
     
     // Verificar se o email está na lista de premium, independente do que diz a assinatura
-    const isEmailPremium = PREMIUM_EMAILS.includes(user.email);
-    return isEmailPremium || (subscription?.isPremium || false);
-  }, [user?.email, subscription?.isPremium]);
+    return isUserPremium || (subscription?.isPremium || false);
+  }, [user?.email, subscription?.isPremium, isUserPremium]);
 
   // Quando a rota muda, buscar novamente os dados da assinatura
   useEffect(() => {
@@ -47,7 +44,7 @@ const ProtectedRoute = () => {
   }, [isAuthenticated, user, authLoading, isPremium]);
 
   // Mostrar carregamento enquanto verifica autenticação
-  if (authLoading || isAuthenticated === null) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
