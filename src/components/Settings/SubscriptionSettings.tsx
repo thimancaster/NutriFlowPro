@@ -8,13 +8,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const SubscriptionSettings = () => {
-  const { data: subscription, isLoading, invalidateSubscriptionCache } = useUserSubscription();
+  const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
   const navigate = useNavigate();
 
   // Force refresh subscription data when component mounts
   React.useEffect(() => {
-    invalidateSubscriptionCache();
-  }, [invalidateSubscriptionCache]);
+    refetchSubscription();
+  }, [refetchSubscription]);
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'N/A';

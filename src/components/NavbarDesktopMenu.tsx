@@ -12,8 +12,15 @@ interface NavbarDesktopMenuProps {
 }
 
 const NavbarDesktopMenu = ({ isAuthenticated, onLogin, onLogout }: NavbarDesktopMenuProps) => {
-  const { data: subscription } = useUserSubscription();
+  const { data: subscription, refetchSubscription } = useUserSubscription();
   const isPremium = subscription?.isPremium;
+  
+  // Refetch subscription when menu renders if authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      refetchSubscription();
+    }
+  }, [isAuthenticated, refetchSubscription]);
   
   return (
     <div className="hidden md:flex items-center space-x-4">
@@ -38,7 +45,7 @@ const NavbarDesktopMenu = ({ isAuthenticated, onLogin, onLogout }: NavbarDesktop
           {isPremium ? (
             <Link 
               to="/subscription" 
-              className="flex items-center px-3 py-2 text-amber-700 hover:text-amber-800 font-medium"
+              className="flex items-center px-3 py-2 bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700 rounded-md border border-amber-200 hover:border-amber-300 font-medium transition-all"
             >
               <Crown className="h-4 w-4 mr-2 text-amber-500" />
               Premium

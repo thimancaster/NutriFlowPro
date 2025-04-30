@@ -14,9 +14,12 @@ interface UserProfile {
 
 const UserInfoHeader = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const { data: subscription } = useUserSubscription();
+  const { data: subscription, refetchSubscription } = useUserSubscription();
   
   useEffect(() => {
+    // Force refetch subscription data when component mounts
+    refetchSubscription();
+    
     const fetchUserProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -38,7 +41,7 @@ const UserInfoHeader = () => {
     };
     
     fetchUserProfile();
-  }, []);
+  }, [refetchSubscription]);
 
   // Loading state
   if (!userProfile) {
@@ -50,7 +53,9 @@ const UserInfoHeader = () => {
   }
 
   return (
-    <div className={`p-4 flex justify-between items-center ${subscription?.isPremium ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' : 'bg-blue-50'}`}>
+    <div className={`p-4 flex justify-between items-center ${subscription?.isPremium 
+      ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' 
+      : 'bg-blue-50'}`}>
       <div className="flex items-center space-x-4">
         <div>
           <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}

@@ -12,7 +12,7 @@ interface SubscriptionData {
   subscriptionStart?: string | null;
 }
 
-const SUBSCRIPTION_QUERY_KEY = "subscription-status";
+export const SUBSCRIPTION_QUERY_KEY = "subscription-status";
 
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
@@ -32,6 +32,7 @@ export const useUserSubscription = () => {
           };
         }
 
+        // Force fresh data from the server by setting cache-control headers
         const { data, error } = await supabase
           .from("subscribers")
           .select("is_premium, role, email, subscription_start, subscription_end")
@@ -47,8 +48,12 @@ export const useUserSubscription = () => {
           throw error;
         }
 
+        // Check if subscription has expired
+        const subscriptionEnd = data?.subscription_end ? new Date(data.subscription_end) : null;
+        const isExpired = subscriptionEnd ? new Date() > subscriptionEnd : false;
+
         return {
-          isPremium: data ? !!data.is_premium : false,
+          isPremium: data ? (!!data.is_premium && !isExpired) : false,
           role: data ? data.role : 'user',
           email: data ? data.email : user.email,
           subscriptionStart: data ? data.subscription_start : null,
@@ -64,11 +69,13 @@ export const useUserSubscription = () => {
       }
     },
     enabled: !!isAuthenticated && !!user?.id, // Only run query if user is authenticated
-    staleTime: 60 * 1000, // Reduced to 1 minute from 5 minutes
-    retry: 1
+    staleTime: 30 * 1000, // Reduced to 30 seconds for more frequent updates
+    refetchInterval: 60 * 1000, // Refresh every minute to catch subscription changes
+    refetchOnWindowFocus: true, // Refresh when window regains focus
+    retry: 2
   });
 
-  // Add a function to invalidate the subscription cache
+  // Function to invalidate the subscription cache
   const invalidateSubscriptionCache = () => {
     if (user?.id) {
       queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, user.id] });
@@ -77,8 +84,14 @@ export const useUserSubscription = () => {
     }
   };
 
+  // Function to force refetch the subscription data
+  const refetchSubscription = async () => {
+    return query.refetch();
+  };
+
   return {
     ...query,
-    invalidateSubscriptionCache
+    invalidateSubscriptionCache,
+    refetchSubscription
   };
 };

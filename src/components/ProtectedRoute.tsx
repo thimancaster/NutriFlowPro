@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -16,9 +16,16 @@ import { Home, Star, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated } = useAuthState();
-  const { data: subscription } = useUserSubscription();
+  const { isAuthenticated, user } = useAuthState();
+  const { data: subscription, refetchSubscription } = useUserSubscription();
   const location = useLocation();
+
+  // When the route changes, refetch subscription data
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      refetchSubscription();
+    }
+  }, [isAuthenticated, user, refetchSubscription]);
 
   // Show loading while checking authentication
   if (isAuthenticated === null) {
@@ -94,7 +101,7 @@ const ProtectedRoute = () => {
             <div className="ml-auto">
               <Badge 
                 variant="outline" 
-                className="bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center shadow-sm"
+                className="bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm"
               >
                 <Crown className="h-3 w-3 mr-1 text-amber-500 fill-yellow-400" />
                 Premium
