@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2, Upload, User } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -27,6 +29,9 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 const ProfileSettings = () => {
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: async () => {
@@ -38,6 +43,10 @@ const ProfileSettings = () => {
         .select('*')
         .eq('id', user.id)
         .single();
+        
+      if (profile?.photo_url) {
+        setAvatarUrl(profile.photo_url);
+      }
         
       return {
         name: profile?.name || '',
@@ -73,8 +82,99 @@ const ProfileSettings = () => {
     }
   };
 
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Você precisa selecionar uma imagem para fazer upload.');
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${Date.now()}.${fileExt}`;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Upload the file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL for the file
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update the user's profile with the new avatar URL
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ photo_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      
+      toast({
+        title: "Foto atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer upload",
+        description: error.message || "Ocorreu um erro ao carregar sua foto.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      <div className="flex flex-col items-center mb-8">
+        <Avatar className="h-24 w-24 mb-4">
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt="Foto de perfil" />
+          ) : (
+            <AvatarFallback>
+              <User className="h-12 w-12 text-gray-400" />
+            </AvatarFallback>
+          )}
+        </Avatar>
+        
+        <div className="flex items-center">
+          <label 
+            htmlFor="avatar-upload" 
+            className="cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-md flex items-center text-sm font-medium"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Carregando...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Alterar foto
+              </>
+            )}
+          </label>
+          <input
+            id="avatar-upload"
+            type="file"
+            accept="image/*"
+            onChange={uploadAvatar}
+            disabled={uploading}
+            className="hidden"
+          />
+        </div>
+      </div>
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField

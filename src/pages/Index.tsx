@@ -3,8 +3,11 @@ import React from 'react';
 import Dashboard from '@/components/Dashboard';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { motion } from 'framer-motion';
+import { useAuthState } from '@/hooks/useAuthState';
 
 const Index = () => {
+  const { user } = useAuthState();
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-8">
@@ -19,6 +22,11 @@ const Index = () => {
               <span className="text-nutri-green">Nutri</span>Flow Pro
             </h1>
             <p className="text-gray-600">Sistema completo de gestão nutricional</p>
+            {user?.email && (
+              <p className="text-sm text-gray-500 mt-1">
+                Bem-vindo(a), {user.email}
+              </p>
+            )}
           </div>
           <ImageWithFallback 
             src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80" 

@@ -14,12 +14,14 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Home, Star, Crown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, user, isLoading: authLoading, isPremium: isUserPremium } = useAuthState();
   const { data: subscription, refetchSubscription } = useUserSubscription();
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Verificação adicional para garantir que emails premium sejam reconhecidos
   // Combina as duas verificações para garantir status premium
@@ -63,9 +65,9 @@ const ProtectedRoute = () => {
   // Mostrar carregamento enquanto verifica autenticação (com timeout de segurança)
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
-        <p className="ml-3 text-nutri-blue font-medium">Verificando autenticação...</p>
+        <p className="ml-3 text-nutri-blue font-medium mt-2">Verificando autenticação...</p>
       </div>
     );
   }
@@ -73,15 +75,26 @@ const ProtectedRoute = () => {
   // Redirecionar para login APENAS quando temos certeza que não está autenticado
   if (isAuthenticated === false) {
     console.log("Usuário não autenticado, redirecionando para login");
+    toast({
+      title: "Sessão expirada",
+      description: "Por favor, faça login novamente.",
+      variant: "destructive"
+    });
     return <Navigate to="/login" replace />;
   }
 
   // Se ainda estiver indeterminado (null) ou não estiver autenticado, mostrar carregamento
   if (isAuthenticated !== true) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
-        <p className="ml-3 text-nutri-blue font-medium">Verificando sessão...</p>
+        <p className="ml-3 text-nutri-blue font-medium mt-2">Verificando sessão...</p>
+        <button 
+          onClick={() => navigate('/login')} 
+          className="mt-4 px-4 py-2 bg-nutri-blue text-white rounded hover:bg-nutri-blue-dark"
+        >
+          Ir para login
+        </button>
       </div>
     );
   }

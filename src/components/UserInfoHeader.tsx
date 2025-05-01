@@ -4,14 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { useAuthState } from '@/hooks/useAuthState';
-import { Star, Crown, Shield } from 'lucide-react';
+import { Star, Crown, Shield, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface UserProfile {
   id: string;
   name: string | null;
   crn: string | null;
   email: string;
+  photo_url: string | null;
 }
 
 const UserInfoHeader = () => {
@@ -39,6 +41,7 @@ const UserInfoHeader = () => {
           .single();
           
         if (profile) {
+          console.log("Perfil do usuário carregado:", profile);
           setUserProfile(profile as UserProfile);
         }
       } catch (error) {
@@ -47,7 +50,7 @@ const UserInfoHeader = () => {
     };
     
     fetchUserProfile();
-  }, [refetchSubscription]);
+  }, [refetchSubscription, user?.id]);
 
   // Debug log para verificar status premium
   useEffect(() => {
@@ -73,6 +76,15 @@ const UserInfoHeader = () => {
       ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' 
       : 'bg-blue-50'}`}>
       <div className="flex items-center space-x-4">
+        <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+          {userProfile?.photo_url ? (
+            <AvatarImage src={userProfile.photo_url} alt={userProfile.name || 'Usuário'} />
+          ) : (
+            <AvatarFallback className="bg-blue-100">
+              <User className="h-5 w-5 text-blue-500" />
+            </AvatarFallback>
+          )}
+        </Avatar>
         <div>
           <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
           {userProfile.crn && <Badge variant="secondary" className="ml-2">CRN: {userProfile.crn}</Badge>}
@@ -89,22 +101,31 @@ const UserInfoHeader = () => {
         </div>
       </div>
       
-      {!isPremium && (
-        <Link 
-          to="/subscription" 
-          className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center"
-        >
-          <Star className="h-4 w-4 mr-1" />
-          Upgrade para Premium
-        </Link>
-      )}
+      <div className="flex items-center">
+        {!isPremium && (
+          <Link 
+            to="/subscription" 
+            className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center mr-4"
+          >
+            <Star className="h-4 w-4 mr-1" />
+            Upgrade para Premium
+          </Link>
+        )}
 
-      {isPremium && (
-        <div className="text-sm text-amber-700 flex items-center">
-          <Shield className="h-4 w-4 mr-1 text-amber-500" />
-          Benefícios Premium Ativos
-        </div>
-      )}
+        {isPremium && (
+          <div className="text-sm text-amber-700 flex items-center mr-4">
+            <Shield className="h-4 w-4 mr-1 text-amber-500" />
+            Benefícios Premium Ativos
+          </div>
+        )}
+        
+        <Link 
+          to="/settings" 
+          className="text-sm bg-white px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+        >
+          Configurações
+        </Link>
+      </div>
     </div>
   );
 };
