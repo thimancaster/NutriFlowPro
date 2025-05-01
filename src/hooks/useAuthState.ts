@@ -108,15 +108,28 @@ export const useAuthState = () => {
           });
         }
 
-        updateAuthState(session);
+        // Assegurar que o estado é atualizado corretamente
+        if (isMounted) {
+          updateAuthState(session);
+        }
       }
     );
 
-    // Verificação explícita da sessão atual
+    // Verificação explícita da sessão atual com tempo limite
     const checkExistingSession = async () => {
       try {
         console.log("Verificando sessão existente...");
-        const { data, error } = await supabase.auth.getSession();
+        
+        // Definir tempo máximo para verificação de sessão (5 segundos)
+        const timeoutPromise = new Promise<{data: {session: null}, error: Error}>((_, reject) => {
+          setTimeout(() => reject(new Error("Timeout ao verificar sessão")), 5000);
+        });
+        
+        // Competir entre o timeout e a verificação de sessão
+        const { data, error } = await Promise.race([
+          supabase.auth.getSession(),
+          timeoutPromise
+        ]);
         
         if (error) {
           console.error("Erro ao obter sessão:", error);
@@ -125,19 +138,25 @@ export const useAuthState = () => {
         
         // Verificação adicional para garantir que a sessão é válida
         if (data.session && data.session.user) {
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          
-          if (userError || !userData.user) {
-            console.log("Sessão inválida detectada, realizando logout");
-            await supabase.auth.signOut();
+          try {
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+            
+            if (userError || !userData.user) {
+              console.log("Sessão inválida detectada, realizando logout");
+              await supabase.auth.signOut();
+              if (isMounted) updateAuthState(null);
+              return;
+            }
+            
+            console.log("Email do usuário logado:", userData.user.email);
+            // Debug importante para verificar se o email está na lista premium
+            if (userData.user.email && PREMIUM_EMAILS.includes(userData.user.email)) {
+              console.log("*** USUÁRIO PREMIUM DETECTADO:", userData.user.email, "***");
+            }
+          } catch (userCheckError) {
+            console.error("Erro ao verificar usuário:", userCheckError);
             if (isMounted) updateAuthState(null);
             return;
-          }
-          
-          console.log("Email do usuário logado:", userData.user.email);
-          // Debug importante para verificar se o email está na lista premium
-          if (userData.user.email && PREMIUM_EMAILS.includes(userData.user.email)) {
-            console.log("*** USUÁRIO PREMIUM DETECTADO:", userData.user.email, "***");
           }
         }
         
@@ -146,7 +165,7 @@ export const useAuthState = () => {
           console.log("Status de autenticação após verificação:", data.session ? "Autenticado" : "Não autenticado");
         }
       } catch (error) {
-        console.error("Erro de autenticação:", error);
+        console.error("Erro de autenticação ou timeout:", error);
         if (isMounted) {
           setAuthState({
             isAuthenticated: false,

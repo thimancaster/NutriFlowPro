@@ -49,14 +49,18 @@ const ProtectedRoute = () => {
   
   // Efeito para verificar autenticação e redirecionar para login se não estiver autenticado
   useEffect(() => {
-    // Se não estiver carregando e não estiver autenticado, redirecionar para login
-    if (!authLoading && isAuthenticated === false) {
-      console.log("Usuário não autenticado, redirecionando para login");
-      navigate('/login', { replace: true });
-    }
+    const redirectTimeout = setTimeout(() => {
+      // Se não estiver carregando e não estiver autenticado, redirecionar para login
+      if (!authLoading && isAuthenticated === false) {
+        console.log("Usuário não autenticado, redirecionando para login");
+        navigate('/login', { replace: true });
+      }
+    }, 2000); // Timeout de segurança de 2 segundos
+
+    return () => clearTimeout(redirectTimeout);
   }, [authLoading, isAuthenticated, navigate]);
 
-  // Mostrar carregamento enquanto verifica autenticação
+  // Mostrar carregamento enquanto verifica autenticação (com timeout de segurança)
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

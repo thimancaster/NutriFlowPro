@@ -12,18 +12,36 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuthState();
 
   // Verificar se já está autenticado e redirecionar para a página inicial
   useEffect(() => {
+    // Marcar que a verificação foi concluída, independente do resultado
+    const timeoutId = setTimeout(() => {
+      setAuthCheckComplete(true);
+    }, 3000); // Timeout de segurança
+
     // Verificação estrita: se isAuthenticated for true, redirecionar imediatamente
     if (isAuthenticated === true) {
       console.log("Usuário já autenticado, redirecionando para a página inicial");
+      clearTimeout(timeoutId);
+      setAuthCheckComplete(true);
       navigate('/', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+
+    // Se não estiver mais carregando e não estiver autenticado, também considerar a verificação concluída
+    if (!authLoading && isAuthenticated === false) {
+      clearTimeout(timeoutId);
+      setAuthCheckComplete(true);
+    }
+
+    return () => {
+      clearTimeout(timeoutId); // Limpar o timeout se o componente for desmontado
+    };
+  }, [isAuthenticated, navigate, authLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +69,16 @@ const Login = () => {
         throw error;
       }
 
-      // O redirecionamento e toast acontecerão automaticamente pelo listener onAuthStateChange
+      // Login bem-sucedido
+      console.log("Login bem-sucedido:", data);
+      toast({
+        title: "Login realizado",
+        description: "Você foi autenticado com sucesso."
+      });
+
+      // Redirecionar para a página inicial
+      navigate('/', { replace: true });
+
     } catch (error: any) {
       console.error("Erro no login:", error);
       toast({
@@ -59,13 +86,12 @@ const Login = () => {
         description: error.message || "Verifique seu email e senha e tente novamente.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
   // Mostrar carregamento enquanto o estado de autenticação é indeterminado
-  if (authLoading) {
+  if (authLoading && !authCheckComplete) {
     return (
       <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
