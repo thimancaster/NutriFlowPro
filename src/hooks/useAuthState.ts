@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from './useUserSubscription';
 
-// Lista centralizada de emails premium
+// Lista centralizada de emails premium - ESTE É O PONTO CRÍTICO PARA GARANTIR ACESSO PREMIUM
 export const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
 
 interface AuthState {
@@ -133,6 +133,12 @@ export const useAuthState = () => {
             if (isMounted) updateAuthState(null);
             return;
           }
+          
+          console.log("Email do usuário logado:", userData.user.email);
+          // Debug importante para verificar se o email está na lista premium
+          if (userData.user.email && PREMIUM_EMAILS.includes(userData.user.email)) {
+            console.log("*** USUÁRIO PREMIUM DETECTADO:", userData.user.email, "***");
+          }
         }
         
         if (isMounted) {
@@ -162,10 +168,18 @@ export const useAuthState = () => {
     };
   }, [toast, queryClient, updateAuthState]);
 
+  // Verificar se o e-mail do usuário está na lista de e-mails premium
+  const isPremium = authState.user?.email ? PREMIUM_EMAILS.includes(authState.user.email) : false;
+  
+  // Log de debug para verificar o status premium
+  if (authState.user?.email) {
+    console.log("Status premium para", authState.user.email, ":", isPremium);
+  }
+
   // Disponibilizar o método de logout junto com o estado
   return {
     ...authState,
     logout,
-    isPremium: authState.user?.email ? PREMIUM_EMAILS.includes(authState.user.email) : false
+    isPremium
   };
 };

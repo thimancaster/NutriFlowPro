@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import PatientForm from '@/components/PatientForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +10,7 @@ import { Plus, Search, User, FileText, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { useAuthState } from "@/hooks/useAuthState";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +27,10 @@ const Patients = () => {
   const navigate = useNavigate();
   
   const { data: subscription, isLoading: subscriptionLoading } = useUserSubscription();
+  const { isPremium: isAuthPremium } = useAuthState();
+  
+  // Combina as duas verificações para garantir que ambas as fontes sejam consultadas
+  const isPremium = isAuthPremium || (subscription?.isPremium || false);
 
   const patients = [
     { id: 1, name: 'Ana Silva', age: 34, lastConsultation: '15/04/2025', status: 'Em andamento' },
@@ -38,12 +44,17 @@ const Patients = () => {
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const isUnlimited = subscription?.isPremium || subscription?.role === "admin";
+  // Debug log para verificar status premium
+  useEffect(() => {
+    console.log("Status premium na página Patients:", {
+      isPremium,
+      isAuthPremium,
+      subscriptionPremium: subscription?.isPremium
+    });
+  }, [isPremium, isAuthPremium, subscription?.isPremium]);
 
   const handleNewPatient = () => {
-    const patientCount = patients.length;
-    
-    if (!isUnlimited && patientCount >= 2) {
+    if (!isPremium && patients.length >= 2) {
       setShowUpgradeDialog(true);
     } else {
       setSelectedTab("new");
@@ -177,7 +188,7 @@ const Patients = () => {
           </DialogHeader>
           <div className="flex flex-col space-y-4 items-center pt-4">
             <img 
-              src="https://lovable.dev/opengraph-image-p98pqg.png" 
+              src="/lovable-uploads/4386d003-9e6d-4478-b8b8-09bbaac09abe.png" 
               alt="Upgrade" 
               className="h-32 mx-auto"
             />
@@ -202,6 +213,7 @@ const Patients = () => {
                 className="flex-1 bg-nutri-blue hover:bg-nutri-blue-dark"
                 onClick={() => {
                   setShowUpgradeDialog(false);
+                  navigate('/subscription');
                   toast({
                     title: "Upgrade iniciado",
                     description: "Redirecionando para a página de pagamento...",

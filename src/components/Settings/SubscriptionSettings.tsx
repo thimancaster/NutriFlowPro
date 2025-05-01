@@ -3,10 +3,10 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { useAuthState } from "@/hooks/useAuthState";
 import { Star, Calendar, Check, ArrowRight, Crown, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAuthState } from '@/hooks/useAuthState';
 
 const SubscriptionSettings = () => {
   const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
@@ -18,9 +18,15 @@ const SubscriptionSettings = () => {
     refetchSubscription();
   }, [refetchSubscription]);
   
-  // Usar a verificação centralizada do hook useAuthState
+  // Usar a verificação centralizada do hook useAuthState e combinar com os dados da assinatura
   const isPremium = React.useMemo(() => {
-    return isUserPremium || (subscription?.isPremium || false);
+    const result = isUserPremium || (subscription?.isPremium || false);
+    console.log("Status premium em SubscriptionSettings:", { 
+      final: result, 
+      authPremium: isUserPremium, 
+      subscriptionPremium: subscription?.isPremium
+    });
+    return result;
   }, [isUserPremium, subscription?.isPremium]);
 
   // Debug log to check subscription status

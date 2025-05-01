@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Home, Star, Crown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { PREMIUM_EMAILS } from '@/hooks/useAuthState';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, user, isLoading: authLoading, isPremium: isUserPremium } = useAuthState();
@@ -22,12 +22,22 @@ const ProtectedRoute = () => {
   const navigate = useNavigate();
   
   // Verificação adicional para garantir que emails premium sejam reconhecidos
+  // Combina as duas verificações para garantir status premium
   const isPremium = React.useMemo(() => {
-    if (!user?.email) return subscription?.isPremium || false;
-    
-    // Verificar se o email está na lista de premium, independente do que diz a assinatura
-    return isUserPremium || (subscription?.isPremium || false);
-  }, [user?.email, subscription?.isPremium, isUserPremium]);
+    const result = isUserPremium || (subscription?.isPremium || false);
+    console.log("Status premium em ProtectedRoute:", { 
+      final: result, 
+      authPremium: isUserPremium, 
+      subscriptionPremium: subscription?.isPremium
+    });
+    return result;
+  }, [isUserPremium, subscription?.isPremium]);
+
+  // Debug log para verificar status premium
+  useEffect(() => {
+    console.log("Email atual:", user?.email);
+    console.log("Status premium em ProtectedRoute:", isPremium);
+  }, [user?.email, isPremium]);
 
   // Quando a rota muda, buscar novamente os dados da assinatura
   useEffect(() => {

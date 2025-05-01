@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useAuthState } from '@/hooks/useAuthState';
 import { Star, Crown, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -14,9 +15,12 @@ interface UserProfile {
 }
 
 const UserInfoHeader = () => {
-  const { data: subscription, refetchSubscription, isLoading } = useUserSubscription();
-  const isPremium = subscription?.isPremium;
+  const { data: subscription, refetchSubscription, isLoading: subscriptionLoading } = useUserSubscription();
+  const { user, isPremium: isAuthPremium } = useAuthState();
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+  
+  // Combinar as duas verificações para status premium
+  const isPremium = isAuthPremium || (subscription?.isPremium || false);
   
   useEffect(() => {
     // Força renovação dos dados da assinatura quando o componente monta
@@ -45,8 +49,18 @@ const UserInfoHeader = () => {
     fetchUserProfile();
   }, [refetchSubscription]);
 
+  // Debug log para verificar status premium
+  useEffect(() => {
+    console.log("Status premium no UserInfoHeader:", {
+      isPremium,
+      isAuthPremium,
+      subscriptionPremium: subscription?.isPremium,
+      email: user?.email
+    });
+  }, [isPremium, isAuthPremium, subscription?.isPremium, user?.email]);
+
   // Estado de carregamento
-  if (isLoading || !userProfile) {
+  if (subscriptionLoading || !userProfile) {
     return (
       <div className="bg-blue-50 p-4 flex justify-between items-center animate-pulse">
         <div className="h-6 bg-blue-200 rounded w-64"></div>
