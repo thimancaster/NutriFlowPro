@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -18,51 +17,24 @@ import { useToast } from '@/hooks/use-toast';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, user, isLoading: authLoading, isPremium: isUserPremium } = useAuthState();
-  const { data: subscription, refetchSubscription } = useUserSubscription();
+  const { data: subscription, isPremiumUser } = useUserSubscription();
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Verificação adicional para garantir que emails premium sejam reconhecidos
-  // Combina as duas verificações para garantir status premium
+  // Combinação otimizada das duas verificações para garantir status premium
   const isPremium = React.useMemo(() => {
-    const result = isUserPremium || (subscription?.isPremium || false);
-    console.log("Status premium em ProtectedRoute:", { 
-      final: result, 
-      authPremium: isUserPremium, 
-      subscriptionPremium: subscription?.isPremium
-    });
-    return result;
-  }, [isUserPremium, subscription?.isPremium]);
+    return isUserPremium || isPremiumUser;
+  }, [isUserPremium, isPremiumUser]);
 
-  // Debug log para verificar status premium
-  useEffect(() => {
-    console.log("Email atual:", user?.email);
-    console.log("Status premium em ProtectedRoute:", isPremium);
-  }, [user?.email, isPremium]);
-
-  // Quando a rota muda, buscar novamente os dados da assinatura
-  useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      console.log("Rota alterada, atualizando dados de assinatura");
-      refetchSubscription();
-    }
-  }, [isAuthenticated, user, refetchSubscription, location.pathname]);
-  
   // Efeito para verificar autenticação e redirecionar para login se não estiver autenticado
   useEffect(() => {
-    const redirectTimeout = setTimeout(() => {
-      // Se não estiver carregando e não estiver autenticado, redirecionar para login
-      if (!authLoading && isAuthenticated === false) {
-        console.log("Usuário não autenticado, redirecionando para login");
-        navigate('/login', { replace: true });
-      }
-    }, 2000); // Timeout de segurança de 2 segundos
-
-    return () => clearTimeout(redirectTimeout);
+    if (!authLoading && isAuthenticated === false) {
+      navigate('/login', { replace: true });
+    }
   }, [authLoading, isAuthenticated, navigate]);
 
-  // Mostrar carregamento enquanto verifica autenticação (com timeout de segurança)
+  // Mostrar carregamento enquanto verifica autenticação
   if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -72,9 +44,8 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Redirecionar para login APENAS quando temos certeza que não está autenticado
+  // Redirecionar para login quando temos certeza que não está autenticado
   if (isAuthenticated === false) {
-    console.log("Usuário não autenticado, redirecionando para login");
     toast({
       title: "Sessão expirada",
       description: "Por favor, faça login novamente.",

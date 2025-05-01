@@ -2,24 +2,28 @@
 import { useSessionInit } from './useSessionInit';
 import { useAuthLogout } from './useAuthLogout';
 import { usePremiumStatus } from './usePremiumStatus';
-
-// Export for compatibility with other files that import this
-export const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+import { useMemo } from 'react';
 
 export const useAuthState = () => {
-  // Get session state
+  // Obter estado da sessão
   const sessionState = useSessionInit();
   
-  // Get logout function
+  // Obter função de logout
   const logout = useAuthLogout();
   
-  // Check premium status
+  // Verificar status premium
   const isPremium = usePremiumStatus(sessionState.user);
   
-  // Return combined values
+  // Calcular se usuário está autenticado de forma memorizada para evitar rerenders
+  const isFullyAuthenticated = useMemo(() => {
+    return sessionState.isAuthenticated === true && !!sessionState.user;
+  }, [sessionState.isAuthenticated, sessionState.user]);
+  
+  // Retornar valores combinados
   return {
     ...sessionState,
     logout,
-    isPremium
+    isPremium,
+    isFullyAuthenticated
   };
 };

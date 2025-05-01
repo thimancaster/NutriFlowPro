@@ -15,7 +15,7 @@ export interface SubscriptionData {
 }
 
 /**
- * Hook for fetching subscription data from the database
+ * Hook para buscar dados de assinatura do banco de dados de forma otimizada
  */
 export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean | null) => {
   const { toast } = useToast();
@@ -24,11 +24,8 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
     queryKey: [SUBSCRIPTION_QUERY_KEY, user?.id],
     queryFn: async (): Promise<SubscriptionData> => {
       try {
-        console.log("Executando query de assinatura para usuário:", user?.email);
-        
-        // Don't fetch if user is not authenticated
+        // Não buscar se o usuário não estiver autenticado
         if (!isAuthenticated || !user) {
-          console.log("Usuário não autenticado, retornando status não premium");
           return {
             isPremium: false,
             role: 'user',
@@ -36,44 +33,34 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           };
         }
 
-        // PRIORITY CHECK: check if email is in premium list
-        // This check takes absolute priority over any database data
+        // VERIFICAÇÃO PRIORITÁRIA: verificar se o e-mail está na lista premium
+        // Esta verificação tem prioridade absoluta sobre qualquer dado do banco
         if (validatePremiumStatus(user.email, null)) {
-          console.log("Email premium CONFIRMADO:", user.email);
           return {
             isPremium: true,
             role: 'premium',
             email: user.email,
             subscriptionStart: new Date().toISOString(),
-            subscriptionEnd: null // No expiration date for premium emails
+            subscriptionEnd: null // Sem data de expiração para e-mails premium
           };
         }
 
-        // Debug log
-        console.log("Email não está na lista premium, verificando banco de dados:", user.email);
-
-        // Force new data from server by setting cache-control headers
+        // Buscar dados do banco com cache otimizado
         const { data, error } = await supabase
           .from("subscribers")
           .select("is_premium, role, email, subscription_start, subscription_end")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Erro ao buscar status de assinatura:", error);
+        if (error && error.code !== 'PGRST116') {
+          toast({
+            title: "Erro ao buscar dados da assinatura",
+            description: error.message,
+            variant: "destructive",
+          });
           
-          // Show toast only for significant errors
-          if (error.code !== 'PGRST116') { // Ignore "not found" errors
-            toast({
-              title: "Erro ao buscar dados da assinatura",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
-          
-          // SAFETY CHECK: if error occurs but email is premium, return premium
+          // Verificação de segurança: se ocorrer um erro, mas o e-mail é premium, retornar premium
           if (validatePremiumStatus(user.email, null)) {
-            console.log("Erro na consulta, mas email é premium:", user.email);
             return {
               isPremium: true,
               role: 'premium',
@@ -86,28 +73,9 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           throw error;
         }
 
-        console.log("Dados de assinatura recebidos:", data);
-
-        // FINAL CHECK: even with database data, if email is premium, ensure premium status
-        if (validatePremiumStatus(user.email, null)) {
-          console.log("Dados do banco recebidos, mas email é premium, garantindo status premium:", user.email);
-          return {
-            isPremium: true,
-            role: 'premium',
-            email: user.email,
-            subscriptionStart: new Date().toISOString(),
-            subscriptionEnd: null
-          };
-        }
-
-        // Check if subscription has expired
-        const subscriptionEnd = data?.subscription_end ? new Date(data.subscription_end) : null;
+        // Verificar se a assinatura expirou
         const expired = isSubscriptionExpired(data?.subscription_end);
         
-        if (expired) {
-          console.log("Assinatura expirada em:", subscriptionEnd);
-        }
-
         return {
           isPremium: data ? (!!data.is_premium && !expired) : false,
           role: data ? data.role : 'user',
@@ -116,11 +84,8 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           subscriptionEnd: data ? data.subscription_end : null
         };
       } catch (error: any) {
-        console.error("Erro ao buscar status de assinatura:", error);
-        
-        // FALLBACK CHECK: in case of error, if email is premium, return premium
+        // Verificação de fallback: em caso de erro, se o e-mail é premium, retornar premium
         if (validatePremiumStatus(user.email, null)) {
-          console.log("Erro ocorreu, mas email é premium, garantindo status premium:", user.email);
           return {
             isPremium: true,
             role: 'premium',
@@ -137,7 +102,7 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
         };
       }
     },
-    enabled: !!isAuthenticated, // Run query only if user is authenticated
+    enabled: !!isAuthenticated,
     ...SUBSCRIPTION_REFETCH_SETTINGS
   });
 };

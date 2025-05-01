@@ -8,39 +8,43 @@ export { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
 export type { SubscriptionData } from "./useSubscriptionQuery";
 
 /**
- * Hook for managing user subscription status with extended functionality
+ * Hook para gerenciar o status da assinatura do usuário com funcionalidade estendida e otimizada
  */
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
   const queryClient = useQueryClient();
   
-  // Use the core subscription query hook
+  // Usar o hook de consulta de assinatura principal
   const query = useSubscriptionQuery(user, isAuthenticated);
 
   /**
-   * Invalidates the subscription cache to force a refresh
+   * Invalida o cache de assinatura para forçar uma atualização
    */
   const invalidateSubscriptionCache = () => {
     if (user?.id) {
-      console.log("Invalidando cache de assinatura para usuário:", user.id);
       queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, user.id] });
     } else {
-      console.log("Invalidando cache geral de assinatura");
       queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY] });
     }
   };
 
   /**
-   * Forces an update of subscription data
+   * Força uma atualização dos dados de assinatura com debounce
    */
   const refetchSubscription = async () => {
-    console.log("Forçando atualização de dados de assinatura");
     return query.refetch();
   };
+
+  /**
+   * Determina se o usuário tem status premium com base 
+   * nos dados de assinatura e estado de autenticação
+   */
+  const isPremiumUser = query.data?.isPremium || false;
 
   return {
     ...query,
     invalidateSubscriptionCache,
-    refetchSubscription
+    refetchSubscription,
+    isPremiumUser
   };
 };
