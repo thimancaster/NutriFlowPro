@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -30,9 +31,18 @@ const ProtectedRoute = () => {
   // Efeito para verificar autenticação e redirecionar para login se não estiver autenticado
   useEffect(() => {
     if (!authLoading && isAuthenticated === false) {
+      // Move toast inside effect to prevent rendering issues
+      setTimeout(() => {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente.",
+          variant: "destructive"
+        });
+      }, 0);
+      
       navigate('/login', { replace: true });
     }
-  }, [authLoading, isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate, toast]);
 
   // Mostrar carregamento enquanto verifica autenticação
   if (authLoading) {
@@ -46,11 +56,7 @@ const ProtectedRoute = () => {
 
   // Redirecionar para login quando temos certeza que não está autenticado
   if (isAuthenticated === false) {
-    toast({
-      title: "Sessão expirada",
-      description: "Por favor, faça login novamente.",
-      variant: "destructive"
-    });
+    // Don't show toast here, it's already handled in the effect
     return <Navigate to="/login" replace />;
   }
 
