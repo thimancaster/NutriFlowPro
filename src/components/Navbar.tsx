@@ -11,6 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,20 +34,40 @@ const Navbar = () => {
     console.log("Botão de logout clicado");
     
     try {
+      // Prevenir múltiplos cliques
+      if (isLoggingOut) {
+        console.log("Processo de logout já em andamento, ignorando clique");
+        return;
+      }
+      
+      setIsLoggingOut(true);
+      
       // Forçar fechamento do menu antes do logout
       if (isMenuOpen) {
         setIsMenuOpen(false);
       }
       
+      toast({
+        title: "Saindo...",
+        description: "Encerrando sua sessão.",
+      });
+      
       const result = await logout();
       
       if (result.success) {
         console.log("Logout bem-sucedido, redirecionando para login");
-        // Navigate is handled automatically by AuthContext
+        // Navegação acontece dentro da função logout
+      } else {
+        console.error("Logout retornou false sem erro:", result);
+        // Forçar navegação mesmo assim
+        navigate('/login');
       }
     } catch (error: any) {
       console.error("Erro ao fazer logout:", error);
-      // Error handling is done in the logout function
+      // Forçar navegação mesmo com erro
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -68,6 +89,7 @@ const Navbar = () => {
             isHomePage={isHomePage}
             onLogin={handleLoginClick}
             onLogout={handleLogout}
+            isLoggingOut={isLoggingOut}
           />
           
           <div className="flex md:hidden items-center">
@@ -87,6 +109,7 @@ const Navbar = () => {
           isHomePage={isHomePage}
           onLogout={handleLogout}
           onToggleMenu={toggleMenu}
+          isLoggingOut={isLoggingOut}
         />
       )}
     </nav>

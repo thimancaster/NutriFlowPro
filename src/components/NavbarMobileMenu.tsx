@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Users, Calculator, LogOut, Star, Crown, Settings } from 'lucide-react';
+import { FileText, Users, Calculator, LogOut, Star, Crown, Settings, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 
@@ -10,9 +10,10 @@ interface NavbarMobileMenuProps {
   isHomePage?: boolean;
   onLogout: () => Promise<void>;
   onToggleMenu: () => void;
+  isLoggingOut?: boolean;
 }
 
-const NavbarMobileMenu = ({ isAuthenticated, isHomePage, onLogout, onToggleMenu }: NavbarMobileMenuProps) => {
+const NavbarMobileMenu = ({ isAuthenticated, isHomePage, onLogout, onToggleMenu, isLoggingOut }: NavbarMobileMenuProps) => {
   const navigate = useNavigate();
   const { data: subscription } = useUserSubscription();
   const isPremium = subscription?.isPremium;
@@ -161,9 +162,19 @@ const NavbarMobileMenu = ({ isAuthenticated, isHomePage, onLogout, onToggleMenu 
           variant="outline" 
           className="w-full mt-4 border-red-400 text-red-500 hover:bg-red-50"
           onClick={onLogout}
+          disabled={isLoggingOut}
         >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sair
+          {isLoggingOut ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saindo...
+            </>
+          ) : (
+            <>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </>
+          )}
         </Button>
       </div>
     </div>

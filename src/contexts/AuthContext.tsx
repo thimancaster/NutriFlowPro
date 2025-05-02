@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
       
-      console.log("Auth state changed:", event);
+      console.log("Auth state changed:", event, "Session:", session ? "exists" : "null");
       
       if (event === 'SIGNED_IN') {
         toast({
@@ -97,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
+        console.log("Initial session check:", data.session ? "Session found" : "No session");
         if (isMounted) updateAuthState(data.session);
       } catch (error) {
         console.error("Error checking session:", error);
@@ -182,19 +183,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      console.log("Iniciando processo de logout...");
+      
+      // Limpar o cache do React Query antes do logout
+      queryClient.clear();
+      
+      // Executar o logout no Supabase
       const { error } = await supabase.auth.signOut();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro Supabase durante logout:", error);
+        throw error;
+      }
       
-      queryClient.clear();
+      console.log("Supabase signOut concluído, verificando se a sessão foi removida...");
+      
+      // Verificar se a sessão foi realmente removida
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      
+      if (sessionCheck.session) {
+        console.error("Logout incompleto: sessão ainda existe");
+        
+        // Tentativa forçada de limpar o localStorage
+        try {
+          localStorage.removeItem('supabase.auth.token');
+          console.log("Token removido manualmente do localStorage");
+        } catch (e) {
+          console.error("Erro ao limpar localStorage:", e);
+        }
+        
+        // Atualizar estado da aplicação de qualquer forma
+        updateAuthState(null);
+      } else {
+        console.log("Logout completo: sessão não encontrada");
+      }
+      
+      // Forçar redirecionamento para a página de login após o logout
+      window.location.href = '/#/login';
+      
       return { success: true };
     } catch (error: any) {
-      console.error("Logout error:", error.message);
+      console.error("Erro completo durante logout:", error);
       toast({
         title: "Erro ao fazer logout",
         description: error.message || "Ocorreu um erro ao tentar desconectar.",
         variant: "destructive"
       });
+      
+      // Mesmo com erro, tente forçar o redirecionamento
+      setTimeout(() => {
+        window.location.href = '/#/login';
+      }, 1500);
+      
       return { success: false, error };
     }
   };
