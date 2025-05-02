@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import ConsultationHeader from '@/components/ConsultationHeader';
 import MealPlanActions from '@/components/MealPlanActions';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { MealDistributionItem, MealPlan } from '@/types';
+import { BackButton } from '@/components/ui/back-button';
 
 interface MealDistribution {
   [key: string]: MealDistributionItem;
@@ -195,7 +197,7 @@ const MealPlanGenerator = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 flex justify-center items-center h-64">
+        <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h2 className="text-xl font-medium mb-2">Carregando dados da consulta...</h2>
             <p className="text-gray-600">Aguarde enquanto processamos os dados.</p>
@@ -228,7 +230,8 @@ const MealPlanGenerator = () => {
         
         <div className="flex flex-col md:flex-row justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-nutri-blue mb-2">Plano Alimentar</h1>
+            <BackButton to="/consultation" label="Voltar para Consulta" />
+            <h1 className="text-3xl font-bold text-nutri-blue mt-4 mb-2">Plano Alimentar</h1>
             <p className="text-gray-600">
               Distribua as calorias e macronutrientes entre as refeições
             </p>
@@ -362,7 +365,8 @@ const MealPlanGenerator = () => {
           })}
         </div>
         
-        <div className="mt-8 flex justify-end">
+        <div className="mt-8 flex justify-between">
+          <BackButton to="/consultation" variant="outline" />
           <Button 
             onClick={handleSaveMealPlan}
             className="bg-nutri-green hover:bg-nutri-green-dark"

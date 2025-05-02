@@ -1,8 +1,9 @@
 
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,38 +12,71 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const navigate = useNavigate();
+  const [isVerifying, setIsVerifying] = useState(true);
 
   // Additional verification of authentication status
   useEffect(() => {
     const verifySession = async () => {
-      if (!isLoading && isAuthenticated) {
-        try {
-          // Double-check session validity with Supabase
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error || !data.session) {
-            console.error("Protected route session verification failed:", error || "No valid session");
-            navigate('/login', { replace: true });
-          }
-        } catch (err) {
-          console.error("Error verifying authentication:", err);
+      if (isLoading) return;
+      
+      if (!isAuthenticated) {
+        setIsVerifying(false);
+        return;
+      }
+      
+      try {
+        console.log("Verificando sessão do usuário:", user?.email);
+        // Double-check session validity with Supabase
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Erro ao verificar sessão:", error);
           navigate('/login', { replace: true });
+          return;
         }
+        
+        if (!data.session) {
+          console.warn("Nenhuma sessão válida encontrada");
+          navigate('/login', { replace: true });
+          return;
+        }
+        
+        // Verify token expiration
+        const expiresAt = data.session.expires_at;
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (expiresAt && expiresAt < now) {
+          console.warn("Token expirado, fazendo logout");
+          await supabase.auth.signOut();
+          navigate('/login', { replace: true });
+          return;
+        }
+        
+        console.log("Sessão verificada com sucesso");
+      } catch (err) {
+        console.error("Erro ao verificar autenticação:", err);
+        navigate('/login', { replace: true });
+      } finally {
+        setIsVerifying(false);
       }
     };
     
     verifySession();
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, user?.email]);
 
-  if (isLoading) {
+  if (isLoading || isVerifying) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-nutri-green border-opacity-50"></div>
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-nutri-green" />
+          <p className="mt-4 text-nutri-blue">Verificando autenticação...</p>
+        </div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
+    console.log("Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
   }
 

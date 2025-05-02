@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import AnthropometryForm from '@/components/Anthropometry/AnthropometryForm';
 import AnthropometryHistory from '@/components/Anthropometry/AnthropometryHistory';
+import { BackButton } from '@/components/ui/back-button';
+import Navbar from '@/components/Navbar';
 
 const PatientAnthropometry = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -45,23 +47,29 @@ const PatientAnthropometry = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <p>Carregando...</p>
-      </div>
+      <>
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <p>Carregando...</p>
+        </div>
+      </>
     );
   }
 
   if (!patient) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-2">Paciente não encontrado</h1>
-          <p className="mb-4">Não foi possível encontrar o paciente solicitado.</p>
-          <Button onClick={() => navigate('/patients')}>
-            Voltar para lista de pacientes
-          </Button>
+      <>
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-2">Paciente não encontrado</h1>
+            <p className="mb-4">Não foi possível encontrar o paciente solicitado.</p>
+            <Button onClick={() => navigate('/patients')}>
+              Voltar para lista de pacientes
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -78,52 +86,48 @@ const PatientAnthropometry = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-nutri-blue mb-1">{patient.name}</h1>
-            <p className="text-gray-600">
-              {age ? `${age} anos` : ''}{patient.gender ? ` • ${patient.gender === 'female' ? 'Feminino' : 'Masculino'}` : ''}
-            </p>
-          </div>
-          
-          <div className="mt-4 md:mt-0">
-            <Button 
-              variant="outline"
-              onClick={() => navigate(`/patient-history/${patientId}`)}
-              className="mr-2"
-            >
-              Voltar para histórico
-            </Button>
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start mb-4">
+            <div className="flex items-center gap-4">
+              <BackButton to={`/patient-history/${patientId}`} />
+              <div>
+                <h1 className="text-3xl font-bold text-nutri-blue mb-1">{patient.name}</h1>
+                <p className="text-gray-600">
+                  {age ? `${age} anos` : ''}{patient.gender ? ` • ${patient.gender === 'female' ? 'Feminino' : 'Masculino'}` : ''}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+        
+        <Tabs defaultValue="form" className="bg-white rounded-xl shadow-lg p-6">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="form">
+              Nova avaliação
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              Histórico e Gráficos
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="form">
+            <AnthropometryForm 
+              patientId={patientId || ''} 
+              patientName={patient.name}
+              patientAge={age || 30}
+              patientGender={patient.gender || 'female'}
+            />
+          </TabsContent>
+          
+          <TabsContent value="history">
+            <AnthropometryHistory patientId={patientId || ''} />
+          </TabsContent>
+        </Tabs>
       </div>
-      
-      <Tabs defaultValue="form" className="bg-white rounded-xl shadow-lg p-6">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="form">
-            Nova avaliação
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            Histórico e Gráficos
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="form">
-          <AnthropometryForm 
-            patientId={patientId || ''} 
-            patientName={patient.name}
-            patientAge={age || 30}
-            patientGender={patient.gender || 'female'}
-          />
-        </TabsContent>
-        
-        <TabsContent value="history">
-          <AnthropometryHistory patientId={patientId || ''} />
-        </TabsContent>
-      </Tabs>
-    </div>
+    </>
   );
 };
 

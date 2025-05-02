@@ -23,82 +23,99 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { ConsultationProvider } from './contexts/ConsultationContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import PatientAnthropometry from './pages/PatientAnthropometry';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
-    <HashRouter>
-      <AuthProvider>
-        <ConsultationProvider>
-          <ErrorBoundary>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/patients" element={
-                <ProtectedRoute>
-                  <Patients />
-                </ProtectedRoute>
-              } />
-              <Route path="/patient-history/:patientId" element={
-                <ProtectedRoute>
-                  <PatientHistory />
-                </ProtectedRoute>
-              } />
-              <Route path="/consultation" element={
-                <ProtectedRoute>
-                  <Consultation />
-                </ProtectedRoute>
-              } />
-              <Route path="/meal-plan-generator" element={
-                <ProtectedRoute>
-                  <MealPlanGenerator />
-                </ProtectedRoute>
-              } />
-              <Route path="/subscription" element={
-                <ProtectedRoute>
-                  <Subscription />
-                </ProtectedRoute>
-              } />
-              <Route path="/pricing" element={
-                <ProtectedRoute>
-                  <Pricing />
-                </ProtectedRoute>
-              } />
-              <Route path="/calculator" element={
-                <ProtectedRoute>
-                  <Calculator />
-                </ProtectedRoute>
-              } />
-              <Route path="/meal-plans" element={
-                <ProtectedRoute>
-                  <MealPlans />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              
-              {/* Redirect any unknown route to the homepage */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </ErrorBoundary>
-          <Toaster />
-        </ConsultationProvider>
-      </AuthProvider>
-    </HashRouter>
+    <QueryClientProvider client={queryClient}>
+      <HashRouter>
+        <AuthProvider>
+          <ConsultationProvider>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/patients" element={
+                  <ProtectedRoute>
+                    <Patients />
+                  </ProtectedRoute>
+                } />
+                <Route path="/patient-history/:patientId" element={
+                  <ProtectedRoute>
+                    <PatientHistory />
+                  </ProtectedRoute>
+                } />
+                <Route path="/patient-anthropometry/:patientId" element={
+                  <ProtectedRoute>
+                    <PatientAnthropometry />
+                  </ProtectedRoute>
+                } />
+                <Route path="/consultation" element={
+                  <ProtectedRoute>
+                    <Consultation />
+                  </ProtectedRoute>
+                } />
+                <Route path="/meal-plan-generator" element={
+                  <ProtectedRoute>
+                    <MealPlanGenerator />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subscription" element={
+                  <ProtectedRoute>
+                    <Subscription />
+                  </ProtectedRoute>
+                } />
+                <Route path="/pricing" element={
+                  <ProtectedRoute>
+                    <Pricing />
+                  </ProtectedRoute>
+                } />
+                <Route path="/calculator" element={
+                  <ProtectedRoute>
+                    <Calculator />
+                  </ProtectedRoute>
+                } />
+                <Route path="/meal-plans" element={
+                  <ProtectedRoute>
+                    <MealPlans />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Redirect any unknown route to the homepage */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </ErrorBoundary>
+            <Toaster />
+          </ConsultationProvider>
+        </AuthProvider>
+      </HashRouter>
+    </QueryClientProvider>
   );
 }
 

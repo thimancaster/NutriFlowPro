@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -37,10 +38,14 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log("Tentando fazer login com:", { email });
       const { success, error } = await login(email, password);
       
       if (!success && error) {
+        console.error("Erro no login:", error);
         throw error;
+      } else {
+        console.log("Login bem-sucedido");
       }
       
       // Navigate is handled automatically by useEffect when auth state changes
@@ -56,7 +61,7 @@ const Login = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        <Loader2 size={48} className="text-white animate-spin" />
         <p className="mt-4 text-white">Verificando autenticação...</p>
       </div>
     );
@@ -114,8 +119,17 @@ const Login = () => {
               className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium"
               disabled={isLoading}
             >
-              {isLoading ? "Entrando..." : "Entrar"}
-              <ArrowRight className="ml-2 h-4 w-4" />
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                <>
+                  Entrar
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
           </form>
 
@@ -175,7 +189,7 @@ const Login = () => {
           <div className="mt-8 text-center">
             <p className="text-blue-100">
               Não tem uma conta?{" "}
-              <Link to="/signup" className="text-white hover:underline font-medium">
+              <Link to="/register" className="text-white hover:underline font-medium">
                 Criar conta
               </Link>
             </p>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,31 +31,89 @@ const ProfileSettings = () => {
   const { toast } = useToast();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileFormValues | null>(null);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return {};
-      
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-        
-      if (profile?.photo_url) {
-        setAvatarUrl(profile.photo_url);
-      }
-        
-      return {
-        name: profile?.name || '',
-        crn: profile?.crn || '',
-        specialty: profile?.specialty || '',
-        clinic_name: profile?.clinic_name || '',
-      };
+    defaultValues: {
+      name: '',
+      crn: '',
+      specialty: '',
+      clinic_name: ''
     }
   });
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          console.error("Nenhum usuário autenticado encontrado");
+          toast({
+            title: "Erro ao carregar perfil",
+            description: "Usuário não autenticado.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        console.log("Buscando perfil do usuário com ID:", user.id);
+        
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Erro ao buscar perfil do usuário:', error);
+          toast({
+            title: "Erro ao carregar perfil",
+            description: "Não foi possível obter seus dados de perfil.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (profile) {
+          console.log("Dados do perfil carregados:", profile);
+          setProfileData({
+            name: profile.name || '',
+            crn: profile.crn || '',
+            specialty: profile.specialty || '',
+            clinic_name: profile.clinic_name || '',
+          });
+          
+          form.reset({
+            name: profile.name || '',
+            crn: profile.crn || '',
+            specialty: profile.specialty || '',
+            clinic_name: profile.clinic_name || '',
+          });
+          
+          if (profile.photo_url) {
+            setAvatarUrl(profile.photo_url);
+          }
+        } else {
+          console.warn("Nenhum perfil encontrado para o usuário");
+        }
+      } catch (error) {
+        console.error('Erro ao buscar perfil do usuário:', error);
+        toast({
+          title: "Erro ao carregar perfil",
+          description: "Ocorreu um erro ao buscar seus dados.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [toast, form]);
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
@@ -74,6 +132,7 @@ const ProfileSettings = () => {
         description: "Suas informações foram atualizadas com sucesso.",
       });
     } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
       toast({
         title: "Erro ao atualizar perfil",
         description: "Ocorreu um erro ao atualizar suas informações.",
@@ -109,6 +168,8 @@ const ProfileSettings = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
+      console.log("Arquivo enviado com sucesso, URL pública:", publicUrl);
+
       // Update the user's profile with the new avatar URL
       const { error: updateError } = await supabase
         .from('users')
@@ -124,6 +185,7 @@ const ProfileSettings = () => {
         description: "Sua foto de perfil foi atualizada com sucesso.",
       });
     } catch (error: any) {
+      console.error("Erro ao fazer upload:", error);
       toast({
         title: "Erro ao fazer upload",
         description: error.message || "Ocorreu um erro ao carregar sua foto.",
@@ -134,12 +196,28 @@ const ProfileSettings = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-nutri-blue" />
+        <p className="mt-4 text-sm text-gray-500">Carregando suas informações...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="flex flex-col items-center mb-8">
         <Avatar className="h-24 w-24 mb-4">
           {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt="Foto de perfil" />
+            <AvatarImage 
+              src={avatarUrl} 
+              alt="Foto de perfil" 
+              onError={(e) => {
+                console.error("Error loading avatar:", e);
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+              }}
+            />
           ) : (
             <AvatarFallback>
               <User className="h-12 w-12 text-gray-400" />

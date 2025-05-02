@@ -7,6 +7,8 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { Star, Crown, Shield, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserProfile {
   id: string;
@@ -17,6 +19,7 @@ interface UserProfile {
 }
 
 const UserInfoHeader = () => {
+  const { toast } = useToast();
   const { data: subscription, refetchSubscription, isLoading: subscriptionLoading } = useUserSubscription();
   const { user, isPremium: isAuthPremium } = useAuthState();
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
@@ -32,13 +35,26 @@ const UserInfoHeader = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user) return;
+        if (!user) {
+          console.error("Nenhum usuário autenticado encontrado");
+          return;
+        }
         
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .single();
+          
+        if (error) {
+          console.error('Erro ao buscar perfil do usuário:', error);
+          toast({
+            title: "Erro ao carregar perfil",
+            description: "Não foi possível carregar suas informações de perfil.",
+            variant: "destructive"
+          });
+          return;
+        }
           
         if (profile) {
           console.log("Perfil do usuário carregado:", profile);
@@ -50,7 +66,7 @@ const UserInfoHeader = () => {
     };
     
     fetchUserProfile();
-  }, [refetchSubscription, user?.id]);
+  }, [refetchSubscription, user?.id, toast]);
 
   // Debug log para verificar status premium
   useEffect(() => {
@@ -78,7 +94,14 @@ const UserInfoHeader = () => {
       <div className="flex items-center space-x-4">
         <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
           {userProfile?.photo_url ? (
-            <AvatarImage src={userProfile.photo_url} alt={userProfile.name || 'Usuário'} />
+            <AvatarImage 
+              src={userProfile.photo_url} 
+              alt={userProfile.name || 'Usuário'}
+              onError={(e) => {
+                console.error("Error loading avatar image:", e);
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+              }}
+            />
           ) : (
             <AvatarFallback className="bg-blue-100">
               <User className="h-5 w-5 text-blue-500" />

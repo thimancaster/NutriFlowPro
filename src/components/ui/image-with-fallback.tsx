@@ -9,16 +9,25 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
   ({ src, alt, className, fallbackSrc = "/placeholder.svg", ...props }, ref) => {
     const [error, setError] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     return (
-      <img
-        ref={ref}
-        src={error ? fallbackSrc : src}
-        alt={alt}
-        onError={() => setError(true)}
-        className={cn("object-cover", className)}
-        {...props}
-      />
+      <div className={cn("relative", className)}>
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full animate-pulse">
+            <span className="sr-only">Carregando...</span>
+          </div>
+        )}
+        <img
+          ref={ref}
+          src={error || !src ? fallbackSrc : src}
+          alt={alt}
+          onError={() => setError(true)}
+          onLoad={() => setLoading(false)}
+          className={cn("object-cover", loading ? "opacity-0" : "opacity-100", className)}
+          {...props}
+        />
+      </div>
     );
   }
 );
