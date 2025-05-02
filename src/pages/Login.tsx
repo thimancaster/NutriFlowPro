@@ -16,10 +16,10 @@ const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading, login } = useAuth();
 
-  // Redirect to home if already authenticated
+  // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -46,9 +46,9 @@ const Login = () => {
         throw error;
       } else {
         console.log("Login bem-sucedido");
+        // After successful login, navigate to dashboard
+        navigate('/dashboard', { replace: true });
       }
-      
-      // Navigate is handled automatically by useEffect when auth state changes
     } catch (error: any) {
       console.error("Erro no login:", error);
       // Toast is already handled in the login function

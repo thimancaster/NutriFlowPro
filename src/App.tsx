@@ -27,6 +27,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { ConsultationProvider } from './contexts/ConsultationContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PatientAnthropometry from './pages/PatientAnthropometry';
+import Index from './pages/Index';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -46,12 +47,15 @@ function App() {
           <ConsultationProvider>
             <ErrorBoundary>
               <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 
-                <Route path="/" element={
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>

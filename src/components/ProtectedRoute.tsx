@@ -31,13 +31,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         
         if (error) {
           console.error("Erro ao verificar sessão:", error);
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
           return;
         }
         
         if (!data.session) {
           console.warn("Nenhuma sessão válida encontrada");
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
           return;
         }
         
@@ -48,14 +48,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         if (expiresAt && expiresAt < now) {
           console.warn("Token expirado, fazendo logout");
           await supabase.auth.signOut();
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
           return;
         }
         
         console.log("Sessão verificada com sucesso");
       } catch (err) {
         console.error("Erro ao verificar autenticação:", err);
-        navigate('/login', { replace: true });
+        navigate('/', { replace: true });
       } finally {
         setIsVerifying(false);
       }
@@ -76,8 +76,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    console.log("Usuário não autenticado, redirecionando para login");
-    return <Navigate to="/login" replace />;
+    console.log("Usuário não autenticado, redirecionando para página inicial");
+    return <Navigate to="/" replace />;
   }
 
   return (

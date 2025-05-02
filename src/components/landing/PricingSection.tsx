@@ -50,7 +50,7 @@ const PricingSection = () => {
               </li>
             </ul>
             
-            <Link to="/signup">
+            <Link to="/register">
               <Button 
                 className="w-full bg-nutri-blue text-white hover:bg-nutri-blue-dark transition-colors"
               >
@@ -103,7 +103,7 @@ const PricingSection = () => {
               </li>
             </ul>
             
-            <Link to="/signup?plan=premium">
+            <Link to="/register?plan=premium">
               <Button 
                 className="w-full bg-white text-nutri-blue hover:bg-nutri-gray-light transition-colors"
               >

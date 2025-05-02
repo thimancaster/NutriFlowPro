@@ -28,7 +28,7 @@ const HeroSection = () => {
               Transforme sua prática nutricional com nossa plataforma completa. Gerencie pacientes, crie planos alimentares personalizados e acompanhe resultados em tempo real.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/signup">
+              <Link to="/register">
                 <Button 
                   className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 text-white font-medium px-8 py-6 text-lg w-full sm:w-auto"
                 >

@@ -1,12 +1,23 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Dashboard from '@/components/Dashboard';
 import LandingPage from '@/components/LandingPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import { Helmet } from 'react-helmet';
 
 const Index = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  
+  // Effect to redirect authenticated users to dashboard
+  React.useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
   
   if (isLoading) {
     return (
@@ -17,8 +28,15 @@ const Index = () => {
     );
   }
   
-  // If authenticated, show Dashboard, otherwise show LandingPage
-  return isAuthenticated ? <Dashboard /> : <LandingPage />;
+  // For unauthenticated users, show the landing page
+  return (
+    <>
+      <Helmet>
+        <title>NutriFlow Pro - Sistema para Nutricionistas</title>
+      </Helmet>
+      <LandingPage />
+    </>
+  );
 };
 
 export default Index;
