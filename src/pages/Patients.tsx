@@ -6,45 +6,106 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, User, FileText, Clock } from 'lucide-react';
+import { Plus, Search, User, FileText, Clock, Pencil, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useAuthState } from "@/hooks/useAuthState";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { format, parseISO, differenceInYears } from 'date-fns';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2 } from 'lucide-react';
+
+interface Patient {
+  id: string;
+  name: string;
+  birth_date: string | null;
+  email: string | null;
+  phone: string | null;
+  gender: string | null;
+  created_at: string;
+  updated_at: string;
+  goals: {
+    objective?: string;
+    profile?: string;
+  } | null;
+}
 
 const Patients = () => {
   const [selectedTab, setSelectedTab] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const { data: subscription, isLoading: subscriptionLoading } = useUserSubscription();
   const { isPremium: isAuthPremium } = useAuthState();
   
-  // Combina as duas verificações para garantir que ambas as fontes sejam consultadas
+  // Combine the two checks to ensure both sources are consulted
   const isPremium = isAuthPremium || (subscription?.isPremium || false);
 
-  const patients = [
-    { id: 1, name: 'Ana Silva', age: 34, lastConsultation: '15/04/2025', status: 'Em andamento' },
-    { id: 2, name: 'Carlos Santos', age: 42, lastConsultation: '14/04/2025', status: 'Novo' },
-    { id: 3, name: 'Maria Oliveira', age: 28, lastConsultation: '12/04/2025', status: 'Concluído' },
-    { id: 4, name: 'João Pereira', age: 55, lastConsultation: '10/04/2025', status: 'Em andamento' },
-    { id: 5, name: 'Lúcia Fernandes', age: 31, lastConsultation: '05/04/2025', status: 'Concluído' },
-  ];
+  // Function to fetch patients from Supabase
+  const fetchPatients = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw error;
+      }
+      
+      setPatients(data || []);
+    } catch (error: any) {
+      console.error('Error fetching patients:', error);
+      toast({
+        title: "Erro ao buscar pacientes",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch patients on component mount
+  useEffect(() => {
+    if (user) {
+      fetchPatients();
+    }
+  }, [user]);
   
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  // Debug log para verificar status premium
+  // Debug log for premium status
   useEffect(() => {
     console.log("Status premium na página Patients:", {
       isPremium,
@@ -61,8 +122,66 @@ const Patients = () => {
     }
   };
   
-  const handlePatientSelect = (patientId: number) => {
+  const handlePatientSelect = (patientId: string) => {
     navigate(`/patient-history/${patientId}`);
+  };
+  
+  const handleEditPatient = (patient: Patient) => {
+    setPatientToEdit(patient);
+    setShowEditDialog(true);
+  };
+  
+  const handleDeletePrompt = (patient: Patient) => {
+    setPatientToDelete(patient);
+    setShowDeleteDialog(true);
+  };
+  
+  const handleDeletePatient = async () => {
+    if (!patientToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', patientToDelete.id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Paciente excluído",
+        description: `${patientToDelete.name} foi excluído com sucesso.`,
+      });
+      
+      // Refresh patient list
+      fetchPatients();
+    } catch (error: any) {
+      console.error('Error deleting patient:', error);
+      toast({
+        title: "Erro ao excluir paciente",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setShowDeleteDialog(false);
+      setPatientToDelete(null);
+    }
+  };
+
+  const filteredPatients = patients.filter(patient => 
+    patient.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  // Calculate age from birth date
+  const calculateAge = (birthDate: string | null) => {
+    if (!birthDate) return '-';
+    try {
+      const date = parseISO(birthDate);
+      return differenceInYears(new Date(), date);
+    } catch (e) {
+      return '-';
+    }
   };
 
   return (
@@ -108,19 +227,24 @@ const Patients = () => {
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left border-b">
-                    <th className="pb-3 font-medium">Nome</th>
-                    <th className="pb-3 font-medium">Idade</th>
-                    <th className="pb-3 font-medium">Última Consulta</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPatients.length > 0 ? (
-                    filteredPatients.map((patient) => (
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-nutri-blue" />
+                  <p className="ml-2 text-nutri-blue">Carregando pacientes...</p>
+                </div>
+              ) : filteredPatients.length > 0 ? (
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="pb-3 font-medium">Nome</th>
+                      <th className="pb-3 font-medium">Idade</th>
+                      <th className="pb-3 font-medium">Data Cadastro</th>
+                      <th className="pb-3 font-medium">Objetivo</th>
+                      <th className="pb-3 font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPatients.map((patient) => (
                       <tr key={patient.id} className="border-b last:border-b-0 hover:bg-gray-50">
                         <td className="py-4">
                           <div className="flex items-center">
@@ -130,49 +254,90 @@ const Patients = () => {
                             {patient.name}
                           </div>
                         </td>
-                        <td className="py-4">{patient.age} anos</td>
+                        <td className="py-4">{calculateAge(patient.birth_date)} anos</td>
                         <td className="py-4">
                           <div className="flex items-center">
                             <Clock className="h-3 w-3 mr-1 text-gray-500" />
-                            {patient.lastConsultation}
+                            {patient.created_at 
+                              ? format(new Date(patient.created_at), 'dd/MM/yyyy')
+                              : '-'}
                           </div>
                         </td>
                         <td className="py-4">
                           <span 
                             className={`px-2 py-1 text-xs rounded-full ${
-                              patient.status === 'Novo' ? 'bg-nutri-blue-light text-white' : 
-                              patient.status === 'Em andamento' ? 'bg-nutri-green-light text-white' : 
+                              patient.goals?.objective === 'emagrecimento' ? 'bg-nutri-blue-light text-white' : 
+                              patient.goals?.objective === 'hipertrofia' ? 'bg-nutri-green-light text-white' : 
                               'bg-nutri-gray-light text-nutri-gray-dark'
                             }`}
                           >
-                            {patient.status}
+                            {patient.goals?.objective 
+                              ? patient.goals.objective.charAt(0).toUpperCase() + patient.goals.objective.slice(1) 
+                              : 'Não definido'}
                           </span>
                         </td>
                         <td className="py-4">
-                          <Button 
-                            variant="ghost" 
-                            className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-blue-50"
-                            onClick={() => handlePatientSelect(patient.id)}
-                          >
-                            <FileText className="h-3 w-3 mr-1" /> Ver histórico
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-blue-50"
+                              onClick={() => handlePatientSelect(patient.id)}
+                            >
+                              <FileText className="h-3 w-3 mr-1" /> Ver histórico
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              onClick={() => handleEditPatient(patient)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDeletePrompt(patient)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
-                    ))
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center py-8">
+                  {searchQuery.length > 0 ? (
+                    <p className="text-gray-500">
+                      Nenhum paciente encontrado com o termo "{searchQuery}"
+                    </p>
                   ) : (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-gray-500">
-                        Nenhum paciente encontrado com o termo "{searchQuery}"
-                      </td>
-                    </tr>
+                    <div className="flex flex-col items-center">
+                      <div className="bg-blue-50 p-6 rounded-full mb-4">
+                        <User className="h-12 w-12 text-nutri-blue opacity-70" />
+                      </div>
+                      <p className="text-lg font-medium mb-1">Nenhum paciente cadastrado</p>
+                      <p className="text-gray-500 mb-4">Cadastre seu primeiro paciente clicando no botão abaixo</p>
+                      <Button
+                        className="bg-nutri-green hover:bg-nutri-green-dark"
+                        onClick={() => setSelectedTab("new")}
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Adicionar Paciente
+                      </Button>
+                    </div>
                   )}
-                </tbody>
-              </table>
+                </div>
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="new">
-            <PatientForm />
+            <PatientForm 
+              onSuccess={() => {
+                setSelectedTab("list");
+                fetchPatients();
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -226,6 +391,64 @@ const Patients = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Patient Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={(value) => {
+        if (!value) {
+          setShowEditDialog(false);
+          setPatientToEdit(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Paciente</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do paciente
+            </DialogDescription>
+          </DialogHeader>
+          {patientToEdit && (
+            <PatientForm 
+              editPatient={patientToEdit}
+              onSuccess={() => {
+                setShowEditDialog(false);
+                setPatientToEdit(null);
+                fetchPatients();
+              }}
+              onCancel={() => {
+                setShowEditDialog(false);
+                setPatientToEdit(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o paciente{" "}
+              <strong>{patientToDelete?.name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDeleteDialog(false);
+              setPatientToDelete(null);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeletePatient}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

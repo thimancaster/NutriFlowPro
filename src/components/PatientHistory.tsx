@@ -3,26 +3,31 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, CheckCircle, User, Ruler } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, User, Ruler, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { format, parseISO, differenceInYears } from 'date-fns';
 
 interface Patient {
   id: string;
   name: string;
   birth_date: string;
   gender: string;
-  email: string;
-  phone: string;
-  address: string;
-  notes: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  notes: string | null;
   created_at: string;
-  objective?: string;
+  goals: {
+    objective?: string;
+    profile?: string;
+  } | null;
 }
 
 const PatientHistory = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,7 +46,7 @@ const PatientHistory = () => {
           throw new Error(error.message);
         }
 
-        setPatient(data);
+        setPatient(data as Patient);
       } catch (error: any) {
         console.error("Error fetching patient:", error);
         toast({
@@ -49,38 +54,90 @@ const PatientHistory = () => {
           description: error.message,
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchPatient();
   }, [patientId, toast]);
+  
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-nutri-blue" />
+        <p className="mt-4 text-nutri-blue">Carregando dados do paciente...</p>
+      </div>
+    );
+  }
 
   if (!patientId) {
-    return <div>Paciente inválido</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="mb-8 nutri-card border-none shadow-lg">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-xl text-red-600">Paciente inválido</p>
+              <Button 
+                className="mt-4"
+                onClick={() => navigate('/patients')}
+              >
+                Voltar para lista de pacientes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!patient) {
-    return <div>Carregando informações do paciente...</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="mb-8 nutri-card border-none shadow-lg">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-xl text-red-600">Paciente não encontrado</p>
+              <Button 
+                className="mt-4"
+                onClick={() => navigate('/patients')}
+              >
+                Voltar para lista de pacientes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Calculate age from birth_date
   let age = null;
   if (patient.birth_date) {
-    const birthDate = new Date(patient.birth_date);
-    const today = new Date();
-    age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    try {
+      const birthDate = parseISO(patient.birth_date);
+      age = differenceInYears(new Date(), birthDate);
+    } catch (e) {
+      console.error("Error parsing birth date:", e);
     }
   }
+
+  // Format date to display
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '-';
+    try {
+      return format(parseISO(dateStr), 'dd/MM/yyyy');
+    } catch (e) {
+      return dateStr;
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="mb-8 nutri-card border-none shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl font-bold">{patient?.name}</CardTitle>
+            <CardTitle className="text-2xl font-bold">{patient.name}</CardTitle>
             <Button onClick={() => navigate('/patients')}>Voltar para Pacientes</Button>
           </div>
           <CardDescription>
@@ -96,27 +153,32 @@ const PatientHistory = () => {
             )}
             {patient.gender && (
               <div className="bg-purple-50 rounded-full px-3 py-1 text-sm text-purple-700">
-                {patient.gender === 'female' ? 'Feminino' : 'Masculino'}
+                {patient.gender === 'F' ? 'Feminino' : 'Masculino'}
               </div>
             )}
-            {patient.objective && (
+            {patient.goals?.objective && (
               <div className="bg-green-50 rounded-full px-3 py-1 text-sm text-green-700">
-                <span className="font-medium">Objetivo:</span> {patient.objective}
+                <span className="font-medium">Objetivo:</span> {patient.goals.objective}
+              </div>
+            )}
+            {patient.goals?.profile && (
+              <div className="bg-amber-50 rounded-full px-3 py-1 text-sm text-amber-700">
+                <span className="font-medium">Perfil:</span> {patient.goals.profile}
               </div>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <span className="font-semibold">Email:</span> {patient?.email}
+              <span className="font-semibold">Email:</span> {patient.email || '-'}
             </div>
             <div>
-              <span className="font-semibold">Telefone:</span> {patient?.phone}
+              <span className="font-semibold">Telefone:</span> {patient.phone || '-'}
             </div>
             <div>
-              <span className="font-semibold">Data de Nascimento:</span> {patient?.birth_date}
+              <span className="font-semibold">Data de Nascimento:</span> {formatDate(patient.birth_date)}
             </div>
             <div>
-              <span className="font-semibold">Gênero:</span> {patient?.gender}
+              <span className="font-semibold">Gênero:</span> {patient.gender === 'F' ? 'Feminino' : 'Masculino'}
             </div>
           </div>
         </CardContent>
