@@ -1,14 +1,38 @@
 
-import React, { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { ReactNode, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const navigate = useNavigate();
+
+  // Additional verification of authentication status
+  useEffect(() => {
+    const verifySession = async () => {
+      if (!isLoading && isAuthenticated) {
+        try {
+          // Double-check session validity with Supabase
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error || !data.session) {
+            console.error("Protected route session verification failed:", error || "No valid session");
+            navigate('/login', { replace: true });
+          }
+        } catch (err) {
+          console.error("Error verifying authentication:", err);
+          navigate('/login', { replace: true });
+        }
+      }
+    };
+    
+    verifySession();
+  }, [isAuthenticated, isLoading, navigate]);
 
   if (isLoading) {
     return (

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +11,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isPremium: boolean;
-  loading: boolean; // Added this property to match the usage in ProtectedRoute
+  loading: boolean;
 }
 
 interface AuthContextType extends AuthState {
@@ -31,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: false,
     isLoading: true,
     isPremium: false,
-    loading: true // Initialize loading as true
+    loading: true
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!session,
       isLoading: false,
       isPremium,
-      loading: false // Update loading state
+      loading: false
     });
 
     // Invalidate subscription data when auth state changes
@@ -189,37 +188,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       queryClient.clear();
       
       // Executar o logout no Supabase
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // Force global scope to clear all sessions
+      });
       
       if (error) {
         console.error("Erro Supabase durante logout:", error);
         throw error;
       }
       
-      console.log("Supabase signOut concluído, verificando se a sessão foi removida...");
+      console.log("Supabase signOut concluído, limpando localStorage...");
       
-      // Verificar se a sessão foi realmente removida
-      const { data: sessionCheck } = await supabase.auth.getSession();
-      
-      if (sessionCheck.session) {
-        console.error("Logout incompleto: sessão ainda existe");
-        
-        // Tentativa forçada de limpar o localStorage
-        try {
-          localStorage.removeItem('supabase.auth.token');
-          console.log("Token removido manualmente do localStorage");
-        } catch (e) {
-          console.error("Erro ao limpar localStorage:", e);
+      // Limpar manualmente todos os itens relacionados ao Supabase no localStorage
+      try {
+        // Clean all Supabase-related items
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('supabase') || key.includes('sb-'))) {
+            localStorage.removeItem(key);
+            console.log(`Removed localStorage item: ${key}`);
+          }
         }
-        
-        // Atualizar estado da aplicação de qualquer forma
-        updateAuthState(null);
-      } else {
-        console.log("Logout completo: sessão não encontrada");
+      } catch (e) {
+        console.error("Erro ao limpar localStorage:", e);
       }
       
-      // Forçar redirecionamento para a página de login após o logout
-      window.location.href = '/#/login';
+      // Verificação adicional após um curto atraso para garantir que a sessão foi removida
+      setTimeout(async () => {
+        try {
+          const { data: sessionCheck } = await supabase.auth.getSession();
+          
+          if (sessionCheck.session) {
+            console.error("Logout incompleto: sessão ainda existe após limpeza");
+          } else {
+            console.log("Verificação adicional: logout completo, sessão removida");
+          }
+        } catch (e) {
+          console.error("Erro na verificação adicional da sessão:", e);
+        }
+      }, 300);
+      
+      // Atualizar estado local imediatamente
+      updateAuthState(null);
+      
+      // Navegar para a tela de login com hash router (compatível com HashRouter)
+      const baseUrl = window.location.href.split('#')[0];
+      window.location.href = `${baseUrl}#/login`;
       
       return { success: true };
     } catch (error: any) {
@@ -230,10 +244,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive"
       });
       
-      // Mesmo com erro, tente forçar o redirecionamento
+      // Mesmo com erro, forçar redirecionamento para login
+      const baseUrl = window.location.href.split('#')[0];
       setTimeout(() => {
-        window.location.href = '/#/login';
-      }, 1500);
+        window.location.href = `${baseUrl}#/login`;
+      }, 1000);
       
       return { success: false, error };
     }
@@ -242,7 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
+        redirectTo: window.location.origin + '/#/reset-password',
       });
       
       if (error) throw error;
