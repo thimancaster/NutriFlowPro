@@ -4,11 +4,12 @@
  * Implements TMB (Basal Metabolic Rate) and GET (Total Energy Expenditure) calculations
  */
 
-// TMB calculation for lean individuals
+// TMB calculation for women
 export function tmbMagrasMulheres(weight: number, height: number, age: number): number {
   return 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
 }
 
+// TMB calculation for men
 export function tmbMagrosHomens(weight: number, height: number, age: number): number {
   return 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
 }
@@ -45,19 +46,16 @@ export const activityFactors = {
 
 // Calculate macronutrients based on GET and objective
 export function calculateMacros(get: number, objective: string = 'manutenção') {
-  let proteinPercentage = 0;
-  let carbsPercentage = 0;
-  let fatPercentage = 0;
+  // Default distribution: 20% protein, 55% carbs, 25% fat
+  let proteinPercentage = 0.20;
+  let carbsPercentage = 0.55;
+  let fatPercentage = 0.25;
   
+  // Can be adjusted based on objective if needed
   switch (objective) {
     case 'emagrecimento':
-      proteinPercentage = 0.35;
-      carbsPercentage = 0.30;
-      fatPercentage = 0.35;
-      break;
-    case 'manutenção':
-      proteinPercentage = 0.30;
-      carbsPercentage = 0.40;
+      proteinPercentage = 0.25;
+      carbsPercentage = 0.45;
       fatPercentage = 0.30;
       break;
     case 'hipertrofia':
@@ -65,10 +63,10 @@ export function calculateMacros(get: number, objective: string = 'manutenção')
       carbsPercentage = 0.50;
       fatPercentage = 0.20;
       break;
+    case 'manutenção':
     default:
-      proteinPercentage = 0.20;
-      carbsPercentage = 0.50;
-      fatPercentage = 0.30;
+      // Use default values
+      break;
   }
   
   const protein = Math.round((get * proteinPercentage) / 4); // 4 calories per gram
@@ -84,7 +82,9 @@ export function calculateMacros(get: number, objective: string = 'manutenção')
 
 // Validate inputs to prevent calculation errors
 export function validateInputs(weight: number, height: number, age: number): boolean {
-  return weight > 0 && height > 0 && age > 0;
+  return weight > 0 && weight <= 300 && 
+         height > 0 && height <= 250 && 
+         age > 0 && age <= 120;
 }
 
 // Calculate TMB based on profile and gender
@@ -97,7 +97,7 @@ export function calculateTMB(
   bodyFat?: number
 ): number {
   if (!validateInputs(weight, height, age)) {
-    throw new Error('Invalid inputs: weight, height, and age must be greater than 0');
+    throw new Error('Invalid inputs: weight, height, and age must be within reasonable ranges');
   }
   
   if (profile === 'magro') {

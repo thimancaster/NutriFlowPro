@@ -8,18 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 const CalculatorTool = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
   // States for form data
   const [gender, setGender] = useState('female');
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [activityLevel, setActivityLevel] = useState('1.2');
-  const [carbsPercentage, setCarbsPercentage] = useState('55');
-  const [proteinPercentage, setProteinPercentage] = useState('15');
-  const [fatPercentage, setFatPercentage] = useState('30');
+  const [carbsPercentage, setCarbsPercentage] = useState('55'); // Updated to 55%
+  const [proteinPercentage, setProteinPercentage] = useState('20'); // Updated to 20%
+  const [fatPercentage, setFatPercentage] = useState('25'); // Updated to 25%
 
   // Results
   const [bmr, setBmr] = useState<number | null>(null);
@@ -29,32 +32,86 @@ const CalculatorTool = () => {
   const [activeTab, setActiveTab] = useState('calculator');
   const [patientName, setPatientName] = useState('');
   const [objective, setObjective] = useState('manutenção');
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const validateInputs = (): boolean => {
+    // Basic validation for required fields
+    if (!age || !weight || !height) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos necessários.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    // Validate reasonable values
+    const ageVal = parseFloat(age);
+    const weightVal = parseFloat(weight);
+    const heightVal = parseFloat(height);
+    
+    if (ageVal <= 0 || ageVal > 120) {
+      toast({
+        title: "Valor inválido",
+        description: "A idade deve estar entre 1 e 120 anos.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    if (weightVal <= 0 || weightVal > 300) {
+      toast({
+        title: "Valor inválido",
+        description: "O peso deve estar entre 1 e 300 kg.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    if (heightVal <= 0 || heightVal > 250) {
+      toast({
+        title: "Valor inválido",
+        description: "A altura deve estar entre 1 e 250 cm.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
+  };
 
   const calculateBMR = () => {
-    if (!age || !weight || !height) {
+    if (!validateInputs()) {
       return;
     }
+    
+    setIsCalculating(true);
     
     const ageVal = parseFloat(age);
     const weightVal = parseFloat(weight);
     const heightVal = parseFloat(height);
     
-    // Mifflin-St Jeor Equation
+    // Updated TMB calculation formulas for men and women
     let calculatedBmr;
     if (gender === 'male') {
-      calculatedBmr = 10 * weightVal + 6.25 * heightVal - 5 * ageVal + 5;
+      // Men: 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
+      calculatedBmr = 66 + (13.7 * weightVal) + (5 * heightVal) - (6.8 * ageVal);
     } else {
-      calculatedBmr = 10 * weightVal + 6.25 * heightVal - 5 * ageVal - 161;
+      // Women: 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+      calculatedBmr = 655 + (9.6 * weightVal) + (1.8 * heightVal) - (4.7 * ageVal);
     }
     
-    setBmr(Math.round(calculatedBmr));
+    // Round TMB to the nearest whole number
+    calculatedBmr = Math.round(calculatedBmr);
+    setBmr(calculatedBmr);
     
-    // Calculate Total Energy Expenditure
+    // Calculate Total Energy Expenditure with the selected activity factor
     const activityFactor = parseFloat(activityLevel);
     const calculatedTee = calculatedBmr * activityFactor;
     setTee(Math.round(calculatedTee));
     
-    // Calculate macronutrients
+    // Calculate macronutrients with updated distribution
+    // Protein: 20%, Carbs: 55%, Fat: 25%
     const carbsPercent = parseFloat(carbsPercentage) / 100;
     const proteinPercent = parseFloat(proteinPercentage) / 100;
     const fatPercent = parseFloat(fatPercentage) / 100;
@@ -67,6 +124,12 @@ const CalculatorTool = () => {
     
     // After calculations are done, switch to results tab
     setActiveTab('results');
+    setIsCalculating(false);
+    
+    toast({
+      title: "Cálculo realizado com sucesso",
+      description: "Os resultados do cálculo TMB e GET estão disponíveis na aba Resultados."
+    });
   };
 
   const handleGenerateMealPlan = () => {
@@ -103,6 +166,11 @@ const CalculatorTool = () => {
         consultation: consultationData,
         patient: patientData
       }
+    });
+    
+    toast({
+      title: "Redirecionando para o plano alimentar",
+      description: "Preparando interface para montagem do plano alimentar."
     });
   };
 

@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 // Database of food items organized by meal type
 export const foodDatabase = {
   breakfast: [
@@ -71,24 +73,27 @@ export const getRandomFoodItems = (mealType: keyof typeof foodDatabase, count: n
 
 // Calculate macros based on calories and diet type
 export const generateMacros = (calories: number, dietType: string) => {
-  let carbPercentage, proteinPercentage, fatPercentage;
+  // Standard distribution: 20% protein, 55% carbs, 25% fat
+  let carbPercentage = 0.55;
+  let proteinPercentage = 0.20;
+  let fatPercentage = 0.25;
   
+  // Can be adjusted based on diet type if needed
   switch (dietType) {
     case 'low-carb':
-      carbPercentage = 0.20;
-      proteinPercentage = 0.40;
-      fatPercentage = 0.40;
+      carbPercentage = 0.30;
+      proteinPercentage = 0.35;
+      fatPercentage = 0.35;
       break;
     case 'high-protein':
-      carbPercentage = 0.30;
-      proteinPercentage = 0.45;
+      carbPercentage = 0.45;
+      proteinPercentage = 0.30;
       fatPercentage = 0.25;
       break;
     case 'balanced':
     default:
-      carbPercentage = 0.50;
-      proteinPercentage = 0.25;
-      fatPercentage = 0.25;
+      // Use default values
+      break;
   }
   
   const carbCalories = calories * carbPercentage;
@@ -102,6 +107,16 @@ export const generateMacros = (calories: number, dietType: string) => {
   };
 };
 
+// Meal distributions as specified
+export const MEAL_DISTRIBUTIONS = {
+  'ref1': { protein: 0.15, carbs: 0.25, fat: 0.20 },
+  'ref2': { protein: 0.15, carbs: 0.15, fat: 0.10 },
+  'ref3': { protein: 0.20, carbs: 0.20, fat: 0.20 },
+  'ref4': { protein: 0.15, carbs: 0.10, fat: 0.10 },
+  'ref5': { protein: 0.15, carbs: 0.15, fat: 0.20 },
+  'ref6': { protein: 0.20, carbs: 0.15, fat: 0.20 }
+};
+
 // Generate a complete meal plan based on the provided settings
 export const generateMealPlanData = (
   numMeals: string, 
@@ -112,56 +127,101 @@ export const generateMealPlanData = (
   const meals = parseInt(numMeals);
   const calories = parseInt(totalCalories);
   
-  const breakfastCalories = Math.round(calories * 0.25);
-  const dinnerCalories = Math.round(calories * 0.30);
+  // Define meal names and distribution based on number of meals
+  const mealNames = [];
+  const mealTimes = [];
   
-  const remainingCalories = calories - breakfastCalories - dinnerCalories;
-  
-  const plan = [];
-  
-  plan.push({
-    name: 'Café da manhã',
-    time: '07:00',
-    calories: breakfastCalories,
-    items: getRandomFoodItems('breakfast', 3, restrictions),
-    macros: generateMacros(breakfastCalories, dietType)
-  });
-  
-  if (meals >= 3) {
-    const lunchCalories = Math.round(remainingCalories * 0.6);
-    plan.push({
-      name: 'Almoço',
-      time: '12:00',
-      calories: lunchCalories,
-      items: getRandomFoodItems('lunch', 4, restrictions),
-      macros: generateMacros(lunchCalories, dietType)
-    });
-    
-    if (meals > 3) {
-      const snackCalories = Math.round(remainingCalories * 0.4 / (meals - 3));
-      for (let i = 0; i < meals - 3; i++) {
-        plan.push({
-          name: `Lanche ${i + 1}`,
-          time: i === 0 ? '16:00' : `${17 + i}:00`,
-          calories: snackCalories,
-          items: getRandomFoodItems('snack', 2, restrictions),
-          macros: generateMacros(snackCalories, dietType)
-        });
-      }
-    }
+  if (meals === 6) {
+    mealNames.push('Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar', 'Ceia');
+    mealTimes.push('07:00', '10:00', '12:30', '15:30', '19:00', '22:00');
+  } else if (meals === 5) {
+    mealNames.push('Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar');
+    mealTimes.push('07:30', '10:30', '13:00', '16:00', '19:30');
+  } else if (meals === 4) {
+    mealNames.push('Café da manhã', 'Almoço', 'Lanche da tarde', 'Jantar');
+    mealTimes.push('07:30', '12:30', '16:00', '19:30');
+  } else { // 3 meals
+    mealNames.push('Café da manhã', 'Almoço', 'Jantar');
+    mealTimes.push('08:00', '13:00', '20:00');
   }
   
-  plan.push({
-    name: 'Jantar',
-    time: '20:00',
-    calories: dinnerCalories,
-    items: getRandomFoodItems('dinner', 3, restrictions),
-    macros: generateMacros(dinnerCalories, dietType)
-  });
+  // Calculate calories per meal using the specified distribution
+  const plan = [];
+  const totalMacros = generateMacros(calories, dietType);
   
-  return plan.sort((a, b) => {
-    const timeA = parseInt(a.time.split(':')[0]);
-    const timeB = parseInt(b.time.split(':')[0]);
-    return timeA - timeB;
-  });
+  for (let i = 0; i < meals; i++) {
+    // Use meal distribution percentages if available
+    const refKey = `ref${i + 1}` as keyof typeof MEAL_DISTRIBUTIONS;
+    const mealDistribution = MEAL_DISTRIBUTIONS[refKey] || { 
+      protein: 1/meals,
+      carbs: 1/meals,
+      fat: 1/meals
+    };
+    
+    const mealCalories = Math.round(calories / meals);
+    
+    const mealMacros = {
+      protein: Math.round(totalMacros.protein * mealDistribution.protein / (1/meals)),
+      carbs: Math.round(totalMacros.carbs * mealDistribution.carbs / (1/meals)),
+      fat: Math.round(totalMacros.fat * mealDistribution.fat / (1/meals))
+    };
+    
+    plan.push({
+      name: mealNames[i],
+      time: mealTimes[i],
+      calories: mealCalories,
+      items: getRandomFoodItems(
+        i === 0 ? 'breakfast' : 
+        i === 2 || i === 4 ? 'lunch' : 
+        i === meals - 1 ? 'dinner' : 'snack', 
+        i === 0 || i === 2 || i === 4 ? 3 : 2, 
+        restrictions
+      ),
+      macros: mealMacros
+    });
+  }
+  
+  return plan;
 };
+
+// Save meal plan to database
+export async function saveMealPlan(consultationId: string, meals: any[], totalMacros: any) {
+  try {
+    // Check if supabase client is defined
+    if (!supabase) {
+      console.error('Supabase client is not defined');
+      return {
+        success: false,
+        message: 'Erro de conexão com o banco de dados'
+      };
+    }
+    
+    const { data, error } = await supabase
+      .from('meal_plans')
+      .insert({
+        consultation_id: consultationId,
+        meals,
+        total_calories: totalMacros.totalCalories,
+        total_protein: totalMacros.totalProtein,
+        total_carbs: totalMacros.totalCarbs,
+        total_fats: totalMacros.totalFats,
+        date: new Date().toISOString().split('T')[0]
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    
+    return {
+      success: true,
+      data,
+      message: 'Plano alimentar salvo com sucesso'
+    };
+  } catch (error: any) {
+    console.error('Error saving meal plan:', error);
+    return {
+      success: false,
+      message: 'Falha ao salvar plano alimentar: ' + error.message
+    };
+  }
+}
