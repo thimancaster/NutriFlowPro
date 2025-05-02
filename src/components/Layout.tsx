@@ -6,7 +6,7 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen">
       <ProtectedRoute>

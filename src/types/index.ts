@@ -30,7 +30,7 @@ export interface MealPlan {
   user_id?: string;
   date: string;
   meals: MealData[];
-  mealDistribution?: Record<string, MealDistributionItem>; // Add this property
+  mealDistribution?: Record<string, MealDistributionItem>;
   total_calories: number;
   total_protein: number;
   total_carbs: number;
