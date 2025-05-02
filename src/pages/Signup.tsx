@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/AuthContext';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -15,6 +15,14 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAuthenticated, signup } = useAuth();
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,51 +40,16 @@ const Signup = () => {
     }
 
     try {
-      // Use Supabase authentication
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          }
-        }
-      });
-
-      if (error) {
+      const { success, error } = await signup(email, password, name);
+      
+      if (!success && error) {
         throw error;
       }
-
-      if (data.user) {
-        // Create a profile for the new user
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            { 
-              id: data.user.id,
-              name,
-              email
-            }
-          ]);
-
-        if (profileError) {
-          throw profileError;
-        }
-        
-        toast({
-          title: "Conta criada com sucesso",
-          description: "Bem-vindo ao NutriFlow Pro!",
-        });
-        
-        // Navigate to the dashboard
-        navigate('/');
-      }
+      
+      // Navigate is handled automatically by useEffect when auth state changes
     } catch (error: any) {
-      toast({
-        title: "Erro ao criar conta",
-        description: error.message || "Ocorreu um problema ao tentar criar sua conta.",
-        variant: "destructive",
-      });
+      console.error("Signup error:", error);
+      // Toast is already handled in the signup function
     } finally {
       setIsLoading(false);
     }

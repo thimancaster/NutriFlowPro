@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import Navbar from './Navbar';
 import { 
@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, user, isLoading: authLoading, isPremium: isUserPremium } = useAuthState();
+  const { isAuthenticated, user, isLoading, isPremium: isUserPremium } = useAuth();
   const { data: subscription, isPremiumUser } = useUserSubscription();
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ const ProtectedRoute = () => {
 
   // Efeito para verificar autenticação e redirecionar para login se não estiver autenticado
   useEffect(() => {
-    if (!authLoading && isAuthenticated === false) {
+    if (!isLoading && isAuthenticated === false) {
       // Move toast inside effect to prevent rendering issues
       setTimeout(() => {
         toast({
@@ -42,10 +42,10 @@ const ProtectedRoute = () => {
       
       navigate('/login', { replace: true });
     }
-  }, [authLoading, isAuthenticated, navigate, toast]);
+  }, [isLoading, isAuthenticated, navigate, toast]);
 
   // Mostrar carregamento enquanto verifica autenticação
-  if (authLoading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
@@ -60,8 +60,8 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Se ainda estiver indeterminado (null) ou não estiver autenticado, mostrar carregamento
-  if (isAuthenticated !== true) {
+  // Se ainda estiver indeterminado ou não estiver autenticado, mostrar carregamento
+  if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nutri-blue"></div>
@@ -155,7 +155,7 @@ const ProtectedRoute = () => {
       )}
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {generateBreadcrumbs()}
+        {location.pathname !== '/' && generateBreadcrumbs()}
         <Outlet />
       </div>
     </div>

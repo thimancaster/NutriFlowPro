@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/contexts/AuthContext';
 import NavbarBrand from './NavbarBrand';
 import NavbarDesktopMenu from './NavbarDesktopMenu';
 import NavbarMobileMenu from './NavbarMobileMenu';
@@ -11,7 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuthState();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
@@ -42,18 +42,11 @@ const Navbar = () => {
       
       if (result.success) {
         console.log("Logout bem-sucedido, redirecionando para login");
-        // Forçar redirecionamento após logout
-        navigate('/login', { replace: true });
-      } else {
-        console.error("Falha no logout:", result.error);
+        // Navigate is handled automatically by AuthContext
       }
     } catch (error: any) {
       console.error("Erro ao fazer logout:", error);
-      toast({
-        title: "Erro ao fazer logout",
-        description: error.message || "Ocorreu um erro ao tentar desconectar.",
-        variant: "destructive"
-      });
+      // Error handling is done in the logout function
     }
   };
 

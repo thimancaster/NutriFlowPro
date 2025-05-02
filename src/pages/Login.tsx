@@ -5,43 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: authLoading } = useAuthState();
+  const { isAuthenticated, isLoading: authLoading, login } = useAuth();
 
-  // Verificar se já está autenticado e redirecionar para a página inicial
+  // Redirect to home if already authenticated
   useEffect(() => {
-    // Marcar que a verificação foi concluída, independente do resultado
-    const timeoutId = setTimeout(() => {
-      setAuthCheckComplete(true);
-    }, 3000); // Timeout de segurança
-
-    // Verificação estrita: se isAuthenticated for true, redirecionar imediatamente
-    if (isAuthenticated === true) {
-      console.log("Usuário já autenticado, redirecionando para a página inicial");
-      clearTimeout(timeoutId);
-      setAuthCheckComplete(true);
+    if (isAuthenticated) {
       navigate('/', { replace: true });
     }
-
-    // Se não estiver mais carregando e não estiver autenticado, também considerar a verificação concluída
-    if (!authLoading && isAuthenticated === false) {
-      clearTimeout(timeoutId);
-      setAuthCheckComplete(true);
-    }
-
-    return () => {
-      clearTimeout(timeoutId); // Limpar o timeout se o componente for desmontado
-    };
-  }, [isAuthenticated, navigate, authLoading]);
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,54 +37,27 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      console.log("Tentando login com email:", email);
-      // Usar Supabase authentication
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
+      const { success, error } = await login(email, password);
+      
+      if (!success && error) {
         throw error;
       }
-
-      // Login bem-sucedido
-      console.log("Login bem-sucedido:", data);
-      toast({
-        title: "Login realizado",
-        description: "Você foi autenticado com sucesso."
-      });
-
-      // Redirecionar para a página inicial
-      navigate('/', { replace: true });
-
+      
+      // Navigate is handled automatically by useEffect when auth state changes
     } catch (error: any) {
       console.error("Erro no login:", error);
-      toast({
-        title: "Erro ao fazer login",
-        description: error.message || "Verifique seu email e senha e tente novamente.",
-        variant: "destructive",
-      });
+      // Toast is already handled in the login function
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Mostrar carregamento enquanto o estado de autenticação é indeterminado
-  if (authLoading && !authCheckComplete) {
+  // Show loading while authentication is being checked
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
         <p className="mt-4 text-white">Verificando autenticação...</p>
-      </div>
-    );
-  }
-
-  // Se já estiver autenticado, não renderiza o formulário (o useEffect acima vai redirecionar)
-  if (isAuthenticated === true) {
-    return (
-      <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-        <p className="mt-4 text-white">Redirecionando...</p>
       </div>
     );
   }

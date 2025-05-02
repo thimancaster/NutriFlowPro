@@ -1,44 +1,48 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAuthenticated, resetPassword } = useAuth();
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Mock password reset request
-      if (email) {
-        // Success
-        setIsSubmitted(true);
-        toast({
-          title: "E-mail enviado",
-          description: "Verifique sua caixa de entrada para redefinir sua senha.",
-        });
-      } else {
-        // Error
+      if (!email) {
         toast({
           title: "E-mail inválido",
           description: "Por favor, forneça um e-mail válido.",
           variant: "destructive",
         });
+        return;
+      }
+
+      const { success } = await resetPassword(email);
+      
+      if (success) {
+        setIsSubmitted(true);
       }
     } catch (error) {
-      toast({
-        title: "Erro ao enviar e-mail",
-        description: "Ocorreu um problema ao tentar enviar o e-mail de redefinição de senha.",
-        variant: "destructive",
-      });
+      // Error handling is done in the resetPassword function
     } finally {
       setIsLoading(false);
     }
