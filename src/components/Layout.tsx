@@ -6,11 +6,15 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = ({ children }: LayoutProps) => {
   return (
-    <ProtectedRoute>
-      {children}
-    </ProtectedRoute>
+    <div className="min-h-screen">
+      <ProtectedRoute>
+        <main className="container mx-auto px-4 py-8">
+          {children}
+        </main>
+      </ProtectedRoute>
+    </div>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -20,6 +19,7 @@ import {
 } from '@/utils/nutritionCalculations';
 import { Json } from '@/integrations/supabase/types';
 import { useConsultation } from '@/contexts/ConsultationContext';
+import { Patient } from '@/types';
 
 // Helper function to safely extract objective from goals
 const getObjectiveFromGoals = (goals: Json | null): string => {
@@ -66,7 +66,7 @@ const Consultation = () => {
     const fetchPatient = async () => {
       if (patientData) {
         setPatient(patientData);
-        setActivePatient(patientData);
+        setActivePatient(patientData as Patient);
         
         if (patientData.birth_date) {
           const birthDate = new Date(patientData.birth_date);
@@ -99,8 +99,14 @@ const Consultation = () => {
           
           if (error) throw error;
           
-          setPatient(data);
-          setActivePatient(data);
+          // Convert the raw data to a Patient type with correct goals structure
+          const patientWithFormattedGoals: Patient = {
+            ...data,
+            goals: typeof data.goals === 'object' ? data.goals as any : { objective: 'manutenção' }
+          };
+          
+          setPatient(patientWithFormattedGoals);
+          setActivePatient(patientWithFormattedGoals);
           
           if (data.birth_date) {
             const birthDate = new Date(data.birth_date);

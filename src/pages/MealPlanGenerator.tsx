@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,17 +13,10 @@ import PatientHeader from '@/components/Anthropometry/PatientHeader';
 import ConsultationHeader from '@/components/ConsultationHeader';
 import MealPlanActions from '@/components/MealPlanActions';
 import { useConsultation } from '@/contexts/ConsultationContext';
+import { MealDistributionItem, MealPlan } from '@/types';
 
 interface MealDistribution {
-  [key: string]: {
-    name: string;
-    percent: number;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    suggestions: string[];
-  };
+  [key: string]: MealDistributionItem;
 }
 
 const MealPlanGenerator = () => {
@@ -62,7 +54,7 @@ const MealPlanGenerator = () => {
   });
 
   const [mealDistribution, setMealDistribution] = useState<MealDistribution>(
-    mealPlan ? mealPlan.mealDistribution as MealDistribution : initialDistribution
+    mealPlan && mealPlan.mealDistribution ? mealPlan.mealDistribution : initialDistribution
   );
 
   // Calculate meal macros when distribution percentages or total macros change
@@ -96,7 +88,7 @@ const MealPlanGenerator = () => {
     setMealDistribution(updatedDistribution);
     
     // Update the meal plan in the context
-    setMealPlan({
+    const newMealPlan: MealPlan = {
       meals: Object.values(updatedDistribution),
       mealDistribution: updatedDistribution,
       total_calories: totalCalories,
@@ -105,7 +97,9 @@ const MealPlanGenerator = () => {
       total_fats: totalFats,
       patient_id: activePatient?.id,
       date: new Date().toISOString().split('T')[0]
-    });
+    };
+    
+    setMealPlan(newMealPlan);
     
   }, [consultationData, setMealPlan, activePatient]);
 
