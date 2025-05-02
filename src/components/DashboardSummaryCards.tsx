@@ -6,8 +6,17 @@ import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Skeleton } from "@/components/ui/skeleton";
 
-const DashboardSummaryCards: React.FC = () => {
-  const { totalPatients, appointmentsToday, activePlans, isLoading } = useDashboardData();
+interface DashboardSummaryCardsProps {
+  totalPatients?: number;
+  appointmentsToday?: number;
+  activePlans?: number;
+}
+
+const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = (props) => {
+  const { totalPatients, appointmentsToday, activePlans, isLoading } = {
+    ...useDashboardData(),
+    ...props
+  };
 
   const summaryCards = [
     { 
