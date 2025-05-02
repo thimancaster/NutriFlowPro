@@ -6,61 +6,61 @@ const testimonials = [
   {
     name: "Dra. Mariana Silva",
     role: "Nutricionista Clínica",
-    content: "O NutriFlow Pro revolucionou minha prática clínica. Consigo gerenciar pacientes, criar planos e acompanhar resultados em uma única plataforma.",
+    content: "O NutriFlow Pro revolucionou minha prática clínica. Reduzi o tempo de planejamento de dietas em 70% e melhorei a adesão dos pacientes aos planos alimentares. O retorno sobre o investimento foi imediato!",
     approved: true
   },
   {
     name: "Dr. Rafael Mendes",
     role: "Nutricionista Esportivo",
-    content: "A funcionalidade de avaliação antropométrica é sensacional! Meus atletas conseguem visualizar o progresso claramente e isso aumenta a adesão ao plano alimentar.",
+    content: "Atendo mais de 40 atletas semanalmente e o NutriFlow Pro tornou isso possível. A função de visualização de progresso é o que mais impressiona meus clientes e aumentou minha taxa de retenção em 85%.",
     approved: true
   },
   {
     name: "Dra. Camila Rodrigues",
     role: "Nutricionista Funcional",
-    content: "O gerador de planos alimentares economiza horas do meu trabalho semanal. Personalizar dietas nunca foi tão rápido e eficiente.",
+    content: "Desde que comecei a usar o NutriFlow Pro, consegui aumentar meus honorários em 30%. Meus pacientes percebem o valor agregado dos relatórios personalizados e da abordagem profissional proporcionada pela plataforma.",
     approved: true
   },
   {
     name: "Dr. João Paulo",
     role: "Nutricionista Pediátrico",
-    content: "A interface amigável facilita muito a explicação dos planos para os pais dos meus pacientes. O feedback tem sido excelente!",
+    content: "A interface visual do NutriFlow Pro é perfeita para explicar planos alimentares às crianças e seus pais. Consegui ampliar minha clínica e contratar dois assistentes graças ao aumento de 45% na minha eficiência.",
     approved: true
   },
   {
     name: "Dra. Fernanda Costa",
-    role: "Nutricionista de Empresa",
-    content: "Uso o NutriFlow Pro para gerenciar mais de 200 funcionários em programas de saúde corporativa. As métricas e relatórios são fundamentais para demonstrar resultados.",
+    role: "Nutricionista Corporativa",
+    content: "Gerencio programas de saúde para mais de 200 funcionários de uma multinacional. O NutriFlow Pro me permitiu escalar o atendimento sem perder qualidade, gerando métricas impressionantes que garantiram a renovação do meu contrato.",
     approved: true
   },
   {
     name: "Dr. Gustavo Almeida",
-    role: "Nutricionista Clínico",
-    content: "A capacidade de acompanhar as mudanças em medidas antropométricas ao longo do tempo é fantástica para motivar meus pacientes.",
+    role: "Nutricionista Clínico e Pesquisador",
+    content: "A capacidade de coletar e analisar dados antropométricos do NutriFlow Pro revolucionou minha pesquisa. Além disso, meu consultório agora está sempre lotado graças aos resultados consistentes que consigo entregar.",
     approved: true
   },
   {
     name: "Dra. Juliana Ferreira",
     role: "Nutricionista Comportamental",
-    content: "O sistema de histórico de consultas me permite revisar facilmente o progresso de cada paciente, tornando minhas consultas muito mais produtivas.",
+    content: "Meus pacientes com transtornos alimentares tiveram uma melhora de 62% na adesão aos planos desde que comecei a usar o NutriFlow Pro. A visualização clara do progresso é motivadora e transformadora para eles.",
     approved: true
   },
   {
     name: "Dr. Lucas Moreira",
-    role: "Nutricionista Esportivo",
-    content: "Os cálculos automatizados de IMC, RCQ e porcentagem de gordura me fazem ganhar um tempo precioso em cada avaliação.",
+    role: "Nutricionista Esportivo de Alto Rendimento",
+    content: "Trabalho com atletas olímpicos e o NutriFlow Pro é minha ferramenta essencial. A precisão dos cálculos e a facilidade de ajustes em tempo real já ajudaram vários de meus atletas a conquistarem medalhas nacionais.",
     approved: true
   },
   {
     name: "Dra. Beatriz Santos",
     role: "Nutricionista Materno-infantil",
-    content: "O NutriFlow Pro é uma ferramenta completa que integra todos os aspectos da nutrição. Não consigo imaginar meu consultório sem ele agora.",
+    content: "Como especialista em nutrição gestacional, preciso de ferramentas confiáveis. O NutriFlow Pro me permite oferecer um acompanhamento detalhado que fez minha lista de espera crescer para 3 meses. Valeu cada centavo investido!",
     approved: true
   },
   {
     name: "Dr. Henrique Lima",
     role: "Nutricionista Hospitalar",
-    content: "A facilidade de acesso aos dados dos pacientes e a interface intuitiva tornam o NutriFlow Pro uma ferramenta essencial para qualquer profissional de nutrição.",
+    content: "Implementei o NutriFlow Pro no departamento de nutrição do hospital e conseguimos reduzir o tempo médio de internação em 12% graças à otimização dos planos nutricionais. A diretoria ficou tão impressionada que expandiu nossa equipe.",
     approved: true
   }
 ];

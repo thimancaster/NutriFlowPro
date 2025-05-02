@@ -27,16 +27,17 @@ const DashboardTestimonials: React.FC = () => {
         .from('testimonials')
         .select('*')
         .eq('approved', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching testimonials:', error);
         throw new Error('Erro ao carregar depoimentos');
       }
 
       return data || [];
     },
-    retry: 2,
+    retry: 3,
+    staleTime: 60000, // 1 minute
   });
 
   const handleAddTestimonial = () => {

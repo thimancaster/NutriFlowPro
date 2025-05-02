@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   HashRouter,
   Routes,
@@ -28,6 +28,8 @@ import { ConsultationProvider } from './contexts/ConsultationContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PatientAnthropometry from './pages/PatientAnthropometry';
 import Index from './pages/Index';
+import AddTestimonial from './pages/AddTestimonial';
+import { seedTestimonials } from './utils/seedTestimonials';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -40,6 +42,11 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Seed testimonials when the app loads
+  useEffect(() => {
+    seedTestimonials();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <HashRouter>
@@ -53,6 +60,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/add-testimonial" element={<AddTestimonial />} />
                 
                 {/* Protected routes */}
                 <Route path="/dashboard" element={
