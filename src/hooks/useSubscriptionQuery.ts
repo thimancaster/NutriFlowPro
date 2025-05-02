@@ -1,10 +1,10 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SUBSCRIPTION_QUERY_KEY, SUBSCRIPTION_REFETCH_SETTINGS } from "@/constants/subscriptionConstants";
 import { useToast } from "./use-toast";
 import { validatePremiumStatus, isSubscriptionExpired } from "@/utils/subscriptionUtils";
 import { User } from "@supabase/supabase-js";
+import React from "react";
 
 export interface SubscriptionData {
   isPremium: boolean;
