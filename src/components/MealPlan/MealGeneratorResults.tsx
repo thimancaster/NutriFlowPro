@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { MealGeneratorSettings } from '@/hooks/useMealGeneratorState';
 
 interface MealItem {
   name: string;
@@ -22,11 +23,7 @@ interface MealPlanItem {
 
 interface MealGeneratorResultsProps {
   mealPlan: MealPlanItem[];
-  settings: {
-    numMeals: string;
-    totalCalories: string;
-    dietType: string;
-  };
+  settings: MealGeneratorSettings;
 }
 
 const MealGeneratorResults = ({ mealPlan, settings }: MealGeneratorResultsProps) => {

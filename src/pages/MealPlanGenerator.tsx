@@ -10,7 +10,6 @@ import PatientHeader from '@/components/Anthropometry/PatientHeader';
 import { useMealPlanState } from '@/hooks/useMealPlanState';
 import NutritionSummary from '@/components/MealPlan/NutritionSummary';
 import BreadcrumbNav from '@/components/MealPlan/BreadcrumbNav';
-import MealPlanHeader from '@/components/MealPlan/MealPlanHeader';
 import MealCard from '@/components/MealPlan/MealCard';
 import MealPlanGeneratorUI from '@/components/MealPlan/MealPlanGeneratorUI';
 import { ConsultationData as AppConsultationData, Patient as AppPatient, MealPlan as AppMealPlan } from '@/types';
@@ -72,8 +71,11 @@ const MealPlanGenerator = () => {
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
       <MealPlanGeneratorUI
-        activePatient={activePatient}
-        consultationData={consultationData}
+        activePatient={{
+          name: activePatient?.name || '',
+          gender: activePatient?.gender || ''
+        }}
+        consultationData={consultationData as AppConsultationData}
         mealDistribution={mealDistribution}
         totalMealPercent={totalMealPercent}
         isSaving={isSaving}

@@ -10,7 +10,7 @@ import MealPlanForm from '@/components/MealPlan/MealPlanForm';
 import { MealDistributionItem, ConsultationData } from '@/types';
 
 interface MealPlanGeneratorUIProps {
-  activePatient: { name: string; gender: string | null } | null;
+  activePatient: { name: string; gender: string | null };
   consultationData: ConsultationData;
   mealDistribution: Record<string, MealDistributionItem> | undefined;
   totalMealPercent: number;
