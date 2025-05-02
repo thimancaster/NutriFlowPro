@@ -85,7 +85,20 @@ const Patients = () => {
         throw error;
       }
       
-      setPatients(data || []);
+      // Transform the data to ensure type compatibility
+      const typedPatients: Patient[] = data?.map(patient => ({
+        id: patient.id,
+        name: patient.name,
+        birth_date: patient.birth_date,
+        email: patient.email,
+        phone: patient.phone,
+        gender: patient.gender,
+        created_at: patient.created_at,
+        updated_at: patient.updated_at,
+        goals: patient.goals as Patient['goals'] // Cast the JSON to our expected type
+      })) || [];
+      
+      setPatients(typedPatients);
     } catch (error: any) {
       console.error('Error fetching patients:', error);
       toast({

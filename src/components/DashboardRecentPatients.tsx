@@ -7,13 +7,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, parseISO } from 'date-fns';
+import { Database } from '@/integrations/supabase/types';
 
+// Define a more specific type for the goals property based on your data shape
 interface Patient {
   id: string;
   name: string;
   created_at: string;
   goals: {
     objective?: string;
+    profile?: string;
   } | null;
 }
 
@@ -40,7 +43,15 @@ const DashboardRecentPatients: React.FC = () => {
           throw error;
         }
         
-        setRecentPatients(data || []);
+        // Transform the data to ensure type compatibility
+        const typedPatients: Patient[] = data?.map(patient => ({
+          id: patient.id,
+          name: patient.name,
+          created_at: patient.created_at,
+          goals: patient.goals as Patient['goals'] // Cast the JSON to our expected type
+        })) || [];
+        
+        setRecentPatients(typedPatients);
       } catch (error) {
         console.error('Error fetching recent patients:', error);
       } finally {
