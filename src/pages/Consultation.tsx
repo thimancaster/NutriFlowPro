@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import PatientHeader from '@/components/Anthropometry/PatientHeader';
+import ConsultationHeader from '@/components/ConsultationHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   activityFactors, 
@@ -18,6 +19,7 @@ import {
   calculateMacros 
 } from '@/utils/nutritionCalculations';
 import { Json } from '@/integrations/supabase/types';
+import { useConsultation } from '@/contexts/ConsultationContext';
 
 // Helper function to safely extract objective from goals
 const getObjectiveFromGoals = (goals: Json | null): string => {
@@ -37,8 +39,9 @@ const Consultation = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { activePatient, setActivePatient, consultationData, setConsultationData } = useConsultation();
   
-  const patientData = location.state?.patientData;
+  const patientData = location.state?.patientData || activePatient;
   const repeatConsultation = location.state?.repeatConsultation;
   
   const [patient, setPatient] = useState<any>(null);
@@ -63,6 +66,8 @@ const Consultation = () => {
     const fetchPatient = async () => {
       if (patientData) {
         setPatient(patientData);
+        setActivePatient(patientData);
+        
         if (patientData.birth_date) {
           const birthDate = new Date(patientData.birth_date);
           const today = new Date();
@@ -95,6 +100,7 @@ const Consultation = () => {
           if (error) throw error;
           
           setPatient(data);
+          setActivePatient(data);
           
           if (data.birth_date) {
             const birthDate = new Date(data.birth_date);
@@ -135,7 +141,7 @@ const Consultation = () => {
         activityLevel: repeatConsultation.activityLevel || 'moderado'
       }));
     }
-  }, [location, patientData, repeatConsultation, toast]);
+  }, [location, patientData, repeatConsultation, toast, setActivePatient]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -184,34 +190,30 @@ const Consultation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const consultationData = {
+    const consultationFormData = {
       ...formData,
       results
     };
     
-    console.log('Consultation data:', consultationData);
+    console.log('Consultation data:', consultationFormData);
+    
+    // Save consultation data to context
+    setConsultationData(consultationFormData);
     
     toast({
       title: "Consulta salva com sucesso",
       description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
     });
     
-    if (patient?.id) {
-      try {
-        // Here you would save the consultation to the database
-        // For now, we'll just navigate to the meal plan generator
-      } catch (error) {
-        console.error('Error saving consultation:', error);
-      }
-    }
-    
-    navigate('/meal-plan-generator', { state: { consultation: consultationData, patient } });
+    navigate('/meal-plan-generator');
   };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
+        <ConsultationHeader currentStep="consultation" />
+        
         <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Nova Consulta</h1>
         
         {patient && (

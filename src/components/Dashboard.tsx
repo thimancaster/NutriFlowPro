@@ -6,8 +6,10 @@ import DashboardRecentPatients from './DashboardRecentPatients';
 import DashboardQuickActions from './DashboardQuickActions';
 import DashboardTestimonials from './DashboardTestimonials';
 import UserInfoHeader from './UserInfoHeader';
+import ConsultationHeader from './ConsultationHeader';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useConsultation } from '@/contexts/ConsultationContext';
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -18,8 +20,14 @@ const LoadingFallback = () => (
 );
 
 const Dashboard = () => {
+  const { isConsultationActive } = useConsultation();
+  
   return (
     <div className="space-y-6">
+      {isConsultationActive && (
+        <ConsultationHeader />
+      )}
+      
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

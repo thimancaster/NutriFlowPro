@@ -1,88 +1,127 @@
+import React, { Suspense } from 'react';
+import {
+  HashRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Patients from './pages/Patients';
+import PatientHistory from './pages/PatientHistory';
+import Consultation from './pages/Consultation';
+import MealPlanGenerator from './pages/MealPlanGenerator';
+import Subscription from './pages/Subscription';
+import Pricing from './pages/Pricing';
+import Calculator from './pages/Calculator';
+import MealPlans from './pages/MealPlans';
+import Settings from './pages/Settings';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
+import { useAuth } from './contexts/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Calculator from "./pages/Calculator";
-import Patients from "./pages/Patients";
-import MealPlans from "./pages/MealPlans";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
-import Onboarding from "./pages/Onboarding";
-import Consultation from "./pages/Consultation";
-import MealPlanGenerator from "./pages/MealPlanGenerator";
-import PatientHistory from "./pages/PatientHistory";
-import PatientAnthropometry from "./pages/PatientAnthropometry";
-import Recursos from "./pages/Recursos";
-import AddTestimonial from "./pages/AddTestimonial";
-import Subscription from "./pages/Subscription";
-import Settings from "./pages/Settings";
-import { useEffect } from "react";
-import { seedTestimonials } from "./utils/seedTestimonials";
+// Add import for the ConsultationProvider
+import { ConsultationProvider } from './contexts/ConsultationContext';
 
-// Create a client with default options
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-const App = () => {
-  // Seed testimonials on app initialization
-  useEffect(() => {
-    seedTestimonials();
-  }, []);
+// Protected route component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen"><Skeleton className="w-20 h-20 rounded-full animate-pulse" /></div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>;
+}
+
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    
+    <HashRouter>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes - login, cadastro, recuperação de senha e página inicial */}
-              <Route path="/" element={<Index />} /> {/* Index will conditionally render LandingPage or Dashboard */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/recursos" element={<Recursos />} />
-              
-              {/* Protected Routes - Todas as funcionalidades do sistema requerem autenticação */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/calculator" element={<Calculator />} />
-                <Route path="/patients" element={<Patients />} />
-                <Route path="/meal-plans" element={<MealPlans />} />
-                <Route path="/add-testimonial" element={<AddTestimonial />} />
-                <Route path="/subscription" element={<Subscription />} />
+        <ConsultationProvider>
+          <QueryClientProvider client={queryClient}>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 
-                {/* Patient and Consultation Routes */}
-                <Route path="/patient-history/:patientId" element={<PatientHistory />} />
-                <Route path="/patient-anthropometry/:patientId" element={<PatientAnthropometry />} />
-                <Route path="/consultation" element={<Consultation />} />
-                <Route path="/meal-plan-generator" element={<MealPlanGenerator />} />
-                <Route path="/meal-plan/:consultationId" element={<Index />} /> {/* Placeholder */}
-                <Route path="/settings" element={<Settings />} />
-              </Route>
-
-              {/* Redirecionar qualquer rota desconhecida para login se não autenticado */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/patients" element={
+                  <ProtectedRoute>
+                    <Patients />
+                  </ProtectedRoute>
+                } />
+                <Route path="/patient-history/:patientId" element={
+                  <ProtectedRoute>
+                    <PatientHistory />
+                  </ProtectedRoute>
+                } />
+                <Route path="/consultation" element={
+                  <ProtectedRoute>
+                    <Consultation />
+                  </ProtectedRoute>
+                } />
+                <Route path="/meal-plan-generator" element={
+                  <ProtectedRoute>
+                    <MealPlanGenerator />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subscription" element={
+                  <ProtectedRoute>
+                    <Subscription />
+                  </ProtectedRoute>
+                } />
+                <Route path="/pricing" element={
+                  <ProtectedRoute>
+                    <Pricing />
+                  </ProtectedRoute>
+                } />
+                <Route path="/calculator" element={
+                  <ProtectedRoute>
+                    <Calculator />
+                  </ProtectedRoute>
+                } />
+                <Route path="/meal-plans" element={
+                  <ProtectedRoute>
+                    <MealPlans />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Redirect any unknown route to the homepage */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </ErrorBoundary>
+            <Toaster />
+          </QueryClientProvider>
+        </ConsultationProvider>
       </AuthProvider>
-    </QueryClientProvider>
+    </HashRouter>
+    
   );
-};
+}
 
 export default App;

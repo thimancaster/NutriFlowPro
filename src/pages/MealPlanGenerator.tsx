@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Save, FileText, Home, Calculator, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { FileText, Home, Calculator, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DEFAULT_MEAL_DISTRIBUTION, MEAL_NAMES, calculateMealDistribution } from '@/utils/mealPlanUtils';
 import PatientHeader from '@/components/Anthropometry/PatientHeader';
+import ConsultationHeader from '@/components/ConsultationHeader';
+import MealPlanActions from '@/components/MealPlanActions';
+import { useConsultation } from '@/contexts/ConsultationContext';
 
 interface MealDistribution {
   [key: string]: {
@@ -26,10 +29,8 @@ interface MealDistribution {
 
 const MealPlanGenerator = () => {
   const { toast } = useToast();
-  const location = useLocation();
   const navigate = useNavigate();
-  const consultationData = location.state?.consultation;
-  const patientData = location.state?.patient;
+  const { activePatient, consultationData, mealPlan, setMealPlan, saveMealPlan, saveConsultation } = useConsultation();
   
   // Ensure we have the data
   useEffect(() => {
@@ -39,11 +40,12 @@ const MealPlanGenerator = () => {
         description: "Por favor, complete uma consulta ou cálculo nutricional primeiro.",
         variant: "destructive",
       });
-      navigate('/calculator');
+      navigate('/consultation');
     }
   }, [consultationData, navigate, toast]);
 
   const [totalMealPercent, setTotalMealPercent] = useState(100);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Initial meal distribution based on our utility
   const initialDistribution: MealDistribution = {};
@@ -59,7 +61,9 @@ const MealPlanGenerator = () => {
     };
   });
 
-  const [mealDistribution, setMealDistribution] = useState<MealDistribution>(initialDistribution);
+  const [mealDistribution, setMealDistribution] = useState<MealDistribution>(
+    mealPlan ? mealPlan.mealDistribution as MealDistribution : initialDistribution
+  );
 
   // Calculate meal macros when distribution percentages or total macros change
   useEffect(() => {
@@ -69,7 +73,7 @@ const MealPlanGenerator = () => {
       mealKey => mealDistribution[mealKey].percent / 100
     );
     
-    const { meals } = calculateMealDistribution(
+    const { meals, totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealDistribution(
       consultationData.results.get, 
       consultationData.objective,
       distributionArray
@@ -91,7 +95,19 @@ const MealPlanGenerator = () => {
     
     setMealDistribution(updatedDistribution);
     
-  }, [consultationData]);
+    // Update the meal plan in the context
+    setMealPlan({
+      meals: Object.values(updatedDistribution),
+      mealDistribution: updatedDistribution,
+      total_calories: totalCalories,
+      total_protein: totalProtein,
+      total_carbs: totalCarbs,
+      total_fats: totalFats,
+      patient_id: activePatient?.id,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+  }, [consultationData, setMealPlan, activePatient]);
 
   // Update a specific meal's percentage
   const handleMealPercentChange = (mealKey: string, newValue: number[]) => {
@@ -120,6 +136,8 @@ const MealPlanGenerator = () => {
         key => updatedDistribution[key].percent / 100
       );
       
+      if (!consultationData) return prev;
+      
       // Recalculate macros for all meals
       const { meals } = calculateMealDistribution(
         consultationData.results.get, 
@@ -147,32 +165,58 @@ const MealPlanGenerator = () => {
     setTotalMealPercent(prev => prev + (newValue[0] - mealDistribution[mealKey].percent));
   };
 
-  const handleSaveMealPlan = () => {
-    // Here you would save the meal plan to your database
-    console.log('Saving meal plan:', { mealDistribution, consultationData, patientData });
-    
-    toast({
-      title: "Plano alimentar salvo",
-      description: "O plano alimentar foi salvo com sucesso."
-    });
-    
-    // Navigate to patient history or dashboard
-    if (patientData?.id) {
-      navigate(`/patient-history/${patientData.id}`);
-    } else {
-      navigate('/meal-plans');
+  const handleSaveMealPlan = async () => {
+    setIsSaving(true);
+    try {
+      // First save the consultation data
+      await saveConsultation();
+      
+      // Then save the meal plan
+      await saveMealPlan();
+      
+      toast({
+        title: "Plano alimentar salvo",
+        description: "O plano alimentar foi salvo com sucesso."
+      });
+      
+      // Navigate to patient history if we have a patient
+      if (activePatient?.id) {
+        navigate(`/patient-history/${activePatient.id}`);
+      } else {
+        navigate('/meal-plans');
+      }
+    } catch (error) {
+      console.error("Error saving meal plan:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar o plano alimentar.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   if (!consultationData) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 flex justify-center items-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-medium mb-2">Carregando dados da consulta...</h2>
+            <p className="text-gray-600">Aguarde enquanto processamos os dados.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
-  
-  const isFromCalculator = location.state?.source === 'calculator' || !location.state?.source;
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
+        <ConsultationHeader currentStep="meal-plan" />
+        
         {/* Breadcrumb Navigation */}
         <div className="flex items-center mb-4 text-sm text-gray-600">
           <Link to="/" className="flex items-center hover:text-nutri-blue transition-colors">
@@ -180,9 +224,9 @@ const MealPlanGenerator = () => {
             <span>Início</span>
           </Link>
           <ChevronRight className="h-3 w-3 mx-2" />
-          <Link to="/calculator" className="flex items-center hover:text-nutri-blue transition-colors">
+          <Link to="/consultation" className="flex items-center hover:text-nutri-blue transition-colors">
             <Calculator className="h-4 w-4 mr-1" />
-            <span>Calculadora</span>
+            <span>Consulta</span>
           </Link>
           <ChevronRight className="h-3 w-3 mx-2" />
           <span className="font-medium text-nutri-blue">Plano Alimentar</span>
@@ -197,32 +241,15 @@ const MealPlanGenerator = () => {
           </div>
           
           <div className="mt-4 md:mt-0">
-            <div className="flex gap-4">
-              <Button 
-                variant="outline" 
-                className="flex gap-2"
-                onClick={() => navigate(-1)}
-              >
-                <FileText className="h-4 w-4" />
-                Voltar
-              </Button>
-              
-              <Button 
-                className="bg-nutri-green hover:bg-nutri-green-dark flex gap-2"
-                onClick={handleSaveMealPlan}
-              >
-                <Save className="h-4 w-4" />
-                Salvar Plano
-              </Button>
-            </div>
+            <MealPlanActions onSave={handleSaveMealPlan} />
           </div>
         </div>
         
-        {patientData && (
+        {activePatient && (
           <PatientHeader 
-            patientName={patientData.name}
+            patientName={activePatient.name}
             patientAge={consultationData.age ? parseInt(consultationData.age) : undefined}
-            patientGender={patientData.gender}
+            patientGender={activePatient.gender}
             patientObjective={consultationData.objective}
           />
         )}
@@ -298,7 +325,7 @@ const MealPlanGenerator = () => {
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
                           <div 
                             className="bg-nutri-blue h-1.5 rounded-full" 
-                            style={{ width: `${(meal.protein * 4 * 100) / meal.calories}%` }}
+                            style={{ width: `${(meal.protein * 4 * 100) / (meal.calories || 1)}%` }}
                           ></div>
                         </div>
                         
@@ -309,7 +336,7 @@ const MealPlanGenerator = () => {
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
                           <div 
                             className="bg-nutri-green h-1.5 rounded-full" 
-                            style={{ width: `${(meal.carbs * 4 * 100) / meal.calories}%` }}
+                            style={{ width: `${(meal.carbs * 4 * 100) / (meal.calories || 1)}%` }}
                           ></div>
                         </div>
                         
@@ -320,7 +347,7 @@ const MealPlanGenerator = () => {
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
                           <div 
                             className="bg-amber-500 h-1.5 rounded-full" 
-                            style={{ width: `${(meal.fat * 9 * 100) / meal.calories}%` }}
+                            style={{ width: `${(meal.fat * 9 * 100) / (meal.calories || 1)}%` }}
                           ></div>
                         </div>
                       </div>
@@ -329,9 +356,9 @@ const MealPlanGenerator = () => {
                     <div className="pt-2 border-t border-gray-100">
                       <p className="text-sm font-medium mb-2">Sugestões de alimentos:</p>
                       <ul className="text-sm space-y-1">
-                        {meal.suggestions.map((suggestion, idx) => (
+                        {meal.suggestions?.map((suggestion, idx) => (
                           <li key={idx} className="text-gray-600">• {suggestion}</li>
-                        ))}
+                        )) || <li className="text-gray-500">Nenhuma sugestão disponível</li>}
                       </ul>
                     </div>
                   </div>
@@ -339,6 +366,16 @@ const MealPlanGenerator = () => {
               </Card>
             );
           })}
+        </div>
+        
+        <div className="mt-8 flex justify-end">
+          <Button 
+            onClick={handleSaveMealPlan}
+            className="bg-nutri-green hover:bg-nutri-green-dark"
+            disabled={isSaving}
+          >
+            {isSaving ? "Salvando..." : "Salvar e Finalizar Plano"}
+          </Button>
         </div>
       </div>
     </div>
