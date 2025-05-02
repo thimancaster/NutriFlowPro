@@ -4,7 +4,7 @@ import { BackButton } from '@/components/ui/back-button';
 import MealPlanActions from '@/components/MealPlanActions';
 
 interface MealPlanHeaderProps {
-  onSave: () => void;
+  onSave: () => Promise<void>; // Changed to Promise<void> to match the expected type
 }
 
 const MealPlanHeader = ({ onSave }: MealPlanHeaderProps) => {

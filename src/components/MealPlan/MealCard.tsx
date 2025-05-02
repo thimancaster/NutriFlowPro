@@ -3,6 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { MealDistributionItem } from '@/types';
+import FoodSuggestionList from './FoodSuggestionList';
+import MealCardMacros from './MealCardMacros';
 
 interface MealCardProps {
   mealKey: string;
@@ -42,48 +44,18 @@ const MealCard = ({ mealKey, meal, onPercentChange }: MealCardProps) => {
               <span className="font-medium">{meal.calories} kcal</span>
             </div>
             
-            <div className="space-y-2 mt-3">
-              <div className="flex justify-between text-xs">
-                <span>Proteínas</span>
-                <span>{meal.protein}g</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className="bg-nutri-blue h-1.5 rounded-full" 
-                  style={{ width: `${(meal.protein * 4 * 100) / (meal.calories || 1)}%` }}
-                ></div>
-              </div>
-              
-              <div className="flex justify-between text-xs">
-                <span>Carboidratos</span>
-                <span>{meal.carbs}g</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className="bg-nutri-green h-1.5 rounded-full" 
-                  style={{ width: `${(meal.carbs * 4 * 100) / (meal.calories || 1)}%` }}
-                ></div>
-              </div>
-              
-              <div className="flex justify-between text-xs">
-                <span>Gorduras</span>
-                <span>{meal.fat}g</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className="bg-amber-500 h-1.5 rounded-full" 
-                  style={{ width: `${(meal.fat * 9 * 100) / (meal.calories || 1)}%` }}
-                ></div>
-              </div>
-            </div>
+            <MealCardMacros 
+              protein={meal.protein} 
+              carbs={meal.carbs} 
+              fat={meal.fat} 
+              calories={meal.calories} 
+            />
           </div>
           
           <div className="pt-2 border-t border-gray-100">
             <p className="text-sm font-medium mb-2">Sugestões de alimentos:</p>
             <ul className="text-sm space-y-1">
-              {meal.suggestions?.map((suggestion, idx) => (
-                <li key={idx} className="text-gray-600">• {suggestion}</li>
-              )) || <li className="text-gray-500">Nenhuma sugestão disponível</li>}
+              <FoodSuggestionList suggestions={meal.suggestions || []} />
             </ul>
           </div>
         </div>
