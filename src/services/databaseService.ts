@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MealPlan, Patient, ConsultationData } from "@/types";
+import { Json } from "@/integrations/supabase/types";
 
 /**
  * Service to handle all database interactions
@@ -22,7 +23,8 @@ export const DatabaseService = {
       
       const patientData = {
         ...patient,
-        user_id: userId
+        user_id: userId,
+        name: patient.name // Explicitly include name to satisfy TypeScript
       };
       
       const { data, error } = await supabase
@@ -156,13 +158,16 @@ export const DatabaseService = {
         throw new Error('Missing required data for saving meal plan');
       }
       
+      // Convert MealData[] to Json before inserting
+      const mealsAsJson = JSON.parse(JSON.stringify(mealPlan.meals)) as Json;
+      
       const { data, error } = await supabase
         .from('meal_plans')
         .insert({
           user_id: userId,
           patient_id: patientId,
           consultation_id: consultationId,
-          meals: mealPlan.meals,
+          meals: mealsAsJson,
           total_calories: mealPlan.total_calories || 0,
           total_protein: mealPlan.total_protein || 0,
           total_carbs: mealPlan.total_carbs || 0,
@@ -240,9 +245,29 @@ export const DatabaseService = {
         throw error;
       }
       
+      // Transform data to match MealPlan type
+      const mealPlans: MealPlan[] = data?.map(item => {
+        // Convert Json meals back to MealData[]
+        const meals = item.meals as unknown as MealPlan['meals'];
+        
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          patient_id: item.patient_id,
+          date: item.date,
+          meals: meals,
+          total_calories: item.total_calories,
+          total_protein: item.total_protein,
+          total_carbs: item.total_carbs,
+          total_fats: item.total_fats,
+          created_at: item.created_at,
+          updated_at: item.updated_at
+        };
+      }) || [];
+      
       return {
         success: true,
-        data: data as MealPlan[]
+        data: mealPlans
       };
     } catch (error: any) {
       console.error('Error getting patient meal plans:', error);
