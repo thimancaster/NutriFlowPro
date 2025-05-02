@@ -5,10 +5,35 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const DashboardQuickActions: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { isPremiumUser, isLoading: subscriptionLoading } = useUserSubscription();
+  
+  // Get patient count to show accurate usage information
+  const { data: patientCount, isLoading: countLoading } = useQuery({
+    queryKey: ['patientCount', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      
+      const { count, error } = await supabase
+        .from('patients')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user,
+    staleTime: 60000 // Cache for 1 minute
+  });
   
   const handleUpgrade = () => {
     navigate('/subscription');
@@ -65,17 +90,36 @@ const DashboardQuickActions: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span>Plano:</span>
-              <span className="bg-gradient-to-r from-blue-400 to-blue-500 px-2 py-0.5 rounded-full text-sm text-white">Freemium</span>
+              {subscriptionLoading ? (
+                <Skeleton className="h-6 w-24" />
+              ) : (
+                <span className={`px-2 py-0.5 rounded-full text-sm text-white ${
+                  isPremiumUser ? 'bg-gradient-to-r from-blue-400 to-blue-500' : 'bg-gray-400'
+                }`}>
+                  {isPremiumUser ? 'Premium' : 'Freemium'}
+                </span>
+              )}
             </div>
             <div className="flex justify-between">
               <span>Pacientes Permitidos:</span>
-              <span className="font-medium">10/10</span>
+              {countLoading ? (
+                <Skeleton className="h-6 w-16" />
+              ) : (
+                <span className="font-medium">
+                  {isPremiumUser ? `${patientCount}/∞` : `${patientCount}/10`}
+                </span>
+              )}
             </div>
             <Button 
-              className="w-full mt-3 bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90"
+              className={`w-full mt-3 ${
+                isPremiumUser 
+                  ? 'bg-green-500 hover:bg-green-600' 
+                  : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'
+              }`}
               onClick={handleUpgrade}
             >
-              <Star className="h-4 w-4 mr-2" /> Atualizar para Pro
+              <Star className="h-4 w-4 mr-2" /> 
+              {isPremiumUser ? 'Gerenciar Assinatura' : 'Atualizar para Pro'}
             </Button>
           </div>
         </CardContent>

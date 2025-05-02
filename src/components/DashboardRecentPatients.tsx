@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, parseISO } from 'date-fns';
-import { Database } from '@/integrations/supabase/types';
 
 // Define a more specific type for the goals property based on your data shape
 interface Patient {
@@ -23,44 +23,37 @@ interface Patient {
 const DashboardRecentPatients: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
   
-  // Fetch recent patients from Supabase
-  useEffect(() => {
-    const fetchRecentPatients = async () => {
-      if (!user) return;
+  // Use React Query for better caching and loading states
+  const { data: recentPatients, isLoading } = useQuery({
+    queryKey: ['recentPatients', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
       
-      try {
-        const { data, error } = await supabase
-          .from('patients')
-          .select('id, name, created_at, goals')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(3);
+      const { data, error } = await supabase
+        .from('patients')
+        .select('id, name, created_at, goals')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
           
-        if (error) {
-          throw error;
-        }
-        
-        // Transform the data to ensure type compatibility
-        const typedPatients: Patient[] = data?.map(patient => ({
-          id: patient.id,
-          name: patient.name,
-          created_at: patient.created_at,
-          goals: patient.goals as Patient['goals'] // Cast the JSON to our expected type
-        })) || [];
-        
-        setRecentPatients(typedPatients);
-      } catch (error) {
-        console.error('Error fetching recent patients:', error);
-      } finally {
-        setLoading(false);
+      if (error) {
+        throw error;
       }
-    };
-    
-    fetchRecentPatients();
-  }, [user]);
+        
+      // Transform the data to ensure type compatibility
+      const typedPatients: Patient[] = data?.map(patient => ({
+        id: patient.id,
+        name: patient.name,
+        created_at: patient.created_at,
+        goals: patient.goals as Patient['goals'] // Cast the JSON to our expected type
+      })) || [];
+        
+      return typedPatients;
+    },
+    enabled: !!user,
+    staleTime: 60000, // Cache for 1 minute
+  });
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -99,12 +92,12 @@ const DashboardRecentPatients: React.FC = () => {
         <CardDescription>Gerencie seus pacientes recentes e consultados recentemente</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center items-center py-6">
             <Loader2 className="h-6 w-6 animate-spin text-nutri-blue" />
             <span className="ml-2 text-nutri-blue">Carregando pacientes...</span>
           </div>
-        ) : recentPatients.length > 0 ? (
+        ) : recentPatients && recentPatients.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
