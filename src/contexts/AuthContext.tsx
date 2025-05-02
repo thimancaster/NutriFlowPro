@@ -12,6 +12,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isPremium: boolean;
+  loading: boolean; // Added this property to match the usage in ProtectedRoute
 }
 
 interface AuthContextType extends AuthState {
@@ -29,7 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session: null,
     isAuthenticated: false,
     isLoading: true,
-    isPremium: false
+    isPremium: false,
+    loading: true // Initialize loading as true
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -52,7 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session,
       isAuthenticated: !!session,
       isLoading: false,
-      isPremium
+      isPremium,
+      loading: false // Update loading state
     });
 
     // Invalidate subscription data when auth state changes
@@ -98,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error("Error checking session:", error);
         if (isMounted) {
-          setAuthState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
+          setAuthState(prev => ({ ...prev, isLoading: false, loading: false, isAuthenticated: false }));
         }
       }
     };
