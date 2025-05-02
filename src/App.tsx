@@ -22,6 +22,8 @@ import Recursos from "./pages/Recursos";
 import AddTestimonial from "./pages/AddTestimonial";
 import Subscription from "./pages/Subscription";
 import Settings from "./pages/Settings";
+import { useEffect } from "react";
+import { seedTestimonials } from "./utils/seedTestimonials";
 
 // Create a client with default options
 const queryClient = new QueryClient({
@@ -35,6 +37,11 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // Seed testimonials on app initialization
+  useEffect(() => {
+    seedTestimonials();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
