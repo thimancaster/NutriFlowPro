@@ -19,6 +19,7 @@ interface AuthContextType extends AuthState {
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: Error }>;
   logout: () => Promise<{ success: boolean; error?: Error }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: Error }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: Error }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -279,12 +280,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // New method for Google authentication
+  const signInWithGoogle = async () => {
+    try {
+      console.log("Iniciando login com Google...");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/#/dashboard`,
+        }
+      });
+      
+      if (error) throw error;
+      
+      console.log("Redirecionando para autenticação Google...", data);
+      return { success: true };
+    } catch (error: any) {
+      console.error("Erro ao fazer login com Google:", error.message);
+      toast({
+        title: "Erro ao fazer login com Google",
+        description: error.message || "Não foi possível conectar com o Google. Tente novamente.",
+        variant: "destructive"
+      });
+      return { success: false, error };
+    }
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     login,
     signup,
     logout,
-    resetPassword
+    resetPassword,
+    signInWithGoogle
   };
 
   return (

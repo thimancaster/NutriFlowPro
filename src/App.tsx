@@ -30,6 +30,7 @@ import PatientAnthropometry from './pages/PatientAnthropometry';
 import Index from './pages/Index';
 import AddTestimonial from './pages/AddTestimonial';
 import { seedTestimonials } from './utils/seedTestimonials';
+import { supabase } from './integrations/supabase/client';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -46,6 +47,55 @@ function App() {
   useEffect(() => {
     console.log('App loaded, seeding testimonials...');
     seedTestimonials();
+  }, []);
+
+  // Handle auth state changes, especially for OAuth providers like Google
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change event:", event);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log("User signed in:", session.user);
+        
+        // Check if we need to create a user profile
+        if (session.user.app_metadata.provider === 'google') {
+          try {
+            console.log("Checking if user profile exists for Google user...");
+            const { data: existingUser, error: checkError } = await supabase
+              .from('users')
+              .select('id')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (checkError || !existingUser) {
+              // Create user profile for Google user
+              console.log("Creating profile for Google user...");
+              const { error: profileError } = await supabase
+                .from('users')
+                .insert([{
+                  id: session.user.id,
+                  email: session.user.email,
+                  name: session.user.user_metadata.full_name || session.user.user_metadata.name || 'Usuário Google'
+                }]);
+                
+              if (profileError) {
+                console.error("Error creating user profile:", profileError);
+              } else {
+                console.log("Successfully created profile for Google user");
+              }
+            } else {
+              console.log("User profile already exists for Google user");
+            }
+          } catch (error) {
+            console.error("Error handling Google sign-in:", error);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
