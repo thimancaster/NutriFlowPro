@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { forceSeedTestimonials } from '@/utils/seedTestimonials';
 
 interface Testimonial {
   id: string;
@@ -20,9 +21,10 @@ const DashboardTestimonials: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: testimonials, isLoading, error } = useQuery<Testimonial[]>({
+  const { data: testimonials, isLoading, error, refetch } = useQuery<Testimonial[]>({
     queryKey: ['testimonials'],
     queryFn: async () => {
+      console.log('Fetching testimonials...');
       const { data, error } = await supabase
         .from('testimonials')
         .select('*')
@@ -34,14 +36,38 @@ const DashboardTestimonials: React.FC = () => {
         throw new Error('Erro ao carregar depoimentos');
       }
 
+      console.log('Testimonials fetched:', data?.length || 0);
       return data || [];
     },
     retry: 3,
     staleTime: 60000, // 1 minute
   });
 
+  useEffect(() => {
+    // Log testimonials count when component mounts or testimonials changes
+    console.log('Testimonials in component:', testimonials?.length || 0);
+  }, [testimonials]);
+
   const handleAddTestimonial = () => {
     navigate('/add-testimonial');
+  };
+
+  const handleForceSeed = async () => {
+    try {
+      await forceSeedTestimonials();
+      toast({
+        title: 'Depoimentos adicionados',
+        description: 'Os depoimentos de exemplo foram adicionados com sucesso.',
+      });
+      refetch(); // Refresh the testimonials data
+    } catch (error) {
+      console.error('Error forcing seed testimonials:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível adicionar os depoimentos de exemplo.',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (error) {
@@ -51,8 +77,9 @@ const DashboardTestimonials: React.FC = () => {
           <CardTitle>Depoimentos</CardTitle>
           <CardDescription>Não foi possível carregar os depoimentos</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button onClick={() => window.location.reload()}>Tentar novamente</Button>
+        <CardContent className="space-y-4">
+          <Button onClick={() => refetch()}>Tentar novamente</Button>
+          <Button variant="outline" onClick={handleForceSeed}>Adicionar depoimentos de exemplo</Button>
         </CardContent>
       </Card>
     );
@@ -113,13 +140,20 @@ const DashboardTestimonials: React.FC = () => {
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">Nenhum depoimento encontrado</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={handleAddTestimonial}
-            >
-              Seja o primeiro a deixar um depoimento
-            </Button>
+            <div className="space-x-4 mt-4">
+              <Button 
+                variant="outline" 
+                onClick={handleAddTestimonial}
+              >
+                Seja o primeiro a deixar um depoimento
+              </Button>
+              <Button 
+                variant="default"
+                onClick={handleForceSeed}
+              >
+                Adicionar depoimentos de exemplo
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

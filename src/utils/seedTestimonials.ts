@@ -67,7 +67,9 @@ const testimonials = [
 
 // Function to insert testimonials to the database
 export const seedTestimonials = async () => {
+  console.log('Attempting to seed testimonials...');
   try {
+    // First check if there are any testimonials in the table
     const { data: existingTestimonials, error: countError } = await supabase
       .from('testimonials')
       .select('id');
@@ -77,21 +79,52 @@ export const seedTestimonials = async () => {
       return;
     }
     
-    // Only seed if no testimonials exist
-    if (existingTestimonials && existingTestimonials.length === 0) {
-      const { error } = await supabase
+    // Seed if no testimonials exist or if the table is empty
+    if (!existingTestimonials || existingTestimonials.length === 0) {
+      console.log('No testimonials found, seeding the table...');
+      const { data, error } = await supabase
         .from('testimonials')
         .insert(testimonials);
         
       if (error) {
         console.error('Error seeding testimonials:', error);
       } else {
-        console.log('Successfully seeded 10 testimonials');
+        console.log('Successfully seeded testimonials, count:', testimonials.length);
       }
     } else {
-      console.log('Testimonials already exist, skipping seeding');
+      console.log('Testimonials already exist, count:', existingTestimonials.length);
     }
   } catch (error) {
     console.error('Error in seedTestimonials:', error);
+  }
+};
+
+// Function to force seed testimonials (for manual call if needed)
+export const forceSeedTestimonials = async () => {
+  console.log('Force seeding testimonials...');
+  try {
+    // Delete existing testimonials first
+    const { error: deleteError } = await supabase
+      .from('testimonials')
+      .delete()
+      .gte('id', '0'); // This will delete all rows
+    
+    if (deleteError) {
+      console.error('Error deleting existing testimonials:', deleteError);
+      return;
+    }
+    
+    // Insert new testimonials
+    const { data, error } = await supabase
+      .from('testimonials')
+      .insert(testimonials);
+      
+    if (error) {
+      console.error('Error force seeding testimonials:', error);
+    } else {
+      console.log('Successfully force seeded testimonials');
+    }
+  } catch (error) {
+    console.error('Error in forceSeedTestimonials:', error);
   }
 };

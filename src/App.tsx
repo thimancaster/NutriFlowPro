@@ -44,6 +44,7 @@ const queryClient = new QueryClient({
 function App() {
   // Seed testimonials when the app loads
   useEffect(() => {
+    console.log('App loaded, seeding testimonials...');
     seedTestimonials();
   }, []);
 
