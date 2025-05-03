@@ -38,7 +38,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <ConsultationHeader />
+              <ConsultationHeader currentStep="dashboard" />
             </motion.div>
           )}
           

@@ -25,7 +25,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {isConsultationActive && (
-        <ConsultationHeader />
+        <ConsultationHeader currentStep="dashboard" />
       )}
       
       <motion.div

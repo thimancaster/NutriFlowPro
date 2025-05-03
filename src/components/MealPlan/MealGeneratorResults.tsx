@@ -11,6 +11,9 @@ import { MealPlanSettings } from '@/utils/mealGeneratorUtils';
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
+    lastAutoTable?: {
+      finalY: number;
+    };
   }
 }
 
@@ -56,7 +59,7 @@ const MealGeneratorResults: React.FC<MealGeneratorResultsProps> = ({ mealPlan, s
     });
     
     // Add each meal
-    let yPosition = doc.autoTable.previous.finalY + 20;
+    let yPosition = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 20 : 100;
     
     mealPlan.meals.forEach((meal: any, index: number) => {
       // Add new page if needed
@@ -84,7 +87,7 @@ const MealGeneratorResults: React.FC<MealGeneratorResultsProps> = ({ mealPlan, s
         tableWidth: 80
       });
       
-      yPosition = doc.autoTable.previous.finalY + 10;
+      yPosition = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : yPosition + 50;
       
       if (meal.foodSuggestions && meal.foodSuggestions.length > 0) {
         doc.setFontSize(12);

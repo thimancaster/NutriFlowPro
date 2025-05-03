@@ -6,10 +6,10 @@ import StepIndicator from '@/components/StepWizard/StepIndicator';
 import { useConsultation } from '@/contexts/ConsultationContext';
 
 interface ConsultationHeaderProps {
-  currentStep: string;
+  currentStep?: string; // Making currentStep optional
 }
 
-const ConsultationHeader = ({ currentStep }: ConsultationHeaderProps) => {
+const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderProps) => {
   const navigate = useNavigate();
   const { activePatient } = useConsultation();
 
