@@ -1,23 +1,53 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Home, Calculator, ChevronRight } from 'lucide-react';
+import { Home, ChevronRight } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { useConsultation } from '@/contexts/ConsultationContext';
 
 const BreadcrumbNav = () => {
+  const location = useLocation();
+  const { activePatient } = useConsultation();
+  
+  // Determine current page
+  let currentPage = 'Plano Alimentar';
+  let pathSegments = [
+    { name: 'Início', path: '/', icon: <Home className="h-4 w-4" /> },
+    { name: 'Pacientes', path: '/patients' }
+  ];
+  
+  if (location.pathname.includes('meal-plan-generator')) {
+    currentPage = 'Plano Alimentar';
+    pathSegments = [
+      ...pathSegments,
+      { name: 'Consulta', path: '/consultation' },
+      { name: currentPage, path: '/meal-plan-generator' }
+    ];
+  } else if (location.pathname.includes('patient-history')) {
+    currentPage = activePatient?.name || 'Paciente';
+    pathSegments = [
+      ...pathSegments,
+      { name: currentPage, path: `/patient-history/${activePatient?.id}` }
+    ];
+  }
+  
   return (
-    <div className="flex items-center mb-4 text-sm text-gray-600">
-      <Link to="/" className="flex items-center hover:text-nutri-blue transition-colors">
-        <Home className="h-4 w-4 mr-1" />
-        <span>Início</span>
-      </Link>
-      <ChevronRight className="h-3 w-3 mx-2" />
-      <Link to="/consultation" className="flex items-center hover:text-nutri-blue transition-colors">
-        <Calculator className="h-4 w-4 mr-1" />
-        <span>Consulta</span>
-      </Link>
-      <ChevronRight className="h-3 w-3 mx-2" />
-      <span className="font-medium text-nutri-blue">Plano Alimentar</span>
-    </div>
+    <nav className="flex items-center text-sm text-gray-500 mb-4">
+      {pathSegments.map((segment, index) => (
+        <React.Fragment key={index}>
+          <Link 
+            to={segment.path} 
+            className="flex items-center hover:text-nutri-blue transition-colors"
+          >
+            {segment.icon && <span className="mr-1">{segment.icon}</span>}
+            {segment.name}
+          </Link>
+          
+          {index < pathSegments.length - 1 && (
+            <ChevronRight className="h-3 w-3 mx-2 text-gray-400" />
+          )}
+        </React.Fragment>
+      ))}
+    </nav>
   );
 };
 

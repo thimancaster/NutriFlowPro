@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import PatientHeader from '@/components/Anthropometry/PatientHeader';
-import ConsultationHeader from '@/components/ConsultationHeader';
+import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   activityFactors, 
@@ -214,243 +214,257 @@ const Consultation = () => {
     navigate('/meal-plan-generator');
   };
   
+  const handleNext = () => {
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
+  
+  const handleBack = () => {
+    navigate('/patients');
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <ConsultationHeader currentStep="consultation" />
-        
-        <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Nova Consulta</h1>
-        
-        {patient && (
-          <PatientHeader 
-            patientName={patient.name}
-            patientAge={formData.age ? parseInt(formData.age) : undefined}
-            patientGender={patient.gender}
-            patientObjective={formData.objective}
-          />
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <Card className="nutri-card shadow-lg border-none">
-              <CardHeader>
-                <CardTitle>Dados da Consulta</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Peso (kg)*</Label>
-                    <Input
-                      id="weight"
-                      name="weight"
-                      type="number"
-                      step="0.1"
-                      min="30"
-                      max="300"
-                      value={formData.weight}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="height">Altura (cm)*</Label>
-                    <Input
-                      id="height"
-                      name="height"
-                      type="number"
-                      step="1"
-                      min="100"
-                      max="250"
-                      value={formData.height}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Idade (anos)*</Label>
-                    <Input
-                      id="age"
-                      name="age"
-                      type="number"
-                      step="1"
-                      min="1"
-                      max="120"
-                      value={formData.age}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Sexo*</Label>
-                    <RadioGroup 
-                      value={formData.sex} 
-                      onValueChange={(value) => handleSelectChange('sex', value)}
-                      className="flex gap-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="M" id="sex-m" />
-                        <Label htmlFor="sex-m">Masculino</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="F" id="sex-f" />
-                        <Label htmlFor="sex-f">Feminino</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="objective">Objetivo*</Label>
-                    <Select 
-                      value={formData.objective} 
-                      onValueChange={(value) => handleSelectChange('objective', value)}
-                    >
-                      <SelectTrigger id="objective">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
-                        <SelectItem value="manutenção">Manutenção</SelectItem>
-                        <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Perfil*</Label>
-                    <RadioGroup 
-                      value={formData.profile} 
-                      onValueChange={(value) => handleSelectChange('profile', value)}
-                      className="flex flex-col space-y-1"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="magro" id="profile-magro" />
-                        <Label htmlFor="profile-magro">Magro</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="obeso" id="profile-obeso" />
-                        <Label htmlFor="profile-obeso">Obeso</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="atleta" id="profile-atleta" />
-                        <Label htmlFor="profile-atleta">Atleta</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="activityLevel">Nível de Atividade*</Label>
-                    <Select 
-                      value={formData.activityLevel} 
-                      onValueChange={(value) => handleSelectChange('activityLevel', value)}
-                    >
-                      <SelectTrigger id="activityLevel">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sedentário">Sedentário</SelectItem>
-                        <SelectItem value="moderado">Moderado</SelectItem>
-                        <SelectItem value="alto">Alto</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-nutri-green hover:bg-nutri-green-dark"
-                    >
-                      Gerar Plano Alimentar
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+        <ConsultationWizard 
+          currentStep={1} 
+          onNext={handleNext} 
+          onBack={handleBack}
+          canGoNext={formData.weight && formData.height && formData.age ? true : false}
+          nextButtonLabel="Gerar Plano Alimentar"
+        >
+          <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Nova Consulta</h1>
           
-          <div className="md:col-span-2">
-            <Card className="nutri-card shadow-lg border-none">
-              <CardHeader>
-                <CardTitle>Resultados do Cálculo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                  <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
-                    <h3 className="text-sm text-gray-500 mb-1">Taxa Metabólica Basal</h3>
-                    <p className="text-3xl font-bold text-nutri-blue">{results.tmb}</p>
-                    <p className="text-sm text-gray-500">kcal/dia</p>
+          {patient && (
+            <PatientHeader 
+              patientName={patient.name}
+              patientAge={formData.age ? parseInt(formData.age) : undefined}
+              patientGender={patient.gender}
+              patientObjective={formData.objective}
+            />
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-1">
+              <Card className="nutri-card shadow-lg border-none">
+                <CardHeader>
+                  <CardTitle>Dados da Consulta</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="weight">Peso (kg)*</Label>
+                      <Input
+                        id="weight"
+                        name="weight"
+                        type="number"
+                        step="0.1"
+                        min="30"
+                        max="300"
+                        value={formData.weight}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="height">Altura (cm)*</Label>
+                      <Input
+                        id="height"
+                        name="height"
+                        type="number"
+                        step="1"
+                        min="100"
+                        max="250"
+                        value={formData.height}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="age">Idade (anos)*</Label>
+                      <Input
+                        id="age"
+                        name="age"
+                        type="number"
+                        step="1"
+                        min="1"
+                        max="120"
+                        value={formData.age}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Sexo*</Label>
+                      <RadioGroup 
+                        value={formData.sex} 
+                        onValueChange={(value) => handleSelectChange('sex', value)}
+                        className="flex gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="M" id="sex-m" />
+                          <Label htmlFor="sex-m">Masculino</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="F" id="sex-f" />
+                          <Label htmlFor="sex-f">Feminino</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="objective">Objetivo*</Label>
+                      <Select 
+                        value={formData.objective} 
+                        onValueChange={(value) => handleSelectChange('objective', value)}
+                      >
+                        <SelectTrigger id="objective">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                          <SelectItem value="manutenção">Manutenção</SelectItem>
+                          <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Perfil*</Label>
+                      <RadioGroup 
+                        value={formData.profile} 
+                        onValueChange={(value) => handleSelectChange('profile', value)}
+                        className="flex flex-col space-y-1"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="magro" id="profile-magro" />
+                          <Label htmlFor="profile-magro">Magro</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="obeso" id="profile-obeso" />
+                          <Label htmlFor="profile-obeso">Obeso</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="atleta" id="profile-atleta" />
+                          <Label htmlFor="profile-atleta">Atleta</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="activityLevel">Nível de Atividade*</Label>
+                      <Select 
+                        value={formData.activityLevel} 
+                        onValueChange={(value) => handleSelectChange('activityLevel', value)}
+                      >
+                        <SelectTrigger id="activityLevel">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sedentário">Sedentário</SelectItem>
+                          <SelectItem value="moderado">Moderado</SelectItem>
+                          <SelectItem value="alto">Alto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="pt-4">
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-nutri-green hover:bg-nutri-green-dark"
+                      >
+                        Gerar Plano Alimentar
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="md:col-span-2">
+              <Card className="nutri-card shadow-lg border-none">
+                <CardHeader>
+                  <CardTitle>Resultados do Cálculo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
+                      <h3 className="text-sm text-gray-500 mb-1">Taxa Metabólica Basal</h3>
+                      <p className="text-3xl font-bold text-nutri-blue">{results.tmb}</p>
+                      <p className="text-sm text-gray-500">kcal/dia</p>
+                    </div>
+                    
+                    <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
+                      <h3 className="text-sm text-gray-500 mb-1">Fator de Atividade</h3>
+                      <p className="text-3xl font-bold text-nutri-green">{results.fa}</p>
+                    </div>
+                    
+                    <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
+                      <h3 className="text-sm text-gray-500 mb-1">Gasto Energético Total</h3>
+                      <p className="text-3xl font-bold text-purple-600">{results.get}</p>
+                      <p className="text-sm text-gray-500">kcal/dia</p>
+                    </div>
                   </div>
                   
-                  <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
-                    <h3 className="text-sm text-gray-500 mb-1">Fator de Atividade</h3>
-                    <p className="text-3xl font-bold text-nutri-green">{results.fa}</p>
-                  </div>
+                  <h3 className="font-medium text-lg mb-4">Distribuição de Macronutrientes</h3>
                   
-                  <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
-                    <h3 className="text-sm text-gray-500 mb-1">Gasto Energético Total</h3>
-                    <p className="text-3xl font-bold text-purple-600">{results.get}</p>
-                    <p className="text-sm text-gray-500">kcal/dia</p>
-                  </div>
-                </div>
-                
-                <h3 className="font-medium text-lg mb-4">Distribuição de Macronutrientes</h3>
-                
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">Proteínas</span>
-                      <span className="font-medium">{results.macros.protein}g</span>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium">Proteínas</span>
+                        <span className="font-medium">{results.macros.protein}g</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-nutri-blue h-2.5 rounded-full" 
+                          style={{ width: `${Math.min(100, (results.macros.protein * 100) / (results.macros.protein + results.macros.carbs + results.macros.fat))}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {Math.round((results.macros.protein * 4 * 100) / results.get)}% do total de calorias
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-nutri-blue h-2.5 rounded-full" 
-                        style={{ width: `${Math.min(100, (results.macros.protein * 100) / (results.macros.protein + results.macros.carbs + results.macros.fat))}%` }}
-                      ></div>
+                    
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium">Carboidratos</span>
+                        <span className="font-medium">{results.macros.carbs}g</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-nutri-green h-2.5 rounded-full" 
+                          style={{ width: `${Math.min(100, (results.macros.carbs * 100) / (results.macros.protein + results.macros.carbs + results.macros.fat))}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {Math.round((results.macros.carbs * 4 * 100) / results.get)}% do total de calorias
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {Math.round((results.macros.protein * 4 * 100) / results.get)}% do total de calorias
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">Carboidratos</span>
-                      <span className="font-medium">{results.macros.carbs}g</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-nutri-green h-2.5 rounded-full" 
-                        style={{ width: `${Math.min(100, (results.macros.carbs * 100) / (results.macros.protein + results.macros.carbs + results.macros.fat))}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {Math.round((results.macros.carbs * 4 * 100) / results.get)}% do total de calorias
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">Gorduras</span>
-                      <span className="font-medium">{results.macros.fat}g</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-amber-500 h-2.5 rounded-full" 
-                        style={{ width: `${Math.min(100, (results.macros.fat * 100) / (results.macros.protein + results.macros.carbs + results.macros.fat))}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {Math.round((results.macros.fat * 9 * 100) / results.get)}% do total de calorias
+                    
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium">Gorduras</span>
+                        <span className="font-medium">{results.macros.fat}g</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-amber-500 h-2.5 rounded-full" 
+                          style={{ width: `${Math.min(100, (results.macros.fat * 100) / (results.macros.protein + results.macros.carbs + results.macros.fat))}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {Math.round((results.macros.fat * 9 * 100) / results.get)}% do total de calorias
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        </ConsultationWizard>
       </div>
     </div>
   );

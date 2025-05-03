@@ -2,15 +2,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useConsultation } from '@/contexts/ConsultationContext';
-import { BackButton } from '@/components/ui/back-button';
-import PatientHeader from '@/components/Anthropometry/PatientHeader';
 import { useMealPlanState } from '@/hooks/useMealPlanState';
-import NutritionSummary from '@/components/MealPlan/NutritionSummary';
-import BreadcrumbNav from '@/components/MealPlan/BreadcrumbNav';
-import MealCard from '@/components/MealPlan/MealCard';
+import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import MealPlanGeneratorUI from '@/components/MealPlan/MealPlanGeneratorUI';
 import { ConsultationData as AppConsultationData, Patient as AppPatient, MealPlan as AppMealPlan } from '@/types';
 
@@ -67,21 +62,36 @@ const MealPlanGenerator = () => {
     );
   }
   
+  const handleBack = () => {
+    navigate('/consultation');
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
-      <MealPlanGeneratorUI
-        activePatient={{
-          name: activePatient?.name || '',
-          gender: activePatient?.gender || ''
-        }}
-        consultationData={consultationData as AppConsultationData}
-        mealDistribution={mealDistribution}
-        totalMealPercent={totalMealPercent}
-        isSaving={isSaving}
-        handleMealPercentChange={handleMealPercentChange}
-        handleSaveMealPlan={handleSaveMealPlan}
-      />
+      <div className="container mx-auto px-4 py-8">
+        <ConsultationWizard 
+          currentStep={2}
+          onBack={handleBack}
+          onNext={handleSaveMealPlan}
+          canGoNext={totalMealPercent === 100}
+          nextButtonLabel="Salvar e Finalizar Plano"
+          canGoBack={true}
+        >
+          <MealPlanGeneratorUI
+            activePatient={{
+              name: activePatient?.name || '',
+              gender: activePatient?.gender || ''
+            }}
+            consultationData={consultationData as AppConsultationData}
+            mealDistribution={mealDistribution}
+            totalMealPercent={totalMealPercent}
+            isSaving={isSaving}
+            handleMealPercentChange={handleMealPercentChange}
+            handleSaveMealPlan={handleSaveMealPlan}
+          />
+        </ConsultationWizard>
+      </div>
     </div>
   );
 };

@@ -1,26 +1,23 @@
 
 import React from 'react';
-import { BackButton } from '@/components/ui/back-button';
-import MealPlanActions from '@/components/MealPlanActions';
+import { FileText } from 'lucide-react';
 
 interface MealPlanHeaderProps {
-  onSave: () => Promise<void>; // Changed to Promise<void> to match the expected type
+  onSave?: () => Promise<void>;
 }
 
-const MealPlanHeader = ({ onSave }: MealPlanHeaderProps) => {
+const MealPlanHeader: React.FC<MealPlanHeaderProps> = () => {
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start mb-8">
-      <div>
-        <BackButton to="/consultation" label="Voltar para Consulta" />
-        <h1 className="text-3xl font-bold text-nutri-blue mt-4 mb-2">Plano Alimentar</h1>
-        <p className="text-gray-600">
-          Distribua as calorias e macronutrientes entre as refeições
-        </p>
+    <div className="mb-6">
+      <div className="flex items-center mb-2">
+        <div className="bg-nutri-green/20 p-2 rounded-full mr-3">
+          <FileText className="h-5 w-5 text-nutri-green" />
+        </div>
+        <h1 className="text-2xl font-bold text-nutri-blue">Gerador de Plano Alimentar</h1>
       </div>
-      
-      <div className="mt-4 md:mt-0">
-        <MealPlanActions onSave={onSave} />
-      </div>
+      <p className="text-gray-600 ml-10">
+        Distribua as refeições e macronutrientes para criar um plano alimentar personalizado
+      </p>
     </div>
   );
 };

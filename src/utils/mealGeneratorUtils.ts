@@ -1,227 +1,156 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { MealPlan } from '@/types';
 
-// Database of food items organized by meal type
-export const foodDatabase = {
-  breakfast: [
-    { name: 'Ovos mexidos', portion: '2 unidades', calories: 140 },
-    { name: 'Pão integral', portion: '2 fatias', calories: 120 },
-    { name: 'Aveia', portion: '3 colheres de sopa', calories: 150 },
-    { name: 'Iogurte', portion: '200ml', calories: 100 },
-    { name: 'Frutas', portion: '1 porção média', calories: 60 },
-    { name: 'Omelete', portion: '2 ovos', calories: 160 },
-    { name: 'Tapioca', portion: '1 unidade média', calories: 130 },
-    { name: 'Smoothie proteico', portion: '300ml', calories: 200 },
-    { name: 'Panquecas', portion: '2 unidades médias', calories: 180 }
-  ],
-  lunch: [
-    { name: 'Arroz integral', portion: '4 colheres de sopa', calories: 160 },
-    { name: 'Feijão', portion: '1 concha média', calories: 140 },
-    { name: 'Frango grelhado', portion: '150g', calories: 165 },
-    { name: 'Peixe', portion: '150g', calories: 170 },
-    { name: 'Carne magra', portion: '150g', calories: 180 },
-    { name: 'Salada verde', portion: '2 xícaras', calories: 50 },
-    { name: 'Legumes', portion: '1 xícara', calories: 70 },
-    { name: 'Batata doce', portion: '1 unidade média', calories: 110 },
-    { name: 'Quinoa', portion: '4 colheres de sopa', calories: 140 }
-  ],
-  snack: [
-    { name: 'Nozes', portion: '30g', calories: 180 },
-    { name: 'Frutas', portion: '1 unidade média', calories: 60 },
-    { name: 'Iogurte', portion: '200ml', calories: 100 },
-    { name: 'Barra de proteína', portion: '1 unidade', calories: 200 },
-    { name: 'Hummus com vegetais', portion: '2 colheres + 1 xícara', calories: 150 },
-    { name: 'Queijo branco', portion: '2 fatias', calories: 140 },
-    { name: 'Ovo cozido', portion: '2 unidades', calories: 140 },
-    { name: 'Shake proteico', portion: '300ml', calories: 160 }
-  ],
-  dinner: [
-    { name: 'Frango assado', portion: '150g', calories: 165 },
-    { name: 'Peixe grelhado', portion: '150g', calories: 170 },
-    { name: 'Omelete', portion: '3 ovos', calories: 240 },
-    { name: 'Sopas', portion: '300ml', calories: 200 },
-    { name: 'Saladas', portion: '3 xícaras', calories: 75 },
-    { name: 'Legumes', portion: '1.5 xícara', calories: 105 },
-    { name: 'Carne magra', portion: '150g', calories: 180 },
-    { name: 'Tofu', portion: '150g', calories: 120 },
-    { name: 'Cogumelos', portion: '1 xícara', calories: 40 }
-  ]
-};
+export interface MealPlanSettings {
+  numMeals: string;
+  totalCalories: string;
+  dietType: string;
+  restrictions: string[];
+}
 
-// Function to get random food items based on meal type and dietary restrictions
-export const getRandomFoodItems = (mealType: keyof typeof foodDatabase, count: number, restrictions: string[]) => {
-  const items = [...foodDatabase[mealType]];
-  const result = [];
-  
-  let filteredItems = items;
-  if (restrictions.includes('vegan') || restrictions.includes('vegetarian')) {
-    filteredItems = filteredItems.filter(item => 
-      !['Frango', 'Peixe', 'Carne', 'Omelete', 'Ovos'].some(meat => 
-        item.name.toLowerCase().includes(meat.toLowerCase())
-      )
-    );
+// Food categories with their properties
+const foodCategories = {
+  protein: {
+    foods: [
+      'Frango grelhado', 'Peixe assado', 'Carne magra', 'Ovos', 
+      'Tofu', 'Whey protein', 'Iogurte grego', 'Queijo cottage'
+    ],
+    portionUnit: 'g',
+    calories: 4 // calories per gram
+  },
+  carbs: {
+    foods: [
+      'Arroz integral', 'Batata doce', 'Aveia', 'Quinoa', 
+      'Pão integral', 'Macarrão integral', 'Frutas', 'Legumes'
+    ],
+    portionUnit: 'g',
+    calories: 4 // calories per gram
+  },
+  fats: {
+    foods: [
+      'Azeite', 'Abacate', 'Oleaginosas', 'Sementes de chia',
+      'Manteiga ghee', 'Óleo de coco', 'Sementes de linhaça', 'Castanhas'
+    ],
+    portionUnit: 'g',
+    calories: 9 // calories per gram
   }
-  
-  for (let i = 0; i < count && filteredItems.length > 0; i++) {
-    const randomIndex = Math.floor(Math.random() * filteredItems.length);
-    result.push(filteredItems[randomIndex]);
-    filteredItems.splice(randomIndex, 1);
-  }
-  
-  return result;
 };
 
-// Calculate macros based on calories and diet type
-export const generateMacros = (calories: number, dietType: string) => {
-  // Standard distribution: 20% protein, 55% carbs, 25% fat
-  let carbPercentage = 0.55;
-  let proteinPercentage = 0.20;
-  let fatPercentage = 0.25;
-  
-  // Can be adjusted based on diet type if needed
-  switch (dietType) {
-    case 'low-carb':
-      carbPercentage = 0.30;
-      proteinPercentage = 0.35;
-      fatPercentage = 0.35;
-      break;
-    case 'high-protein':
-      carbPercentage = 0.45;
-      proteinPercentage = 0.30;
-      fatPercentage = 0.25;
-      break;
-    case 'balanced':
-    default:
-      // Use default values
-      break;
-  }
-  
-  const carbCalories = calories * carbPercentage;
-  const proteinCalories = calories * proteinPercentage;
-  const fatCalories = calories * fatPercentage;
-  
-  return {
-    carbs: Math.round(carbCalories / 4),
-    protein: Math.round(proteinCalories / 4),
-    fat: Math.round(fatCalories / 9),
-  };
-};
-
-// Meal distributions as specified
-export const MEAL_DISTRIBUTIONS = {
-  'ref1': { protein: 0.15, carbs: 0.25, fat: 0.20 },
-  'ref2': { protein: 0.15, carbs: 0.15, fat: 0.10 },
-  'ref3': { protein: 0.20, carbs: 0.20, fat: 0.20 },
-  'ref4': { protein: 0.15, carbs: 0.10, fat: 0.10 },
-  'ref5': { protein: 0.15, carbs: 0.15, fat: 0.20 },
-  'ref6': { protein: 0.20, carbs: 0.15, fat: 0.20 }
-};
-
-// Generate a complete meal plan based on the provided settings
-export const generateMealPlanData = (
+// Generate meal plan data based on user settings
+export function generateMealPlanData(
   numMeals: string, 
   totalCalories: string, 
-  dietType: string, 
+  dietType: string,
   restrictions: string[]
-) => {
-  const meals = parseInt(numMeals);
-  const calories = parseInt(totalCalories);
+): MealPlan {
+  // Calculate calories per meal
+  const mealCount = parseInt(numMeals);
+  const totalCals = parseInt(totalCalories);
+  const caloriesPerMeal = Math.round(totalCals / mealCount);
   
-  // Define meal names and distribution based on number of meals
-  const mealNames = [];
-  const mealTimes = [];
+  // Set macro distribution based on diet type
+  let proteinPercentage = 0.25;
+  let carbsPercentage = 0.50;
+  let fatsPercentage = 0.25;
   
-  if (meals === 6) {
-    mealNames.push('Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar', 'Ceia');
-    mealTimes.push('07:00', '10:00', '12:30', '15:30', '19:00', '22:00');
-  } else if (meals === 5) {
-    mealNames.push('Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar');
-    mealTimes.push('07:30', '10:30', '13:00', '16:00', '19:30');
-  } else if (meals === 4) {
-    mealNames.push('Café da manhã', 'Almoço', 'Lanche da tarde', 'Jantar');
-    mealTimes.push('07:30', '12:30', '16:00', '19:30');
-  } else { // 3 meals
-    mealNames.push('Café da manhã', 'Almoço', 'Jantar');
-    mealTimes.push('08:00', '13:00', '20:00');
+  switch (dietType) {
+    case 'low-carb':
+      proteinPercentage = 0.35;
+      carbsPercentage = 0.25;
+      fatsPercentage = 0.40;
+      break;
+    case 'high-protein':
+      proteinPercentage = 0.40;
+      carbsPercentage = 0.35;
+      fatsPercentage = 0.25;
+      break;
+    case 'keto':
+      proteinPercentage = 0.25;
+      carbsPercentage = 0.05;
+      fatsPercentage = 0.70;
+      break;
+    // Default 'balanced' uses the initial values
   }
   
-  // Calculate calories per meal using the specified distribution
-  const plan = [];
-  const totalMacros = generateMacros(calories, dietType);
-  
-  for (let i = 0; i < meals; i++) {
-    // Use meal distribution percentages if available
-    const refKey = `ref${i + 1}` as keyof typeof MEAL_DISTRIBUTIONS;
-    const mealDistribution = MEAL_DISTRIBUTIONS[refKey] || { 
-      protein: 1/meals,
-      carbs: 1/meals,
-      fat: 1/meals
-    };
-    
-    const mealCalories = Math.round(calories / meals);
-    
-    const mealMacros = {
-      protein: Math.round(totalMacros.protein * mealDistribution.protein / (1/meals)),
-      carbs: Math.round(totalMacros.carbs * mealDistribution.carbs / (1/meals)),
-      fat: Math.round(totalMacros.fat * mealDistribution.fat / (1/meals))
-    };
-    
-    plan.push({
-      name: mealNames[i],
-      time: mealTimes[i],
-      calories: mealCalories,
-      items: getRandomFoodItems(
-        i === 0 ? 'breakfast' : 
-        i === 2 || i === 4 ? 'lunch' : 
-        i === meals - 1 ? 'dinner' : 'snack', 
-        i === 0 || i === 2 || i === 4 ? 3 : 2, 
-        restrictions
-      ),
-      macros: mealMacros
+  // Filter out restricted foods
+  const filteredFoodCategories = { ...foodCategories };
+  if (restrictions.length > 0) {
+    Object.keys(filteredFoodCategories).forEach(category => {
+      const categoryKey = category as keyof typeof foodCategories;
+      const foods = foodCategories[categoryKey].foods.filter(
+        food => !restrictions.some(restriction => food.toLowerCase().includes(restriction.toLowerCase()))
+      );
+      filteredFoodCategories[categoryKey] = {
+        ...filteredFoodCategories[categoryKey],
+        foods
+      };
     });
   }
   
-  return plan;
-};
-
-// Save meal plan to database
-export async function saveMealPlan(consultationId: string, meals: any[], totalMacros: any) {
-  try {
-    // Check if supabase client is defined
-    if (!supabase) {
-      console.error('Supabase client is not defined');
-      return {
-        success: false,
-        message: 'Erro de conexão com o banco de dados'
-      };
+  // Generate meals
+  const meals = Array.from({ length: mealCount }, (_, i) => {
+    // Calculate macros for this meal
+    const mealProtein = Math.round((caloriesPerMeal * proteinPercentage) / 4); // 4 calories per gram
+    const mealCarbs = Math.round((caloriesPerMeal * carbsPercentage) / 4); // 4 calories per gram
+    const mealFats = Math.round((caloriesPerMeal * fatsPercentage) / 9); // 9 calories per gram
+    
+    // Determine meal name based on index
+    let mealName = '';
+    if (mealCount <= 3) {
+      mealName = i === 0 ? 'Café da manhã' : i === 1 ? 'Almoço' : 'Jantar';
+    } else if (mealCount <= 6) {
+      const mealNames = [
+        'Café da manhã', 'Lanche da manhã', 'Almoço', 
+        'Lanche da tarde', 'Jantar', 'Ceia'
+      ];
+      mealName = mealNames[i];
+    } else {
+      mealName = `Refeição ${i + 1}`;
     }
     
-    const { data, error } = await supabase
-      .from('meal_plans')
-      .insert({
-        consultation_id: consultationId,
-        meals,
-        total_calories: totalMacros.totalCalories,
-        total_protein: totalMacros.totalProtein,
-        total_carbs: totalMacros.totalCarbs,
-        total_fats: totalMacros.totalFats,
-        date: new Date().toISOString().split('T')[0]
-      })
-      .select()
-      .maybeSingle();
-
-    if (error) throw error;
+    // Select food items for this meal
+    const proteinFoods = selectRandomItems(filteredFoodCategories.protein.foods, 2);
+    const carbFoods = selectRandomItems(filteredFoodCategories.carbs.foods, 2);
+    const fatFoods = selectRandomItems(filteredFoodCategories.fats.foods, 1);
     
     return {
-      success: true,
-      data,
-      message: 'Plano alimentar salvo com sucesso'
+      mealNumber: i + 1,
+      name: mealName,
+      calories: caloriesPerMeal,
+      protein: mealProtein,
+      carbs: mealCarbs,
+      fat: mealFats,
+      percentage: 100 / mealCount,
+      foodSuggestions: [...proteinFoods, ...carbFoods, ...fatFoods]
     };
-  } catch (error: any) {
-    console.error('Error saving meal plan:', error);
-    return {
-      success: false,
-      message: 'Falha ao salvar plano alimentar: ' + error.message
-    };
+  });
+  
+  // Calculate totals
+  const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0);
+  const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0);
+  const totalFats = meals.reduce((sum, meal) => sum + meal.fat, 0);
+  
+  // Create meal plan object
+  return {
+    meals,
+    total_calories: totalCals,
+    total_protein: totalProtein,
+    total_carbs: totalCarbs,
+    total_fats: totalFats,
+    date: new Date().toISOString().split('T')[0]
+  };
+}
+
+// Helper function to select random items from an array
+function selectRandomItems<T>(arr: T[], count: number): T[] {
+  const result: T[] = [];
+  const arrCopy = [...arr];
+  
+  for (let i = 0; i < count && arrCopy.length > 0; i++) {
+    const randomIndex = Math.floor(Math.random() * arrCopy.length);
+    result.push(arrCopy[randomIndex]);
+    arrCopy.splice(randomIndex, 1);
   }
+  
+  return result;
 }

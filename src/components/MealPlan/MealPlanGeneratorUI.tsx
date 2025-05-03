@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { BackButton } from '@/components/ui/back-button';
 import PatientHeader from '@/components/Anthropometry/PatientHeader';
 import NutritionSummary from '@/components/MealPlan/NutritionSummary';
 import BreadcrumbNav from '@/components/MealPlan/BreadcrumbNav';
@@ -24,15 +22,13 @@ const MealPlanGeneratorUI = ({
   consultationData,
   mealDistribution,
   totalMealPercent,
-  isSaving,
   handleMealPercentChange,
-  handleSaveMealPlan
 }: MealPlanGeneratorUIProps) => {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full">
       <BreadcrumbNav />
       
-      <MealPlanHeader onSave={handleSaveMealPlan} />
+      <MealPlanHeader />
       
       {activePatient && (
         <PatientHeader 
@@ -51,16 +47,12 @@ const MealPlanGeneratorUI = ({
         onMealPercentChange={handleMealPercentChange}
       />
       
-      <div className="mt-8 flex justify-between">
-        <BackButton to="/consultation" variant="outline" />
-        <Button 
-          onClick={handleSaveMealPlan}
-          className="bg-nutri-green hover:bg-nutri-green-dark"
-          disabled={isSaving}
-        >
-          {isSaving ? "Salvando..." : "Salvar e Finalizar Plano"}
-        </Button>
-      </div>
+      {totalMealPercent !== 100 && (
+        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-sm">
+          <strong>Nota:</strong> A distribuição total das refeições deve ser exatamente 100%. 
+          Atual: {totalMealPercent}%
+        </div>
+      )}
     </div>
   );
 };
