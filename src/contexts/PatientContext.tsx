@@ -23,7 +23,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const storedPatient = storageUtils.getSessionItem('activePatient');
 
     if (storedPatient) {
-      setActivePatient(storedPatient);
+      // Fix: Type cast the stored patient to Patient type
+      setActivePatient(storedPatient as Patient);
     }
   }, []);
 

@@ -1,75 +1,73 @@
 
 /**
- * Utility functions for interacting with browser storage
+ * Utility functions for working with browser storage
  */
+
+// Helper for type-safe storage operations
 export const storageUtils = {
-  /**
-   * Get an item from sessionStorage and parse it as JSON
-   */
-  getSessionItem: <T>(key: string): T | null => {
+  // Local Storage
+  setLocalItem: <T>(key: string, value: T): void => {
     try {
-      const item = sessionStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
+      const serializedValue = JSON.stringify(value);
+      localStorage.setItem(key, serializedValue);
     } catch (error) {
-      console.error(`Error getting item ${key} from sessionStorage:`, error);
-      return null;
+      console.error('Error setting localStorage item:', error);
     }
   },
 
-  /**
-   * Set an item in sessionStorage as JSON
-   */
-  setSessionItem: <T>(key: string, value: T): void => {
-    try {
-      sessionStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(`Error setting item ${key} in sessionStorage:`, error);
-    }
-  },
-
-  /**
-   * Remove an item from sessionStorage
-   */
-  removeSessionItem: (key: string): void => {
-    try {
-      sessionStorage.removeItem(key);
-    } catch (error) {
-      console.error(`Error removing item ${key} from sessionStorage:`, error);
-    }
-  },
-
-  /**
-   * Get an item from localStorage and parse it as JSON
-   */
   getLocalItem: <T>(key: string): T | null => {
     try {
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
+      return item ? JSON.parse(item) as T : null;
     } catch (error) {
-      console.error(`Error getting item ${key} from localStorage:`, error);
+      console.error('Error getting localStorage item:', error);
       return null;
     }
   },
 
-  /**
-   * Set an item in localStorage as JSON
-   */
-  setLocalItem: <T>(key: string, value: T): void => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(`Error setting item ${key} in localStorage:`, error);
-    }
-  },
-
-  /**
-   * Remove an item from localStorage
-   */
   removeLocalItem: (key: string): void => {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error(`Error removing item ${key} from localStorage:`, error);
+      console.error('Error removing localStorage item:', error);
     }
   },
+
+  // Session Storage
+  setSessionItem: <T>(key: string, value: T): void => {
+    try {
+      const serializedValue = JSON.stringify(value);
+      sessionStorage.setItem(key, serializedValue);
+    } catch (error) {
+      console.error('Error setting sessionStorage item:', error);
+    }
+  },
+
+  getSessionItem: <T>(key: string): T | null => {
+    try {
+      const item = sessionStorage.getItem(key);
+      return item ? JSON.parse(item) as T : null;
+    } catch (error) {
+      console.error('Error getting sessionStorage item:', error);
+      return null;
+    }
+  },
+
+  removeSessionItem: (key: string): void => {
+    try {
+      sessionStorage.removeItem(key);
+    } catch (error) {
+      console.error('Error removing sessionStorage item:', error);
+    }
+  },
+  
+  // Clear all storage
+  clearAll: (): void => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (error) {
+      console.error('Error clearing storage:', error);
+    }
+  }
 };
