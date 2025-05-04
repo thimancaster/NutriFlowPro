@@ -1,15 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from 'lucide-react';
-import { BirthDateInput } from '@/components/BirthDateInput';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+
+import BasicInfoFields from './patient/BasicInfoFields';
+import GoalsFields from './patient/GoalsFields';
+import FormActions from './patient/FormActions';
 
 interface PatientFormProps {
   onSuccess?: () => void;
@@ -163,126 +161,26 @@ const PatientForm = ({ onSuccess, editPatient, onCancel }: PatientFormProps) => 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo*</Label>
-              <Input 
-                id="name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleChange}
-                required 
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email"
-                  type="email"
-                  value={formData.email} 
-                  onChange={handleChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input 
-                  id="phone" 
-                  name="phone"
-                  value={formData.phone} 
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Sexo*</Label>
-              <RadioGroup 
-                value={formData.sex} 
-                onValueChange={(value) => handleSelectChange('sex', value)}
-                required
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="M" id="sex-m" />
-                  <Label htmlFor="sex-m">Masculino</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="F" id="sex-f" />
-                  <Label htmlFor="sex-f">Feminino</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <BirthDateInput 
-              value={birthDate} 
-              onChange={setBirthDate} 
+            <BasicInfoFields 
+              formData={formData}
+              birthDate={birthDate}
+              setBirthDate={setBirthDate}
+              handleChange={handleChange}
+              handleSelectChange={handleSelectChange}
             />
             
-            <div className="space-y-2">
-              <Label htmlFor="objective">Objetivo*</Label>
-              <Select 
-                value={formData.objective} 
-                onValueChange={(value) => handleSelectChange('objective', value)}
-                required
-              >
-                <SelectTrigger id="objective">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
-                  <SelectItem value="manutenção">Manutenção</SelectItem>
-                  <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Perfil*</Label>
-              <RadioGroup 
-                value={formData.profile} 
-                onValueChange={(value) => handleSelectChange('profile', value)}
-                required
-                className="flex flex-col space-y-1"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="magro" id="profile-magro" />
-                  <Label htmlFor="profile-magro">Magro</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="obeso" id="profile-obeso" />
-                  <Label htmlFor="profile-obeso">Obeso</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="atleta" id="profile-atleta" />
-                  <Label htmlFor="profile-atleta">Atleta</Label>
-                </div>
-              </RadioGroup>
-            </div>
+            <GoalsFields 
+              formData={formData}
+              handleSelectChange={handleSelectChange}
+            />
           </div>
           
-          <CardFooter className="px-0 pt-2 pb-0 flex justify-end">
-            {onCancel && (
-              <Button variant="outline" type="button" onClick={onCancel} className="mr-2">
-                Cancelar
-              </Button>
-            )}
-            <Button 
-              type="submit" 
-              className="bg-nutri-green hover:bg-nutri-green-dark"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {editPatient ? "Atualizando..." : "Salvando..."}
-                </>
-              ) : (
-                editPatient ? "Atualizar Paciente" : "Salvar Paciente"
-              )}
-            </Button>
+          <CardFooter className="px-0 pt-2 pb-0">
+            <FormActions 
+              isLoading={isLoading}
+              onCancel={onCancel}
+              isEditMode={!!editPatient}
+            />
           </CardFooter>
         </form>
       </CardContent>
