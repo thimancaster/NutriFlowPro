@@ -47,7 +47,8 @@ const TestimonialsSection = () => {
           </div>
         </div>
         
-        <DashboardTestimonials />
+        {/* Passando showTitle={false} para evitar a redundância de títulos */}
+        <DashboardTestimonials showTitle={false} />
       </div>
     </section>
   );

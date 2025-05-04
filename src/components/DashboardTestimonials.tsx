@@ -18,7 +18,11 @@ interface Testimonial {
   approved?: boolean;
 }
 
-const DashboardTestimonials: React.FC = () => {
+interface DashboardTestimonialsProps {
+  showTitle?: boolean;
+}
+
+const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle = true }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [fallbackTestimonials, setFallbackTestimonials] = useState<Testimonial[]>([]);
@@ -94,21 +98,23 @@ const DashboardTestimonials: React.FC = () => {
 
   return (
     <Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Heart className="h-5 w-5 text-red-500 mr-2" /> Depoimentos de Usuários
-          </div>
-          <Button 
-            variant="outline" 
-            className="text-nutri-blue hover:bg-nutri-blue hover:text-white transition-colors"
-            onClick={handleAddTestimonial}
-          >
-            Adicionar Depoimento
-          </Button>
-        </CardTitle>
-        <CardDescription>O que os nutricionistas estão dizendo sobre o NutriFlow Pro</CardDescription>
-      </CardHeader>
+      {showTitle && (
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Heart className="h-5 w-5 text-red-500 mr-2" /> Depoimentos de Usuários
+            </div>
+            <Button 
+              variant="outline" 
+              className="text-nutri-blue hover:bg-nutri-blue hover:text-white transition-colors"
+              onClick={handleAddTestimonial}
+            >
+              Adicionar Depoimento
+            </Button>
+          </CardTitle>
+          <CardDescription>O que os nutricionistas estão dizendo sobre o NutriFlow Pro</CardDescription>
+        </CardHeader>
+      )}
       <CardContent>
         {testimonials && testimonials.length > 0 ? (
           <Carousel
