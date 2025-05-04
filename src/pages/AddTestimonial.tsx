@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from '@/components/Navbar';
+import { Star } from 'lucide-react';
 
 const AddTestimonial = () => {
   const navigate = useNavigate();
@@ -18,7 +19,12 @@ const AddTestimonial = () => {
     name: '',
     role: '',
     content: '',
+    rating: 5
   });
+
+  const handleRatingChange = (newRating: number) => {
+    setFormData(prev => ({ ...prev, rating: newRating }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +93,28 @@ const AddTestimonial = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
                   placeholder="Ex: Nutricionista Clínico"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Sua Avaliação</Label>
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className="focus:outline-none"
+                      onClick={() => handleRatingChange(star)}
+                    >
+                      <Star
+                        size={28}
+                        className={
+                          star <= formData.rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="content">Seu Depoimento</Label>

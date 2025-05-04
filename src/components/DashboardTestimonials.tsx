@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { forceSeedTestimonials, getTestimonials } from '@/utils/seedTestimonials';
+import StarRating from './StarRating';
 
 interface Testimonial {
   id?: string;
@@ -16,6 +17,7 @@ interface Testimonial {
   role: string;
   content: string;
   approved?: boolean;
+  rating?: number;
 }
 
 interface DashboardTestimonialsProps {
@@ -50,11 +52,16 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
     staleTime: 60000, // 1 minute
   });
 
-  // Usar depoimentos de fallback caso o banco de dados não tenha dados
+  // Usar depoimentos de fallback caso o banco de dados não tenha dados - carrega automaticamente
   useEffect(() => {
     if ((dbTestimonials && dbTestimonials.length === 0) || error) {
       console.log('Using fallback testimonials since database returned no data');
       setFallbackTestimonials(getTestimonials());
+      
+      // Tenta semear os depoimentos automaticamente sem exibir toast
+      forceSeedTestimonials().catch(err => {
+        console.error('Error auto-seeding testimonials:', err);
+      });
     }
   }, [dbTestimonials, error]);
 
@@ -65,25 +72,6 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
 
   const handleAddTestimonial = () => {
     navigate('/add-testimonial');
-  };
-
-  const handleForceSeed = async () => {
-    try {
-      await forceSeedTestimonials();
-      // Mesmo que o banco falhe, vamos usar os depoimentos locais como fallback
-      setFallbackTestimonials(getTestimonials());
-      toast({
-        title: 'Depoimentos adicionados',
-        description: 'Os depoimentos de exemplo foram carregados com sucesso.',
-      });
-      refetch(); // Tenta atualizar os dados do banco
-    } catch (error) {
-      console.error('Error forcing seed testimonials:', error);
-      toast({
-        title: 'Usando depoimentos locais',
-        description: 'Os depoimentos estão sendo mostrados localmente.',
-      });
-    }
   };
 
   if (isLoading && fallbackTestimonials.length === 0) {
@@ -128,6 +116,9 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
               {testimonials.map((testimonial, index) => (
                 <CarouselItem key={testimonial.id || index} className="md:basis-1/2">
                   <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="mb-3">
+                      <StarRating rating={testimonial.rating || 5} />
+                    </div>
                     <p className="italic text-gray-600 mb-4">&quot;{testimonial.content}&quot;</p>
                     <p className="font-medium text-nutri-blue">{testimonial.name}</p>
                     <p className="text-sm text-gray-500">{testimonial.role}</p>
@@ -143,18 +134,12 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">Nenhum depoimento encontrado</p>
-            <div className="space-x-4 mt-4">
+            <div className="mt-4">
               <Button 
                 variant="outline" 
                 onClick={handleAddTestimonial}
               >
                 Seja o primeiro a deixar um depoimento
-              </Button>
-              <Button 
-                variant="default"
-                onClick={handleForceSeed}
-              >
-                Adicionar depoimentos de exemplo
               </Button>
             </div>
           </div>
