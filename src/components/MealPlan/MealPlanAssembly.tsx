@@ -11,6 +11,8 @@ import { generateMealAssemblyPDF } from '@/utils/pdf/mealAssemblyPdfUtils';
 import { Meal, MealItem } from '@/types/meal';
 import MealPlanAssemblyCard from './MealPlanAssemblyCard';
 import MealPlanMacroSummary from './MealPlanMacroSummary';
+import MealPlanLoader from './MealPlanLoader';
+import MealPlanHeader from './MealPlanHeader';
 
 interface MealPlanAssemblyProps {
   totalCalories: number;

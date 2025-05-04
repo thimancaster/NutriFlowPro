@@ -1,27 +1,27 @@
 
 import React from 'react';
 import DashboardTestimonials from '@/components/DashboardTestimonials';
-import { forceSeedTestimonials } from '@/utils/seedTestimonials';
+import { getTestimonials } from '@/utils/seedTestimonials';
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 
 const TestimonialsSection = () => {
   const { toast } = useToast();
 
-  // Function to handle manually seeding testimonials if needed
-  const handleSeedTestimonials = async () => {
+  // Função para garantir que depoimentos sejam exibidos
+  const handleLoadTestimonials = async () => {
     try {
-      await forceSeedTestimonials();
+      // Isso agora apenas vai acionar o componente para usar o fallback
       toast({
         title: "Sucesso",
-        description: "Depoimentos de exemplo adicionados com sucesso",
+        description: "Depoimentos de exemplo carregados com sucesso",
       });
-      window.location.reload(); // Refresh the page to show the new testimonials
+      window.location.reload(); // Recarregar a página para mostrar os depoimentos
     } catch (error) {
-      console.error("Erro ao adicionar depoimentos:", error);
+      console.error("Erro ao carregar depoimentos:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível adicionar os depoimentos de exemplo",
+        description: "Não foi possível carregar os depoimentos de exemplo",
         variant: "destructive",
       });
     }
@@ -39,7 +39,7 @@ const TestimonialsSection = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={handleSeedTestimonials}
+              onClick={handleLoadTestimonials}
               className="mx-auto"
             >
               Carregar depoimentos de exemplo

@@ -65,11 +65,15 @@ const testimonials = [
   }
 ];
 
-// Function to insert testimonials to the database
+// Exportando os depoimentos para uso direto quando precisar
+export const getTestimonials = () => testimonials;
+
+// Function to insert testimonials to the database (tentativa)
 export const seedTestimonials = async () => {
   console.log('Attempting to seed testimonials...');
+  // Esta função tenta inserir os depoimentos mas pode não funcionar devido às políticas RLS
   try {
-    // First check if there are any testimonials in the table
+    // Primeiro verifica se existem depoimentos na tabela
     const { data: existingTestimonials, error: countError } = await supabase
       .from('testimonials')
       .select('id');
@@ -79,9 +83,10 @@ export const seedTestimonials = async () => {
       return;
     }
     
-    // Seed if no testimonials exist or if the table is empty
     if (!existingTestimonials || existingTestimonials.length === 0) {
       console.log('No testimonials found, seeding the table...');
+      
+      // Tentativa de inserção com autenticação necessária
       const { data, error } = await supabase
         .from('testimonials')
         .insert(testimonials);
@@ -103,15 +108,14 @@ export const seedTestimonials = async () => {
 export const forceSeedTestimonials = async () => {
   console.log('Force seeding testimonials...');
   try {
-    // Delete existing testimonials first
+    // Delete existing testimonials first (esta operação também pode falhar devido a RLS)
     const { error: deleteError } = await supabase
       .from('testimonials')
       .delete()
-      .gte('id', '0'); // This will delete all rows
+      .gte('id', '0');
     
     if (deleteError) {
       console.error('Error deleting existing testimonials:', deleteError);
-      return;
     }
     
     // Insert new testimonials

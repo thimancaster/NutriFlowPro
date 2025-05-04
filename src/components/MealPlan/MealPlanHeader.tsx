@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 
-interface MealPlanHeaderProps {
+export interface MealPlanHeaderProps {
   generatePDF: () => Promise<void>;
   generating: boolean;
 }

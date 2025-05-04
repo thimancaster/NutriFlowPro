@@ -22,13 +22,23 @@ const MealPlanGeneratorUI = ({
   consultationData,
   mealDistribution,
   totalMealPercent,
+  isSaving,
   handleMealPercentChange,
+  handleSaveMealPlan,
 }: MealPlanGeneratorUIProps) => {
+  // Função simples para gerar PDF (será substituída no componente pai)
+  const dummyGeneratePDF = async () => {
+    await handleSaveMealPlan();
+  };
+
   return (
     <div className="w-full">
       <BreadcrumbNav />
       
-      <MealPlanHeader />
+      <MealPlanHeader 
+        generatePDF={dummyGeneratePDF}
+        generating={isSaving}
+      />
       
       {activePatient && (
         <PatientHeader 

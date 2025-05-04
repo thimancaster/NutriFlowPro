@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart } from 'lucide-react';
@@ -8,23 +8,26 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { forceSeedTestimonials } from '@/utils/seedTestimonials';
+import { forceSeedTestimonials, getTestimonials } from '@/utils/seedTestimonials';
 
 interface Testimonial {
-  id: string;
+  id?: string;
   name: string;
   role: string;
   content: string;
+  approved?: boolean;
 }
 
 const DashboardTestimonials: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const { data: testimonials, isLoading, error, refetch } = useQuery<Testimonial[]>({
+  const [fallbackTestimonials, setFallbackTestimonials] = useState<Testimonial[]>([]);
+  
+  // Carrega os depoimentos do banco de dados
+  const { data: dbTestimonials, isLoading, error, refetch } = useQuery<Testimonial[]>({
     queryKey: ['testimonials'],
     queryFn: async () => {
-      console.log('Fetching testimonials...');
+      console.log('Fetching testimonials from database...');
       const { data, error } = await supabase
         .from('testimonials')
         .select('*')
@@ -33,20 +36,28 @@ const DashboardTestimonials: React.FC = () => {
 
       if (error) {
         console.error('Error fetching testimonials:', error);
-        throw new Error('Erro ao carregar depoimentos');
+        throw new Error('Erro ao carregar depoimentos do banco');
       }
 
-      console.log('Testimonials fetched:', data?.length || 0);
+      console.log('Testimonials fetched from database:', data?.length || 0);
       return data || [];
     },
     retry: 3,
     staleTime: 60000, // 1 minute
   });
 
+  // Usar depoimentos de fallback caso o banco de dados não tenha dados
   useEffect(() => {
-    // Log testimonials count when component mounts or testimonials changes
-    console.log('Testimonials in component:', testimonials?.length || 0);
-  }, [testimonials]);
+    if ((dbTestimonials && dbTestimonials.length === 0) || error) {
+      console.log('Using fallback testimonials since database returned no data');
+      setFallbackTestimonials(getTestimonials());
+    }
+  }, [dbTestimonials, error]);
+
+  // Determina quais depoimentos mostrar: banco de dados ou fallback
+  const testimonials = (dbTestimonials && dbTestimonials.length > 0) 
+    ? dbTestimonials 
+    : fallbackTestimonials;
 
   const handleAddTestimonial = () => {
     navigate('/add-testimonial');
@@ -55,37 +66,23 @@ const DashboardTestimonials: React.FC = () => {
   const handleForceSeed = async () => {
     try {
       await forceSeedTestimonials();
+      // Mesmo que o banco falhe, vamos usar os depoimentos locais como fallback
+      setFallbackTestimonials(getTestimonials());
       toast({
         title: 'Depoimentos adicionados',
-        description: 'Os depoimentos de exemplo foram adicionados com sucesso.',
+        description: 'Os depoimentos de exemplo foram carregados com sucesso.',
       });
-      refetch(); // Refresh the testimonials data
+      refetch(); // Tenta atualizar os dados do banco
     } catch (error) {
       console.error('Error forcing seed testimonials:', error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível adicionar os depoimentos de exemplo.',
-        variant: 'destructive',
+        title: 'Usando depoimentos locais',
+        description: 'Os depoimentos estão sendo mostrados localmente.',
       });
     }
   };
 
-  if (error) {
-    return (
-      <Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
-        <CardHeader>
-          <CardTitle>Depoimentos</CardTitle>
-          <CardDescription>Não foi possível carregar os depoimentos</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button onClick={() => refetch()}>Tentar novamente</Button>
-          <Button variant="outline" onClick={handleForceSeed}>Adicionar depoimentos de exemplo</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isLoading) {
+  if (isLoading && fallbackTestimonials.length === 0) {
     return (
       <Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
         <CardHeader>
@@ -122,8 +119,8 @@ const DashboardTestimonials: React.FC = () => {
             className="w-full"
           >
             <CarouselContent>
-              {testimonials.map((testimonial) => (
-                <CarouselItem key={testimonial.id} className="md:basis-1/2">
+              {testimonials.map((testimonial, index) => (
+                <CarouselItem key={testimonial.id || index} className="md:basis-1/2">
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <p className="italic text-gray-600 mb-4">&quot;{testimonial.content}&quot;</p>
                     <p className="font-medium text-nutri-blue">{testimonial.name}</p>
