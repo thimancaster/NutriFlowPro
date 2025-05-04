@@ -25,6 +25,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { ConsultationProvider } from './contexts/ConsultationContext';
+import { MealPlanProvider } from './contexts/MealPlanContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PatientAnthropometry from './pages/PatientAnthropometry';
 import Index from './pages/Index';
@@ -103,78 +104,80 @@ function App() {
       <HashRouter>
         <AuthProvider>
           <ConsultationProvider>
-            <ErrorBoundary>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/add-testimonial" element={<AddTestimonial />} />
-                
-                {/* Protected routes */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/patients" element={
-                  <ProtectedRoute>
-                    <Patients />
-                  </ProtectedRoute>
-                } />
-                <Route path="/patient-history/:patientId" element={
-                  <ProtectedRoute>
-                    <PatientHistory />
-                  </ProtectedRoute>
-                } />
-                <Route path="/patient-anthropometry/:patientId" element={
-                  <ProtectedRoute>
-                    <PatientAnthropometry />
-                  </ProtectedRoute>
-                } />
-                <Route path="/consultation" element={
-                  <ProtectedRoute>
-                    <Consultation />
-                  </ProtectedRoute>
-                } />
-                <Route path="/meal-plan-generator" element={
-                  <ProtectedRoute>
-                    <MealPlanGenerator />
-                  </ProtectedRoute>
-                } />
-                <Route path="/subscription" element={
-                  <ProtectedRoute>
-                    <Subscription />
-                  </ProtectedRoute>
-                } />
-                <Route path="/pricing" element={
-                  <ProtectedRoute>
-                    <Pricing />
-                  </ProtectedRoute>
-                } />
-                <Route path="/calculator" element={
-                  <ProtectedRoute>
-                    <Calculator />
-                  </ProtectedRoute>
-                } />
-                <Route path="/meal-plans" element={
-                  <ProtectedRoute>
-                    <MealPlans />
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Redirect any unknown route to the homepage */}
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </ErrorBoundary>
-            <Toaster />
+            <MealPlanProvider>
+              <ErrorBoundary>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/add-testimonial" element={<AddTestimonial />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/patients" element={
+                    <ProtectedRoute>
+                      <Patients />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/patient-history/:patientId" element={
+                    <ProtectedRoute>
+                      <PatientHistory />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/patient-anthropometry/:patientId" element={
+                    <ProtectedRoute>
+                      <PatientAnthropometry />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/consultation" element={
+                    <ProtectedRoute>
+                      <Consultation />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/meal-plan-generator" element={
+                    <ProtectedRoute>
+                      <MealPlanGenerator />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/subscription" element={
+                    <ProtectedRoute>
+                      <Subscription />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/pricing" element={
+                    <ProtectedRoute>
+                      <Pricing />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/calculator" element={
+                    <ProtectedRoute>
+                      <Calculator />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/meal-plans" element={
+                    <ProtectedRoute>
+                      <MealPlans />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Redirect any unknown route to the homepage */}
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </ErrorBoundary>
+              <Toaster />
+            </MealPlanProvider>
           </ConsultationProvider>
         </AuthProvider>
       </HashRouter>

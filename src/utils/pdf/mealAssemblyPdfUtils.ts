@@ -1,16 +1,7 @@
 
 import { jsPDF } from 'jspdf';
-import { Meal, MealItem } from '@/types/meal';
-
-// Extend the jsPDF type definition to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable?: {
-      finalY: number;
-    };
-  }
-}
+import { Meal } from '@/types/meal';
+import 'jspdf-autotable';
 
 interface MealAssemblyPdfData {
   meals: Meal[];
@@ -24,13 +15,7 @@ interface MealAssemblyPdfData {
   };
 }
 
-export const generateMealAssemblyPDF = ({
-  meals,
-  patientName,
-  patientData,
-  totalCalories,
-  macros
-}: MealAssemblyPdfData): jsPDF => {
+export const generateMealAssemblyPDF = (data: MealAssemblyPdfData): jsPDF => {
   const doc = new jsPDF();
   
   // Add title
@@ -39,26 +24,27 @@ export const generateMealAssemblyPDF = ({
   
   // Add patient info
   doc.setFontSize(12);
-  doc.text(`Paciente: ${patientName}`, 20, 40);
-  if (patientData) {
-    doc.text(`Idade: ${patientData.age || '-'}`, 20, 50);
-    doc.text(`Peso: ${patientData.weight || '-'} kg`, 20, 60);
-    doc.text(`Altura: ${patientData.height || '-'} cm`, 20, 70);
+  doc.text(`Paciente: ${data.patientName}`, 20, 40);
+  if (data.patientData) {
+    doc.text(`Idade: ${data.patientData.age || '-'}`, 20, 50);
+    doc.text(`Peso: ${data.patientData.weight || '-'} kg`, 20, 60);
+    doc.text(`Altura: ${data.patientData.height || '-'} cm`, 20, 70);
+    doc.text(`Objetivo: ${data.patientData.objective || '-'}`, 20, 80);
   }
   
   // Add nutrition summary
   doc.setFontSize(14);
   doc.text("Resumo Nutricional", 105, 90, { align: "center" });
   doc.setFontSize(11);
-  doc.text(`Calorias totais: ${totalCalories} kcal`, 20, 100);
-  doc.text(`Proteínas: ${macros.protein}g (${Math.round(macros.protein * 4 / totalCalories * 100)}%)`, 20, 110);
-  doc.text(`Carboidratos: ${macros.carbs}g (${Math.round(macros.carbs * 4 / totalCalories * 100)}%)`, 20, 120);
-  doc.text(`Gorduras: ${macros.fat}g (${Math.round(macros.fat * 9 / totalCalories * 100)}%)`, 20, 130);
+  doc.text(`Calorias totais: ${data.totalCalories} kcal`, 20, 100);
+  doc.text(`Proteínas: ${data.macros.protein}g (${Math.round(data.macros.protein * 4 / data.totalCalories * 100)}%)`, 20, 110);
+  doc.text(`Carboidratos: ${data.macros.carbs}g (${Math.round(data.macros.carbs * 4 / data.totalCalories * 100)}%)`, 20, 120);
+  doc.text(`Gorduras: ${data.macros.fat}g (${Math.round(data.macros.fat * 9 / data.totalCalories * 100)}%)`, 20, 130);
   
   // Add meals table
   let yPosition = 150;
   
-  for (const meal of meals) {
+  for (const meal of data.meals) {
     if (yPosition > 270) {
       doc.addPage();
       yPosition = 20;

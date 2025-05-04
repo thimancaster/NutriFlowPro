@@ -1,11 +1,13 @@
 
 import React from 'react';
-import MealPlanGenerator from '@/components/MealPlanGenerator';
 import { motion } from 'framer-motion';
+import Navbar from '@/components/Navbar';
+import MealAssembly from '@/components/MealPlan/MealAssembly';
 
 const MealPlans = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <motion.div 
           className="flex flex-col md:flex-row items-center justify-between mb-8"
@@ -30,7 +32,20 @@ const MealPlans = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <MealPlanGenerator />
+          <MealAssembly 
+            totalCalories={2000}
+            macros={{
+              protein: 150,
+              carbs: 200,
+              fat: 67
+            }}
+            patientName="Exemplo de Paciente"
+            patientData={{
+              age: 35,
+              weight: 70,
+              height: 170
+            }}
+          />
         </motion.div>
         
         <motion.div 

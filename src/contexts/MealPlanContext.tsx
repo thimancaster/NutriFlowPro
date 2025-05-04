@@ -15,6 +15,7 @@ interface MealPlan {
   total_protein?: number;
   total_carbs?: number;
   total_fats?: number;
+  mealDistribution?: Record<string, any>;
 }
 
 interface MealPlanContextType {
