@@ -7,5 +7,8 @@ export { default as MealSummaryCard } from './MealPlan/MealSummaryCard';
 export { default as NutritionSummaryHeader } from './MealPlan/NutritionSummaryHeader';
 export { default as MealPlanActionButtons } from './MealPlan/MealPlanActionButtons';
 export { default as MealPlanAssemblyCard } from './MealPlan/MealPlanAssemblyCard';
+export { default as MealPlanLoader } from './MealPlan/MealPlanLoader';
+export { default as MealPlanHeader } from './MealPlan/MealPlanHeader';
+export { default as MealPlanMacroSummary } from './MealPlan/MealPlanMacroSummary';
 export { default as ConsultationForm } from './Consultation/ConsultationForm';
 export { default as ConsultationResults } from './Consultation/ConsultationResults';
