@@ -46,6 +46,11 @@ const Calculator = () => {
               <h2 className="text-xl font-semibold mb-2">Por que calcular?</h2>
               <p className="text-gray-600">Cálculos precisos de macronutrientes e calorias são essenciais para desenvolver planos nutricionais personalizados e eficazes para seus pacientes.</p>
               
+              <div className="mt-4 text-sm bg-blue-50 p-3 rounded-lg border border-blue-100 text-blue-700">
+                <p className="font-medium">Novidade: Cadastro rápido de pacientes</p>
+                <p>Para maior agilidade, agora você pode inserir o nome do paciente diretamente na calculadora e realizar o cadastro completo depois de ter os resultados.</p>
+              </div>
+              
               <div className="mt-4">
                 <Link to="/meal-plans">
                   <Button variant="outline" className="text-nutri-blue">

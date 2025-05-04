@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { useConsultation } from '@/contexts/ConsultationContext';
@@ -13,20 +13,32 @@ import { ConsultationData as AppConsultationData, Patient as AppPatient, MealPla
 const MealPlanGenerator = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [step, setStep] = useState(1); // 1 for meal distribution, 2 for meal assembly
   
   const { 
     activePatient, 
     consultationData, 
+    setConsultationData,
     mealPlan, 
     setMealPlan, 
     saveMealPlan, 
     saveConsultation 
   } = useConsultation();
   
+  // Check if there's data in the location state (from calculator)
+  useEffect(() => {
+    if (location.state?.consultation) {
+      if (!consultationData) {
+        // Only set if we don't already have data in the context
+        setConsultationData(location.state.consultation);
+      }
+    }
+  }, [location.state, consultationData, setConsultationData]);
+  
   // Ensure we have the data
   useEffect(() => {
-    if (!consultationData) {
+    if (!consultationData && !location.state?.consultation) {
       toast({
         title: "Dados insuficientes",
         description: "Por favor, complete uma consulta ou cálculo nutricional primeiro.",
@@ -34,7 +46,7 @@ const MealPlanGenerator = () => {
       });
       navigate('/consultation');
     }
-  }, [consultationData, navigate, toast]);
+  }, [consultationData, location.state, navigate, toast]);
 
   const {
     mealDistribution,
@@ -43,15 +55,19 @@ const MealPlanGenerator = () => {
     handleMealPercentChange,
     handleSaveMealPlan
   } = useMealPlanState({
-    activePatient: activePatient as AppPatient,
-    consultationData: consultationData as AppConsultationData,
+    activePatient: activePatient || (location.state?.patient as AppPatient),
+    consultationData: consultationData || (location.state?.consultation as AppConsultationData),
     mealPlan: mealPlan as AppMealPlan,
     setMealPlan,
     saveConsultation,
     saveMealPlan
   });
 
-  if (!consultationData) {
+  // If we don't have consultation data but have it in location state, use it
+  const displayConsultationData = consultationData || location.state?.consultation;
+  const displayPatient = activePatient || location.state?.patient;
+
+  if (!displayConsultationData) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
         <Navbar />
@@ -69,7 +85,7 @@ const MealPlanGenerator = () => {
     if (step === 2) {
       setStep(1);
     } else {
-      navigate('/consultation');
+      navigate(-1); // Go back to previous page instead of hardcoding /consultation
     }
   };
   
@@ -101,13 +117,13 @@ const MealPlanGenerator = () => {
           nextButtonLabel={step === 1 ? "Continuar para Montagem" : "Salvar e Finalizar Plano"}
           canGoBack={true}
         >
-          {step === 1 && (
+          {step === 1 && displayPatient && displayConsultationData && (
             <MealPlanGeneratorUI
               activePatient={{
-                name: activePatient?.name || '',
-                gender: activePatient?.gender || ''
+                name: displayPatient.name || '',
+                gender: displayPatient.gender || ''
               }}
-              consultationData={consultationData as AppConsultationData}
+              consultationData={displayConsultationData as AppConsultationData}
               mealDistribution={mealDistribution}
               totalMealPercent={totalMealPercent}
               isSaving={isSaving}
@@ -116,21 +132,21 @@ const MealPlanGenerator = () => {
             />
           )}
           
-          {step === 2 && consultationData && (
+          {step === 2 && displayConsultationData && (
             <MealAssembly
-              totalCalories={consultationData.results.get}
+              totalCalories={displayConsultationData.results.get}
               macros={{
-                protein: Math.round((consultationData.results.get * 0.20) / 4),
-                carbs: Math.round((consultationData.results.get * 0.50) / 4),
-                fat: Math.round((consultationData.results.get * 0.30) / 9)
+                protein: Math.round((displayConsultationData.results.get * 0.20) / 4),
+                carbs: Math.round((displayConsultationData.results.get * 0.50) / 4),
+                fat: Math.round((displayConsultationData.results.get * 0.30) / 9)
               }}
-              patientName={activePatient?.name || "Paciente"}
+              patientName={displayPatient?.name || "Paciente"}
               patientData={{
-                age: consultationData.age,
-                weight: consultationData.weight,
-                height: consultationData.height,
-                gender: activePatient?.gender || "não informado",
-                objective: consultationData.objective
+                age: displayConsultationData.age,
+                weight: displayConsultationData.weight,
+                height: displayConsultationData.height,
+                gender: displayPatient?.gender || "não informado",
+                objective: displayConsultationData.objective
               }}
             />
           )}

@@ -7,12 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, UserPlus, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const CalculatorTool = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { setConsultationData } = useConsultationData();
   
   // States for form data
   const [gender, setGender] = useState('female');
@@ -33,6 +39,10 @@ const CalculatorTool = () => {
   const [patientName, setPatientName] = useState('');
   const [objective, setObjective] = useState('manutenção');
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isSavingPatient, setIsSavingPatient] = useState(false);
+
+  // Temp patient data
+  const [tempPatientId, setTempPatientId] = useState<string | null>(null);
 
   const validateInputs = (): boolean => {
     // Basic validation for required fields
@@ -80,7 +90,7 @@ const CalculatorTool = () => {
     return true;
   };
 
-  const calculateBMR = () => {
+  const calculateBMR = async () => {
     if (!validateInputs()) {
       return;
     }
@@ -116,11 +126,90 @@ const CalculatorTool = () => {
     const proteinPercent = parseFloat(proteinPercentage) / 100;
     const fatPercent = parseFloat(fatPercentage) / 100;
     
-    setMacros({
+    const calculatedMacros = {
       carbs: Math.round((calculatedTee * carbsPercent) / 4), // 4 calories per gram of carbs
       protein: Math.round((calculatedTee * proteinPercent) / 4), // 4 calories per gram of protein
       fat: Math.round((calculatedTee * fatPercent) / 9), // 9 calories per gram of fat
-    });
+    };
+    
+    setMacros(calculatedMacros);
+    
+    // Store calculation data for meal plan and future reference
+    const consultationData = {
+      weight: weight,
+      height: height,
+      age: age,
+      sex: gender === 'male' ? 'M' : 'F',
+      objective: objective,
+      profile: 'magro', // Default profile
+      activityLevel: activityLevel,
+      results: {
+        tmb: calculatedBmr,
+        fa: activityFactor,
+        get: Math.round(calculatedTee),
+        macros: {
+          protein: calculatedMacros.protein,
+          carbs: calculatedMacros.carbs,
+          fat: calculatedMacros.fat
+        }
+      }
+    };
+    
+    setConsultationData(consultationData);
+    
+    // If we have a name, create a temporary patient
+    if (patientName && user) {
+      try {
+        // Create temporary patient ID if not already created
+        const patientId = tempPatientId || uuidv4();
+        
+        if (!tempPatientId) {
+          setTempPatientId(patientId);
+          
+          // Create temporary patient
+          const { error } = await supabase
+            .from('patients')
+            .insert({
+              id: patientId,
+              name: patientName,
+              gender: gender === 'male' ? 'male' : 'female',
+              user_id: user.id,
+              goals: {
+                objective: objective
+              }
+            });
+            
+          if (error) {
+            console.error("Error creating temporary patient:", error);
+          } else {
+            // Save the calculation
+            const { error: calcError } = await supabase
+              .from('calculations')
+              .insert({
+                user_id: user.id,
+                patient_id: patientId,
+                weight: parseFloat(weight),
+                height: parseFloat(height),
+                age: parseInt(age),
+                bmr: calculatedBmr,
+                tdee: Math.round(calculatedTee),
+                protein: calculatedMacros.protein,
+                carbs: calculatedMacros.carbs,
+                fats: calculatedMacros.fat,
+                gender: gender,
+                activity_level: activityLevel,
+                goal: objective
+              });
+              
+            if (calcError) {
+              console.error("Error saving calculation:", calcError);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error in patient pre-registration:", err);
+      }
+    }
     
     // After calculations are done, switch to results tab
     setActiveTab('results');
@@ -132,6 +221,58 @@ const CalculatorTool = () => {
     });
   };
 
+  const handleSavePatient = async () => {
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para cadastrar pacientes.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!patientName || !age) {
+      toast({
+        title: "Dados incompletos",
+        description: "O nome do paciente e a idade são obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSavingPatient(true);
+    
+    try {
+      // Navigate to the patients page with data for registration
+      navigate('/patients', {
+        state: {
+          newPatient: {
+            name: patientName,
+            gender: gender === 'male' ? 'M' : 'F',
+            age: age,
+            height: height,
+            weight: weight,
+            objective: objective
+          }
+        }
+      });
+      
+      toast({
+        title: "Redirecionando...",
+        description: "Complete o cadastro do paciente para salvar os dados."
+      });
+    } catch (error) {
+      console.error("Error navigating to patient registration:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível redirecionar para o cadastro de pacientes.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingPatient(false);
+    }
+  };
+
   const handleGenerateMealPlan = () => {
     if (!tee || !macros) return;
     
@@ -139,12 +280,14 @@ const CalculatorTool = () => {
     const consultationData = {
       age: age,
       objective: objective,
-      gender: gender,
+      sex: gender === 'male' ? 'M' : 'F',
       weight: weight,
       height: height,
       activityLevel: activityLevel,
       results: {
         get: tee,
+        tmb: bmr || 0,
+        fa: parseFloat(activityLevel),
         macros: {
           protein: macros.protein,
           carbs: macros.carbs,
@@ -156,9 +299,12 @@ const CalculatorTool = () => {
     // Create patient-like data structure
     const patientData = {
       name: patientName || "Paciente",
-      gender: gender,
-      id: Date.now().toString() // Temporary ID for demonstration
+      gender: gender === 'male' ? 'male' : 'female',
+      id: tempPatientId || Date.now().toString() // Use temp ID if available
     };
+    
+    // Set consultation data in context
+    setConsultationData(consultationData);
     
     // Navigate to meal plan generator with the data
     navigate('/meal-plan-generator', {
@@ -194,7 +340,7 @@ const CalculatorTool = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="patientName">Nome do Paciente (opcional)</Label>
+                  <Label htmlFor="patientName">Nome do Paciente</Label>
                   <Input 
                     id="patientName" 
                     value={patientName} 
@@ -282,6 +428,13 @@ const CalculatorTool = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            {patientName && user && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm">
+                <p className="font-medium">Nota: Os dados serão automaticamente pré-salvos quando o cálculo for realizado.</p>
+                <p>Para completar o cadastro do paciente, clique em "Salvar Paciente" após o cálculo.</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="macros" className="space-y-4">
@@ -405,11 +558,27 @@ const CalculatorTool = () => {
                   </Card>
                 )}
 
-                <div className="flex justify-center mt-4">
+                <div className="flex flex-wrap gap-3 justify-center mt-4">
+                  {user && patientName && (
+                    <Button 
+                      onClick={handleSavePatient}
+                      variant="outline"
+                      className="border-nutri-blue text-nutri-blue flex items-center gap-2"
+                      disabled={isSavingPatient}
+                    >
+                      {isSavingPatient ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <UserPlus className="h-4 w-4 mr-1" />
+                      )}
+                      Salvar Paciente
+                    </Button>
+                  )}
+                  
                   <Button 
                     onClick={handleGenerateMealPlan} 
                     className="bg-nutri-green hover:bg-nutri-green-dark flex items-center gap-2"
-                    size="lg"
+                    size="default"
                   >
                     Gerar Plano Alimentar
                     <ArrowRight className="h-4 w-4" />
