@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { forceSeedTestimonials, getTestimonials } from '@/utils/seedTestimonials';
 import StarRating from './StarRating';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface Testimonial {
   id?: string;
@@ -28,6 +30,34 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
   const navigate = useNavigate();
   const { toast } = useToast();
   const [fallbackTestimonials, setFallbackTestimonials] = useState<Testimonial[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  // Setup autoplay plugin
+  const autoplayOptions = {
+    delay: 7000, // 7 seconds per slide for reading time
+    stopOnInteraction: true, // Stop on user interaction
+    rootNode: (emblaRoot: any) => emblaRoot.parentElement, // Needed for proper functioning
+  };
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "center",
+    skipSnaps: false,
+  }, [Autoplay(autoplayOptions)]);
+  
+  // Update active index when slide changes
+  useEffect(() => {
+    if (!emblaApi) return;
+    
+    const onSelect = () => {
+      setActiveIndex(emblaApi.selectedScrollSnap());
+    };
+    
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi]);
   
   // Carrega os depoimentos do banco de dados
   const { data: dbTestimonials, isLoading, error, refetch } = useQuery<Testimonial[]>({
@@ -105,32 +135,37 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
       )}
       <CardContent>
         {testimonials && testimonials.length > 0 ? (
-          <Carousel
-            opts={{
-              align: "center",
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent>
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex py-4">
               {testimonials.map((testimonial, index) => (
-                <CarouselItem key={testimonial.id || index} className="md:basis-1/2">
-                  <div className="bg-white p-6 rounded-lg shadow-md">
+                <div
+                  key={testimonial.id || index}
+                  className={`min-w-0 flex-[0_0_90%] md:flex-[0_0_45%] mx-2 transition-all duration-500 ${
+                    index === activeIndex
+                      ? "scale-105 z-10 shadow-lg bg-white"
+                      : "scale-95 opacity-70 bg-white/90"
+                  }`}
+                >
+                  <div className={`p-6 rounded-lg ${
+                    index === activeIndex
+                      ? "shadow-xl"
+                      : "shadow-md"
+                  }`}>
                     <div className="mb-3">
                       <StarRating rating={testimonial.rating || 5} />
                     </div>
-                    <p className="italic text-gray-600 mb-4">&quot;{testimonial.content}&quot;</p>
+                    <p className={`italic text-gray-600 mb-4 ${
+                      index === activeIndex
+                        ? "text-gray-800"
+                        : "text-gray-600"
+                    }`}>&quot;{testimonial.content}&quot;</p>
                     <p className="font-medium text-nutri-blue">{testimonial.name}</p>
                     <p className="text-sm text-gray-500">{testimonial.role}</p>
                   </div>
-                </CarouselItem>
+                </div>
               ))}
-            </CarouselContent>
-            <div className="hidden md:flex">
-              <CarouselPrevious className="-left-4" />
-              <CarouselNext className="-right-4" />
             </div>
-          </Carousel>
+          </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500">Nenhum depoimento encontrado</p>
@@ -142,6 +177,29 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
                 Seja o primeiro a deixar um depoimento
               </Button>
             </div>
+          </div>
+        )}
+        
+        {testimonials && testimonials.length > 1 && (
+          <div className="flex justify-center mt-6 gap-2">
+            <Button
+              size="icon"
+              variant="outline"
+              className="rounded-full h-8 w-8 border-nutri-blue text-nutri-blue"
+              onClick={() => emblaApi?.scrollPrev()}
+            >
+              <span className="sr-only">Anterior</span>
+              ←
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="rounded-full h-8 w-8 border-nutri-blue text-nutri-blue"
+              onClick={() => emblaApi?.scrollNext()}
+            >
+              <span className="sr-only">Próximo</span>
+              →
+            </Button>
           </div>
         )}
       </CardContent>

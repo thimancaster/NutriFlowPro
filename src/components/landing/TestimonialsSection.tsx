@@ -15,8 +15,9 @@ const TestimonialsSection = () => {
           </p>
         </div>
         
-        {/* Passando showTitle={false} para evitar a redundância de títulos */}
-        <DashboardTestimonials showTitle={false} />
+        <div className="max-w-5xl mx-auto">
+          <DashboardTestimonials showTitle={false} />
+        </div>
       </div>
     </section>
   );
