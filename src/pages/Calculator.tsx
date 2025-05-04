@@ -1,6 +1,6 @@
 
 import React from 'react';
-import CalculatorTool from '@/components/CalculatorTool';
+import CalculatorTool from '@/components/calculator';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Home, Calculator as CalculatorIcon, ChevronRight } from 'lucide-react';
