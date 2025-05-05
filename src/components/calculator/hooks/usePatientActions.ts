@@ -47,12 +47,10 @@ export const usePatientActions = ({
       
       await handleSavePatient(
         calculatorState,
-        bmr,
-        tee,
-        macros,
-        tempPatientId,
+        user,
+        navigate,
         toast,
-        user
+        setIsSavingPatient
       );
       
       // Show confirmation
@@ -70,7 +68,7 @@ export const usePatientActions = ({
     } finally {
       setIsSavingPatient(false);
     }
-  }, [calculatorState, bmr, tee, macros, tempPatientId, user, toast]);
+  }, [calculatorState, bmr, tee, macros, tempPatientId, user, toast, navigate]);
   
   const handleGenerateMealPlan = useCallback(() => {
     generateMealPlan(
