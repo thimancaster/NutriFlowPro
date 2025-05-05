@@ -1,11 +1,7 @@
-
 import { useCallback } from 'react';
 import { CalculatorState } from '../types';
-import { 
-  validateCalculatorInputs, 
-  calculateBMR, 
-  calculateMacros 
-} from '../utils/calculations';
+import { validateCalculatorInputs } from '../utils/validation';
+import { calculateBMR, calculateMacros } from '../utils/calculations';
 import { saveConsultationData } from '../storageUtils';
 import { saveTemporaryPatient } from '../patientUtils';
 

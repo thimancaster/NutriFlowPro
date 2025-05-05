@@ -51,8 +51,8 @@ export const usePatientActions = ({
         tee,
         macros,
         tempPatientId,
-        user,
-        toast
+        toast,
+        user
       );
       
       // Show confirmation
