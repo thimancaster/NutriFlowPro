@@ -6,6 +6,10 @@ export interface MealPlanSettings {
   totalCalories: string;
   dietType: string;
   restrictions: string[];
+  patientName?: string;
+  patientData?: any;
+  patientAge?: number;
+  patientGender?: string;
 }
 
 // Food categories with their properties

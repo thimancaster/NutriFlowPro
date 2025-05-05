@@ -30,7 +30,12 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
           totalCarbs: 0,
           totalFats: 0,
           patientName: settings.patientName || "Paciente",
-          settings
+          settings: {
+            patientName: settings.patientName,
+            patientData: settings.patientData,
+            patientAge: settings.patientAge,
+            patientGender: settings.patientGender
+          }
         });
         
         // Save PDF
@@ -67,7 +72,12 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
           totalCarbs: 0,
           totalFats: 0,
           patientName: settings.patientName || "Paciente",
-          settings
+          settings: {
+            patientName: settings.patientName,
+            patientData: settings.patientData,
+            patientAge: settings.patientAge,
+            patientGender: settings.patientGender
+          }
         });
         
         // Open PDF in a new tab for printing
