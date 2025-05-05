@@ -1,4 +1,3 @@
-
 import { CalculatorState } from './types';
 
 // Key for storing calculator results in storage
@@ -16,7 +15,8 @@ export function getInitialCalculatorState(): CalculatorState {
     activityLevel: '1.2',
     carbsPercentage: '55',
     proteinPercentage: '20',
-    fatPercentage: '25'
+    fatPercentage: '25',
+    consultationType: 'primeira_consulta'
   };
 }
 

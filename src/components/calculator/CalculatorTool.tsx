@@ -5,7 +5,7 @@ import MacroDistributionInputs from './MacroDistributionInputs';
 import CalculatorResults from './CalculatorResults';
 import CalculatorActions from './CalculatorActions';
 import { Card, CardContent } from "@/components/ui/card";
-import { useCalculatorState } from './useCalculatorState';
+import useCalculatorState from './useCalculatorState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 

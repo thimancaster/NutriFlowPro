@@ -5,10 +5,9 @@ export { default as CalculatorInputs } from "./CalculatorInputs";
 export { default as MacroDistributionInputs } from "./MacroDistributionInputs";
 export { default as CalculatorResults } from "./CalculatorResults";
 export { default as CalculatorActions } from "./CalculatorActions";
-export { default } from "./CalculatorTool"; // Default export still points to CalculatorTool
+export { default as useCalculatorState } from "./useCalculatorState"; // Update to export the default
 
 // Export the hook and utility types
-export { default as useCalculatorState } from "./useCalculatorState";
 export * from "./types";
 export * from "./calculatorUtils";
 export * from "./storageUtils";

@@ -31,7 +31,10 @@ const mockConsultations = [
     fa: 1.55,
     get: 2343,
     macros: { protein: 146, carbs: 234, fat: 78 },
-    notes: "Primeira consulta. Paciente apresenta histórico de prática regular de atividade física."
+    notes: "Primeira consulta. Paciente apresenta histórico de prática regular de atividade física.",
+    tipo: 'primeira_consulta',
+    status: 'completo',
+    last_auto_save: '2025-04-15T15:30:00Z'
   },
   {
     id: "2",
@@ -43,7 +46,10 @@ const mockConsultations = [
     fa: 1.55,
     get: 2356,
     macros: { protein: 147, carbs: 236, fat: 79 },
-    notes: "Paciente relata dificuldade em seguir o plano alimentar nos fins de semana."
+    notes: "Paciente relata dificuldade em seguir o plano alimentar nos fins de semana.",
+    tipo: 'retorno',
+    status: 'completo',
+    last_auto_save: '2025-04-01T14:45:00Z'
   },
   {
     id: "3",
@@ -55,7 +61,10 @@ const mockConsultations = [
     fa: 1.55,
     get: 2376,
     macros: { protein: 149, carbs: 238, fat: 79 },
-    notes: "Iniciou suplementação com whey protein após o treino."
+    notes: "Iniciou suplementação com whey protein após o treino.",
+    tipo: 'retorno',
+    status: 'completo',
+    last_auto_save: '2025-03-15T16:20:00Z'
   },
   {
     id: "4",
@@ -67,7 +76,10 @@ const mockConsultations = [
     fa: 1.55,
     get: 2399,
     macros: { protein: 150, carbs: 240, fat: 80 },
-    notes: "Primeira avaliação após retorno das férias."
+    notes: "Primeira avaliação após retorno das férias.",
+    tipo: 'retorno',
+    status: 'completo',
+    last_auto_save: '2025-03-01T10:15:00Z'
   },
   {
     id: "5",
@@ -79,7 +91,10 @@ const mockConsultations = [
     fa: 1.55,
     get: 2410,
     macros: { protein: 151, carbs: 241, fat: 80 },
-    notes: "Paciente demonstra boa adesão ao plano."
+    notes: "Paciente demonstra boa adesão ao plano.",
+    tipo: 'retorno',
+    status: 'completo',
+    last_auto_save: '2025-02-15T11:30:00Z'
   },
 ];
 
