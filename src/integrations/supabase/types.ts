@@ -159,11 +159,14 @@ export type Database = {
           goal: string
           height: number
           id: string
+          last_auto_save: string | null
           measurements: Json | null
           notes: string | null
           patient_id: string | null
           protein: number
+          status: string
           tdee: number
+          tipo: string
           user_id: string | null
           weight: number
         }
@@ -179,11 +182,14 @@ export type Database = {
           goal: string
           height: number
           id?: string
+          last_auto_save?: string | null
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
           protein: number
+          status?: string
           tdee: number
+          tipo?: string
           user_id?: string | null
           weight: number
         }
@@ -199,11 +205,14 @@ export type Database = {
           goal?: string
           height?: number
           id?: string
+          last_auto_save?: string | null
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
           protein?: number
+          status?: string
           tdee?: number
+          tipo?: string
           user_id?: string | null
           weight?: number
         }

@@ -61,7 +61,9 @@ export async function saveTemporaryPatient(
         fats: macros.fat,
         gender: state.gender,
         activity_level: state.activityLevel,
-        goal: state.objective
+        goal: state.objective,
+        tipo: state.consultationType || 'primeira_consulta',
+        status: 'em_andamento'
       });
       
     if (calcError) {
@@ -72,5 +74,28 @@ export async function saveTemporaryPatient(
   } catch (err) {
     console.error("Error in patient pre-registration:", err);
     return tempPatientId || '';
+  }
+}
+
+// Helper function to update the status of a calculation
+export async function updateCalculationStatus(
+  calculationId: string, 
+  status: 'em_andamento' | 'completo'
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('calculations')
+      .update({ status })
+      .eq('id', calculationId);
+      
+    if (error) {
+      console.error("Error updating calculation status:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (err) {
+    console.error("Error updating calculation status:", err);
+    return false;
   }
 }

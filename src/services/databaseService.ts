@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { MealPlan, Patient, ConsultationData } from "@/types";
 import { Json } from "@/integrations/supabase/types";
@@ -162,7 +161,8 @@ export const DatabaseService = {
   saveConsultation: async (
     userId: string, 
     patientId: string, 
-    consultationData: ConsultationData
+    consultationData: ConsultationData,
+    consultationType: string = 'primeira_consulta'
   ): Promise<{success: boolean, data?: any, error?: string}> => {
     try {
       if (!supabase) {
@@ -188,7 +188,9 @@ export const DatabaseService = {
           fats: consultationData.results?.macros.fat || 0,
           gender: consultationData.sex === 'M' ? 'male' : 'female',
           activity_level: consultationData.activityLevel,
-          goal: consultationData.objective
+          goal: consultationData.objective,
+          tipo: consultationType,
+          status: 'em_andamento'
         })
         .select('id')
         .single();
@@ -209,6 +211,80 @@ export const DatabaseService = {
       return {
         success: false,
         error: error.message || 'Failed to save consultation'
+      };
+    }
+  },
+  
+  /**
+   * Auto-save consultation data periodically
+   */
+  autoSaveConsultation: async (
+    consultationId: string,
+    updatedData: Partial<any>
+  ): Promise<{success: boolean, error?: string}> => {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client is not initialized');
+      }
+      
+      if (!consultationId) {
+        throw new Error('Consultation ID is required for auto-save');
+      }
+      
+      const { error } = await supabase
+        .from('calculations')
+        .update(updatedData)
+        .eq('id', consultationId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      return {
+        success: true
+      };
+    } catch (error: any) {
+      console.error('Error auto-saving consultation:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to auto-save consultation'
+      };
+    }
+  },
+  
+  /**
+   * Update the status of a consultation
+   */
+  updateConsultationStatus: async (
+    consultationId: string,
+    status: 'em_andamento' | 'completo'
+  ): Promise<{success: boolean, error?: string}> => {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client is not initialized');
+      }
+      
+      if (!consultationId) {
+        throw new Error('Consultation ID is required');
+      }
+      
+      const { error } = await supabase
+        .from('calculations')
+        .update({ status })
+        .eq('id', consultationId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      return {
+        success: true
+      };
+    } catch (error: any) {
+      console.error('Error updating consultation status:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to update consultation status'
       };
     }
   },
@@ -256,6 +332,13 @@ export const DatabaseService = {
       
       // Invalidate meal plans cache for this patient
       dbCache.invalidate(`${CACHE_KEYS.MEAL_PLANS}${patientId}`);
+      
+      // After saving meal plan, mark consultation as complete
+      try {
+        await DatabaseService.updateConsultationStatus(consultationId, 'completo');
+      } catch (err) {
+        console.warn('Could not update consultation status after saving meal plan', err);
+      }
       
       return {
         success: true,

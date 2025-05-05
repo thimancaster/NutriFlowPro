@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalculatorInputsProps } from './types';
 
 const CalculatorInputs = ({
@@ -19,23 +21,30 @@ const CalculatorInputs = ({
   setObjective,
   activityLevel,
   setActivityLevel,
+  consultationType,
+  setConsultationType,
   user
 }: CalculatorInputsProps) => {
+  
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="patientName">Nome do Paciente</Label>
-            <Input 
-              id="patientName" 
-              value={patientName} 
-              onChange={(e) => setPatientName(e.target.value)}
-              placeholder="Nome do paciente"
-            />
-          </div>
-          
-          <div className="space-y-1.5">
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Dados do Paciente</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="patientName">Nome do Paciente</Label>
+          <Input
+            id="patientName"
+            value={patientName}
+            onChange={(e) => setPatientName(e.target.value)}
+            placeholder="Nome completo"
+            className="w-full"
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="gender">Sexo</Label>
             <Select value={gender} onValueChange={setGender}>
               <SelectTrigger id="gender">
@@ -47,43 +56,49 @@ const CalculatorInputs = ({
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="age">Idade (anos)</Label>
-            <Input 
-              id="age" 
-              type="number" 
-              value={age} 
+          
+          <div className="space-y-2">
+            <Label htmlFor="age">Idade</Label>
+            <Input
+              id="age"
+              type="number"
+              value={age}
               onChange={(e) => setAge(e.target.value)}
-              placeholder="Ex: 35"
+              placeholder="Idade em anos"
+              className="w-full"
             />
           </div>
         </div>
-
-        <div className="space-y-3">
-          <div className="space-y-1.5">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="weight">Peso (kg)</Label>
-            <Input 
-              id="weight" 
-              type="number" 
-              value={weight} 
+            <Input
+              id="weight"
+              type="number"
+              step="0.1"
+              value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              placeholder="Ex: 70"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="height">Altura (cm)</Label>
-            <Input 
-              id="height" 
-              type="number" 
-              value={height} 
-              onChange={(e) => setHeight(e.target.value)}
-              placeholder="Ex: 170"
+              placeholder="Peso em kg"
+              className="w-full"
             />
           </div>
           
-          <div className="space-y-1.5">
+          <div className="space-y-2">
+            <Label htmlFor="height">Altura (cm)</Label>
+            <Input
+              id="height"
+              type="number"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              placeholder="Altura em cm"
+              className="w-full"
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="objective">Objetivo</Label>
             <Select value={objective} onValueChange={setObjective}>
               <SelectTrigger id="objective">
@@ -96,32 +111,38 @@ const CalculatorInputs = ({
               </SelectContent>
             </Select>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="activityLevel">Nível de Atividade</Label>
+            <Select value={activityLevel} onValueChange={setActivityLevel}>
+              <SelectTrigger id="activityLevel">
+                <SelectValue placeholder="Selecione o nível" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sedentario">Sedentário</SelectItem>
+                <SelectItem value="leve">Leve</SelectItem>
+                <SelectItem value="moderado">Moderado</SelectItem>
+                <SelectItem value="intenso">Intenso</SelectItem>
+                <SelectItem value="muito_intenso">Muito Intenso</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
-
-      <div className="space-y-1.5 mt-4">
-        <Label htmlFor="activity">Nível de Atividade</Label>
-        <Select value={activityLevel} onValueChange={setActivityLevel}>
-          <SelectTrigger id="activity">
-            <SelectValue placeholder="Selecione o nível de atividade" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1.2">Sedentário (pouco ou nenhum exercício)</SelectItem>
-            <SelectItem value="1.375">Levemente ativo (exercício leve 1-3 dias/semana)</SelectItem>
-            <SelectItem value="1.55">Moderadamente ativo (exercício moderado 3-5 dias/semana)</SelectItem>
-            <SelectItem value="1.725">Muito ativo (exercício intenso 6-7 dias/semana)</SelectItem>
-            <SelectItem value="1.9">Extremamente ativo (exercício muito intenso, trabalho físico)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      {patientName && user && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm">
-          <p className="font-medium">Nota: Os dados serão automaticamente pré-salvos quando o cálculo for realizado.</p>
-          <p>Para completar o cadastro do paciente, clique em "Salvar Paciente" após o cálculo.</p>
+        
+        <div className="space-y-2">
+          <Label htmlFor="consultationType">Tipo de Consulta</Label>
+          <Select value={consultationType} onValueChange={setConsultationType}>
+            <SelectTrigger id="consultationType">
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="primeira_consulta">Primeira Consulta</SelectItem>
+              <SelectItem value="retorno">Retorno</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

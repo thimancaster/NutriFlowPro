@@ -1,143 +1,125 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from 'react-router-dom';
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/contexts/AuthContext';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import CalculatorInputs from './CalculatorInputs';
 import MacroDistributionInputs from './MacroDistributionInputs';
 import CalculatorResults from './CalculatorResults';
 import CalculatorActions from './CalculatorActions';
-import useCalculatorState from './useCalculatorState';
-import { handleSavePatient } from './handlers/patientHandlers';
-import { handleGenerateMealPlan } from './handlers/mealPlanHandlers';
+import { Card, CardContent } from "@/components/ui/card";
+import { useCalculatorState } from './useCalculatorState';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const CalculatorTool = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
-  const { setConsultationData } = useConsultationData();
-  const [activeTab, setActiveTab] = useState('calculator');
-  const [isSavingPatient, setIsSavingPatient] = useState(false);
+  const { toast } = useToast();
   
+  // Combine useCalculatorState with local state management
   const {
-    calculatorState,
-    setPatientName,
-    setGender,
-    setAge,
-    setWeight,
-    setHeight,
-    setObjective,
-    setActivityLevel,
-    setCarbsPercentage,
-    setProteinPercentage,
-    setFatPercentage,
-    isCalculating,
+    patientName, setPatientName,
+    gender, setGender,
+    age, setAge,
+    weight, setWeight,
+    height, setHeight,
+    objective, setObjective,
+    activityLevel, setActivityLevel,
+    carbsPercentage, setCarbsPercentage,
+    proteinPercentage, setProteinPercentage,
+    fatPercentage, setFatPercentage,
+    bmr, setBmr,
+    tee, setTee,
+    macros, setMacros,
+    isCalculating, setIsCalculating,
     calculateResults,
-    bmr,
-    tee,
-    macros,
-    tempPatientId
-  } = useCalculatorState({ toast, user, setConsultationData });
+    handleSavePatient,
+    handleGenerateMealPlan,
+    isSavingPatient
+  } = useCalculatorState({ toast, user, setConsultationData: () => {} });
 
-  const onSavePatient = () => {
-    handleSavePatient(
-      calculatorState,
-      user,
-      navigate,
-      toast,
-      setIsSavingPatient
-    );
-  };
-
-  const onGenerateMealPlan = () => {
-    handleGenerateMealPlan(
-      calculatorState,
-      bmr,
-      tee,
-      macros,
-      tempPatientId,
-      setConsultationData,
-      navigate,
-      toast
-    );
-  };
-
+  const [consultationType, setConsultationType] = useState<string>('primeira_consulta');
+  
+  // Calculate combined percentage for validation
+  const totalPercentage = 
+    (parseInt(carbsPercentage) || 0) + 
+    (parseInt(proteinPercentage) || 0) + 
+    (parseInt(fatPercentage) || 0);
+  
+  const hasValidPercentages = totalPercentage === 100;
+  const hasRequiredFields = patientName && age && weight && height;
+  
   return (
-    <Card className="nutri-card w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>Calculadora Nutricional</CardTitle>
-        <CardDescription>
-          Calcule a Taxa Metabólica Basal (TMB), Gasto Energético Total (GET) e distribuição de macronutrientes.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} defaultValue="calculator" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="calculator">Calculadora</TabsTrigger>
-            <TabsTrigger value="macros">Macronutrientes</TabsTrigger>
-            <TabsTrigger value="results">Resultados</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="calculator">
-            <CalculatorInputs 
-              patientName={calculatorState.patientName}
-              setPatientName={setPatientName}
-              gender={calculatorState.gender}
-              setGender={setGender}
-              age={calculatorState.age}
-              setAge={setAge}
-              weight={calculatorState.weight}
-              setWeight={setWeight}
-              height={calculatorState.height}
-              setHeight={setHeight}
-              objective={calculatorState.objective}
-              setObjective={setObjective}
-              activityLevel={calculatorState.activityLevel}
-              setActivityLevel={setActivityLevel}
-              user={user}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-6">
+        <CalculatorInputs
+          patientName={patientName}
+          setPatientName={setPatientName}
+          gender={gender}
+          setGender={setGender}
+          age={age}
+          setAge={setAge}
+          weight={weight}
+          setWeight={setWeight}
+          height={height}
+          setHeight={setHeight}
+          objective={objective}
+          setObjective={setObjective}
+          activityLevel={activityLevel}
+          setActivityLevel={setActivityLevel}
+          consultationType={consultationType}
+          setConsultationType={setConsultationType}
+          user={user}
+        />
+        
+        <MacroDistributionInputs
+          carbsPercentage={carbsPercentage}
+          setCarbsPercentage={setCarbsPercentage}
+          proteinPercentage={proteinPercentage}
+          setProteinPercentage={setProteinPercentage}
+          fatPercentage={fatPercentage}
+          setFatPercentage={setFatPercentage}
+        />
+        
+        {!hasValidPercentages && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 p-3 rounded">
+            A soma dos percentuais de macronutrientes deve ser igual a 100%. Atualmente: {totalPercentage}%
+          </div>
+        )}
+        
+        <Card>
+          <CardContent className="pt-6">
+            <CalculatorActions
+              isCalculating={isCalculating}
+              calculateResults={() => {
+                if (hasRequiredFields && hasValidPercentages) {
+                  calculateResults();
+                } else {
+                  toast({
+                    title: "Dados incompletos",
+                    description: "Preencha todos os campos obrigatórios e ajuste os percentuais para totalizar 100%.",
+                    variant: "destructive"
+                  });
+                }
+              }}
             />
-          </TabsContent>
-          
-          <TabsContent value="macros">
-            <MacroDistributionInputs 
-              carbsPercentage={calculatorState.carbsPercentage}
-              setCarbsPercentage={setCarbsPercentage}
-              proteinPercentage={calculatorState.proteinPercentage}
-              setProteinPercentage={setProteinPercentage}
-              fatPercentage={calculatorState.fatPercentage}
-              setFatPercentage={setFatPercentage}
-            />
-          </TabsContent>
-          
-          <TabsContent value="results">
-            <CalculatorResults 
-              bmr={bmr}
-              tee={tee}
-              macros={macros}
-              carbsPercentage={calculatorState.carbsPercentage}
-              proteinPercentage={calculatorState.proteinPercentage}
-              fatPercentage={calculatorState.fatPercentage}
-              handleSavePatient={onSavePatient}
-              handleGenerateMealPlan={onGenerateMealPlan}
-              isSavingPatient={isSavingPatient}
-              hasPatientName={!!calculatorState.patientName}
-              user={user}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      {activeTab !== 'results' && (
-        <CardFooter className="flex justify-end">
-          <CalculatorActions 
-            isCalculating={isCalculating}
-            calculateResults={() => calculateResults(calculatorState)}
-          />
-        </CardFooter>
-      )}
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="lg:col-span-1">
+        <CalculatorResults
+          bmr={bmr}
+          tee={tee}
+          macros={macros}
+          carbsPercentage={carbsPercentage}
+          proteinPercentage={proteinPercentage}
+          fatPercentage={fatPercentage}
+          handleSavePatient={handleSavePatient}
+          handleGenerateMealPlan={handleGenerateMealPlan}
+          isSavingPatient={isSavingPatient}
+          hasPatientName={!!patientName}
+          user={user}
+        />
+      </div>
+    </div>
   );
 };
 

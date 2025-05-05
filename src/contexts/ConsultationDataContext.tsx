@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
 import { storageUtils } from '@/utils/storageUtils';
+import { DatabaseService } from '@/services/databaseService';
 
 interface ConsultationData {
   weight?: string;
@@ -15,6 +16,7 @@ interface ConsultationData {
   objective?: string;
   profile?: string;
   activityLevel?: string;
+  consultationType?: 'primeira_consulta' | 'retorno';
   results?: {
     tmb: number;
     fa: number;
@@ -31,6 +33,8 @@ interface ConsultationDataContextType {
   consultationData: ConsultationData | null;
   setConsultationData: (data: ConsultationData | null) => void;
   saveConsultation: () => Promise<string | undefined>;
+  autoSaveConsultation: (consultationId: string, data: any) => Promise<boolean>;
+  updateConsultationStatus: (consultationId: string, status: 'em_andamento' | 'completo') => Promise<boolean>;
 }
 
 const ConsultationDataContext = createContext<ConsultationDataContextType | undefined>(undefined);
@@ -69,35 +73,22 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     }
 
     try {
-      // Save the consultation data to the database
-      const { data, error } = await supabase
-        .from('calculations')
-        .insert({
-          user_id: user.id,
-          patient_id: activePatient.id,
-          weight: parseFloat(consultationData.weight || '0'),
-          height: parseFloat(consultationData.height || '0'),
-          age: parseInt(consultationData.age || '0'),
-          bmr: consultationData.results?.tmb || 0,
-          tdee: consultationData.results?.get || 0,
-          protein: consultationData.results?.macros.protein || 0,
-          carbs: consultationData.results?.macros.carbs || 0,
-          fats: consultationData.results?.macros.fat || 0,
-          gender: consultationData.sex === 'M' ? 'male' : 'female',
-          activity_level: consultationData.activityLevel,
-          goal: consultationData.objective
-        })
-        .select('id')
-        .single();
+      // Use DatabaseService instead of direct Supabase call
+      const result = await DatabaseService.saveConsultation(
+        user.id,
+        activePatient.id,
+        consultationData,
+        consultationData.consultationType || 'primeira_consulta'
+      );
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error);
       
       toast({
         title: "Consulta salva",
         description: "Os dados da consulta foram salvos com sucesso."
       });
       
-      return data.id;
+      return result.data.id;
     } catch (error: any) {
       console.error('Error saving consultation:', error);
       toast({
@@ -108,13 +99,49 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
       return undefined;
     }
   };
+  
+  const autoSaveConsultation = async (consultationId: string, data: any): Promise<boolean> => {
+    try {
+      if (!consultationId) return false;
+      
+      const result = await DatabaseService.autoSaveConsultation(consultationId, data);
+      return result.success;
+    } catch (error) {
+      console.error('Auto-save error:', error);
+      return false;
+    }
+  };
+  
+  const updateConsultationStatus = async (consultationId: string, status: 'em_andamento' | 'completo'): Promise<boolean> => {
+    try {
+      if (!consultationId) return false;
+      
+      const result = await DatabaseService.updateConsultationStatus(consultationId, status);
+      
+      if (result.success) {
+        toast({
+          title: status === 'completo' ? "Consulta finalizada" : "Status atualizado",
+          description: status === 'completo' 
+            ? "A consulta foi marcada como completa." 
+            : "O status da consulta foi atualizado."
+        });
+      }
+      
+      return result.success;
+    } catch (error) {
+      console.error('Status update error:', error);
+      return false;
+    }
+  };
 
   return (
     <ConsultationDataContext.Provider
       value={{
         consultationData,
         setConsultationData,
-        saveConsultation
+        saveConsultation,
+        autoSaveConsultation,
+        updateConsultationStatus
       }}
     >
       {children}

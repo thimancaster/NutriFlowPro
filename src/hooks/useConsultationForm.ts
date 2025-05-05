@@ -16,6 +16,7 @@ interface FormData {
   objective: string;
   profile: string;
   activityLevel: string;
+  consultationType?: string;
 }
 
 interface Results {
@@ -40,6 +41,7 @@ export const useConsultationForm = (initialData?: Partial<FormData>) => {
     objective: initialData?.objective || 'manutenção',
     profile: initialData?.profile || 'magro',
     activityLevel: initialData?.activityLevel || 'moderado',
+    consultationType: initialData?.consultationType || 'primeira_consulta',
   });
   
   const [results, setResults] = useState<Results>({

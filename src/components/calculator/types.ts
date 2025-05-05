@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface CalculatorState {
@@ -12,6 +11,7 @@ export interface CalculatorState {
   carbsPercentage: string;
   proteinPercentage: string;
   fatPercentage: string;
+  consultationType: 'primeira_consulta' | 'retorno';
 }
 
 export interface CalculatorResults {
@@ -23,6 +23,7 @@ export interface CalculatorResults {
     fat: number;
   };
   tempPatientId?: string | null;
+  status?: 'em_andamento' | 'completo';
 }
 
 export interface UseCalculatorStateProps {
@@ -80,6 +81,8 @@ export interface CalculatorInputsProps {
   setObjective: (value: string) => void;
   activityLevel: string;
   setActivityLevel: (value: string) => void;
+  consultationType: string;
+  setConsultationType: (value: string) => void;
   user: any;
 }
 

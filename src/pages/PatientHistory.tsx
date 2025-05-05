@@ -121,6 +121,15 @@ const PatientHistory = () => {
     }
   };
 
+  // Get appropriate badge color based on consultation type and status
+  const getConsultationTypeBadgeColor = (tipo: string) => {
+    return tipo === 'primeira_consulta' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+  };
+  
+  const getStatusBadgeColor = (status: string) => {
+    return status === 'completo' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
@@ -279,9 +288,19 @@ const PatientHistory = () => {
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                   <div className="space-y-3 flex-1">
                     <div className="flex justify-between">
-                      <h3 className="font-semibold text-lg">
-                        Consulta: {consultation.date}
-                      </h3>
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          Consulta: {consultation.date}
+                        </h3>
+                        <div className="flex gap-2 mt-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${getConsultationTypeBadgeColor(consultation.tipo || 'primeira_consulta')}`}>
+                            {consultation.tipo === 'retorno' ? 'Retorno' : 'Primeira Consulta'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusBadgeColor(consultation.status || 'em_andamento')}`}>
+                            {consultation.status === 'completo' ? 'Completo' : 'Em andamento'}
+                          </span>
+                        </div>
+                      </div>
                       <div className="flex gap-2">
                         <Button 
                           size="sm" 
@@ -325,6 +344,12 @@ const PatientHistory = () => {
                       <p className="text-sm text-gray-500">Observações:</p>
                       <p className="text-sm">{consultation.notes}</p>
                     </div>
+                    
+                    {consultation.last_auto_save && (
+                      <div className="text-xs text-gray-500 mt-2">
+                        Último salvamento automático: {new Date(consultation.last_auto_save).toLocaleString()}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
