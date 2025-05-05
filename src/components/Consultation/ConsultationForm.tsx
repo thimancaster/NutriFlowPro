@@ -15,13 +15,21 @@ interface ConsultationFormProps {
     profile: string;
     activityLevel: string;
     consultationType?: string;
+    consultationStatus?: string;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  lastAutoSave?: Date | null;
 }
 
-const ConsultationForm = ({ formData, handleInputChange, handleSelectChange, onSubmit }: ConsultationFormProps) => {
+const ConsultationForm = ({ 
+  formData, 
+  handleInputChange, 
+  handleSelectChange, 
+  onSubmit,
+  lastAutoSave
+}: ConsultationFormProps) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -122,6 +130,28 @@ const ConsultationForm = ({ formData, handleInputChange, handleSelectChange, onS
           </SelectContent>
         </Select>
       </div>
+      
+      <div>
+        <Label htmlFor="consultationStatus">Status da Consulta</Label>
+        <Select 
+          value={formData.consultationStatus || 'em_andamento'} 
+          onValueChange={(value) => handleSelectChange('consultationStatus', value)}
+        >
+          <SelectTrigger id="consultationStatus">
+            <SelectValue placeholder="Selecione o status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="em_andamento">Em Andamento</SelectItem>
+            <SelectItem value="completo">Completo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {lastAutoSave && (
+        <div className="text-xs text-gray-500 italic">
+          Último salvamento automático: {lastAutoSave.toLocaleTimeString()}
+        </div>
+      )}
       
       <Button type="submit" className="w-full">Calcular</Button>
     </form>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,11 @@ import { getObjectiveFromGoals, calculateAge } from '@/utils/patientUtils';
 import ConsultationForm from '@/components/Consultation/ConsultationForm';
 import ConsultationResults from '@/components/Consultation/ConsultationResults';
 import { useConsultationForm } from '@/hooks/useConsultationForm';
+import { updateConsultationStatus, updateConsultationType } from '@/components/calculator/handlers/consultationHandlers';
+import { handleAutoSaveConsultation } from '@/components/calculator/handlers/consultationHandlers';
+
+// Auto-save interval in milliseconds (2 minutes)
+const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
 
 const Consultation = () => {
   const { toast } = useToast();
@@ -24,6 +29,7 @@ const Consultation = () => {
   const repeatConsultation = location.state?.repeatConsultation;
   
   const [patient, setPatient] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Initialize form with any repeat consultation data if available
   const initialFormData = repeatConsultation ? {
@@ -32,10 +38,67 @@ const Consultation = () => {
     sex: repeatConsultation.sex || 'M',
     objective: repeatConsultation.objective || 'manutenção',
     profile: repeatConsultation.profile || 'magro',
-    activityLevel: repeatConsultation.activityLevel || 'moderado'
+    activityLevel: repeatConsultation.activityLevel || 'moderado',
+    consultationType: repeatConsultation.tipo || 'primeira_consulta',
+    consultationStatus: repeatConsultation.status || 'em_andamento'
   } : {};
   
-  const { formData, results, handleInputChange, handleSelectChange, setFormData } = useConsultationForm(initialFormData);
+  const { 
+    formData, 
+    results, 
+    handleInputChange, 
+    handleSelectChange, 
+    setFormData,
+    lastAutoSave,
+    setLastAutoSave,
+    consultationId,
+    setConsultationId
+  } = useConsultationForm(initialFormData);
+  
+  // Auto-save timer
+  useEffect(() => {
+    let autoSaveTimer: NodeJS.Timeout | null = null;
+    
+    if (consultationId) {
+      autoSaveTimer = setInterval(async () => {
+        try {
+          setIsSaving(true);
+          
+          // Update consultation data with current form values and results
+          const success = await handleAutoSaveConsultation(
+            consultationId,
+            {
+              bmr: results.tmb,
+              tdee: results.get,
+              weight: parseFloat(formData.weight),
+              height: parseFloat(formData.height),
+              age: parseInt(formData.age),
+              gender: formData.sex === 'M' ? 'male' : 'female',
+              protein: results.macros.protein,
+              carbs: results.macros.carbs,
+              fats: results.macros.fat,
+              activity_level: formData.activityLevel,
+              goal: formData.objective,
+              status: formData.consultationStatus as 'em_andamento' | 'completo'
+            }
+          );
+          
+          if (success) {
+            setLastAutoSave(new Date());
+            console.log('Auto-saved consultation at:', new Date().toLocaleTimeString());
+          }
+        } catch (error) {
+          console.error('Auto-save error:', error);
+        } finally {
+          setIsSaving(false);
+        }
+      }, AUTO_SAVE_INTERVAL);
+    }
+    
+    return () => {
+      if (autoSaveTimer) clearInterval(autoSaveTimer);
+    };
+  }, [consultationId, formData, results, setLastAutoSave]);
   
   // Fetch patient data if not available
   useEffect(() => {
@@ -103,7 +166,7 @@ const Consultation = () => {
     fetchPatient();
   }, [location, patientData, repeatConsultation, toast, setActivePatient, setFormData]);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const consultationFormData = {
@@ -113,6 +176,23 @@ const Consultation = () => {
     
     // Save consultation data to context
     setConsultationData(consultationFormData);
+    
+    // If we have a consultation ID, update the type and status
+    if (consultationId) {
+      try {
+        await updateConsultationType(
+          consultationId, 
+          formData.consultationType as 'primeira_consulta' | 'retorno'
+        );
+        
+        await updateConsultationStatus(
+          consultationId,
+          formData.consultationStatus as 'em_andamento' | 'completo'
+        );
+      } catch (error) {
+        console.error('Error updating consultation metadata:', error);
+      }
+    }
     
     toast({
       title: "Consulta salva com sucesso",
@@ -164,7 +244,14 @@ const Consultation = () => {
                     handleInputChange={handleInputChange}
                     handleSelectChange={handleSelectChange}
                     onSubmit={handleSubmit}
+                    lastAutoSave={lastAutoSave}
                   />
+                  
+                  {isSaving && (
+                    <div className="text-xs text-blue-500 mt-2">
+                      Salvando alterações...
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

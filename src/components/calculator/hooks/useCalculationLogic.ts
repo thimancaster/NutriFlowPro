@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { validateCalculatorInputs } from '../utils/validation';
@@ -71,6 +72,8 @@ export const useCalculationLogic = ({
       objective: state.objective,
       profile: 'magro', // Default profile
       activityLevel: state.activityLevel,
+      consultationType: state.consultationType || 'primeira_consulta',
+      consultationStatus: 'em_andamento',
       results: {
         tmb: calculatedBmr,
         fa: activityFactor,
