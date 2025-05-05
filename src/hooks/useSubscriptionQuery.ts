@@ -1,6 +1,7 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBSCRIPTION_QUERY_KEY, SUBSCRIPTION_REFETCH_SETTINGS } from "@/constants/subscriptionConstants";
+import { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
 import { useToast } from "./use-toast";
 import { validatePremiumStatus, isSubscriptionExpired } from "@/utils/subscriptionUtils";
 import { User } from "@supabase/supabase-js";
@@ -13,6 +14,17 @@ export interface SubscriptionData {
   subscriptionStart?: string | null;
   subscriptionEnd?: string | null;
 }
+
+// Optimized refetch settings to prevent excessive API calls
+const OPTIMIZED_REFETCH_SETTINGS = {
+  staleTime: 10 * 60 * 1000, // 10 minutes
+  cacheTime: 30 * 60 * 1000, // 30 minutes
+  refetchOnWindowFocus: false,
+  refetchOnMount: true,
+  refetchOnReconnect: true,
+  retry: 1,
+  retryDelay: 5000 // 5 seconds
+};
 
 /**
  * Hook para buscar dados de assinatura do banco de dados de forma otimizada
@@ -136,10 +148,6 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
       }
     },
     enabled: !!isAuthenticated,
-    ...SUBSCRIPTION_REFETCH_SETTINGS,
-    // Reduce retry attempts to minimize errors
-    retry: 1,
-    // Add a longer stale time to reduce excessive retries
-    staleTime: 5 * 60 * 1000 // 5 minutes
+    ...OPTIMIZED_REFETCH_SETTINGS
   });
 };

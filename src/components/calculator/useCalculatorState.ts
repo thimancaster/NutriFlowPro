@@ -1,7 +1,8 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
+import { storageUtils } from '@/utils/storageUtils';
 
 interface CalculatorState {
   patientName: string;
@@ -22,31 +23,72 @@ interface UseCalculatorStateProps {
   setConsultationData: (data: any) => void;
 }
 
+// Key for storing calculator results in storage
+const CALCULATOR_RESULTS_KEY = 'nutriflow_calculator_results';
+
 const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorStateProps) => {
+  // Try to restore state from storage on initial render
+  const getInitialState = (): CalculatorState => {
+    const savedState = storageUtils.getLocalItem<CalculatorState>('nutriflow_calculator_state');
+    
+    return savedState || {
+      patientName: '',
+      gender: 'female',
+      age: '',
+      weight: '',
+      height: '',
+      objective: 'manutenção',
+      activityLevel: '1.2',
+      carbsPercentage: '55',
+      proteinPercentage: '20',
+      fatPercentage: '25'
+    };
+  };
+
   // State for form data
-  const [calculatorState, setCalculatorState] = useState<CalculatorState>({
-    patientName: '',
-    gender: 'female',
-    age: '',
-    weight: '',
-    height: '',
-    objective: 'manutenção',
-    activityLevel: '1.2',
-    carbsPercentage: '55',
-    proteinPercentage: '20',
-    fatPercentage: '25'
-  });
+  const [calculatorState, setCalculatorState] = useState<CalculatorState>(getInitialState());
 
   // Results states
-  const [bmr, setBmr] = useState<number | null>(null);
-  const [tee, setTee] = useState<number | null>(null);
-  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(null);
+  const [bmr, setBmr] = useState<number | null>(() => {
+    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    return savedResults?.bmr || null;
+  });
+  
+  const [tee, setTee] = useState<number | null>(() => {
+    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    return savedResults?.tee || null;
+  });
+  
+  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(() => {
+    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    return savedResults?.macros || null;
+  });
   
   // Calculation state
   const [isCalculating, setIsCalculating] = useState(false);
   
   // Temp patient id state
-  const [tempPatientId, setTempPatientId] = useState<string | null>(null);
+  const [tempPatientId, setTempPatientId] = useState<string | null>(() => {
+    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    return savedResults?.tempPatientId || null;
+  });
+  
+  // Save state to storage whenever it changes
+  useEffect(() => {
+    storageUtils.setLocalItem('nutriflow_calculator_state', calculatorState);
+  }, [calculatorState]);
+  
+  // Save results to storage whenever they change
+  useEffect(() => {
+    if (bmr && tee && macros) {
+      storageUtils.setLocalItem(CALCULATOR_RESULTS_KEY, {
+        bmr,
+        tee,
+        macros,
+        tempPatientId
+      });
+    }
+  }, [bmr, tee, macros, tempPatientId]);
   
   // Setter functions for each state property
   const setPatientName = (value: string) => setCalculatorState(prev => ({ ...prev, patientName: value }));
@@ -137,7 +179,6 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
     setTee(Math.round(calculatedTee));
     
     // Calculate macronutrients with updated distribution
-    // Protein: 20%, Carbs: 55%, Fat: 25%
     const carbsPercent = parseFloat(state.carbsPercentage) / 100;
     const proteinPercent = parseFloat(state.proteinPercentage) / 100;
     const fatPercent = parseFloat(state.fatPercentage) / 100;
@@ -172,6 +213,9 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
     };
     
     setConsultationData(consultationData);
+    
+    // Also store in localStorage for persistence between pages
+    storageUtils.setLocalItem('nutriflow_consultation_data', consultationData);
     
     // If we have a name, create a temporary patient
     if (state.patientName && user) {
@@ -237,6 +281,31 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
     return true;
   }, [validateInputs, tempPatientId, user, toast, setConsultationData]);
 
+  // Clear all calculator data
+  const clearCalculatorData = useCallback(() => {
+    storageUtils.removeLocalItem('nutriflow_calculator_state');
+    storageUtils.removeLocalItem(CALCULATOR_RESULTS_KEY);
+    storageUtils.removeLocalItem('nutriflow_consultation_data');
+    
+    setCalculatorState({
+      patientName: '',
+      gender: 'female',
+      age: '',
+      weight: '',
+      height: '',
+      objective: 'manutenção',
+      activityLevel: '1.2',
+      carbsPercentage: '55',
+      proteinPercentage: '20',
+      fatPercentage: '25'
+    });
+    
+    setBmr(null);
+    setTee(null);
+    setMacros(null);
+    setTempPatientId(null);
+  }, []);
+
   return {
     calculatorState,
     setPatientName,
@@ -251,6 +320,7 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
     setFatPercentage,
     isCalculating,
     calculateResults,
+    clearCalculatorData,
     bmr,
     tee,
     macros,

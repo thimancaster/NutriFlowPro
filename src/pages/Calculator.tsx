@@ -1,12 +1,37 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CalculatorTool from '@/components/calculator';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Home, Calculator as CalculatorIcon, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Home, Calculator as CalculatorIcon, ChevronRight, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { storageUtils } from '@/utils/storageUtils';
 
 const Calculator = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [hasPreviousCalculation, setHasPreviousCalculation] = useState(false);
+  
+  // Check if there's a previous calculation
+  useEffect(() => {
+    const savedData = storageUtils.getLocalItem('nutriflow_consultation_data');
+    setHasPreviousCalculation(!!savedData);
+  }, []);
+  
+  const handleContinueToMealPlan = () => {
+    const savedData = storageUtils.getLocalItem('nutriflow_consultation_data');
+    if (savedData) {
+      navigate('/meal-plan-generator');
+    } else {
+      toast({
+        title: "Nenhum cálculo encontrado",
+        description: "Por favor, realize um cálculo primeiro",
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-8">
@@ -35,6 +60,18 @@ const Calculator = () => {
             <div className="bg-white p-5 rounded-xl shadow-lg">
               <CalculatorTool />
             </div>
+            
+            {hasPreviousCalculation && (
+              <div className="mt-4 flex justify-end">
+                <Button 
+                  onClick={handleContinueToMealPlan}
+                  className="bg-nutri-green hover:bg-nutri-green-dark text-white flex items-center gap-2"
+                >
+                  Continuar para o Plano Alimentar
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="md:w-1/2 rounded-xl overflow-hidden shadow-lg">
             <img 

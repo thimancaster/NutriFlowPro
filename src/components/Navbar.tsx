@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import NavbarBrand from './NavbarBrand';
 import NavbarDesktopMenu from './NavbarDesktopMenu';
 import NavbarMobileMenu from './NavbarMobileMenu';
-import { useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,7 +55,8 @@ const Navbar = () => {
       
       if (result.success) {
         console.log("Logout bem-sucedido, redirecionando para login");
-        // Navegação acontece dentro da função logout
+        // Use React Router navigation
+        navigate('/login');
       } else {
         console.error("Logout retornou false sem erro:", result);
         // Forçar navegação mesmo assim

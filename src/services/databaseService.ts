@@ -1,11 +1,60 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { MealPlan, Patient, ConsultationData } from "@/types";
 import { Json } from "@/integrations/supabase/types";
+import { storageUtils } from "@/utils/storageUtils";
+
+// Constants for optimized caching
+const CACHE_KEYS = {
+  PATIENT: 'db_patient_',
+  CONSULTATIONS: 'db_consultations_',
+  MEAL_PLANS: 'db_meal_plans_'
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Service to handle all database interactions
+ * Utility functions for managing database operation cache
+ */
+const dbCache = {
+  get: <T>(key: string): { data: T, timestamp: number } | null => {
+    const cachedData = storageUtils.getSessionItem<{ data: T, timestamp: number }>(key);
+    if (!cachedData) return null;
+    
+    // Check if cache is still valid
+    if (Date.now() - cachedData.timestamp > CACHE_TTL) {
+      storageUtils.removeSessionItem(key);
+      return null;
+    }
+    
+    return cachedData;
+  },
+  
+  set: <T>(key: string, data: T): void => {
+    storageUtils.setSessionItem(key, {
+      data,
+      timestamp: Date.now()
+    });
+  },
+  
+  invalidate: (keyPrefix: string, id?: string): void => {
+    if (id) {
+      // Invalidate specific cache entry
+      storageUtils.removeSessionItem(`${keyPrefix}${id}`);
+    } else {
+      // Find and remove all cache entries with this prefix
+      // Since we can't enumerate sessionStorage, we'll focus on known keys
+      Object.values(CACHE_KEYS).forEach(key => {
+        if (key.startsWith(keyPrefix)) {
+          storageUtils.removeSessionItem(key);
+        }
+      });
+    }
+  }
+};
+
+/**
+ * Service to handle all database interactions with optimized caching
  */
 export const DatabaseService = {
   /**
@@ -37,6 +86,11 @@ export const DatabaseService = {
         throw error;
       }
       
+      // Invalidate related caches
+      if (data?.id) {
+        dbCache.set(`${CACHE_KEYS.PATIENT}${data.id}`, data);
+      }
+      
       return {
         success: true,
         data: data as Patient
@@ -51,10 +105,23 @@ export const DatabaseService = {
   },
   
   /**
-   * Get a patient by ID
+   * Get a patient by ID with optimized caching
    */
   getPatient: async (patientId: string): Promise<{success: boolean, data?: Patient, error?: string}> => {
     try {
+      if (!patientId) {
+        throw new Error('Patient ID is required');
+      }
+      
+      // Check cache first
+      const cachedData = dbCache.get<Patient>(`${CACHE_KEYS.PATIENT}${patientId}`);
+      if (cachedData) {
+        return {
+          success: true,
+          data: cachedData.data
+        };
+      }
+      
       if (!supabase) {
         throw new Error('Supabase client is not initialized');
       }
@@ -72,6 +139,9 @@ export const DatabaseService = {
       if (!data) {
         throw new Error('Patient not found');
       }
+      
+      // Save to cache
+      dbCache.set(`${CACHE_KEYS.PATIENT}${patientId}`, data);
       
       return {
         success: true,
@@ -127,6 +197,9 @@ export const DatabaseService = {
         throw error;
       }
       
+      // Invalidate consultations cache for this patient
+      dbCache.invalidate(`${CACHE_KEYS.CONSULTATIONS}${patientId}`);
+      
       return {
         success: true,
         data
@@ -181,6 +254,9 @@ export const DatabaseService = {
         throw error;
       }
       
+      // Invalidate meal plans cache for this patient
+      dbCache.invalidate(`${CACHE_KEYS.MEAL_PLANS}${patientId}`);
+      
       return {
         success: true,
         data
@@ -195,10 +271,24 @@ export const DatabaseService = {
   },
   
   /**
-   * Get consultation history for a patient
+   * Get consultation history for a patient with caching
    */
   getPatientConsultations: async (patientId: string): Promise<{success: boolean, data?: any[], error?: string}> => {
     try {
+      if (!patientId) {
+        throw new Error('Patient ID is required');
+      }
+      
+      // Check cache first
+      const cacheKey = `${CACHE_KEYS.CONSULTATIONS}${patientId}`;
+      const cachedData = dbCache.get<any[]>(cacheKey);
+      if (cachedData) {
+        return {
+          success: true,
+          data: cachedData.data
+        };
+      }
+      
       if (!supabase) {
         throw new Error('Supabase client is not initialized');
       }
@@ -212,6 +302,9 @@ export const DatabaseService = {
       if (error) {
         throw error;
       }
+      
+      // Save to cache
+      dbCache.set(cacheKey, data || []);
       
       return {
         success: true,
@@ -227,10 +320,24 @@ export const DatabaseService = {
   },
   
   /**
-   * Get meal plans for a patient
+   * Get meal plans for a patient with caching
    */
   getPatientMealPlans: async (patientId: string): Promise<{success: boolean, data?: MealPlan[], error?: string}> => {
     try {
+      if (!patientId) {
+        throw new Error('Patient ID is required');
+      }
+      
+      // Check cache first
+      const cacheKey = `${CACHE_KEYS.MEAL_PLANS}${patientId}`;
+      const cachedData = dbCache.get<MealPlan[]>(cacheKey);
+      if (cachedData) {
+        return {
+          success: true,
+          data: cachedData.data
+        };
+      }
+      
       if (!supabase) {
         throw new Error('Supabase client is not initialized');
       }
@@ -265,6 +372,9 @@ export const DatabaseService = {
         };
       }) || [];
       
+      // Save to cache
+      dbCache.set(cacheKey, mealPlans);
+      
       return {
         success: true,
         data: mealPlans
@@ -276,5 +386,14 @@ export const DatabaseService = {
         error: error.message || 'Failed to get patient meal plans'
       };
     }
+  },
+  
+  /**
+   * Clear all database service caches
+   */
+  clearCache: (): void => {
+    Object.values(CACHE_KEYS).forEach(keyPrefix => {
+      dbCache.invalidate(keyPrefix);
+    });
   }
 };

@@ -1,48 +1,67 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, Printer } from 'lucide-react';
+import { FileDown, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateMealPlanPDF } from '@/utils/pdfExport';
-import { Patient, MealPlan } from '@/types';
+import { generatePdfAsync } from '@/utils/pdfExport';
 
 interface PdfActionButtonsProps {
-  activePatient: Patient | null;
-  mealPlan: MealPlan | null;
+  activePatient: any;
+  mealPlan: any;
 }
 
-const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({
-  activePatient,
-  mealPlan,
-}) => {
+const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, mealPlan }) => {
   const { toast } = useToast();
-
-  const handlePrint = () => {
-    if (!mealPlan?.meals || !activePatient) {
+  const [isExporting, setIsExporting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  
+  const handleExportPDF = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    
+    try {
+      // Use async PDF generation to avoid blocking UI
+      const doc = await generatePdfAsync({ 
+        mealPlan, 
+        settings: { 
+          patientName: activePatient?.name || 'Paciente',
+          patientData: activePatient
+        } 
+      });
+      
+      // Save PDF
+      doc.save(`plano_alimentar_${activePatient?.name?.replace(/\s+/g, '_').toLowerCase() || 'paciente'}.pdf`);
+      
+      toast({
+        title: "PDF gerado",
+        description: "O plano alimentar foi baixado com sucesso"
+      });
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
       toast({
         title: "Erro",
-        description: "Dados insuficientes para gerar o PDF",
+        description: "Não foi possível gerar o PDF",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsExporting(false);
     }
-
+  };
+  
+  const handlePrint = async () => {
+    if (isPrinting) return;
+    setIsPrinting(true);
+    
     try {
-      const patientAge = activePatient.birth_date 
-        ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
-        : undefined;
-      
-      const doc = generateMealPlanPDF({
-        patientName: activePatient.name,
-        patientAge,
-        patientGender: activePatient.gender || undefined,
-        meals: mealPlan.meals,
-        totalCalories: mealPlan.total_calories || 0,
-        totalProtein: mealPlan.total_protein || 0,
-        totalCarbs: mealPlan.total_carbs || 0,
-        totalFats: mealPlan.total_fats || 0
+      // Use async PDF generation to avoid blocking UI
+      const doc = await generatePdfAsync({ 
+        mealPlan, 
+        settings: { 
+          patientName: activePatient?.name || 'Paciente',
+          patientData: activePatient
+        } 
       });
-
+      
       // Open PDF in a new tab for printing
       window.open(URL.createObjectURL(doc.output('blob')));
       
@@ -54,75 +73,45 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({
       console.error('Error generating PDF:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF",
+        description: "Não foi possível gerar o PDF para impressão",
         variant: "destructive"
       });
+    } finally {
+      setIsPrinting(false);
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (!mealPlan?.meals || !activePatient) {
-      toast({
-        title: "Erro",
-        description: "Dados insuficientes para gerar o PDF",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const patientAge = activePatient.birth_date 
-        ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
-        : undefined;
-      
-      const doc = generateMealPlanPDF({
-        patientName: activePatient.name,
-        patientAge,
-        patientGender: activePatient.gender || undefined,
-        meals: mealPlan.meals,
-        totalCalories: mealPlan.total_calories || 0,
-        totalProtein: mealPlan.total_protein || 0,
-        totalCarbs: mealPlan.total_carbs || 0,
-        totalFats: mealPlan.total_fats || 0
-      });
-
-      // Download the PDF file
-      doc.save(`Plano_Alimentar_${activePatient.name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF baixado",
-        description: "O plano alimentar foi baixado com sucesso"
-      });
-    } catch (error: any) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF",
-        variant: "destructive"
-      });
-    }
-  };
-  
   return (
-    <>
+    <div className="flex gap-2">
       <Button 
         variant="outline" 
-        className="flex items-center gap-2"
-        onClick={handleDownloadPDF}
+        size="sm" 
+        onClick={handleExportPDF} 
+        disabled={isExporting}
+        className="flex items-center gap-1"
       >
-        <FileText className="h-4 w-4" />
-        Baixar PDF
+        {isExporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{isExporting ? "Exportando..." : "Exportar PDF"}</span>
       </Button>
-      
       <Button 
         variant="outline" 
-        className="flex items-center gap-2"
-        onClick={handlePrint}
+        size="sm" 
+        onClick={handlePrint} 
+        disabled={isPrinting}
+        className="flex items-center gap-1 print:hidden"
       >
-        <Printer className="h-4 w-4" />
-        Imprimir
+        {isPrinting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Printer className="h-4 w-4" />
+        )}
+        <span>{isPrinting ? "Preparando..." : "Imprimir"}</span>
       </Button>
-    </>
+    </div>
   );
 };
 

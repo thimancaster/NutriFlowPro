@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileDown, Printer } from 'lucide-react';
+import { FileDown, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MealPlanSettings } from '@/utils/mealGeneratorUtils';
-import { generateMealPlanPDF } from '@/utils/pdf/mealPlanPdfUtils';
+import { generateMealPlanPDF } from '@/utils/pdf/pdfExport';
 
 interface MealPlanActionButtonsProps {
   mealPlan: any;
@@ -13,18 +13,27 @@ interface MealPlanActionButtonsProps {
 
 const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan, settings }) => {
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    if (isExporting) return; // Prevent multiple clicks
+    
+    setIsExporting(true);
     try {
-      const doc = generateMealPlanPDF({ mealPlan, settings });
-      
-      // Save PDF
-      doc.save('plano_alimentar.pdf');
-      
-      toast({
-        title: "PDF gerado",
-        description: "O plano alimentar foi baixado com sucesso"
-      });
+      // Use setTimeout to prevent UI blocking
+      setTimeout(() => {
+        const doc = generateMealPlanPDF({ mealPlan, settings });
+        
+        // Save PDF
+        doc.save('plano_alimentar.pdf');
+        
+        toast({
+          title: "PDF gerado",
+          description: "O plano alimentar foi baixado com sucesso"
+        });
+        setIsExporting(false);
+      }, 10);
     } catch (error: any) {
       console.error('Error generating PDF:', error);
       toast({
@@ -32,20 +41,28 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
         description: "Não foi possível gerar o PDF",
         variant: "destructive"
       });
+      setIsExporting(false);
     }
   };
   
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    if (isPrinting) return; // Prevent multiple clicks
+    
+    setIsPrinting(true);
     try {
-      const doc = generateMealPlanPDF({ mealPlan, settings });
-      
-      // Open PDF in a new tab for printing
-      window.open(URL.createObjectURL(doc.output('blob')));
-      
-      toast({
-        title: "PDF gerado",
-        description: "O plano alimentar foi aberto em uma nova aba para impressão"
-      });
+      // Use setTimeout to prevent UI blocking
+      setTimeout(() => {
+        const doc = generateMealPlanPDF({ mealPlan, settings });
+        
+        // Open PDF in a new tab for printing
+        window.open(URL.createObjectURL(doc.output('blob')));
+        
+        toast({
+          title: "PDF gerado",
+          description: "O plano alimentar foi aberto em uma nova aba para impressão"
+        });
+        setIsPrinting(false);
+      }, 10);
     } catch (error: any) {
       console.error('Error generating PDF:', error);
       toast({
@@ -53,6 +70,7 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
         description: "Não foi possível gerar o PDF para impressão",
         variant: "destructive"
       });
+      setIsPrinting(false);
     }
   };
 
@@ -62,19 +80,29 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
         variant="outline" 
         size="sm" 
         onClick={handleExportPDF} 
+        disabled={isExporting}
         className="flex items-center gap-1"
       >
-        <FileDown className="h-4 w-4" />
-        <span>Exportar PDF</span>
+        {isExporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{isExporting ? "Exportando..." : "Exportar PDF"}</span>
       </Button>
       <Button 
         variant="outline" 
         size="sm" 
         onClick={handlePrint} 
+        disabled={isPrinting}
         className="flex items-center gap-1 print:hidden"
       >
-        <Printer className="h-4 w-4" />
-        <span>Imprimir</span>
+        {isPrinting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Printer className="h-4 w-4" />
+        )}
+        <span>{isPrinting ? "Preparando..." : "Imprimir"}</span>
       </Button>
     </div>
   );

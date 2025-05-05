@@ -257,6 +257,56 @@ export type Database = {
         }
         Relationships: []
       }
+      cities: {
+        Row: {
+          country_id: number
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          country_id: number
+          created_at?: string | null
+          id?: never
+          name: string
+        }
+        Update: {
+          country_id?: number
+          created_at?: string | null
+          id?: never
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_country"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      countries: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: never
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: never
+          name?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           category_id: string | null
