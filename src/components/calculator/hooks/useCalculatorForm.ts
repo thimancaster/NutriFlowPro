@@ -1,0 +1,46 @@
+
+import { useState, useEffect } from 'react';
+import { CalculatorState } from '../types';
+import { getInitialCalculatorState } from '../calculatorUtils';
+import { getCalculatorState, saveCalculatorState } from '../storageUtils';
+
+/**
+ * Hook to manage calculator form state
+ */
+export const useCalculatorForm = () => {
+  // Try to restore state from storage on initial render
+  const [calculatorState, setCalculatorState] = useState<CalculatorState>(() => {
+    return getCalculatorState() || getInitialCalculatorState();
+  });
+  
+  // Save state to storage whenever it changes
+  useEffect(() => {
+    saveCalculatorState(calculatorState);
+  }, [calculatorState]);
+  
+  // Setter functions for each state property
+  const setPatientName = (value: string) => setCalculatorState(prev => ({ ...prev, patientName: value }));
+  const setGender = (value: string) => setCalculatorState(prev => ({ ...prev, gender: value }));
+  const setAge = (value: string) => setCalculatorState(prev => ({ ...prev, age: value }));
+  const setWeight = (value: string) => setCalculatorState(prev => ({ ...prev, weight: value }));
+  const setHeight = (value: string) => setCalculatorState(prev => ({ ...prev, height: value }));
+  const setObjective = (value: string) => setCalculatorState(prev => ({ ...prev, objective: value }));
+  const setActivityLevel = (value: string) => setCalculatorState(prev => ({ ...prev, activityLevel: value }));
+  const setCarbsPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, carbsPercentage: value }));
+  const setProteinPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, proteinPercentage: value }));
+  const setFatPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, fatPercentage: value }));
+
+  return {
+    calculatorState,
+    setPatientName,
+    setGender,
+    setAge,
+    setWeight,
+    setHeight,
+    setObjective,
+    setActivityLevel,
+    setCarbsPercentage,
+    setProteinPercentage,
+    setFatPercentage
+  };
+};
