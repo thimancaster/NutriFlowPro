@@ -1,16 +1,7 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface MacroDistributionInputsProps {
-  carbsPercentage: string;
-  setCarbsPercentage: (value: string) => void;
-  proteinPercentage: string;
-  setProteinPercentage: (value: string) => void;
-  fatPercentage: string;
-  setFatPercentage: (value: string) => void;
-}
+import { MacroDistributionInputsProps } from './types';
 
 const MacroDistributionInputs = ({
   carbsPercentage,

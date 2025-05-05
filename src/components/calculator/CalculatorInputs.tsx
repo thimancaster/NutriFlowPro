@@ -1,26 +1,8 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface CalculatorInputsProps {
-  patientName: string;
-  setPatientName: (value: string) => void;
-  gender: string;
-  setGender: (value: string) => void;
-  age: string;
-  setAge: (value: string) => void;
-  weight: string;
-  setWeight: (value: string) => void;
-  height: string;
-  setHeight: (value: string) => void;
-  objective: string;
-  setObjective: (value: string) => void;
-  activityLevel: string;
-  setActivityLevel: (value: string) => void;
-  user: any;
-}
+import { CalculatorInputsProps } from './types';
 
 const CalculatorInputs = ({
   patientName,

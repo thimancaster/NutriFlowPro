@@ -50,3 +50,49 @@ export interface ConsultationData {
     }
   }
 }
+
+export interface CalculatorResultsProps {
+  bmr: number | null;
+  tee: number | null;
+  macros: { carbs: number; protein: number; fat: number } | null;
+  carbsPercentage: string;
+  proteinPercentage: string;
+  fatPercentage: string;
+  handleSavePatient: () => void;
+  handleGenerateMealPlan: () => void;
+  isSavingPatient: boolean;
+  hasPatientName: boolean;
+  user: any;
+}
+
+export interface CalculatorInputsProps {
+  patientName: string;
+  setPatientName: (value: string) => void;
+  gender: string;
+  setGender: (value: string) => void;
+  age: string;
+  setAge: (value: string) => void;
+  weight: string;
+  setWeight: (value: string) => void;
+  height: string;
+  setHeight: (value: string) => void;
+  objective: string;
+  setObjective: (value: string) => void;
+  activityLevel: string;
+  setActivityLevel: (value: string) => void;
+  user: any;
+}
+
+export interface MacroDistributionInputsProps {
+  carbsPercentage: string;
+  setCarbsPercentage: (value: string) => void;
+  proteinPercentage: string;
+  setProteinPercentage: (value: string) => void;
+  fatPercentage: string;
+  setFatPercentage: (value: string) => void;
+}
+
+export interface CalculatorActionsProps {
+  isCalculating: boolean;
+  calculateResults: () => void;
+}

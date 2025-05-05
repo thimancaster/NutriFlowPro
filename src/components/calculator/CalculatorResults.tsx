@@ -1,22 +1,8 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Loader2, UserPlus } from 'lucide-react';
-
-interface CalculatorResultsProps {
-  bmr: number | null;
-  tee: number | null;
-  macros: { carbs: number; protein: number; fat: number } | null;
-  carbsPercentage: string;
-  proteinPercentage: string;
-  fatPercentage: string;
-  handleSavePatient: () => void;
-  handleGenerateMealPlan: () => void;
-  isSavingPatient: boolean;
-  hasPatientName: boolean;
-  user: any;
-}
+import { CalculatorResultsProps } from './types';
 
 const CalculatorResults = ({
   bmr,

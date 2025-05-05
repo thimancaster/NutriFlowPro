@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { v4 as uuidv4 } from 'uuid';
 import CalculatorInputs from './CalculatorInputs';
 import MacroDistributionInputs from './MacroDistributionInputs';
 import CalculatorResults from './CalculatorResults';
+import CalculatorActions from './CalculatorActions';
 import useCalculatorState from './useCalculatorState';
+import { handleSavePatient } from './handlers/patientHandlers';
+import { handleGenerateMealPlan } from './handlers/mealPlanHandlers';
 
 const CalculatorTool = () => {
   const navigate = useNavigate();
@@ -39,107 +39,30 @@ const CalculatorTool = () => {
     bmr,
     tee,
     macros,
-    tempPatientId,
-    setTempPatientId
+    tempPatientId
   } = useCalculatorState({ toast, user, setConsultationData });
 
-  const handleSavePatient = async () => {
-    if (!user) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para cadastrar pacientes.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!calculatorState.patientName || !calculatorState.age) {
-      toast({
-        title: "Dados incompletos",
-        description: "O nome do paciente e a idade são obrigatórios.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsSavingPatient(true);
-    
-    try {
-      // Navigate to the patients page with data for registration
-      navigate('/patients', {
-        state: {
-          newPatient: {
-            name: calculatorState.patientName,
-            gender: calculatorState.gender === 'male' ? 'M' : 'F',
-            age: calculatorState.age,
-            height: calculatorState.height,
-            weight: calculatorState.weight,
-            objective: calculatorState.objective
-          }
-        }
-      });
-      
-      toast({
-        title: "Redirecionando...",
-        description: "Complete o cadastro do paciente para salvar os dados."
-      });
-    } catch (error) {
-      console.error("Error navigating to patient registration:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível redirecionar para o cadastro de pacientes.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSavingPatient(false);
-    }
+  const onSavePatient = () => {
+    handleSavePatient(
+      calculatorState,
+      user,
+      navigate,
+      toast,
+      setIsSavingPatient
+    );
   };
 
-  const handleGenerateMealPlan = () => {
-    if (!tee || !macros) return;
-    
-    // Create consultation-like data structure to pass to meal plan generator
-    const consultationData = {
-      age: calculatorState.age,
-      objective: calculatorState.objective,
-      sex: calculatorState.gender === 'male' ? 'M' : 'F',
-      weight: calculatorState.weight,
-      height: calculatorState.height,
-      activityLevel: calculatorState.activityLevel,
-      results: {
-        get: tee,
-        tmb: bmr || 0,
-        fa: parseFloat(calculatorState.activityLevel),
-        macros: {
-          protein: macros.protein,
-          carbs: macros.carbs,
-          fat: macros.fat
-        }
-      }
-    };
-    
-    // Create patient-like data structure
-    const patientData = {
-      name: calculatorState.patientName || "Paciente",
-      gender: calculatorState.gender === 'male' ? 'male' : 'female',
-      id: tempPatientId || Date.now().toString() // Use temp ID if available
-    };
-    
-    // Set consultation data in context
-    setConsultationData(consultationData);
-    
-    // Navigate to meal plan generator with the data
-    navigate('/meal-plan-generator', {
-      state: {
-        consultation: consultationData,
-        patient: patientData
-      }
-    });
-    
-    toast({
-      title: "Redirecionando para o plano alimentar",
-      description: "Preparando interface para montagem do plano alimentar."
-    });
+  const onGenerateMealPlan = () => {
+    handleGenerateMealPlan(
+      calculatorState,
+      bmr,
+      tee,
+      macros,
+      tempPatientId,
+      setConsultationData,
+      navigate,
+      toast
+    );
   };
 
   return (
@@ -197,8 +120,8 @@ const CalculatorTool = () => {
               carbsPercentage={calculatorState.carbsPercentage}
               proteinPercentage={calculatorState.proteinPercentage}
               fatPercentage={calculatorState.fatPercentage}
-              handleSavePatient={handleSavePatient}
-              handleGenerateMealPlan={handleGenerateMealPlan}
+              handleSavePatient={onSavePatient}
+              handleGenerateMealPlan={onGenerateMealPlan}
               isSavingPatient={isSavingPatient}
               hasPatientName={!!calculatorState.patientName}
               user={user}
@@ -208,13 +131,10 @@ const CalculatorTool = () => {
       </CardContent>
       {activeTab !== 'results' && (
         <CardFooter className="flex justify-end">
-          <Button 
-            onClick={() => calculateResults(calculatorState)} 
-            className="bg-nutri-green hover:bg-nutri-green-dark"
-            disabled={isCalculating}
-          >
-            Calcular
-          </Button>
+          <CalculatorActions 
+            isCalculating={isCalculating}
+            calculateResults={() => calculateResults(calculatorState)}
+          />
         </CardFooter>
       )}
     </Card>
