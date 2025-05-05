@@ -12,3 +12,12 @@ export { default as MealPlanHeader } from './MealPlan/MealPlanHeader';
 export { default as MealPlanMacroSummary } from './MealPlan/MealPlanMacroSummary';
 export { default as ConsultationForm } from './Consultation/ConsultationForm';
 export { default as ConsultationResults } from './Consultation/ConsultationResults';
+
+// Calculator components exports
+export { 
+  CalculatorTool, 
+  CalculatorInputs, 
+  MacroDistributionInputs, 
+  CalculatorResults, 
+  useCalculatorState 
+} from './calculator';
