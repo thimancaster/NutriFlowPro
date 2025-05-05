@@ -224,146 +224,6 @@ export type Database = {
           },
         ]
       }
-      categories: {
-        Row: {
-          bg_color: string | null
-          created_at: string | null
-          description: string | null
-          icon: string | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string | null
-        }
-        Insert: {
-          bg_color?: string | null
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string | null
-        }
-        Update: {
-          bg_color?: string | null
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          name?: string
-          slug?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      cities: {
-        Row: {
-          country_id: number
-          created_at: string | null
-          id: number
-          name: string
-        }
-        Insert: {
-          country_id: number
-          created_at?: string | null
-          id?: never
-          name: string
-        }
-        Update: {
-          country_id?: number
-          created_at?: string | null
-          id?: never
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_country"
-            columns: ["country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      countries: {
-        Row: {
-          code: string
-          created_at: string | null
-          id: number
-          name: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          id?: never
-          name: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          id?: never
-          name?: string
-        }
-        Relationships: []
-      }
-      coupons: {
-        Row: {
-          category_id: string | null
-          code: string
-          created_at: string | null
-          discount: string
-          discount_percentage: number | null
-          expires_at: string | null
-          id: string
-          is_vip: boolean | null
-          store_id: string | null
-          type: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          category_id?: string | null
-          code: string
-          created_at?: string | null
-          discount: string
-          discount_percentage?: number | null
-          expires_at?: string | null
-          id?: string
-          is_vip?: boolean | null
-          store_id?: string | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          category_id?: string | null
-          code?: string
-          created_at?: string | null
-          discount?: string
-          discount_percentage?: number | null
-          expires_at?: string | null
-          id?: string
-          is_vip?: boolean | null
-          store_id?: string | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "coupons_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "coupons_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       food_substitutions: {
         Row: {
           created_at: string | null
@@ -609,33 +469,6 @@ export type Database = {
           },
         ]
       }
-      stores: {
-        Row: {
-          created_at: string | null
-          id: string
-          logo: string | null
-          name: string
-          updated_at: string | null
-          website: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          logo?: string | null
-          name: string
-          updated_at?: string | null
-          website?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          logo?: string | null
-          name?: string
-          updated_at?: string | null
-          website?: string | null
-        }
-        Relationships: []
-      }
       subscribers: {
         Row: {
           created_at: string
@@ -707,54 +540,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      user_coupons: {
-        Row: {
-          coupon_id: string | null
-          created_at: string | null
-          id: string
-          is_favorite: boolean | null
-          is_used: boolean | null
-          updated_at: string | null
-          used_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          coupon_id?: string | null
-          created_at?: string | null
-          id?: string
-          is_favorite?: boolean | null
-          is_used?: boolean | null
-          updated_at?: string | null
-          used_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          coupon_id?: string | null
-          created_at?: string | null
-          id?: string
-          is_favorite?: boolean | null
-          is_used?: boolean | null
-          updated_at?: string | null
-          used_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_coupons_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
-            referencedRelation: "coupons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_coupons_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
-            referencedRelation: "coupons_with_stores"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_settings: {
         Row: {
@@ -829,24 +614,7 @@ export type Database = {
       }
     }
     Views: {
-      coupons_with_stores: {
-        Row: {
-          category_name: string | null
-          category_slug: string | null
-          code: string | null
-          created_at: string | null
-          discount: string | null
-          discount_percentage: number | null
-          expires_at: string | null
-          id: string | null
-          is_vip: boolean | null
-          store: string | null
-          store_logo: string | null
-          type: string | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       calculate_nutritional_similarity: {
