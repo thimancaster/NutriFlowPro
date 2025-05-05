@@ -15,21 +15,22 @@ const CalculatorTool = () => {
   
   // Combine useCalculatorState with local state management
   const {
-    patientName, setPatientName,
-    gender, setGender,
-    age, setAge,
-    weight, setWeight,
-    height, setHeight,
-    objective, setObjective,
-    activityLevel, setActivityLevel,
-    carbsPercentage, setCarbsPercentage,
-    proteinPercentage, setProteinPercentage,
-    fatPercentage, setFatPercentage,
-    bmr, setBmr,
-    tee, setTee,
-    macros, setMacros,
-    isCalculating, setIsCalculating,
+    calculatorState,
+    setPatientName,
+    setGender,
+    setAge,
+    setWeight,
+    setHeight,
+    setObjective,
+    setActivityLevel,
+    setCarbsPercentage,
+    setProteinPercentage,
+    setFatPercentage,
+    isCalculating,
     calculateResults,
+    bmr,
+    tee,
+    macros,
     handleSavePatient,
     handleGenerateMealPlan,
     isSavingPatient
@@ -39,30 +40,30 @@ const CalculatorTool = () => {
   
   // Calculate combined percentage for validation
   const totalPercentage = 
-    (parseInt(carbsPercentage) || 0) + 
-    (parseInt(proteinPercentage) || 0) + 
-    (parseInt(fatPercentage) || 0);
+    (parseInt(calculatorState.carbsPercentage) || 0) + 
+    (parseInt(calculatorState.proteinPercentage) || 0) + 
+    (parseInt(calculatorState.fatPercentage) || 0);
   
   const hasValidPercentages = totalPercentage === 100;
-  const hasRequiredFields = patientName && age && weight && height;
+  const hasRequiredFields = calculatorState.patientName && calculatorState.age && calculatorState.weight && calculatorState.height;
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
         <CalculatorInputs
-          patientName={patientName}
+          patientName={calculatorState.patientName}
           setPatientName={setPatientName}
-          gender={gender}
+          gender={calculatorState.gender}
           setGender={setGender}
-          age={age}
+          age={calculatorState.age}
           setAge={setAge}
-          weight={weight}
+          weight={calculatorState.weight}
           setWeight={setWeight}
-          height={height}
+          height={calculatorState.height}
           setHeight={setHeight}
-          objective={objective}
+          objective={calculatorState.objective}
           setObjective={setObjective}
-          activityLevel={activityLevel}
+          activityLevel={calculatorState.activityLevel}
           setActivityLevel={setActivityLevel}
           consultationType={consultationType}
           setConsultationType={setConsultationType}
@@ -70,11 +71,11 @@ const CalculatorTool = () => {
         />
         
         <MacroDistributionInputs
-          carbsPercentage={carbsPercentage}
+          carbsPercentage={calculatorState.carbsPercentage}
           setCarbsPercentage={setCarbsPercentage}
-          proteinPercentage={proteinPercentage}
+          proteinPercentage={calculatorState.proteinPercentage}
           setProteinPercentage={setProteinPercentage}
-          fatPercentage={fatPercentage}
+          fatPercentage={calculatorState.fatPercentage}
           setFatPercentage={setFatPercentage}
         />
         
@@ -90,7 +91,7 @@ const CalculatorTool = () => {
               isCalculating={isCalculating}
               calculateResults={() => {
                 if (hasRequiredFields && hasValidPercentages) {
-                  calculateResults();
+                  calculateResults(calculatorState);
                 } else {
                   toast({
                     title: "Dados incompletos",
@@ -109,13 +110,13 @@ const CalculatorTool = () => {
           bmr={bmr}
           tee={tee}
           macros={macros}
-          carbsPercentage={carbsPercentage}
-          proteinPercentage={proteinPercentage}
-          fatPercentage={fatPercentage}
+          carbsPercentage={calculatorState.carbsPercentage}
+          proteinPercentage={calculatorState.proteinPercentage}
+          fatPercentage={calculatorState.fatPercentage}
           handleSavePatient={handleSavePatient}
           handleGenerateMealPlan={handleGenerateMealPlan}
           isSavingPatient={isSavingPatient}
-          hasPatientName={!!patientName}
+          hasPatientName={!!calculatorState.patientName}
           user={user}
         />
       </div>
