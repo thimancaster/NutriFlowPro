@@ -45,7 +45,7 @@ export const usePatientActions = ({
       setIsSavingPatient(true);
       const { handleSavePatient } = await import('../handlers/patientHandlers');
       
-      const success = await handleSavePatient(
+      await handleSavePatient(
         calculatorState,
         bmr,
         tee,
@@ -55,13 +55,11 @@ export const usePatientActions = ({
         toast
       );
       
-      if (success) {
-        // Navigate to patient page or show confirmation
-        toast({
-          title: "Paciente salvo",
-          description: "O paciente foi salvo com sucesso."
-        });
-      }
+      // Show confirmation
+      toast({
+        title: "Paciente salvo",
+        description: "O paciente foi salvo com sucesso."
+      });
     } catch (error) {
       console.error('Error saving patient:', error);
       toast({

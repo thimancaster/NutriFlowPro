@@ -8,7 +8,7 @@ import {
   usePatientActions
 } from './hooks';
 import { clearCalculatorData as clearCalcData } from './storageUtils';
-import { getInitialCalculatorState } from './calculatorUtils';
+import { getInitialCalculatorState } from './utils/initialState';
 
 /**
  * Main hook for calculator state management

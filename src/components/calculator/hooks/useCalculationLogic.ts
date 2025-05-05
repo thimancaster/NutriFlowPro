@@ -5,7 +5,7 @@ import {
   validateCalculatorInputs, 
   calculateBMR, 
   calculateMacros 
-} from '../calculatorUtils';
+} from '../utils/calculations';
 import { saveConsultationData } from '../storageUtils';
 import { saveTemporaryPatient } from '../patientUtils';
 
