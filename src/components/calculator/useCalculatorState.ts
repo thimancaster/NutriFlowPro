@@ -26,6 +26,18 @@ interface UseCalculatorStateProps {
 // Key for storing calculator results in storage
 const CALCULATOR_RESULTS_KEY = 'nutriflow_calculator_results';
 
+// Define the interface for the calculator results
+interface CalculatorResults {
+  bmr: number;
+  tee: number;
+  macros: {
+    carbs: number;
+    protein: number;
+    fat: number;
+  };
+  tempPatientId?: string | null;
+}
+
 const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorStateProps) => {
   // Try to restore state from storage on initial render
   const getInitialState = (): CalculatorState => {
@@ -50,17 +62,17 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
 
   // Results states
   const [bmr, setBmr] = useState<number | null>(() => {
-    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    const savedResults = storageUtils.getLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY);
     return savedResults?.bmr || null;
   });
   
   const [tee, setTee] = useState<number | null>(() => {
-    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    const savedResults = storageUtils.getLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY);
     return savedResults?.tee || null;
   });
   
   const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(() => {
-    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    const savedResults = storageUtils.getLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY);
     return savedResults?.macros || null;
   });
   
@@ -69,7 +81,7 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
   
   // Temp patient id state
   const [tempPatientId, setTempPatientId] = useState<string | null>(() => {
-    const savedResults = storageUtils.getLocalItem(CALCULATOR_RESULTS_KEY);
+    const savedResults = storageUtils.getLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY);
     return savedResults?.tempPatientId || null;
   });
   
@@ -81,7 +93,7 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
   // Save results to storage whenever they change
   useEffect(() => {
     if (bmr && tee && macros) {
-      storageUtils.setLocalItem(CALCULATOR_RESULTS_KEY, {
+      storageUtils.setLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY, {
         bmr,
         tee,
         macros,

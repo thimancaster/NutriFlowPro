@@ -12,6 +12,7 @@ declare module 'jspdf' {
 }
 
 export interface MealPlanExportOptions {
+  mealPlan?: any;
   patientName: string;
   patientAge?: number;
   patientGender?: string;
@@ -25,4 +26,10 @@ export interface MealPlanExportOptions {
   totalCarbs: number;
   totalFats: number;
   notes?: string;
+  settings?: {
+    patientName?: string;
+    patientData?: any;
+    patientAge?: number;
+    patientGender?: string;
+  };
 }

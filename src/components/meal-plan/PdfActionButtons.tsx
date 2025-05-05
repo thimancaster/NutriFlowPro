@@ -22,7 +22,12 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
     try {
       // Use async PDF generation to avoid blocking UI
       const doc = await generatePdfAsync({ 
-        mealPlan, 
+        meals: mealPlan,
+        totalCalories: mealPlan.total_calories || 0,
+        totalProtein: mealPlan.total_protein || 0,
+        totalCarbs: mealPlan.total_carbs || 0,
+        totalFats: mealPlan.total_fats || 0,
+        patientName: activePatient?.name || 'Paciente',
         settings: { 
           patientName: activePatient?.name || 'Paciente',
           patientData: activePatient
@@ -55,7 +60,12 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
     try {
       // Use async PDF generation to avoid blocking UI
       const doc = await generatePdfAsync({ 
-        mealPlan, 
+        meals: mealPlan,
+        totalCalories: mealPlan.total_calories || 0,
+        totalProtein: mealPlan.total_protein || 0,
+        totalCarbs: mealPlan.total_carbs || 0,
+        totalFats: mealPlan.total_fats || 0,
+        patientName: activePatient?.name || 'Paciente',
         settings: { 
           patientName: activePatient?.name || 'Paciente',
           patientData: activePatient

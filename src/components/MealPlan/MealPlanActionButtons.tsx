@@ -23,7 +23,15 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
     try {
       // Use setTimeout to prevent UI blocking
       setTimeout(() => {
-        const doc = generateMealPlanPDF({ mealPlan, settings });
+        const doc = generateMealPlanPDF({ 
+          meals: mealPlan,
+          totalCalories: 0, // Calculate or provide these values
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFats: 0,
+          patientName: settings.patientName || "Paciente",
+          settings
+        });
         
         // Save PDF
         doc.save('plano_alimentar.pdf');
@@ -52,7 +60,15 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
     try {
       // Use setTimeout to prevent UI blocking
       setTimeout(() => {
-        const doc = generateMealPlanPDF({ mealPlan, settings });
+        const doc = generateMealPlanPDF({ 
+          meals: mealPlan,
+          totalCalories: 0, // Calculate or provide these values
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFats: 0,
+          patientName: settings.patientName || "Paciente",
+          settings
+        });
         
         // Open PDF in a new tab for printing
         window.open(URL.createObjectURL(doc.output('blob')));
