@@ -8,6 +8,17 @@ export interface AuthState {
   isLoading: boolean;
   isPremium: boolean;
   loading: boolean;
+  userTier: 'free' | 'premium'; // Added to explicitly track user tier
+  usageQuota: {
+    patients: {
+      used: number;
+      limit: number;
+    };
+    mealPlans: {
+      used: number;
+      limit: number;
+    };
+  };
 }
 
 export interface AuthContextType extends AuthState {

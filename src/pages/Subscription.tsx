@@ -1,24 +1,51 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Star, Check, ArrowRight } from 'lucide-react';
+import { Star, Check, ArrowRight, Crown, X } from 'lucide-react';
 import { useUserSubscription } from "@/hooks/useUserSubscription";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const Subscription = () => {
   const { data: subscription } = useUserSubscription();
+  const { userTier } = useAuth();
   const navigate = useNavigate();
-
-  const features = [
-    { name: "Pacientes cadastrados", free: "Limitado (5)", premium: "Ilimitado" },
-    { name: "Geração de Planos Alimentares", free: "Limitado (3/mês)", premium: "Ilimitado" },
-    { name: "Acesso a todas as ferramentas de cálculo", free: "Sim", premium: "Sim" },
-    { name: "Histórico de medidas antropométricas", free: "30 dias", premium: "Completo" },
-    { name: "Suporte prioritário", free: "Não", premium: "Sim" },
-    { name: "Treinamentos exclusivos", free: "Não", premium: "Sim" },
-    { name: "Personalização do perfil", free: "Básica", premium: "Avançada" }
+  const location = useLocation();
+  const { getPatientsQuota, getMealPlansQuota } = useFeatureAccess();
+  const patientsQuota = getPatientsQuota();
+  const mealPlansQuota = getMealPlansQuota();
+  
+  const isPremium = userTier === 'premium';
+  const reason = location.state?.reason;
+  const referrer = location.state?.referrer;
+  
+  const freeTierFeatures = [
+    { name: "Pacientes cadastrados", value: `Limitado (${patientsQuota.limit})`, available: true },
+    { name: "Planos Alimentares", value: `Limitado (${mealPlansQuota.limit}/mês)`, available: true },
+    { name: "Acesso a ferramentas básicas de cálculo", value: "Sim", available: true },
+    { name: "Histórico básico de medidas", value: "30 dias", available: true },
+    { name: "Suporte ao cliente", value: "Email", available: true },
+    { name: "Planos alimentares avançados", value: "Não", available: false },
+    { name: "Exportação de relatórios", value: "Não", available: false },
   ];
-
+  
+  const premiumFeatures = [
+    { name: "Pacientes cadastrados", value: "Ilimitado", available: true },
+    { name: "Planos Alimentares", value: "Ilimitado", available: true },
+    { name: "Acesso a todas as ferramentas de cálculo", value: "Sim", available: true },
+    { name: "Histórico completo de medidas", value: "Completo", available: true },
+    { name: "Suporte prioritário", value: "Chat e Email", available: true },
+    { name: "Planos alimentares avançados", value: "Sim", available: true },
+    { name: "Exportação de relatórios", value: "Sim", available: true },
+    { name: "Personalização do perfil", value: "Avançada", available: true },
+    { name: "Treinamentos exclusivos", value: "Mensal", available: true },
+  ];
+  
+  // Check if we need to show an alert for premium access
+  const showPremiumAlert = reason === 'premium-required';
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-12">
@@ -30,125 +57,140 @@ const Subscription = () => {
         <p className="text-center text-gray-600 max-w-2xl mx-auto mb-8">
           Escolha o plano que melhor se adapta às suas necessidades e impulsione sua prática como nutricionista.
         </p>
+        
+        {showPremiumAlert && (
+          <Alert variant="destructive" className="mb-8 max-w-2xl mx-auto">
+            <AlertTitle className="flex items-center">
+              <Crown className="h-4 w-4 mr-2" />
+              Funcionalidade Premium
+            </AlertTitle>
+            <AlertDescription>
+              A funcionalidade que você tentou acessar está disponível apenas para usuários premium.
+            </AlertDescription>
+            <div className="mt-2">
+              {referrer && (
+                <Button variant="outline" size="sm" className="mr-2" onClick={() => navigate(referrer)}>
+                  Voltar
+                </Button>
+              )}
+            </div>
+          </Alert>
+        )}
 
-        {/* Comparison Table - Desktop */}
-        <div className="hidden md:block max-w-4xl mx-auto mb-12">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-nutri-blue-light text-white">
-                <tr>
-                  <th className="py-4 px-6 text-left">Recursos</th>
-                  <th className="py-4 px-6 text-center">Plano Gratuito</th>
-                  <th className="py-4 px-6 text-center bg-nutri-blue">Plano Premium</th>
-                </tr>
-              </thead>
-              <tbody>
-                {features.map((feature, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="py-3 px-6 font-medium">{feature.name}</td>
-                    <td className="py-3 px-6 text-center">{feature.free}</td>
-                    <td className="py-3 px-6 text-center bg-blue-50">{feature.premium}</td>
-                  </tr>
-                ))}
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 font-medium">Preço</td>
-                  <td className="py-4 px-6 text-center font-medium">R$ 0</td>
-                  <td className="py-4 px-6 text-center bg-blue-50">
-                    <div className="font-bold text-nutri-blue">R$ 97,00<span className="text-sm font-normal text-gray-500">/mês</span></div>
-                    <div className="text-sm text-gray-600">ou R$ 970,00/ano (2 meses grátis)</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Current plan status */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className={`p-4 rounded-lg ${isPremium ? 'bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
+            <h2 className="text-xl font-semibold mb-2 flex items-center">
+              {isPremium ? (
+                <>
+                  <Crown className="h-5 w-5 mr-2 text-amber-500" />
+                  Seu plano atual: Premium
+                </>
+              ) : (
+                'Seu plano atual: Gratuito'
+              )}
+            </h2>
+            <p className="text-gray-600">
+              {isPremium 
+                ? 'Você está aproveitando todos os recursos premium do NutriFlow Pro.' 
+                : 'Atualize para o plano Premium para desbloquear todos os recursos.'}
+            </p>
           </div>
         </div>
         
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Plano Mensal */}
-          <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow">
+          {/* Plano Gratuito */}
+          <div className={`bg-white rounded-xl shadow-lg p-8 border ${!isPremium ? 'border-blue-300 ring-2 ring-blue-200' : 'border-gray-200'}`}>
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Plano Mensal</h2>
-              <p className="text-3xl font-bold text-nutri-blue">R$ 97,00<span className="text-lg font-normal text-gray-500">/mês</span></p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Plano Gratuito</h2>
+              <p className="text-3xl font-bold text-nutri-blue">R$ 0<span className="text-lg font-normal text-gray-500">/sempre</span></p>
+              {!isPremium && (
+                <div className="mt-2 inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                  Seu plano atual
+                </div>
+              )}
             </div>
             
             <ul className="space-y-4 mb-8">
-              <li className="flex items-center text-gray-600">
-                <Check className="h-5 w-5 text-nutri-green mr-2" />
-                Acesso a todas as funcionalidades
-              </li>
-              <li className="flex items-center text-gray-600">
-                <Check className="h-5 w-5 text-nutri-green mr-2" />
-                Suporte prioritário
-              </li>
-              <li className="flex items-center text-gray-600">
-                <Check className="h-5 w-5 text-nutri-green mr-2" />
-                Pacientes ilimitados
-              </li>
+              {freeTierFeatures.map((feature, index) => (
+                <li key={index} className="flex items-center text-gray-600">
+                  {feature.available ? (
+                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                  ) : (
+                    <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                  )}
+                  <span className={`${!feature.available ? 'text-gray-400' : ''}`}>
+                    {feature.name}: <strong>{feature.value}</strong>
+                  </span>
+                </li>
+              ))}
             </ul>
             
             <Button 
-              className={`w-full ${subscription?.isPremium 
-                ? 'bg-green-500 hover:bg-green-600' 
-                : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'}`}
-              onClick={() => window.location.href = 'https://pay.kiwify.com.br/nv9DKL8'}
-              disabled={subscription?.isPremium}
+              className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300"
+              disabled={!isPremium}
             >
-              {subscription?.isPremium ? 'Você já é Premium' : 'Assinar Plano Mensal'}
+              {!isPremium ? 'Plano Atual' : 'Fazer Downgrade'}
             </Button>
           </div>
           
-          {/* Plano Anual */}
-          <div className="bg-gradient-to-br from-nutri-blue to-nutri-blue-dark rounded-xl shadow-lg p-8 border border-blue-400 transform hover:scale-105 transition-transform">
+          {/* Plano Premium */}
+          <div className={`${isPremium ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-gray-200'} rounded-xl shadow-lg p-8 border`}>
             <div className="text-center mb-6">
               <div className="flex justify-center items-center mb-2">
-                <Star className="h-6 w-6 text-yellow-300 fill-current" />
-                <h2 className="text-2xl font-bold text-white ml-2">Plano Anual</h2>
+                <Crown className={`h-6 w-6 ${isPremium ? 'text-amber-500' : 'text-gray-400'} mr-2`} />
+                <h2 className="text-2xl font-bold text-gray-800">Plano Premium</h2>
               </div>
-              <p className="text-3xl font-bold text-white">R$ 970,00<span className="text-lg font-normal text-blue-100">/ano</span></p>
-              <p className="text-blue-100 mt-2">Economia de 2 meses!</p>
+              <p className="text-3xl font-bold text-nutri-blue">R$ 97,00<span className="text-lg font-normal text-gray-500">/mês</span></p>
+              {isPremium && (
+                <div className="mt-2 inline-block bg-amber-100 text-amber-800 px-2 py-1 rounded text-sm">
+                  Seu plano atual
+                </div>
+              )}
             </div>
             
             <ul className="space-y-4 mb-8">
-              <li className="flex items-center text-white">
-                <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                Todas as funcionalidades do plano mensal
-              </li>
-              <li className="flex items-center text-white">
-                <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                2 meses grátis
-              </li>
-              <li className="flex items-center text-white">
-                <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                Treinamentos exclusivos
-              </li>
+              {premiumFeatures.map((feature, index) => (
+                <li key={index} className="flex items-center text-gray-600">
+                  <Check className={`h-5 w-5 ${isPremium ? 'text-amber-500' : 'text-green-500'} mr-2 flex-shrink-0`} />
+                  <span>
+                    {feature.name}: <strong>{feature.value}</strong>
+                  </span>
+                </li>
+              ))}
             </ul>
             
             <Button 
-              className="w-full bg-white text-nutri-blue hover:bg-blue-50 transition-colors"
-              onClick={() => window.location.href = 'https://pay.kiwify.com.br/usRxcG3'}
-              disabled={subscription?.isPremium}
+              className={`w-full ${isPremium 
+                ? 'bg-amber-200 text-amber-800 hover:bg-amber-300' 
+                : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'}`}
+              onClick={() => isPremium ? null : window.location.href = 'https://pay.kiwify.com.br/nv9DKL8'}
+              disabled={isPremium}
             >
-              {subscription?.isPremium ? 'Você já é Premium' : 'Assinar Plano Anual'}
+              {isPremium ? 'Plano Atual' : 'Assinar Plano Premium'}
             </Button>
             
-            <p className="text-center text-blue-100 text-sm mt-4">
-              7 dias de garantia de devolução do dinheiro
-            </p>
+            {isPremium && (
+              <p className="text-center text-sm mt-2 text-amber-700">
+                Sua assinatura está ativa até {subscription?.subscriptionEnd 
+                  ? new Date(subscription.subscriptionEnd).toLocaleDateString('pt-BR') 
+                  : 'prazo indeterminado'
+                }
+              </p>
+            )}
           </div>
         </div>
 
-        {subscription?.isPremium && (
-          <div className="text-center mt-8">
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/')}
-              className="mx-auto"
-            >
-              Voltar para o Dashboard
-            </Button>
-          </div>
-        )}
+        <div className="text-center mt-8">
+          <Button 
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="mx-auto"
+          >
+            Voltar para o Dashboard
+          </Button>
+        </div>
       </div>
     </div>
   );

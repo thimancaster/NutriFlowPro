@@ -5,14 +5,17 @@ import Navbar from '@/components/Navbar';
 import DashboardComponent from '@/components/Dashboard';
 import UserInfoHeader from '@/components/UserInfoHeader';
 import ConsultationHeader from '@/components/ConsultationHeader';
+import UsageLimits from '@/components/UsageLimits';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
   const { totalPatients, appointmentsToday, activePlans, isLoading } = useDashboardData();
+  const { userTier } = useFeatureAccess();
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
@@ -41,6 +44,16 @@ const Dashboard = () => {
               <ConsultationHeader currentStep="dashboard" />
             </motion.div>
           )}
+          
+          {/* Add usage limits card for free users */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="mb-6"
+          >
+            <UsageLimits />
+          </motion.div>
           
           <DashboardComponent />
         </div>

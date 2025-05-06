@@ -7,10 +7,11 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  requiresPremium?: boolean;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading, user, isPremium } = useAuth();
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
 
@@ -21,6 +22,18 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       
       if (!isAuthenticated) {
         setIsVerifying(false);
+        return;
+      }
+      
+      // If route requires premium and user is not premium, redirect to subscription
+      if (requiresPremium && !isPremium) {
+        console.log("Premium route access denied, redirecting to subscription page");
+        navigate('/subscription', { 
+          state: { 
+            referrer: window.location.pathname,
+            reason: 'premium-required' 
+          } 
+        });
         return;
       }
       
@@ -62,7 +75,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     };
     
     verifySession();
-  }, [isAuthenticated, isLoading, navigate, user?.email]);
+  }, [isAuthenticated, isLoading, navigate, user?.email, isPremium, requiresPremium]);
 
   if (isLoading || isVerifying) {
     return (
