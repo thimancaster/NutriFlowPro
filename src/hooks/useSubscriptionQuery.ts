@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
 import { useToast } from "./use-toast";
-import { validatePremiumStatus, isSubscriptionExpired } from "@/utils/subscriptionUtils";
+import { validatePremiumStatus } from "@/utils/subscriptionUtils";
 import { User } from "@supabase/supabase-js";
 import React from "react";
 
@@ -27,7 +27,7 @@ const OPTIMIZED_REFETCH_SETTINGS = {
 };
 
 /**
- * Hook para buscar dados de assinatura do banco de dados de forma otimizada
+ * Hook para buscar dados de assinatura do banco de dados de forma otimizada e segura
  */
 export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean | null) => {
   const { toast } = useToast();
@@ -48,9 +48,11 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           };
         }
 
-        // VERIFICAÇÃO PRIORITÁRIA: verificar se o e-mail está na lista premium
-        // Esta verificação tem prioridade absoluta sobre qualquer dado do banco
-        if (validatePremiumStatus(user.email, null)) {
+        // Verificar status premium usando a função segura do banco
+        const isPremium = await validatePremiumStatus(user.id, user.email);
+        
+        // Se o usuário for premium pelo e-mail, retornar dados simplificados
+        if (isPremium && validatePremiumStatus(undefined, user.email)) {
           return {
             isPremium: true,
             role: 'premium',
@@ -60,41 +62,25 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           };
         }
 
-        // Buscar dados do banco com cache otimizado
+        // Buscar o papel do usuário usando função segura
+        const { data: roleData, error: roleError } = await supabase.rpc('get_user_role', {
+          user_id: user.id
+        });
+        
+        if (roleError) {
+          console.warn("Erro ao buscar papel do usuário:", roleError);
+        }
+        
+        // Buscar dados completos da assinatura
         const { data, error } = await supabase
           .from("subscribers")
           .select("is_premium, role, email, subscription_start, subscription_end")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        // Handle specific recursive policy error silently
-        if (error && error.message && error.message.includes('infinite recursion')) {
-          console.warn("Recurssion policy error in subscribers table:", error.message);
-          
-          // Use email check as fallback without triggering toast
-          if (validatePremiumStatus(user.email, null)) {
-            return {
-              isPremium: true,
-              role: 'premium',
-              email: user.email,
-              subscriptionStart: new Date().toISOString(),
-              subscriptionEnd: null
-            };
-          }
-          
-          // Return default values if not premium by email
-          return {
-            isPremium: false,
-            role: 'user',
-            email: user.email
-          };
-        }
-
-        // For other errors, only show toast once
-        if (error && error.code !== 'PGRST116') {
+        if (error && error.message && !error.message.includes('infinite recursion')) {
           console.error("Erro ao buscar dados da assinatura:", error);
           
-          // Only show the toast notification once per session
           if (!errorToastShown.current) {
             toast({
               title: "Erro ao buscar dados da assinatura",
@@ -103,45 +89,23 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
             });
             errorToastShown.current = true;
           }
-          
-          // Verificação de segurança: se ocorrer um erro, mas o e-mail é premium, retornar premium
-          if (validatePremiumStatus(user.email, null)) {
-            return {
-              isPremium: true,
-              role: 'premium',
-              email: user.email,
-              subscriptionStart: new Date().toISOString(),
-              subscriptionEnd: null
-            };
-          }
-          
-          throw error;
         }
 
-        // Verificar se a assinatura expirou
-        const expired = isSubscriptionExpired(data?.subscription_end);
-        
         return {
-          isPremium: data ? (!!data.is_premium && !expired) : false,
-          role: data ? data.role : 'user',
+          isPremium: isPremium,
+          role: roleData || (data ? data.role : 'user'),
           email: data ? data.email : user.email,
           subscriptionStart: data ? data.subscription_start : null,
           subscriptionEnd: data ? data.subscription_end : null
         };
       } catch (error: any) {
-        // Verificação de fallback: em caso de erro, se o e-mail é premium, retornar premium
-        if (validatePremiumStatus(user.email, null)) {
-          return {
-            isPremium: true,
-            role: 'premium',
-            email: user.email,
-            subscriptionStart: new Date().toISOString(),
-            subscriptionEnd: null
-          };
-        }
+        console.error("Erro na consulta de assinatura:", error);
+        
+        // Verificação de fallback: em caso de erro, ainda verificamos o e-mail
+        const isPremium = await validatePremiumStatus(undefined, user?.email);
         
         return {
-          isPremium: false,
+          isPremium,
           role: 'user',
           email: user?.email || null
         };

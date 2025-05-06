@@ -1,5 +1,6 @@
 
 import { PREMIUM_EMAILS } from "@/constants/authConstants";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubscriptionData {
   isPremium: boolean;
@@ -11,29 +12,37 @@ interface SubscriptionData {
 
 /**
  * Valida se um usuário tem status premium com base no e-mail ou dados de assinatura
- * @param email E-mail do usuário
- * @param subscriptionData Dados da assinatura do banco de dados
+ * usando função segura do banco de dados
+ * @param userId ID do usuário
  * @returns Boolean indicando status premium
  */
-export const validatePremiumStatus = (
-  email: string | null | undefined,
-  subscriptionData: SubscriptionData | null | undefined
-): boolean => {
-  // Verificação prioritária: E-mail na lista premium sempre tem status premium
-  if (email && PREMIUM_EMAILS.includes(email)) {
-    return true;
+export const validatePremiumStatus = async (
+  userId: string | undefined,
+  fallbackEmail: string | null | undefined
+): Promise<boolean> => {
+  if (!userId) {
+    // Fallback para verificação por email para compatibilidade
+    return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
   }
 
-  // Verificação secundária via dados de assinatura
-  if (subscriptionData?.isPremium) {
-    // Verificar se a assinatura não expirou
-    if (subscriptionData.subscriptionEnd) {
-      return !isSubscriptionExpired(subscriptionData.subscriptionEnd);
+  try {
+    // Usar a função SQL segura para verificar status premium
+    const { data, error } = await supabase.rpc('check_user_premium_status', {
+      user_id: userId
+    });
+
+    if (error) {
+      console.error("Erro ao verificar status premium:", error);
+      // Fallback para verificação por email
+      return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
     }
-    return true;
-  }
 
-  return false;
+    return !!data;
+  } catch (err) {
+    console.error("Erro ao validar status premium:", err);
+    // Fallback para verificação por email
+    return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
+  }
 };
 
 /**

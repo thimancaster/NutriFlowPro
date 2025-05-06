@@ -1,14 +1,30 @@
 
 import { User } from '@supabase/supabase-js';
-import { PREMIUM_EMAILS } from '@/constants/authConstants';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { validatePremiumStatus } from '@/utils/subscriptionUtils';
 
 export const usePremiumStatus = (user: User | null) => {
-  // Verifica de forma memorizada se o email do usuário está na lista premium
-  const isPremium = useMemo(() => {
-    if (!user?.email) return false;
-    return PREMIUM_EMAILS.includes(user.email);
-  }, [user?.email]);
+  const [isPremium, setIsPremium] = useState(false);
+  
+  useEffect(() => {
+    if (!user) {
+      setIsPremium(false);
+      return;
+    }
+    
+    // Use the secure database function to validate premium status
+    const checkPremium = async () => {
+      try {
+        const result = await validatePremiumStatus(user.id, user.email);
+        setIsPremium(result);
+      } catch (err) {
+        console.error("Error checking premium status:", err);
+        setIsPremium(false);
+      }
+    };
+    
+    checkPremium();
+  }, [user?.id, user?.email]);
   
   return isPremium;
 };

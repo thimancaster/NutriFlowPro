@@ -1,9 +1,11 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
+import { validatePremiumStatus } from '@/utils/subscriptionUtils';
 
 interface AuthState {
   user: User | null;
@@ -36,18 +38,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if user is premium based on email
-  const checkPremiumStatus = useCallback((email: string | undefined) => {
-    if (!email) return false;
-    // Check against premium emails list
-    const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
-    return PREMIUM_EMAILS.includes(email);
+  // Check if user is premium using the secure database function
+  const checkPremiumStatus = useCallback(async (userId: string | undefined, email: string | undefined) => {
+    if (!userId && !email) return false;
+    try {
+      return await validatePremiumStatus(userId, email);
+    } catch (error) {
+      console.error("Error checking premium status:", error);
+      return false;
+    }
   }, []);
 
   // Update auth state with consistent format
-  const updateAuthState = useCallback((session: Session | null) => {
+  const updateAuthState = useCallback(async (session: Session | null) => {
     const user = session?.user || null;
-    const isPremium = user ? checkPremiumStatus(user.email) : false;
+    const isPremium = user ? await checkPremiumStatus(user.id, user.email) : false;
     
     setAuthState({
       user,

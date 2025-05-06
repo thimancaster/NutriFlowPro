@@ -630,6 +630,10 @@ export type Database = {
         Args: { original_id: string; substitute_id: string }
         Returns: Json
       }
+      check_user_premium_status: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       get_food_ids: {
         Args: { food_names: string[] }
         Returns: string[]
@@ -641,6 +645,10 @@ export type Database = {
           role: string
           email: string
         }[]
+      }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
       }
       is_user_premium: {
         Args: { user_id: string }
