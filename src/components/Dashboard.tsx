@@ -5,7 +5,6 @@ import DashboardSummaryCards from './DashboardSummaryCards';
 import DashboardRecentPatients from './DashboardRecentPatients';
 import DashboardQuickActions from './DashboardQuickActions';
 import DashboardTestimonials from './DashboardTestimonials';
-import UserInfoHeader from './UserInfoHeader';
 import ConsultationHeader from './ConsultationHeader';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,14 +26,6 @@ const Dashboard = () => {
       {isConsultationActive && (
         <ConsultationHeader currentStep="dashboard" />
       )}
-      
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <UserInfoHeader />
-      </motion.div>
       
       <motion.div
         initial={{ opacity: 0, y: 10 }}
