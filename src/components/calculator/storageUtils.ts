@@ -1,7 +1,7 @@
 
 import { storageUtils } from '@/utils/storageUtils';
 import { CalculatorState, CalculatorResults } from './types';
-import { CALCULATOR_RESULTS_KEY } from './calculatorUtils';
+import { CALCULATOR_RESULTS_KEY } from './utils/initialState';
 
 // Save calculator state to storage
 export function saveCalculatorState(state: CalculatorState): void {

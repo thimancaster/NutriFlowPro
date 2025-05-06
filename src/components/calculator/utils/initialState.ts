@@ -20,3 +20,6 @@ export const getInitialCalculatorState = (): CalculatorState => {
     profile: 'magro', // Default profile
   };
 };
+
+// Key for storing calculator results in storage
+export const CALCULATOR_RESULTS_KEY = 'nutriflow_calculator_results';
