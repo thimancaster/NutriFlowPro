@@ -23,6 +23,12 @@ const UsageQuotaDisplay: React.FC<UsageQuotaDisplayProps> = ({
   const percentage = limit === Infinity ? 0 : (used / limit) * 100;
   const isPremium = limit === Infinity;
   
+  // Determine the color class for the progress bar based on usage percentage
+  const getProgressColorClass = () => {
+    if (percentage > 80) return "bg-primary text-primary-foreground";
+    return "bg-blue-500 text-white";
+  };
+  
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
@@ -46,7 +52,6 @@ const UsageQuotaDisplay: React.FC<UsageQuotaDisplayProps> = ({
         <Progress 
           value={percentage} 
           className={`h-2 ${percentage > 80 ? 'bg-red-100' : 'bg-gray-100'}`} 
-          indicatorClassName={percentage > 80 ? 'bg-red-500' : 'bg-blue-500'} 
         />
       )}
     </div>
