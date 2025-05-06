@@ -8,7 +8,7 @@ export const handleSavePatient = async (
   navigate: NavigateFunction,
   toast: any,
   setIsSavingPatient: (value: boolean) => void
-) => {
+): Promise<{ consultationId?: string } | undefined> => {
   if (!user) {
     toast({
       title: "Erro de autenticação",
@@ -48,6 +48,10 @@ export const handleSavePatient = async (
       title: "Redirecionando...",
       description: "Complete o cadastro do paciente para salvar os dados."
     });
+    
+    // Return a placeholder consultationId or undefined
+    // In a real implementation, this would be an actual ID from the database
+    return { consultationId: undefined };
   } catch (error) {
     console.error("Error navigating to patient registration:", error);
     toast({
@@ -58,4 +62,7 @@ export const handleSavePatient = async (
   } finally {
     setIsSavingPatient(false);
   }
+  
+  // Make sure we always return something of the expected type
+  return { consultationId: undefined };
 };

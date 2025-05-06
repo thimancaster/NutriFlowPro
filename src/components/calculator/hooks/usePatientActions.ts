@@ -117,8 +117,8 @@ export const usePatientActions = ({
         setIsSavingPatient
       );
       
-      // Store the consultation ID for auto-save
-      if (savedData?.consultationId) {
+      // Store the consultation ID for auto-save if it exists
+      if (savedData && savedData.consultationId) {
         setConsultationId(savedData.consultationId);
         setLastAutoSaveTime(new Date());
       }
