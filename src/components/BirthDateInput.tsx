@@ -8,13 +8,15 @@ interface BirthDateInputProps {
   onChange: (date: Date | undefined) => void;
   error?: string;
   label?: string;
+  onBlur?: () => void; // Added missing onBlur property
 }
 
 export function BirthDateInput({
   value,
   onChange,
   error,
-  label = "Data de Nascimento*"
+  label = "Data de Nascimento*",
+  onBlur
 }: BirthDateInputProps) {
   return (
     <div className="space-y-2">
@@ -23,6 +25,7 @@ export function BirthDateInput({
         value={value}
         onChange={onChange}
         error={error}
+        onBlur={onBlur}
       />
     </div>
   );

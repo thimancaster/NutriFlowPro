@@ -1,22 +1,22 @@
 
 import { CalculatorState } from '../types';
 
-// Get initial calculator state
-export function getInitialCalculatorState(): CalculatorState {
+/**
+ * Get initial state for calculator
+ */
+export const getInitialCalculatorState = (): CalculatorState => {
   return {
     patientName: '',
-    gender: 'female',
+    gender: 'male',
     age: '',
     weight: '',
     height: '',
     objective: 'manutenção',
-    activityLevel: '1.2',
+    activityLevel: '1.55', // Moderadamente ativo como padrão
     carbsPercentage: '55',
     proteinPercentage: '20',
     fatPercentage: '25',
-    consultationType: 'primeira_consulta'
+    consultationType: 'primeira_consulta',
+    profile: 'magro', // Default profile
   };
-}
-
-// Key for storing calculator results in storage
-export const CALCULATOR_RESULTS_KEY = 'nutriflow_calculator_results';
+};

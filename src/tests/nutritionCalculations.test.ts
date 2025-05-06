@@ -72,24 +72,24 @@ describe('GET Calculations', () => {
 
 describe('Macros Calculations', () => {
   it('calculates maintenance macros correctly', () => {
-    const macros = calculateMacros(2000, 'manutenção');
-    expect(macros.protein).toBe(150);
-    expect(macros.carbs).toBe(200);
-    expect(macros.fat).toBe(67);
+    const macros = calculateMacros(2000, 0.20, 0.55, 0.25); // Fixed: use numbers instead of strings
+    expect(macros.protein).toBe(100); // 2000 * 0.2 / 4 = 100
+    expect(macros.carbs).toBe(275); // 2000 * 0.55 / 4 = 275
+    expect(macros.fat).toBe(56); // 2000 * 0.25 / 9 = 55.55, rounded to 56
   });
 
   it('calculates weight loss macros correctly', () => {
-    const macros = calculateMacros(2000, 'emagrecimento');
-    expect(macros.protein).toBe(175);
-    expect(macros.carbs).toBe(150);
-    expect(macros.fat).toBe(78);
+    const macros = calculateMacros(2000, 0.30, 0.40, 0.30); // Fixed: use numbers instead of strings
+    expect(macros.protein).toBe(150); // 2000 * 0.3 / 4 = 150
+    expect(macros.carbs).toBe(200); // 2000 * 0.4 / 4 = 200
+    expect(macros.fat).toBe(67); // 2000 * 0.3 / 9 = 66.67, rounded to 67
   });
 
   it('calculates muscle gain macros correctly', () => {
-    const macros = calculateMacros(2000, 'hipertrofia');
-    expect(macros.protein).toBe(150);
-    expect(macros.carbs).toBe(250);
-    expect(macros.fat).toBe(44);
+    const macros = calculateMacros(2000, 0.30, 0.50, 0.20); // Fixed: use numbers instead of strings
+    expect(macros.protein).toBe(150); // 2000 * 0.3 / 4 = 150
+    expect(macros.carbs).toBe(250); // 2000 * 0.5 / 4 = 250
+    expect(macros.fat).toBe(44); // 2000 * 0.2 / 9 = 44.44, rounded to 44
   });
 });
 

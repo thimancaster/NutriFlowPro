@@ -18,6 +18,7 @@ interface BirthDatePickerProps {
   className?: string;
   placeholder?: string;
   error?: string;
+  onBlur?: () => void; // Added missing onBlur property
 }
 
 export function BirthDatePicker({ 
@@ -25,7 +26,8 @@ export function BirthDatePicker({
   onChange, 
   className,
   placeholder = "Selecione a data de nascimento", 
-  error 
+  error,
+  onBlur
 }: BirthDatePickerProps) {
   const [inputValue, setInputValue] = React.useState<string>(
     value ? format(value, "dd/MM/yyyy") : ""
@@ -115,6 +117,7 @@ export function BirthDatePicker({
               error && "border-red-500",
               className
             )}
+            onBlur={onBlur} // Add onBlur event handler
           />
           <PopoverTrigger asChild>
             <Button
