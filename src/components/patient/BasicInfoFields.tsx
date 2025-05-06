@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { TextField, RadioGroupField, DateField } from './FormFields';
+import { useToast } from '@/hooks/use-toast';
 
 interface BasicInfoFieldsProps {
   formData: {
@@ -13,6 +14,7 @@ interface BasicInfoFieldsProps {
   setBirthDate: (date: Date | undefined) => void;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
+  errors?: Record<string, string>;
 }
 
 const BasicInfoFields = ({ 
@@ -20,8 +22,23 @@ const BasicInfoFields = ({
   birthDate, 
   setBirthDate, 
   handleChange,
-  handleSelectChange 
+  handleSelectChange,
+  errors = {}
 }: BasicInfoFieldsProps) => {
+  const { toast } = useToast();
+  
+  const validateGender = () => {
+    if (!formData.sex) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Por favor, selecione o sexo do paciente.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+  
   return (
     <>
       <TextField 
@@ -31,6 +48,7 @@ const BasicInfoFields = ({
         value={formData.name} 
         onChange={handleChange} 
         required 
+        error={errors.name}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -41,6 +59,7 @@ const BasicInfoFields = ({
           value={formData.email} 
           onChange={handleChange}
           type="email"
+          error={errors.email}
         />
         
         <TextField 
@@ -49,6 +68,7 @@ const BasicInfoFields = ({
           label="Telefone" 
           value={formData.phone} 
           onChange={handleChange}
+          error={errors.phone}
         />
       </div>
       
@@ -61,11 +81,14 @@ const BasicInfoFields = ({
           { value: "M", label: "Masculino" },
           { value: "F", label: "Feminino" }
         ]}
+        error={errors.sex}
+        onBlur={validateGender}
       />
       
       <DateField 
         value={birthDate} 
         onChange={setBirthDate} 
+        error={errors.birthDate}
       />
     </>
   );

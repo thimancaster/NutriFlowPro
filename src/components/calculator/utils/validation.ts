@@ -6,6 +6,7 @@ export function validateCalculatorInputs(
   age: string, 
   weight: string, 
   height: string,
+  gender: string,
   toast: any
 ): boolean {
   // Basic validation for required fields
@@ -17,13 +18,23 @@ export function validateCalculatorInputs(
     });
     return false;
   }
+
+  // Validate gender is selected
+  if (!gender) {
+    toast({
+      title: "Campo obrigatório",
+      description: "Por favor, selecione o sexo do paciente.",
+      variant: "destructive"
+    });
+    return false;
+  }
   
   // Validate reasonable values
   const ageVal = parseFloat(age);
   const weightVal = parseFloat(weight);
   const heightVal = parseFloat(height);
   
-  if (ageVal <= 0 || ageVal > 120) {
+  if (isNaN(ageVal) || ageVal <= 0 || ageVal > 120) {
     toast({
       title: "Valor inválido",
       description: "A idade deve estar entre 1 e 120 anos.",
@@ -32,7 +43,7 @@ export function validateCalculatorInputs(
     return false;
   }
   
-  if (weightVal <= 0 || weightVal > 300) {
+  if (isNaN(weightVal) || weightVal <= 0 || weightVal > 300) {
     toast({
       title: "Valor inválido",
       description: "O peso deve estar entre 1 e 300 kg.",
@@ -41,7 +52,7 @@ export function validateCalculatorInputs(
     return false;
   }
   
-  if (heightVal <= 0 || heightVal > 250) {
+  if (isNaN(heightVal) || heightVal <= 0 || heightVal > 250) {
     toast({
       title: "Valor inválido",
       description: "A altura deve estar entre 1 e 250 cm.",

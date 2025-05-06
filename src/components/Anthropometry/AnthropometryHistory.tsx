@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
+import { calculateIMC, calculateRCQ, calculateBodyFatJacksonPollock, calculateLeanMass } from '@/utils/nutritionCalculations';
 
 type AnthropometryData = Tables<"anthropometry">;
 

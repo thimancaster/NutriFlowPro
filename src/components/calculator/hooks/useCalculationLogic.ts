@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { validateCalculatorInputs } from '../utils/validation';
-import { calculateBMR, calculateMacros } from '../utils/calculations';
+import { calculateTMB, calcGET, calculateMacros } from '@/utils/nutritionCalculations';
 import { saveConsultationData } from '../storageUtils';
 import { saveTemporaryPatient } from '../patientUtils';
 
@@ -28,37 +28,50 @@ export const useCalculationLogic = ({
   const validateInputs = useCallback((
     age: string, 
     weight: string, 
-    height: string
+    height: string,
+    gender: string
   ): boolean => {
-    return validateCalculatorInputs(age, weight, height, toast);
+    return validateCalculatorInputs(age, weight, height, gender, toast);
   }, [toast]);
 
   const calculateResults = useCallback(async (state: CalculatorState) => {
-    if (!validateInputs(state.age, state.weight, state.height)) {
+    if (!validateInputs(state.age, state.weight, state.height, state.gender)) {
       return;
     }
     
-    // Calculate BMR
-    const calculatedBmr = calculateBMR(
-      state.gender,
-      state.weight,
-      state.height,
-      state.age
+    // Calculate TMB using proper formulas based on gender and profile
+    const weightVal = parseFloat(state.weight);
+    const heightVal = parseFloat(state.height);
+    const ageVal = parseFloat(state.age);
+    const profile = state.profile || 'magro'; // Default to 'magro' if not specified
+    const sex = state.gender === 'male' ? 'M' : 'F';
+    
+    // Calculate TMB based on appropriate formula
+    const calculatedBmr = calculateTMB(
+      weightVal, 
+      heightVal, 
+      ageVal, 
+      sex, 
+      profile as 'magro' | 'obeso' | 'atleta'
     );
     
     setBmr(calculatedBmr);
     
     // Calculate Total Energy Expenditure with the selected activity factor
     const activityFactor = parseFloat(state.activityLevel);
-    const calculatedTee = calculatedBmr * activityFactor;
-    setTee(Math.round(calculatedTee));
+    const calculatedTee = calcGET(calculatedBmr, activityFactor);
+    setTee(calculatedTee);
     
     // Calculate macronutrients with updated distribution
+    const proteinPercentage = parseFloat(state.proteinPercentage) / 100;
+    const carbsPercentage = parseFloat(state.carbsPercentage) / 100;
+    const fatPercentage = parseFloat(state.fatPercentage) / 100;
+    
     const calculatedMacros = calculateMacros(
       calculatedTee,
-      state.carbsPercentage,
-      state.proteinPercentage,
-      state.fatPercentage
+      proteinPercentage,
+      carbsPercentage,
+      fatPercentage
     );
     
     setMacros(calculatedMacros);
@@ -70,14 +83,14 @@ export const useCalculationLogic = ({
       age: state.age,
       sex: state.gender === 'male' ? 'M' : 'F',
       objective: state.objective,
-      profile: 'magro', // Default profile
+      profile: profile, 
       activityLevel: state.activityLevel,
       consultationType: state.consultationType || 'primeira_consulta',
       consultationStatus: 'em_andamento',
       results: {
         tmb: calculatedBmr,
         fa: activityFactor,
-        get: Math.round(calculatedTee),
+        get: calculatedTee,
         macros: {
           protein: calculatedMacros.protein,
           carbs: calculatedMacros.carbs,
