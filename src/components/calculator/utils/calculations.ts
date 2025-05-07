@@ -32,7 +32,8 @@ export function calculateMacros(
   tee: number,
   carbsPercentage: string,
   proteinPercentage: string,
-  fatPercentage: string
+  fatPercentage: string,
+  weightKg: number
 ) {
   const carbsPercent = parseFloat(carbsPercentage) / 100;
   const proteinPercent = parseFloat(proteinPercentage) / 100;
@@ -42,13 +43,14 @@ export function calculateMacros(
   const protein = Math.round((tee * proteinPercent) / 4); // 4 calories per gram of protein
   const fat = Math.round((tee * fatPercent) / 9); // 9 calories per gram of fat
   
+  // Calculate protein per kg
+  const proteinPerKg = weightKg > 0 ? parseFloat((protein / weightKg).toFixed(2)) : 0;
+  
   return {
     carbs,
     protein,
     fat,
-    proteinPerKg: function(weightKg: number) {
-      return weightKg > 0 ? parseFloat((protein / weightKg).toFixed(2)) : 0;
-    }
+    proteinPerKg
   };
 }
 
