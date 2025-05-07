@@ -1,17 +1,24 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CalculatorInputs from './CalculatorInputs';
 import MacroDistributionInputs from './MacroDistributionInputs';
 import CalculatorResults from './CalculatorResults';
 import CalculatorActions from './CalculatorActions';
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, User } from 'lucide-react';
 import useCalculatorState from './useCalculatorState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { usePatient } from '@/contexts/PatientContext';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 
 const CalculatorTool = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { activePatient } = usePatient();
+  const { setConsultationData } = useConsultationData();
   
   // Combine useCalculatorState with local state management
   const {
@@ -26,17 +33,23 @@ const CalculatorTool = () => {
     setCarbsPercentage,
     setProteinPercentage,
     setFatPercentage,
+    setProfile,
+    setConsultationType,
     isCalculating,
     calculateResults,
+    clearCalculatorData,
     bmr,
     tee,
     macros,
     handleSavePatient,
     handleGenerateMealPlan,
     isSavingPatient
-  } = useCalculatorState({ toast, user, setConsultationData: () => {} });
-
-  const [consultationType, setConsultationType] = useState<string>('primeira_consulta');
+  } = useCalculatorState({ 
+    toast, 
+    user, 
+    setConsultationData, 
+    activePatient 
+  });
   
   // Calculate combined percentage for validation
   const totalPercentage = 
@@ -50,6 +63,25 @@ const CalculatorTool = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
+        {activePatient && (
+          <Alert className="bg-blue-50 border-blue-200">
+            <User className="h-4 w-4" />
+            <AlertTitle>Paciente Ativo</AlertTitle>
+            <AlertDescription className="flex justify-between items-center">
+              <span>Calculando para: <strong>{activePatient.name}</strong></span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={clearCalculatorData}
+              >
+                <RefreshCw className="h-3 w-3" />
+                Limpar
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <CalculatorInputs
           patientName={calculatorState.patientName}
           setPatientName={setPatientName}
@@ -65,9 +97,12 @@ const CalculatorTool = () => {
           setObjective={setObjective}
           activityLevel={calculatorState.activityLevel}
           setActivityLevel={setActivityLevel}
-          consultationType={consultationType}
+          consultationType={calculatorState.consultationType}
           setConsultationType={setConsultationType}
+          profile={calculatorState.profile}
+          setProfile={setProfile}
           user={user}
+          activePatient={activePatient}
         />
         
         <MacroDistributionInputs
@@ -77,6 +112,9 @@ const CalculatorTool = () => {
           setProteinPercentage={setProteinPercentage}
           fatPercentage={calculatorState.fatPercentage}
           setFatPercentage={setFatPercentage}
+          bmr={bmr}
+          tee={tee}
+          objective={calculatorState.objective}
         />
         
         {!hasValidPercentages && (

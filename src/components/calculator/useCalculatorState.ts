@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { UseCalculatorStateProps } from './types';
 import { 
   useCalculatorForm,
@@ -13,7 +13,7 @@ import { getInitialCalculatorState } from './utils/initialState';
 /**
  * Main hook for calculator state management
  */
-const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorStateProps) => {
+const useCalculatorState = ({ toast, user, setConsultationData, activePatient }: UseCalculatorStateProps) => {
   // Form state management
   const calculatorFormHook = useCalculatorForm();
   const { 
@@ -27,7 +27,9 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
     setActivityLevel,
     setCarbsPercentage,
     setProteinPercentage,
-    setFatPercentage
+    setFatPercentage,
+    setProfile,
+    setConsultationType
   } = calculatorFormHook;
 
   // Results state management
@@ -45,6 +47,43 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
   // Calculation state
   const [isCalculating, setIsCalculating] = useState(false);
   
+  // Pre-fill data from active patient if available
+  useEffect(() => {
+    if (activePatient) {
+      setPatientName(activePatient.name || '');
+      
+      if (activePatient.gender) {
+        // Map gender from database format to component format
+        setGender(activePatient.gender === 'M' ? 'male' : 'female');
+      }
+      
+      // Calculate age from birth_date if available
+      if (activePatient.birth_date) {
+        const birthDate = new Date(activePatient.birth_date);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        setAge(age.toString());
+      }
+
+      // Set objective if available in patient goals
+      if (activePatient.goals?.objective) {
+        setObjective(activePatient.goals.objective);
+      }
+
+      // Set profile if available in patient goals
+      if (activePatient.goals?.profile) {
+        setProfile(activePatient.goals.profile);
+      }
+
+      // Set consultation type to follow-up since this is an existing patient
+      setConsultationType('retorno');
+    }
+  }, [activePatient]);
+
   // Calculation logic
   const { calculateResults } = useCalculationLogic({
     setBmr,
@@ -116,6 +155,8 @@ const useCalculatorState = ({ toast, user, setConsultationData }: UseCalculatorS
     setCarbsPercentage,
     setProteinPercentage,
     setFatPercentage,
+    setProfile,
+    setConsultationType,
     isCalculating,
     calculateResults: performCalculation,
     clearCalculatorData,

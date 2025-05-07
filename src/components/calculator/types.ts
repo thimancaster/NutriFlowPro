@@ -33,6 +33,7 @@ export interface UseCalculatorStateProps {
   toast: any;
   user: any;
   setConsultationData: (data: any) => void;
+  activePatient?: any;
 }
 
 export interface ConsultationData {
@@ -89,7 +90,10 @@ export interface CalculatorInputsProps {
   setActivityLevel: (value: string) => void;
   consultationType: string;
   setConsultationType: (value: string) => void;
+  profile: string;
+  setProfile: (value: string) => void;
   user: any;
+  activePatient?: any;
 }
 
 export interface MacroDistributionInputsProps {
@@ -99,6 +103,9 @@ export interface MacroDistributionInputsProps {
   setProteinPercentage: (value: string) => void;
   fatPercentage: string;
   setFatPercentage: (value: string) => void;
+  bmr?: number | null;
+  tee?: number | null;
+  objective?: string;
 }
 
 export interface CalculatorActionsProps {
