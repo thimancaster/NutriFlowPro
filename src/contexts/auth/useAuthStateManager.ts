@@ -14,6 +14,10 @@ const FREE_TIER_LIMITS = {
 };
 
 export const useAuthStateManager = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Initialize state
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     session: null,
@@ -33,9 +37,6 @@ export const useAuthStateManager = () => {
       }
     }
   });
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Update auth state with consistent format
   const updateAuthState = useCallback(async (session: Session | null) => {

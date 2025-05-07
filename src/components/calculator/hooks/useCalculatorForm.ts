@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { CalculatorState } from '../types';
-import { getInitialCalculatorState } from '../calculatorUtils';
+import { getInitialCalculatorState } from '../utils/initialState';
 import { getCalculatorState, saveCalculatorState } from '../storageUtils';
 
 /**
@@ -29,6 +29,9 @@ export const useCalculatorForm = () => {
   const setCarbsPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, carbsPercentage: value }));
   const setProteinPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, proteinPercentage: value }));
   const setFatPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, fatPercentage: value }));
+  const setProfile = (value: string) => setCalculatorState(prev => ({ ...prev, profile: value }));
+  const setConsultationType = (value: 'primeira_consulta' | 'retorno') => 
+    setCalculatorState(prev => ({ ...prev, consultationType: value }));
 
   return {
     calculatorState,
@@ -41,6 +44,8 @@ export const useCalculatorForm = () => {
     setActivityLevel,
     setCarbsPercentage,
     setProteinPercentage,
-    setFatPercentage
+    setFatPercentage,
+    setProfile,
+    setConsultationType
   };
 };

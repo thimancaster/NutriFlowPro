@@ -6,12 +6,12 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/auth/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Patients from './pages/Patients';
-import PatientHistory from './components/PatientHistory'; // Fixed import path
+import PatientHistory from './components/PatientHistory'; 
 import Consultation from './pages/Consultation';
 import MealPlanGenerator from './pages/MealPlanGenerator';
 import Subscription from './pages/Subscription';
@@ -33,7 +33,7 @@ import AddTestimonial from './pages/AddTestimonial';
 import { seedTestimonials } from './utils/seedTestimonials';
 import { supabase } from './integrations/supabase/client';
 
-// Create a client
+// Create a client with retry options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

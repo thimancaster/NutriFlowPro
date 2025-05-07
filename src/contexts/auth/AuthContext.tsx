@@ -4,9 +4,11 @@ import { AuthContextType } from './types';
 import { useAuthStateManager } from './useAuthStateManager';
 import { useAuthMethods } from './authMethods';
 
+// Create the context with undefined as initial value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Use our hooks inside the component
   const { authState, updateAuthState, toast, queryClient } = useAuthStateManager();
   const { checkPremiumStatus, login, signup, logout, resetPassword, signInWithGoogle } = useAuthMethods(updateAuthState, toast, queryClient);
 
