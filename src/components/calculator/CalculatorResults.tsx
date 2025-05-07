@@ -28,27 +28,42 @@ const CalculatorResults = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-nutri-gray-light">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Taxa Metabólica Basal (TMB)</CardTitle>
+            <CardTitle className="text-lg">Taxa Metabólica Basal</CardTitle>
+            <CardDescription>TMB</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-nutri-green-dark">{bmr} kcal/dia</p>
+            <p className="text-3xl font-bold text-nutri-green-dark">{bmr} kcal</p>
             <p className="text-sm text-gray-600 mt-2">
-              Energia necessária para manter as funções vitais em repouso.
+              Energia necessária para funções vitais em repouso
             </p>
           </CardContent>
         </Card>
 
         <Card className="bg-nutri-gray-light">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Meta Calórica (VET)</CardTitle>
+            <CardTitle className="text-lg">Gasto Energético Total</CardTitle>
+            <CardDescription>GET</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-nutri-blue-dark">{tee} kcal/dia</p>
+            <p className="text-3xl font-bold text-nutri-blue">{Math.round(bmr * 1.55)} kcal</p>
             <p className="text-sm text-gray-600 mt-2">
-              Meta calórica ajustada ao objetivo: {tee > bmr ? 'ganho' : tee < bmr ? 'perda' : 'manutenção'}
+              Calorias gastas incluindo atividade física
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-nutri-gray-light">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Meta Calórica</CardTitle>
+            <CardDescription>VET</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-nutri-blue-dark">{tee} kcal</p>
+            <p className="text-sm text-gray-600 mt-2">
+              Calorias totais ajustadas ao objetivo
             </p>
           </CardContent>
         </Card>
@@ -59,28 +74,50 @@ const CalculatorResults = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Distribuição de Macronutrientes</CardTitle>
             <CardDescription>
-              Baseado em: {carbsPercentage}% Carboidratos, {proteinPercentage}% Proteínas, {fatPercentage}% Gorduras
+              {carbsPercentage}% Carboidratos, {proteinPercentage}% Proteínas, {fatPercentage}% Gorduras
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
+              <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Carboidratos</p>
-                <p className="text-xl font-bold text-nutri-green">{macros.carbs}g</p>
+                <p className="text-2xl font-bold text-nutri-green">{macros.carbs}g</p>
                 <p className="text-sm">{parseInt(carbsPercentage)}% / {macros.carbs * 4} kcal</p>
               </div>
-              <div>
+              <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Proteínas</p>
-                <p className="text-xl font-bold text-nutri-blue">{macros.protein}g</p>
+                <p className="text-2xl font-bold text-nutri-blue">{macros.protein}g</p>
                 <p className="text-sm">{parseInt(proteinPercentage)}% / {macros.protein * 4} kcal</p>
                 {macros.proteinPerKg && (
-                  <p className="text-xs text-gray-500 mt-1">{macros.proteinPerKg} g/kg peso</p>
+                  <p className="mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs inline-block">
+                    {macros.proteinPerKg} g/kg
+                  </p>
                 )}
               </div>
-              <div>
+              <div className="bg-amber-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Gorduras</p>
-                <p className="text-xl font-bold text-nutri-teal">{macros.fat}g</p>
+                <p className="text-2xl font-bold text-amber-600">{macros.fat}g</p>
                 <p className="text-sm">{parseInt(fatPercentage)}% / {macros.fat * 9} kcal</p>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h3 className="text-base font-medium mb-2">Total Calórico</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Calorias do plano:</p>
+                  <p className="text-lg font-semibold">{(macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9)} kcal</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Meta calórica:</p>
+                  <p className="text-lg font-semibold">{tee} kcal</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Diferença:</p>
+                  <p className={`text-lg font-semibold ${Math.abs((macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9) - tee) <= 10 ? 'text-green-600' : 'text-amber-600'}`}>
+                    {Math.round((macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9)) - tee} kcal
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>

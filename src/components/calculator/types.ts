@@ -13,7 +13,7 @@ export interface CalculatorState {
   proteinPercentage: string;
   fatPercentage: string;
   consultationType: 'primeira_consulta' | 'retorno';
-  profile: string; // Added missing profile property
+  profile: string;
 }
 
 export interface CalculatorResults {

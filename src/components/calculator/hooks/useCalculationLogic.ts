@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { validateCalculatorInputs } from '../utils/validation';
 import { calculateBMR, calculateTEE, calculateMacros } from '../utils/calculations';
@@ -93,7 +94,7 @@ export const useCalculationLogic = ({
         activityLevel: state.activityLevel,
         results: {
           tmb: calculatedBmr,
-          fa: parseFloat(state.activityLevel),
+          fa: getActivityFactorValue(state.activityLevel),
           get: get, // Unadjusted value
           adjustment: adjustment, // The caloric adjustment
           vet: vet, // Adjusted value (GET + adjustment)
@@ -126,6 +127,19 @@ export const useCalculationLogic = ({
       setIsCalculating(false);
     }
   }, [setBmr, setTee, setMacros, tempPatientId, setTempPatientId, setConsultationData, toast]);
+
+  // Helper function to get the numeric value for activity factor
+  const getActivityFactorValue = (activityLevel: string): number => {
+    const activityFactors: Record<string, number> = {
+      'sedentario': 1.2,
+      'leve': 1.375,
+      'moderado': 1.55,
+      'intenso': 1.725,
+      'muito_intenso': 1.9
+    };
+    
+    return activityFactors[activityLevel.toLowerCase()] || 1.55;
+  };
 
   return {
     calculateResults,
