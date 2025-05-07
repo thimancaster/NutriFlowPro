@@ -2,7 +2,12 @@
 import { useCallback } from 'react';
 import { CalculatorState } from '../types';
 import { validateCalculatorInputs } from '../utils/validation';
-import { calculateTMB, calcGET, calculateMacros } from '@/utils/nutritionCalculations';
+import { 
+  calculateBMR, 
+  calculateTEE, 
+  calculateMacros, 
+  getActivityFactor 
+} from '../utils/calculations';
 import { saveConsultationData } from '../storageUtils';
 import { saveTemporaryPatient } from '../patientUtils';
 
@@ -18,7 +23,7 @@ export const useCalculationLogic = ({
 }: {
   setBmr: (value: number) => void;
   setTee: (value: number) => void;
-  setMacros: (value: { carbs: number, protein: number, fat: number }) => void;
+  setMacros: (value: { carbs: number, protein: number, fat: number, proteinPerKg: number }) => void;
   tempPatientId: string | null;
   setTempPatientId: (id: string | null) => void;
   setConsultationData: (data: any) => void;
@@ -29,52 +34,62 @@ export const useCalculationLogic = ({
     age: string, 
     weight: string, 
     height: string,
-    gender: string
+    gender: string,
+    carbsPercentage: string,
+    proteinPercentage: string,
+    fatPercentage: string
   ): boolean => {
-    return validateCalculatorInputs(age, weight, height, gender, toast);
+    return validateCalculatorInputs(age, weight, height, gender, carbsPercentage, proteinPercentage, fatPercentage, toast);
   }, [toast]);
 
   const calculateResults = useCallback(async (state: CalculatorState) => {
-    if (!validateInputs(state.age, state.weight, state.height, state.gender)) {
+    if (!validateInputs(
+      state.age, 
+      state.weight, 
+      state.height, 
+      state.gender, 
+      state.carbsPercentage, 
+      state.proteinPercentage, 
+      state.fatPercentage
+    )) {
       return;
     }
     
-    // Calculate TMB using proper formulas based on gender and profile
+    // Calculate BMR using Mifflin-St Jeor formula
     const weightVal = parseFloat(state.weight);
     const heightVal = parseFloat(state.height);
     const ageVal = parseFloat(state.age);
-    const profile = state.profile || 'magro'; // Default to 'magro' if not specified
-    const sex = state.gender === 'male' ? 'M' : 'F';
+    const gender = state.gender;
     
-    // Calculate TMB based on appropriate formula
-    const calculatedBmr = calculateTMB(
-      weightVal, 
-      heightVal, 
-      ageVal, 
-      sex, 
-      profile as 'magro' | 'obeso' | 'atleta'
-    );
-    
+    // Calculate BMR
+    const calculatedBmr = calculateBMR(gender, state.weight, state.height, state.age);
     setBmr(calculatedBmr);
     
-    // Calculate Total Energy Expenditure with the selected activity factor
-    const activityFactor = parseFloat(state.activityLevel);
-    const calculatedTee = calcGET(calculatedBmr, activityFactor);
-    setTee(calculatedTee);
-    
-    // Calculate macronutrients with updated distribution
-    const proteinPercentage = parseFloat(state.proteinPercentage) / 100;
-    const carbsPercentage = parseFloat(state.carbsPercentage) / 100;
-    const fatPercentage = parseFloat(state.fatPercentage) / 100;
-    
-    const calculatedMacros = calculateMacros(
-      calculatedTee,
-      proteinPercentage,
-      carbsPercentage,
-      fatPercentage
+    // Calculate GET, adjustment and VET
+    const { get: calculatedGet, adjustment, vet } = calculateTEE(
+      calculatedBmr, 
+      state.activityLevel, 
+      state.objective
     );
     
-    setMacros(calculatedMacros);
+    setTee(vet); // Set VET as the main TEE value to use for meal planning
+    
+    // Calculate macronutrients with updated distribution
+    const calculatedMacros = calculateMacros(
+      vet, 
+      state.carbsPercentage,
+      state.proteinPercentage,
+      state.fatPercentage
+    );
+    
+    // Add protein per kg calculation
+    const proteinPerKg = calculatedMacros.proteinPerKg(weightVal);
+    
+    // Update macros state with protein per kg information
+    setMacros({
+      ...calculatedMacros,
+      proteinPerKg
+    });
     
     // Store calculation data for meal plan and future reference
     const consultationData = {
@@ -83,18 +98,21 @@ export const useCalculationLogic = ({
       age: state.age,
       sex: state.gender === 'male' ? 'M' : 'F',
       objective: state.objective,
-      profile: profile, 
+      profile: state.profile || 'magro', 
       activityLevel: state.activityLevel,
       consultationType: state.consultationType || 'primeira_consulta',
       consultationStatus: 'em_andamento',
       results: {
         tmb: calculatedBmr,
-        fa: activityFactor,
-        get: calculatedTee,
+        fa: getActivityFactor(state.activityLevel),
+        get: calculatedGet,
+        adjustment: adjustment,
+        vet: vet,
         macros: {
           protein: calculatedMacros.protein,
           carbs: calculatedMacros.carbs,
-          fat: calculatedMacros.fat
+          fat: calculatedMacros.fat,
+          proteinPerKg: proteinPerKg
         }
       }
     };
@@ -111,7 +129,7 @@ export const useCalculationLogic = ({
         user,
         tempPatientId,
         calculatedBmr,
-        calculatedTee,
+        vet, // Use VET instead of GET for the meal planning
         calculatedMacros
       );
       
@@ -122,7 +140,7 @@ export const useCalculationLogic = ({
     
     toast({
       title: "Cálculo realizado com sucesso",
-      description: "Os resultados do cálculo TMB e GET estão disponíveis na aba Resultados."
+      description: "Os resultados do cálculo TMB, GET e VET estão disponíveis na aba Resultados."
     });
     
     return true;

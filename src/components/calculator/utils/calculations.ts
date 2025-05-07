@@ -1,6 +1,6 @@
 
 /**
- * Calculate BMR based on gender, weight, height and age
+ * Calculate BMR based on gender, weight, height and age using Mifflin-St Jeor formula
  */
 export function calculateBMR(
   gender: string,
@@ -14,11 +14,11 @@ export function calculateBMR(
   
   let calculatedBmr;
   if (gender === 'male') {
-    // Men: 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
-    calculatedBmr = 66 + (13.7 * weightVal) + (5 * heightVal) - (6.8 * ageVal);
+    // Men: (10 * weight) + (6.25 * height) - (5 * age) + 5
+    calculatedBmr = (10 * weightVal) + (6.25 * heightVal) - (5 * ageVal) + 5;
   } else {
-    // Women: 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
-    calculatedBmr = 655 + (9.6 * weightVal) + (1.8 * heightVal) - (4.7 * ageVal);
+    // Women: (10 * weight) + (6.25 * height) - (5 * age) - 161
+    calculatedBmr = (10 * weightVal) + (6.25 * heightVal) - (5 * ageVal) - 161;
   }
   
   // Round TMB to the nearest whole number
@@ -38,10 +38,17 @@ export function calculateMacros(
   const proteinPercent = parseFloat(proteinPercentage) / 100;
   const fatPercent = parseFloat(fatPercentage) / 100;
   
+  const carbs = Math.round((tee * carbsPercent) / 4); // 4 calories per gram of carbs
+  const protein = Math.round((tee * proteinPercent) / 4); // 4 calories per gram of protein
+  const fat = Math.round((tee * fatPercent) / 9); // 9 calories per gram of fat
+  
   return {
-    carbs: Math.round((tee * carbsPercent) / 4), // 4 calories per gram of carbs
-    protein: Math.round((tee * proteinPercent) / 4), // 4 calories per gram of protein
-    fat: Math.round((tee * fatPercent) / 9), // 9 calories per gram of fat
+    carbs,
+    protein,
+    fat,
+    proteinPerKg: function(weightKg: number) {
+      return weightKg > 0 ? parseFloat((protein / weightKg).toFixed(2)) : 0;
+    }
   };
 }
 
@@ -57,5 +64,38 @@ export function getActivityFactor(activityLevel: string): number {
     'muito_intenso': 1.9
   };
   
-  return activityFactors[activityLevel as keyof typeof activityFactors] || 1.2;
+  return activityFactors[activityLevel.toLowerCase()] || 1.55; // Default to moderate if not found
+}
+
+/**
+ * Calculate caloric adjustment based on objective
+ */
+export function getCaloricAdjustment(objective: string): number {
+  const adjustments: Record<string, number> = {
+    'emagrecimento': -500,
+    'manutenção': 0,
+    'hipertrofia': 300
+  };
+  
+  return adjustments[objective.toLowerCase()] || 0;
+}
+
+/**
+ * Calculate Total Energy Expenditure with adjustments
+ */
+export function calculateTEE(bmr: number, activityLevel: string, objective: string): {
+  get: number;
+  adjustment: number;
+  vet: number;
+} {
+  const activityFactor = getActivityFactor(activityLevel);
+  const get = Math.round(bmr * activityFactor);
+  const adjustment = getCaloricAdjustment(objective);
+  const vet = get + adjustment;
+  
+  return {
+    get,
+    adjustment,
+    vet
+  };
 }

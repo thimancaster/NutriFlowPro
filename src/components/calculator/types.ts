@@ -1,3 +1,4 @@
+
 import { Json } from '@/integrations/supabase/types';
 
 export interface CalculatorState {
@@ -22,6 +23,7 @@ export interface CalculatorResults {
     carbs: number;
     protein: number;
     fat: number;
+    proteinPerKg?: number;
   };
   tempPatientId?: string | null;
   status?: 'em_andamento' | 'completo';
@@ -45,10 +47,13 @@ export interface ConsultationData {
     tmb: number;
     fa: number;
     get: number;
+    adjustment?: number;
+    vet?: number;
     macros: {
       protein: number;
       carbs: number;
       fat: number;
+      proteinPerKg?: number;
     }
   }
 }
@@ -56,7 +61,7 @@ export interface ConsultationData {
 export interface CalculatorResultsProps {
   bmr: number | null;
   tee: number | null;
-  macros: { carbs: number; protein: number; fat: number } | null;
+  macros: { carbs: number; protein: number; fat: number; proteinPerKg?: number } | null;
   carbsPercentage: string;
   proteinPercentage: string;
   fatPercentage: string;

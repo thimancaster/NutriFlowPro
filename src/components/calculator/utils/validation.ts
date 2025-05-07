@@ -7,6 +7,9 @@ export function validateCalculatorInputs(
   weight: string, 
   height: string,
   gender: string,
+  carbsPercentage: string,
+  proteinPercentage: string,
+  fatPercentage: string,
   toast: any
 ): boolean {
   // Basic validation for required fields
@@ -56,6 +59,21 @@ export function validateCalculatorInputs(
     toast({
       title: "Valor inválido",
       description: "A altura deve estar entre 1 e 250 cm.",
+      variant: "destructive"
+    });
+    return false;
+  }
+  
+  // Validate macro percentages sum to 100%
+  const carbsVal = parseFloat(carbsPercentage);
+  const proteinVal = parseFloat(proteinPercentage);
+  const fatVal = parseFloat(fatPercentage);
+  
+  const totalPercentage = carbsVal + proteinVal + fatVal;
+  if (Math.abs(totalPercentage - 100) > 0.1) {  // Allow small rounding errors
+    toast({
+      title: "Distribuição inválida",
+      description: `A soma dos percentuais de macronutrientes deve ser 100%. Atualmente: ${totalPercentage}%.`,
       variant: "destructive"
     });
     return false;

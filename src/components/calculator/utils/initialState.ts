@@ -12,7 +12,7 @@ export const getInitialCalculatorState = (): CalculatorState => {
     weight: '',
     height: '',
     objective: 'manutenção',
-    activityLevel: '1.55', // Moderadamente ativo como padrão
+    activityLevel: 'moderado', // Using string value instead of numerical value
     carbsPercentage: '55',
     proteinPercentage: '20',
     fatPercentage: '25',

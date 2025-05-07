@@ -129,17 +129,34 @@ const CalculatorInputs = ({
           </div>
         </div>
         
-        <div className="space-y-2">
-          <Label htmlFor="consultationType">Tipo de Consulta</Label>
-          <Select value={consultationType} onValueChange={setConsultationType}>
-            <SelectTrigger id="consultationType">
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="primeira_consulta">Primeira Consulta</SelectItem>
-              <SelectItem value="retorno">Retorno</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="consultationType">Tipo de Consulta</Label>
+            <Select value={consultationType} onValueChange={setConsultationType}>
+              <SelectTrigger id="consultationType">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="primeira_consulta">Primeira Consulta</SelectItem>
+                <SelectItem value="retorno">Retorno</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="profile">Perfil</Label>
+            <Select value={objective === "hipertrofia" ? "atleta" : objective === "emagrecimento" ? "obeso" : "magro"} onValueChange={(value) => {}}>
+              <SelectTrigger id="profile" disabled>
+                <SelectValue placeholder="Perfil selecionado automaticamente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="magro">Magro/Eutrófico</SelectItem>
+                <SelectItem value="obeso">Sobrepeso/Obesidade</SelectItem>
+                <SelectItem value="atleta">Atleta</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">O perfil é determinado automaticamente com base no objetivo.</p>
+          </div>
         </div>
       </CardContent>
     </Card>
