@@ -24,10 +24,13 @@ export interface ConsultationData {
     tmb: number;
     fa: number;
     get: number;
+    adjustment?: number;
+    vet?: number;
     macros: {
       protein: number;
       carbs: number;
       fat: number;
+      proteinPerKg?: number;
     };
   };
 }
