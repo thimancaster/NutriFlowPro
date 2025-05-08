@@ -1,22 +1,19 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { MealDistributionItem, Patient, ConsultationData, MealPlan } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+import { mealOptions } from '@/utils/mealGeneratorUtils';
 import { useToast } from '@/hooks/use-toast';
-import { ConsultationData, Patient, MealPlan, MealDistributionItem } from '@/types';
-import { DEFAULT_MEAL_DISTRIBUTION, MEAL_NAMES, calculateMealDistribution } from '@/utils/mealPlanUtils';
+import { useNavigate } from 'react-router-dom';
 
-interface MealDistribution {
-  [key: string]: MealDistributionItem;
-}
-
-interface UseMealPlanStateProps {
+type UseMealPlanStateProps = {
   activePatient: Patient | null;
   consultationData: ConsultationData | null;
   mealPlan: MealPlan | null;
-  setMealPlan: (plan: MealPlan | null) => void;
-  saveConsultation: () => Promise<string | undefined>;
-  saveMealPlan: () => Promise<string | undefined>;
-}
+  setMealPlan: (mealPlan: MealPlan) => void;
+  saveConsultation: (data: any) => Promise<any>;
+  saveMealPlan: (mealPlan: MealPlan) => Promise<any>;
+};
 
 export const useMealPlanState = ({
   activePatient,
@@ -26,168 +23,159 @@ export const useMealPlanState = ({
   saveConsultation,
   saveMealPlan
 }: UseMealPlanStateProps) => {
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [totalMealPercent, setTotalMealPercent] = useState(100);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // Initial meal distribution based on our utility
-  const initialDistribution: MealDistribution = {};
-  DEFAULT_MEAL_DISTRIBUTION.forEach((percent, index) => {
-    initialDistribution[`meal${index + 1}`] = {
-      name: MEAL_NAMES[index],
-      percent: percent * 100,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      suggestions: [],
-    };
-  });
 
-  const [mealDistribution, setMealDistribution] = useState<MealDistribution>(
-    mealPlan && mealPlan.mealDistribution ? mealPlan.mealDistribution : initialDistribution
+  // Initialize meal distribution state
+  const [mealDistribution, setMealDistribution] = useState<MealDistributionItem[]>(
+    mealPlan?.mealDistribution || 
+    [
+      {
+        id: uuidv4(),
+        name: 'Café da manhã',
+        percentage: 20,
+        percent: 20, // For compatibility with existing code
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        suggestions: []
+      }
+    ]
   );
 
-  // Calculate meal macros when distribution percentages or total macros change
+  // Calculate total percentage
+  const totalMealPercent = useMemo(() => {
+    return mealDistribution.reduce((acc, meal) => acc + (meal.percentage || meal.percent || 0), 0);
+  }, [mealDistribution]);
+
+  // Handle meal percentage change
+  const handleMealPercentChange = useCallback((id: string, value: number) => {
+    setMealDistribution(prev => 
+      prev.map(meal => meal.id === id ? { ...meal, percentage: value, percent: value } : meal)
+    );
+  }, []);
+
+  // Calculate macros for each meal based on the total from consultation data
   useEffect(() => {
-    if (!consultationData) return;
-    
-    const distributionArray = Object.keys(mealDistribution).map(
-      mealKey => mealDistribution[mealKey].percent / 100
-    );
-    
-    const { meals, totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealDistribution(
-      consultationData.results.get, 
-      consultationData.objective,
-      distributionArray
-    );
-    
-    const updatedDistribution = { ...mealDistribution };
-    
-    meals.forEach((meal, index) => {
-      const mealKey = `meal${index + 1}`;
-      updatedDistribution[mealKey] = {
-        ...updatedDistribution[mealKey],
-        calories: meal.calories,
-        protein: meal.protein,
-        carbs: meal.cho,
-        fat: meal.fat,
-        suggestions: meal.foodSuggestions
-      };
-    });
-    
-    setMealDistribution(updatedDistribution);
-    
-    // Update the meal plan in the context
-    const newMealPlan: MealPlan = {
-      meals: Object.values(updatedDistribution),
-      mealDistribution: updatedDistribution,
-      total_calories: totalCalories,
-      total_protein: totalProtein,
-      total_carbs: totalCarbs,
-      total_fats: totalFats,
-      patient_id: activePatient?.id,
-      date: new Date().toISOString().split('T')[0]
-    };
-    
-    setMealPlan(newMealPlan);
-    
-  }, [consultationData, setMealPlan, activePatient]);
+    if (consultationData?.results && totalMealPercent === 100) {
+      const totalCalories = consultationData.results.get;
+      const totalProtein = consultationData.results.macros.protein;
+      const totalCarbs = consultationData.results.macros.carbs;
+      const totalFat = consultationData.results.macros.fat;
+      
+      setMealDistribution(prev => 
+        prev.map(meal => ({
+          ...meal,
+          calories: Math.round(totalCalories * (meal.percentage || meal.percent || 0) / 100),
+          protein: Math.round(totalProtein * (meal.percentage || meal.percent || 0) / 100),
+          carbs: Math.round(totalCarbs * (meal.percentage || meal.percent || 0) / 100),
+          fat: Math.round(totalFat * (meal.percentage || meal.percent || 0) / 100),
+          suggestions: []
+        }))
+      );
+    }
+  }, [consultationData, totalMealPercent]);
 
-  // Update a specific meal's percentage
-  const handleMealPercentChange = (mealKey: string, newValue: number[]) => {
-    const newPercent = newValue[0];
-    
-    setMealDistribution(prev => {
-      const prevPercent = prev[mealKey].percent;
-      const diff = newPercent - prevPercent;
-      
-      // Don't allow changes that would make total percent go over/under 100%
-      if (totalMealPercent + diff !== 100) {
-        return prev;
-      }
-      
-      // Create updated distribution
-      const updatedDistribution = {
-        ...prev,
-        [mealKey]: {
-          ...prev[mealKey],
-          percent: newValue[0]
-        }
-      };
-      
-      // Get array of percentages for recalculating
-      const distributionArray = Object.keys(updatedDistribution).map(
-        key => updatedDistribution[key].percent / 100
-      );
-      
-      if (!consultationData) return prev;
-      
-      // Recalculate macros for all meals
-      const { meals } = calculateMealDistribution(
-        consultationData.results.get, 
-        consultationData.objective,
-        distributionArray
-      );
-      
-      // Update all meal values
-      meals.forEach((meal, index) => {
-        const currMealKey = `meal${index + 1}`;
-        updatedDistribution[currMealKey] = {
-          ...updatedDistribution[currMealKey],
-          calories: meal.calories,
-          protein: meal.protein,
-          carbs: meal.cho,
-          fat: meal.fat,
-          suggestions: meal.foodSuggestions
-        };
+  // Handle save meal plan
+  const handleSaveMealPlan = useCallback(async () => {
+    if (!activePatient || !consultationData) {
+      toast({
+        title: "Erro",
+        description: "Dados insuficientes para salvar o plano alimentar.",
+        variant: "destructive"
       });
-      
-      return updatedDistribution;
-    });
-    
-    // Update total percentage
-    setTotalMealPercent(prev => prev + (newValue[0] - mealDistribution[mealKey].percent));
-  };
+      return;
+    }
 
-  const handleSaveMealPlan = async () => {
     setIsSaving(true);
+
     try {
-      // First save the consultation data
-      await saveConsultation();
+      // Create a simplified mealplan data object
+      const mealPlanData: MealPlan = {
+        name: `Plano para ${activePatient.name}`,
+        patient_id: activePatient.id,
+        consultation_id: consultationData.id,
+        calories: consultationData.results?.get || 0,
+        protein: consultationData.results?.macros.protein || 0,
+        carbs: consultationData.results?.macros.carbs || 0,
+        fat: consultationData.results?.macros.fat || 0,
+        mealDistribution: mealDistribution,
+        meals: []
+      };
+
+      // Save or update the meal plan
+      await saveMealPlan(mealPlanData);
       
-      // Then save the meal plan
-      await saveMealPlan();
+      // Update the meal plan in context
+      setMealPlan(mealPlanData);
       
       toast({
         title: "Plano alimentar salvo",
-        description: "O plano alimentar foi salvo com sucesso."
+        description: "Distribuição de refeições foi salva com sucesso.",
       });
       
-      // Navigate to patient history if we have a patient
-      if (activePatient?.id) {
-        navigate(`/patient-history/${activePatient.id}`);
-      } else {
-        navigate('/meal-plans');
-      }
+      // Navigate to the next step in the wizard
     } catch (error) {
-      console.error("Error saving meal plan:", error);
+      console.error('Error saving meal plan:', error);
       toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar o plano alimentar.",
+        title: "Erro",
+        description: "Não foi possível salvar o plano alimentar.",
         variant: "destructive"
       });
     } finally {
       setIsSaving(false);
     }
-  };
-  
+  }, [activePatient, consultationData, toast, saveMealPlan, setMealPlan, mealDistribution]);
+
+  // Add a new meal to the distribution
+  const addMeal = useCallback(() => {
+    const newMealId = uuidv4();
+    const newMeal: MealDistributionItem = {
+      id: newMealId,
+      name: mealOptions[Math.min(mealDistribution.length, mealOptions.length - 1)].name,
+      percentage: 0,
+      percent: 0,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      suggestions: []
+    };
+    
+    setMealDistribution(prev => [...prev, newMeal]);
+  }, [mealDistribution]);
+
+  // Remove a meal from the distribution
+  const removeMeal = useCallback((id: string) => {
+    setMealDistribution(prev => {
+      const filtered = prev.filter(meal => meal.id !== id);
+      
+      // Recalculate percentages to distribute the removed meal's percentage
+      const removedMeal = prev.find(meal => meal.id === id);
+      const removedPercent = removedMeal ? (removedMeal.percentage || removedMeal.percent || 0) : 0;
+      
+      if (removedPercent > 0 && filtered.length > 0) {
+        const percentPerMeal = removedPercent / filtered.length;
+        return filtered.map(meal => ({
+          ...meal,
+          percentage: (meal.percentage || meal.percent || 0) + percentPerMeal,
+          percent: (meal.percentage || meal.percent || 0) + percentPerMeal
+        }));
+      }
+      
+      return filtered;
+    });
+  }, []);
+
   return {
     mealDistribution,
     totalMealPercent,
     isSaving,
     handleMealPercentChange,
-    handleSaveMealPlan
+    handleSaveMealPlan,
+    addMeal,
+    removeMeal
   };
 };

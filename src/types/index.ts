@@ -10,6 +10,8 @@ export interface Patient {
   created_at?: string;
   updated_at?: string;
   goals?: any; // Added for compatibility with existing code
+  address?: string;
+  notes?: string;
 }
 
 export interface AppointmentType {
@@ -38,11 +40,17 @@ export interface Appointment {
   updated_at?: string;
 }
 
-// Add missing type definitions to fix build errors
+// Update MealDistributionItem to include all required properties
 export interface MealDistributionItem {
   id: string;
   name: string;
   percentage: number;
+  percent?: number; // Compatibility for existing code
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  suggestions?: any[];
 }
 
 export interface ConsultationData {
@@ -60,6 +68,21 @@ export interface ConsultationData {
   protein?: number;
   carbs?: number;
   fat?: number;
+  sex?: string;
+  objective?: string;
+  profile?: string;
+  activityLevel?: string;
+  consultationType?: string;
+  consultationStatus?: string;
+  results?: {
+    tmb: number;
+    get: number;
+    macros: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    }
+  };
 }
 
 export interface MealPlan {
@@ -74,4 +97,10 @@ export interface MealPlan {
   meals?: any[];
   created_at?: string;
   updated_at?: string;
+  mealDistribution?: MealDistributionItem[];
+  total_calories?: number;
+  total_protein?: number;
+  total_carbs?: number;
+  total_fats?: number;
+  date?: string;
 }

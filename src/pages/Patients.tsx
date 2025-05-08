@@ -1,467 +1,159 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
-import PatientForm from '@/components/PatientForm';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, User, FileText, Clock, Pencil, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { useUserSubscription } from "@/hooks/useUserSubscription";
-import { useAuthState } from "@/hooks/useAuthState";
+import { PlusCircle, Search } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { format, parseISO, differenceInYears } from 'date-fns';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Patient } from '@/types';
+import PatientListActions from '@/components/PatientListActions';
+import PatientDetailModal from '@/components/patient/PatientDetailModal';
+import { usePatientDetail } from '@/hooks/usePatientDetail';
+import { useNavigate } from 'react-router-dom';
 
-interface Patient {
-  id: string;
-  name: string;
-  birth_date: string | null;
-  email: string | null;
-  phone: string | null;
-  gender: string | null;
-  created_at: string;
-  updated_at: string;
-  goals: {
-    objective?: string;
-    profile?: string;
-  } | null;
-}
+interface PatientsProps {}
 
 const Patients = () => {
-  const [selectedTab, setSelectedTab] = useState("list");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
+  const { isModalOpen, patientId, patient, isLoading: isLoadingPatient, openPatientDetail, closePatientDetail } = usePatientDetail();
+  const navigate = useNavigate();
   
-  const { data: subscription, isLoading: subscriptionLoading } = useUserSubscription();
-  const { isPremium: isAuthPremium } = useAuthState();
-  
-  // Combine the two checks to ensure both sources are consulted
-  const isPremium = isAuthPremium || (subscription?.isPremium || false);
-
-  // Function to fetch patients from Supabase
-  const fetchPatients = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
+  const { data: patients, isLoading } = useQuery({
+    queryKey: ['patients', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('patients')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
         
       if (error) {
         throw error;
       }
-      
-      // Transform the data to ensure type compatibility
-      const typedPatients: Patient[] = data?.map(patient => ({
-        id: patient.id,
-        name: patient.name,
-        birth_date: patient.birth_date,
-        email: patient.email,
-        phone: patient.phone,
-        gender: patient.gender,
-        created_at: patient.created_at,
-        updated_at: patient.updated_at,
-        goals: patient.goals as Patient['goals'] // Cast the JSON to our expected type
-      })) || [];
-      
-      setPatients(typedPatients);
-    } catch (error: any) {
-      console.error('Error fetching patients:', error);
-      toast({
-        title: "Erro ao buscar pacientes",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch patients on component mount
-  useEffect(() => {
-    if (user) {
-      fetchPatients();
-    }
-  }, [user]);
-  
-  // Debug log for premium status
-  useEffect(() => {
-    console.log("Status premium na página Patients:", {
-      isPremium,
-      isAuthPremium,
-      subscriptionPremium: subscription?.isPremium
-    });
-  }, [isPremium, isAuthPremium, subscription?.isPremium]);
-
-  const handleNewPatient = () => {
-    if (!isPremium && patients.length >= 2) {
-      setShowUpgradeDialog(true);
-    } else {
-      setSelectedTab("new");
-    }
-  };
-  
-  const handlePatientSelect = (patientId: string) => {
-    navigate(`/patient-history/${patientId}`);
-  };
-  
-  const handleEditPatient = (patient: Patient) => {
-    setPatientToEdit(patient);
-    setShowEditDialog(true);
-  };
-  
-  const handleDeletePrompt = (patient: Patient) => {
-    setPatientToDelete(patient);
-    setShowDeleteDialog(true);
-  };
-  
-  const handleDeletePatient = async () => {
-    if (!patientToDelete) return;
-    
-    try {
-      const { error } = await supabase
-        .from('patients')
-        .delete()
-        .eq('id', patientToDelete.id);
         
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Paciente excluído",
-        description: `${patientToDelete.name} foi excluído com sucesso.`,
-      });
-      
-      // Refresh patient list
-      fetchPatients();
-    } catch (error: any) {
-      console.error('Error deleting patient:', error);
-      toast({
-        title: "Erro ao excluir paciente",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setShowDeleteDialog(false);
-      setPatientToDelete(null);
-    }
-  };
-
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase())
+      return data as Patient[];
+    },
+    enabled: !!user,
+    staleTime: 60000, // Cache for 1 minute
+  });
+  
+  const filteredPatients = patients?.filter(patient => 
+    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.phone?.includes(searchTerm)
   );
   
-  // Calculate age from birth date
-  const calculateAge = (birthDate: string | null) => {
-    if (!birthDate) return '-';
-    try {
-      const date = parseISO(birthDate);
-      return differenceInYears(new Date(), date);
-    } catch (e) {
-      return '-';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2 text-nutri-blue">Pacientes</h1>
-            <p className="text-gray-600">Gerencie seus pacientes e histórico de consultas</p>
+            <h1 className="text-3xl font-bold text-nutri-blue mb-2">Pacientes</h1>
+            <p className="text-gray-600">Gerencie seus pacientes e acessar consultas anteriores</p>
           </div>
-          <img 
-            src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" 
-            alt="Atendimento nutricional" 
-            className="w-full md:w-1/4 rounded-xl shadow-lg mt-4 md:mt-0 hidden md:block"
-          />
+          <Button 
+            className="bg-nutri-green hover:bg-nutri-green-dark mt-4 md:mt-0"
+            onClick={() => navigate('/patients/new')}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" /> Novo Paciente
+          </Button>
         </div>
         
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="bg-white rounded-xl shadow-lg p-6">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1">
-            <TabsTrigger value="list" className="data-[state=active]:bg-white data-[state=active]:text-nutri-blue">Lista de Pacientes</TabsTrigger>
-            <TabsTrigger value="new" className="data-[state=active]:bg-white data-[state=active]:text-nutri-green">Novo Paciente</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="list">
-            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input 
-                  className="pl-10 border-gray-300 focus:border-nutri-blue focus:ring-nutri-blue" 
-                  placeholder="Buscar paciente por nome..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button
-                className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90"
-                onClick={handleNewPatient}
-                disabled={subscriptionLoading}
-              >
-                <Plus className="h-4 w-4 mr-2" /> Novo Paciente
-              </Button>
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle>Pesquisar Pacientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input 
+                placeholder="Buscar por nome, email ou telefone" 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            
-            <div className="overflow-x-auto">
-              {loading ? (
-                <div className="flex justify-center items-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-nutri-blue" />
-                  <p className="ml-2 text-nutri-blue">Carregando pacientes...</p>
-                </div>
-              ) : filteredPatients.length > 0 ? (
-                <table className="w-full">
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>Lista de Pacientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-nutri-blue"></div>
+                <p className="mt-2 text-gray-600">Carregando pacientes...</p>
+              </div>
+            ) : filteredPatients && filteredPatients.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr className="text-left border-b">
-                      <th className="pb-3 font-medium">Nome</th>
-                      <th className="pb-3 font-medium">Idade</th>
-                      <th className="pb-3 font-medium">Data Cadastro</th>
-                      <th className="pb-3 font-medium">Objetivo</th>
-                      <th className="pb-3 font-medium">Ações</th>
+                    <tr className="border-b">
+                      <th className="py-3 px-4 text-left">Nome</th>
+                      <th className="py-3 px-4 text-left hidden md:table-cell">Email</th>
+                      <th className="py-3 px-4 text-left hidden md:table-cell">Telefone</th>
+                      <th className="py-3 px-4 text-left hidden lg:table-cell">Objetivo</th>
+                      <th className="py-3 px-4 text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredPatients.map((patient) => (
-                      <tr key={patient.id} className="border-b last:border-b-0 hover:bg-gray-50">
-                        <td className="py-4">
-                          <div className="flex items-center">
-                            <div className="bg-gradient-to-r from-blue-100 to-blue-200 p-2 rounded-full mr-3">
-                              <User className="h-4 w-4 text-nutri-blue" />
-                            </div>
-                            {patient.name}
-                          </div>
+                      <tr key={patient.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">{patient.name}</td>
+                        <td className="py-3 px-4 hidden md:table-cell">{patient.email || '-'}</td>
+                        <td className="py-3 px-4 hidden md:table-cell">{patient.phone || '-'}</td>
+                        <td className="py-3 px-4 hidden lg:table-cell">
+                          {patient.goals?.objective 
+                            ? patient.goals.objective.charAt(0).toUpperCase() + patient.goals.objective.slice(1)
+                            : '-'
+                          }
                         </td>
-                        <td className="py-4">{calculateAge(patient.birth_date)} anos</td>
-                        <td className="py-4">
-                          <div className="flex items-center">
-                            <Clock className="h-3 w-3 mr-1 text-gray-500" />
-                            {patient.created_at 
-                              ? format(new Date(patient.created_at), 'dd/MM/yyyy')
-                              : '-'}
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <span 
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              patient.goals?.objective === 'emagrecimento' ? 'bg-nutri-blue-light text-white' : 
-                              patient.goals?.objective === 'hipertrofia' ? 'bg-nutri-green-light text-white' : 
-                              'bg-nutri-gray-light text-nutri-gray-dark'
-                            }`}
-                          >
-                            {patient.goals?.objective 
-                              ? patient.goals.objective.charAt(0).toUpperCase() + patient.goals.objective.slice(1) 
-                              : 'Não definido'}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-blue-50"
-                              onClick={() => handlePatientSelect(patient.id)}
-                            >
-                              <FileText className="h-3 w-3 mr-1" /> Ver histórico
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                              onClick={() => handleEditPatient(patient)}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDeletePrompt(patient)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                        <td className="py-3 px-4 text-right">
+                          <PatientListActions 
+                            patient={patient} 
+                            onViewDetail={openPatientDetail}
+                          />
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              ) : (
-                <div className="text-center py-8">
-                  {searchQuery.length > 0 ? (
-                    <p className="text-gray-500">
-                      Nenhum paciente encontrado com o termo "{searchQuery}"
-                    </p>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <div className="bg-blue-50 p-6 rounded-full mb-4">
-                        <User className="h-12 w-12 text-nutri-blue opacity-70" />
-                      </div>
-                      <p className="text-lg font-medium mb-1">Nenhum paciente cadastrado</p>
-                      <p className="text-gray-500 mb-4">Cadastre seu primeiro paciente clicando no botão abaixo</p>
-                      <Button
-                        className="bg-nutri-green hover:bg-nutri-green-dark"
-                        onClick={() => setSelectedTab("new")}
-                      >
-                        <Plus className="h-4 w-4 mr-2" /> Adicionar Paciente
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="new">
-            <PatientForm 
-              onSuccess={() => {
-                setSelectedTab("list");
-                fetchPatients();
-              }}
-            />
-          </TabsContent>
-        </Tabs>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">
+                  {searchTerm ? 'Nenhum paciente encontrado com os termos de busca.' : 'Você ainda não tem pacientes cadastrados.'}
+                </p>
+                {!searchTerm && (
+                  <Button 
+                    className="mt-4 bg-nutri-green hover:bg-nutri-green-dark"
+                    onClick={() => navigate('/patients/new')}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Paciente
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Patient Detail Modal */}
+        <PatientDetailModal
+          isOpen={isModalOpen}
+          onClose={closePatientDetail}
+          patientId={patientId || ''}
+          patient={patient}
+          isLoading={isLoadingPatient}
+        />
       </div>
-
-      {/* Upgrade Dialog */}
-      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl">Limite de Pacientes Atingido</DialogTitle>
-            <DialogDescription className="text-center">
-              Você já atingiu o limite de 2 pacientes no plano gratuito.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col space-y-4 items-center pt-4">
-            <img 
-              src="/lovable-uploads/4386d003-9e6d-4478-b8b8-09bbaac09abe.png" 
-              alt="Upgrade" 
-              className="h-32 mx-auto"
-            />
-            <div className="text-center">
-              <p className="mb-2">Atualize para o plano premium para:</p>
-              <ul className="text-sm text-gray-600 text-left space-y-1">
-                <li>• Cadastrar pacientes ilimitados</li>
-                <li>• Acessar recursos avançados</li>
-                <li>• Gerar relatórios personalizados</li>
-                <li>• Suporte prioritário</li>
-              </ul>
-            </div>
-            <div className="flex gap-4 w-full">
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowUpgradeDialog(false)}
-              >
-                Não agora
-              </Button>
-              <Button 
-                className="flex-1 bg-nutri-blue hover:bg-nutri-blue-dark"
-                onClick={() => {
-                  setShowUpgradeDialog(false);
-                  navigate('/subscription');
-                  toast({
-                    title: "Upgrade iniciado",
-                    description: "Redirecionando para a página de pagamento...",
-                  });
-                }}
-              >
-                Fazer Upgrade
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Patient Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={(value) => {
-        if (!value) {
-          setShowEditDialog(false);
-          setPatientToEdit(null);
-        }
-      }}>
-        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Paciente</DialogTitle>
-            <DialogDescription>
-              Atualize as informações do paciente
-            </DialogDescription>
-          </DialogHeader>
-          {patientToEdit && (
-            <PatientForm 
-              editPatient={patientToEdit}
-              onSuccess={() => {
-                setShowEditDialog(false);
-                setPatientToEdit(null);
-                fetchPatients();
-              }}
-              onCancel={() => {
-                setShowEditDialog(false);
-                setPatientToEdit(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o paciente{" "}
-              <strong>{patientToDelete?.name}</strong>? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setShowDeleteDialog(false);
-              setPatientToDelete(null);
-            }}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleDeletePatient}
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
