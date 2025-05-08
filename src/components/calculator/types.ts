@@ -1,3 +1,4 @@
+
 import { Json } from '@/integrations/supabase/types';
 
 export interface CalculatorState {
@@ -36,9 +37,9 @@ export interface UseCalculatorStateProps {
 }
 
 export interface ConsultationData {
-  weight: string;
-  height: string;
-  age: string;
+  weight: string | number;
+  height: string | number;
+  age: string | number;
   sex: string;
   objective: string;
   profile: string;
