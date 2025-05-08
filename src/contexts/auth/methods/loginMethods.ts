@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Toast } from '@/hooks/use-toast';
+import { toast as Toast } from '@/hooks/use-toast';
 
 /**
  * Handles user login with email and password
@@ -8,7 +7,7 @@ import { Toast } from '@/hooks/use-toast';
 export const login = async (
   email: string, 
   password: string, 
-  toast: Toast
+  toast: typeof Toast
 ) => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -33,7 +32,7 @@ export const login = async (
 /**
  * Handles Google OAuth sign-in
  */
-export const signInWithGoogle = async (toast: Toast) => {
+export const signInWithGoogle = async (toast: typeof Toast) => {
   try {
     console.log("Iniciando login com Google...");
     const { data, error } = await supabase.auth.signInWithOAuth({

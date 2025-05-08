@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -5,27 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
 import { storageUtils } from '@/utils/storageUtils';
 import { DatabaseService } from '@/services/databaseService';
-
-interface ConsultationData {
-  weight?: string;
-  height?: string;
-  age?: string;
-  sex?: string;
-  objective?: string;
-  profile?: string;
-  activityLevel?: string;
-  consultationType?: 'primeira_consulta' | 'retorno';
-  results?: {
-    tmb: number;
-    fa: number;
-    get: number;
-    macros: {
-      protein: number;
-      carbs: number;
-      fat: number;
-    };
-  };
-}
+import { ConsultationData } from '@/types';
 
 interface ConsultationDataContextType {
   consultationData: ConsultationData | null;
@@ -71,11 +52,23 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     }
 
     try {
+      // Convert string values to numbers for database
+      const dbConsultationData: ConsultationData = {
+        ...consultationData,
+        // Ensure weight, height, and age are numbers for the database
+        weight: typeof consultationData.weight === 'string' ? 
+          parseFloat(consultationData.weight) : consultationData.weight,
+        height: typeof consultationData.height === 'string' ? 
+          parseFloat(consultationData.height) : consultationData.height,
+        age: typeof consultationData.age === 'string' ? 
+          parseInt(consultationData.age) : consultationData.age,
+      };
+      
       // Use DatabaseService instead of direct Supabase call
       const result = await DatabaseService.saveConsultation(
         user.id,
         activePatient.id,
-        consultationData,
+        dbConsultationData,
         consultationData.consultationType || 'primeira_consulta'
       );
 

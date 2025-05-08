@@ -12,6 +12,18 @@ export interface MealPlanSettings {
   patientGender?: string;
 }
 
+// Define meal options that were missing
+export const mealOptions = [
+  { id: 'breakfast', name: 'Café da manhã' },
+  { id: 'morning_snack', name: 'Lanche da manhã' },
+  { id: 'lunch', name: 'Almoço' },
+  { id: 'afternoon_snack', name: 'Lanche da tarde' },
+  { id: 'dinner', name: 'Jantar' },
+  { id: 'evening_snack', name: 'Ceia' },
+  { id: 'pre_workout', name: 'Pré-treino' },
+  { id: 'post_workout', name: 'Pós-treino' }
+];
+
 // Food categories with their properties
 const foodCategories = {
   protein: {

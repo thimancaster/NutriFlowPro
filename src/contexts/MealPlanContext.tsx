@@ -1,21 +1,11 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
 import { storageUtils } from '@/utils/storageUtils';
 import { DatabaseService } from '@/services/databaseService';
-
-interface MealPlan {
-  id?: string;
-  date?: string;
-  patient_id?: string;
-  meals?: any[];
-  total_calories?: number;
-  total_protein?: number;
-  total_carbs?: number;
-  total_fats?: number;
-  mealDistribution?: Record<string, any>;
-}
+import { MealPlan } from '@/types';
 
 interface MealPlanContextType {
   mealPlan: MealPlan | null;
@@ -49,7 +39,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [mealPlan]);
 
   const saveMealPlan = async (): Promise<string | undefined> => {
-    if (!user?.id || !activePatient?.id || !mealPlan || !mealPlan.meals) {
+    if (!user?.id || !activePatient?.id || !mealPlan) {
       toast({
         title: "Erro",
         description: "Dados insuficientes para salvar o plano alimentar",
@@ -59,12 +49,24 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     try {
+      // Create a complete meal plan object that matches the required interface
+      const completeMealPlan: MealPlan = {
+        ...mealPlan,
+        name: mealPlan.name || `Plano para ${activePatient.name}`,
+        patient_id: activePatient.id,
+        calories: mealPlan.calories || 0,
+        protein: mealPlan.protein || 0, 
+        carbs: mealPlan.carbs || 0,
+        fat: mealPlan.fat || 0,
+        meals: mealPlan.meals || []
+      };
+      
       // Use the DatabaseService instead of direct Supabase call
       const result = await DatabaseService.saveMealPlan(
         user.id,
         activePatient.id,
         '0', // This should be replaced with the actual consultationId
-        mealPlan
+        completeMealPlan
       );
 
       if (!result.success) throw new Error(result.error);

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ConsultationData } from "@/types";
 import { dbCache } from "./dbCache";
@@ -25,14 +24,19 @@ export const ConsultationService = {
         throw new Error('Missing required data for saving consultation');
       }
       
+      // Convert string values to numbers where needed
+      const weight = consultationData.weight ? parseFloat(String(consultationData.weight)) : 0;
+      const height = consultationData.height ? parseFloat(String(consultationData.height)) : 0;
+      const age = consultationData.age ? parseInt(String(consultationData.age)) : 0;
+      
       const { data, error } = await supabase
         .from('calculations')
         .insert({
           user_id: userId,
           patient_id: patientId,
-          weight: parseFloat(consultationData.weight || '0'),
-          height: parseFloat(consultationData.height || '0'),
-          age: parseInt(consultationData.age || '0'),
+          weight: weight,
+          height: height,
+          age: age,
           bmr: consultationData.results?.tmb || 0,
           tdee: consultationData.results?.get || 0,
           protein: consultationData.results?.macros.protein || 0,

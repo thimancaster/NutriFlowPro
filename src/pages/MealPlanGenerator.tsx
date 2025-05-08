@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -8,7 +7,7 @@ import { useMealPlanState } from '@/hooks/useMealPlanState';
 import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import MealPlanGeneratorUI from '@/components/MealPlan/MealPlanGeneratorUI';
 import MealAssembly from '@/components/MealPlan/MealAssembly';
-import { ConsultationData as AppConsultationData, Patient as AppPatient, MealPlan as AppMealPlan } from '@/types';
+import { ConsultationData as AppConsultationData, Patient as AppPatient, MealPlan as AppMealPlan, MealDistributionItem } from '@/types';
 
 const MealPlanGenerator = () => {
   const { toast } = useToast();
@@ -62,6 +61,19 @@ const MealPlanGenerator = () => {
     saveConsultation,
     saveMealPlan
   });
+
+  // Create a record from array to match the expected type
+  const mealDistributionRecord = mealDistribution ? 
+    mealDistribution.reduce((acc, meal) => {
+      acc[meal.id] = meal;
+      return acc;
+    }, {} as Record<string, MealDistributionItem>) : {};
+
+  // Adapter function to convert between array and record approaches
+  const handleMealPercentChangeAdapter = (mealKey: string, newValue: number[]) => {
+    // Just use the first value in the array since our actual implementation uses a single number
+    handleMealPercentChange(mealKey, newValue[0]);
+  };
 
   // If we don't have consultation data but have it in location state, use it
   const displayConsultationData = consultationData || location.state?.consultation;
@@ -124,10 +136,10 @@ const MealPlanGenerator = () => {
                 gender: displayPatient.gender || ''
               }}
               consultationData={displayConsultationData as AppConsultationData}
-              mealDistribution={mealDistribution}
+              mealDistribution={mealDistributionRecord}
               totalMealPercent={totalMealPercent}
               isSaving={isSaving}
-              handleMealPercentChange={handleMealPercentChange}
+              handleMealPercentChange={handleMealPercentChangeAdapter}
               handleSaveMealPlan={handleSaveMealPlan}
             />
           )}

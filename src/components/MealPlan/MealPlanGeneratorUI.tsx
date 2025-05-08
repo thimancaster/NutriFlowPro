@@ -26,6 +26,9 @@ const MealPlanGeneratorUI = ({
   handleMealPercentChange,
   handleSaveMealPlan,
 }: MealPlanGeneratorUIProps) => {
+  // Convert number to string for compatibility
+  const formatNumber = (num: number): string => String(num);
+
   // Função simples para gerar PDF (será substituída no componente pai)
   const dummyGeneratePDF = async () => {
     await handleSaveMealPlan();
@@ -43,7 +46,7 @@ const MealPlanGeneratorUI = ({
       {activePatient && (
         <PatientHeader 
           patientName={activePatient.name}
-          patientAge={consultationData.age ? parseInt(consultationData.age) : undefined}
+          patientAge={consultationData.age ? parseInt(formatNumber(consultationData.age)) : undefined}
           patientGender={activePatient.gender}
           patientObjective={consultationData.objective}
         />

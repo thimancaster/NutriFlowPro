@@ -1,13 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Toast } from '@/hooks/use-toast';
+import { toast as Toast } from '@/hooks/use-toast';
 import { QueryClient } from '@tanstack/react-query';
 
 /**
  * Handles user logout and session cleanup
  */
 export const logout = async (
-  toast: Toast,
+  toast: typeof Toast,
   queryClient: QueryClient,
   updateAuthState: (session: any) => Promise<void>
 ) => {

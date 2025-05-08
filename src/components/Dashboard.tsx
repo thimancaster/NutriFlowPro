@@ -9,6 +9,15 @@ import ConsultationHeader from './ConsultationHeader';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useConsultation } from '@/contexts/ConsultationContext';
+import { useDashboardData } from '@/hooks/useDashboardData';
+
+// Define the SummaryData interface if it's not imported
+interface SummaryData {
+  totalPatients: number;
+  appointmentsToday: number;
+  activePlans: number;
+  isLoading: boolean;
+}
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -20,6 +29,9 @@ const LoadingFallback = () => (
 
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
+  
+  // Use the dashboard data hook to get real data
+  const dashboardData = useDashboardData();
   
   return (
     <div className="space-y-6">
@@ -41,7 +53,12 @@ const Dashboard = () => {
         transition={{ duration: 0.3 }}
       >
         <Suspense fallback={<LoadingFallback />}>
-          <DashboardSummaryCards />
+          <DashboardSummaryCards 
+            totalPatients={dashboardData.totalPatients}
+            appointmentsToday={dashboardData.appointmentsToday}
+            activePlans={dashboardData.activePlans}
+            isLoading={dashboardData.isLoading}
+          />
         </Suspense>
       </motion.div>
       

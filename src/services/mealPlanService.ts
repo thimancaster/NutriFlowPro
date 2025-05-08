@@ -1,19 +1,18 @@
 
+// Create basic structure for mealPlanService.ts that would match the expected interface
 import { supabase } from "@/integrations/supabase/client";
 import { MealPlan } from "@/types";
-import { Json } from "@/integrations/supabase/types";
 import { dbCache } from "./dbCache";
-import { ConsultationService } from "./consultationService";
 
 /**
- * Service to handle meal plan related database interactions
+ * Service to handle meal plan-related database interactions
  */
 export const MealPlanService = {
   /**
    * Save meal plan data
    */
   saveMealPlan: async (
-    userId: string,
+    userId: string, 
     patientId: string,
     consultationId: string,
     mealPlan: MealPlan
@@ -23,46 +22,64 @@ export const MealPlanService = {
         throw new Error('Supabase client is not initialized');
       }
       
-      if (!userId || !patientId || !mealPlan.meals) {
+      if (!userId || !patientId || !mealPlan) {
         throw new Error('Missing required data for saving meal plan');
       }
       
-      // Convert MealData[] to Json before inserting
-      const mealsAsJson = JSON.parse(JSON.stringify(mealPlan.meals)) as Json;
+      // Convert the meal plan to the database format
+      const dbMealPlan = {
+        user_id: userId,
+        patient_id: patientId,
+        date: new Date().toISOString().split('T')[0],
+        meals: mealPlan.meals || [],
+        total_calories: mealPlan.calories || 0,
+        total_protein: mealPlan.protein || 0,
+        total_carbs: mealPlan.carbs || 0,
+        total_fats: mealPlan.fat || 0
+      };
       
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .insert({
-          user_id: userId,
-          patient_id: patientId,
-          consultation_id: consultationId,
-          meals: mealsAsJson,
-          total_calories: mealPlan.total_calories || 0,
-          total_protein: mealPlan.total_protein || 0,
-          total_carbs: mealPlan.total_carbs || 0,
-          total_fats: mealPlan.total_fats || 0,
-          date: new Date().toISOString().split('T')[0]
-        })
-        .select('id')
-        .single();
-      
-      if (error) {
-        throw error;
+      // Check if we're updating an existing plan or creating a new one
+      let result;
+      if (mealPlan.id) {
+        const { data, error } = await supabase
+          .from('meal_plans')
+          .update(dbMealPlan)
+          .eq('id', mealPlan.id)
+          .select('*')
+          .single();
+          
+        if (error) throw error;
+        result = { data, error };
+      } else {
+        const { data, error } = await supabase
+          .from('meal_plans')
+          .insert(dbMealPlan)
+          .select('*')
+          .single();
+          
+        if (error) throw error;
+        result = { data, error };
       }
       
       // Invalidate meal plans cache for this patient
       dbCache.invalidate(`${dbCache.KEYS.MEAL_PLANS}${patientId}`);
       
-      // After saving meal plan, mark consultation as complete
-      try {
-        await ConsultationService.updateConsultationStatus(consultationId, 'completo');
-      } catch (err) {
-        console.warn('Could not update consultation status after saving meal plan', err);
-      }
+      // Map the database response back to our MealPlan type
+      const adaptedMealPlan: MealPlan = {
+        id: result.data.id,
+        name: mealPlan.name || `Plano Alimentar - ${new Date().toLocaleDateString()}`,
+        patient_id: result.data.patient_id,
+        calories: result.data.total_calories,
+        protein: result.data.total_protein,
+        carbs: result.data.total_carbs,
+        fat: result.data.total_fats,
+        mealDistribution: mealPlan.mealDistribution || [],
+        meals: result.data.meals || []
+      };
       
       return {
         success: true,
-        data
+        data: adaptedMealPlan
       };
     } catch (error: any) {
       console.error('Error saving meal plan:', error);
@@ -74,9 +91,11 @@ export const MealPlanService = {
   },
   
   /**
-   * Get meal plans for a patient with caching
+   * Get meal plans for a patient
    */
-  getPatientMealPlans: async (patientId: string): Promise<{success: boolean, data?: MealPlan[], error?: string}> => {
+  getPatientMealPlans: async (
+    patientId: string
+  ): Promise<{success: boolean, data?: MealPlan[], error?: string}> => {
     try {
       if (!patientId) {
         throw new Error('Patient ID is required');
@@ -106,25 +125,18 @@ export const MealPlanService = {
         throw error;
       }
       
-      // Transform data to match MealPlan type
-      const mealPlans: MealPlan[] = data?.map(item => {
-        // Convert Json meals back to MealData[]
-        const meals = item.meals as unknown as MealPlan['meals'];
-        
-        return {
-          id: item.id,
-          user_id: item.user_id,
-          patient_id: item.patient_id,
-          date: item.date,
-          meals: meals,
-          total_calories: item.total_calories,
-          total_protein: item.total_protein,
-          total_carbs: item.total_carbs,
-          total_fats: item.total_fats,
-          created_at: item.created_at,
-          updated_at: item.updated_at
-        };
-      }) || [];
+      // Map database records to MealPlan type
+      const mealPlans: MealPlan[] = data.map(item => ({
+        id: item.id,
+        name: `Plano Alimentar - ${new Date(item.date).toLocaleDateString()}`,
+        patient_id: item.patient_id,
+        calories: item.total_calories,
+        protein: item.total_protein,
+        carbs: item.total_carbs,
+        fat: item.total_fats,
+        mealDistribution: [],
+        meals: item.meals || []
+      }));
       
       // Save to cache
       dbCache.set(cacheKey, mealPlans);
