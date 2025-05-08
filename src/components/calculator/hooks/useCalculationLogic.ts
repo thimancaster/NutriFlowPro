@@ -84,16 +84,15 @@ export const useCalculationLogic = ({
       
       // Create consultation-like data structure for compatibility with other modules
       const consultationData: ConsultationData = {
-        weight: parseFloat(state.weight), // Fix: Convert string to number
-        height: parseFloat(state.height), // Fix: Convert string to number
-        age: parseFloat(state.age),       // Fix: Convert string to number
+        weight: parseFloat(state.weight),
+        height: parseFloat(state.height),
+        age: parseFloat(state.age),
         sex: state.gender === 'male' ? 'M' : 'F',
         objective: state.objective,
         profile: state.profile,
         activityLevel: state.activityLevel,
         results: {
           tmb: calculatedBmr,
-          fa: getActivityFactorValue(state.activityLevel),
           get: get, // Unadjusted value
           adjustment: adjustment, // The caloric adjustment
           vet: vet, // Adjusted value (GET + adjustment)
@@ -101,7 +100,6 @@ export const useCalculationLogic = ({
             protein: calculatedMacros.protein,
             carbs: calculatedMacros.carbs,
             fat: calculatedMacros.fat
-            // Remove proteinPerKg as it doesn't exist in the expected type
           }
         }
       };
