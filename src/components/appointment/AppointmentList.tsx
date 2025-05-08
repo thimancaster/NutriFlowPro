@@ -1,63 +1,39 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Edit, 
-  XCircle, 
-  Clock, 
-  Calendar, 
-  User 
-} from 'lucide-react';
 import { Appointment } from '@/types';
-import { Skeleton } from '@/components/ui/skeleton';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Calendar, Clock, Edit, X } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface AppointmentListProps {
   appointments: Appointment[];
   isLoading: boolean;
   onEdit: (appointment: Appointment) => void;
-  onCancel: (appointment: Appointment) => void;
-  showDate?: boolean;
-  emptyMessage?: string;
+  onCancel: (id: string) => void;
 }
 
-const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
+const getStatusBadge = (status: string = 'scheduled') => {
+  switch (status) {
     case 'scheduled':
-      return 'bg-blue-100 text-blue-800';
+      return <Badge className="bg-blue-500">Agendado</Badge>;
     case 'completed':
-      return 'bg-green-100 text-green-800';
+      return <Badge className="bg-green-500">Concluído</Badge>;
     case 'canceled':
-      return 'bg-red-100 text-red-800';
+      return <Badge className="bg-red-500">Cancelado</Badge>;
     case 'rescheduled':
-      return 'bg-amber-100 text-amber-800';
+      return <Badge className="bg-amber-500">Reagendado</Badge>;
     default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getStatusTranslation = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'scheduled':
-      return 'Agendado';
-    case 'completed':
-      return 'Concluído';
-    case 'canceled':
-      return 'Cancelado';
-    case 'rescheduled':
-      return 'Remarcado';
-    default:
-      return status;
+      return <Badge>{status}</Badge>;
   }
 };
 
@@ -65,116 +41,115 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
   appointments,
   isLoading,
   onEdit,
-  onCancel,
-  showDate = false,
-  emptyMessage = 'Nenhum agendamento encontrado'
+  onCancel
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, index) => (
-          <Card key={index} className="mb-4">
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-2/3" />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Skeleton className="h-8 w-20 mr-2" />
-              <Skeleton className="h-8 w-20" />
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="text-center py-10">
+        <p className="text-gray-500">Carregando agendamentos...</p>
       </div>
     );
   }
 
-  if (!appointments || appointments.length === 0) {
+  if (appointments.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <p>{emptyMessage}</p>
+      <div className="text-center py-10 border rounded-lg bg-gray-50">
+        <p className="text-gray-500 mb-2">Nenhum agendamento encontrado.</p>
+        <p className="text-gray-400 text-sm">Crie novos agendamentos usando o botão acima.</p>
       </div>
     );
   }
+
+  // Group appointments by date for display
+  const appointmentsByDate: Record<string, Appointment[]> = {};
+  
+  appointments.forEach(appointment => {
+    if (!appointment.start_time) return;
+    
+    const dateKey = format(parseISO(appointment.start_time), 'yyyy-MM-dd');
+    if (!appointmentsByDate[dateKey]) {
+      appointmentsByDate[dateKey] = [];
+    }
+    appointmentsByDate[dateKey].push(appointment);
+  });
+
+  const sortedDateKeys = Object.keys(appointmentsByDate).sort();
 
   return (
-    <div className="space-y-4">
-      {appointments.map((appointment) => (
-        <Card key={appointment.id} className="mb-4">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-lg">{appointment.title}</CardTitle>
-                <CardDescription>
-                  <div className="flex items-center mt-1">
-                    <User className="h-4 w-4 mr-1" />
-                    <span>{appointment.patientName}</span>
-                  </div>
-                </CardDescription>
-              </div>
-              <Badge className={getStatusColor(appointment.status)}>
-                {getStatusTranslation(appointment.status)}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {showDate && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>
-                    {format(new Date(appointment.start_time), "dd 'de' MMMM', 'yyyy", { locale: ptBR })}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center text-sm text-gray-600">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>
-                  {format(new Date(appointment.start_time), "HH:mm", { locale: ptBR })} - 
-                  {format(new Date(appointment.end_time), " HH:mm", { locale: ptBR })}
-                </span>
-              </div>
-              {appointment.notes && (
-                <div className="text-sm">
-                  <p className="font-medium text-gray-700">Observações:</p>
-                  <p className="text-gray-600">{appointment.notes}</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter>
-            {appointment.status !== 'canceled' && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mr-2"
-                  onClick={() => onEdit(appointment)}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Editar
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => onCancel(appointment)}
-                >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Cancelar
-                </Button>
-              </>
-            )}
-            {appointment.status === 'canceled' && (
-              <span className="text-sm text-gray-500">Agendamento cancelado</span>
-            )}
-          </CardFooter>
-        </Card>
+    <div className="space-y-8">
+      {sortedDateKeys.map(dateKey => (
+        <div key={dateKey} className="mb-6">
+          <h3 className="text-xl font-medium mb-3 flex items-center">
+            <Calendar className="mr-2 h-5 w-5 text-nutri-blue" />
+            {format(parseISO(dateKey), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          </h3>
+          
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {appointmentsByDate[dateKey]
+              .sort((a, b) => new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime())
+              .map(appointment => (
+                <Card key={appointment.id} className={`
+                  ${appointment.status === 'canceled' ? 'opacity-70 bg-gray-50' : 'bg-white'}
+                  ${appointment.status === 'completed' ? 'border-green-200' : ''}
+                `}>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between">
+                      <CardTitle className="text-lg">{appointment.title}</CardTitle>
+                      {getStatusBadge(appointment.status)}
+                    </div>
+                    <CardDescription className="flex items-center">
+                      <Clock className="h-3.5 w-3.5 mr-1 inline text-gray-500" />
+                      {format(parseISO(appointment.start_time!), 'HH:mm')} até {
+                        format(parseISO(appointment.end_time!), 'HH:mm')
+                      } ({appointment.duration_minutes} min)
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <p className="font-medium">Paciente: {appointment.patientName}</p>
+                    {appointment.notes && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        <span className="font-medium">Observações:</span> {appointment.notes}
+                      </p>
+                    )}
+                  </CardContent>
+                  
+                  <CardFooter className="pt-0 justify-end space-x-2">
+                    {appointment.status !== 'canceled' && appointment.status !== 'completed' && (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => onCancel(appointment.id!)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => onEdit(appointment)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                      </>
+                    )}
+                    
+                    {(appointment.status === 'canceled' || appointment.status === 'completed') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onEdit(appointment)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Visualizar
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
+          </div>
+        </div>
       ))}
     </div>
   );

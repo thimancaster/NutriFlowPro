@@ -4,8 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { format, startOfDay, endOfDay } from 'date-fns';
 
+export interface SummaryData {
+  totalPatients: number;
+  appointmentsToday: number;
+  activePlans: number;
+  isLoading: boolean;
+}
+
 // Hook to fetch dashboard data
-export const useDashboardData = () => {
+export const useDashboardData = (): SummaryData => {
   const [totalPatients, setTotalPatients] = useState(0);
   const [appointmentsToday, setAppointmentsToday] = useState(0);
   const [activePlans, setActivePlans] = useState(0);

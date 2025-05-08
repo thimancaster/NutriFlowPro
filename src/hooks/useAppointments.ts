@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Appointment } from '@/types';
+import { format, parseISO, addDays } from 'date-fns';
 
 export const useAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -28,11 +29,27 @@ export const useAppointments = () => {
         .eq('user_id', user.id);
       
       if (error) throw error;
+      
+      if (!data) {
+        setAppointments([]);
+        return;
+      }
 
       // Map the data to include patientName directly in the appointment object
       const formattedAppointments = data.map(appointment => ({
-        ...appointment,
-        patientName: appointment.patients?.name || 'Unknown Patient'
+        id: appointment.id,
+        user_id: appointment.user_id,
+        patient_id: appointment.patient_id,
+        patientName: appointment.patients?.name || 'Unknown Patient',
+        title: appointment.title || '',
+        start_time: appointment.start_time,
+        end_time: appointment.end_time,
+        duration_minutes: appointment.duration_minutes,
+        appointment_type_id: appointment.appointment_type_id,
+        notes: appointment.notes,
+        status: appointment.status,
+        created_at: appointment.created_at,
+        updated_at: appointment.updated_at
       }));
       
       setAppointments(formattedAppointments);
@@ -48,6 +65,21 @@ export const useAppointments = () => {
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  // Group appointments by date for easier display
+  const appointmentsByDate = useCallback(() => {
+    const grouped: { [key: string]: Appointment[] } = {};
+    
+    appointments.forEach(appointment => {
+      const dateKey = format(parseISO(appointment.start_time), 'yyyy-MM-dd');
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(appointment);
+    });
+    
+    return grouped;
+  }, [appointments]);
 
   // CRUD operations for appointments
   const createAppointment = async (appointmentData: Partial<Appointment>) => {
@@ -114,6 +146,11 @@ export const useAppointments = () => {
       return { success: false, error };
     }
   };
+  
+  // Cancel an appointment (update status to 'canceled')
+  const cancelAppointment = async (id: string) => {
+    return await updateAppointment(id, { status: 'canceled' });
+  };
 
   return {
     appointments,
@@ -121,6 +158,8 @@ export const useAppointments = () => {
     fetchAppointments,
     createAppointment,
     updateAppointment,
-    deleteAppointment
+    deleteAppointment,
+    cancelAppointment,
+    appointmentsByDate
   };
 };

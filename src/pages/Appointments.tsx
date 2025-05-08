@@ -1,166 +1,159 @@
 
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { useAppointments } from '@/hooks/useAppointments';
+import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
+import UserInfoHeader from '@/components/UserInfoHeader';
 import AppointmentList from '@/components/appointment/AppointmentList';
 import AppointmentFormDialog from '@/components/appointment/AppointmentFormDialog';
-import { Button } from '@/components/ui/button';
-import { PlusCircle, Calendar as CalendarIcon, List } from 'lucide-react';
-import { useAppointments } from '@/hooks/useAppointments';
+import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Clock, Plus, RefreshCw } from 'lucide-react';
 import { Appointment } from '@/types';
 
 const Appointments = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
-  const [view, setView] = useState<'calendar' | 'list'>('calendar');
-  
-  const { 
-    appointments, 
-    isLoading, 
-    appointmentsByDate,
-    createAppointment, 
-    updateAppointment, 
-    cancelAppointment 
-  } = useAppointments();
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const { appointments, isLoading, fetchAppointments, createAppointment, updateAppointment, deleteAppointment, cancelAppointment, appointmentsByDate } = useAppointments();
+  const { toast } = useToast();
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
+  const handleCreateAppointment = async (appointmentData: Partial<Appointment>) => {
+    const { success, error } = await createAppointment(appointmentData);
+    if (success) {
+      toast({
+        title: "Consulta Agendada",
+        description: "A consulta foi agendada com sucesso."
+      });
+      setIsFormOpen(false);
+    } else {
+      toast({
+        title: "Erro ao agendar consulta",
+        description: error?.message || "Ocorreu um erro ao tentar agendar a consulta.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleOpenForm = (appointment?: Appointment) => {
-    if (appointment) {
-      setAppointmentToEdit(appointment);
-    } else {
-      setAppointmentToEdit(null);
-    }
+  const handleEditAppointment = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setAppointmentToEdit(null);
-  };
-
-  const handleSaveAppointment = async (appointmentData: Partial<Appointment>) => {
-    try {
-      if (appointmentToEdit) {
-        await updateAppointment({
-          ...appointmentToEdit,
-          ...appointmentData
-        });
-      } else {
-        await createAppointment(appointmentData);
-      }
-      handleCloseForm();
-    } catch (error) {
-      console.error('Failed to save appointment', error);
+  const handleUpdateAppointment = async (id: string, appointmentData: Partial<Appointment>) => {
+    const { success, error } = await updateAppointment(id, appointmentData);
+    if (success) {
+      toast({
+        title: "Consulta Atualizada",
+        description: "As informações da consulta foram atualizadas com sucesso."
+      });
+      setIsFormOpen(false);
+      setSelectedAppointment(null);
+    } else {
+      toast({
+        title: "Erro ao atualizar consulta",
+        description: error?.message || "Ocorreu um erro ao tentar atualizar a consulta.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleCancelAppointment = async (appointment: Appointment) => {
-    try {
-      await cancelAppointment(appointment);
-    } catch (error) {
-      console.error('Failed to cancel appointment', error);
+  const handleCancelAppointment = async (id: string) => {
+    const { success, error } = await cancelAppointment(id);
+    if (success) {
+      toast({
+        title: "Consulta Cancelada",
+        description: "A consulta foi cancelada com sucesso."
+      });
+    } else {
+      toast({
+        title: "Erro ao cancelar consulta",
+        description: error?.message || "Ocorreu um erro ao tentar cancelar a consulta.",
+        variant: "destructive"
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <>
       <Helmet>
         <title>Agendamentos - NutriFlow Pro</title>
       </Helmet>
       <Navbar />
+      <UserInfoHeader />
       
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-nutri-blue">Agendamentos</h1>
-          <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-800">Agendamentos</h1>
+          <div className="flex gap-2">
             <Button 
-              onClick={() => handleOpenForm()}
-              className="bg-nutri-green hover:bg-nutri-green-dark"
+              variant="outline"
+              onClick={() => fetchAppointments()}
+              className="flex items-center gap-1"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                setSelectedAppointment(null);
+                setIsFormOpen(true);
+              }}
+              className="bg-nutri-blue hover:bg-nutri-blue-dark flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
               Novo Agendamento
             </Button>
           </div>
         </div>
-
-        <Tabs defaultValue="calendar" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-            <TabsTrigger 
-              value="calendar" 
-              onClick={() => setView('calendar')}
-              className="flex items-center gap-2"
-            >
-              <CalendarIcon className="h-4 w-4" />
-              Calendário
-            </TabsTrigger>
-            <TabsTrigger 
-              value="list" 
-              onClick={() => setView('list')}
-              className="flex items-center gap-2"
-            >
-              <List className="h-4 w-4" />
+        
+        <Tabs defaultValue="list">
+          <TabsList className="mb-4">
+            <TabsTrigger value="list" className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
               Lista
             </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              Calendário
+            </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="calendar" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1 bg-white rounded-lg shadow p-4">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  className="rounded-md border"
-                  locale={ptBR}
-                />
-              </div>
-              <div className="lg:col-span-2 bg-white rounded-lg shadow p-4">
-                <h2 className="text-xl font-semibold mb-4">
-                  {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}
-                </h2>
-                <AppointmentList 
-                  appointments={selectedDate ? appointmentsByDate(selectedDate) : []}
-                  isLoading={isLoading}
-                  onEdit={handleOpenForm}
-                  onCancel={handleCancelAppointment}
-                  emptyMessage="Nenhum agendamento para esta data"
-                />
-              </div>
-            </div>
+          
+          <TabsContent value="list">
+            <AppointmentList 
+              appointments={appointments}
+              isLoading={isLoading}
+              onEdit={handleEditAppointment}
+              onCancel={handleCancelAppointment}
+            />
           </TabsContent>
-
-          <TabsContent value="list" className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-xl font-semibold mb-4">Todos os Agendamentos</h2>
-              <AppointmentList 
-                appointments={appointments}
-                isLoading={isLoading}
-                onEdit={handleOpenForm}
-                onCancel={handleCancelAppointment}
-                showDate
-                emptyMessage="Nenhum agendamento encontrado"
-              />
+          
+          <TabsContent value="calendar">
+            <div className="bg-white rounded-lg p-6 shadow">
+              <p className="text-center text-gray-500">
+                Visualização de calendário em breve!
+              </p>
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-
-      <AppointmentFormDialog 
-        isOpen={isFormOpen} 
-        onClose={handleCloseForm}
-        onSave={handleSaveAppointment}
-        appointment={appointmentToEdit}
-        selectedDate={selectedDate}
-      />
-    </div>
+        
+        {isFormOpen && (
+          <AppointmentFormDialog
+            isOpen={isFormOpen}
+            onClose={() => {
+              setIsFormOpen(false);
+              setSelectedAppointment(null);
+            }}
+            onSubmit={selectedAppointment 
+              ? (data) => handleUpdateAppointment(selectedAppointment.id!, data)
+              : handleCreateAppointment
+            }
+            appointment={selectedAppointment}
+          />
+        )}
+      </main>
+    </>
   );
 };
 

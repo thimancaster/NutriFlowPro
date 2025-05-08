@@ -3,25 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
-import { validatePremiumStatus } from '@/utils/subscriptionUtils';
 import { User } from '@supabase/supabase-js';
 import { useCallback } from 'react';
+import { usePremiumCheck } from '@/hooks/usePremiumCheck';
 
 export const useAuthMethods = (
   updateAuthState: (session: any) => Promise<void>,
   toast: ReturnType<typeof useToast>['toast'],
   queryClient: ReturnType<typeof useQueryClient>
 ) => {
-  // Check if user is premium using the secure database function
-  const checkPremiumStatus = useCallback(async (userId: string | undefined, email: string | undefined) => {
-    if (!userId && !email) return false;
-    try {
-      return await validatePremiumStatus(userId, email);
-    } catch (error) {
-      console.error("Error checking premium status:", error);
-      return false;
-    }
-  }, []);
+  const { checkPremiumStatus } = usePremiumCheck();
 
   const login = async (email: string, password: string) => {
     try {
