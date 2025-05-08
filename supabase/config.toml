@@ -1,1 +1,33 @@
+
 project_id = "lnyixnhsrovzdxybmjfa"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+hostname = "127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+
+# O webhook do Stripe não precisa de autenticação JWT
+[functions.stripe-webhook]
+verify_jwt = false

@@ -478,13 +478,44 @@ export type Database = {
           },
         ]
       }
+      stripe_events: {
+        Row: {
+          created_at: string
+          event_data: Json
+          event_type: string
+          id: string
+          processed_at: string | null
+          stripe_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data: Json
+          event_type: string
+          id?: string
+          processed_at?: string | null
+          stripe_event_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          processed_at?: string | null
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
           email: string
           id: string
           is_premium: boolean
+          payment_status: string | null
           role: string
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
           subscription_end: string | null
           subscription_start: string | null
           updated_at: string
@@ -495,7 +526,11 @@ export type Database = {
           email: string
           id?: string
           is_premium?: boolean
+          payment_status?: string | null
           role?: string
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_end?: string | null
           subscription_start?: string | null
           updated_at?: string
@@ -506,7 +541,11 @@ export type Database = {
           email?: string
           id?: string
           is_premium?: boolean
+          payment_status?: string | null
           role?: string
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_end?: string | null
           subscription_start?: string | null
           updated_at?: string
