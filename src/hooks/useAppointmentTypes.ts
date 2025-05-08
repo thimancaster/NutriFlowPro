@@ -1,14 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface AppointmentType {
-  id: string;
-  name: string;
-  description: string | null;
-  color: string | null;
-  duration_minutes: number;
-}
+import { AppointmentType } from '@/types';
 
 export const useAppointmentTypes = () => {
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([]);
@@ -18,6 +11,7 @@ export const useAppointmentTypes = () => {
     const fetchAppointmentTypes = async () => {
       setIsLoading(true);
       try {
+        // Use "appointment_types" table that we created in our SQL migration
         const { data, error } = await supabase
           .from('appointment_types')
           .select('*')
@@ -25,7 +19,8 @@ export const useAppointmentTypes = () => {
         
         if (error) throw error;
         
-        setAppointmentTypes(data || []);
+        // Ensure we're setting the correct types
+        setAppointmentTypes(data as AppointmentType[] || []);
       } catch (error) {
         console.error('Error fetching appointment types:', error);
         setAppointmentTypes([]);

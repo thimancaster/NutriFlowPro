@@ -1,85 +1,52 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { LogOut } from 'lucide-react';
 
-interface NavbarDesktopMenuProps {
-  isAuthenticated: boolean;
-  isHomePage: boolean;
-  onLogin: () => void;
-  onLogout: () => void;
-  isLoggingOut: boolean;
+export interface NavigationItem {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
 }
 
-const NavbarDesktopMenu = ({
-  isAuthenticated,
-  isHomePage,
-  onLogin,
-  onLogout,
-  isLoggingOut
-}: NavbarDesktopMenuProps) => {
+export interface NavbarDesktopMenuProps {
+  navigationItems: NavigationItem[];
+  onLogout: () => Promise<void>;
+}
+
+const NavbarDesktopMenu = ({ navigationItems, onLogout }: NavbarDesktopMenuProps) => {
+  const { user } = useAuth();
+
   return (
     <div className="hidden md:flex items-center">
-      {isAuthenticated ? (
-        <>
-          <Link to="/dashboard" className="text-nutri-blue hover:text-nutri-green px-3 py-2 rounded-md text-sm font-medium">
-            Dashboard
-          </Link>
-          <Link to="/patients" className="text-nutri-blue hover:text-nutri-green px-3 py-2 rounded-md text-sm font-medium">
-            Pacientes
-          </Link>
-          <Link to="/calculator" className="text-nutri-blue hover:text-nutri-green px-3 py-2 rounded-md text-sm font-medium">
-            Calculadora
-          </Link>
-          <Link to="/meal-plans" className="text-nutri-blue hover:text-nutri-green px-3 py-2 rounded-md text-sm font-medium">
-            Planos
-          </Link>
-          <Link to="/settings" className="text-nutri-blue hover:text-nutri-green px-3 py-2 rounded-md text-sm font-medium">
-            Configurações
-          </Link>
-          <Button 
-            variant="outline" 
-            onClick={onLogout}
-            disabled={isLoggingOut}
-            className="ml-4 border-nutri-red text-nutri-red hover:bg-nutri-red hover:text-white"
+      <div className="flex space-x-1">
+        {navigationItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-nutri-blue"
           >
-            {isLoggingOut ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saindo...
-              </>
-            ) : (
-              'Sair'
-            )}
+            {item.name}
+          </Link>
+        ))}
+      </div>
+
+      <div className="ml-4 flex items-center">
+        <div className="flex items-center">
+          <Avatar className="h-8 w-8 bg-nutri-blue text-white">
+            <AvatarFallback>
+              {user?.email?.charAt(0).toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <Button variant="ghost" size="sm" onClick={onLogout} className="ml-2">
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
           </Button>
-        </>
-      ) : (
-        <>
-          {/* For landing page */}
-          {isHomePage && (
-            <>
-              <Link to="/login" className="text-nutri-blue hover:text-nutri-green px-3 py-2 rounded-md text-sm font-medium">
-                Login
-              </Link>
-              <Link to="/register">
-                <Button className="ml-4 bg-nutri-green hover:bg-nutri-green-dark text-white">
-                  Criar Conta
-                </Button>
-              </Link>
-            </>
-          )}
-          
-          {/* For login/register pages */}
-          {!isHomePage && (
-            <Link to="/">
-              <Button variant="outline" className="ml-4 border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white">
-                Voltar para Home
-              </Button>
-            </Link>
-          )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };

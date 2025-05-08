@@ -6,7 +6,7 @@ import { Users, CalendarDays, ClipboardList, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface SummaryData {
+export interface SummaryData {
   totalPatients: number;
   appointmentsToday: number;
   activePlans: number;

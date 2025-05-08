@@ -6,16 +6,13 @@ import { AuthState } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
-
-// Define limits for free tier
-const FREE_TIER_LIMITS = {
-  patients: 5,
-  mealPlans: 3
-};
+import { useUsageQuota } from '@/hooks/useUsageQuota';
+import { usePremiumCheck } from '@/hooks/usePremiumCheck';
 
 export const useAuthStateManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { checkPremiumStatus } = usePremiumCheck();
 
   // Initialize state
   const [authState, setAuthState] = useState<AuthState>({
@@ -29,65 +26,29 @@ export const useAuthStateManager = () => {
     usageQuota: {
       patients: {
         used: 0,
-        limit: FREE_TIER_LIMITS.patients
+        limit: 5
       },
       mealPlans: {
         used: 0,
-        limit: FREE_TIER_LIMITS.mealPlans
+        limit: 3
       }
     }
   });
+
+  // Get usage quota based on user and premium status
+  const usageQuota = useUsageQuota(authState.user, authState.isPremium);
 
   // Update auth state with consistent format
   const updateAuthState = useCallback(async (session: Session | null) => {
     const user = session?.user || null;
     
-    // Use the secure RPC function to check premium status
     let isPremium = false;
     let userTier = 'free' as 'free' | 'premium';
     
     if (user?.id) {
       try {
-        const { data, error } = await supabase.rpc('check_user_premium_status', {
-          user_id: user.id
-        });
-        
-        if (error) {
-          console.error("Error checking premium status:", error);
-          // Fallback to email check if RPC fails
-          isPremium = user?.email ? ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(user.email) : false;
-        } else {
-          isPremium = !!data;
-        }
-        
-        // Set user tier based on premium status
+        isPremium = await checkPremiumStatus(user.id);
         userTier = isPremium ? 'premium' : 'free';
-        
-        // If user is authenticated, fetch their usage data
-        let patientsUsed = 0;
-        let mealPlansUsed = 0;
-        
-        if (user.id) {
-          // Get patient count
-          const { count: patientCount, error: patientError } = await supabase
-            .from('patients')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-            
-          if (!patientError) {
-            patientsUsed = patientCount || 0;
-          }
-          
-          // Get meal plan count
-          const { count: mealPlanCount, error: mealPlanError } = await supabase
-            .from('meal_plans')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-            
-          if (!mealPlanError) {
-            mealPlansUsed = mealPlanCount || 0;
-          }
-        }
         
         setAuthState({
           user,
@@ -97,16 +58,7 @@ export const useAuthStateManager = () => {
           isPremium,
           loading: false,
           userTier,
-          usageQuota: {
-            patients: {
-              used: patientsUsed,
-              limit: isPremium ? Infinity : FREE_TIER_LIMITS.patients
-            },
-            mealPlans: {
-              used: mealPlansUsed,
-              limit: isPremium ? Infinity : FREE_TIER_LIMITS.mealPlans
-            }
-          }
+          usageQuota
         });
       } catch (error) {
         console.error("Error checking premium status:", error);
@@ -119,16 +71,7 @@ export const useAuthStateManager = () => {
           isPremium: false,
           loading: false,
           userTier: 'free',
-          usageQuota: {
-            patients: {
-              used: 0,
-              limit: FREE_TIER_LIMITS.patients
-            },
-            mealPlans: {
-              used: 0,
-              limit: FREE_TIER_LIMITS.mealPlans
-            }
-          }
+          usageQuota
         });
       }
     } else {
@@ -141,16 +84,7 @@ export const useAuthStateManager = () => {
         isPremium: false,
         loading: false,
         userTier: 'free',
-        usageQuota: {
-          patients: {
-            used: 0,
-            limit: FREE_TIER_LIMITS.patients
-          },
-          mealPlans: {
-            used: 0,
-            limit: FREE_TIER_LIMITS.mealPlans
-          }
-        }
+        usageQuota
       });
     }
 
@@ -160,7 +94,7 @@ export const useAuthStateManager = () => {
         queryClient.invalidateQueries({ queryKey: [SUBSCRIPTION_QUERY_KEY, user.id] });
       }, 0);
     }
-  }, [queryClient]);
+  }, [checkPremiumStatus, queryClient, usageQuota]);
 
   // Initialize authentication state
   useEffect(() => {
