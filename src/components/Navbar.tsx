@@ -1,115 +1,104 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import NavbarBrand from './NavbarBrand';
-import NavbarDesktopMenu from './NavbarDesktopMenu';
 import NavbarMobileMenu from './NavbarMobileMenu';
+import NavbarDesktopMenu from './NavbarDesktopMenu';
+import { Button } from '@/components/ui/button';
+import { User, Menu, X, Home, Users, FileText, Calculator, Coffee, Settings, CalendarDays } from 'lucide-react';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const location = useLocation();
-  
-  // Check if we're on the home page (landing page)
-  const isHomePage = location.pathname === '/';
-  // Check if we're on a public page (login, signup, forgot password, recursos)
-  const isPublicPage = ['/login', '/signup', '/forgot-password', '/recursos'].includes(location.pathname);
+  const { isAuthenticated, logout, user } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleLoginClick = () => {
-    navigate('/login');
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = async () => {
-    console.log("Botão de logout clicado");
-    
-    try {
-      // Prevenir múltiplos cliques
-      if (isLoggingOut) {
-        console.log("Processo de logout já em andamento, ignorando clique");
-        return;
-      }
-      
-      setIsLoggingOut(true);
-      
-      // Forçar fechamento do menu antes do logout
-      if (isMenuOpen) {
-        setIsMenuOpen(false);
-      }
-      
-      toast({
-        title: "Saindo...",
-        description: "Encerrando sua sessão.",
-      });
-      
-      const result = await logout();
-      
-      if (result.success) {
-        console.log("Logout bem-sucedido, redirecionando para login");
-        // Use React Router navigation
-        navigate('/login');
-      } else {
-        console.error("Logout retornou false sem erro:", result);
-        // Forçar navegação mesmo assim
-        navigate('/login');
-      }
-    } catch (error: any) {
-      console.error("Erro ao fazer logout:", error);
-      // Forçar navegação mesmo com erro
-      navigate('/login');
-    } finally {
-      setIsLoggingOut(false);
-    }
+    await logout();
+    navigate('/login');
+    closeMobileMenu();
   };
 
-  // For home page with landing page, use a transparent background with shadow on scroll
-  const navbarClass = isHomePage && !isAuthenticated 
-    ? "bg-white bg-opacity-95 shadow-md backdrop-blur-sm sticky top-0 z-50" 
-    : "bg-white shadow-md";
+  const navigationItems = [
+    { name: 'Início', path: '/dashboard', icon: <Home className="h-5 w-5" /> },
+    { name: 'Pacientes', path: '/patients', icon: <Users className="h-5 w-5" /> },
+    { name: 'Agendamentos', path: '/appointments', icon: <CalendarDays className="h-5 w-5" /> },
+    { name: 'Consultas', path: '/consultation', icon: <FileText className="h-5 w-5" /> },
+    { name: 'Calculadora', path: '/calculator', icon: <Calculator className="h-5 w-5" /> },
+    { name: 'Planos Alimentares', path: '/meal-plans', icon: <Coffee className="h-5 w-5" /> },
+    { name: 'Configurações', path: '/settings', icon: <Settings className="h-5 w-5" /> }
+  ];
 
   return (
-    <nav className={navbarClass}>
+    <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex">
             <NavbarBrand />
           </div>
-          
-          <NavbarDesktopMenu 
-            isAuthenticated={isAuthenticated}
-            isHomePage={isHomePage}
-            onLogin={handleLoginClick}
-            onLogout={handleLogout}
-            isLoggingOut={isLoggingOut}
-          />
-          
-          <div className="flex md:hidden items-center">
-            <button
-              onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-nutri-gray-dark hover:text-nutri-green"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+
+          {/* Desktop nav menu */}
+          {isAuthenticated && (
+            <NavbarDesktopMenu 
+              navigationItems={navigationItems} 
+              onLogout={handleLogout}
+            />
+          )}
+
+          {/* Mobile menu button */}
+          {isAuthenticated && (
+            <div className="flex items-center md:hidden">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-nutri-blue hover:bg-gray-100 focus:outline-none"
+                aria-controls="mobile-menu"
+                aria-expanded="false"
+                onClick={toggleMobileMenu}
+              >
+                <span className="sr-only">Open main menu</span>
+                {isMobileMenuOpen ? (
+                  <X className="block h-6 w-6" />
+                ) : (
+                  <Menu className="block h-6 w-6" />
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Login / Register buttons for non-authenticated users */}
+          {!isAuthenticated && (
+            <div className="flex items-center">
+              <Link to="/login">
+                <Button variant="ghost" className="text-gray-700 hover:text-nutri-blue mr-2">
+                  <User className="h-5 w-5 mr-1" />
+                  Login
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button className="bg-nutri-blue hover:bg-nutri-blue-dark text-white">
+                  Cadastrar
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
-      {isMenuOpen && (
-        <NavbarMobileMenu 
-          isAuthenticated={isAuthenticated}
-          isHomePage={isHomePage}
+      {/* Mobile menu */}
+      {isAuthenticated && (
+        <NavbarMobileMenu
+          isOpen={isMobileMenuOpen}
+          navigationItems={navigationItems}
+          onClose={closeMobileMenu}
           onLogout={handleLogout}
-          onToggleMenu={toggleMenu}
-          isLoggingOut={isLoggingOut}
         />
       )}
     </nav>

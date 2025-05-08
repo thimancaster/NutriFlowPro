@@ -1,4 +1,3 @@
-
 export interface Patient {
   id: string;
   name: string;
@@ -55,4 +54,26 @@ export interface MealDistributionItem {
   carbs: number;
   fat: number;
   suggestions: string[];
+}
+
+export interface Appointment {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  notes?: string;
+  status: string;
+  patient_id: string;
+  patientName: string;
+  appointment_type_id?: string;
+  user_id?: string;
+}
+
+export interface AppointmentType {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  duration_minutes: number;
 }

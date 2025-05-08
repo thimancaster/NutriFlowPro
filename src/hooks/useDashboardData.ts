@@ -1,71 +1,75 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { format, startOfDay, endOfDay } from 'date-fns';
 
-export interface DashboardStats {
-  totalPatients: number;
-  appointmentsToday: number;
-  activePlans: number;
-  isLoading: boolean;
-  error: Error | null;
-}
-
-export const useDashboardData = (): DashboardStats => {
+// Hook to fetch dashboard data
+export const useDashboardData = () => {
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [appointmentsToday, setAppointmentsToday] = useState(0);
+  const [activePlans, setActivePlans] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  const userId = user?.id;
-  const today = format(new Date(), 'yyyy-MM-dd');
   
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['dashboardStats', userId],
-    queryFn: async () => {
-      if (!userId) {
-        return { totalPatients: 0, appointmentsToday: 0, activePlans: 0 };
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
       }
       
-      // Fetch total patients count
-      const { count: totalPatients, error: patientsError } = await supabase
-        .from('patients')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-        
-      if (patientsError) throw patientsError;
+      setIsLoading(true);
       
-      // Fetch appointments for today
-      const { count: appointmentsToday, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('status', 'scheduled')
-        .gte('date', `${today}T00:00:00`)
-        .lte('date', `${today}T23:59:59`);
+      try {
+        // Get total patients count
+        const { count: patientsCount, error: patientsError } = await supabase
+          .from('patients')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+          
+        if (patientsError) throw patientsError;
         
-      if (appointmentsError) throw appointmentsError;
-      
-      // Fetch active meal plans
-      const { count: activePlans, error: plansError } = await supabase
-        .from('meal_plans')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+        // Get today's appointments count
+        const today = new Date();
+        const startOfToday = startOfDay(today).toISOString();
+        const endOfToday = endOfDay(today).toISOString();
         
-      if (plansError) throw plansError;
-      
-      return {
-        totalPatients: totalPatients || 0,
-        appointmentsToday: appointmentsToday || 0,
-        activePlans: activePlans || 0,
-      };
-    },
-    enabled: !!userId,
-    staleTime: 60000, // Cache for 1 minute
-  });
+        const { count: appointmentsCount, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'scheduled')
+          .gte('start_time', startOfToday)
+          .lte('start_time', endOfToday);
+        
+        if (appointmentsError) throw appointmentsError;
+        
+        // Get active meal plans count
+        const { count: plansCount, error: plansError } = await supabase
+          .from('meal_plans')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+          
+        if (plansError) throw plansError;
+          
+        setTotalPatients(patientsCount || 0);
+        setAppointmentsToday(appointmentsCount || 0);
+        setActivePlans(plansCount || 0);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, [user]);
   
-  return {
-    totalPatients: data?.totalPatients || 0,
-    appointmentsToday: data?.appointmentsToday || 0,
-    activePlans: data?.activePlans || 0,
-    isLoading,
-    error: error as Error | null,
+  return { 
+    totalPatients, 
+    appointmentsToday, 
+    activePlans, 
+    isLoading 
   };
 };

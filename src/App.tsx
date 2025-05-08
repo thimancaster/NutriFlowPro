@@ -32,6 +32,7 @@ import Index from './pages/Index';
 import AddTestimonial from './pages/AddTestimonial';
 import { seedTestimonials } from './utils/seedTestimonials';
 import { supabase } from './integrations/supabase/client';
+import Appointments from './pages/Appointments';
 
 // Create a client with retry options
 const queryClient = new QueryClient({
@@ -124,6 +125,11 @@ function App() {
                   <Route path="/patients" element={
                     <ProtectedRoute>
                       <Patients />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/appointments" element={
+                    <ProtectedRoute>
+                      <Appointments />
                     </ProtectedRoute>
                   } />
                   <Route path="/patient-history/:patientId" element={
