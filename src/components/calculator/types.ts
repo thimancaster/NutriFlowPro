@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface CalculatorState {
@@ -46,7 +45,6 @@ export interface ConsultationData {
   activityLevel: string;
   results: {
     tmb: number;
-    fa: number;
     get: number;
     adjustment?: number;
     vet?: number;

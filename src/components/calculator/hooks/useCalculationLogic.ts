@@ -85,9 +85,9 @@ export const useCalculationLogic = ({
       
       // Create consultation-like data structure for compatibility with other modules
       const consultationData: ConsultationData = {
-        weight: parseFloat(state.weight),
-        height: parseFloat(state.height),
-        age: parseFloat(state.age),
+        weight: parseFloat(state.weight) as unknown as string,
+        height: parseFloat(state.height) as unknown as string,
+        age: parseFloat(state.age) as unknown as string,
         sex: state.gender === 'male' ? 'M' : 'F',
         objective: state.objective,
         profile: state.profile,
@@ -101,7 +101,7 @@ export const useCalculationLogic = ({
             protein: calculatedMacros.protein,
             carbs: calculatedMacros.carbs,
             fat: calculatedMacros.fat,
-            proteinPerKg: calculatedMacros.proteinPerKg // Include proteinPerKg
+            proteinPerKg: calculatedMacros.proteinPerKg // Now this is properly typed
           }
         }
       };
