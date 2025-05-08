@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { validateCalculatorInputs } from '../utils/validation';
 import { calculateBMR, calculateTEE, calculateMacros } from '../utils/calculations';
@@ -94,12 +95,13 @@ export const useCalculationLogic = ({
         results: {
           tmb: calculatedBmr,
           get: get, // Unadjusted value
-          adjustment: adjustment, // The caloric adjustment
           vet: vet, // Adjusted value (GET + adjustment)
+          adjustment: adjustment, // Add the adjustment value explicitly
           macros: {
             protein: calculatedMacros.protein,
             carbs: calculatedMacros.carbs,
-            fat: calculatedMacros.fat
+            fat: calculatedMacros.fat,
+            proteinPerKg: calculatedMacros.proteinPerKg // Include proteinPerKg
           }
         }
       };

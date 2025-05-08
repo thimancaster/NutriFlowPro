@@ -87,13 +87,23 @@ export const useAppointments = (patientId?: string) => {
         throw new Error('User not authenticated');
       }
 
+      // Map the appointment data to match the database structure
+      const dbAppointmentData = {
+        user_id: user.id,
+        patient_id: appointmentData.patient_id,
+        title: appointmentData.title,
+        start_time: appointmentData.start_time,
+        end_time: appointmentData.end_time,
+        duration_minutes: appointmentData.duration_minutes,
+        notes: appointmentData.notes,
+        status: appointmentData.status || 'scheduled',
+        type: appointmentData.title || 'consultation', // Use title as type if not provided
+        date: appointmentData.start_time // Use start_time for the date field
+      };
+
       const { data, error } = await supabase
         .from('appointments')
-        .insert({
-          ...appointmentData,
-          user_id: user.id,
-          status: appointmentData.status || 'scheduled'
-        })
+        .insert(dbAppointmentData)
         .select();
 
       if (error) {
@@ -114,9 +124,22 @@ export const useAppointments = (patientId?: string) => {
         throw new Error('User not authenticated');
       }
 
+      // Map the appointment data to match the database structure
+      const dbAppointmentData = {
+        patient_id: appointmentData.patient_id,
+        title: appointmentData.title,
+        start_time: appointmentData.start_time,
+        end_time: appointmentData.end_time,
+        duration_minutes: appointmentData.duration_minutes,
+        notes: appointmentData.notes,
+        status: appointmentData.status,
+        type: appointmentData.title || 'consultation', // Use title as type if not provided
+        date: appointmentData.start_time // Use start_time for the date field
+      };
+
       const { data, error } = await supabase
         .from('appointments')
-        .update(appointmentData)
+        .update(dbAppointmentData)
         .eq('id', id)
         .eq('user_id', user.id)
         .select();
