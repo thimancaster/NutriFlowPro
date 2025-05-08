@@ -19,7 +19,7 @@ export const useAppointments = () => {
 
     setIsLoading(true);
     try {
-      // Fetch appointments and join with patients table to get patient name
+      // Query the existing appointments table with the correct field names
       const { data, error } = await supabase
         .from('appointments')
         .select(`
@@ -35,22 +35,22 @@ export const useAppointments = () => {
         return;
       }
 
-      // Map the data to include patientName directly in the appointment object
+      // Map the database fields to our Appointment type
       const formattedAppointments = data.map(appointment => ({
         id: appointment.id,
         user_id: appointment.user_id,
         patient_id: appointment.patient_id,
         patientName: appointment.patients?.name || 'Unknown Patient',
-        title: appointment.title || '',
-        start_time: appointment.start_time,
-        end_time: appointment.end_time,
-        duration_minutes: appointment.duration_minutes,
-        appointment_type_id: appointment.appointment_type_id,
+        title: appointment.type || '', // Using 'type' field as title
+        start_time: appointment.date || '', // Using 'date' field as start_time
+        end_time: appointment.date ? new Date(new Date(appointment.date).getTime() + 60*60*1000).toISOString() : '', // Estimate end_time as 1 hour after start
+        duration_minutes: 60, // Default duration
+        appointment_type_id: appointment.type,
         notes: appointment.notes,
         status: appointment.status,
         created_at: appointment.created_at,
         updated_at: appointment.updated_at
-      }));
+      } as Appointment));
       
       setAppointments(formattedAppointments);
     } catch (error) {
@@ -86,12 +86,19 @@ export const useAppointments = () => {
     if (!user) return { success: false, error: new Error('User not authenticated') };
     
     try {
+      // Transform from our Appointment interface to the database schema
+      const dbAppointment = {
+        user_id: user.id,
+        patient_id: appointmentData.patient_id,
+        date: appointmentData.start_time, // Map start_time to date
+        type: appointmentData.title, // Map title to type
+        notes: appointmentData.notes,
+        status: appointmentData.status || 'scheduled',
+      };
+      
       const { data, error } = await supabase
         .from('appointments')
-        .insert({
-          ...appointmentData,
-          user_id: user.id
-        })
+        .insert(dbAppointment)
         .select()
         .single();
       
@@ -109,9 +116,18 @@ export const useAppointments = () => {
     if (!user) return { success: false, error: new Error('User not authenticated') };
     
     try {
+      // Transform from our Appointment interface to the database schema
+      const dbAppointment: any = {};
+      
+      if (appointmentData.patient_id) dbAppointment.patient_id = appointmentData.patient_id;
+      if (appointmentData.title) dbAppointment.type = appointmentData.title;
+      if (appointmentData.start_time) dbAppointment.date = appointmentData.start_time;
+      if (appointmentData.notes) dbAppointment.notes = appointmentData.notes;
+      if (appointmentData.status) dbAppointment.status = appointmentData.status;
+      
       const { data, error } = await supabase
         .from('appointments')
-        .update(appointmentData)
+        .update(dbAppointment)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
