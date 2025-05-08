@@ -125,7 +125,7 @@ export const MealPlanService = {
         throw error;
       }
       
-      // Map database records to MealPlan type
+      // Map database records to MealPlan type with proper type casting
       const mealPlans: MealPlan[] = data.map(item => ({
         id: item.id,
         name: `Plano Alimentar - ${new Date(item.date).toLocaleDateString()}`,
@@ -135,7 +135,7 @@ export const MealPlanService = {
         carbs: item.total_carbs,
         fat: item.total_fats,
         mealDistribution: [],
-        meals: item.meals || []
+        meals: Array.isArray(item.meals) ? item.meals : [] // Fix: Ensure meals is always an array
       }));
       
       // Save to cache

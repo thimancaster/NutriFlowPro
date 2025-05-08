@@ -25,7 +25,8 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     const storedMealPlan = storageUtils.getSessionItem('mealPlan');
     if (storedMealPlan) {
-      setMealPlan(storedMealPlan);
+      // Fix: Cast the unknown value to MealPlan
+      setMealPlan(storedMealPlan as MealPlan);
     }
   }, []);
 

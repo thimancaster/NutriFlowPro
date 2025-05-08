@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { validateCalculatorInputs } from '../utils/validation';
 import { calculateBMR, calculateTEE, calculateMacros } from '../utils/calculations';
@@ -85,9 +84,9 @@ export const useCalculationLogic = ({
       
       // Create consultation-like data structure for compatibility with other modules
       const consultationData: ConsultationData = {
-        weight: state.weight,
-        height: state.height,
-        age: state.age,
+        weight: parseFloat(state.weight), // Fix: Convert string to number
+        height: parseFloat(state.height), // Fix: Convert string to number
+        age: parseFloat(state.age),       // Fix: Convert string to number
         sex: state.gender === 'male' ? 'M' : 'F',
         objective: state.objective,
         profile: state.profile,
@@ -101,8 +100,8 @@ export const useCalculationLogic = ({
           macros: {
             protein: calculatedMacros.protein,
             carbs: calculatedMacros.carbs,
-            fat: calculatedMacros.fat,
-            proteinPerKg: calculatedMacros.proteinPerKg
+            fat: calculatedMacros.fat
+            // Remove proteinPerKg as it doesn't exist in the expected type
           }
         }
       };

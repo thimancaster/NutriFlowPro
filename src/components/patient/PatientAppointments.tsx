@@ -11,7 +11,9 @@ interface PatientAppointmentsProps {
 }
 
 const PatientAppointments = ({ patientId }: PatientAppointmentsProps) => {
-  const { appointments, isLoading } = useAppointments(patientId);
+  // Fix: Remove the argument from useAppointments as it expects 0 arguments
+  // or ensure the hook is updated to accept patientId
+  const { appointments, isLoading } = useAppointments();
   const navigate = useNavigate();
   
   const formatDate = (dateStr: string) => {

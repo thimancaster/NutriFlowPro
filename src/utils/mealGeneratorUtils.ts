@@ -146,13 +146,16 @@ export function generateMealPlanData(
   const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0);
   const totalFats = meals.reduce((sum, meal) => sum + meal.fat, 0);
   
-  // Create meal plan object
+  // Create meal plan object with all required properties for MealPlan type
   return {
-    meals,
-    total_calories: totalCals,
-    total_protein: totalProtein,
-    total_carbs: totalCarbs,
-    total_fats: totalFats,
+    name: `Plano Alimentar - ${new Date().toLocaleDateString()}`,
+    patient_id: '',  // This should be filled in by the parent component
+    calories: totalCals,
+    protein: totalProtein,
+    carbs: totalCarbs,
+    fat: totalFats,
+    meals: meals,
+    mealDistribution: [], // Initialize as empty array
     date: new Date().toISOString().split('T')[0]
   };
 }
