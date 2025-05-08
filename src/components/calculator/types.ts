@@ -48,7 +48,7 @@ export interface ConsultationData {
     tmb: number;
     get: number;
     adjustment?: number;
-    vet?: number;
+    vet?: number; // Add VET property here to match usage in useCalculationLogic.ts
     macros: {
       protein: number;
       carbs: number;

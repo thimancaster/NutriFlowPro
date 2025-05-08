@@ -57,9 +57,9 @@ export interface ConsultationData {
   id?: string;
   patient_id?: string;
   date?: string;
-  weight?: number;
-  height?: number;
-  age?: number;
+  weight?: string | number;
+  height?: string | number;
+  age?: string | number;
   gender?: string;
   activity_level?: string;
   goal?: string;
@@ -77,6 +77,8 @@ export interface ConsultationData {
   results?: {
     tmb: number;
     get: number;
+    vet?: number; // Add the vet property to match the usage in useCalculationLogic.ts
+    adjustment?: number;
     macros: {
       protein: number;
       carbs: number;
