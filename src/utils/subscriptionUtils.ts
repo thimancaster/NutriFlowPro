@@ -1,5 +1,5 @@
 
-import { PREMIUM_EMAILS } from "@/constants/authConstants";
+import { PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SubscriptionData {

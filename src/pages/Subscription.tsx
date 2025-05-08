@@ -7,10 +7,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 const Subscription = () => {
   const { data: subscription } = useUserSubscription();
-  const { userTier } = useAuth();
+  const { userTier, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { getPatientsQuota, getMealPlansQuota } = useFeatureAccess();
@@ -45,6 +46,30 @@ const Subscription = () => {
   
   // Check if we need to show an alert for premium access
   const showPremiumAlert = reason === 'premium-required';
+  
+  const handleSubscribe = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      
+      const response = await fetch("https://lnyixnhsrovzdxybmjfa.supabase.co/functions/v1/create-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.session?.access_token || ""}`,
+        },
+        body: JSON.stringify({
+          returnUrl: window.location.origin,
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+    }
+  };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
@@ -165,7 +190,7 @@ const Subscription = () => {
               className={`w-full ${isPremium 
                 ? 'bg-amber-200 text-amber-800 hover:bg-amber-300' 
                 : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'}`}
-              onClick={() => isPremium ? null : window.location.href = 'https://pay.kiwify.com.br/nv9DKL8'}
+              onClick={isPremium ? () => {} : handleSubscribe}
               disabled={isPremium}
             >
               {isPremium ? 'Plano Atual' : 'Assinar Plano Premium'}

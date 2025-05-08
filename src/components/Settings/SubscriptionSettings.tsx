@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { useAuthState } from "@/hooks/useAuthState";
 import { Star, Calendar, Check, ArrowRight, Crown, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 
 const SubscriptionSettings = () => {
   const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
@@ -18,7 +18,7 @@ const SubscriptionSettings = () => {
     refetchSubscription();
   }, [refetchSubscription]);
   
-  // Usar a verificação centralizada do hook useAuthState e combinar com os dados da assinatura
+  // Use the central verification from useAuthState hook combined with subscription data
   const isPremium = React.useMemo(() => {
     const result = isUserPremium || (subscription?.isPremium || false);
     console.log("Status premium em SubscriptionSettings:", { 
@@ -29,19 +29,34 @@ const SubscriptionSettings = () => {
     return result;
   }, [isUserPremium, subscription?.isPremium]);
 
-  // Debug log to check subscription status
-  useEffect(() => {
-    console.log("Subscription status in settings:", subscription);
-    console.log("User email:", user?.email);
-    console.log("Final premium status:", isPremium);
-  }, [subscription, user?.email, isPremium]);
-
+  // Format date helper function
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'N/A';
     try {
       return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     } catch (e) {
       return 'Data inválida';
+    }
+  };
+
+  // Handle customer portal navigation
+  const handleManageSubscription = async () => {
+    try {
+      const response = await fetch("https://lnyixnhsrovzdxybmjfa.supabase.co/functions/v1/customer-portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user?.id ? await supabase.auth.getSession().then(res => res.data.session?.access_token) : ''}`,
+        },
+        body: JSON.stringify({ returnUrl: window.location.origin }),
+      });
+      
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error("Failed to open customer portal:", error);
     }
   };
 
@@ -132,7 +147,7 @@ const SubscriptionSettings = () => {
             </ul>
           </div>
           <Button
-            onClick={() => navigate('/subscription')}
+            onClick={handleManageSubscription}
             variant="outline"
             className="w-full border-amber-300 text-amber-800 hover:bg-amber-50"
           >
