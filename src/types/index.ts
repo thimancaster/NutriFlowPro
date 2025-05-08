@@ -81,6 +81,7 @@ export interface ConsultationData {
       protein: number;
       carbs: number;
       fat: number;
+      proteinPerKg?: number;
     }
   };
 }
