@@ -16,6 +16,11 @@ export const useFeatureAccess = () => {
     return isPremiumUser || authPremium;
   }, [isPremiumUser, authPremium]);
 
+  // Determinar o tier do usuário baseado no status premium
+  const userTier = useMemo(() => {
+    return isPremium ? 'premium' : 'free'; 
+  }, [isPremium]);
+
   /**
    * Retorna a quota de pacientes com base no plano
    */
@@ -62,6 +67,7 @@ export const useFeatureAccess = () => {
 
   return {
     isPremiumUser: isPremium,
+    userTier,
     getPatientsQuota,
     getMealPlansQuota,
     getConsultationsQuota,

@@ -15,7 +15,7 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
   const { totalPatients, appointmentsToday, activePlans, isLoading } = useDashboardData();
-  const { userTier } = useFeatureAccess();
+  const { isPremiumUser, userTier } = useFeatureAccess();
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
