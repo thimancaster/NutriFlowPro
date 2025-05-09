@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
+import { SUBSCRIPTION_QUERY_KEY, PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
 import { useToast } from "./use-toast";
 import { validatePremiumStatus } from "@/utils/subscriptionUtils";
 import { User } from "@supabase/supabase-js";
@@ -22,8 +22,8 @@ const OPTIMIZED_REFETCH_SETTINGS = {
   refetchOnWindowFocus: false,
   refetchOnMount: true,
   refetchOnReconnect: true,
-  retry: 1,
-  retryDelay: 5000 // 5 seconds
+  retry: 2, // Increased retries for better reliability
+  retryDelay: 3000 // 3 seconds
 };
 
 /**
@@ -48,11 +48,8 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           };
         }
 
-        // Verificar status premium usando a função segura do banco
-        const isPremium = await validatePremiumStatus(user.id, user.email);
-        
-        // Se o usuário for premium pelo e-mail, retornar dados simplificados
-        if (isPremium && validatePremiumStatus(undefined, user.email)) {
+        // Verificar emails premium direto (rápido fail-fast)
+        if (user.email && PREMIUM_EMAILS.includes(user.email)) {
           return {
             isPremium: true,
             role: 'premium',
@@ -62,47 +59,70 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           };
         }
 
-        // Buscar o papel do usuário usando função segura
-        const { data: roleData, error: roleError } = await supabase.rpc('get_user_role', {
-          user_id: user.id
-        });
-        
-        if (roleError) {
-          console.warn("Erro ao buscar papel do usuário:", roleError);
-        }
-        
-        // Buscar dados completos da assinatura
-        const { data, error } = await supabase
-          .from("subscribers")
-          .select("is_premium, role, email, subscription_start, subscription_end")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (error && error.message && !error.message.includes('infinite recursion')) {
-          console.error("Erro ao buscar dados da assinatura:", error);
+        // Verificar status premium usando a função segura do banco
+        try {
+          const isPremium = await validatePremiumStatus(user.id, user.email);
           
-          if (!errorToastShown.current) {
-            toast({
-              title: "Erro ao buscar dados da assinatura",
-              description: "Estamos com dificuldades técnicas. Tentando modo offline.",
-              variant: "destructive",
-            });
-            errorToastShown.current = true;
+          // Buscar o papel do usuário usando função segura
+          const { data: roleData, error: roleError } = await supabase.rpc('get_user_role', {
+            user_id: user.id
+          });
+          
+          if (roleError) {
+            console.warn("Erro ao buscar papel do usuário:", roleError);
           }
-        }
+          
+          // Buscar dados completos da assinatura
+          const { data, error } = await supabase
+            .from("subscribers")
+            .select("is_premium, role, email, subscription_start, subscription_end")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-        return {
-          isPremium: isPremium,
-          role: roleData || (data ? data.role : 'user'),
-          email: data ? data.email : user.email,
-          subscriptionStart: data ? data.subscription_start : null,
-          subscriptionEnd: data ? data.subscription_end : null
-        };
+          if (error) {
+            console.error("Erro ao buscar dados da assinatura:", error);
+            
+            if (!errorToastShown.current) {
+              toast({
+                title: "Erro ao buscar dados da assinatura",
+                description: "Estamos com dificuldades técnicas. Tentando modo offline.",
+                variant: "destructive",
+              });
+              errorToastShown.current = true;
+            }
+            
+            // Ainda retornamos dados básicos mesmo com erro
+            return {
+              isPremium: isPremium,
+              role: roleData || 'user',
+              email: user.email
+            };
+          }
+
+          return {
+            isPremium: isPremium,
+            role: roleData || (data ? data.role : 'user'),
+            email: data ? data.email : user.email,
+            subscriptionStart: data ? data.subscription_start : null,
+            subscriptionEnd: data ? data.subscription_end : null
+          };
+        } catch (e) {
+          console.error("Erro na validação premium:", e);
+          
+          // Verificação de fallback direta para emails premium
+          const isPremium = user.email ? PREMIUM_EMAILS.includes(user.email) : false;
+          
+          return {
+            isPremium,
+            role: isPremium ? 'premium' : 'user',
+            email: user.email
+          };
+        }
       } catch (error: any) {
         console.error("Erro na consulta de assinatura:", error);
         
         // Verificação de fallback: em caso de erro, ainda verificamos o e-mail
-        const isPremium = await validatePremiumStatus(undefined, user?.email);
+        const isPremium = user?.email ? PREMIUM_EMAILS.includes(user.email) : false;
         
         return {
           isPremium,

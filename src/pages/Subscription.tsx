@@ -8,12 +8,14 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from "@/hooks/use-toast";
 
 const Subscription = () => {
   const { data: subscription } = useUserSubscription();
   const { userTier, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const { getPatientsQuota, getMealPlansQuota } = useFeatureAccess();
   const patientsQuota = getPatientsQuota();
   const mealPlansQuota = getMealPlansQuota();
@@ -51,23 +53,49 @@ const Subscription = () => {
     try {
       const { data: session } = await supabase.auth.getSession();
       
+      if (!session?.session?.access_token) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para assinar.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      toast({
+        title: "Processando",
+        description: "Aguarde enquanto preparamos sua assinatura..."
+      });
+      
       const response = await fetch("https://lnyixnhsrovzdxybmjfa.supabase.co/functions/v1/create-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.session?.access_token || ""}`,
+          "Authorization": `Bearer ${session.session.access_token}`,
         },
         body: JSON.stringify({
           returnUrl: window.location.origin,
         }),
       });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao processar pagamento');
+      }
+      
       const data = await response.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error('URL de checkout não retornada pelo servidor');
       }
     } catch (error) {
       console.error("Error creating checkout session:", error);
+      toast({
+        title: "Erro ao processar pagamento",
+        description: error instanceof Error ? error.message : "Tente novamente mais tarde",
+        variant: "destructive"
+      });
     }
   };
   

@@ -52,7 +52,14 @@ serve(async (req) => {
     logStep("User authenticated", { id: user.id, email: user.email });
 
     // Parse request body
-    const { priceId = "price_1OjYjCHzfnR3nJy6kL0pPqEy", returnUrl } = await req.json();
+    // Use environment variable for priceId with fallback
+    const stripeMonthlyPriceId = Deno.env.get("STRIPE_MONTHLY_PRICE_ID");
+    const { priceId = stripeMonthlyPriceId, returnUrl } = await req.json();
+    
+    if (!priceId) {
+      throw new Error("No price ID provided and no default price ID set in environment variables");
+    }
+    
     logStep("Request params", { priceId, returnUrl });
     
     // Initialize Stripe
@@ -99,7 +106,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: priceId, // Use the provided price ID or default
+          price: priceId, // Use the provided price ID or default from environment variable
           quantity: 1,
         },
       ],
