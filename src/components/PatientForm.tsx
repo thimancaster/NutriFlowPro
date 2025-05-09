@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 import BasicInfoFields from './patient/BasicInfoFields';
 import GoalsFields from './patient/GoalsFields';
@@ -13,9 +13,10 @@ interface PatientFormProps {
   onSuccess?: () => void;
   editPatient?: any;
   onCancel?: () => void;
+  initialData?: any;
 }
 
-const PatientForm = ({ onSuccess, editPatient, onCancel }: PatientFormProps) => {
+const PatientForm = ({ onSuccess, editPatient, onCancel, initialData }: PatientFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +32,7 @@ const PatientForm = ({ onSuccess, editPatient, onCancel }: PatientFormProps) => 
     phone: '',
   });
 
-  // If we're editing a patient, populate the form
+  // If we're editing a patient or have initial data, populate the form
   useEffect(() => {
     if (editPatient) {
       setFormData({
@@ -46,8 +47,25 @@ const PatientForm = ({ onSuccess, editPatient, onCancel }: PatientFormProps) => 
       if (editPatient.birth_date) {
         setBirthDate(new Date(editPatient.birth_date));
       }
+    } else if (initialData) {
+      // Use data passed from calculator
+      setFormData({
+        name: initialData.name || '',
+        sex: initialData.gender === 'F' ? 'F' : 'M',
+        objective: initialData.objective || '',
+        profile: '',
+        email: '',
+        phone: '',
+      });
+      
+      if (initialData.age) {
+        // Set an approximate birth date based on age
+        const today = new Date();
+        const birthYear = today.getFullYear() - parseInt(initialData.age);
+        setBirthDate(new Date(birthYear, 0, 1));
+      }
     }
-  }, [editPatient]);
+  }, [editPatient, initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

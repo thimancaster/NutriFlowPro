@@ -30,8 +30,8 @@ export const handleSavePatient = async (
   setIsSavingPatient(true);
   
   try {
-    // Navigate to the patients page with data for registration
-    navigate('/patients', {
+    // Navigate to the patients/new page with data for registration
+    navigate('/patients/new', {
       state: {
         newPatient: {
           name: calculatorState.patientName,

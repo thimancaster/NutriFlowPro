@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Patients from './pages/Patients';
+import PatientNew from './pages/PatientNew'; // Add this import
 import PatientHistory from './components/PatientHistory'; 
 import Consultation from './pages/Consultation';
 import MealPlanGenerator from './pages/MealPlanGenerator';
@@ -125,6 +126,11 @@ function App() {
                   <Route path="/patients" element={
                     <ProtectedRoute>
                       <Patients />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/patients/new" element={
+                    <ProtectedRoute>
+                      <PatientNew />
                     </ProtectedRoute>
                   } />
                   <Route path="/appointments" element={

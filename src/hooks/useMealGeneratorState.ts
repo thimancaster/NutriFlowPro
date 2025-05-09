@@ -14,7 +14,7 @@ export const useMealGeneratorState = () => {
   const { toast } = useToast();
   const [mealPlan, setMealPlan] = useState<any>(null);
   const [generatorSettings, setGeneratorSettings] = useState<MealGeneratorSettings>({
-    numMeals: '6', // Updated to default to 6 meals
+    numMeals: '6', // Default to 6 meals
     totalCalories: '2000',
     dietType: 'balanced',
     restrictions: [] as string[]
