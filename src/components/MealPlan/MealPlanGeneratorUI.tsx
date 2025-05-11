@@ -15,6 +15,9 @@ interface MealPlanGeneratorUIProps {
   isSaving: boolean;
   handleMealPercentChange: (mealKey: string, newValue: number[]) => void;
   handleSaveMealPlan: () => Promise<void>;
+  handleAddMeal?: () => void;
+  handleRemoveMeal?: (mealKey: string) => void;
+  handleChangeMealName?: (mealKey: string, newName: string) => void;
 }
 
 const MealPlanGeneratorUI = ({
@@ -25,6 +28,9 @@ const MealPlanGeneratorUI = ({
   isSaving,
   handleMealPercentChange,
   handleSaveMealPlan,
+  handleAddMeal,
+  handleRemoveMeal,
+  handleChangeMealName,
 }: MealPlanGeneratorUIProps) => {
   // Convert string values to numbers if needed
   const parseNumericValue = (value: string | number | undefined): number | undefined => {
@@ -61,6 +67,9 @@ const MealPlanGeneratorUI = ({
         mealDistribution={mealDistribution} 
         totalMealPercent={totalMealPercent}
         onMealPercentChange={handleMealPercentChange}
+        onAddMeal={handleAddMeal}
+        onRemoveMeal={handleRemoveMeal}
+        onChangeMealName={handleChangeMealName}
       />
       
       {totalMealPercent !== 100 && (

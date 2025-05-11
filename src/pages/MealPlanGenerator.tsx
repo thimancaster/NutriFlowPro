@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -52,7 +53,9 @@ const MealPlanGenerator = () => {
     totalMealPercent,
     isSaving,
     handleMealPercentChange,
-    handleSaveMealPlan
+    handleSaveMealPlan,
+    addMeal,
+    removeMeal
   } = useMealPlanState({
     activePatient: activePatient || (location.state?.patient as AppPatient),
     consultationData: consultationData || (location.state?.consultation as AppConsultationData),
@@ -69,10 +72,28 @@ const MealPlanGenerator = () => {
       return acc;
     }, {} as Record<string, MealDistributionItem>) : {};
 
-  // Adapter function to convert between array and record approaches
+  // Adapter functions to convert between array and record approaches
   const handleMealPercentChangeAdapter = (mealKey: string, newValue: number[]) => {
     // Just use the first value in the array since our actual implementation uses a single number
     handleMealPercentChange(mealKey, newValue[0]);
+  };
+  
+  const handleRemoveMealAdapter = (mealKey: string) => {
+    removeMeal(mealKey);
+  };
+  
+  const handleChangeMealNameAdapter = (mealKey: string, newName: string) => {
+    // Update the meal name in the array
+    const updatedMealDistribution = mealDistribution.map(meal => 
+      meal.id === mealKey ? { ...meal, name: newName } : meal
+    );
+    
+    // Using the setter function from useState directly as we don't have a dedicated function for this
+    mealDistribution.forEach((meal, index) => {
+      if (meal.id === mealKey) {
+        meal.name = newName;
+      }
+    });
   };
 
   // If we don't have consultation data but have it in location state, use it
@@ -141,6 +162,9 @@ const MealPlanGenerator = () => {
               isSaving={isSaving}
               handleMealPercentChange={handleMealPercentChangeAdapter}
               handleSaveMealPlan={handleSaveMealPlan}
+              handleAddMeal={addMeal}
+              handleRemoveMeal={handleRemoveMealAdapter}
+              handleChangeMealName={handleChangeMealNameAdapter}
             />
           )}
           

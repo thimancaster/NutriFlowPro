@@ -27,15 +27,37 @@ export const useMealPlanState = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Initialize meal distribution state
+  // Initialize meal distribution with multiple default meals instead of just one
   const [mealDistribution, setMealDistribution] = useState<MealDistributionItem[]>(
     mealPlan?.mealDistribution || 
     [
       {
         id: uuidv4(),
         name: 'Café da manhã',
-        percentage: 20,
-        percent: 20, // For compatibility with existing code
+        percentage: 25,
+        percent: 25,
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        suggestions: []
+      },
+      {
+        id: uuidv4(),
+        name: 'Almoço',
+        percentage: 40,
+        percent: 40,
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        suggestions: []
+      },
+      {
+        id: uuidv4(),
+        name: 'Jantar',
+        percentage: 35,
+        percent: 35,
         calories: 0,
         protein: 0,
         carbs: 0,
