@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
 import { storageUtils } from '@/utils/storageUtils';
 import { DatabaseService } from '@/services/databaseService';

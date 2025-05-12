@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatient } from './PatientContext';
 import { useConsultationData } from './ConsultationDataContext';
