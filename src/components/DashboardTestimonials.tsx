@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Heart } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -59,41 +58,41 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
     };
   }, [emblaApi]);
 
-  // Imediatamente usar testemunhos de fallback
+  // Immediately use testimonial fallbacks
   useEffect(() => {
     setFallbackTestimonials(getTestimonials());
   }, []);
   
-  // Carrega os depoimentos do banco de dados com tratamento de erro melhorado
+  // Load testimonials from database with improved error handling
   const { data: dbTestimonials, isLoading, error } = useQuery<Testimonial[]>({
     queryKey: ['testimonials'],
     queryFn: async () => {
       try {
-        // Adiciona seleção explícita de colunas e limita a quantidade
+        // Add explicit column selection and limit the quantity
         const { data, error } = await supabase
           .from('testimonials')
           .select('id,name,role,content,approved,rating')
           .eq('approved', true)
-          .limit(10) // Limita a 10 para performance
+          .limit(10) // Limit to 10 for performance
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.warn('Erro ao buscar depoimentos:', error);
+          console.warn('Error fetching testimonials:', error);
           return [];
         }
 
         return data || [];
       } catch (err) {
-        console.warn('Erro na consulta de depoimentos:', err);
+        console.warn('Error in testimonial query:', err);
         return [];
       }
     },
-    retry: 1, // Reduz tentativas para melhorar performance
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
-    cacheTime: 10 * 60 * 1000, // Mantém no cache por 10 minutos
+    retry: 1, // Reduce retries to improve performance
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes (replaced cacheTime)
   });
 
-  // Determina quais depoimentos mostrar: banco de dados ou fallback
+  // Determine which testimonials to show: database or fallback
   const testimonials = (dbTestimonials && dbTestimonials.length > 0) 
     ? dbTestimonials 
     : fallbackTestimonials;
