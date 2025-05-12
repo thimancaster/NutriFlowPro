@@ -1,9 +1,9 @@
 
 import React, { createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PatientProvider, usePatient } from './PatientContext';
-import { ConsultationDataProvider, useConsultationData } from './ConsultationDataContext';
-import { MealPlanProvider, useMealPlan } from './MealPlanContext';
+import { usePatient } from './PatientContext';
+import { useConsultationData } from './ConsultationDataContext';
+import { useMealPlan } from './MealPlanContext';
 import { Patient } from '@/types';
 
 interface ConsultationContextType {
@@ -22,8 +22,8 @@ interface ConsultationContextType {
 
 const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
 
-// Inner provider that uses the individual context hooks
-const InnerConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Main provider that uses the individual context hooks
+export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const { activePatient, setActivePatient, endPatientSession } = usePatient();
   const { consultationData, setConsultationData, saveConsultation } = useConsultationData();
@@ -61,21 +61,6 @@ const InnerConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     >
       {children}
     </ConsultationContext.Provider>
-  );
-};
-
-// Main provider that combines all three context providers
-export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <PatientProvider>
-      <ConsultationDataProvider>
-        <MealPlanProvider>
-          <InnerConsultationProvider>
-            {children}
-          </InnerConsultationProvider>
-        </MealPlanProvider>
-      </ConsultationDataProvider>
-    </PatientProvider>
   );
 };
 
