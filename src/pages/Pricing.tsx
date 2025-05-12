@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import Layout from '@/components/Layout';
 import { Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Pricing = () => {
@@ -42,7 +43,44 @@ const Pricing = () => {
           </p>
         </div>
         
-        <div className="space-y-8 lg:grid lg:grid-cols-2 sm:gap-6 xl:gap-10 lg:space-y-0 max-w-5xl mx-auto">
+        <div className="space-y-8 lg:grid lg:grid-cols-3 sm:gap-6 xl:gap-10 lg:space-y-0 max-w-6xl mx-auto">
+          {/* Plano Free */}
+          <Card className="border-gray-200 hover:shadow-md transition-shadow flex flex-col">
+            <CardHeader className="bg-gray-50 rounded-t-lg border-b p-6">
+              <CardTitle className="text-xl font-medium">Plano Free</CardTitle>
+              <div className="mt-4">
+                <span className="text-3xl font-semibold text-gray-900">Gratuito</span>
+              </div>
+              <CardDescription className="text-sm text-gray-500 mt-1">
+                Acesso básico às funcionalidades
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 flex-grow">
+              <ul className="space-y-4">
+                <li className="flex space-x-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Até 10 pacientes</span>
+                </li>
+                <li className="flex space-x-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Calculadora nutricional básica</span>
+                </li>
+                <li className="flex space-x-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Histórico básico de consultas</span>
+                </li>
+              </ul>
+            </CardContent>
+            <CardFooter className="bg-gray-50 rounded-b-lg p-6">
+              <Link
+                to="/signup"
+                className="w-full bg-gray-500 text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-gray-600 transition-colors"
+              >
+                Comece Agora
+              </Link>
+            </CardFooter>
+          </Card>
+          
           {/* Plano Mensal */}
           <Card className="border-gray-200 hover:shadow-md transition-shadow flex flex-col">
             <CardHeader className="bg-gray-50 rounded-t-lg border-b p-6">

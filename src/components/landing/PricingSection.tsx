@@ -36,13 +36,52 @@ const PricingSection = () => {
           </p>
         </div>
         
-        <div className="flex flex-wrap justify-center gap-8 max-w-5xl mx-auto">
-          {/* Plano Mensal */}
+        <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+          {/* Plano Free */}
           <motion.div 
-            className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 w-full md:w-[calc(50%-1rem)] flex flex-col"
+            className="bg-white rounded-xl shadow-md p-8 border border-gray-200 w-full md:w-[calc(33%-1rem)] flex flex-col"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Plano Free</h3>
+              <p className="text-nutri-blue text-2xl font-bold mt-4">Gratuito</p>
+              <p className="text-gray-500 mt-2">Acesso básico</p>
+            </div>
+            
+            <ul className="space-y-3 mb-8 flex-grow">
+              <li className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Cadastro de até 10 pacientes</span>
+              </li>
+              <li className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Calculadora nutricional básica</span>
+              </li>
+              <li className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Histórico básico de consultas</span>
+              </li>
+            </ul>
+            
+            <div className="mt-auto">
+              <Link
+                to="/signup"
+                className="w-full bg-gray-500 text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-gray-600 transition-colors"
+              >
+                Comece Agora
+              </Link>
+            </div>
+          </motion.div>
+          
+          {/* Plano Mensal */}
+          <motion.div 
+            className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 w-full md:w-[calc(33%-1rem)] flex flex-col"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
           >
             <div className="text-center mb-6">
@@ -83,7 +122,7 @@ const PricingSection = () => {
           
           {/* Plano Anual - Com desconto */}
           <motion.div 
-            className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-xl p-8 border-2 border-nutri-blue relative w-full md:w-[calc(50%-1rem)] flex flex-col"
+            className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-xl p-8 border-2 border-nutri-blue relative w-full md:w-[calc(33%-1rem)] flex flex-col"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
