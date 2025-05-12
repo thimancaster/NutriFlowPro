@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
@@ -12,21 +13,19 @@ const SubscriptionSettings = () => {
   const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
   const { user, isPremium: isUserPremium } = useAuthState();
   const navigate = useNavigate();
+  const hasRefetched = useRef(false);
 
-  // Force refresh subscription data when component mounts
+  // Force refresh subscription data when component mounts, only once
   useEffect(() => {
-    refetchSubscription();
-  }, [refetchSubscription]);
+    if (!hasRefetched.current && !isLoading) {
+      refetchSubscription();
+      hasRefetched.current = true;
+    }
+  }, [refetchSubscription, isLoading]);
   
   // Use the central verification from useAuthState hook combined with subscription data
   const isPremium = React.useMemo(() => {
-    const result = isUserPremium || (subscription?.isPremium || false);
-    console.log("Status premium em SubscriptionSettings:", { 
-      final: result, 
-      authPremium: isUserPremium, 
-      subscriptionPremium: subscription?.isPremium
-    });
-    return result;
+    return isUserPremium || (subscription?.isPremium || false);
   }, [isUserPremium, subscription?.isPremium]);
 
   // Format date helper function

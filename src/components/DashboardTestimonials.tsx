@@ -32,9 +32,9 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
   const [fallbackTestimonials, setFallbackTestimonials] = useState<Testimonial[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // Setup autoplay plugin
+  // Setup autoplay plugin with reduced polling for performance
   const autoplayOptions = {
-    delay: 7000, // 7 seconds per slide for reading time
+    delay: 10000, // 10 seconds per slide for reading time (increased from 7s)
     stopOnInteraction: true, // Stop on user interaction
     rootNode: (emblaRoot: any) => emblaRoot.parentElement, // Needed for proper functioning
   };
@@ -58,42 +58,40 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({ showTitle
       emblaApi.off("select", onSelect);
     };
   }, [emblaApi]);
+
+  // Imediatamente usar testemunhos de fallback
+  useEffect(() => {
+    setFallbackTestimonials(getTestimonials());
+  }, []);
   
-  // Carrega os depoimentos do banco de dados
-  const { data: dbTestimonials, isLoading, error, refetch } = useQuery<Testimonial[]>({
+  // Carrega os depoimentos do banco de dados com tratamento de erro melhorado
+  const { data: dbTestimonials, isLoading, error } = useQuery<Testimonial[]>({
     queryKey: ['testimonials'],
     queryFn: async () => {
-      console.log('Fetching testimonials from database...');
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('*')
-        .eq('approved', true)
-        .order('created_at', { ascending: false });
+      try {
+        // Adiciona seleção explícita de colunas e limita a quantidade
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('id,name,role,content,approved,rating')
+          .eq('approved', true)
+          .limit(10) // Limita a 10 para performance
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching testimonials:', error);
-        throw new Error('Erro ao carregar depoimentos do banco');
+        if (error) {
+          console.warn('Erro ao buscar depoimentos:', error);
+          return [];
+        }
+
+        return data || [];
+      } catch (err) {
+        console.warn('Erro na consulta de depoimentos:', err);
+        return [];
       }
-
-      console.log('Testimonials fetched from database:', data?.length || 0);
-      return data || [];
     },
-    retry: 3,
-    staleTime: 60000, // 1 minute
+    retry: 1, // Reduz tentativas para melhorar performance
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+    cacheTime: 10 * 60 * 1000, // Mantém no cache por 10 minutos
   });
-
-  // Usar depoimentos de fallback caso o banco de dados não tenha dados - carrega automaticamente
-  useEffect(() => {
-    if ((dbTestimonials && dbTestimonials.length === 0) || error) {
-      console.log('Using fallback testimonials since database returned no data');
-      setFallbackTestimonials(getTestimonials());
-      
-      // Tenta semear os depoimentos automaticamente sem exibir toast
-      forceSeedTestimonials().catch(err => {
-        console.error('Error auto-seeding testimonials:', err);
-      });
-    }
-  }, [dbTestimonials, error]);
 
   // Determina quais depoimentos mostrar: banco de dados ou fallback
   const testimonials = (dbTestimonials && dbTestimonials.length > 0) 

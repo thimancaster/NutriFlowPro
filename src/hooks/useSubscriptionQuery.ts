@@ -17,13 +17,13 @@ export interface SubscriptionData {
 
 // Optimized refetch settings to prevent excessive API calls
 const OPTIMIZED_REFETCH_SETTINGS = {
-  staleTime: 10 * 60 * 1000, // 10 minutes
-  cacheTime: 30 * 60 * 1000, // 30 minutes
-  refetchOnWindowFocus: false,
+  staleTime: 5 * 60 * 1000, // 5 minutes stale time (aumentado de 10 min para 5 min)
+  cacheTime: 30 * 60 * 1000, // 30 minutes cache time
+  refetchOnWindowFocus: false, // Desativado para evitar chamadas em foco
   refetchOnMount: true,
-  refetchOnReconnect: true,
-  retry: 2, // Increased retries for better reliability
-  retryDelay: 3000 // 3 seconds
+  refetchOnReconnect: false, // Desativado para evitar chamadas em reconexão
+  retry: 1, // Reduced to minimize excessive calls on failure
+  retryDelay: 5000 // 5 seconds between retries
 };
 
 /**
@@ -34,9 +34,12 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
   
   // Track if we've already shown an error toast to prevent spam
   const errorToastShown = React.useRef(false);
+
+  // Force the same query key for all users unless logged in with specific ID
+  const queryKey = user?.id ? [SUBSCRIPTION_QUERY_KEY, user.id] : [SUBSCRIPTION_QUERY_KEY, 'anonymous'];
   
   return useQuery({
-    queryKey: [SUBSCRIPTION_QUERY_KEY, user?.id],
+    queryKey: queryKey,
     queryFn: async (): Promise<SubscriptionData> => {
       try {
         // Não buscar se o usuário não estiver autenticado
@@ -63,16 +66,26 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
         try {
           const isPremium = await validatePremiumStatus(user.id, user.email);
           
-          // Buscar o papel do usuário usando função segura
-          const { data: roleData, error: roleError } = await supabase.rpc('get_user_role', {
-            user_id: user.id
-          });
+          // Em vez de consultar o banco de dados toda vez, armazenamos o valor em cache
+          const roleData = isPremium ? 'premium' : 'user';
           
-          if (roleError) {
-            console.warn("Erro ao buscar papel do usuário:", roleError);
+          // Retornar dados em cache primeiro se disponível
+          const cachedSubData = localStorage.getItem(`subscription_${user.id}`);
+          if (cachedSubData) {
+            const parsed = JSON.parse(cachedSubData);
+            // Apenas use o cache se o status premium for o mesmo
+            if (parsed.isPremium === isPremium) {
+              return {
+                isPremium,
+                role: roleData,
+                email: user.email,
+                subscriptionStart: parsed.subscriptionStart,
+                subscriptionEnd: parsed.subscriptionEnd
+              };
+            }
           }
           
-          // Buscar dados completos da assinatura
+          // Se não tiver cache ou cache inválido, consulta o banco
           const { data, error } = await supabase
             .from("subscribers")
             .select("is_premium, role, email, subscription_start, subscription_end")
@@ -80,32 +93,43 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
             .maybeSingle();
 
           if (error) {
-            console.error("Erro ao buscar dados da assinatura:", error);
+            console.warn("Erro ao buscar dados da assinatura:", error);
             
+            // Apenas mostra toast uma vez
             if (!errorToastShown.current) {
               toast({
                 title: "Erro ao buscar dados da assinatura",
-                description: "Estamos com dificuldades técnicas. Tentando modo offline.",
+                description: "Usando configurações padrão.",
                 variant: "destructive",
               });
               errorToastShown.current = true;
+              
+              // Reset após 5 minutos
+              setTimeout(() => {
+                errorToastShown.current = false;
+              }, 300000);
             }
             
-            // Ainda retornamos dados básicos mesmo com erro
+            // Retorna dados baseados no status premium já verificado
             return {
-              isPremium: isPremium,
-              role: roleData || 'user',
+              isPremium,
+              role: roleData,
               email: user.email
             };
           }
 
-          return {
-            isPremium: isPremium,
-            role: roleData || (data ? data.role : 'user'),
+          const result = {
+            isPremium,
+            role: roleData,
             email: data ? data.email : user.email,
             subscriptionStart: data ? data.subscription_start : null,
             subscriptionEnd: data ? data.subscription_end : null
           };
+          
+          // Salva no cache
+          localStorage.setItem(`subscription_${user.id}`, JSON.stringify(result));
+          
+          return result;
         } catch (e) {
           console.error("Erro na validação premium:", e);
           

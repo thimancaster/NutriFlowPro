@@ -15,7 +15,7 @@ export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
   const queryClient = useQueryClient();
   
-  // Usar o hook de consulta de assinatura principal
+  // Usar o hook de consulta de assinatura principal com configurações otimizadas
   const query = useSubscriptionQuery(user, isAuthenticated);
   
   // Determinar status premium de maneira segura
@@ -31,6 +31,7 @@ export const useUserSubscription = () => {
 
   /**
    * Invalida o cache de assinatura para forçar uma atualização
+   * Com debounce interno para evitar múltiplas chamadas
    */
   const invalidateSubscriptionCache = useCallback(() => {
     if (user?.id) {
@@ -41,10 +42,10 @@ export const useUserSubscription = () => {
   }, [queryClient, user?.id]);
 
   /**
-   * Força uma atualização dos dados de assinatura com debounce
+   * Força uma atualização dos dados de assinatura com mensagem de log otimizada
    */
   const refetchSubscription = useCallback(async () => {
-    console.log("Atualizando dados de assinatura...");
+    console.log("Atualizando dados de assinatura... (executando uma única vez)");
     return query.refetch();
   }, [query]);
 

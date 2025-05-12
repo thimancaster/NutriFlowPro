@@ -52,7 +52,37 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
+
+    // Verificar se o usuário já tem dados de assinatura recentes (menos de 5 minutos)
+    const { data: existingSubscriber } = await supabaseClient
+      .from("subscribers")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    // Se temos dados recentes (nos últimos 5 minutos), retorne-os sem consultar o Stripe
+    if (existingSubscriber) {
+      const updatedAtTime = new Date(existingSubscriber.updated_at).getTime();
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+      
+      if (updatedAtTime > fiveMinutesAgo) {
+        logStep("Using recently cached subscription data", { 
+          userId: user.id, 
+          isPremium: existingSubscriber.is_premium 
+        });
+        
+        return new Response(JSON.stringify({ 
+          subscribed: existingSubscriber.is_premium,
+          subscription_tier: existingSubscriber.role,
+          subscription_end: existingSubscriber.subscription_end,
+          cached: true
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
 
     // Check for premium emails first
     const isPremiumEmail = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(user.email);
@@ -68,6 +98,7 @@ serve(async (req) => {
         subscription_start: new Date().toISOString(),
         subscription_end: null, // No end date for special emails
         updated_at: new Date().toISOString(),
+        payment_status: 'active'
       }, { onConflict: 'user_id' });
       
       logStep("Updated database for premium email user");
@@ -93,6 +124,7 @@ serve(async (req) => {
         stripe_customer_id: null,
         is_premium: false,
         role: 'user',
+        payment_status: 'none',
         subscription_end: null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
@@ -143,6 +175,7 @@ serve(async (req) => {
       stripe_customer_id: customerId,
       is_premium: hasActiveSub,
       role: hasActiveSub ? 'premium' : 'user',
+      payment_status: hasActiveSub ? 'active' : 'none',
       subscription_end: subscriptionEnd,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
