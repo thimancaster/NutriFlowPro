@@ -1,36 +1,42 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 import { Json } from '@/integrations/supabase/types';
 
 // Helper to convert database record to a Patient object
 const convertDbToPatient = (dbRecord: any): Patient => {
-  // Parse JSON strings back to objects
+  // Handle address - could be a string (from DB) or already an object
   let address = dbRecord.address;
   if (typeof address === 'string') {
     try {
       address = JSON.parse(address);
     } catch (e) {
-      // If parsing fails, initialize with empty object that matches the Patient interface
+      // If parsing fails, initialize with empty object
       address = {};
     }
+  } else if (!address) {
+    // If address is null/undefined
+    address = {};
   }
   
+  // Handle goals - could be a string (from DB) or already an object
   let goals = dbRecord.goals;
   if (typeof goals === 'string') {
     try {
       goals = JSON.parse(goals);
     } catch (e) {
-      // If parsing fails, initialize with empty object that matches the Patient interface
+      // If parsing fails, initialize with empty object
       goals = { objective: undefined, profile: undefined };
     }
+  } else if (!goals) {
+    // If goals is null/undefined
+    goals = { objective: undefined, profile: undefined };
   }
   
   // Ensure we have the correct structure for a Patient object
   const patient: Patient = {
     ...dbRecord,
-    address: address || {},
-    goals: goals || {}
+    address: address as any, // We'll fix the type here
+    goals: goals as any // We'll fix the type here
   };
 
   return patient;
@@ -58,11 +64,14 @@ export class PatientService {
         dbPatientData.goals = JSON.stringify(dbPatientData.goals);
       }
       
+      // Remove any non-database fields
+      const { secondaryPhone, cpf, ...cleanedData } = dbPatientData;
+      
       if (patientData.id) {
         // Update existing patient
         const { error } = await supabase
           .from('patients')
-          .update(dbPatientData)
+          .update(cleanedData)
           .eq('id', patientData.id);
           
         if (error) throw error;
@@ -73,11 +82,11 @@ export class PatientService {
         };
       } else {
         // Create new patient
-        dbPatientData.created_at = new Date().toISOString();
+        cleanedData.created_at = new Date().toISOString();
         
         const { data, error } = await supabase
           .from('patients')
-          .insert(dbPatientData)
+          .insert(cleanedData)
           .select('id')
           .single();
           

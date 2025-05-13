@@ -11,14 +11,24 @@ export const usePatientDetail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const openPatientDetail = async (patient: Patient) => {
-    setPatientId(patient.id);
+  // This function can now accept either a Patient object or a string ID
+  const openPatientDetail = async (patientInput: Patient | string) => {
+    // If the input is a string, it's a patient ID
+    let id: string;
+    if (typeof patientInput === 'string') {
+      id = patientInput;
+    } else {
+      // It's a Patient object
+      id = patientInput.id;
+    }
+    
+    setPatientId(id);
     setIsLoading(true);
     setIsModalOpen(true);
 
     try {
       // Fetch the latest patient data to ensure we have the most up-to-date information
-      const result = await PatientService.getPatient(patient.id);
+      const result = await PatientService.getPatient(id);
       
       if (result.success) {
         setPatient(result.data);
@@ -32,7 +42,11 @@ export const usePatientDetail = () => {
         description: 'Não foi possível carregar os detalhes do paciente.',
         variant: 'destructive',
       });
-      setPatient(patient); // Fallback to the provided patient data
+      
+      // If we have a patient object as input, use it as fallback
+      if (typeof patientInput !== 'string') {
+        setPatient(patientInput);
+      }
     } finally {
       setIsLoading(false);
     }

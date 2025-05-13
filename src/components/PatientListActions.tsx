@@ -9,7 +9,7 @@ import PatientStatusActions from './patient/PatientStatusActions';
 
 interface PatientListActionsProps {
   patient: Patient;
-  onViewDetail?: (patientId: string) => void;
+  onViewDetail?: (patientIdOrPatient: string | Patient) => void;
   onStatusChange?: () => void;
 }
 
@@ -31,7 +31,7 @@ const PatientListActions: React.FC<PatientListActionsProps> = ({
   
   const handleViewDetail = () => {
     if (onViewDetail) {
-      onViewDetail(patient.id);
+      onViewDetail(patient);
     }
   };
   

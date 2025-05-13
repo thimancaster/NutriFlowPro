@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -85,7 +84,7 @@ const Patients = () => {
     setFilters({ ...filters, status: value, page: 1 });
   };
 
-  const handleFilterChange = (newFilters: Partial<PatientFiltersType>) => {
+  const handleFiltersChange = (newFilters: PatientFiltersType) => {
     setFilters({ ...filters, ...newFilters, page: 1 });
   };
 
@@ -148,7 +147,8 @@ const Patients = () => {
             
             <PatientFilters 
               filters={filters} 
-              onFilterChange={handleFilterChange} 
+              onFiltersChange={handleFiltersChange} 
+              onSearch={fetchPatients}
             />
           </div>
         </CardHeader>
