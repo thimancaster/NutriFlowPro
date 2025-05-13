@@ -3,34 +3,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 import { Json } from '@/integrations/supabase/types';
 
-// Helper to convert a Patient object to a database-friendly format
-const convertPatientForDb = (patient: Partial<Patient>) => {
-  // Convert complex objects like address and goals to JSON strings for Supabase
-  const dbPatient: any = {
-    ...patient,
-    // Convert address object to string JSON for storage if it exists
-    address: patient.address ? JSON.stringify(patient.address) : null,
-    // Convert goals object to string JSON for storage if it exists
-    goals: patient.goals ? JSON.stringify(patient.goals) : null
-  };
-
-  return dbPatient;
-};
-
 // Helper to convert database record to a Patient object
 const convertDbToPatient = (dbRecord: any): Patient => {
   // Parse JSON strings back to objects
-  const patient = {
+  let address = dbRecord.address;
+  if (typeof address === 'string') {
+    try {
+      address = JSON.parse(address);
+    } catch (e) {
+      address = null;
+    }
+  }
+  
+  let goals = dbRecord.goals;
+  if (typeof goals === 'string') {
+    try {
+      goals = JSON.parse(goals);
+    } catch (e) {
+      goals = null;
+    }
+  }
+  
+  const patient: Patient = {
     ...dbRecord,
-    // Parse address JSON string back to object if it exists
-    address: dbRecord.address ? 
-      (typeof dbRecord.address === 'string' ? JSON.parse(dbRecord.address) : dbRecord.address) : 
-      undefined,
-    // Parse goals JSON string back to object if it exists
-    goals: dbRecord.goals ? 
-      (typeof dbRecord.goals === 'string' ? JSON.parse(dbRecord.goals) : dbRecord.goals) : 
-      undefined
-  } as Patient;
+    address,
+    goals
+  };
 
   return patient;
 };
@@ -44,14 +42,22 @@ export class PatientService {
       // Set updated_at timestamp
       patientData.updated_at = new Date().toISOString();
       
-      // Format data for database
-      const dbPatient = convertPatientForDb(patientData);
+      // Format address for database - convert to string if it's an object
+      let dbPatientData = { ...patientData };
+      if (dbPatientData.address && typeof dbPatientData.address === 'object') {
+        dbPatientData.address = JSON.stringify(dbPatientData.address);
+      }
+      
+      // Format goals for database - convert to string if it's an object
+      if (dbPatientData.goals && typeof dbPatientData.goals === 'object') {
+        dbPatientData.goals = JSON.stringify(dbPatientData.goals);
+      }
       
       if (patientData.id) {
         // Update existing patient
         const { data, error } = await supabase
           .from('patients')
-          .update(dbPatient)
+          .update(dbPatientData)
           .eq('id', patientData.id);
           
         if (error) throw error;
@@ -62,11 +68,11 @@ export class PatientService {
         };
       } else {
         // Create new patient
-        patientData.created_at = new Date().toISOString();
+        dbPatientData.created_at = new Date().toISOString();
         
         const { data, error } = await supabase
           .from('patients')
-          .insert(dbPatient)
+          .insert(dbPatientData)
           .select('id')
           .single();
           
