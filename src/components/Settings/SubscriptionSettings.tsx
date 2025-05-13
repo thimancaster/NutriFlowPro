@@ -89,7 +89,7 @@ const SubscriptionSettings = () => {
               {isPremium ? (
                 <>
                   <p className="text-sm text-amber-700 mt-1">
-                    Acesso a todas as funcionalidades premium
+                    <span className="font-semibold">R$ 57,90/mês</span> - Acesso a todas as funcionalidades premium
                   </p>
                   <div className="mt-3 space-y-1">
                     <p className="text-xs flex items-center text-amber-700">
@@ -155,9 +155,31 @@ const SubscriptionSettings = () => {
         </div>
       ) : (
         <div className="space-y-4">
+          <div className="border border-blue-100 bg-blue-50 p-3 rounded-md">
+            <h4 className="text-sm font-medium text-blue-800 flex items-center">
+              <Star className="h-4 w-4 mr-1.5 text-blue-600" />
+              Planos disponíveis
+            </h4>
+            <ul className="mt-2 space-y-2">
+              <li className="text-xs text-blue-700 flex items-center justify-between">
+                <span className="flex items-center">
+                  <Check className="h-3 w-3 mr-1.5" />
+                  Plano Mensal
+                </span>
+                <span className="font-semibold">R$ 57,90/mês</span>
+              </li>
+              <li className="text-xs text-blue-700 flex items-center justify-between">
+                <span className="flex items-center">
+                  <Check className="h-3 w-3 mr-1.5" />
+                  Plano Anual <span className="text-green-600 ml-1">(economia de 20%)</span>
+                </span>
+                <span className="font-semibold">R$ 557,00/ano</span>
+              </li>
+            </ul>
+          </div>
           <Button
             onClick={() => navigate('/subscription')}
-            className="w-full bg-nutri-blue hover:bg-nutri-blue-dark flex items-center justify-center"
+            className="w-full bg-nutri-blue hover:bg-nutri-blue-dark flex items-center justify-center transition duration-200 ease-in-out transform hover:scale-105"
           >
             Fazer upgrade para Premium <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

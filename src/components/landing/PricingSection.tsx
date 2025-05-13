@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { CheckCircle, Star } from 'lucide-react';
+import { CheckCircle, Star, Shield, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -111,7 +111,7 @@ const PricingSection = () => {
             <div className="mt-auto">
               <a 
                 href="https://pay.hotmart.com/COD_MONTHLY?checkoutMode=2" 
-                className="w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-nutri-blue-dark transition-colors"
+                className="w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-nutri-blue-dark transition-colors transform hover:scale-105 duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -159,12 +159,16 @@ const PricingSection = () => {
                 <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
                 <span className="text-gray-600">Suporte premium prioritário</span>
               </li>
+              <li className="flex items-center">
+                <Shield className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Acesso a treinamentos exclusivos</span>
+              </li>
             </ul>
             
             <div className="mt-auto">
               <a 
                 href="https://pay.hotmart.com/C99693448A?checkoutMode=2" 
-                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-600 transition-colors"
+                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-600 transition-colors transform hover:scale-105 duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -174,9 +178,12 @@ const PricingSection = () => {
           </motion.div>
         </div>
         
-        <div className="text-center mt-10 text-gray-500 text-sm">
-          <p>Acesso imediato após a confirmação do pagamento</p>
-          <p className="mt-2">7 dias de garantia de devolução do dinheiro</p>
+        <div className="text-center mt-10">
+          <p className="text-gray-500 text-sm">Acesso imediato após a confirmação do pagamento</p>
+          <p className="mt-2 text-gray-500 text-sm flex items-center justify-center">
+            <Award className="h-4 w-4 mr-2 text-nutri-green" />
+            7 dias de garantia de devolução do dinheiro
+          </p>
         </div>
       </div>
     </section>

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Loader2, ArrowRight, Apple } from 'lucide-react';
+import { Loader2, ArrowRight, Apple, Lock, Mail } from 'lucide-react';
 
 interface LoginFormProps {
   onGoogleLogin: () => void;
@@ -68,29 +68,33 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
   };
 
   return (
-    <div>
+    <div className="px-6 py-8 sm:px-8">
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-blue-100 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-blue-100 mb-1 flex items-center">
+            <Mail className="h-4 w-4 mr-1.5 text-blue-200" />
             E-mail
           </label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
-            placeholder="seu@email.com"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pl-3 transition-all duration-200 hover:bg-white/30"
+              placeholder="seu@email.com"
+              required
+            />
+          </div>
         </div>
 
         <div>
           <div className="flex justify-between mb-1">
-            <label htmlFor="password" className="block text-sm font-medium text-blue-100">
+            <label htmlFor="password" className="block text-sm font-medium text-blue-100 flex items-center">
+              <Lock className="h-4 w-4 mr-1.5 text-blue-200" />
               Senha
             </label>
-            <Link to="/forgot-password" className="text-sm text-blue-200 hover:text-white">
+            <Link to="/forgot-password" className="text-sm text-blue-200 hover:text-white transition-colors">
               Esqueci minha senha
             </Link>
           </div>
@@ -99,7 +103,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
+            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pl-3 transition-all duration-200 hover:bg-white/30"
             placeholder="••••••••"
             required
           />
@@ -107,7 +111,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
 
         <Button
           type="submit"
-          className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium"
+          className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -130,7 +134,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
             <div className="w-full border-t border-blue-200/30"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-nutri-blue px-2 text-blue-200">ou continue com</span>
+            <span className="bg-nutri-blue/0 backdrop-blur-sm px-2 text-blue-200">ou continue com</span>
           </div>
         </div>
       </div>
@@ -138,7 +142,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
       <div className="grid grid-cols-2 gap-3">
         <Button 
           variant="outline" 
-          className="bg-transparent border-white text-white hover:bg-white hover:text-nutri-blue"
+          className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
           onClick={handleGoogleLogin}
           disabled={isGoogleLoading}
         >
@@ -168,7 +172,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
         </Button>
         <Button 
           variant="outline" 
-          className="bg-transparent border-white text-white hover:bg-white hover:text-nutri-blue"
+          className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
           onClick={() => toast({
             title: "Login com Apple",
             description: "Esta funcionalidade está disponível apenas para iOS.",
@@ -182,7 +186,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
       <div className="mt-8 text-center">
         <p className="text-blue-100">
           Não tem uma conta?{" "}
-          <Link to="/register" className="text-white hover:underline font-medium">
+          <Link to="/register" className="text-white hover:underline font-medium transition-colors">
             Criar conta
           </Link>
         </p>

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Star, Check, ArrowRight, Crown, X } from 'lucide-react';
+import { Star, Check, ArrowRight, Crown, X, Shield } from 'lucide-react';
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -152,7 +152,7 @@ const Subscription = () => {
         </div>
         
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Plano Gratuito */}
           <div className={`bg-white rounded-xl shadow-lg p-8 border ${!isPremium ? 'border-blue-300 ring-2 ring-blue-200' : 'border-gray-200'}`}>
             <div className="text-center mb-6">
@@ -188,14 +188,14 @@ const Subscription = () => {
             </Button>
           </div>
           
-          {/* Plano Premium */}
+          {/* Plano Mensal */}
           <div className={`${isPremium ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-gray-200'} rounded-xl shadow-lg p-8 border`}>
             <div className="text-center mb-6">
               <div className="flex justify-center items-center mb-2">
                 <Crown className={`h-6 w-6 ${isPremium ? 'text-amber-500' : 'text-gray-400'} mr-2`} />
-                <h2 className="text-2xl font-bold text-gray-800">Plano Premium</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Plano Mensal</h2>
               </div>
-              <p className="text-3xl font-bold text-nutri-blue">R$ 97,00<span className="text-lg font-normal text-gray-500">/mês</span></p>
+              <p className="text-3xl font-bold text-nutri-blue">R$ 57,90<span className="text-lg font-normal text-gray-500">/mês</span></p>
               {isPremium && (
                 <div className="mt-2 inline-block bg-amber-100 text-amber-800 px-2 py-1 rounded text-sm">
                   Seu plano atual
@@ -221,7 +221,7 @@ const Subscription = () => {
               onClick={isPremium ? () => {} : handleSubscribe}
               disabled={isPremium}
             >
-              {isPremium ? 'Plano Atual' : 'Assinar Plano Premium'}
+              {isPremium ? 'Plano Atual' : 'Assinar Plano Mensal'}
             </Button>
             
             {isPremium && (
@@ -232,6 +232,46 @@ const Subscription = () => {
                 }
               </p>
             )}
+          </div>
+          
+          {/* Plano Anual - Com desconto */}
+          <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 relative">
+            <div className="absolute -top-4 right-4 bg-nutri-green text-white text-sm px-3 py-1 rounded-full font-medium">
+              ECONOMIA DE 20%
+            </div>
+            
+            <div className="text-center mb-6">
+              <div className="flex justify-center items-center mb-2">
+                <Star className="h-6 w-6 text-yellow-500 mr-2" />
+                <h2 className="text-2xl font-bold text-gray-800">Plano Anual</h2>
+              </div>
+              <p className="text-3xl font-bold text-nutri-blue">R$ 557,00<span className="text-lg font-normal text-gray-500">/ano</span></p>
+              <p className="text-sm text-gray-500 mt-1">(equivale a R$ 46,42/mês)</p>
+            </div>
+            
+            <ul className="space-y-4 mb-8">
+              {premiumFeatures.map((feature, index) => (
+                <li key={index} className="flex items-center text-gray-600">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                  <span>
+                    {feature.name}: <strong>{feature.value}</strong>
+                  </span>
+                </li>
+              ))}
+              <li className="flex items-center text-gray-600">
+                <Shield className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span>
+                  Desconto anual: <strong>20% de economia</strong>
+                </span>
+              </li>
+            </ul>
+            
+            <Button 
+              className="w-full bg-gradient-to-r from-nutri-green to-nutri-green-dark text-white hover:opacity-90"
+              onClick={handleSubscribe}
+            >
+              Assinar Plano Anual
+            </Button>
           </div>
         </div>
 
