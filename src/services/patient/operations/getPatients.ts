@@ -19,29 +19,19 @@ interface PatientDB {
   notes?: string;
 }
 
-// Typing for Supabase query result
-interface SupabaseQueryResult<T> {
-  data: T | null;
-  error: Error | null;
-  count: number | null;
-}
-
-// Typing for function return
-interface GetPatientsResult {
-  success: boolean;
-  data: ReturnType<typeof convertDbToPatient>[];
-  total: number;
-  count: number;
-  error?: string;
-}
-
 /**
  * Get patients with optional filtering and pagination
  */
 export const getPatients = async (
   userId: string,
   filters: PatientFilters = { page: 1, pageSize: 10 }
-): Promise<GetPatientsResult> => {
+): Promise<{
+  success: boolean;
+  data: ReturnType<typeof convertDbToPatient>[];
+  total: number;
+  count: number;
+  error?: string;
+}> => {
   try {
     const {
       search = '',
@@ -56,48 +46,51 @@ export const getPatients = async (
 
     const offset = (page - 1) * pageSize;
 
-    // Start building query
-    let queryBuilder = supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
-
-    // Apply filters
+    // Use a simpler approach with less type complexity
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply user ID filter
+    query = query.eq('user_id', userId);
+    
+    // Apply status filter if not 'all'
     if (status !== 'all') {
-      queryBuilder = queryBuilder.eq('status', status);
+      query = query.eq('status', status);
     }
 
+    // Apply search filter if provided
     if (search) {
-      queryBuilder = queryBuilder.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
     }
 
+    // Apply date filters if provided
     if (startDate) {
-      queryBuilder = queryBuilder.gte('created_at', startDate);
+      query = query.gte('created_at', startDate);
     }
 
     if (endDate) {
       const nextDay = new Date(endDate);
       nextDay.setDate(nextDay.getDate() + 1);
-      queryBuilder = queryBuilder.lt('created_at', nextDay.toISOString());
+      query = query.lt('created_at', nextDay.toISOString());
     }
 
-    // Add sorting and pagination
-    queryBuilder = queryBuilder.order(sortBy, { ascending: sortOrder === 'asc' });
-    queryBuilder = queryBuilder.range(offset, offset + pageSize - 1);
+    // Add sorting
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    
+    // Add pagination
+    query = query.range(offset, offset + pageSize - 1);
 
-    // Execute query with explicit typing
-    const result = await queryBuilder as unknown as SupabaseQueryResult<PatientDB[]>;
-    const { data, error, count } = result;
+    // Execute query without complex type assertions
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
-    // Convert records safely using traditional loop
+    // Process the patient data
     const patients = [];
     if (data) {
       for (const record of data) {
-        // Create safe copy to avoid reference issues
-        const safeCopy = JSON.parse(JSON.stringify(record));
-        patients.push(convertDbToPatient(safeCopy));
+        // Create a safe copy to avoid reference issues
+        const patientCopy = JSON.parse(JSON.stringify(record));
+        patients.push(convertDbToPatient(patientCopy));
       }
     }
 
