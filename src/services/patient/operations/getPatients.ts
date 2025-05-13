@@ -25,53 +25,50 @@ export const getPatients = async (userId: string, filters: PatientFilters = {
     // Calculate offset based on page and pageSize
     const offset = (page - 1) * pageSize;
     
-    // Start building query
-    let query = supabase
+    // Start building query with clean object
+    const query = supabase
       .from('patients')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
-    // Apply filters
-    // Filter by user_id
-    query = query.eq('user_id', userId);
-    
-    // Filter by status if not 'all'
+    // Apply status filter if not 'all'
     if (status !== 'all') {
-      query = query.eq('status', status);
+      query.eq('status', status);
     }
     
-    // Filter by search term
+    // Apply search filter
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+      query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
     }
     
-    // Filter by date range
+    // Apply date range filters
     if (startDate) {
-      query = query.gte('created_at', startDate);
+      query.gte('created_at', startDate);
     }
     
     if (endDate) {
       // Add a day to endDate to include the entire day
       const nextDay = new Date(endDate);
       nextDay.setDate(nextDay.getDate() + 1);
-      query = query.lt('created_at', nextDay.toISOString());
+      query.lt('created_at', nextDay.toISOString());
     }
     
     // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    query.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination
-    query = query.range(offset, offset + pageSize - 1);
+    query.range(offset, offset + pageSize - 1);
     
     // Execute query
     const { data, error, count } = await query;
     
     if (error) throw error;
     
-    // Convert DB records to Patient objects - create a new array with new objects
+    // Convert DB records to Patient objects with safe deep copying
     const patients = data ? data.map(record => {
-      // Make a deep copy of the record to avoid reference issues
-      const recordCopy = JSON.parse(JSON.stringify(record));
-      return convertDbToPatient(recordCopy);
+      // Use structuredClone for modern environments, or JSON parse/stringify for deep copying
+      const safeRecord = JSON.parse(JSON.stringify(record));
+      return convertDbToPatient(safeRecord);
     }) : [];
     
     return {
