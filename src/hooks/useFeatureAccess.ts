@@ -1,5 +1,5 @@
 
-import { FREEMIUM_LIMITS } from "@/constants/subscriptionConstants";
+import { FREE_TIER_LIMITS } from "@/constants/subscriptionConstants";
 import { useUserSubscription } from "./useUserSubscription";
 import { useAuthState } from "./useAuthState";
 import { useMemo } from "react";
@@ -28,7 +28,7 @@ export const useFeatureAccess = () => {
     if (isPremium) {
       return { limit: Infinity, used: 0 };
     }
-    return { limit: FREEMIUM_LIMITS.patients, used: 0 };
+    return { limit: FREE_TIER_LIMITS.patients, used: 0 };
   };
 
   /**
@@ -38,7 +38,7 @@ export const useFeatureAccess = () => {
     if (isPremium) {
       return { limit: Infinity, used: 0 };
     }
-    return { limit: FREEMIUM_LIMITS.mealPlans, used: 0 };
+    return { limit: FREE_TIER_LIMITS.mealPlans, used: 0 };
   };
 
   /**
@@ -48,7 +48,7 @@ export const useFeatureAccess = () => {
     if (isPremium) {
       return { limit: Infinity, used: 0 };
     }
-    return { limit: FREEMIUM_LIMITS.consultations, used: 0 };
+    return { limit: FREE_TIER_LIMITS.historyDays, used: 0 };
   };
 
   /**
