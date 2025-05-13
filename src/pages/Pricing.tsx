@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import Layout from '@/components/Layout';
-import { Check } from 'lucide-react';
+import { Check, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBSCRIPTION_PRICES } from '@/constants/subscriptionConstants';
@@ -110,12 +110,12 @@ const Pricing = () => {
                   <span className="text-base text-gray-700">Gerador de planos alimentares</span>
                 </li>
                 <li className="flex space-x-3">
-                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  <span className="text-base text-gray-700">Exportação de relatórios</span>
+                  <Zap className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Economize até 10 horas por semana</span>
                 </li>
                 <li className="flex space-x-3">
-                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  <span className="text-base text-gray-700">Histórico completo e antropometria</span>
+                  <BookOpen className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Biblioteca ampliada (+5000 alimentos)</span>
                 </li>
               </ul>
             </CardContent>
@@ -154,16 +154,16 @@ const Pricing = () => {
                   <span className="text-base text-gray-700">Tudo do plano mensal</span>
                 </li>
                 <li className="flex space-x-3">
-                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  <span className="text-base text-gray-700">Pacientes ilimitados</span>
+                  <FileText className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Exportação de relatórios premium</span>
                 </li>
                 <li className="flex space-x-3">
-                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  <span className="text-base text-gray-700">Gerador avançado de planos alimentares</span>
+                  <Badge className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Selo de nutricionista premium</span>
                 </li>
                 <li className="flex space-x-3">
-                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  <span className="text-base text-gray-700">Suporte prioritário</span>
+                  <Clock className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <span className="text-base text-gray-700">Acesso antecipado a novas funcionalidades</span>
                 </li>
                 <li className="flex space-x-3">
                   <Check className="h-5 w-5 text-green-500 flex-shrink-0" />

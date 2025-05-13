@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useAuthState } from "@/hooks/useAuthState";
-import { Star, Calendar, Check, ArrowRight, Crown, Shield } from 'lucide-react';
+import { Star, Calendar, Check, ArrowRight, Crown, Shield, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -157,12 +157,12 @@ const SubscriptionSettings = () => {
                 Acesso completo a todas funcionalidades avançadas
               </li>
               <li className="text-xs text-green-700 flex items-center">
-                <Check className="h-3 w-3 mr-1.5" />
-                Suporte prioritário e personalizado
+                <Zap className="h-3 w-3 mr-1.5" />
+                Economize até 10 horas por semana
               </li>
               <li className="text-xs text-green-700 flex items-center">
-                <Check className="h-3 w-3 mr-1.5" />
-                Interface exclusiva premium
+                <Badge className="h-3 w-3 mr-1.5" />
+                Selo de nutricionista premium
               </li>
             </ul>
           </div>

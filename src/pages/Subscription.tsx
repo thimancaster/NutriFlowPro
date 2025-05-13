@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Star, Check, ArrowRight, Crown, X, Shield } from 'lucide-react';
+import { Star, Check, ArrowRight, Crown, X, Shield, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -37,11 +37,12 @@ const Subscription = () => {
     { name: "Planos Alimentares", value: "Ilimitado", available: true },
     { name: "Acesso a todas as ferramentas de cálculo", value: "Sim", available: true },
     { name: "Histórico completo de medidas", value: "Completo", available: true },
-    { name: "Suporte prioritário", value: "Chat e Email", available: true },
+    { name: "Economize até 10 horas por semana", value: "Sim", available: true },
+    { name: "Biblioteca ampliada (+5000 alimentos)", value: "Sim", available: true },
     { name: "Planos alimentares avançados", value: "Sim", available: true },
-    { name: "Exportação de relatórios", value: "Sim", available: true },
-    { name: "Personalização do perfil", value: "Avançada", available: true },
-    { name: "Treinamentos exclusivos", value: "Mensal", available: true },
+    { name: "Exportação de relatórios premium", value: "Sim", available: true },
+    { name: "Selo de nutricionista premium", value: "Sim", available: true },
+    { name: "Acesso antecipado a novas funcionalidades", value: "Sim", available: true },
   ];
   
   // Check if we need to show an alert for premium access

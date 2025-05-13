@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { CheckCircle, Star, Shield, Award } from 'lucide-react';
+import { CheckCircle, Star, Shield, Award, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -106,12 +106,16 @@ const PricingSection = () => {
                 <span className="text-gray-600">IA para criação de planos alimentares</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
-                <span className="text-gray-600">Histórico completo de consultas</span>
+                <Zap className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Economize até 10 horas por semana</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
-                <span className="text-gray-600">Exportação de relatórios em PDF</span>
+                <BookOpen className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Biblioteca ampliada (+5000 alimentos)</span>
+              </li>
+              <li className="flex items-center">
+                <FileText className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Exportação de relatórios premium</span>
               </li>
             </ul>
             
@@ -156,20 +160,24 @@ const PricingSection = () => {
                 <span className="text-gray-600">IA para criação de planos alimentares</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
-                <span className="text-gray-600">Histórico completo de consultas</span>
+                <Zap className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Economize até 10 horas por semana</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
-                <span className="text-gray-600">Exportação de relatórios em PDF</span>
+                <BookOpen className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Biblioteca ampliada (+5000 alimentos)</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-nutri-green mr-2" />
-                <span className="text-gray-600">Suporte premium prioritário</span>
+                <FileText className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Exportação de relatórios premium</span>
               </li>
               <li className="flex items-center">
-                <Shield className="h-5 w-5 text-nutri-green mr-2" />
-                <span className="text-gray-600">Acesso a treinamentos exclusivos</span>
+                <Badge className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Selo de nutricionista premium</span>
+              </li>
+              <li className="flex items-center">
+                <Clock className="h-5 w-5 text-nutri-green mr-2" />
+                <span className="text-gray-600">Acesso antecipado a novas funcionalidades</span>
               </li>
             </ul>
             
