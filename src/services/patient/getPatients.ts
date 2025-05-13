@@ -1,0 +1,86 @@
+
+import { supabase } from '@/integrations/supabase/client';
+import { convertDbToPatient } from './patientDataUtils';
+import { PatientFilters } from '@/types';
+
+/**
+ * Get patients with optional filtering and pagination
+ */
+export const getPatients = async (userId: string, filters: PatientFilters = {
+  page: 1,
+  pageSize: 10
+}) => {
+  try {
+    const {
+      search = '',
+      status = 'active',
+      startDate,
+      endDate,
+      sortBy = 'name',
+      sortOrder = 'asc',
+      page = 1,
+      pageSize = 10
+    } = filters;
+    
+    // Calculate offset based on page and pageSize
+    const offset = (page - 1) * pageSize;
+    
+    // Start building query
+    let query = supabase
+      .from('patients')
+      .select('*', { count: 'exact' });
+    
+    // Apply filters
+    // Filter by user_id
+    query = query.eq('user_id', userId);
+    
+    // Filter by status if not 'all'
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+    
+    // Filter by search term
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+    
+    // Filter by date range
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    
+    if (endDate) {
+      // Add a day to endDate to include the entire day
+      const nextDay = new Date(endDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      query = query.lt('created_at', nextDay.toISOString());
+    }
+    
+    // Apply sorting
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    
+    // Apply pagination
+    query = query.range(offset, offset + pageSize - 1);
+    
+    // Execute query
+    const { data, error, count } = await query;
+    
+    if (error) throw error;
+    
+    // Convert DB records to Patient objects
+    const patients = data.map(record => convertDbToPatient(record));
+    
+    return {
+      success: true,
+      data: patients,
+      total: count,
+      count
+    };
+  } catch (error: any) {
+    console.error('Error getting patients:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to get patients'
+    };
+  }
+};

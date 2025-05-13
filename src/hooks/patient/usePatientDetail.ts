@@ -11,7 +11,7 @@ export const usePatientDetail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // This function can now accept either a Patient object or a string ID
+  // This function accepts either a Patient object or a string ID
   const openPatientDetail = async (patientInput: Patient | string) => {
     // If the input is a string, it's a patient ID
     let id: string;
