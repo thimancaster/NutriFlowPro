@@ -20,13 +20,17 @@ const convertPatientForDb = (patient: Partial<Patient>) => {
 // Helper to convert database record to a Patient object
 const convertDbToPatient = (dbRecord: any): Patient => {
   // Parse JSON strings back to objects
-  const patient: Patient = {
+  const patient = {
     ...dbRecord,
-    // Parse address JSON string back to object
-    address: dbRecord.address ? JSON.parse(dbRecord.address) : undefined,
-    // Parse goals JSON string back to object
-    goals: dbRecord.goals ? JSON.parse(dbRecord.goals) : undefined
-  };
+    // Parse address JSON string back to object if it exists
+    address: dbRecord.address ? 
+      (typeof dbRecord.address === 'string' ? JSON.parse(dbRecord.address) : dbRecord.address) : 
+      undefined,
+    // Parse goals JSON string back to object if it exists
+    goals: dbRecord.goals ? 
+      (typeof dbRecord.goals === 'string' ? JSON.parse(dbRecord.goals) : dbRecord.goals) : 
+      undefined
+  } as Patient;
 
   return patient;
 };

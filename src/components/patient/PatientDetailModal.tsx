@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +24,7 @@ interface PatientDetailModalProps {
 }
 
 const PatientDetailModal = ({ patient, open, onClose, onStatusChange }: PatientDetailModalProps) => {
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
@@ -92,6 +92,7 @@ const PatientDetailModal = ({ patient, open, onClose, onStatusChange }: PatientD
     <>
       <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl">{patient.name}</DialogTitle>
@@ -166,6 +167,7 @@ const PatientDetailModal = ({ patient, open, onClose, onStatusChange }: PatientD
       </Dialog>
       
       <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
