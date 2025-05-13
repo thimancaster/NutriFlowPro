@@ -6,6 +6,8 @@ import { X, Pencil, Archive, RotateCcw, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Patient } from '@/types';
+import { PatientService } from '@/services/patient';
+import { useToast } from '@/hooks/use-toast';
 
 import PatientBasicInfo from './PatientBasicInfo';
 import PatientAppointments from './PatientAppointments';
@@ -13,8 +15,6 @@ import PatientMealPlans from './PatientMealPlans';
 import PatientEvaluations from './PatientEvaluations';
 import PatientEvolution from './PatientEvolution';
 import PatientNotes from './PatientNotes';
-import { PatientService } from '@/services/patientService';
-import { useToast } from '@/hooks/use-toast';
 
 interface PatientDetailModalProps {
   patient: Patient | null;

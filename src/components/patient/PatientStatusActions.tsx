@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Archive, ArchiveRestore } from 'lucide-react';
 import { Patient } from '@/types';
-import { PatientService } from '@/services/patientService';
+import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
 
 interface PatientStatusActionsProps {

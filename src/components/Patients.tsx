@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, UserPlus, Search, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { PatientService } from '@/services/patientService';
+import { PatientService } from '@/services/patient';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import PatientListActions from '@/components/PatientListActions';
 import PatientPagination from '@/components/patient/PatientPagination';

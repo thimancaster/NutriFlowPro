@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { PatientService } from '@/services/patientService';
+import { PatientService } from '@/services/patient';
 import { Patient } from '@/types';
 
 interface UsePatientFormSubmitProps {

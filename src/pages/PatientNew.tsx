@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import PatientForm from '@/components/PatientForm';
 import { useQuery } from '@tanstack/react-query';
-import { PatientService } from '@/services/patientService';
+import { PatientService } from '@/services/patient';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 const PatientNew = () => {

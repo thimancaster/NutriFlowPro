@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
@@ -12,7 +13,7 @@ import PatientFiltersComponent from '@/components/patient/PatientFilters';
 import PatientPagination from '@/components/patient/PatientPagination';
 import { usePatientDetail } from '@/hooks/usePatientDetail';
 import { useNavigate } from 'react-router-dom';
-import { PatientService } from '@/services/patientService';
+import { PatientService } from '@/services/patient';
 import { Badge } from '@/components/ui/badge';
 
 const Patients = () => {
