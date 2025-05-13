@@ -5,13 +5,19 @@ import { Button } from '@/components/ui/button';
 import { FileText, User, Eye } from 'lucide-react';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { Patient } from '@/types';
+import PatientStatusActions from './patient/PatientStatusActions';
 
 interface PatientListActionsProps {
   patient: Patient;
   onViewDetail?: (patientId: string) => void;
+  onStatusChange?: () => void;
 }
 
-const PatientListActions: React.FC<PatientListActionsProps> = ({ patient, onViewDetail }) => {
+const PatientListActions: React.FC<PatientListActionsProps> = ({ 
+  patient, 
+  onViewDetail,
+  onStatusChange
+}) => {
   const navigate = useNavigate();
   const { startConsultation } = useConsultation();
   
@@ -36,7 +42,7 @@ const PatientListActions: React.FC<PatientListActionsProps> = ({ patient, onView
         className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-blue-50"
         onClick={handleViewDetail}
       >
-        <Eye className="h-3 w-3 mr-1" /> Ver detalhes
+        <Eye className="h-3 w-3 mr-1" /> Ver
       </Button>
       <Button 
         variant="ghost" 
@@ -52,6 +58,10 @@ const PatientListActions: React.FC<PatientListActionsProps> = ({ patient, onView
       >
         <User className="h-3 w-3 mr-1" /> Consulta
       </Button>
+      <PatientStatusActions 
+        patient={patient} 
+        onStatusChange={onStatusChange}
+      />
     </div>
   );
 };

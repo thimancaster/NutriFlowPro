@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BirthDateInput } from '@/components/BirthDateInput';
+import { Textarea } from '@/components/ui/textarea';
+import { formatCpf, formatPhone, formatCep } from '@/utils/patientValidation';
 
 interface TextFieldProps {
   id: string;
@@ -16,6 +18,8 @@ interface TextFieldProps {
   type?: string;
   error?: string;
   onBlur?: () => void;
+  placeholder?: string;
+  mask?: (value: string) => string;
 }
 
 export const TextField = ({ 
@@ -27,8 +31,17 @@ export const TextField = ({
   required = false, 
   type = 'text', 
   error,
-  onBlur 
+  onBlur,
+  placeholder,
+  mask
 }: TextFieldProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (mask) {
+      e.target.value = mask(e.target.value);
+    }
+    onChange(e);
+  };
+  
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}{required && '*'}</Label>
@@ -37,9 +50,10 @@ export const TextField = ({
         name={name} 
         type={type}
         value={value} 
-        onChange={onChange}
+        onChange={handleChange}
         required={required}
         onBlur={onBlur}
+        placeholder={placeholder}
         className={error ? "border-red-500" : ""}
       />
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -53,17 +67,65 @@ interface DateFieldProps {
   error?: string;
   label?: string;
   onBlur?: () => void;
+  required?: boolean;
 }
 
-export const DateField = ({ value, onChange, error, label = "Data de Nascimento*", onBlur }: DateFieldProps) => {
+export const DateField = ({ value, onChange, error, label = "Data de Nascimento", required = false, onBlur }: DateFieldProps) => {
   return (
-    <BirthDateInput 
-      value={value} 
-      onChange={onChange}
-      error={error}
-      label={label}
-      onBlur={onBlur}
-    />
+    <div className="space-y-2">
+      <Label>{label}{required && '*'}</Label>
+      <BirthDateInput 
+        value={value} 
+        onChange={onChange}
+        error={error}
+        onBlur={onBlur}
+      />
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+};
+
+interface TextAreaFieldProps {
+  id: string;
+  name: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  required?: boolean;
+  error?: string;
+  onBlur?: () => void;
+  placeholder?: string;
+  rows?: number;
+}
+
+export const TextAreaField = ({ 
+  id, 
+  name, 
+  label, 
+  value, 
+  onChange, 
+  required = false, 
+  error,
+  onBlur,
+  placeholder,
+  rows = 3
+}: TextAreaFieldProps) => {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}{required && '*'}</Label>
+      <Textarea 
+        id={id} 
+        name={name}
+        value={value} 
+        onChange={onChange}
+        required={required}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        className={error ? "border-red-500" : ""}
+        rows={rows}
+      />
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
   );
 };
 

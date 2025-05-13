@@ -1,16 +1,29 @@
-
 export interface Patient {
   id: string;
   user_id: string;
   name: string;
   email: string;
   phone: string;
+  secondaryPhone?: string;
+  cpf?: string;
   birth_date: string;
   gender: string;
   created_at?: string;
   updated_at?: string;
-  goals?: any; // Added for compatibility with existing code
-  address?: string;
+  status?: 'active' | 'archived';
+  goals?: {
+    objective?: string;
+    profile?: string;
+  };
+  address?: {
+    cep?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+  };
   notes?: string;
 }
 
@@ -106,4 +119,15 @@ export interface MealPlan {
   total_carbs?: number;
   total_fats?: number;
   date?: string;
+}
+
+export interface PatientFilters {
+  search?: string;
+  status?: 'active' | 'archived' | 'all';
+  startDate?: string;
+  endDate?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
 }

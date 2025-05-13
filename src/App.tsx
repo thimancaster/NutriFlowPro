@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import {
   HashRouter,
@@ -157,6 +156,7 @@ function App() {
                   </PatientProvider>
                 </ProtectedRoute>
               } />
+              <Route path="/patients/edit/:id" element={<PatientNew />} />
               <Route path="/appointments" element={
                 <ProtectedRoute>
                   <PatientProvider>

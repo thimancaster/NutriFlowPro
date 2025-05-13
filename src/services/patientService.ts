@@ -76,6 +76,40 @@ export const PatientService = {
   },
   
   /**
+   * Update a patient's status (active/archived)
+   */
+  updatePatientStatus: async (patientId: string, status: 'active' | 'archived'): Promise<{success: boolean, error?: string}> => {
+    try {
+      if (!patientId) {
+        throw new Error('Patient ID is required');
+      }
+      
+      const { data, error } = await supabase
+        .from('patients')
+        .update({
+          status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', patientId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Invalidate cache
+      dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patientId}`);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error updating patient status:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to update patient status'
+      };
+    }
+  },
+  
+  /**
    * Get a patient by ID with optimized caching
    */
   getPatient: async (patientId: string): Promise<{success: boolean, data?: Patient, error?: string}> => {
@@ -128,9 +162,26 @@ export const PatientService = {
   },
   
   /**
-   * Get all patients for a user with optimized caching
+   * Get all patients for a user with optimized caching and pagination
    */
-  getUserPatients: async (userId: string): Promise<{success: boolean, data?: Patient[], error?: string}> => {
+  getUserPatients: async (
+    userId: string, 
+    options: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+      status?: 'active' | 'archived' | 'all';
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      startDate?: string;
+      endDate?: string;
+    } = {}
+  ): Promise<{
+    success: boolean, 
+    data?: Patient[], 
+    total?: number,
+    error?: string
+  }> => {
     try {
       if (!userId) {
         throw new Error('User ID is required');
@@ -139,12 +190,50 @@ export const PatientService = {
       if (!supabase) {
         throw new Error('Supabase client is not initialized');
       }
+
+      const {
+        page = 1,
+        pageSize = 10,
+        search = '',
+        status = 'active',
+        sortBy = 'name',
+        sortOrder = 'asc',
+        startDate,
+        endDate
+      } = options;
       
-      const { data, error } = await supabase
+      // Build query
+      let query = supabase
         .from('patients')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name', { ascending: true });
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId);
+        
+      // Apply status filter
+      if (status !== 'all') {
+        query = query.eq('status', status);
+      }
+      
+      // Apply search if provided
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      }
+      
+      // Apply date range filter if provided
+      if (startDate) {
+        query = query.gte('created_at', startDate);
+      }
+      
+      if (endDate) {
+        query = query.lte('created_at', endDate);
+      }
+      
+      // Apply sorting
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+      
+      // Apply pagination
+      query = query.range((page - 1) * pageSize, (page * pageSize) - 1);
+      
+      const { data, error, count } = await query;
         
       if (error) {
         throw error;
@@ -152,7 +241,8 @@ export const PatientService = {
       
       return {
         success: true,
-        data: data as Patient[]
+        data: data as Patient[],
+        total: count || 0
       };
     } catch (error: any) {
       console.error('Error getting patients:', error);
