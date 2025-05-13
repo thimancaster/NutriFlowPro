@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { SUBSCRIPTION_PRICES } from '@/constants/subscriptionConstants';
 
 const Pricing = () => {
   useEffect(() => {
@@ -26,6 +27,11 @@ const Pricing = () => {
       if (document.head.contains(link)) document.head.removeChild(link);
     };
   }, []);
+
+  const importHotmart = () => {
+    // This function is already handled in the useEffect
+    console.log('Hotmart scripts already loaded');
+  };
   
   return (
     <Layout>
@@ -86,7 +92,7 @@ const Pricing = () => {
             <CardHeader className="bg-gray-50 rounded-t-lg border-b p-6">
               <CardTitle className="text-xl font-medium">Plano Mensal</CardTitle>
               <div className="mt-4 flex items-baseline">
-                <span className="text-3xl font-semibold text-gray-900">R$ 57,90</span>
+                <span className="text-3xl font-semibold text-gray-900">{SUBSCRIPTION_PRICES.MONTHLY.formatted}</span>
                 <span className="text-gray-500 text-sm ml-1">/mês</span>
               </div>
               <CardDescription className="text-sm text-gray-500 mt-1">
@@ -115,12 +121,13 @@ const Pricing = () => {
             </CardContent>
             <CardFooter className="bg-gray-50 rounded-b-lg p-6">
               <a 
-                href="https://pay.hotmart.com/COD_MONTHLY?checkoutMode=2" 
-                className="w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-blue-700 transition-colors"
+                onClick={() => importHotmart()}
+                href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d" 
+                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-blue-700 transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Assinar Mensal
+                Assinar Pro Mensal
               </a>
             </CardFooter>
           </Card>
@@ -133,11 +140,11 @@ const Pricing = () => {
             <CardHeader className="bg-blue-50 rounded-t-lg border-b p-6">
               <CardTitle className="text-xl font-medium">Plano Anual</CardTitle>
               <div className="mt-4 flex items-baseline">
-                <span className="text-3xl font-semibold text-gray-900">R$ 557,00</span>
+                <span className="text-3xl font-semibold text-gray-900">{SUBSCRIPTION_PRICES.ANNUAL.formatted}</span>
                 <span className="text-gray-500 text-sm ml-1">/ano</span>
               </div>
               <CardDescription className="text-sm text-gray-500 mt-1">
-                (equivale a R$ 46,42/mês)
+                (equivale a {SUBSCRIPTION_PRICES.ANNUAL.monthlyEquivalent}/mês)
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 flex-grow">
@@ -166,12 +173,13 @@ const Pricing = () => {
             </CardContent>
             <CardFooter className="bg-blue-50 rounded-b-lg p-6">
               <a 
-                href="https://pay.hotmart.com/C99693448A?checkoutMode=2" 
-                className="w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-700 transition-colors"
+                onClick={() => importHotmart()}
+                href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf" 
+                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-700 transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Assinar Anual (Recomendado)
+                Assinar Pro Anual (Recomendado)
               </a>
             </CardFooter>
           </Card>

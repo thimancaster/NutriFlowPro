@@ -4,6 +4,7 @@ import { CheckCircle, Star, Shield, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { SUBSCRIPTION_PRICES } from '@/constants/subscriptionConstants';
 
 const PricingSection = () => {
   useEffect(() => {
@@ -25,6 +26,12 @@ const PricingSection = () => {
       document.head.removeChild(link);
     };
   }, []);
+
+  const importHotmart = () => {
+    // This function is already handled in the useEffect
+    // Including as reference but not executing again
+    console.log('Hotmart scripts already loaded');
+  };
 
   return (
     <section className="py-16 md:py-24 bg-blue-50">
@@ -86,7 +93,7 @@ const PricingSection = () => {
           >
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-800 mb-2">Plano Mensal</h3>
-              <p className="text-nutri-blue text-2xl font-bold mt-4">R$ 57,90<span className="text-base font-normal ml-1">/mês</span></p>
+              <p className="text-nutri-blue text-2xl font-bold mt-4">{SUBSCRIPTION_PRICES.MONTHLY.formatted}<span className="text-base font-normal ml-1">/mês</span></p>
             </div>
             
             <ul className="space-y-3 mb-8 flex-grow">
@@ -110,12 +117,13 @@ const PricingSection = () => {
             
             <div className="mt-auto">
               <a 
-                href="https://pay.hotmart.com/COD_MONTHLY?checkoutMode=2" 
-                className="w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-nutri-blue-dark transition-colors transform hover:scale-105 duration-200"
+                onClick={() => importHotmart()}
+                href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d" 
+                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-nutri-blue-dark transition-colors transform hover:scale-105 duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Assinar Mensal
+                Assinar Pro Mensal
               </a>
             </div>
           </motion.div>
@@ -134,8 +142,8 @@ const PricingSection = () => {
             
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-800 mb-2">Plano Anual</h3>
-              <p className="text-nutri-blue text-2xl font-bold mt-4">R$ 557,00<span className="text-base font-normal ml-1">/ano</span></p>
-              <p className="text-sm text-gray-500 mt-1">(equivale a R$ 46,42/mês)</p>
+              <p className="text-nutri-blue text-2xl font-bold mt-4">{SUBSCRIPTION_PRICES.ANNUAL.formatted}<span className="text-base font-normal ml-1">/ano</span></p>
+              <p className="text-sm text-gray-500 mt-1">(equivale a {SUBSCRIPTION_PRICES.ANNUAL.monthlyEquivalent}/mês)</p>
             </div>
             
             <ul className="space-y-3 mb-8 flex-grow">
@@ -167,12 +175,13 @@ const PricingSection = () => {
             
             <div className="mt-auto">
               <a 
-                href="https://pay.hotmart.com/C99693448A?checkoutMode=2" 
+                onClick={() => importHotmart()}
+                href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf" 
                 className="hotmart-fb hotmart__button-checkout w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-600 transition-colors transform hover:scale-105 duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Assinar Anual (Recomendado)
+                Assinar Pro Anual (Recomendado)
               </a>
             </div>
           </motion.div>

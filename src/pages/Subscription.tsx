@@ -7,15 +7,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
+import { SUBSCRIPTION_PRICES } from '@/constants/subscriptionConstants';
 
 const Subscription = () => {
   const { data: subscription } = useUserSubscription();
   const { userTier, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const { getPatientsQuota, getMealPlansQuota } = useFeatureAccess();
   const patientsQuota = getPatientsQuota();
   const mealPlansQuota = getMealPlansQuota();
@@ -49,54 +47,29 @@ const Subscription = () => {
   // Check if we need to show an alert for premium access
   const showPremiumAlert = reason === 'premium-required';
   
-  const handleSubscribe = async () => {
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      
-      if (!session?.session?.access_token) {
-        toast({
-          title: "Erro de autenticação",
-          description: "Você precisa estar logado para assinar.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      toast({
-        title: "Processando",
-        description: "Aguarde enquanto preparamos sua assinatura..."
-      });
-      
-      const response = await fetch("https://lnyixnhsrovzdxybmjfa.supabase.co/functions/v1/create-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.session.access_token}`,
-        },
-        body: JSON.stringify({
-          returnUrl: window.location.origin,
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao processar pagamento');
-      }
-      
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('URL de checkout não retornada pelo servidor');
-      }
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
-      toast({
-        title: "Erro ao processar pagamento",
-        description: error instanceof Error ? error.message : "Tente novamente mais tarde",
-        variant: "destructive"
-      });
-    }
+  useEffect(() => {
+    // Add Hotmart checkout script
+    const script = document.createElement('script');
+    script.src = 'https://static.hotmart.com/checkout/widget.min.js';
+    script.async = true;
+    
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://static.hotmart.com/css/hotmart-fb.min.css';
+    
+    document.head.appendChild(script);
+    document.head.appendChild(link);
+    
+    return () => {
+      // Cleanup on unmount
+      if (document.head.contains(script)) document.head.removeChild(script);
+      if (document.head.contains(link)) document.head.removeChild(link);
+    };
+  }, []);
+
+  const importHotmart = () => {
+    // This function is already handled in the useEffect
+    console.log('Hotmart scripts already loaded');
   };
   
   return (
@@ -195,7 +168,7 @@ const Subscription = () => {
                 <Crown className={`h-6 w-6 ${isPremium ? 'text-amber-500' : 'text-gray-400'} mr-2`} />
                 <h2 className="text-2xl font-bold text-gray-800">Plano Mensal</h2>
               </div>
-              <p className="text-3xl font-bold text-nutri-blue">R$ 57,90<span className="text-lg font-normal text-gray-500">/mês</span></p>
+              <p className="text-3xl font-bold text-nutri-blue">{SUBSCRIPTION_PRICES.MONTHLY.formatted}<span className="text-lg font-normal text-gray-500">/mês</span></p>
               {isPremium && (
                 <div className="mt-2 inline-block bg-amber-100 text-amber-800 px-2 py-1 rounded text-sm">
                   Seu plano atual
@@ -214,15 +187,24 @@ const Subscription = () => {
               ))}
             </ul>
             
-            <Button 
-              className={`w-full ${isPremium 
-                ? 'bg-amber-200 text-amber-800 hover:bg-amber-300' 
-                : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'}`}
-              onClick={isPremium ? () => {} : handleSubscribe}
-              disabled={isPremium}
-            >
-              {isPremium ? 'Plano Atual' : 'Assinar Plano Mensal'}
-            </Button>
+            {!isPremium ? (
+              <a 
+                onClick={() => importHotmart()}
+                href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d" 
+                className="hotmart-fb hotmart__button-checkout w-full bg-gradient-to-r from-nutri-blue to-nutri-blue-dark text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:opacity-90"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Assinar Pro Mensal
+              </a>
+            ) : (
+              <Button 
+                className="w-full bg-amber-200 text-amber-800 hover:bg-amber-300"
+                disabled={true}
+              >
+                Plano Atual
+              </Button>
+            )}
             
             {isPremium && (
               <p className="text-center text-sm mt-2 text-amber-700">
@@ -245,8 +227,8 @@ const Subscription = () => {
                 <Star className="h-6 w-6 text-yellow-500 mr-2" />
                 <h2 className="text-2xl font-bold text-gray-800">Plano Anual</h2>
               </div>
-              <p className="text-3xl font-bold text-nutri-blue">R$ 557,00<span className="text-lg font-normal text-gray-500">/ano</span></p>
-              <p className="text-sm text-gray-500 mt-1">(equivale a R$ 46,42/mês)</p>
+              <p className="text-3xl font-bold text-nutri-blue">{SUBSCRIPTION_PRICES.ANNUAL.formatted}<span className="text-lg font-normal text-gray-500">/ano</span></p>
+              <p className="text-sm text-gray-500 mt-1">(equivale a {SUBSCRIPTION_PRICES.ANNUAL.monthlyEquivalent}/mês)</p>
             </div>
             
             <ul className="space-y-4 mb-8">
@@ -266,12 +248,15 @@ const Subscription = () => {
               </li>
             </ul>
             
-            <Button 
-              className="w-full bg-gradient-to-r from-nutri-green to-nutri-green-dark text-white hover:opacity-90"
-              onClick={handleSubscribe}
+            <a 
+              onClick={() => importHotmart()}
+              href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf" 
+              className="hotmart-fb hotmart__button-checkout w-full bg-gradient-to-r from-nutri-green to-nutri-green-dark text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:opacity-90 text-center"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Assinar Plano Anual
-            </Button>
+              Assinar Pro Anual
+            </a>
           </div>
         </div>
 

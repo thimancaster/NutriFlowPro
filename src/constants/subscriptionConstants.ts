@@ -5,9 +5,9 @@ export const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.
 // Subscription pricing constants
 export const SUBSCRIPTION_PRICES = {
   MONTHLY: {
-    price: 57.90,
+    price: 77.90,
     currency: 'BRL',
-    formatted: 'R$ 57,90'
+    formatted: 'R$ 77,90'
   },
   ANNUAL: {
     price: 557.00,

@@ -8,6 +8,7 @@ import { Star, Calendar, Check, ArrowRight, Crown, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
+import { SUBSCRIPTION_PRICES } from '@/constants/subscriptionConstants';
 
 const SubscriptionSettings = () => {
   const { data: subscription, isLoading, refetchSubscription } = useUserSubscription();
@@ -22,6 +23,26 @@ const SubscriptionSettings = () => {
       hasRefetched.current = true;
     }
   }, [refetchSubscription, isLoading]);
+  
+  useEffect(() => {
+    // Add Hotmart checkout script
+    const script = document.createElement('script');
+    script.src = 'https://static.hotmart.com/checkout/widget.min.js';
+    script.async = true;
+    
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://static.hotmart.com/css/hotmart-fb.min.css';
+    
+    document.head.appendChild(script);
+    document.head.appendChild(link);
+    
+    return () => {
+      // Cleanup
+      if (document.head.contains(script)) document.head.removeChild(script);
+      if (document.head.contains(link)) document.head.removeChild(link);
+    };
+  }, []);
   
   // Use the central verification from useAuthState hook combined with subscription data
   const isPremium = React.useMemo(() => {
@@ -89,7 +110,7 @@ const SubscriptionSettings = () => {
               {isPremium ? (
                 <>
                   <p className="text-sm text-amber-700 mt-1">
-                    <span className="font-semibold">R$ 57,90/mês</span> - Acesso a todas as funcionalidades premium
+                    <span className="font-semibold">{SUBSCRIPTION_PRICES.MONTHLY.formatted}/mês</span> - Acesso a todas as funcionalidades premium
                   </p>
                   <div className="mt-3 space-y-1">
                     <p className="text-xs flex items-center text-amber-700">
@@ -166,14 +187,14 @@ const SubscriptionSettings = () => {
                   <Check className="h-3 w-3 mr-1.5" />
                   Plano Mensal
                 </span>
-                <span className="font-semibold">R$ 57,90/mês</span>
+                <span className="font-semibold">{SUBSCRIPTION_PRICES.MONTHLY.formatted}/mês</span>
               </li>
               <li className="text-xs text-blue-700 flex items-center justify-between">
                 <span className="flex items-center">
                   <Check className="h-3 w-3 mr-1.5" />
                   Plano Anual <span className="text-green-600 ml-1">(economia de 20%)</span>
                 </span>
-                <span className="font-semibold">R$ 557,00/ano</span>
+                <span className="font-semibold">{SUBSCRIPTION_PRICES.ANNUAL.formatted}/ano</span>
               </li>
             </ul>
           </div>
