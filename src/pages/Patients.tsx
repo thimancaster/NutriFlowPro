@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
@@ -18,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 
 const Patients = () => {
   const { user } = useAuth();
-  const { isModalOpen, patientId, patient, isLoading: isLoadingPatient, openPatientDetail, closePatientDetail } = usePatientDetail();
+  const { isModalOpen, patient, isLoading: isLoadingPatient, openPatientDetail, closePatientDetail } = usePatientDetail();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   

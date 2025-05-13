@@ -67,8 +67,12 @@ export const getPatients = async (userId: string, filters: PatientFilters = {
     
     if (error) throw error;
     
-    // Convert DB records to Patient objects - make sure to clone data to avoid reference issues
-    const patients = data ? data.map(record => convertDbToPatient({ ...record })) : [];
+    // Convert DB records to Patient objects - create a new array with new objects
+    const patients = data ? data.map(record => {
+      // Make a deep copy of the record to avoid reference issues
+      const recordCopy = JSON.parse(JSON.stringify(record));
+      return convertDbToPatient(recordCopy);
+    }) : [];
     
     return {
       success: true,
