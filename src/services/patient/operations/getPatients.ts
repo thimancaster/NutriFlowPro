@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { convertDbToPatient } from '../utils/patientDataUtils';
 import { PatientFilters } from '@/types';
@@ -23,47 +24,45 @@ export const getPatients = async (
 
     const offset = (page - 1) * pageSize;
 
-    // Início da query
+    // Build the query with proper type handling
     let query = supabase
       .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+      .select('*', { count: 'exact' });
 
-    // Aplicar status se não for 'all'
+    // Add filter conditions
+    query = query.eq('user_id', userId);
+
     if (status !== 'all') {
       query = query.eq('status', status);
     }
 
-    // Aplicar busca
     if (search) {
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
     }
 
-    // Filtro por data de início
     if (startDate) {
       query = query.gte('created_at', startDate);
     }
 
-    // Filtro por data de fim (incluindo o dia inteiro)
     if (endDate) {
       const nextDay = new Date(endDate);
       nextDay.setDate(nextDay.getDate() + 1);
       query = query.lt('created_at', nextDay.toISOString());
     }
 
-    // Ordenação
+    // Add sorting and pagination
     query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-    // Paginação
     query = query.range(offset, offset + pageSize - 1);
 
-    // Executar query
+    // Execute query
     const { data, error, count } = await query;
 
     if (error) throw error;
 
+    // Process results with safe type handling
     const patients = data
       ? data.map((record) => {
+          // Create a deep copy to avoid reference issues
           const patientData = JSON.parse(JSON.stringify(record));
           return convertDbToPatient(patientData);
         })
