@@ -1,85 +1,62 @@
 
 import { useState } from 'react';
 import { Patient } from '@/types';
-import { PatientService } from '@/services/patientService';
-import { useToast } from '@/hooks/use-toast';
+import { PatientService } from '@/services/patient';
 
+/**
+ * Hook to manage patient detail modal state and data fetching
+ */
 export const usePatientDetail = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
-  // This function accepts either a Patient object or a string ID
-  const openPatientDetail = async (patientInput: Patient | string) => {
-    // If the input is a string, it's a patient ID
-    let id: string;
-    if (typeof patientInput === 'string') {
-      id = patientInput;
-    } else {
-      // It's a Patient object
-      id = patientInput.id;
-    }
-    
-    setPatientId(id);
+  /**
+   * Open patient detail modal and load patient data
+   * Accepts either a patient object or patient ID
+   */
+  const openPatientDetail = async (patientIdOrPatient: string | Patient) => {
     setIsLoading(true);
-    setIsModalOpen(true);
-
+    
     try {
-      // Fetch the latest patient data to ensure we have the most up-to-date information
-      const result = await PatientService.getPatient(id);
+      let patientData: Patient | null = null;
       
-      if (result.success) {
-        setPatient(result.data);
+      // Check if we received a patient object or just an ID
+      if (typeof patientIdOrPatient === 'string') {
+        // We received an ID, fetch the patient data
+        const id = patientIdOrPatient;
+        setPatientId(id);
+        
+        const result = await PatientService.getPatient(id);
+        
+        if (result.success && result.data) {
+          patientData = result.data;
+        } else {
+          console.error('Failed to fetch patient details:', result.error);
+          return;
+        }
       } else {
-        throw new Error(result.error);
+        // We received a patient object directly
+        patientData = patientIdOrPatient;
+        setPatientId(patientData.id);
       }
-    } catch (error: any) {
-      console.error('Error fetching patient details:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os detalhes do paciente.',
-        variant: 'destructive',
-      });
       
-      // If we have a patient object as input, use it as fallback
-      if (typeof patientInput !== 'string') {
-        setPatient(patientInput);
-      }
+      setPatient(patientData);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error in openPatientDetail:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * Close patient detail modal and reset state
+   */
   const closePatientDetail = () => {
     setIsModalOpen(false);
-    setPatientId(null);
     setPatient(null);
-  };
-
-  const refreshPatientData = async () => {
-    if (!patientId) return;
-    
-    setIsLoading(true);
-    try {
-      const result = await PatientService.getPatient(patientId);
-      
-      if (result.success) {
-        setPatient(result.data);
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error: any) {
-      console.error('Error refreshing patient data:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível atualizar os dados do paciente.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return {
@@ -88,7 +65,6 @@ export const usePatientDetail = () => {
     patient,
     isLoading,
     openPatientDetail,
-    closePatientDetail,
-    refreshPatientData
+    closePatientDetail
   };
 };

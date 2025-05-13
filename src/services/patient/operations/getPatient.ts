@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { convertDbToPatient } from './patientDataUtils';
+import { convertDbToPatient } from '../utils/patientDataUtils';
 
 /**
  * Get a patient by ID

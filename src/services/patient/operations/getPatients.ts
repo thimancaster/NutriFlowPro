@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { convertDbToPatient } from './patientDataUtils';
+import { convertDbToPatient } from '../utils/patientDataUtils';
 import { PatientFilters } from '@/types';
 
 /**
@@ -73,14 +73,17 @@ export const getPatients = async (userId: string, filters: PatientFilters = {
     return {
       success: true,
       data: patients,
-      total: count,
-      count
+      total: count || 0,
+      count: count || 0
     };
   } catch (error: any) {
     console.error('Error getting patients:', error);
     return {
       success: false,
-      error: error.message || 'Failed to get patients'
+      error: error.message || 'Failed to get patients',
+      data: [],
+      total: 0,
+      count: 0
     };
   }
 };

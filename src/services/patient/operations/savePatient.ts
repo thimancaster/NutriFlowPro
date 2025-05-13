@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
-import { preparePatientForDb } from './patientDataUtils';
+import { preparePatientForDb } from '../utils/patientDataUtils';
 
 /**
  * Save a patient to the database (create or update)

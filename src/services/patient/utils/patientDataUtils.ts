@@ -7,6 +7,8 @@ import { Json } from '@/integrations/supabase/types';
  * Handles parsing string data from the database into objects
  */
 export const convertDbToPatient = (dbRecord: any): Patient => {
+  if (!dbRecord) return null as any;
+  
   // Handle address - could be a string (from DB) or already an object
   let address = dbRecord.address;
   if (typeof address === 'string') {
@@ -50,8 +52,10 @@ export const convertDbToPatient = (dbRecord: any): Patient => {
  * Converts objects to strings for database storage
  */
 export const preparePatientForDb = (patientData: Partial<Patient>): any => {
+  if (!patientData) return {};
+  
   // Create a copy to avoid modifying the original
-  let dbPatientData: any = { ...patientData };
+  const dbPatientData: any = { ...patientData };
   
   // Convert address object to string for database storage
   if (dbPatientData.address && typeof dbPatientData.address === 'object') {
@@ -63,8 +67,13 @@ export const preparePatientForDb = (patientData: Partial<Patient>): any => {
     dbPatientData.goals = JSON.stringify(dbPatientData.goals);
   }
   
-  // Remove any non-database fields
-  const { secondaryPhone, cpf, ...cleanedData } = dbPatientData;
+  // Remove any non-database fields to avoid Supabase errors
+  const fieldsToRemove = ['secondaryPhone', 'cpf'];
+  fieldsToRemove.forEach(field => {
+    if (field in dbPatientData) {
+      delete dbPatientData[field];
+    }
+  });
   
-  return cleanedData;
+  return dbPatientData;
 };

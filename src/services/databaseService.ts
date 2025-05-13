@@ -1,6 +1,6 @@
 
 import { dbCache } from "./dbCache";
-import { PatientService } from "./patientService";
+import { PatientService } from "./patient";
 import { ConsultationService } from "./consultationService";
 import { MealPlanService } from "./mealPlanService";
 
