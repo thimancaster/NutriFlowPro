@@ -1,71 +1,78 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Patient } from "@/types";
-import { dbCache } from "./dbCache";
+import { supabase } from '@/integrations/supabase/client';
+import { Patient } from '@/types';
+import { Json } from '@/integrations/supabase/types';
 
-/**
- * Service to handle patient-related database interactions
- */
-export const PatientService = {
-  /**
-   * Save patient data to the database
-   */
-  savePatient: async (patient: Partial<Patient>, userId: string): Promise<{success: boolean, data?: Patient, error?: string}> => {
+// Helper to convert a Patient object to a database-friendly format
+const convertPatientForDb = (patient: Partial<Patient>) => {
+  // Convert complex objects like address and goals to JSON strings for Supabase
+  const dbPatient: any = {
+    ...patient,
+    // Convert address object to string JSON for storage if it exists
+    address: patient.address ? JSON.stringify(patient.address) : null,
+    // Convert goals object to string JSON for storage if it exists
+    goals: patient.goals ? JSON.stringify(patient.goals) : null
+  };
+
+  return dbPatient;
+};
+
+// Helper to convert database record to a Patient object
+const convertDbToPatient = (dbRecord: any): Patient => {
+  // Parse JSON strings back to objects
+  const patient: Patient = {
+    ...dbRecord,
+    // Parse address JSON string back to object
+    address: dbRecord.address ? JSON.parse(dbRecord.address) : undefined,
+    // Parse goals JSON string back to object
+    goals: dbRecord.goals ? JSON.parse(dbRecord.goals) : undefined
+  };
+
+  return patient;
+};
+
+export class PatientService {
+  static async savePatient(patientData: Partial<Patient>, userId: string) {
     try {
-      if (!supabase) {
-        throw new Error('Supabase client is not initialized');
-      }
+      // Ensure user_id is set
+      patientData.user_id = userId;
       
-      if (!patient.name) {
-        throw new Error('Patient name is required');
-      }
-
-      if (!userId) {
-        throw new Error('User ID is required');
-      }
+      // Set updated_at timestamp
+      patientData.updated_at = new Date().toISOString();
       
-      const patientData = {
-        ...patient,
-        user_id: userId,
-        name: patient.name // Explicitly include name to satisfy TypeScript
-      };
+      // Format data for database
+      const dbPatient = convertPatientForDb(patientData);
       
-      let response;
-      
-      // Update existing patient
-      if (patient.id) {
-        response = await supabase
+      if (patientData.id) {
+        // Update existing patient
+        const { data, error } = await supabase
           .from('patients')
-          .update({
-            ...patientData,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', patient.id)
-          .select('*')
-          .single();
+          .update(dbPatient)
+          .eq('id', patientData.id);
+          
+        if (error) throw error;
+        
+        return {
+          success: true,
+          data: patientData.id
+        };
       } else {
-        // Insert new patient
-        response = await supabase
+        // Create new patient
+        patientData.created_at = new Date().toISOString();
+        
+        const { data, error } = await supabase
           .from('patients')
-          .insert(patientData)
-          .select('*')
+          .insert(dbPatient)
+          .select('id')
           .single();
+          
+        if (error) throw error;
+        
+        return {
+          success: true,
+          data: data.id
+        };
       }
-      
-      if (response.error) {
-        console.error("Database error:", response.error);
-        throw new Error(response.error.message);
-      }
-      
-      // Cache the patient data
-      if (response.data?.id) {
-        dbCache.set(`${dbCache.KEYS.PATIENT}${response.data.id}`, response.data);
-      }
-      
-      return {
-        success: true,
-        data: response.data as Patient
-      };
     } catch (error: any) {
       console.error('Error saving patient:', error);
       return {
@@ -73,84 +80,23 @@ export const PatientService = {
         error: error.message || 'Failed to save patient'
       };
     }
-  },
+  }
   
-  /**
-   * Update a patient's status (active/archived)
-   */
-  updatePatientStatus: async (patientId: string, status: 'active' | 'archived'): Promise<{success: boolean, error?: string}> => {
+  static async getPatient(patientId: string) {
     try {
-      if (!patientId) {
-        throw new Error('Patient ID is required');
-      }
-      
-      const { data, error } = await supabase
-        .from('patients')
-        .update({
-          status: status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', patientId);
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Invalidate cache
-      dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patientId}`);
-      
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error updating patient status:', error);
-      return {
-        success: false,
-        error: error.message || 'Failed to update patient status'
-      };
-    }
-  },
-  
-  /**
-   * Get a patient by ID with optimized caching
-   */
-  getPatient: async (patientId: string): Promise<{success: boolean, data?: Patient, error?: string}> => {
-    try {
-      if (!patientId) {
-        throw new Error('Patient ID is required');
-      }
-      
-      // Check cache first
-      const cachedData = dbCache.get<Patient>(`${dbCache.KEYS.PATIENT}${patientId}`);
-      if (cachedData) {
-        return {
-          success: true,
-          data: cachedData.data
-        };
-      }
-      
-      if (!supabase) {
-        throw new Error('Supabase client is not initialized');
-      }
-      
       const { data, error } = await supabase
         .from('patients')
         .select('*')
         .eq('id', patientId)
-        .maybeSingle();
+        .single();
         
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      if (!data) {
-        throw new Error('Patient not found');
-      }
-      
-      // Save to cache
-      dbCache.set(`${dbCache.KEYS.PATIENT}${patientId}`, data);
+      const patient = convertDbToPatient(data);
       
       return {
         success: true,
-        data: data as Patient
+        data: patient
       };
     } catch (error: any) {
       console.error('Error getting patient:', error);
@@ -159,90 +105,97 @@ export const PatientService = {
         error: error.message || 'Failed to get patient'
       };
     }
-  },
+  }
   
-  /**
-   * Get all patients for a user with optimized caching and pagination
-   */
-  getUserPatients: async (
-    userId: string, 
-    options: {
-      page?: number;
-      pageSize?: number;
-      search?: string;
-      status?: 'active' | 'archived' | 'all';
-      sortBy?: string;
-      sortOrder?: 'asc' | 'desc';
-      startDate?: string;
-      endDate?: string;
-    } = {}
-  ): Promise<{
-    success: boolean, 
-    data?: Patient[], 
-    total?: number,
-    error?: string
-  }> => {
+  static async updatePatientStatus(patientId: string, status: 'active' | 'archived') {
     try {
-      if (!userId) {
-        throw new Error('User ID is required');
-      }
+      const { error } = await supabase
+        .from('patients')
+        .update({ 
+          status, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', patientId);
+        
+      if (error) throw error;
       
-      if (!supabase) {
-        throw new Error('Supabase client is not initialized');
-      }
-
+      return {
+        success: true
+      };
+    } catch (error: any) {
+      console.error('Error updating patient status:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to update patient status'
+      };
+    }
+  }
+  
+  static async getPatients(userId: string, filters: any = {}) {
+    try {
       const {
-        page = 1,
-        pageSize = 10,
         search = '',
         status = 'active',
+        startDate,
+        endDate,
         sortBy = 'name',
         sortOrder = 'asc',
-        startDate,
-        endDate
-      } = options;
+        page = 1,
+        pageSize = 10
+      } = filters;
       
-      // Build query
+      // Calculate offset based on page and pageSize
+      const offset = (page - 1) * pageSize;
+      
+      // Start building query
       let query = supabase
         .from('patients')
-        .select('*', { count: 'exact' })
-        .eq('user_id', userId);
-        
-      // Apply status filter
+        .select('*', { count: 'exact' });
+      
+      // Apply filters
+      // Filter by user_id
+      query = query.eq('user_id', userId);
+      
+      // Filter by status if not 'all'
       if (status !== 'all') {
         query = query.eq('status', status);
       }
       
-      // Apply search if provided
+      // Filter by search term
       if (search) {
         query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
       }
       
-      // Apply date range filter if provided
+      // Filter by date range
       if (startDate) {
         query = query.gte('created_at', startDate);
       }
       
       if (endDate) {
-        query = query.lte('created_at', endDate);
+        // Add a day to endDate to include the entire day
+        const nextDay = new Date(endDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        query = query.lt('created_at', nextDay.toISOString());
       }
       
       // Apply sorting
       query = query.order(sortBy, { ascending: sortOrder === 'asc' });
       
       // Apply pagination
-      query = query.range((page - 1) * pageSize, (page * pageSize) - 1);
+      query = query.range(offset, offset + pageSize - 1);
       
+      // Execute query
       const { data, error, count } = await query;
-        
-      if (error) {
-        throw error;
-      }
+      
+      if (error) throw error;
+      
+      // Convert DB records to Patient objects
+      const patients = data.map(record => convertDbToPatient(record));
       
       return {
         success: true,
-        data: data as Patient[],
-        total: count || 0
+        data: patients,
+        count
       };
     } catch (error: any) {
       console.error('Error getting patients:', error);
@@ -252,4 +205,4 @@ export const PatientService = {
       };
     }
   }
-};
+}

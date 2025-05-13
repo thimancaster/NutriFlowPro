@@ -1,154 +1,199 @@
 
-import React from 'react';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetFooter 
-} from '@/components/ui/sheet';
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { format, parseISO, differenceInYears } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { X, Pencil, Archive, RotateCcw, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Patient } from '@/types';
+
 import PatientBasicInfo from './PatientBasicInfo';
 import PatientAppointments from './PatientAppointments';
-import PatientEvolution from './PatientEvolution';
-import PatientEvaluations from './PatientEvaluations';
 import PatientMealPlans from './PatientMealPlans';
+import PatientEvaluations from './PatientEvaluations';
+import PatientEvolution from './PatientEvolution';
 import PatientNotes from './PatientNotes';
-import PatientStatusActions from './PatientStatusActions';
-import { useNavigate } from 'react-router-dom';
-import { Edit } from 'lucide-react';
+import { PatientService } from '@/services/patientService';
+import { useToast } from '@/hooks/use-toast';
 
 interface PatientDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  patientId: string;
   patient: Patient | null;
-  isLoading: boolean;
+  open: boolean;
+  onClose: () => void;
   onStatusChange?: () => void;
 }
 
-const PatientDetailModal = ({ 
-  isOpen, 
-  onClose, 
-  patientId, 
-  patient, 
-  isLoading,
-  onStatusChange
-}: PatientDetailModalProps) => {
+const PatientDetailModal = ({ patient, open, onClose, onStatusChange }: PatientDetailModalProps) => {
   const navigate = useNavigate();
-
-  // Format date helper
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    try {
-      return format(parseISO(dateStr), 'dd/MM/yyyy');
-    } catch (e) {
-      return dateStr;
-    }
-  };
+  const { toast } = useToast();
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Calculate age from birth_date
-  const calculateAge = (birthDate: string | null) => {
-    if (!birthDate) return null;
-    try {
-      return differenceInYears(new Date(), parseISO(birthDate));
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const handleEditPatient = () => {
-    navigate(`/patients/edit/${patientId}`);
+  if (!patient) return null;
+  
+  const handleEditClick = () => {
+    navigate(`/patients/edit/${patient.id}`);
     onClose();
   };
   
-  return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full md:max-w-[800px] sm:max-w-full overflow-y-auto">
-        <SheetHeader>
-          <div className="flex justify-between items-center">
-            <SheetTitle className="text-2xl font-bold">
-              {isLoading ? 'Carregando...' : patient?.name || 'Paciente não encontrado'}
-            </SheetTitle>
-            {patient && patient.status && (
-              <Badge 
-                className={patient.status === 'archived' ? 'bg-amber-500' : 'bg-green-500'}
-              >
-                {patient.status === 'archived' ? 'Arquivado' : 'Ativo'}
-              </Badge>
-            )}
-          </div>
-        </SheetHeader>
+  const handleArchiveClick = () => {
+    setIsArchiveDialogOpen(true);
+  };
+  
+  const handleReactivateClick = () => {
+    setIsArchiveDialogOpen(true);
+  };
+  
+  const handleStatusChange = async () => {
+    if (!patient) return;
+    
+    setIsLoading(true);
+    
+    const newStatus = patient.status === 'active' ? 'archived' : 'active';
+    
+    try {
+      const result = await PatientService.updatePatientStatus(patient.id, newStatus);
+      
+      if (result.success) {
+        toast({
+          title: newStatus === 'active' ? "Paciente reativado" : "Paciente arquivado",
+          description: `${patient.name} foi ${newStatus === 'active' ? 'reativado(a)' : 'arquivado(a)'} com sucesso.`
+        });
         
-        {isLoading ? (
-          <div className="flex items-center justify-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-nutri-blue"></div>
-          </div>
-        ) : patient ? (
-          <>
-            <div className="flex flex-wrap gap-2 my-4">
-              <Button 
-                className="bg-nutri-blue hover:bg-nutri-blue-dark"
-                onClick={handleEditPatient}
-              >
-                <Edit className="h-4 w-4 mr-2" /> Editar Paciente
-              </Button>
-              <PatientStatusActions 
-                patient={patient} 
-                onStatusChange={onStatusChange}
-              />
-            </div>
+        if (onStatusChange) {
+          onStatusChange();
+        }
+        
+        onClose();
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: `Não foi possível ${newStatus === 'active' ? 'reativar' : 'arquivar'} o paciente. ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+      setIsArchiveDialogOpen(false);
+    }
+  };
+  
+  const handleNewAppointment = () => {
+    // This will be implemented in the future
+    toast({
+      description: "Funcionalidade em desenvolvimento"
+    });
+  };
 
-            <Tabs defaultValue="dados" className="mt-6">
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-4">
-                <TabsTrigger value="dados">Dados</TabsTrigger>
-                <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
-                <TabsTrigger value="evolucao">Evolução</TabsTrigger>
-                <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
-                <TabsTrigger value="planos">Planos</TabsTrigger>
-                <TabsTrigger value="anotacoes">Anotações</TabsTrigger>
-              </TabsList>
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl">{patient.name}</DialogTitle>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className={`inline-block h-3 w-3 rounded-full ${patient.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span className="text-sm text-gray-500">{patient.status === 'active' ? 'Ativo' : 'Arquivado'}</span>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleEditClick}>
+                <Pencil className="h-4 w-4 mr-1" /> Editar
+              </Button>
               
-              <TabsContent value="dados">
-                <PatientBasicInfo patient={patient} formatDate={formatDate} calculateAge={calculateAge} />
-              </TabsContent>
+              {patient.status === 'active' ? (
+                <Button variant="outline" size="sm" onClick={handleArchiveClick}>
+                  <Archive className="h-4 w-4 mr-1" /> Arquivar
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleReactivateClick}>
+                  <RotateCcw className="h-4 w-4 mr-1" /> Reativar
+                </Button>
+              )}
               
-              <TabsContent value="agendamentos">
-                <PatientAppointments patientId={patientId} />
-              </TabsContent>
-              
-              <TabsContent value="evolucao">
-                <PatientEvolution patientId={patientId} />
-              </TabsContent>
-              
-              <TabsContent value="avaliacoes">
-                <PatientEvaluations patientId={patientId} />
-              </TabsContent>
-              
-              <TabsContent value="planos">
-                <PatientMealPlans patientId={patientId} />
-              </TabsContent>
-              
-              <TabsContent value="anotacoes">
-                <PatientNotes patient={patient} patientId={patientId} />
-              </TabsContent>
-            </Tabs>
-          </>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-lg text-red-600">Paciente não encontrado</p>
+              <Button size="sm" onClick={handleNewAppointment}>
+                <Clock className="h-4 w-4 mr-1" /> Novo Agendamento
+              </Button>
+            </div>
           </div>
-        )}
-        
-        <SheetFooter className="mt-6">
-          <Button onClick={onClose}>Fechar</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+          
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="grid grid-cols-6 mb-4">
+              <TabsTrigger value="info">Dados Cadastrais</TabsTrigger>
+              <TabsTrigger value="appointments">Consultas</TabsTrigger>
+              <TabsTrigger value="meal-plans">Planos Alimentares</TabsTrigger>
+              <TabsTrigger value="evaluations">Avaliações</TabsTrigger>
+              <TabsTrigger value="evolution">Evolução</TabsTrigger>
+              <TabsTrigger value="notes">Observações</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="info">
+              <PatientBasicInfo patient={patient} />
+            </TabsContent>
+            
+            <TabsContent value="appointments">
+              <PatientAppointments patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="meal-plans">
+              <PatientMealPlans patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="evaluations">
+              <PatientEvaluations patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="evolution">
+              <PatientEvolution patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="notes">
+              <PatientNotes patientId={patient.id} notes={patient.notes} />
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+      
+      <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {patient.status === 'active' ? 'Arquivar paciente' : 'Reativar paciente'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {patient.status === 'active' 
+                ? 'Tem certeza que deseja arquivar este paciente? Pacientes arquivados não aparecerão na listagem principal.'
+                : 'Tem certeza que deseja reativar este paciente? Pacientes reativados voltarão a aparecer na listagem principal.'
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleStatusChange}
+              disabled={isLoading}
+              className={patient.status === 'active' ? 'bg-red-600 hover:bg-red-700' : ''}
+            >
+              {isLoading 
+                ? 'Processando...' 
+                : patient.status === 'active' ? 'Sim, arquivar' : 'Sim, reativar'
+              }
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

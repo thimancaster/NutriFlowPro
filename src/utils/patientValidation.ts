@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { Json } from '@/integrations/supabase/types';
 
 // CPF validation
 const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
@@ -13,6 +14,17 @@ const cepRegex = /^\d{5}-\d{3}$/;
 // Email validation
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+// Address schema for validation
+const addressSchema = z.object({
+  cep: z.string().regex(cepRegex, { message: "CEP inválido: Use o formato XXXXX-XXX" }).or(z.string().length(0)).optional(),
+  street: z.string().optional(),
+  number: z.string().optional(),
+  complement: z.string().optional(),
+  neighborhood: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+});
+
 // Patient schema for validation
 export const patientSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -24,15 +36,7 @@ export const patientSchema = z.object({
   cpf: z.string().regex(cpfRegex, { message: "CPF inválido: Use o formato XXX.XXX.XXX-XX" }).or(z.string().length(0)).optional(),
   objective: z.string().min(1, { message: "Objetivo é obrigatório" }),
   profile: z.string().min(1, { message: "Perfil é obrigatório" }),
-  address: z.object({
-    cep: z.string().regex(cepRegex, { message: "CEP inválido: Use o formato XXXXX-XXX" }).or(z.string().length(0)).optional(),
-    street: z.string().optional(),
-    number: z.string().optional(),
-    complement: z.string().optional(),
-    neighborhood: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-  }).optional(),
+  address: addressSchema.optional(),
   notes: z.string().optional(),
   status: z.enum(["active", "archived"], { message: "Status inválido" }).default("active"),
 });
@@ -40,14 +44,23 @@ export const patientSchema = z.object({
 export type PatientFormData = z.infer<typeof patientSchema>;
 
 // Validate specific field
-export const validateField = (field: keyof PatientFormData, value: any): string | null => {
+export const validateField = (field: string, value: any): string | null => {
   try {
-    if (field === "address") {
-      const addressSchema = patientSchema.shape.address;
-      addressSchema.parse(value);
+    // Handle nested fields like address.cep
+    if (field.includes('.')) {
+      const [parentField, childField] = field.split('.');
+      
+      if (parentField === 'address') {
+        const addressField = addressSchema.shape[childField as keyof typeof addressSchema.shape];
+        if (addressField) {
+          addressField.parse(value);
+          return null;
+        }
+      }
       return null;
     }
     
+    // Handle standard fields
     const fieldSchema = patientSchema.shape[field as keyof typeof patientSchema.shape];
     if (fieldSchema) {
       fieldSchema.parse(value);
