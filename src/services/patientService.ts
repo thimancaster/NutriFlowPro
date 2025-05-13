@@ -11,7 +11,8 @@ const convertDbToPatient = (dbRecord: any): Patient => {
     try {
       address = JSON.parse(address);
     } catch (e) {
-      address = null;
+      // If parsing fails, initialize with empty object that matches the Patient interface
+      address = {};
     }
   }
   
@@ -20,14 +21,16 @@ const convertDbToPatient = (dbRecord: any): Patient => {
     try {
       goals = JSON.parse(goals);
     } catch (e) {
-      goals = null;
+      // If parsing fails, initialize with empty object that matches the Patient interface
+      goals = { objective: undefined, profile: undefined };
     }
   }
   
+  // Ensure we have the correct structure for a Patient object
   const patient: Patient = {
     ...dbRecord,
-    address,
-    goals
+    address: address || {},
+    goals: goals || {}
   };
 
   return patient;
@@ -42,20 +45,22 @@ export class PatientService {
       // Set updated_at timestamp
       patientData.updated_at = new Date().toISOString();
       
-      // Format address for database - convert to string if it's an object
-      let dbPatientData = { ...patientData };
+      // Format data for database
+      let dbPatientData: any = { ...patientData };
+      
+      // Convert address object to string for database storage
       if (dbPatientData.address && typeof dbPatientData.address === 'object') {
         dbPatientData.address = JSON.stringify(dbPatientData.address);
       }
       
-      // Format goals for database - convert to string if it's an object
+      // Convert goals object to string for database storage
       if (dbPatientData.goals && typeof dbPatientData.goals === 'object') {
         dbPatientData.goals = JSON.stringify(dbPatientData.goals);
       }
       
       if (patientData.id) {
         // Update existing patient
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('patients')
           .update(dbPatientData)
           .eq('id', patientData.id);
@@ -205,6 +210,7 @@ export class PatientService {
       return {
         success: true,
         data: patients,
+        total: count,
         count
       };
     } catch (error: any) {

@@ -14,13 +14,14 @@ import PatientPagination from '@/components/patient/PatientPagination';
 import PatientDetailModal from '@/components/patient/PatientDetailModal';
 import PatientFilters from '@/components/patient/PatientFilters';
 import { usePatientDetail } from '@/hooks/usePatientDetail';
+import { PatientFilters as PatientFiltersType } from '@/types';
 
 const Patients = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<PatientFiltersType>({
     search: '',
     status: 'active',
     startDate: '',
@@ -80,11 +81,11 @@ const Patients = () => {
     }
   };
 
-  const handleStatusChange = (value: string) => {
+  const handleStatusChange = (value: 'active' | 'archived' | 'all') => {
     setFilters({ ...filters, status: value, page: 1 });
   };
 
-  const handleFilterChange = (newFilters: any) => {
+  const handleFilterChange = (newFilters: Partial<PatientFiltersType>) => {
     setFilters({ ...filters, ...newFilters, page: 1 });
   };
 

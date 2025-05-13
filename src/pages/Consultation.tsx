@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -18,6 +17,33 @@ import { handleAutoSaveConsultation } from '@/components/calculator/handlers/con
 
 // Auto-save interval in milliseconds (2 minutes)
 const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
+
+// Helper function to convert patient data in the component when it's loaded
+const convertPatientData = (dbPatient: any): Patient => {
+  let address = dbPatient.address;
+  if (typeof address === 'string') {
+    try {
+      address = JSON.parse(address);
+    } catch (e) {
+      address = {}; // Initialize with empty object that matches the Patient interface
+    }
+  }
+  
+  let goals = dbPatient.goals;
+  if (typeof goals === 'string') {
+    try {
+      goals = JSON.parse(goals);
+    } catch (e) {
+      goals = { objective: undefined, profile: undefined };
+    }
+  }
+  
+  return {
+    ...dbPatient,
+    address: address || {},
+    goals: goals || {}
+  };
+};
 
 const Consultation = () => {
   const { toast } = useToast();
@@ -134,13 +160,11 @@ const Consultation = () => {
           if (error) throw error;
           
           // Convert the raw data to a Patient type with correct goals structure
-          const patientWithFormattedGoals: Patient = {
-            ...data,
-            goals: typeof data.goals === 'object' ? data.goals as any : { objective: 'manutenção' }
-          };
+          const dbPatient = data;
+          const patient = convertPatientData(dbPatient);
           
-          setPatient(patientWithFormattedGoals);
-          setActivePatient(patientWithFormattedGoals);
+          setPatient(patient);
+          setActivePatient(patient);
           
           if (data.birth_date) {
             const age = calculateAge(data.birth_date);

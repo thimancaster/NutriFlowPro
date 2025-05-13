@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
@@ -42,7 +41,7 @@ const Patients = () => {
     queryFn: async () => {
       if (!user) return { data: [], total: 0 };
       
-      const result = await PatientService.getUserPatients(user.id, filters);
+      const result = await PatientService.getPatients(user.id, filters);
         
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch patients');
@@ -198,11 +197,9 @@ const Patients = () => {
         
         {/* Patient Detail Modal */}
         <PatientDetailModal
-          isOpen={isModalOpen}
+          open={isModalOpen}
           onClose={closePatientDetail}
-          patientId={patientId || ''}
           patient={patient}
-          isLoading={isLoadingPatient}
           onStatusChange={handleStatusChange}
         />
       </div>

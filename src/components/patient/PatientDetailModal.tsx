@@ -167,7 +167,6 @@ const PatientDetailModal = ({ patient, open, onClose, onStatusChange }: PatientD
       </Dialog>
       
       <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
-        
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>

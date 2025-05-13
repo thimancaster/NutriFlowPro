@@ -1,64 +1,72 @@
 
-import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { Patient } from '@/types';
+import { PatientService } from '@/services/patientService';
+import { useToast } from '@/hooks/use-toast';
 
-/**
- * Hook for managing patient detail modal state and data fetching
- */
 export const usePatientDetail = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const fetchPatientData = useCallback(async (id: string) => {
+  const openPatientDetail = async (patient: Patient) => {
+    setPatientId(patient.id);
     setIsLoading(true);
-    
+    setIsModalOpen(true);
+
     try {
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', id)
-        .single();
+      // Fetch the latest patient data to ensure we have the most up-to-date information
+      const result = await PatientService.getPatient(patient.id);
       
-      if (error) throw error;
-      
-      // Convert address from string to object if needed
-      let patientData = data as Patient;
-      if (typeof patientData.address === 'string') {
-        try {
-          patientData.address = JSON.parse(patientData.address);
-        } catch (e) {
-          // If parsing fails, set address to null
-          patientData.address = null;
-        }
+      if (result.success) {
+        setPatient(result.data);
+      } else {
+        throw new Error(result.error);
       }
-      
-      setPatient(patientData);
-    } catch (error) {
-      console.error('Error loading patient details:', error);
-      setPatient(null);
+    } catch (error: any) {
+      console.error('Error fetching patient details:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os detalhes do paciente.',
+        variant: 'destructive',
+      });
+      setPatient(patient); // Fallback to the provided patient data
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
-  const openPatientDetail = useCallback(async (id: string) => {
-    setPatientId(id);
-    setIsLoading(true);
-    setIsModalOpen(true);
-    await fetchPatientData(id);
-  }, [fetchPatientData]);
-
-  const closePatientDetail = useCallback(() => {
+  const closePatientDetail = () => {
     setIsModalOpen(false);
-    // Small delay to let the modal animation finish before clearing state
-    setTimeout(() => {
-      setPatientId(null);
-      setPatient(null);
-    }, 300);
-  }, []);
+    setPatientId(null);
+    setPatient(null);
+  };
+
+  const refreshPatientData = async () => {
+    if (!patientId) return;
+    
+    setIsLoading(true);
+    try {
+      const result = await PatientService.getPatient(patientId);
+      
+      if (result.success) {
+        setPatient(result.data);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      console.error('Error refreshing patient data:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar os dados do paciente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
     isModalOpen,
@@ -67,6 +75,6 @@ export const usePatientDetail = () => {
     isLoading,
     openPatientDetail,
     closePatientDetail,
-    refreshPatientData: fetchPatientData
+    refreshPatientData
   };
 };
