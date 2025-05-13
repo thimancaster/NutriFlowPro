@@ -1,17 +1,42 @@
 
 /**
- * Utility functions for working with browser storage with optimized performance
+ * Optimized utility functions for working with browser storage with improved performance
  */
+
+// Configuration constants
+const MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const MEMORY_CACHE_MAX_ITEMS = 100; // Maximum items in memory cache
 
 // Cache commonly used items in memory to reduce storage read operations
 const memoryCache: Record<string, { value: any, timestamp: number }> = {};
-const MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Helper for type-safe storage operations
+// Helper function to cleanup memory cache when it gets too large
+const cleanupMemoryCache = () => {
+  const keys = Object.keys(memoryCache);
+  if (keys.length <= MEMORY_CACHE_MAX_ITEMS) return;
+  
+  // Sort by timestamp (oldest first)
+  const sortedKeys = keys.sort((a, b) => 
+    memoryCache[a].timestamp - memoryCache[b].timestamp
+  );
+  
+  // Remove the oldest 20% of items
+  const removeCount = Math.ceil(keys.length * 0.2);
+  for (let i = 0; i < removeCount; i++) {
+    if (i < sortedKeys.length) {
+      delete memoryCache[sortedKeys[i]];
+    }
+  }
+};
+
+// Helper for type-safe storage operations with improved performance
 export const storageUtils = {
   // Local Storage
   setLocalItem: <T>(key: string, value: T): void => {
     try {
+      // Check if cleanup is needed
+      cleanupMemoryCache();
+      
       // Add to memory cache first
       memoryCache[`local_${key}`] = { 
         value,
@@ -68,6 +93,9 @@ export const storageUtils = {
   // Session Storage
   setSessionItem: <T>(key: string, value: T): void => {
     try {
+      // Check if cleanup is needed
+      cleanupMemoryCache();
+      
       // Add to memory cache first
       memoryCache[`session_${key}`] = { 
         value,
@@ -140,7 +168,7 @@ export const storageUtils = {
     Object.keys(memoryCache).forEach(key => delete memoryCache[key]);
   },
   
-  // Get all keys from storage - useful for debugging
+  // Get all keys from storage - useful for debugging and cache invalidation
   getAllKeys: (): {local: string[], session: string[]} => {
     const localKeys: string[] = [];
     const sessionKeys: string[] = [];

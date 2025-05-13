@@ -13,7 +13,7 @@ export const SUBSCRIPTION_PRICES = {
     price: 557.00,
     currency: 'BRL',
     formatted: 'R$ 557,00',
-    monthlyEquivalent: 'R$ 46,42',
+    monthlyEquivalent: 'R$ 57,61',
     discount: '20%'
   }
 };

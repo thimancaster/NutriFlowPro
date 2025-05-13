@@ -8,15 +8,15 @@ import { format, parseISO } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
-// Define a more specific type for the goals property based on your data shape
+// Define a more specific type for the Patient to optimize data fetching
 interface Patient {
   id: string;
   name: string;
   created_at: string;
   goals: {
     objective?: string;
-    profile?: string;
   } | null;
 }
 
@@ -24,12 +24,13 @@ const DashboardRecentPatients: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  // Use React Query for better caching and loading states
+  // Use React Query with optimized data fetching and better caching
   const { data: recentPatients, isLoading } = useQuery({
     queryKey: ['recentPatients', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
+      // Only select fields we actually need instead of fetching all data
       const { data, error } = await supabase
         .from('patients')
         .select('id, name, created_at, goals')
@@ -38,6 +39,11 @@ const DashboardRecentPatients: React.FC = () => {
         .limit(3);
           
       if (error) {
+        toast({
+          title: "Erro ao carregar pacientes",
+          description: error.message,
+          variant: "destructive"
+        });
         throw error;
       }
         
@@ -46,16 +52,17 @@ const DashboardRecentPatients: React.FC = () => {
         id: patient.id,
         name: patient.name,
         created_at: patient.created_at,
-        goals: patient.goals as Patient['goals'] // Cast the JSON to our expected type
+        goals: patient.goals as Patient['goals'] 
       })) || [];
         
       return typedPatients;
     },
     enabled: !!user,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes to reduce unnecessary API calls
+    retry: 1, // Only retry once to prevent excessive API calls on failure
   });
 
-  // Format date
+  // Format date with error handling
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), 'dd/MM/yyyy');
@@ -64,7 +71,7 @@ const DashboardRecentPatients: React.FC = () => {
     }
   };
   
-  // Get patient status
+  // Get patient status based on creation date and goals
   const getPatientStatus = (patient: Patient) => {
     const createdDate = new Date(patient.created_at);
     const daysDiff = Math.floor((new Date().getTime() - createdDate.getTime()) / (1000 * 3600 * 24));
