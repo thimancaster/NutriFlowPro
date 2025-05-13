@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { TextAreaField } from './FormFields';
+import { TextAreaField } from './fields';
 
 interface NotesFieldsProps {
   notes: string;

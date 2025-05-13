@@ -1,157 +1,120 @@
-
-import React, { useState } from 'react';
-import { TextField } from './FormFields';
-import { fetchAddressByCep } from '@/services/cepService';
+import React from 'react';
+import { TextField, SelectField } from './fields';
 import { formatCep } from '@/utils/patientValidation';
-import { Loader2 } from 'lucide-react';
-
-interface Address {
-  cep: string;
-  street: string;
-  number: string;
-  complement: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-}
 
 interface AddressFieldsProps {
-  address: Address;
-  onChange: (address: Address) => void;
+  address: {
+    cep: string;
+    street: string;
+    number: string;
+    complement: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
+  onChange: (address: any) => void;
   errors: Record<string, string>;
   validateField: (field: string, value: any) => void;
 }
 
 const AddressFields = ({ address, onChange, errors, validateField }: AddressFieldsProps) => {
-  const [isLoadingCep, setIsLoadingCep] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const field = name.split('.')[1]; // address.field format
-    
-    onChange({
-      ...address,
-      [field]: value
-    });
+    onChange({ ...address, [name]: value });
   };
 
-  const handleCepBlur = async () => {
-    if (address.cep && address.cep.replace(/\D/g, '').length === 8) {
-      setIsLoadingCep(true);
-      
-      try {
-        const addressData = await fetchAddressByCep(address.cep);
-        
-        if (addressData && !addressData.erro) {
-          onChange({
-            ...address,
-            street: addressData.logradouro || '',
-            neighborhood: addressData.bairro || '',
-            city: addressData.localidade || '',
-            state: addressData.uf || '',
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching address by CEP:', error);
-      } finally {
-        setIsLoadingCep(false);
-      }
-    }
-    
-    validateField('address.cep', address.cep);
+  const handleSelectChange = (name: string, value: string) => {
+    onChange({ ...address, [name]: value });
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-medium text-lg">Endereço</h3>
-      
-      <div className="flex gap-4 items-center">
-        <div className="w-1/3">
-          <TextField
-            id="address.cep"
-            name="address.cep"
-            label="CEP"
-            value={address.cep}
-            onChange={handleChange}
-            mask={formatCep}
-            placeholder="00000-000"
-            onBlur={handleCepBlur}
-            error={errors['address.cep']}
-          />
-        </div>
-        {isLoadingCep && (
-          <div className="flex items-center mt-6">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-sm text-gray-500">Buscando endereço...</span>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <TextField
-            id="address.street"
-            name="address.street"
-            label="Logradouro"
-            value={address.street}
-            onChange={handleChange}
-            error={errors['address.street']}
-          />
-        </div>
-        <div>
-          <TextField
-            id="address.number"
-            name="address.number"
-            label="Número"
-            value={address.number}
-            onChange={handleChange}
-            error={errors['address.number']}
-          />
-        </div>
-      </div>
-
+    <>
+      <TextField
+        id="cep"
+        name="cep"
+        label="CEP"
+        value={address.cep || ''}
+        onChange={handleAddressChange}
+        mask={formatCep}
+        placeholder="00000-000"
+        error={errors['address.cep']}
+        onBlur={() => validateField('address.cep', address.cep)}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TextField
-          id="address.complement"
-          name="address.complement"
-          label="Complemento"
-          value={address.complement}
-          onChange={handleChange}
-          error={errors['address.complement']}
+          id="street"
+          name="street"
+          label="Rua"
+          value={address.street || ''}
+          onChange={handleAddressChange}
         />
         <TextField
-          id="address.neighborhood"
-          name="address.neighborhood"
-          label="Bairro"
-          value={address.neighborhood}
-          onChange={handleChange}
-          error={errors['address.neighborhood']}
+          id="number"
+          name="number"
+          label="Número"
+          value={address.number || ''}
+          onChange={handleAddressChange}
         />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <TextField
-            id="address.city"
-            name="address.city"
-            label="Cidade"
-            value={address.city}
-            onChange={handleChange}
-            error={errors['address.city']}
-          />
-        </div>
-        <div>
-          <TextField
-            id="address.state"
-            name="address.state"
-            label="Estado"
-            value={address.state}
-            onChange={handleChange}
-            error={errors['address.state']}
-          />
-        </div>
+      <TextField
+        id="complement"
+        name="complement"
+        label="Complemento"
+        value={address.complement || ''}
+        onChange={handleAddressChange}
+      />
+      <TextField
+        id="neighborhood"
+        name="neighborhood"
+        label="Bairro"
+        value={address.neighborhood || ''}
+        onChange={handleAddressChange}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TextField
+          id="city"
+          name="city"
+          label="Cidade"
+          value={address.city || ''}
+          onChange={handleAddressChange}
+        />
+        <SelectField
+          id="state"
+          label="Estado"
+          value={address.state || ''}
+          onChange={handleSelectChange.bind(null, 'state')}
+          options={[
+            { value: 'AC', label: 'Acre' },
+            { value: 'AL', label: 'Alagoas' },
+            { value: 'AP', label: 'Amapá' },
+            { value: 'AM', label: 'Amazonas' },
+            { value: 'BA', label: 'Bahia' },
+            { value: 'CE', label: 'Ceará' },
+            { value: 'DF', label: 'Distrito Federal' },
+            { value: 'ES', label: 'Espírito Santo' },
+            { value: 'GO', label: 'Goiás' },
+            { value: 'MA', label: 'Maranhão' },
+            { value: 'MT', label: 'Mato Grosso' },
+            { value: 'MS', label: 'Mato Grosso do Sul' },
+            { value: 'MG', label: 'Minas Gerais' },
+            { value: 'PA', label: 'Pará' },
+            { value: 'PB', label: 'Paraíba' },
+            { value: 'PR', label: 'Paraná' },
+            { value: 'PE', label: 'Pernambuco' },
+            { value: 'PI', label: 'Piauí' },
+            { value: 'RJ', label: 'Rio de Janeiro' },
+            { value: 'RN', label: 'Rio Grande do Norte' },
+            { value: 'RS', label: 'Rio Grande do Sul' },
+            { value: 'RO', label: 'Rondônia' },
+            { value: 'RR', label: 'Roraima' },
+            { value: 'SC', label: 'Santa Catarina' },
+            { value: 'SP', label: 'São Paulo' },
+            { value: 'SE', label: 'Sergipe' },
+            { value: 'TO', label: 'Tocantins' },
+          ]}
+        />
       </div>
-    </div>
+    </>
   );
 };
 

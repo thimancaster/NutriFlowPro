@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TextField, RadioGroupField, DateField } from './FormFields';
+import { TextField, RadioGroupField, DateField } from './fields';
 import { formatPhone, formatCpf } from '@/utils/patientValidation';
 
 interface BasicInfoFieldsProps {

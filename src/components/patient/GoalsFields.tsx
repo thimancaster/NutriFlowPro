@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { SelectField, RadioGroupField } from './FormFields';
+import { SelectField, RadioGroupField } from './fields';
 
 interface GoalsFieldsProps {
   formData: {
