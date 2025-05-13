@@ -6,6 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Loader2, ArrowRight, Apple, Lock, Mail } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AUTH_STORAGE_KEYS } from '@/constants/authConstants';
+import { storageUtils } from '@/utils/storageUtils';
 
 interface LoginFormProps {
   onGoogleLogin: () => void;
@@ -14,6 +17,10 @@ interface LoginFormProps {
 const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    // Initialize from localStorage if available
+    return !!storageUtils.getLocalItem<boolean>(AUTH_STORAGE_KEYS.REMEMBER_ME);
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
@@ -35,14 +42,18 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log("Tentando fazer login com:", { email });
-      const { success, error } = await login(email, password);
+      console.log("Tentando fazer login com:", { email, rememberMe });
+      const { success, error } = await login(email, password, rememberMe);
       
       if (!success && error) {
         console.error("Erro no login:", error);
         throw error;
       } else {
         console.log("Login bem-sucedido");
+        
+        // Store remember me preference
+        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, rememberMe);
+        
         // After successful login, navigate to dashboard
         navigate('/dashboard', { replace: true });
       }
@@ -60,8 +71,16 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
       console.log("Iniciando login com Google...");
       await onGoogleLogin();
       // Navigation happens in parent component
+      
+      // Store remember me preference for Google login too
+      storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, rememberMe);
     } catch (error: any) {
       console.error("Erro ao processar login com Google:", error);
+      toast({
+        title: "Erro ao fazer login com Google",
+        description: error.message || "Não foi possível conectar com o Google. Tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -107,6 +126,21 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
             placeholder="••••••••"
             required
           />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="rememberMe" 
+            checked={rememberMe} 
+            onCheckedChange={(checked) => setRememberMe(!!checked)}
+            className="data-[state=checked]:bg-white data-[state=checked]:text-nutri-blue" 
+          />
+          <label
+            htmlFor="rememberMe"
+            className="text-sm font-medium leading-none text-blue-100 cursor-pointer"
+          >
+            Lembrar-me
+          </label>
         </div>
 
         <Button

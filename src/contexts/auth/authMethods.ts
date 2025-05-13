@@ -10,16 +10,23 @@ import { logout } from './methods/logoutMethod';
 import { resetPassword } from './methods/passwordMethods';
 
 export const useAuthMethods = (
-  updateAuthState: (session: any) => Promise<void>,
+  updateAuthState: (session: any, remember?: boolean) => Promise<void>,
   toast: ReturnType<typeof useToast>['toast'],
   queryClient: ReturnType<typeof useQueryClient>
 ) => {
   const { checkPremiumStatus } = usePremiumCheck();
 
   // We wrap the imported methods to provide them with the necessary context
-  const handleLogin = useCallback(async (email: string, password: string) => {
-    return await login(email, password, toast);
-  }, [toast]);
+  const handleLogin = useCallback(async (email: string, password: string, remember: boolean = false) => {
+    const result = await login(email, password, toast);
+    
+    // If login was successful, update auth state with the remember me preference
+    if (result.success && result.session) {
+      await updateAuthState(result.session, remember);
+    }
+    
+    return result;
+  }, [toast, updateAuthState]);
 
   const handleSignup = useCallback(async (email: string, password: string, name: string) => {
     return await signup(email, password, name, toast);

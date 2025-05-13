@@ -2,8 +2,8 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { AUTH_CONSTANTS } from '@/constants/authConstants';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,9 +16,6 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
   const [isVerifying, setIsVerifying] = useState(true);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   
-  // Maximum number of verification attempts before showing error
-  const MAX_VERIFICATION_ATTEMPTS = 3;
-
   // Use effect for session verification with timeout protection
   useEffect(() => {
     let isMounted = true;
@@ -26,13 +23,13 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
 
     // Set a timeout to prevent infinite loading
     timeoutId = window.setTimeout(() => {
-      if (isMounted && isVerifying && verificationAttempts >= MAX_VERIFICATION_ATTEMPTS) {
+      if (isMounted && isVerifying && verificationAttempts >= AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS) {
         console.error("Session verification timed out");
         setIsVerifying(false);
         // Force navigate to login if verification is taking too long
         navigate('/', { replace: true });
       }
-    }, 5000); // 5 seconds timeout
+    }, AUTH_CONSTANTS.VERIFICATION_TIMEOUT); // 5 seconds timeout
 
     const verifySession = async () => {
       // Skip verification if we already know the status
@@ -62,38 +59,22 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
         setVerificationAttempts(prev => prev + 1);
         console.log("Verificando sessão do usuário:", user?.email, "Tentativa:", verificationAttempts + 1);
         
-        // Only make the API call if we don't already have a definitive authentication state
-        if (isLoading || !isAuthenticated) {
-          // Check session validity with Supabase
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error || !data.session) {
-            console.warn("Sessão inválida ou expirada:", error?.message || "No session");
-            if (isMounted) {
-              setIsVerifying(false);
-              navigate('/', { replace: true });
-            }
-            return;
+        // If we've reached max attempts but auth is still loading, force navigate to login
+        if (verificationAttempts >= AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS) {
+          console.error("Maximum verification attempts reached");
+          if (isMounted) {
+            setIsVerifying(false);
+            navigate('/', { replace: true });
           }
-          
-          // Verify token expiration
-          const expiresAt = data.session.expires_at;
-          const now = Math.floor(Date.now() / 1000);
-          
-          if (expiresAt && expiresAt < now) {
-            console.warn("Token expirado, fazendo logout");
-            if (isMounted) {
-              await supabase.auth.signOut();
-              navigate('/', { replace: true });
-            }
-            return;
-          }
+          return;
         }
         
-        // Set verification complete if we got this far
-        if (isMounted) {
-          console.log("Sessão verificada com sucesso");
-          setIsVerifying(false);
+        // Set verification complete once auth is no longer loading
+        if (!isLoading) {
+          if (isMounted) {
+            console.log("Sessão verificada com sucesso");
+            setIsVerifying(false);
+          }
         }
       } catch (err) {
         console.error("Erro ao verificar autenticação:", err);
@@ -105,11 +86,8 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
     };
     
     // Only verify if we're still loading or verifying
-    if ((isLoading || isVerifying) && verificationAttempts < MAX_VERIFICATION_ATTEMPTS) {
+    if (isLoading || isVerifying) {
       verifySession();
-    } else if (verificationAttempts >= MAX_VERIFICATION_ATTEMPTS) {
-      setIsVerifying(false);
-      console.error("Maximum verification attempts reached");
     }
     
     return () => {
@@ -128,7 +106,7 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
           <p className="mt-4 text-nutri-blue">Verificando autenticação...</p>
           {verificationAttempts > 1 && (
             <p className="mt-2 text-sm text-gray-500">
-              Tentativa {verificationAttempts} de {MAX_VERIFICATION_ATTEMPTS}...
+              Tentativa {verificationAttempts} de {AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS}...
             </p>
           )}
         </div>
