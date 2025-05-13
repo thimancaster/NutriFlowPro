@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { PatientService } from '@/services/patientService';
 
 import BasicInfoFields from './patient/BasicInfoFields';
 import GoalsFields from './patient/GoalsFields';
@@ -117,20 +118,18 @@ const PatientForm = ({ onSuccess, editPatient, onCancel, initialData }: PatientF
       let result;
       
       if (editPatient) {
-        // Update existing patient
-        result = await supabase
-          .from('patients')
-          .update(patientData)
-          .eq('id', editPatient.id);
+        // Use the PatientService to update existing patient
+        result = await PatientService.savePatient({
+          ...patientData,
+          id: editPatient.id
+        }, user.id);
       } else {
-        // Insert new patient
-        result = await supabase
-          .from('patients')
-          .insert(patientData);
+        // Use the PatientService to insert new patient
+        result = await PatientService.savePatient(patientData, user.id);
       }
       
-      if (result.error) {
-        throw new Error(result.error.message);
+      if (!result.success) {
+        throw new Error(result.error || "Falha ao salvar paciente");
       }
       
       toast({

@@ -19,6 +19,10 @@ export const PatientService = {
       if (!patient.name) {
         throw new Error('Patient name is required');
       }
+
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
       
       const patientData = {
         ...patient,
@@ -26,24 +30,41 @@ export const PatientService = {
         name: patient.name // Explicitly include name to satisfy TypeScript
       };
       
-      const { data, error } = await supabase
-        .from('patients')
-        .insert(patientData)
-        .select('*')
-        .single();
-        
-      if (error) {
-        throw error;
+      let response;
+      
+      // Update existing patient
+      if (patient.id) {
+        response = await supabase
+          .from('patients')
+          .update({
+            ...patientData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', patient.id)
+          .select('*')
+          .single();
+      } else {
+        // Insert new patient
+        response = await supabase
+          .from('patients')
+          .insert(patientData)
+          .select('*')
+          .single();
+      }
+      
+      if (response.error) {
+        console.error("Database error:", response.error);
+        throw new Error(response.error.message);
       }
       
       // Cache the patient data
-      if (data?.id) {
-        dbCache.set(`${dbCache.KEYS.PATIENT}${data.id}`, data);
+      if (response.data?.id) {
+        dbCache.set(`${dbCache.KEYS.PATIENT}${response.data.id}`, response.data);
       }
       
       return {
         success: true,
-        data: data as Patient
+        data: response.data as Patient
       };
     } catch (error: any) {
       console.error('Error saving patient:', error);
@@ -102,6 +123,42 @@ export const PatientService = {
       return {
         success: false,
         error: error.message || 'Failed to get patient'
+      };
+    }
+  },
+  
+  /**
+   * Get all patients for a user with optimized caching
+   */
+  getUserPatients: async (userId: string): Promise<{success: boolean, data?: Patient[], error?: string}> => {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      
+      if (!supabase) {
+        throw new Error('Supabase client is not initialized');
+      }
+      
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('user_id', userId)
+        .order('name', { ascending: true });
+        
+      if (error) {
+        throw error;
+      }
+      
+      return {
+        success: true,
+        data: data as Patient[]
+      };
+    } catch (error: any) {
+      console.error('Error getting patients:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to get patients'
       };
     }
   }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from '@/components/Navbar';
 import { Star } from 'lucide-react';
@@ -30,36 +30,60 @@ const AddTestimonial = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) {
-      toast({
-        title: "Erro",
-        description: "Você precisa estar logado para enviar um depoimento",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        toast({
+          title: "Erro",
+          description: "Você precisa estar logado para enviar um depoimento",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
 
-    const { error } = await supabase.from('testimonials').insert({
-      ...formData,
-      user_id: session.session.user.id,
-    });
+      // Validate form data
+      if (!formData.name || !formData.role || !formData.content) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Por favor preencha todos os campos",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível enviar seu depoimento",
-        variant: "destructive",
+      // Save testimonial to database
+      const { error, data } = await supabase.from('testimonials').insert({
+        name: formData.name,
+        role: formData.role,
+        content: formData.content,
+        rating: formData.rating,
+        user_id: session.session.user.id,
       });
-    } else {
+
+      if (error) {
+        console.error("Error saving testimonial:", error);
+        throw new Error(error.message || "Erro ao salvar depoimento");
+      }
+
       toast({
         title: "Sucesso!",
         description: "Seu depoimento foi enviado para aprovação",
       });
+      
       navigate('/');
+    } catch (error: any) {
+      console.error("Error in testimonial submission:", error);
+      
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível enviar seu depoimento",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
