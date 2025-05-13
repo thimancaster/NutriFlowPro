@@ -25,7 +25,7 @@ export const getPatients = async (userId: string, filters: PatientFilters = {
     // Calculate offset based on page and pageSize
     const offset = (page - 1) * pageSize;
     
-    // Start building query with clean object
+    // Build query in a way that avoids deep type instantiation
     const query = supabase
       .from('patients')
       .select('*', { count: 'exact' })
@@ -64,11 +64,11 @@ export const getPatients = async (userId: string, filters: PatientFilters = {
     
     if (error) throw error;
     
-    // Convert DB records to Patient objects with safe deep copying
+    // Convert DB records to Patient objects with manual deep copying to avoid reference issues
     const patients = data ? data.map(record => {
-      // Use structuredClone for modern environments, or JSON parse/stringify for deep copying
-      const safeRecord = JSON.parse(JSON.stringify(record));
-      return convertDbToPatient(safeRecord);
+      // Create a completely new object structure to avoid type instantiation issues
+      const patientData = JSON.parse(JSON.stringify(record));
+      return convertDbToPatient(patientData);
     }) : [];
     
     return {
