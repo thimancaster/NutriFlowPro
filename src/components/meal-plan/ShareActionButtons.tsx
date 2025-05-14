@@ -7,16 +7,13 @@ import { Patient } from '@/types';
 import ShareDialog from './ShareDialog';
 
 interface ShareActionButtonsProps {
-  activePatient: Patient | null;
+  activePatient: Patient;
 }
 
-const ShareActionButtons: React.FC<ShareActionButtonsProps> = ({
-  activePatient,
-}) => {
+const ShareActionButtons: React.FC<ShareActionButtonsProps> = ({ activePatient }) => {
   const { toast } = useToast();
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [emailSending, setEmailSending] = useState(false);
-
+  
   const handleShareWhatsApp = () => {
     if (!activePatient) {
       toast({
@@ -39,41 +36,7 @@ const ShareActionButtons: React.FC<ShareActionButtonsProps> = ({
     const message = encodeURIComponent(`Olá ${activePatient.name}, aqui está seu plano alimentar personalizado!`);
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
-
-  const handleShareEmail = async (email: string) => {
-    if (!email || !activePatient) {
-      toast({
-        title: "Erro",
-        description: "Por favor, insira um email válido",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setEmailSending(true);
-
-    try {
-      // This is where you'd implement the email sending logic
-      // Typically by calling a serverless function
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulating API call
-      
-      toast({
-        title: "Email enviado",
-        description: `O plano alimentar foi enviado para ${email}`
-      });
-      
-      setShowShareDialog(false);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível enviar o email",
-        variant: "destructive"
-      });
-    } finally {
-      setEmailSending(false);
-    }
-  };
-
+  
   return (
     <>
       <Button 
@@ -94,12 +57,11 @@ const ShareActionButtons: React.FC<ShareActionButtonsProps> = ({
         WhatsApp
       </Button>
       
-      <ShareDialog
-        open={showShareDialog}
+      <ShareDialog 
+        open={showShareDialog} 
         onOpenChange={setShowShareDialog}
-        onSendEmail={handleShareEmail}
-        emailSending={emailSending}
-        activePatient={activePatient}
+        patientEmail={activePatient?.email}
+        patientName={activePatient?.name}
       />
     </>
   );

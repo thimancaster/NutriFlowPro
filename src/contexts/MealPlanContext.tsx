@@ -82,7 +82,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: "O plano alimentar foi salvo com sucesso."
       });
 
-      return result.id;
+      return result.data?.id; // Access the id property from data object
     } catch (error: any) {
       console.error('Error saving meal plan:', error);
       toast({

@@ -1,62 +1,76 @@
 
-import { useState, useEffect } from 'react';
-import { MealDistributionItem, ConsultationData } from '@/types';
+import { useState, useCallback } from 'react';
+import { MealDistributionItem } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+import { MEAL_NAMES } from '@/utils/mealPlanUtils';
 
-interface UseMealDistributionProps {
-  initialDistribution: MealDistributionItem[];
-  consultationData: ConsultationData | null;
-}
+export const useMealDistribution = (initialDistribution?: MealDistributionItem[]) => {
+  const [mealDistribution, setMealDistribution] = useState<MealDistributionItem[]>(
+    initialDistribution || [
+      {
+        id: uuidv4(),
+        name: MEAL_NAMES[0] || "Café da manhã",
+        percentage: 0.25
+      },
+      {
+        id: uuidv4(),
+        name: MEAL_NAMES[1] || "Lanche da manhã",
+        percentage: 0.15
+      },
+      {
+        id: uuidv4(),
+        name: MEAL_NAMES[2] || "Almoço",
+        percentage: 0.30
+      },
+      {
+        id: uuidv4(),
+        name: MEAL_NAMES[3] || "Lanche da tarde",
+        percentage: 0.15
+      },
+      {
+        id: uuidv4(),
+        name: MEAL_NAMES[4] || "Jantar",
+        percentage: 0.15
+      }
+    ]
+  );
 
-export const useMealDistribution = ({ 
-  initialDistribution = [], 
-  consultationData 
-}: UseMealDistributionProps) => {
-  const [mealDistribution, setMealDistribution] = useState<MealDistributionItem[]>(initialDistribution);
-  
-  // Initialize meal distribution if none is provided
-  useEffect(() => {
-    if (mealDistribution.length === 0) {
-      // Create default meal distribution if none exists
-      setMealDistribution([
-        { id: 'breakfast', name: 'Café da manhã', percent: 25 },
-        { id: 'lunch', name: 'Almoço', percent: 30 },
-        { id: 'snack', name: 'Lanche', percent: 15 },
-        { id: 'dinner', name: 'Jantar', percent: 30 }
-      ]);
-    }
+  const totalDistributionPercentage = mealDistribution.reduce(
+    (sum, item) => sum + item.percentage,
+    0
+  );
+
+  const handleMealPercentChange = useCallback((id: string, value: number) => {
+    setMealDistribution(prev => prev.map(meal => {
+      if (meal.id === id) {
+        return { ...meal, percentage: value / 100 };
+      }
+      return meal;
+    }));
+  }, []);
+
+  const addMeal = useCallback(() => {
+    const newMeal: MealDistributionItem = {
+      id: uuidv4(),
+      name: `Refeição ${mealDistribution.length + 1}`,
+      percentage: 0.05
+    };
+
+    setMealDistribution(prev => [...prev, newMeal]);
   }, [mealDistribution.length]);
-  
-  // Calculate total percentage of all meals
-  const totalMealPercent = mealDistribution.reduce((sum, meal) => sum + meal.percent, 0);
-  
-  // Handle changing the percent for a meal
-  const handleMealPercentChange = (id: string, value: number) => {
-    setMealDistribution(prev => 
-      prev.map(meal => 
-        meal.id === id ? { ...meal, percent: value } : meal
-      )
-    );
-  };
-  
-  // Add a new meal
-  const addMeal = () => {
-    const id = `meal-${mealDistribution.length + 1}`;
-    setMealDistribution(prev => [
-      ...prev,
-      { id, name: `Refeição ${mealDistribution.length + 1}`, percent: 0 }
-    ]);
-  };
-  
-  // Remove a meal
-  const removeMeal = (id: string) => {
+
+  const removeMeal = useCallback((id: string) => {
     setMealDistribution(prev => prev.filter(meal => meal.id !== id));
-  };
-  
+  }, []);
+
   return {
     mealDistribution,
-    totalMealPercent,
+    setMealDistribution,
+    totalDistributionPercentage,
     handleMealPercentChange,
     addMeal,
     removeMeal
   };
 };
+
+export default useMealDistribution;

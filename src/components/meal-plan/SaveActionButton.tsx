@@ -1,20 +1,26 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 
 interface SaveActionButtonProps {
   onSave: () => Promise<void>;
+  isSaving?: boolean;
 }
 
-const SaveActionButton: React.FC<SaveActionButtonProps> = ({ onSave }) => {
+const SaveActionButton: React.FC<SaveActionButtonProps> = ({ onSave, isSaving = false }) => {
   return (
     <Button 
       className="bg-nutri-green hover:bg-nutri-green-dark flex gap-2"
-      onClick={onSave}
+      onClick={() => onSave()}
+      disabled={isSaving}
     >
-      <FileText className="h-4 w-4" />
-      Salvar Plano
+      {isSaving ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <FileText className="h-4 w-4" />
+      )}
+      {isSaving ? "Salvando..." : "Salvar Plano"}
     </Button>
   );
 };

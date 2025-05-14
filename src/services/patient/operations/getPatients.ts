@@ -1,67 +1,96 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PatientFilters } from '@/types';
+import { Patient } from '@/types';
+import { dbCache } from '@/services/dbCache';
 
-/**
- * Get patients for a user with optional filters
- * @param userId User ID to fetch patients for
- * @param filters Optional filters like search, status, pagination, sorting
- * @returns Promise with patients data and count
- */
-export const getPatients = async (userId: string, filters: PatientFilters) => {
+export interface PatientFilter {
+  searchTerm?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  perPage?: number;
+}
+
+export const getPatients = async (
+  userId: string,
+  filter: PatientFilter = {}
+): Promise<{data: Patient[] | null, error: Error | null, count: number}> => {
   try {
+    const { searchTerm, status = 'all', sortBy = 'updated_at', sortOrder = 'desc', page = 1, perPage = 10 } = filter;
+    
+    // Calculate pagination values
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+    
+    // Start building the query
     let query = supabase
       .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+      .select('*', { count: 'exact' });
     
-    // Apply status filter
-    if (filters.status && filters.status !== 'all') {
-      query = query.eq('status', filters.status);
+    // Add user filter
+    query = query.eq('user_id', userId);
+    
+    // Add search filter if provided
+    if (searchTerm && searchTerm.trim() !== '') {
+      query = query.ilike('name', `%${searchTerm}%`);
     }
     
-    // Apply search filter
-    if (filters.search) {
-      query = query.ilike('name', `%${filters.search}%`);
+    // Add status filter if not 'all'
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
     }
     
-    // Apply date filters
-    if (filters.startDate) {
-      query = query.gte('created_at', filters.startDate);
-    }
+    // Add sorting and pagination
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' }).range(from, to);
     
-    if (filters.endDate) {
-      query = query.lte('created_at', filters.endDate);
-    }
-    
-    // Apply sorting
-    if (filters.sortBy) {
-      const order = filters.sortOrder?.toLowerCase() === 'desc' ? true : false;
-      query = query.order(filters.sortBy, { ascending: !order });
-    }
-    
-    // Apply pagination
-    const from = (filters.page - 1) * filters.pageSize;
-    const to = from + filters.pageSize - 1;
-    query = query.range(from, to);
-    
+    // Execute query
     const { data, error, count } = await query;
     
     if (error) {
       throw error;
     }
     
+    // Process the data to normalize structures
+    const processedData = data?.map(patient => {
+      let goals = patient.goals;
+      let address = patient.address;
+      
+      // Handle goals field
+      if (typeof goals === 'string') {
+        try {
+          goals = JSON.parse(goals);
+        } catch (e) {
+          goals = {};
+        }
+      }
+      
+      // Handle address field
+      if (typeof address === 'string') {
+        try {
+          address = JSON.parse(address);
+        } catch (e) {
+          address = {};
+        }
+      }
+      
+      return {
+        ...patient,
+        goals: goals || {},
+        address: address || {}
+      };
+    }) as Patient[];
+    
     return {
-      success: true,
-      data: data || [],
+      data: processedData,
+      error: null,
       count: count || 0
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching patients:', error);
     return {
-      success: false,
-      error: error.message || 'Failed to fetch patients',
-      data: [],
+      data: null,
+      error: error as Error,
       count: 0
     };
   }
