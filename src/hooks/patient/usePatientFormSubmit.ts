@@ -2,16 +2,16 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { PatientService } from '@/services/patient';
-import { Patient } from '@/types';
+import { Patient, AddressDetails } from '@/types';
 
 interface UsePatientFormSubmitProps {
   editPatient?: Patient;
   onSuccess?: () => void;
   userId: string;
-  validateForm: (formData: any, birthDate?: Date | undefined, address?: any) => boolean;
+  validateForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => boolean;
   formData: any;
   birthDate?: Date | undefined;
-  address: any;
+  address: AddressDetails;
   notes: string;
 }
 
@@ -52,11 +52,15 @@ export const usePatientFormSubmit = ({
     setIsLoading(true);
 
     try {
+      // Format birth_date for database
+      const formattedBirthDate = birthDate ? 
+        birthDate.toISOString().split('T')[0] : null;
+      
       // Format data for Supabase
-      const patientData: any = {
+      const patientData: Partial<Patient> = {
         name: formData.name,
         gender: formData.sex,
-        birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null, // Format as YYYY-MM-DD
+        birth_date: formattedBirthDate, // Store as string in DB format
         email: formData.email || null,
         phone: formData.phone || null,
         secondaryPhone: formData.secondaryPhone || null,

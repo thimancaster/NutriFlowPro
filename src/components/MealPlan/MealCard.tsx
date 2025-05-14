@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { MealDistributionItem } from '@/types';
+import { MealDistributionItem } from '@/types/meal';
 import FoodSuggestionList from './FoodSuggestionList';
 import MealCardMacros from './MealCardMacros';
 

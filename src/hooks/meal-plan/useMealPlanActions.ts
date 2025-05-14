@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Patient, ConsultationData, MealPlan, MealDistributionItem } from '@/types';
+import { Patient, ConsultationData } from '@/types';
+import { MealPlan, MealDistributionItem } from '@/types/meal';
 
 interface UseMealPlanActionsProps {
   activePatient: Patient | null;
@@ -45,9 +46,9 @@ export const useMealPlanActions = ({
       });
       
       // Prepare the meal plan data
-      const mealPlanData = {
+      const mealPlanData: MealPlan = {
         id: mealPlan?.id || uuidv4(),
-        user_id: consultationData.user_id,
+        user_id: consultationData.user_id || '',
         patient_id: activePatient.id,
         date: new Date(),
         meals: mealDistribution.map(meal => ({

@@ -8,7 +8,7 @@ import {
   filterFoodsByMeal 
 } from '@/utils/mealAssemblyUtils';
 import { generateMealAssemblyPDF } from '@/utils/pdf/mealAssemblyPdfUtils';
-import { Meal, MealItem } from '@/types/meal';
+import { MealItem, Meal } from '@/types/meal';
 import MealPlanAssemblyCard from './MealPlanAssemblyCard';
 import MealPlanMacroSummary from './MealPlanMacroSummary';
 import MealPlanLoader from './MealPlanLoader';

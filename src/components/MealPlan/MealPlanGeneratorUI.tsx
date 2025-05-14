@@ -5,7 +5,8 @@ import NutritionSummary from '@/components/MealPlan/NutritionSummary';
 import BreadcrumbNav from '@/components/MealPlan/BreadcrumbNav';
 import MealPlanHeader from '@/components/MealPlan/MealPlanHeader';
 import MealPlanForm from '@/components/MealPlan/MealPlanForm';
-import { MealDistributionItem, ConsultationData } from '@/types';
+import { MealDistributionItem } from '@/types/meal';
+import { ConsultationData } from '@/types';
 
 interface MealPlanGeneratorUIProps {
   activePatient: { name: string; gender: string | null; age?: number };
@@ -64,7 +65,7 @@ const MealPlanGeneratorUI = ({
           patientName={activePatient.name}
           patientAge={patientAge}
           patientGender={activePatient.gender || undefined}
-          patientObjective={consultationData.objective}
+          patientObjective={consultationData.objective || undefined}
         />
       )}
       

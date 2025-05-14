@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { MealDistributionItem } from '@/types';
+import { MealDistributionItem } from '@/types/meal';
 import { v4 as uuidv4 } from 'uuid';
 
 interface UseMealDistributionProps {

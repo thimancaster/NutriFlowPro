@@ -61,7 +61,7 @@ const MealPlanAssemblyCard: React.FC<MealPlanAssemblyCardProps> = ({
                 {meal.foods.map((food, foodIndex) => (
                   <tr key={foodIndex} className="border-b">
                     <td className="py-2">{food.name}</td>
-                    <td className="py-2">{food.portion}</td>
+                    <td className="py-2">{food.portion || '-'}</td>
                     <td className="py-2">{food.calories} kcal</td>
                     <td className="py-2 text-right">
                       <Button 

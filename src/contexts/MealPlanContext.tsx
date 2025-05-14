@@ -1,7 +1,8 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ConsultationData, Patient, MealPlan } from '@/types';
+import { ConsultationData, Patient } from '@/types';
+import { MealPlan } from '@/types/meal';
 import { format } from 'date-fns';
 
 interface MealPlanContextProps {
@@ -61,7 +62,9 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
         id: mealPlanData.id,
         user_id: mealPlanData.user_id,
         patient_id: mealPlanData.patient_id,
-        date: format(mealPlanData.date, 'yyyy-MM-dd'),
+        date: typeof mealPlanData.date === 'string' 
+          ? mealPlanData.date 
+          : format(mealPlanData.date, 'yyyy-MM-dd'),
         meals: JSON.stringify(mealPlanData.meals),
         total_calories: Number(mealPlanData.total_calories),
         total_protein: Number(mealPlanData.total_protein),

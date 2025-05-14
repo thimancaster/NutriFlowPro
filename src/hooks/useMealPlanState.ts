@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
-import { Patient, ConsultationData, MealPlan, MealDistributionItem } from '@/types';
+import { Patient, ConsultationData } from '@/types';
+import { MealPlan, MealDistributionItem } from '@/types/meal';
 import { useMealDistribution } from './meal-plan/useMealDistribution';
 import { useMealPlanActions } from './meal-plan/useMealPlanActions';
 

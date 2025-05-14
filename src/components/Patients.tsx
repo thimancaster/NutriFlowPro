@@ -20,14 +20,13 @@ const Patients = () => {
     patients,
     isLoading,
     error,
-    totalPatients,
-    pagination,
     filters,
+    pagination,
     handlePageChange,
-    handlePerPageChange,
     handleFilterChange,
     handleStatusChange,
-    refreshPatients
+    togglePatientStatus,
+    refetchPatients
   } = usePatientList();
 
   const handleOpenDetailModal = (patient: Patient) => {
@@ -54,7 +53,10 @@ const Patients = () => {
     }
 
     if (error) {
-      return <PatientErrorState errorMessage={error} onRetry={refreshPatients} />;
+      return <PatientErrorState 
+        errorMessage={error.message} 
+        onRetry={refetchPatients} 
+      />;
     }
 
     if (patients.length === 0) {
@@ -74,8 +76,8 @@ const Patients = () => {
         <div className="mt-6">
           <PatientPagination
             currentPage={pagination.page}
-            totalItems={totalPatients}
-            pageSize={pagination.limit || 10}
+            totalItems={pagination.total}
+            pageSize={pagination.pageSize}
             onPageChange={handlePageChange}
           />
         </div>

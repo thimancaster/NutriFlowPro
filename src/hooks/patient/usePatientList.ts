@@ -1,171 +1,198 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFilters, PaginationParams } from '@/types';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-export const usePatientList = () => {
-  const { user } = useAuth();
+export const usePatientList = (initialFilters?: Partial<PatientFilters>) => {
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Initialize with default filters
+  // Initialize filters with defaults
   const [filters, setFilters] = useState<PatientFilters>({
-    status: 'active',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    page: 1,
-    pageSize: 10
+    search: initialFilters?.search,
+    status: initialFilters?.status || 'active',
+    sortBy: initialFilters?.sortBy || 'name',
+    sortOrder: initialFilters?.sortOrder || 'asc',
+    page: initialFilters?.page || 1,
+    pageSize: initialFilters?.pageSize || 10,
+    startDate: initialFilters?.startDate,
+    endDate: initialFilters?.endDate
   });
   
-  // Pagination state
+  // Set up pagination
   const [pagination, setPagination] = useState<PaginationParams>({
-    page: 1,
-    limit: 10,
+    page: filters.page || 1,
+    pageSize: filters.pageSize || 10,
     total: 0,
-    offset: 0
+    totalPages: 0
   });
-
-  useEffect(() => {
-    if (user) {
-      fetchPatients();
-    }
-  }, [user, filters]);
-
-  // Fetch patients based on current filters
-  const fetchPatients = async () => {
-    if (!user?.id) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
+  
+  const { toast } = useToast();
+  
+  const fetchPatients = useCallback(async () => {
     try {
-      // Calculate offset based on page and pageSize
-      const offset = ((filters.page || 1) - 1) * (filters.pageSize || 10);
+      setIsLoading(true);
+      setError(null);
+      
+      // Calculate offset for pagination
+      const offset = ((pagination.page - 1) * pagination.pageSize);
       
       // Start building the query
       let query = supabase
         .from('patients')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id);
+        .select('*', { count: 'exact' });
       
-      // Apply status filter if not set to 'all'
+      // Apply filters
+      if (filters.search) {
+        query = query.or(
+          `name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`
+        );
+      }
+      
       if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
       }
       
-      // Apply search filter if provided
-      if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
-      }
-      
-      // Apply date range filters if provided
       if (filters.startDate) {
         query = query.gte('created_at', filters.startDate);
       }
       
       if (filters.endDate) {
-        // Add one day to include the end date fully
-        const endDate = new Date(filters.endDate);
-        endDate.setDate(endDate.getDate() + 1);
-        query = query.lt('created_at', endDate.toISOString().split('T')[0]);
+        query = query.lte('created_at', filters.endDate);
       }
       
       // Apply sorting
       if (filters.sortBy) {
         query = query.order(filters.sortBy, { 
-          ascending: filters.sortOrder === 'asc' 
+          ascending: filters.sortOrder === 'asc'
         });
       }
       
       // Apply pagination
-      query = query.range(offset, offset + (filters.pageSize || 10) - 1);
+      query = query
+        .range(offset, offset + pagination.pageSize - 1);
       
-      // Execute the query
       const { data, error, count } = await query;
       
       if (error) throw new Error(error.message);
       
-      // Update pagination with total count
-      setPagination({
-        page: filters.page || 1,
-        limit: filters.pageSize || 10,
-        total: count || 0,
-        offset
+      // Process the data
+      const mappedPatients = data.map(patient => {
+        return {
+          ...patient,
+          // Convert string birth_date to Date for display purposes when needed
+          birth_date: patient.birth_date,
+          // Parse goals from JSON if needed
+          goals: typeof patient.goals === 'string' 
+            ? JSON.parse(patient.goals) 
+            : patient.goals || {}
+        } as Patient;
       });
       
-      setPatients(data || []);
+      setPatients(mappedPatients);
+      
+      // Update pagination
+      if (count !== null) {
+        setPagination({
+          ...pagination,
+          total: count,
+          totalPages: Math.ceil(count / pagination.pageSize)
+        });
+      }
+      
     } catch (err: any) {
       console.error('Error fetching patients:', err);
       setError(err);
+      toast({
+        title: 'Error',
+        description: 'Failed to load patients. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters, pagination.page, pagination.pageSize]);
   
-  // Function to update filters
-  const updateFilters = (newFilters: Partial<PatientFilters>) => {
-    // Reset to page 1 when changing filters
-    if (newFilters.search || newFilters.status || newFilters.sortBy || 
-        newFilters.sortOrder || newFilters.startDate || newFilters.endDate) {
-      newFilters.page = 1;
-    }
-    
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
   
-  // Function to handle page changes
+  // Handle page change
   const handlePageChange = (page: number) => {
-    updateFilters({ page });
+    setPagination({
+      ...pagination,
+      page
+    });
   };
   
-  // Function to handle page size changes
-  const handlePageSizeChange = (pageSize: number) => {
-    updateFilters({ pageSize, page: 1 });
+  // Handle filter changes
+  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
+    setFilters({
+      ...filters,
+      ...newFilters,
+      // Reset to page 1 when filters change
+      page: 1
+    });
   };
   
-  // Calculate total pages
-  const totalPages = Math.ceil((pagination.total || 0) / (filters.pageSize || 10));
+  // Handle status change
+  const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
+    handleFilterChange({
+      status,
+      page: 1 // Reset to first page
+    });
+  };
   
-  // Function to archive/unarchive a patient
+  // Toggle patient status
   const togglePatientStatus = async (patientId: string, newStatus: 'active' | 'archived') => {
-    if (!user?.id) return { success: false, error: 'Not authenticated' };
-    
     try {
       const { error } = await supabase
         .from('patients')
         .update({ status: newStatus })
-        .eq('id', patientId)
-        .eq('user_id', user.id);
+        .eq('id', patientId);
       
       if (error) throw new Error(error.message);
       
-      // Refresh the patient list
-      await fetchPatients();
+      // Update local state
+      setPatients(prevPatients => 
+        prevPatients.map(patient => 
+          patient.id === patientId ? { ...patient, status: newStatus } : patient  
+        )
+      );
+      
+      toast({
+        title: 'Status updated',
+        description: `Patient has been ${newStatus === 'archived' ? 'archived' : 'activated'}.`
+      });
       
       return { success: true };
     } catch (err: any) {
       console.error('Error toggling patient status:', err);
-      return { success: false, error: err.message };
+      toast({
+        title: 'Error',
+        description: 'Failed to update patient status.',
+        variant: 'destructive',
+      });
+      return { success: false, error: err };
     }
   };
-
+  
+  const refetchPatients = () => {
+    fetchPatients();
+  };
+  
   return {
     patients,
     isLoading,
     error,
     filters,
-    pagination: {
-      page: filters.page || 1,
-      pageSize: filters.pageSize || 10,
-      total: pagination.total || 0,
-      totalPages
-    },
-    updateFilters,
+    pagination,
     handlePageChange,
-    handlePageSizeChange,
-    fetchPatients,
-    togglePatientStatus
+    handleFilterChange,
+    handleStatusChange,
+    togglePatientStatus,
+    refetchPatients
   };
 };

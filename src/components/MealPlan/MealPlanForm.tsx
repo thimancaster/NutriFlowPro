@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { MealDistributionItem } from '@/types';
+import { MealDistributionItem } from '@/types/meal';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { mealOptions } from '@/utils/mealGeneratorUtils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
