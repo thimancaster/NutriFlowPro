@@ -3,25 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { PatientFilters, Patient } from '@/types';
 import { convertDbToPatient } from '../utils/patientDataUtils';
 
-interface PatientDB {
-  id: string;
-  user_id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  secondaryPhone?: string | null;
-  birth_date: string | null;
-  gender: string | null;
-  address: string | null;
-  notes: string | null;
-  goals: any;
-  measurements: any;
-  created_at: string;
-  updated_at: string;
-  status: string;
-  cpf?: string | null;
-}
-
 /**
  * Get patients for a specific user with filtering options
  */
@@ -34,7 +15,7 @@ export const getPatients = async (userId: string, filters?: PatientFilters) => {
     // Start building the query
     let query = supabase
       .from('patients')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('user_id', userId);
 
     // Apply filters
@@ -65,9 +46,16 @@ export const getPatients = async (userId: string, filters?: PatientFilters) => {
         // Default ordering by name
         query = query.order('name', { ascending: true });
       }
+      
+      // Apply pagination using range
+      if (filters.page && filters.pageSize) {
+        const from = (filters.page - 1) * filters.pageSize;
+        const to = from + filters.pageSize - 1;
+        query = query.range(from, to);
+      }
     }
 
-    // Fetch data
+    // Fetch data with count
     const { data: patientsData, error, count } = await query;
 
     if (error) throw error;
@@ -80,20 +68,8 @@ export const getPatients = async (userId: string, filters?: PatientFilters) => {
       };
     }
 
-    // Apply pagination in memory if necessary
-    let paginatedData = [...patientsData];
-    let total = patientsData.length;
-
-    if (filters?.page && filters?.pageSize) {
-      const start = (filters.page - 1) * filters.pageSize;
-      const end = start + filters.pageSize;
-      paginatedData = patientsData.slice(start, end);
-      total = patientsData.length;
-    }
-
     // Convert DB format to application format
-    const patients = paginatedData.map(patient => {
-      // Use a safe parsing approach to avoid deep type issues
+    const patients = patientsData.map(patient => {
       const safePatient = JSON.parse(JSON.stringify(patient));
       return convertDbToPatient(safePatient);
     });
@@ -101,7 +77,7 @@ export const getPatients = async (userId: string, filters?: PatientFilters) => {
     return {
       success: true,
       data: patients,
-      count: total
+      count: count || 0
     };
   } catch (error: any) {
     console.error('Error fetching patients:', error);

@@ -1,11 +1,13 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { MealPlan } from '@/types';
-import DatabaseService from '@/services/databaseService';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+
+// Importe o serviço como objeto
+import * as DatabaseService from '@/services/databaseService';
 
 interface MealPlanContextType {
   mealPlan: MealPlan | null;
