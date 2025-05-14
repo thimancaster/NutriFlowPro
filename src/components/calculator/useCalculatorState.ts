@@ -1,15 +1,20 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
 import { usePatientActions } from './hooks/usePatientActions';
-import { CalculatorState, UseCalculatorStateProps, ToastApi } from './types';
+import { CalculatorState, ToastApi } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Higher-order hook that combines form, results, and patient actions
  */
-const useCalculatorState = ({ toast, user, setConsultationData, activePatient }: UseCalculatorStateProps) => {
+const useCalculatorState = ({ toast, user, setConsultationData, activePatient }: {
+  toast: ToastApi;
+  user: any;
+  setConsultationData: (data: any) => void;
+  activePatient: any;
+}) => {
   const [tempPatientId, setTempPatientId] = useState<string | null>(null);
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [isSavingPatient, setIsSavingPatient] = useState<boolean>(false);
@@ -31,30 +36,17 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setConsultationType
   } = useCalculatorForm();
   
-  // Initialize state for calculation results
-  const [bmr, setBmr] = useState<number | null>(null);
-  const [tee, setTee] = useState<number | null>(null);
-  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number, proteinPerKg?: number } | null>(null);
-  
-  // Get results handlers with the state setters
-  const { calculateResults } = useCalculatorResults({
-    setBmr,
-    setTee,
-    setMacros,
-    setConsultationData,
-    toast,
-    user,
-    tempPatientId,
-    setTempPatientId
-  });
+  // Get the calculator results hooks
+  const { bmr, tee, macros, setCarbs, calculateMacros } = useCalculatorResults();
   
   // Get patient actions
-  const { selectedPatient, setSelectedPatient, savePatient } = usePatientActions({
-    toast
-  });
+  const { handleSavePatient: savePatient, handleGenerateMealPlan, isSavingPatient: isPatientSaving } = usePatientActions({ toast });
+  
+  // State for selected patient
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
   
   // Populate form when activePatient changes
-  useState(() => {
+  useEffect(() => {
     if (activePatient && !selectedPatient) {
       setSelectedPatient(activePatient);
       setPatientName(activePatient.name || '');
@@ -65,7 +57,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       // Make sure gender matches our expected values
       setGender(activePatient.gender === 'male' ? 'male' : 'female');
     }
-  });
+  }, [activePatient, selectedPatient]);
   
   // Function to clear form data
   const clearCalculatorData = () => {
@@ -81,19 +73,29 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setFatPercentage('25');
     setConsultationType('primeira_consulta');
     setSelectedPatient(null);
-    setBmr(null);
-    setTee(null);
-    setMacros(null);
     setTempPatientId(null);
   };
   
-  // Wrapper for calculation function
-  const handleCalculateResults = async (state: CalculatorState) => {
+  // Calculate results function
+  const calculateResults = async (state: CalculatorState) => {
     setIsCalculating(true);
     
     try {
-      const results = await calculateResults(state);
-      return results;
+      // Perform calculations using the state and the calculateMacros function from useCalculatorResults
+      const calculatedMacros = calculateMacros(
+        tee,
+        parseInt(state.proteinPercentage) || 0,
+        parseInt(state.carbPercentage) || 0,
+        parseInt(state.fatPercentage) || 0,
+        state.weight
+      );
+      
+      // Return the calculated results
+      return {
+        bmr,
+        tee,
+        macros: calculatedMacros
+      };
     } catch (error) {
       console.error('Error calculating results:', error);
       toast.toast({
@@ -101,6 +103,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         description: 'Ocorreu um erro ao calcular os resultados.',
         variant: 'destructive'
       });
+      return null;
     } finally {
       setIsCalculating(false);
     }
@@ -136,8 +139,8 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         id: patientId,
         name: calculatorState.patientName,
         age: parseInt(calculatorState.age),
-        weight: parseFloat(calculatorState.weight),
-        height: parseInt(calculatorState.height),
+        weight: parseFloat(calculatorState.weight.toString()),
+        height: parseInt(calculatorState.height.toString()),
         gender: calculatorState.gender,
         user_id: user?.id
       };
@@ -145,9 +148,9 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       const result = await savePatient(patientData);
       
       // Now save consultation data
-      if (result.success) {
+      if (result && result.success) {
         // Convert macros percentages to numbers for calculation
-        const carbsPercentage = parseInt(calculatorState.carbsPercentage || '0');
+        const carbsPercentage = parseInt(calculatorState.carbPercentage || '0');
         const proteinPercentage = parseInt(calculatorState.proteinPercentage || '0');
         const fatPercentage = parseInt(calculatorState.fatPercentage || '0');
         
@@ -156,8 +159,8 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
           user_id: user?.id,
           patient_id: patientId,
           date: new Date(),
-          weight: parseFloat(calculatorState.weight),
-          height: parseInt(calculatorState.height),
+          weight: parseFloat(calculatorState.weight.toString()),
+          height: parseInt(calculatorState.height.toString()),
           age: parseInt(calculatorState.age),
           gender: calculatorState.gender,
           activity_level: calculatorState.activityLevel,
@@ -180,7 +183,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         
         return { patientId, ...result };
       } else {
-        throw new Error(result.message || 'Erro ao salvar paciente');
+        throw new Error(result?.message || 'Erro ao salvar paciente');
       }
     } catch (error: any) {
       toast.toast({
@@ -191,27 +194,6 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     } finally {
       setIsSavingPatient(false);
     }
-  };
-  
-  // Function to generate meal plan from results
-  const handleGenerateMealPlan = async () => {
-    if (!bmr || !tee || !macros) {
-      toast.toast({
-        title: 'Dados incompletos',
-        description: 'Realize o cálculo antes de gerar o plano alimentar.',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    // Handle meal plan generation (implementation depends on your app)
-    // For now, just show a success toast
-    toast.toast({
-      title: 'Plano alimentar gerado',
-      description: 'Navegando para o gerador de planos alimentares...'
-    });
-    
-    // Typically you'd navigate or set state here
   };
   
   return {
@@ -229,13 +211,13 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setProfile,
     setConsultationType,
     isCalculating,
-    calculateResults: handleCalculateResults,
+    calculateResults,
     clearCalculatorData,
     bmr,
     tee,
     macros,
     handleSavePatient,
-    handleGenerateMealPlan,
+    handleGenerateMealPlan: handleGenerateMealPlan || (() => {}),
     isSavingPatient
   };
 };

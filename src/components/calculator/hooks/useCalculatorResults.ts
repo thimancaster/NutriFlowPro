@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useCalculator } from '@/contexts/CalculatorContext';
+import { validateInputsForCalculation } from '../utils/validation';
 
 export const useCalculatorResults = () => {
   const { calculatorState, calculatorDispatch } = useCalculator();
@@ -9,6 +11,7 @@ export const useCalculatorResults = () => {
     protein: 0,
     carbs: 0,
     fat: 0,
+    proteinPerKg: 0, // Add proteinPerKg property
   });
 
   useEffect(() => {
@@ -32,9 +35,9 @@ export const useCalculatorResults = () => {
   const handleCalculateBMR = () => {
     let bmrValue;
     if (calculatorState.gender === 'male') {
-      bmrValue = 88.362 + (13.397 * calculatorState.weight) + (4.799 * calculatorState.height) - (5.677 * calculatorState.age);
+      bmrValue = 88.362 + (13.397 * calculatorState.weight) + (4.799 * calculatorState.height) - (5.677 * parseInt(calculatorState.age));
     } else {
-      bmrValue = 447.593 + (9.247 * calculatorState.weight) + (3.098 * calculatorState.height) - (4.330 * calculatorState.age);
+      bmrValue = 447.593 + (9.247 * calculatorState.weight) + (3.098 * calculatorState.height) - (4.330 * parseInt(calculatorState.age));
     }
 
     setBmr(bmrValue);
@@ -70,39 +73,23 @@ export const useCalculatorResults = () => {
       teeValue -= 500;
     }
 
-    const results = {
-      bmr: bmr,
-      get: teeValue,
-      adjustment: 500,
-      vet: teeValue,
-      macros: {
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      }
-    };
-
-    handleCalculationResults(results);
+    setTee(teeValue);
   };
 
   const handleCalculateMacros = () => {
-    const protein = (tee * (calculatorState.proteinPercentage / 100)) / 4;
-    const carbs = (tee * (calculatorState.carbPercentage / 100)) / 4;
-    const fat = (tee * (calculatorState.fatPercentage / 100)) / 9;
+    const protein = (tee * (parseInt(calculatorState.proteinPercentage) / 100)) / 4;
+    const carbs = (tee * (parseInt(calculatorState.carbPercentage) / 100)) / 4;
+    const fat = (tee * (parseInt(calculatorState.fatPercentage) / 100)) / 9;
+    
+    // Calculate protein per kg
+    const proteinPerKg = calculatorState.weight > 0 ? protein / calculatorState.weight : 0;
 
-    const results = {
-      bmr: bmr,
-      get: tee,
-      adjustment: 500,
-      vet: tee,
-      macros: {
-        protein: protein,
-        carbs: carbs,
-        fat: fat,
-      }
-    };
-
-    handleCalculationResults(results);
+    setMacros({
+      protein,
+      carbs,
+      fat,
+      proteinPerKg
+    });
   };
 
   // Convert number to string when calling functions that expect string
@@ -113,19 +100,6 @@ export const useCalculatorResults = () => {
     });
   };
 
-  // Convert complex object to number or properly handle the object
-  const handleCalculationResults = (results: any) => {
-    // If results.get is a complex object, extract the numeric value
-    const calorieValue = typeof results.get === 'object'
-      ? results.get.value || 0
-      : results.get;
-
-    // Update state with the calculated values
-    setBmr(results.bmr);
-    setTee(calorieValue);
-    setMacros(results.macros);
-  };
-
   // Fix function call with correct number of arguments
   const calculateMacros = (
     totalCalories: number,
@@ -134,7 +108,19 @@ export const useCalculatorResults = () => {
     fatPercentage: number,
     weight: number
   ) => {
-    // Implementation
+    const protein = (totalCalories * (proteinPercentage / 100)) / 4;
+    const carbs = (totalCalories * (carbsPercentage / 100)) / 4;
+    const fat = (totalCalories * (fatPercentage / 100)) / 9;
+    
+    // Calculate protein per kg
+    const proteinPerKg = weight > 0 ? protein / weight : 0;
+
+    return {
+      protein,
+      carbs,
+      fat,
+      proteinPerKg
+    };
   };
 
   return {
