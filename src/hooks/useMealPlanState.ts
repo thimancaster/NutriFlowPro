@@ -1,5 +1,6 @@
 
-import { MealDistributionItem, Patient, ConsultationData, MealPlan } from '@/types';
+import { useState } from 'react';
+import { Patient, ConsultationData, MealPlan } from '@/types';
 import { useMealDistribution } from './meal-plan/useMealDistribution';
 import { useMealPlanActions } from './meal-plan/useMealPlanActions';
 
@@ -28,7 +29,7 @@ export const useMealPlanState = ({
     addMeal,
     removeMeal
   } = useMealDistribution({
-    initialDistribution: mealPlan?.mealDistribution || undefined,
+    initialDistribution: mealPlan?.mealDistribution || [],
     consultationData
   });
 
