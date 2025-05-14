@@ -1,67 +1,69 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { usePatient } from './PatientContext';
-import { useConsultationData } from './ConsultationDataContext';
-import { useMealPlan } from './MealPlanContext';
-import { Patient } from '@/types';
+import { Patient, ConsultationData, ConsultationStep } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
-interface ConsultationContextType {
-  activePatient: Patient | null;
-  setActivePatient: (patient: Patient | null) => void;
-  consultationData: any;
-  setConsultationData: (data: any) => void;
-  mealPlan: any;
-  setMealPlan: (plan: any) => void;
+type ConsultationContextType = {
   isConsultationActive: boolean;
-  startConsultation: (patient: Patient) => void;
+  startConsultation: () => void;
   endConsultation: () => void;
-  saveConsultation: () => Promise<string | undefined>;
-  saveMealPlan: () => Promise<string | undefined>;
-}
+  saveDraftConsultation: (data: Partial<ConsultationData>) => void;
+  getDraftConsultation: () => Partial<ConsultationData> | null;
+  currentStep: ConsultationStep;
+  setCurrentStep: (step: ConsultationStep) => void;
+  generateConsultationId: () => Promise<string>;
+};
 
 const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
 
-// Main provider that uses the individual context hooks
 export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const navigate = useNavigate();
-  const { activePatient, setActivePatient, endPatientSession } = usePatient();
-  const { consultationData, setConsultationData, saveConsultation } = useConsultationData();
-  const { mealPlan, setMealPlan, saveMealPlan } = useMealPlan();
+  const [isConsultationActive, setIsConsultationActive] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState<ConsultationStep>('dashboard');
 
-  const startConsultation = (patient: Patient) => {
-    setActivePatient(patient);
-    setConsultationData(null);
-    setMealPlan(null);
-    navigate(`/consultation?patientId=${patient.id}`);
+  const startConsultation = () => {
+    setIsConsultationActive(true);
+    setCurrentStep('dashboard');
   };
 
   const endConsultation = () => {
-    setActivePatient(null);
-    setConsultationData(null);
-    setMealPlan(null);
-    endPatientSession();
+    setIsConsultationActive(false);
+    setCurrentStep('dashboard');
+    // Clear any draft data
+    localStorage.removeItem('draftConsultation');
   };
 
-  return (
-    <ConsultationContext.Provider
-      value={{
-        activePatient,
-        setActivePatient,
-        consultationData,
-        setConsultationData,
-        mealPlan,
-        setMealPlan,
-        isConsultationActive: !!activePatient,
-        startConsultation,
-        endConsultation,
-        saveConsultation,
-        saveMealPlan
-      }}
-    >
-      {children}
-    </ConsultationContext.Provider>
-  );
+  const saveDraftConsultation = (data: Partial<ConsultationData>) => {
+    localStorage.setItem('draftConsultation', JSON.stringify(data));
+  };
+
+  const getDraftConsultation = (): Partial<ConsultationData> | null => {
+    const draft = localStorage.getItem('draftConsultation');
+    if (draft) {
+      try {
+        return JSON.parse(draft);
+      } catch (e) {
+        console.error('Error parsing draft consultation:', e);
+      }
+    }
+    return null;
+  };
+
+  const generateConsultationId = async () => {
+    return uuidv4();
+  };
+
+  const value = {
+    isConsultationActive,
+    startConsultation,
+    endConsultation,
+    saveDraftConsultation,
+    getDraftConsultation,
+    currentStep,
+    setCurrentStep,
+    generateConsultationId,
+  };
+
+  return <ConsultationContext.Provider value={value}>{children}</ConsultationContext.Provider>;
 };
 
 export const useConsultation = () => {

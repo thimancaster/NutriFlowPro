@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { convertDbToPatient } from '../utils/patientDataUtils';
 import { PatientFilters } from '@/types';
@@ -6,17 +7,16 @@ import { PatientFilters } from '@/types';
 interface PatientDB {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   status: string;
   created_at: string;
   user_id: string;
-  // Other fields from the patients table
-  birth_date?: string;
-  gender?: string;
-  phone?: string;
-  address?: string;
+  birth_date?: string | null;
+  gender?: string | null;
+  phone?: string | null;
+  address?: string | null;
   goals?: any;
-  notes?: string;
+  notes?: string | null;
 }
 
 /**
@@ -27,7 +27,7 @@ export const getPatients = async (
   filters: PatientFilters = { page: 1, pageSize: 10 }
 ): Promise<{
   success: boolean;
-  data: ReturnType<typeof convertDbToPatient>[];
+  data: any[];
   total: number;
   count: number;
   error?: string;
@@ -46,7 +46,7 @@ export const getPatients = async (
 
     const offset = (page - 1) * pageSize;
 
-    // Use a simpler approach with less type complexity
+    // Build query in steps to avoid type complexity
     let query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user ID filter
@@ -79,15 +79,15 @@ export const getPatients = async (
     // Add pagination
     query = query.range(offset, offset + pageSize - 1);
 
-    // Execute query without complex type assertions
+    // Execute query
     const { data, error, count } = await query;
 
     if (error) throw error;
 
-    // Process the patient data
+    // Process the patient data with safe copying to avoid reference issues
     const patients = [];
     if (data) {
-      for (const record of data) {
+      for (const record of data as PatientDB[]) {
         // Create a safe copy to avoid reference issues
         const patientCopy = JSON.parse(JSON.stringify(record));
         patients.push(convertDbToPatient(patientCopy));

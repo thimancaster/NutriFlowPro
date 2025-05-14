@@ -1,102 +1,97 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { MealPlan } from '@/types';
+import DatabaseService from '@/services/databaseService';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
-import { storageUtils } from '@/utils/storageUtils';
-import { DatabaseService } from '@/services/databaseService';
-import { MealPlan } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 interface MealPlanContextType {
   mealPlan: MealPlan | null;
   setMealPlan: (plan: MealPlan | null) => void;
-  saveMealPlan: (consultationId: string) => Promise<string | undefined>;
+  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<string | undefined>;
 }
 
 const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
 
 export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
-  const { toast } = useToast();
   const { user } = useAuth();
   const { activePatient } = usePatient();
-
-  // Check for meal plan in sessionStorage on mount
+  const { toast } = useToast();
+  
   useEffect(() => {
-    const storedMealPlan = storageUtils.getSessionItem('mealPlan');
-    if (storedMealPlan) {
-      // Fix: Cast the unknown value to MealPlan
-      setMealPlan(storedMealPlan as MealPlan);
+    // Load from localStorage on init
+    const savedMealPlan = localStorage.getItem('currentMealPlan');
+    try {
+      if (savedMealPlan) {
+        const parsed = JSON.parse(savedMealPlan);
+        setMealPlan(parsed);
+      }
+    } catch (e) {
+      console.error('Error loading meal plan from localStorage:', e);
     }
   }, []);
 
-  // Update sessionStorage when meal plan changes
   useEffect(() => {
+    // Save to localStorage when mealPlan changes
     if (mealPlan) {
-      storageUtils.setSessionItem('mealPlan', mealPlan);
-    } else {
-      storageUtils.removeSessionItem('mealPlan');
+      localStorage.setItem('currentMealPlan', JSON.stringify(mealPlan));
     }
   }, [mealPlan]);
 
-  const saveMealPlan = async (consultationId: string): Promise<string | undefined> => {
-    if (!user?.id || !activePatient?.id || !mealPlan) {
+  const saveMealPlan = async (consultationId: string, mealPlanData: MealPlan): Promise<string | undefined> => {
+    if (!user?.id || !activePatient?.id) {
       toast({
         title: "Erro",
-        description: "Dados insuficientes para salvar o plano alimentar",
+        description: "Dados incompletos para salvar o plano alimentar",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      // Create a complete meal plan object that matches the required interface
-      const completeMealPlan: MealPlan = {
-        ...mealPlan,
-        name: mealPlan.name || `Plano para ${activePatient.name}`,
+      // Generate a unique ID for the meal plan if it doesn't have one
+      const completeMealPlan = {
+        ...mealPlanData,
+        id: mealPlanData.id || uuidv4(),
+        user_id: user.id,
         patient_id: activePatient.id,
-        calories: mealPlan.calories || 0,
-        protein: mealPlan.protein || 0, 
-        carbs: mealPlan.carbs || 0,
-        fat: mealPlan.fat || 0,
-        meals: mealPlan.meals || []
+        consultation_id: consultationId,
+        created_at: mealPlanData.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
-      
-      // Use the DatabaseService instead of direct Supabase call
+
       const result = await DatabaseService.saveMealPlan(
         user.id,
         activePatient.id,
-        consultationId, // Agora usando o consultationId passado como parâmetro
+        consultationId,
         completeMealPlan
       );
 
-      if (!result.success) throw new Error(result.error);
-      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
       toast({
         title: "Plano alimentar salvo",
         description: "O plano alimentar foi salvo com sucesso."
       });
-      
-      return result.data.id;
+
+      return result.id;
     } catch (error: any) {
       console.error('Error saving meal plan:', error);
       toast({
-        title: "Erro ao salvar plano alimentar",
-        description: error.message,
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o plano alimentar",
         variant: "destructive"
       });
-      return undefined;
     }
   };
 
   return (
-    <MealPlanContext.Provider
-      value={{
-        mealPlan,
-        setMealPlan,
-        saveMealPlan
-      }}
-    >
+    <MealPlanContext.Provider value={{ mealPlan, setMealPlan, saveMealPlan }}>
       {children}
     </MealPlanContext.Provider>
   );
