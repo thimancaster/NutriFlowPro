@@ -1,151 +1,103 @@
-export interface Patient {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  secondaryPhone?: string;
-  birthDate?: Date;
-  sex: string;
-  address?: Address;
-  objective: string;
-  notes?: string;
-  profile: string;
-  cpf: string;
-  archived_at?: Date | null;
-  created_at?: Date;
-  updated_at?: Date;
-  user_id: string;
-}
-
 export interface Address {
-  cep: string;
   street: string;
   number: string;
-  complement?: string;
-  neighborhood: string;
   city: string;
   state: string;
+  zipCode: string;
 }
 
-export interface PaginationParams {
-  page: number;
-  perPage: number;
-}
-
-export interface PatientFilters {
-  search?: string;
-  status?: 'active' | 'archived' | 'all';
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-export interface MealPlan {
+export interface Goal {
   id: string;
   name: string;
   description?: string;
-  patientId: string;
-  userId: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  mealDistribution: MealDistributionItem[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  meals: Meal[];
 }
 
-export interface MealDistributionItem {
+export interface Patient {
+  id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  birthDate?: string;
+  birth_date?: string; // For backward compatibility
+  gender?: string;
+  weight?: number;
+  height?: number;
+  address?: Address;
+  goals?: {
+    primary?: string;
+    secondary?: string;
+  };
+  status?: 'active' | 'archived';
+  created_at?: string | Date;
+  updated_at?: string | Date;
+}
+
+export interface User {
   id: string;
   name: string;
-  percentage: number;
-}
-
-export interface Meal {
-  id: string;
-  name: string;
-  time: string;
-  order: number;
-  mealPlanId: string;
-  items: MealItem[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-}
-
-export interface MealItem {
-  id: string;
-  foodId: string;
-  quantity: number;
-  unit: string;
-  mealId: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  food?: Food;
-}
-
-export interface Food {
-  id: string;
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  unit: string;
-  quantity: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  email: string;
+  phone?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ConsultationData {
-  id: string;
-  patientId: string;
-  userId: string;
-  date: Date;
-  weight: number;
-  height: number;
-  bmi: number;
-  bodyFat: number;
-  muscleMass: number;
-  waterPercentage: number;
-  metabolicAge: number;
-  visceralFat: number;
-  dailyCaloricNeeds: number;
-  macronutrientDistribution: MacronutrientDistribution;
-  mealDistribution: MealDistributionItem[];
+  id?: string;
+  patient_id?: string;
+  user_id?: string;
+  date?: string;
+  type?: string;
+  consultationType?: string;
   notes?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  objective?: string;
+  age?: number;
+  results?: {
+    get: number;  // GET (Gasto Energético Total)
+    gbm?: number; // Gasto Basal Metabólico
+    macros: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    };
+  };
 }
 
-export interface MacronutrientDistribution {
+export interface MealPlan {
+  id?: string;
+  name: string;
+  patient_id: string;
+  consultation_id?: string;
+  calories: number;
+  totalCalories?: number; // For backward compatibility
+  protein: number;
+  totalProtein?: number; // For backward compatibility
+  carbs: number;
+  totalCarbs?: number; // For backward compatibility
+  fat: number;
+  totalFat?: number; // For backward compatibility
+  total_calories?: number; // For backward compatibility
+  total_protein?: number; // For backward compatibility
+  total_carbs?: number; // For backward compatibility
+  total_fats?: number; // For backward compatibility
+  meals: any[];
+  mealDistribution: any[];
+  date?: string;
+  created_at?: string;
+  createdAt?: string; // For backward compatibility
+}
+
+// Extend the MealDistributionItem interface
+export interface MealDistributionItem {
+  id?: string;
+  name: string;
+  percent: number;
   protein: number;
   carbs: number;
   fat: number;
+  calories: number; 
+  time?: string;
+  suggestions?: string[];
 }
 
-export interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  session: any;
-  user: any;
-  login: (email: string, password?: string, remember?: boolean) => Promise<any>;
-  signup: (email: string, password?: string, name?: string) => Promise<any>;
-  logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<any>;
-  signInWithGoogle: () => Promise<any>;
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  session: any;
-  user: any;
-}
+export * from './appointment';

@@ -6,6 +6,7 @@ import MealGeneratorResults from './MealPlan/MealGeneratorResults';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useMealGeneratorState } from '@/hooks/useMealGeneratorState';
+import { logger } from '@/utils/logger';
 
 /**
  * MealPlanGenerator component used for generating meal plans 
@@ -28,7 +29,9 @@ const MealPlanGenerator = () => {
 
   // Handle generate meal plan and switch to results tab
   const handleGenerateMealPlan = () => {
+    logger.info('Generating meal plan with settings:', generatorSettings);
     generateMealPlan();
+    
     if (mealPlan) {
       setActiveTab('result');
     }

@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Loader2, ArrowRight, Apple, Lock, Mail } from 'lucide-react';
+import { Loader2, ArrowRight, Mail, Lock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AUTH_STORAGE_KEYS } from '@/constants/authConstants';
 import { storageUtils } from '@/utils/storageUtils';
+import { logger } from '@/utils/logger';
 
 interface LoginFormProps {
   onGoogleLogin: () => void;
@@ -42,14 +43,14 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log("Tentando fazer login com:", { email, rememberMe });
+      logger.debug("Tentando fazer login com:", { email, rememberMe });
       const { success, error } = await login(email, password, rememberMe);
       
       if (!success && error) {
-        console.error("Erro no login:", error);
+        logger.error("Erro no login:", error);
         throw error;
       } else {
-        console.log("Login bem-sucedido");
+        logger.info("Login bem-sucedido");
         
         // Store remember me preference
         storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, rememberMe);
@@ -58,7 +59,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
-      console.error("Erro no login:", error);
+      logger.error("Erro no login:", error);
       // Toast is already handled in the login function
     } finally {
       setIsLoading(false);
@@ -68,14 +69,14 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-      console.log("Iniciando login com Google...");
+      logger.debug("Iniciando login com Google...");
       await onGoogleLogin();
       // Navigation happens in parent component
       
       // Store remember me preference for Google login too
       storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, rememberMe);
     } catch (error: any) {
-      console.error("Erro ao processar login com Google:", error);
+      logger.error("Erro ao processar login com Google:", error);
       toast({
         title: "Erro ao fazer login com Google",
         description: error.message || "Não foi possível conectar com o Google. Tente novamente.",
@@ -173,10 +174,10 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div>
         <Button 
           variant="outline" 
-          className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
           onClick={handleGoogleLogin}
           disabled={isGoogleLoading}
         >
@@ -203,17 +204,6 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
             </svg>
           )}
           Google
-        </Button>
-        <Button 
-          variant="outline" 
-          className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-          onClick={() => toast({
-            title: "Login com Apple",
-            description: "Esta funcionalidade está disponível apenas para iOS.",
-          })}
-        >
-          <Apple className="h-5 w-5 mr-2" />
-          Apple
         </Button>
       </div>
 

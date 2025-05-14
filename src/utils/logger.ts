@@ -1,58 +1,60 @@
 
 /**
- * Logger utility to handle console logging in different environments
- * This helps prevent exposing sensitive information in production
+ * Logger utility for consistent logging throughout the application
+ * Automatically disables debug logs in production environment
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+interface LoggerOptions {
+  enabledInProduction: boolean;
+}
+
 class Logger {
-  private isProduction: boolean;
-  
-  constructor() {
-    this.isProduction = process.env.NODE_ENV === 'production';
+  private options: LoggerOptions;
+
+  constructor(options: Partial<LoggerOptions> = {}) {
+    this.options = {
+      enabledInProduction: false,
+      ...options
+    };
   }
-  
+
   /**
-   * Debug logs - only shown in development
+   * Debug logs - disabled in production
    */
-  debug(...args: any[]): void {
-    if (!this.isProduction) {
-      console.log('[DEBUG]', ...args);
+  debug(message: string, ...args: any[]): void {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEBUG] ${message}`, ...args);
     }
   }
-  
+
   /**
-   * Info logs - only shown in development
+   * Info logs - important information that can be shown in production
    */
-  info(...args: any[]): void {
-    if (!this.isProduction) {
-      console.info('[INFO]', ...args);
+  info(message: string, ...args: any[]): void {
+    if (process.env.NODE_ENV !== 'production' || this.options.enabledInProduction) {
+      console.info(`[INFO] ${message}`, ...args);
     }
   }
-  
+
   /**
-   * Warning logs - shown in all environments
+   * Warning logs - potential issues that should be addressed
    */
-  warn(...args: any[]): void {
-    console.warn('[WARN]', ...args);
+  warn(message: string, ...args: any[]): void {
+    console.warn(`[WARN] ${message}`, ...args);
   }
-  
+
   /**
-   * Error logs - shown in all environments
+   * Error logs - always shown in all environments
    */
-  error(...args: any[]): void {
-    console.error('[ERROR]', ...args);
-  }
-  
-  /**
-   * Development-only logs
-   */
-  dev(...args: any[]): void {
-    if (!this.isProduction) {
-      console.log('[DEV]', ...args);
-    }
+  error(message: string, ...args: any[]): void {
+    console.error(`[ERROR] ${message}`, ...args);
   }
 }
 
+// Create and export the logger instance
 export const logger = new Logger();
+
+// Export the Logger class for custom logger creation
+export default Logger;
