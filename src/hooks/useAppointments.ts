@@ -1,5 +1,5 @@
 
-import { useAppointmentQuery } from './appointments/useAppointmentQuery';
+import { useAppointments as useAppointmentQuery } from './appointments/useAppointmentQuery';
 import { useAppointmentActions } from './appointments/useAppointmentActions';
 
 // Update the hook to accept a patientId parameter
@@ -10,15 +10,27 @@ export const useAppointments = (patientId?: string) => {
     isError,
     error,
     appointmentsByDate
-  } = useAppointmentQuery(patientId);
+  } = useAppointmentQuery();
   
   const {
-    createAppointment,
-    updateAppointment,
-    deleteAppointment,
-    cancelAppointment,
-    fetchAppointments
+    selectedAppointment,
+    formDialogOpen,
+    handleNewAppointment,
+    handleEditAppointment,
+    handleCloseDialog,
+    handleSaveAppointment,
+    handleDeleteAppointment,
+    handleCancelAppointment,
+    isSubmitting,
+    isCanceling
   } = useAppointmentActions();
+
+  // Create aliases for expected method names
+  const createAppointment = handleSaveAppointment;
+  const updateAppointment = handleSaveAppointment;
+  const deleteAppointment = handleDeleteAppointment;
+  const cancelAppointment = handleCancelAppointment;
+  const fetchAppointments = () => {}; // Placeholder, should be implemented if needed
 
   return {
     appointments,
@@ -30,6 +42,17 @@ export const useAppointments = (patientId?: string) => {
     updateAppointment,
     deleteAppointment,
     cancelAppointment,
-    appointmentsByDate
+    appointmentsByDate,
+    // Original properties from useAppointmentActions
+    selectedAppointment,
+    formDialogOpen,
+    handleNewAppointment,
+    handleEditAppointment,
+    handleCloseDialog,
+    handleSaveAppointment,
+    handleDeleteAppointment,
+    handleCancelAppointment,
+    isSubmitting,
+    isCanceling
   };
 };

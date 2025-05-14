@@ -10,10 +10,10 @@ import { MealDistributionItem, ConsultationData } from '@/types';
 interface MealPlanGeneratorUIProps {
   activePatient: { name: string; gender: string | null };
   consultationData: ConsultationData;
-  mealDistribution: Record<string, MealDistributionItem> | undefined;
+  mealDistribution: Record<string, MealDistributionItem>;
   totalMealPercent: number;
   isSaving: boolean;
-  handleMealPercentChange: (mealKey: string, newValue: number[]) => void;
+  handleMealPercentChange: (mealKey: string, newValue: number) => void;
   handleSaveMealPlan: () => Promise<void>;
   handleAddMeal?: () => void;
   handleRemoveMeal?: (mealKey: string) => void;

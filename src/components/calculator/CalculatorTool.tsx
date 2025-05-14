@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import CalculatorInputs from './CalculatorInputs';
 import MacroDistributionInputs from './MacroDistributionInputs';
@@ -45,7 +44,7 @@ const CalculatorTool = () => {
     handleGenerateMealPlan,
     isSavingPatient
   } = useCalculatorState({ 
-    toast, 
+    toast: { toast, dismiss: (id?: string) => {} }, 
     user, 
     setConsultationData, 
     activePatient 

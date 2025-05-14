@@ -23,14 +23,13 @@ export const usePatientAppointments = (patientId: string) => {
           type,
           status,
           notes,
-          start_time,
-          end_time,
+          date,
           created_at,
           updated_at
         `)
         .eq('user_id', user.id)
         .eq('patient_id', patientId)
-        .order('start_time', { ascending: false });
+        .order('date', { ascending: false });
         
       if (error) throw error;
       
@@ -38,7 +37,7 @@ export const usePatientAppointments = (patientId: string) => {
       return data.map(appointment => ({
         ...appointment,
         patientName: appointment.patients?.name
-      })) as Appointment[];
+      })) as unknown as Appointment[];
     },
     enabled: !!user && !!patientId
   });
@@ -68,25 +67,33 @@ export const useMonthlyAppointments = (date: Date = new Date()) => {
           type,
           status,
           notes,
-          start_time,
-          end_time,
+          date,
           created_at,
           updated_at
         `)
         .eq('user_id', user.id)
-        .gte('start_time', startDate)
-        .lte('start_time', endDate)
-        .order('start_time', { ascending: true });
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: true });
         
       if (error) throw error;
       
       // Map to return proper patient name and parse dates
-      return data.map(appointment => ({
-        ...appointment,
-        patientName: appointment.patients?.name,
-        start_time: parseISO(appointment.start_time),
-        end_time: parseISO(appointment.end_time)
-      })) as Appointment[];
+      return data.map(appointment => {
+        const result = {
+          ...appointment,
+          patientName: appointment.patients?.name,
+        };
+
+        // Add start_time and end_time for compatibility (mapped from date)
+        if (appointment.date) {
+          const dateObj = parseISO(appointment.date);
+          result.start_time = dateObj;
+          result.end_time = dateObj;
+        }
+
+        return result;
+      }) as unknown as Appointment[];
     },
     enabled: !!user
   });
@@ -110,14 +117,13 @@ export const useAppointments = () => {
           type,
           status,
           notes,
-          start_time,
-          end_time,
+          date,
           created_at,
           updated_at,
           appointment_type_id
         `)
         .eq('user_id', user.id)
-        .order('start_time', { ascending: true });
+        .order('date', { ascending: true });
         
       if (error) throw error;
       
@@ -125,7 +131,7 @@ export const useAppointments = () => {
       return data.map(appointment => ({
         ...appointment,
         patientName: appointment.patients?.name
-      })) as Appointment[];
+      })) as unknown as Appointment[];
     },
     enabled: !!user
   });

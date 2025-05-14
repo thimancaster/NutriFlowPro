@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -8,19 +7,21 @@ import PatientHeader from '@/components/Anthropometry/PatientHeader';
 import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useConsultation } from '@/contexts/ConsultationContext';
-import { Patient } from '@/types';
+import { Patient, ConsultationData } from '@/types';
 import { getObjectiveFromGoals, calculateAge } from '@/utils/patientUtils';
 import ConsultationForm from '@/components/Consultation/ConsultationForm';
 import ConsultationResults from '@/components/Consultation/ConsultationResults';
 import { useConsultationForm } from '@/hooks/useConsultationForm';
 import usePatientData from './ConsultationHooks/usePatientData';
 import useAutoSave from './ConsultationHooks/useAutoSave';
+import { v4 as uuidv4 } from 'uuid';
 
 const Consultation = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { activePatient, setActivePatient, consultationData, setConsultationData } = useConsultation();
+  const [patientId, setPatientId] = useState<string | null>(null);
   
   const patientData = location.state?.patientData || activePatient;
   const repeatConsultation = location.state?.repeatConsultation;
@@ -49,6 +50,12 @@ const Consultation = () => {
     setConsultationId
   } = useConsultationForm(initialFormData);
   
+  useEffect(() => {
+    if (patientData && patientData.id) {
+      setPatientId(patientData.id);
+    }
+  }, [patientData]);
+  
   const isSaving = useAutoSave({
     consultationId,
     formData,
@@ -66,13 +73,38 @@ const Consultation = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const consultationFormData = {
-      ...formData,
-      results
+    if (!patientId) {
+      toast({
+        title: "Erro",
+        description: "ID do paciente não encontrado",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create complete consultation data object
+    const fullConsultationData: ConsultationData = {
+      id: consultationId || uuidv4(),
+      user_id: supabase.auth.getUser()?.data?.user?.id || '',
+      patient_id: patientId,
+      patient: {
+        id: patientId,
+        name: patientData?.name || '',
+        gender: formData.sex === 'M' ? 'M' : 'F', 
+        age: formData.age ? parseInt(formData.age) : 0
+      },
+      weight: parseFloat(formData.weight),
+      height: parseFloat(formData.height),
+      objective: formData.objective,
+      activityLevel: formData.activityLevel,
+      gender: formData.sex === 'M' ? 'male' : 'female',
+      created_at: new Date().toISOString(),
+      tipo: formData.consultationType || 'primeira_consulta',
+      results: results
     };
     
     // Save consultation data to context
-    setConsultationData(consultationFormData);
+    setConsultationData(fullConsultationData);
     
     toast({
       title: "Consulta salva com sucesso",

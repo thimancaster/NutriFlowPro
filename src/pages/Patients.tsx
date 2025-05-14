@@ -80,10 +80,10 @@ const Patients = () => {
           </CardContent>
         </Card>
         
-        {/* Patient Detail Modal */}
+        {/* PatientDetailModal with corrected props */}
         {patient && (
           <PatientDetailModal
-            open={isModalOpen}
+            isOpen={isModalOpen}
             onClose={closePatientDetail}
             patient={patient}
             onStatusChange={handleStatusChange}

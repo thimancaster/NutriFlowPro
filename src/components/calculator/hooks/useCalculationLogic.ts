@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { CalculatorState, UseCalculationLogicProps } from '../types';
+import { CalculatorState, UseCalculationLogicProps, ToastProps } from '../types';
 import { calculateBMR, calculateMacros, calculateTEE } from '../utils/calculations';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,7 +21,7 @@ export const useCalculationLogic = ({
   const calculateResults = useCallback(async (state: CalculatorState) => {
     // Validate required fields
     if (!state.weight || !state.height || !state.age) {
-      toast({
+      toast.toast({
         title: "Campos incompletos",
         description: "Preencha peso, altura e idade para calcular.",
         variant: "destructive"
@@ -35,7 +35,7 @@ export const useCalculationLogic = ({
     
     // Validate numeric values
     if (isNaN(weightVal) || isNaN(heightVal)) {
-      toast({
+      toast.toast({
         title: "Valores inválidos",
         description: "Peso e altura devem ser números válidos.",
         variant: "destructive"
@@ -114,13 +114,13 @@ export const useCalculationLogic = ({
       }
       
       // Show a toast for success
-      toast({
+      toast.toast({
         title: "Cálculo realizado",
         description: `TMB: ${calculatedBmr} kcal, VET: ${calculatedTee.vet} kcal`,
       });
     } catch (error: any) {
       console.error('Calculation error:', error);
-      toast({
+      toast.toast({
         title: "Erro no cálculo",
         description: error.message || "Ocorreu um erro ao calcular. Verifique os dados e tente novamente.",
         variant: "destructive"

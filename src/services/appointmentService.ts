@@ -1,6 +1,20 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment } from '@/types';
+import { convertDatesToISOString } from '@/utils/dateUtils';
+
+interface AppointmentInsertPayload {
+  user_id?: string;
+  patient_id?: string;
+  date: string;
+  type: string;
+  start_time?: string;
+  end_time?: string;
+  notes?: string;
+  status?: string;
+  measurements?: any;
+  recommendations?: string;
+}
 
 export const AppointmentService = {
   /**
@@ -39,9 +53,24 @@ export const AppointmentService = {
    */
   async createAppointment(appointmentData: Partial<Appointment>) {
     try {
+      // Convert Date objects to ISO strings and ensure required fields
+      const preparedData: AppointmentInsertPayload = {
+        ...convertDatesToISOString(appointmentData),
+        // Ensure required fields
+        date: appointmentData.date 
+          ? (appointmentData.date instanceof Date 
+            ? appointmentData.date.toISOString() 
+            : String(appointmentData.date))
+          : new Date().toISOString(),
+        type: appointmentData.type || 'default'
+      };
+      
+      // Remove the id if it exists (let Supabase generate it)
+      delete (preparedData as any).id;
+      
       const { data, error } = await supabase
         .from('appointments')
-        .insert([appointmentData])
+        .insert([preparedData])
         .select('*')
         .single();
         
@@ -59,9 +88,15 @@ export const AppointmentService = {
    */
   async updateAppointment(id: string, appointmentData: Partial<Appointment>) {
     try {
+      // Remove id from update data
+      const { id: _, ...dataToUpdate } = appointmentData;
+      
+      // Convert all Date objects to ISO strings
+      const preparedData = convertDatesToISOString(dataToUpdate);
+      
       const { data, error } = await supabase
         .from('appointments')
-        .update(appointmentData)
+        .update(preparedData)
         .eq('id', id)
         .select('*')
         .single();
