@@ -89,38 +89,39 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
               </TabsContent>
               
               <TabsContent value="appointments" className="m-0 h-full">
-                <PatientAppointments patient={patient} />
+                <PatientAppointments patientId={patient.id} />
               </TabsContent>
               
               <TabsContent value="evaluations" className="m-0 h-full">
-                <PatientEvaluations patient={patient} />
+                <PatientEvaluations patientId={patient.id} />
               </TabsContent>
               
               <TabsContent value="evolution" className="m-0 h-full">
-                <PatientEvolution patient={patient} />
+                <PatientEvolution patientId={patient.id} />
               </TabsContent>
               
               <TabsContent value="mealplans" className="m-0 h-full">
-                <PatientMealPlans patient={patient} />
+                <PatientMealPlans patientId={patient.id} />
               </TabsContent>
               
               <TabsContent value="notes" className="m-0 h-full">
                 <PatientNotes 
-                  initialNotes={patient.notes || ''} 
-                  onSaveNotes={handleNotesUpdate} 
+                  patientId={patient.id}
+                  content={patient.notes || ''}
+                  onSave={handleNotesUpdate}
                 />
               </TabsContent>
             </div>
           </Tabs>
           
           <div className="px-6 py-4 border-t">
-            <PatientActionButtons onClose={onClose} />
+            <PatientActionButtons onCancel={onClose} />
           </div>
         </DialogContent>
       </Dialog>
       
       <PatientArchiveDialog 
-        isOpen={showArchiveDialog}
+        open={showArchiveDialog}
         onClose={() => setShowArchiveDialog(false)}
         onArchive={handleArchivePatient}
         isArchiving={isArchiving}

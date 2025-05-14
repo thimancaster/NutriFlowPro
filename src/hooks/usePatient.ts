@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-export const usePatient = (patientId: string | null | undefined) => {
+export const usePatient = (patientId?: string | null) => {
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [activePatient, setActivePatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -43,6 +44,8 @@ export const usePatient = (patientId: string | null | undefined) => {
   return {
     patient,
     isLoading,
-    error
+    error,
+    activePatient,
+    setActivePatient
   };
 };

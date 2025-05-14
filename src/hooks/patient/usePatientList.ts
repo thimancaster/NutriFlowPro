@@ -18,8 +18,8 @@ export const usePatientList = (initialFilters: PatientFilters = {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [totalPatients, setTotalPatients] = useState<number>(0);
   const [pagination, setPagination] = useState<PaginationParams>({
-    page: initialFilters.page ? initialFilters.page - 1 : 0, // Convert to 0-based for the API
-    perPage: initialFilters.pageSize || 10
+    limit: initialFilters.pageSize || 10,
+    offset: ((initialFilters.page || 1) - 1) * (initialFilters.pageSize || 10)
   });
   const [filters, setFilters] = useState<PatientFilters>(initialFilters);
   const { toast } = useToast();
@@ -59,20 +59,26 @@ export const usePatientList = (initialFilters: PatientFilters = {
   // Re-fetch when pagination or filters change
   useEffect(() => {
     fetchPatients();
-  }, [pagination.page, pagination.perPage, JSON.stringify(filters)]);
+  }, [pagination.offset, pagination.limit, JSON.stringify(filters)]);
 
   const handlePageChange = (newPage: number) => {
-    setPagination({...pagination, page: newPage - 1}); // Convert to 0-based for the API
+    setPagination({
+      limit: pagination.limit,
+      offset: (newPage - 1) * pagination.limit
+    });
   };
 
   const handlePerPageChange = (newPerPage: number) => {
-    setPagination({page: 0, perPage: newPerPage});
+    setPagination({
+      limit: newPerPage,
+      offset: 0
+    });
   };
 
   const handleFilterChange = (newFilters: PatientFilters) => {
     setFilters(newFilters);
     // Reset to first page on filter change
-    setPagination(prev => ({...prev, page: 0}));
+    setPagination(prev => ({...prev, offset: 0}));
   };
   
   const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
@@ -90,7 +96,7 @@ export const usePatientList = (initialFilters: PatientFilters = {
     totalPatients,
     pagination: {
       ...pagination,
-      page: pagination.page + 1 // Convert back to 1-based for the UI
+      page: Math.floor(pagination.offset / pagination.limit) + 1 // Convert offset to page number
     },
     filters,
     handlePageChange,

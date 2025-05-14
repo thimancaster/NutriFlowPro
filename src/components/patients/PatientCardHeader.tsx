@@ -42,8 +42,8 @@ const PatientCardHeader: React.FC<PatientCardHeaderProps> = ({
       
       <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
         <PatientStatusFilter
-          value={statusFilter}
-          onValueChange={onStatusFilterChange}
+          currentStatus={statusFilter}
+          onStatusChange={onStatusFilterChange}
         />
         
         <Link to="/patients/new" className="w-full sm:w-auto">

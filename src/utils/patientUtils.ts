@@ -22,6 +22,32 @@ export const calculateAge = (birthDate: string | null | undefined): number | nul
 };
 
 /**
+ * Format date to local string
+ * @param date - Date string or Date object
+ * @returns Formatted date string
+ */
+export const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) return '-';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  try {
+    return dateObj.toLocaleDateString('pt-BR');
+  } catch (error) {
+    return '-';
+  }
+};
+
+/**
+ * Get patient's age based on birth date
+ * @param birthDate - Birth date string (YYYY-MM-DD)
+ * @returns Age in years
+ */
+export const getPatientAge = (birthDate: string | null | undefined): number | null => {
+  return calculateAge(birthDate);
+};
+
+/**
  * Format a patient's address for display
  * @param address - Patient address object or string
  * @returns Formatted address string

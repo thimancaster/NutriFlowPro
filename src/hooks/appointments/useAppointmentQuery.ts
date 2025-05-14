@@ -1,88 +1,105 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Appointment } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { format, parseISO } from 'date-fns';
+import { Appointment } from '@/types/appointment';
 
 export const useAppointmentQuery = (patientId?: string) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
   
-  const query = useQuery({
-    queryKey: ['appointments', patientId],
-    queryFn: async () => {
-      if (!user?.id) {
-        return [];
-      }
-
+  // Fetch appointments from Supabase
+  const fetchAppointments = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    setIsError(false);
+    setError(null);
+    
+    try {
       let query = supabase
         .from('appointments')
         .select(`
           id,
+          user_id,
           patient_id,
-          title,
-          start_time,
-          end_time,
-          duration_minutes,
-          notes,
+          patients(name),
+          date,
+          type,
           status,
+          notes,
           created_at,
-          updated_at,
-          patients(name)
+          updated_at
         `)
         .eq('user_id', user.id);
-
-      // Filter by patient if a patientId is provided
+      
+      // Add patient filter if patientId is provided
       if (patientId) {
         query = query.eq('patient_id', patientId);
       }
-
-      const { data, error } = await query.order('start_time', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
-
-      // Format the appointments with patient name included
-      const formattedAppointments: Appointment[] = data.map((appointment: any) => ({
-        id: appointment.id,
-        patient_id: appointment.patient_id,
-        patientName: appointment.patients?.name,
-        title: appointment.title,
-        start_time: appointment.start_time,
-        end_time: appointment.end_time,
-        duration_minutes: appointment.duration_minutes,
-        notes: appointment.notes,
-        status: appointment.status,
-        created_at: appointment.created_at,
-        updated_at: appointment.updated_at
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      // Map and transform data
+      const mappedAppointments: Appointment[] = data.map((item: any) => ({
+        id: item.id,
+        user_id: item.user_id,
+        patient_id: item.patient_id,
+        patientName: item.patients?.name,
+        date: new Date(item.date),
+        type: item.type,
+        status: item.status,
+        notes: item.notes,
+        created_at: new Date(item.created_at),
+        updated_at: new Date(item.updated_at)
       }));
-
-      return formattedAppointments;
-    },
-    enabled: !!user?.id
-  });
-
-  // Group appointments by date for calendar view
-  const appointmentsByDate = () => {
-    const grouped: Record<string, Appointment[]> = {};
-    if (query.data) {
-      query.data.forEach((appointment) => {
-        const date = format(parseISO(appointment.start_time), 'yyyy-MM-dd');
-        if (!grouped[date]) {
-          grouped[date] = [];
-        }
-        grouped[date].push(appointment);
-      });
+      
+      setAppointments(mappedAppointments);
+    } catch (err: any) {
+      console.error('Error fetching appointments:', err);
+      setIsError(true);
+      setError(err);
+    } finally {
+      setIsLoading(false);
     }
-    return grouped;
   };
-
+  
+  // Group appointments by date
+  const appointmentsByDate = useMemo(() => {
+    const grouped: Record<string, Appointment[]> = {};
+    
+    appointments.forEach((appointment) => {
+      const dateStr = format(appointment.date, 'yyyy-MM-dd');
+      
+      if (!grouped[dateStr]) {
+        grouped[dateStr] = [];
+      }
+      
+      grouped[dateStr].push(appointment);
+    });
+    
+    return grouped;
+  }, [appointments]);
+  
+  // Effect to fetch appointments on component mount and user change
+  useEffect(() => {
+    if (user) {
+      fetchAppointments();
+    }
+  }, [user, patientId]);
+  
   return {
-    appointments: query.data || [],
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
-    appointmentsByDate: appointmentsByDate()
+    appointments,
+    isLoading,
+    isError,
+    error,
+    fetchAppointments,
+    appointmentsByDate
   };
 };

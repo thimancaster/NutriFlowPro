@@ -1,9 +1,14 @@
 
 import { User } from "@supabase/supabase-js";
 import { ConsultationData } from "@/types";
-import { toast } from "@/hooks/use-toast";
 
-export type ToastApi = typeof toast;
+export type ToastApi = {
+  toast: (props: {
+    title?: string;
+    description?: string;
+    variant?: "default" | "destructive";
+  }) => void;
+};
 
 export interface CalculatorState {
   patientName: string;
@@ -76,9 +81,17 @@ export interface MacroDistributionInputsProps {
   setProteinPercentage: (value: string) => void;
   fatPercentage: string;
   setFatPercentage: (value: string) => void;
+  // Remove bmr, tee, and objective props as they're not used in the component
 }
 
 export interface UseCalculationLogicProps {
-  calculatorState: CalculatorState;
+  setBmr: (value: number | null) => void;
+  setTee: (value: number | null) => void;
+  setMacros: (value: any | null) => void;
+  setConsultationData?: (data: ConsultationData) => void;
   toast: ToastApi;
+  user: User | null;
+  tempPatientId: string | null;
+  setTempPatientId: (value: string | null) => void;
 }
+
