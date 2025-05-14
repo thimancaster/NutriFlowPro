@@ -1,40 +1,46 @@
 
 import React, { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
 
 interface PatientNotesProps {
   patientId: string;
-  notes?: string;
+  notes?: string | null;
 }
 
-const PatientNotes = ({ patientId, notes: initialNotes = '' }: PatientNotesProps) => {
-  const [notes, setNotes] = useState(initialNotes);
+const PatientNotes = ({ patientId, notes: initialNotes }: PatientNotesProps) => {
+  const [notes, setNotes] = useState(initialNotes || '');
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
-  // Save the notes to the database
-  const handleSaveNotes = async () => {
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+  
+  const handleCancelClick = () => {
+    setNotes(initialNotes || '');
+    setIsEditing(false);
+  };
+  
+  const handleSaveClick = async () => {
     setIsSaving(true);
+    
     try {
-      const { error } = await supabase
-        .from('patients')
-        .update({ notes })
-        .eq('id', patientId);
-      
-      if (error) throw error;
-      
+      // This will be implemented in future tasks
+      // Placeholder for PatientService.updatePatientNotes method
       toast({
-        title: "Anotações salvas",
-        description: "As anotações foram salvas com sucesso.",
+        description: "Funcionalidade em desenvolvimento"
       });
-    } catch (error) {
-      console.error('Error saving notes:', error);
+      
+      setIsEditing(false);
+    } catch (error: any) {
       toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as anotações.",
-        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível salvar as observações",
+        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
@@ -42,33 +48,42 @@ const PatientNotes = ({ patientId, notes: initialNotes = '' }: PatientNotesProps
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Anotações Gerais</h3>
-        <Button 
-          onClick={handleSaveNotes}
-          className="bg-nutri-blue hover:bg-blue-700"
-          disabled={isSaving}
-        >
-          {isSaving ? "Salvando..." : "Salvar Anotações"}
-        </Button>
-      </div>
-      
-      <div>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="w-full h-64 p-3 border rounded-md focus:ring-2 focus:ring-nutri-blue focus:border-transparent"
-          placeholder="Adicione anotações sobre o paciente, como preferências alimentares, alergias, observações comportamentais, etc."
-        />
-      </div>
-      
-      <div className="bg-blue-50 p-3 rounded-md">
-        <p className="text-sm text-blue-700">
-          <strong>Dica:</strong> Utilize este espaço para registrar informações qualitativas importantes 
-          sobre seu paciente que não se encaixam em outros campos estruturados.
-        </p>
-      </div>
+    <div className="py-4">
+      {isEditing ? (
+        <div className="space-y-4">
+          <Textarea 
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Insira observações sobre o paciente"
+            className="min-h-[200px]"
+          />
+          
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={handleCancelClick} disabled={isSaving}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveClick} disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {notes ? (
+            <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md min-h-[200px]">
+              {notes}
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">Nenhuma observação registrada</p>
+          )}
+          
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={handleEditClick}>
+              Editar Observações
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
