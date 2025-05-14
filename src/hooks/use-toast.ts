@@ -2,16 +2,21 @@
 import * as React from "react";
 import { useState } from "react";
 
-import type { ToastProps, ToastActionElement } from "@/components/ui/toast";
+import type { ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 1000000;
 
-type ToasterToast = ToastProps & {
-  id: string;
+export type ToastProps = {
+  id?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  variant?: "default" | "destructive";
+  open?: boolean;
+};
+
+type ToasterToast = Required<Pick<ToastProps, "id">> & ToastProps & {
   open: boolean;
 };
 
@@ -129,8 +134,17 @@ function dispatch(action: Action) {
   });
 }
 
+export type ToastApi = {
+  toast: (props: ToastProps) => {
+    id: string;
+    dismiss: () => void;
+    update: (props: ToastProps) => void;
+  };
+  dismiss: (toastId?: string) => void;
+};
+
 function toast(props: ToastProps) {
-  const id = Math.random().toString(36).slice(2, 9);
+  const id = props.id || Math.random().toString(36).slice(2, 9);
   const update = (props: ToastProps) => {
     dispatch({
       type: "UPDATE_TOAST",
@@ -180,9 +194,4 @@ function useToast() {
   };
 }
 
-// Create a typed version of the toast function that matches our ToastApi interface
-const typedToast = (props: ToastProps) => {
-  return toast(props);
-};
-
-export { useToast, toast, typedToast };
+export { useToast, toast };

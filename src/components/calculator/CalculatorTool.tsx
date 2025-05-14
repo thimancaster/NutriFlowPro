@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, User } from 'lucide-react';
 import useCalculatorState from './useCalculatorState';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast, typedToast } from '@/hooks/use-toast';
+import { useToast, ToastProps } from '@/hooks/use-toast';
 import { usePatient } from '@/contexts/PatientContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { ToastProps } from './types';
 
 const CalculatorTool = () => {
   const { user } = useAuth();

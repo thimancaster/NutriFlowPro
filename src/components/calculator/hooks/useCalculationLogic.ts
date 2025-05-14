@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { CalculatorState, UseCalculationLogicProps, ToastProps } from '../types';
+import { CalculatorState, UseCalculationLogicProps } from '../types';
 import { calculateBMR, calculateMacros, calculateTEE } from '../utils/calculations';
 import { v4 as uuidv4 } from 'uuid';
 
