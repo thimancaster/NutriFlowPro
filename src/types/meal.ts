@@ -1,19 +1,5 @@
 
-// Add this if it doesn't exist already
-export interface MealDistributionItem {
-  id: string;
-  name: string;
-  percent: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  calories: number;
-  foods: any[];
-  suggestions?: string[];
-}
-
-// Make sure Meal type has the required properties
-export interface Meal {
+export interface MealItem {
   id?: string;
   name: string;
   time: string;
@@ -27,19 +13,25 @@ export interface Meal {
   foods: any[];
 }
 
-// Add MealPlan type if not defined
-export interface MealPlan {
+export interface MealDistributionItem {
   id: string;
+  name: string;
+  description?: string;
+  time: string;
+  percentage: number;
+}
+
+export interface MealPlan {
+  id?: string;
   user_id?: string;
   patient_id?: string;
-  consultation_id?: string;
-  date: Date;
-  meals: Meal[];
-  mealDistribution: Record<string, MealDistributionItem>; // Changed from array to record
+  date: Date | string;
+  meals: MealItem[];
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
+  mealDistribution?: Record<string, MealDistributionItem>;
 }

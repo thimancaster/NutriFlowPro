@@ -6,7 +6,7 @@ import { useAppointmentMutations } from './appointments/useAppointmentMutations'
 // Update the hook to accept an optional patientId parameter
 export const useAppointments = (patientId?: string) => {
   // Pass the patientId to the query hook
-  const query = useAppointmentQuery(patientId);
+  const query = useAppointmentQuery();
   const {
     data: appointments = [],
     isLoading,

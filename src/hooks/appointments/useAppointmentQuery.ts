@@ -48,3 +48,13 @@ export const useAppointmentQuery = (patientId?: string) => {
     enabled: !!user?.id
   });
 };
+
+// Export a dedicated hook for patient appointments
+export const usePatientAppointments = (patientId: string) => {
+  return useAppointmentQuery(patientId);
+};
+
+// Export a general appointments hook - without patient filtering
+export const useAppointments = () => {
+  return useAppointmentQuery();
+};
