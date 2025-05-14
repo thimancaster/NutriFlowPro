@@ -44,6 +44,26 @@ export const formatPatientAddress = (address: any): string => {
 };
 
 /**
+ * Get patient's objective from goals object
+ */
+export const getObjectiveFromGoals = (goals: any): string => {
+  if (!goals) return '';
+  
+  // If goals is a string, try to parse it
+  if (typeof goals === 'string') {
+    try {
+      const parsedGoals = JSON.parse(goals);
+      return parsedGoals.objective || '';
+    } catch {
+      return '';
+    }
+  }
+  
+  // If goals is already an object
+  return goals.objective || '';
+};
+
+/**
  * Format an address object for display
  */
 const formatAddressObject = (addressObj: any): string => {

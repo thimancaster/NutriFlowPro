@@ -1,69 +1,54 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { Patient, ConsultationData, ConsultationStep } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
+import { ConsultationData, Patient } from '@/types';
 
-type ConsultationContextType = {
-  isConsultationActive: boolean;
-  startConsultation: () => void;
-  endConsultation: () => void;
-  saveDraftConsultation: (data: Partial<ConsultationData>) => void;
-  getDraftConsultation: () => Partial<ConsultationData> | null;
+// Define the consultation steps
+export type ConsultationStep = 'patient-selection' | 'evaluation' | 'meal-plan' | 'review';
+
+interface ConsultationContextType {
+  activePatient: Patient | null;
+  setActivePatient: (patient: Patient | null) => void;
+  consultationData: ConsultationData | null;
+  setConsultationData: (data: ConsultationData | null) => void;
   currentStep: ConsultationStep;
   setCurrentStep: (step: ConsultationStep) => void;
-  generateConsultationId: () => Promise<string>;
-};
+  isConsultationActive: boolean;
+  clearConsultation: () => void;
+  mealPlan: any; // Add this property
+}
 
 const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
 
-export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isConsultationActive, setIsConsultationActive] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<ConsultationStep>('dashboard');
-
-  const startConsultation = () => {
-    setIsConsultationActive(true);
-    setCurrentStep('dashboard');
+export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ 
+  children 
+}) => {
+  const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
+  const [currentStep, setCurrentStep] = useState<ConsultationStep>('patient-selection');
+  
+  const clearConsultation = () => {
+    setActivePatient(null);
+    setConsultationData(null);
+    setCurrentStep('patient-selection');
   };
-
-  const endConsultation = () => {
-    setIsConsultationActive(false);
-    setCurrentStep('dashboard');
-    // Clear any draft data
-    localStorage.removeItem('draftConsultation');
-  };
-
-  const saveDraftConsultation = (data: Partial<ConsultationData>) => {
-    localStorage.setItem('draftConsultation', JSON.stringify(data));
-  };
-
-  const getDraftConsultation = (): Partial<ConsultationData> | null => {
-    const draft = localStorage.getItem('draftConsultation');
-    if (draft) {
-      try {
-        return JSON.parse(draft);
-      } catch (e) {
-        console.error('Error parsing draft consultation:', e);
-      }
-    }
-    return null;
-  };
-
-  const generateConsultationId = async () => {
-    return uuidv4();
-  };
-
-  const value = {
-    isConsultationActive,
-    startConsultation,
-    endConsultation,
-    saveDraftConsultation,
-    getDraftConsultation,
-    currentStep,
-    setCurrentStep,
-    generateConsultationId,
-  };
-
-  return <ConsultationContext.Provider value={value}>{children}</ConsultationContext.Provider>;
+  
+  return (
+    <ConsultationContext.Provider
+      value={{
+        activePatient,
+        setActivePatient,
+        consultationData,
+        setConsultationData,
+        currentStep,
+        setCurrentStep,
+        isConsultationActive: !!activePatient,
+        clearConsultation,
+        mealPlan: null // Add this property
+      }}
+    >
+      {children}
+    </ConsultationContext.Provider>
+  );
 };
 
 export const useConsultation = () => {

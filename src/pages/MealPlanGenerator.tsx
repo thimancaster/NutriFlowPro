@@ -55,10 +55,6 @@ const MealPlanGenerator = () => {
     consultationData: consultationData || location.state?.consultation || null,
     mealPlan: mealPlan as AppMealPlan,
     setMealPlan,
-    saveConsultation: async () => {
-      // This is a placeholder - in the real app you'd save consultation data
-      return Promise.resolve();
-    },
     saveMealPlan
   });
 

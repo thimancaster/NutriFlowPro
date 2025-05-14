@@ -6,8 +6,8 @@ import { usePatient } from '@/contexts/PatientContext';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
-// Importe o serviço como objeto
-import * as DatabaseService from '@/services/databaseService';
+// Import the DatabaseService properly
+import { MealPlanService } from '@/services/mealPlanService';
 
 interface MealPlanContextType {
   mealPlan: MealPlan | null;
@@ -65,7 +65,8 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updated_at: new Date().toISOString()
       };
 
-      const result = await DatabaseService.saveMealPlan(
+      // Use MealPlanService directly instead of DatabaseService
+      const result = await MealPlanService.saveMealPlan(
         user.id,
         activePatient.id,
         consultationId,

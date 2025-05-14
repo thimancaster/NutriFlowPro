@@ -1,37 +1,21 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { PatientFilters } from '@/types';
+import { User } from 'lucide-react';
 
 interface PatientEmptyStateProps {
-  filters: PatientFilters;
+  hasSearchFilter: boolean;
 }
 
-const PatientEmptyState = ({ filters }: PatientEmptyStateProps) => {
-  const navigate = useNavigate();
-  
+const PatientEmptyState = ({ hasSearchFilter }: PatientEmptyStateProps) => {
   return (
-    <div className="text-center py-8">
-      <p className="text-gray-500">
-        {filters.search 
-          ? 'Nenhum paciente encontrado com os termos de busca.' 
-          : filters.status === 'archived'
-            ? 'Não há pacientes arquivados.'
-            : filters.status === 'all'
-              ? 'Você ainda não tem pacientes cadastrados.'
-              : 'Você ainda não tem pacientes ativos cadastrados.'
-        }
+    <div className="text-center py-10">
+      <User className="h-12 w-12 mx-auto text-gray-400" />
+      <h3 className="mt-2 text-lg font-medium">Nenhum paciente encontrado</h3>
+      <p className="text-gray-500 mt-1">
+        {hasSearchFilter 
+          ? 'Tente uma busca diferente ou limpe os filtros' 
+          : 'Clique em "Novo Paciente" para adicionar seu primeiro paciente'}
       </p>
-      {!filters.search && (
-        <Button 
-          className="mt-4 bg-nutri-green hover:bg-nutri-green-dark"
-          onClick={() => navigate('/patients/new')}
-        >
-          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Paciente
-        </Button>
-      )}
     </div>
   );
 };
