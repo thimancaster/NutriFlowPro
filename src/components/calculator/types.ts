@@ -1,8 +1,24 @@
+
 import { User } from "@supabase/supabase-js";
 import { ConsultationData } from "@/types";
 import { toast } from "@/hooks/use-toast";
 
 export type ToastApi = typeof toast;
+
+export interface CalculatorState {
+  patientName: string;
+  gender: string;
+  age: string;
+  weight: string;
+  height: string;
+  objective: string;
+  activityLevel: string;
+  carbsPercentage: string;
+  proteinPercentage: string;
+  fatPercentage: string;
+  profile: string;
+  consultationType: string;
+}
 
 export interface CalculatorInputsProps {
   patientName: string;
@@ -51,4 +67,18 @@ export interface UseCalculatorStateProps {
   user: User | null;
   setConsultationData: (data: ConsultationData) => void;
   activePatient?: any;
+}
+
+export interface MacroDistributionInputsProps {
+  carbsPercentage: string;
+  setCarbsPercentage: (value: string) => void;
+  proteinPercentage: string;
+  setProteinPercentage: (value: string) => void;
+  fatPercentage: string;
+  setFatPercentage: (value: string) => void;
+}
+
+export interface UseCalculationLogicProps {
+  calculatorState: CalculatorState;
+  toast: ToastApi;
 }

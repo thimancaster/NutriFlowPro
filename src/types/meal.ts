@@ -1,3 +1,4 @@
+
 export interface MealItem {
   name: string;
   portion: string;
@@ -24,13 +25,24 @@ export interface Meal {
 export interface MealDistributionItem {
   id: string;
   name: string;
-  order: number;
+  order?: number;
   description?: string;
   protein: number;
   carbs: number;
   fat: number;
   calories: number;
-  percentage: number;
+  percent: number;
+  percentage?: number;  // For backward compatibility
   suggestions?: string[];
   foods?: MealFood[];
+}
+
+export interface MealFood {
+  id: string;
+  name: string;
+  portion: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
 }

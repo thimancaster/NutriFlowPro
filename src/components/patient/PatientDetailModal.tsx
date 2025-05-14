@@ -42,7 +42,11 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
     handleUpdatePatient,
     handleUpdatePatientNotes,
     isArchiving 
-  } = usePatientModalActions(patient, onStatusChange, onClose);
+  } = usePatientModalActions({
+    patient,
+    onStatusChange,
+    onClose
+  });
 
   // Handle tab change
   const handleTabChange = (value: string) => {

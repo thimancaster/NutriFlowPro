@@ -38,6 +38,11 @@ const MealPlanGeneratorUI = ({
     return typeof value === 'string' ? parseFloat(value) : value;
   };
 
+  // Get patient age from consultationData
+  const patientAge = consultationData.age !== undefined 
+    ? consultationData.age 
+    : (consultationData.patient?.age ?? undefined);
+
   // Função simples para gerar PDF (será substituída no componente pai)
   const dummyGeneratePDF = async () => {
     await handleSaveMealPlan();
@@ -55,7 +60,7 @@ const MealPlanGeneratorUI = ({
       {activePatient && (
         <PatientHeader 
           patientName={activePatient.name}
-          patientAge={parseNumericValue(consultationData.age)}
+          patientAge={patientAge}
           patientGender={activePatient.gender}
           patientObjective={consultationData.objective}
         />

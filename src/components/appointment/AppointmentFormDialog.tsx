@@ -41,7 +41,7 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
   const { patients, isLoading: isLoadingPatients } = usePatientOptions();
   const { appointmentTypes, isLoading: isLoadingAppointmentTypes } = useAppointmentTypes();
   
-  const [formData, setFormData] = useState<Partial<Appointment>>({
+  const [formData, setFormData] = useState<Partial<Appointment> & {duration_minutes?: number}>({
     patient_id: '',
     title: '',
     start_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
@@ -56,14 +56,18 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
 
   useEffect(() => {
     if (appointment) {
+      const startTime = appointment.start_time instanceof Date 
+        ? appointment.start_time 
+        : parseISO(appointment.start_time as string);
+        
+      const endTime = appointment.end_time instanceof Date 
+        ? appointment.end_time 
+        : parseISO(appointment.end_time as string);
+      
       setFormData({
         ...appointment,
-        start_time: appointment.start_time ? 
-          format(parseISO(appointment.start_time), "yyyy-MM-dd'T'HH:mm") : 
-          format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-        end_time: appointment.end_time ? 
-          format(parseISO(appointment.end_time), "yyyy-MM-dd'T'HH:mm") : 
-          format(addMinutes(new Date(), 60), "yyyy-MM-dd'T'HH:mm"),
+        start_time: format(startTime, "yyyy-MM-dd'T'HH:mm"),
+        end_time: format(endTime, "yyyy-MM-dd'T'HH:mm"),
       });
     }
   }, [appointment]);
@@ -87,7 +91,7 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
       if (name === 'appointment_type_id') {
         const appointmentType = appointmentTypes.find(type => type.id === value);
         if (appointmentType) {
-          const startDate = prev.start_time ? new Date(prev.start_time) : new Date();
+          const startDate = prev.start_time ? new Date(prev.start_time as string) : new Date();
           const endDate = addMinutes(startDate, appointmentType.duration_minutes);
           return { 
             ...prev, 
@@ -112,7 +116,9 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      await onSubmit(formData);
+      // Remove duration_minutes before submitting as it's not in the Appointment type
+      const { duration_minutes, ...submissionData } = formData;
+      await onSubmit(submissionData);
     } finally {
       setIsSubmitting(false);
     }

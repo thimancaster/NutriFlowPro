@@ -1,22 +1,50 @@
 
 import React from 'react';
-import { DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
 import { Patient } from '@/types';
+import { Archive, RotateCcw, UserCog } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import PatientStatusIndicator from './PatientStatusIndicator';
 
 interface PatientModalHeaderProps {
   patient: Patient;
-  onClose: () => void;
+  onArchive?: () => void;
 }
 
-const PatientModalHeader = ({ patient, onClose }: PatientModalHeaderProps) => {
+const PatientModalHeader: React.FC<PatientModalHeaderProps> = ({ patient, onArchive }) => {
+  const isArchived = patient.status === 'archived';
+
   return (
-    <div className="flex items-center justify-between">
-      <DialogTitle className="text-2xl">{patient.name}</DialogTitle>
-      <Button variant="ghost" size="icon" onClick={onClose}>
-        <X className="h-4 w-4" />
-      </Button>
+    <div className="flex justify-between items-center">
+      <div>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">{patient.name}</h2>
+          <PatientStatusIndicator status={patient.status || 'active'} />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {patient.email || patient.phone || 'Sem contato disponível'}
+        </p>
+      </div>
+
+      {onArchive && (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onArchive}
+          className={isArchived ? "text-green-600" : "text-red-600"}
+        >
+          {isArchived ? (
+            <>
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Reativar
+            </>
+          ) : (
+            <>
+              <Archive className="h-4 w-4 mr-1" />
+              Arquivar
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

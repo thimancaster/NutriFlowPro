@@ -58,7 +58,10 @@ const Patients = () => {
     }
 
     if (patients.length === 0) {
-      return <PatientEmptyState hasSearchFilter={!!filters.search || filters.status !== 'active'} />;
+      return <PatientEmptyState 
+        filters={filters} 
+        hasSearchFilter={!!filters.search || filters.status !== 'active'} 
+      />;
     }
 
     return (
@@ -72,7 +75,7 @@ const Patients = () => {
           <PatientPagination
             currentPage={pagination.page}
             totalItems={totalPatients}
-            pageSize={pagination.perPage}
+            pageSize={pagination.limit || 10}
             onPageChange={handlePageChange}
           />
         </div>

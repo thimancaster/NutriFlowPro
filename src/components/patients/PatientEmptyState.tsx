@@ -6,12 +6,13 @@ import { Link } from 'react-router-dom';
 import { PatientFilters } from '@/types';
 
 interface PatientEmptyStateProps {
-  filters: PatientFilters;
+  filters?: PatientFilters;
+  hasSearchFilter?: boolean;
 }
 
-const PatientEmptyState: React.FC<PatientEmptyStateProps> = ({ filters }) => {
+const PatientEmptyState: React.FC<PatientEmptyStateProps> = ({ filters, hasSearchFilter }) => {
   // Determine if empty state is due to filters
-  const isFiltered = filters.search || filters.status !== 'active';
+  const isFiltered = hasSearchFilter || (filters && (filters.search || filters.status !== 'active'));
   
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">

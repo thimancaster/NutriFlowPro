@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Appointment } from '@/types';
@@ -66,7 +65,12 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
   appointments.forEach(appointment => {
     if (!appointment.start_time) return;
     
-    const dateKey = format(parseISO(appointment.start_time), 'yyyy-MM-dd');
+    const startTime = appointment.start_time instanceof Date 
+      ? appointment.start_time 
+      : parseISO(appointment.start_time as string);
+      
+    const dateKey = format(startTime, 'yyyy-MM-dd');
+    
     if (!appointmentsByDate[dateKey]) {
       appointmentsByDate[dateKey] = [];
     }
@@ -86,68 +90,93 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
           
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {appointmentsByDate[dateKey]
-              .sort((a, b) => new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime())
-              .map(appointment => (
-                <Card key={appointment.id} className={`
-                  ${appointment.status === 'canceled' ? 'opacity-70 bg-gray-50' : 'bg-white'}
-                  ${appointment.status === 'completed' ? 'border-green-200' : ''}
-                `}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between">
-                      <CardTitle className="text-lg">{appointment.title}</CardTitle>
-                      {getStatusBadge(appointment.status)}
-                    </div>
-                    <CardDescription className="flex items-center">
-                      <Clock className="h-3.5 w-3.5 mr-1 inline text-gray-500" />
-                      {format(parseISO(appointment.start_time!), 'HH:mm')} até {
-                        format(parseISO(appointment.end_time!), 'HH:mm')
-                      } ({appointment.duration_minutes} min)
-                    </CardDescription>
-                  </CardHeader>
+              .sort((a, b) => {
+                const aTime = a.start_time instanceof Date 
+                  ? a.start_time.getTime() 
+                  : new Date(a.start_time).getTime();
                   
-                  <CardContent>
-                    <p className="font-medium">Paciente: {appointment.patientName}</p>
-                    {appointment.notes && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        <span className="font-medium">Observações:</span> {appointment.notes}
-                      </p>
-                    )}
-                  </CardContent>
+                const bTime = b.start_time instanceof Date 
+                  ? b.start_time.getTime() 
+                  : new Date(b.start_time).getTime();
                   
-                  <CardFooter className="pt-0 justify-end space-x-2">
-                    {appointment.status !== 'canceled' && appointment.status !== 'completed' && (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => onCancel(appointment.id!)}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Cancelar
-                        </Button>
+                return aTime - bTime;
+              })
+              .map(appointment => {
+                const startTime = appointment.start_time instanceof Date 
+                  ? appointment.start_time 
+                  : parseISO(appointment.start_time as string);
+                  
+                const endTime = appointment.end_time instanceof Date 
+                  ? appointment.end_time 
+                  : parseISO(appointment.end_time as string);
+                  
+                // Calculate duration in minutes
+                const durationMinutes = Math.round(
+                  (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+                );
+                
+                return (
+                  <Card key={appointment.id} className={`
+                    ${appointment.status === 'canceled' ? 'opacity-70 bg-gray-50' : 'bg-white'}
+                    ${appointment.status === 'completed' ? 'border-green-200' : ''}
+                  `}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between">
+                        <CardTitle className="text-lg">{appointment.title}</CardTitle>
+                        {getStatusBadge(appointment.status)}
+                      </div>
+                      <CardDescription className="flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1 inline text-gray-500" />
+                        {format(startTime, 'HH:mm')} até {
+                          format(endTime, 'HH:mm')
+                        } ({durationMinutes} min)
+                      </CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <p className="font-medium">Paciente: {appointment.patientName || "Não especificado"}</p>
+                      {appointment.notes && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Observações:</span> {appointment.notes}
+                        </p>
+                      )}
+                    </CardContent>
+                    
+                    <CardFooter className="pt-0 justify-end space-x-2">
+                      {appointment.status !== 'canceled' && appointment.status !== 'completed' && (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => onCancel(appointment.id!)}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => onEdit(appointment)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar
+                          </Button>
+                        </>
+                      )}
+                      
+                      {(appointment.status === 'canceled' || appointment.status === 'completed') && (
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() => onEdit(appointment)}
                         >
                           <Edit className="h-4 w-4 mr-1" />
-                          Editar
+                          Visualizar
                         </Button>
-                      </>
-                    )}
-                    
-                    {(appointment.status === 'canceled' || appointment.status === 'completed') && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onEdit(appointment)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Visualizar
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
+                      )}
+                    </CardFooter>
+                  </Card>
+                );
+              })}
           </div>
         </div>
       ))}

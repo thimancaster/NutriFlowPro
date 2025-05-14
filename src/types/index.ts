@@ -18,6 +18,7 @@ export interface Patient {
   created_at?: string;
   updated_at?: string;
   notes?: string;
+  status?: 'active' | 'archived';
   goals?: {
     weight?: number;
     calories?: number;
@@ -39,6 +40,7 @@ export interface PaginationParams {
   page: number;
   limit: number;
   total?: number;
+  perPage?: number;
 }
 
 export interface PatientFilters {
@@ -46,12 +48,6 @@ export interface PatientFilters {
   status?: 'active' | 'archived' | 'all';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-}
-
-export interface MealDistributionItem {
-  id: string;
-  name: string;
-  percent: number;
 }
 
 export interface MealPlan {
@@ -63,6 +59,10 @@ export interface MealPlan {
   protein: number;
   carbs: number;
   fat: number;
+  total_calories?: number;
+  total_protein?: number;
+  total_carbs?: number;
+  total_fats?: number;
   mealDistribution: MealDistributionItem[];
   meals: any[];
   created_at?: string;
@@ -86,6 +86,7 @@ export interface ConsultationData {
   objective?: string;
   activityLevel?: string;
   gender?: string;
+  age?: number;
   tipo?: 'primeira_consulta' | 'retorno';
   results?: {
     bmr: number;
