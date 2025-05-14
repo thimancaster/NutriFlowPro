@@ -1,5 +1,10 @@
 
-// Re-export from the patient directory
+// Import operations before using them
+import { getPatient } from './operations/getPatient';
+import { getPatients, getSortedPatients } from './operations/getPatients';
+import { savePatient, updatePatientStatus, updatePatient } from './operations/savePatient';
+
+// Re-export the imported functions
 export { getPatient } from './operations/getPatient';
 export { getPatients, getSortedPatients } from './operations/getPatients';
 export { savePatient, updatePatientStatus, updatePatient } from './operations/savePatient';
