@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
-interface PatientPaginationProps {
+export interface PatientPaginationProps {
   currentPage: number;
   totalItems: number;
   pageSize: number;

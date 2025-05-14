@@ -3,39 +3,13 @@ import React, { useEffect } from 'react';
 import {
   HashRouter,
   Routes,
-  Route,
-  Navigate,
 } from "react-router-dom";
 import { AuthProvider } from './contexts/auth/AuthContext';
-import { PatientProvider } from './contexts/PatientContext';
-import { ConsultationDataProvider } from './contexts/ConsultationDataContext';
-import { MealPlanProvider } from './contexts/MealPlanContext';
-import { ConsultationProvider } from './contexts/ConsultationContext';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Patients from './pages/Patients';
-import PatientNew from './pages/PatientNew';
-import PatientHistory from './components/PatientHistory'; 
-import Consultation from './pages/Consultation';
-import MealPlanGenerator from './pages/MealPlanGenerator';
-import Subscription from './pages/Subscription';
-import Pricing from './pages/Pricing';
-import Calculator from './pages/Calculator';
-import MealPlans from './pages/MealPlans';
-import Settings from './pages/Settings';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import ProtectedRoute from './components/ProtectedRoute';
-import PatientAnthropometry from './pages/PatientAnthropometry';
-import Index from './pages/Index';
-import AddTestimonial from './pages/AddTestimonial';
-import { initializeTestimonials } from './utils/seedDataUtils';
 import { supabase } from './integrations/supabase/client';
-import Appointments from './pages/Appointments';
+import { publicRoutes, protectedRoutes } from './routes';
+import { logger } from './utils/logger';
 
 // Create a client with retry options
 const queryClient = new QueryClient({
@@ -48,26 +22,18 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  // Only initialize testimonials in development
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Development mode: initializing testimonials if needed');
-      initializeTestimonials();
-    }
-  }, []);
-
   // Handle auth state changes, especially for OAuth providers like Google
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change event:", event);
+      logger.info("Auth state change event:", event);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log("User signed in:", session.user);
+        logger.info("User signed in:", session.user.id);
         
         // Check if we need to create a user profile
         if (session.user.app_metadata.provider === 'google') {
           try {
-            console.log("Checking if user profile exists for Google user...");
+            logger.info("Checking if user profile exists for Google user...");
             const { data: existingUser, error: checkError } = await supabase
               .from('users')
               .select('id')
@@ -76,7 +42,7 @@ function App() {
               
             if (checkError || !existingUser) {
               // Create user profile for Google user
-              console.log("Creating profile for Google user...");
+              logger.info("Creating profile for Google user...");
               const { error: profileError } = await supabase
                 .from('users')
                 .insert([{
@@ -86,15 +52,15 @@ function App() {
                 }]);
                 
               if (profileError) {
-                console.error("Error creating user profile:", profileError);
+                logger.error("Error creating user profile:", profileError);
               } else {
-                console.log("Successfully created profile for Google user");
+                logger.info("Successfully created profile for Google user");
               }
             } else {
-              console.log("User profile already exists for Google user");
+              logger.info("User profile already exists for Google user");
             }
           } catch (error) {
-            console.error("Error handling Google sign-in:", error);
+            logger.error("Error handling Google sign-in:", error);
           }
         }
       }
@@ -108,195 +74,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <HashRouter>
-        <ErrorBoundary>
-          <AuthProvider>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/add-testimonial" element={<AddTestimonial />} />
-              
-              {/* Protected routes - Properly nest context providers */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Dashboard />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/patients" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Patients />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/patients/new" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <PatientNew />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/patients/edit/:id" element={<PatientNew />} />
-              <Route path="/appointments" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Appointments />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/patient-history/:patientId" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <PatientHistory />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/patient-anthropometry/:patientId" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <PatientAnthropometry />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/consultation" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Consultation />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/meal-plan-generator" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <MealPlanGenerator />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscription" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Subscription />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/pricing" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Pricing />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/calculator" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Calculator />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/meal-plans" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <MealPlans />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <PatientProvider>
-                    <ConsultationDataProvider>
-                      <MealPlanProvider>
-                        <ConsultationProvider>
-                          <Settings />
-                        </ConsultationProvider>
-                      </MealPlanProvider>
-                    </ConsultationDataProvider>
-                  </PatientProvider>
-                </ProtectedRoute>
-              } />
-              
-              {/* Redirect any unknown route to the homepage */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-            <Toaster />
-          </AuthProvider>
-        </ErrorBoundary>
+        <AuthProvider>
+          <Routes>
+            {/* Render all routes */}
+            {publicRoutes}
+            {protectedRoutes}
+          </Routes>
+          <Toaster />
+        </AuthProvider>
       </HashRouter>
     </QueryClientProvider>
   );

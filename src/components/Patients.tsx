@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from './Layout';
 import { usePatientList } from '@/hooks/patient/usePatientList';
@@ -25,6 +26,7 @@ const Patients = () => {
     handlePageChange,
     handlePerPageChange,
     handleFilterChange,
+    handleStatusChange,
     refreshPatients
   } = usePatientList();
 
@@ -36,13 +38,6 @@ const Patients = () => {
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedPatient(null);
-  };
-
-  const handleStatusChange = (status: string) => {
-    handleFilterChange({
-      ...filters,
-      status: status === 'all' ? undefined : status
-    });
   };
 
   const handleSearchChange = (search: string) => {
@@ -59,11 +54,11 @@ const Patients = () => {
     }
 
     if (error) {
-      return <PatientErrorState message={error} onRetry={refreshPatients} />;
+      return <PatientErrorState errorMessage={error} onRetry={refreshPatients} />;
     }
 
     if (patients.length === 0) {
-      return <PatientEmptyState hasSearchFilter={!!filters.search || filters.status !== undefined} />;
+      return <PatientEmptyState hasSearchFilter={!!filters.search || filters.status !== 'active'} />;
     }
 
     return (
@@ -76,7 +71,8 @@ const Patients = () => {
         <div className="mt-6">
           <PatientPagination
             currentPage={pagination.page}
-            totalPages={Math.ceil(totalPatients / pagination.perPage)}
+            totalItems={totalPatients}
+            pageSize={pagination.perPage}
             onPageChange={handlePageChange}
           />
         </div>
@@ -96,7 +92,7 @@ const Patients = () => {
           />
           
           <PatientStatusFilter
-            currentStatus={filters.status || 'all'}
+            currentStatus={filters.status || 'active'}
             onStatusChange={handleStatusChange}
           />
         </div>

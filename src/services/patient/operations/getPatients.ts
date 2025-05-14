@@ -1,8 +1,31 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { dbCache } from '@/services/dbCache';
 import { Patient, PaginationParams, PatientFilters } from '@/types';
-import { formatPatientFromDb } from '../utils/patientDataUtils';
+import { logger } from '@/utils/logger';
+
+/**
+ * Format a patient record from database format to application format
+ */
+const formatPatientFromDb = (data: any): Patient => {
+  return {
+    id: data.id,
+    name: data.name || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    secondaryPhone: data.secondary_phone || '',
+    birthDate: data.birth_date ? new Date(data.birth_date) : undefined,
+    sex: data.sex || '',
+    address: data.address || {},
+    objective: data.objective || '',
+    notes: data.notes || '',
+    profile: data.profile || '',
+    cpf: data.cpf || '',
+    archived_at: data.archived_at,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    user_id: data.user_id
+  };
+};
 
 /**
  * Get patients from the database with pagination and filtering
@@ -12,7 +35,13 @@ import { formatPatientFromDb } from '../utils/patientDataUtils';
  */
 export const getPatients = async (
   pagination: PaginationParams = { page: 0, perPage: 10 },
-  filters: PatientFilters = {}
+  filters: PatientFilters = {
+    page: 1,
+    pageSize: 10,
+    status: 'active',
+    sortBy: 'name',
+    sortOrder: 'asc'
+  }
 ): Promise<{ 
   data: Patient[], 
   error: Error | null,
@@ -25,8 +54,14 @@ export const getPatients = async (
   try {
     let query = supabase
       .from('patients')
-      .select('*', { count: 'exact' })
-      .order('name', { ascending: true });
+      .select('*', { count: 'exact' });
+      
+    // Add sorting
+    if (filters.sortBy && filters.sortOrder) {
+      query = query.order(filters.sortBy, { ascending: filters.sortOrder === 'asc' });
+    } else {
+      query = query.order('name', { ascending: true });
+    }
 
     // Add filters if they exist
     if (filters.search) {
@@ -38,6 +73,15 @@ export const getPatients = async (
     } else if (filters.status === 'archived') {
       query = query.not('archived_at', 'is', null);
     }
+    
+    // Date range filters
+    if (filters.startDate) {
+      query = query.gte('created_at', filters.startDate);
+    }
+    
+    if (filters.endDate) {
+      query = query.lte('created_at', filters.endDate);
+    }
 
     // Add range for pagination
     query = query.range(start, end);
@@ -45,7 +89,7 @@ export const getPatients = async (
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('Error fetching patients:', error);
+      logger.error('Error fetching patients:', error);
       return {
         data: [],
         error: new Error(error.message),
@@ -65,7 +109,7 @@ export const getPatients = async (
     };
 
   } catch (error) {
-    console.error('Error in getPatients:', error);
+    logger.error('Error in getPatients:', error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error fetching patients";
     
     return {

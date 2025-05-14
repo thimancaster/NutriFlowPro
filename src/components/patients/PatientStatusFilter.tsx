@@ -1,25 +1,39 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
-interface PatientStatusFilterProps {
-  status: string;
-  onStatusChange: (value: 'active' | 'archived' | 'all') => void;
+export interface PatientStatusFilterProps {
+  currentStatus: 'active' | 'archived' | 'all';
+  onStatusChange: (status: 'active' | 'archived' | 'all') => void;
 }
 
-const PatientStatusFilter = ({ status, onStatusChange }: PatientStatusFilterProps) => {
+const PatientStatusFilter: React.FC<PatientStatusFilterProps> = ({ 
+  currentStatus, 
+  onStatusChange 
+}) => {
   return (
-    <div className="w-[180px]">
-      <Select value={status} onValueChange={(value) => onStatusChange(value as 'active' | 'archived' | 'all')}>
-        <SelectTrigger>
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="active">Ativos</SelectItem>
-          <SelectItem value="archived">Arquivados</SelectItem>
-          <SelectItem value="all">Todos</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex space-x-2">
+      <Button
+        variant={currentStatus === 'active' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => onStatusChange('active')}
+      >
+        Ativos
+      </Button>
+      <Button
+        variant={currentStatus === 'archived' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => onStatusChange('archived')}
+      >
+        Arquivados
+      </Button>
+      <Button
+        variant={currentStatus === 'all' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => onStatusChange('all')}
+      >
+        Todos
+      </Button>
     </div>
   );
 };

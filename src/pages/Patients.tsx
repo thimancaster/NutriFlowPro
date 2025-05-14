@@ -29,11 +29,11 @@ const Patients = () => {
     totalPatients,
     filters,
     isLoading,
-    isError,
     error,
+    isError,
     refetch,
     handlePageChange,
-    handleFiltersChange,
+    handleFilterChange,
     handleStatusChange
   } = usePatientList({
     page: 1,
@@ -51,7 +51,7 @@ const Patients = () => {
         
         <PatientFiltersComponent 
           filters={filters}
-          onFiltersChange={handleFiltersChange}
+          onFiltersChange={handleFilterChange}
           onSearch={refetch}
         />
         
@@ -64,7 +64,7 @@ const Patients = () => {
               <PatientLoadingState />
             ) : isError ? (
               <PatientErrorState 
-                errorMessage={(error as Error).message} 
+                errorMessage={error || "Failed to load patients"} 
                 onRetry={refetch} 
               />
             ) : (

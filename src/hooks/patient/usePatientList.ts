@@ -4,14 +4,24 @@ import { useToast } from '@/hooks/use-toast';
 import { usePatient } from '@/hooks/usePatient';
 import { Patient, PaginationParams, PatientFilters } from '@/types';
 import { getPatients } from '@/services/patient/operations/getPatients';
+import { logger } from '@/utils/logger';
 
-export const usePatientList = (initialPagination: PaginationParams = { page: 0, perPage: 10 }) => {
+export const usePatientList = (initialFilters: PatientFilters = {
+  page: 1,
+  pageSize: 10,
+  status: 'active',
+  sortBy: 'name',
+  sortOrder: 'asc'
+}) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [totalPatients, setTotalPatients] = useState<number>(0);
-  const [pagination, setPagination] = useState<PaginationParams>(initialPagination);
-  const [filters, setFilters] = useState<PatientFilters>({});
+  const [pagination, setPagination] = useState<PaginationParams>({
+    page: initialFilters.page ? initialFilters.page - 1 : 0, // Convert to 0-based for the API
+    perPage: initialFilters.pageSize || 10
+  });
+  const [filters, setFilters] = useState<PatientFilters>(initialFilters);
   const { toast } = useToast();
   const { activePatient, setActivePatient } = usePatient();
 
@@ -40,6 +50,7 @@ export const usePatientList = (initialPagination: PaginationParams = { page: 0, 
         description: errorMessage,
         variant: 'destructive'
       });
+      logger.error('Error fetching patients:', err);
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +62,7 @@ export const usePatientList = (initialPagination: PaginationParams = { page: 0, 
   }, [pagination.page, pagination.perPage, JSON.stringify(filters)]);
 
   const handlePageChange = (newPage: number) => {
-    setPagination({...pagination, page: newPage});
+    setPagination({...pagination, page: newPage - 1}); // Convert to 0-based for the API
   };
 
   const handlePerPageChange = (newPerPage: number) => {
@@ -60,21 +71,35 @@ export const usePatientList = (initialPagination: PaginationParams = { page: 0, 
 
   const handleFilterChange = (newFilters: PatientFilters) => {
     setFilters(newFilters);
-    setPagination({...pagination, page: 0}); // Reset to first page on filter change
+    // Reset to first page on filter change
+    setPagination(prev => ({...prev, page: 0}));
+  };
+  
+  const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
+    handleFilterChange({
+      ...filters,
+      status
+    });
   };
 
   return {
     patients,
     isLoading,
     error,
+    isError: !!error,
     totalPatients,
-    pagination,
+    pagination: {
+      ...pagination,
+      page: pagination.page + 1 // Convert back to 1-based for the UI
+    },
     filters,
     handlePageChange,
     handlePerPageChange,
     handleFilterChange,
+    handleStatusChange,
     refreshPatients: fetchPatients,
     activePatient,
-    setActivePatient
+    setActivePatient,
+    refetch: fetchPatients
   };
 };

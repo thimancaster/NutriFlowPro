@@ -1,61 +1,93 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { getTestimonials } from "./seedTestimonials";
+import { supabase } from '@/integrations/supabase/client';
+import { seedTestimonials as seedTestimonialsData } from './seedTestimonials';
+import { logger } from './logger';
+
+// Flag to track if testimonials have been initialized in the current session
+let testimonialsInitialized = false;
 
 /**
- * Checks if testimonials already exist in the database
- * @returns boolean indicating if testimonials exist
+ * Check if testimonials already exist in the database
  */
-export const checkTestimonialsExist = async (): Promise<boolean> => {
+const checkTestimonialsExist = async (): Promise<boolean> => {
   try {
-    const { data: existingTestimonials, error } = await supabase
+    const { count, error } = await supabase
       .from('testimonials')
-      .select('id')
-      .limit(1);
+      .select('*', { count: 'exact', head: true });
     
     if (error) {
-      console.error('Error checking testimonials:', error);
-      return false;
+      throw error;
     }
     
-    return existingTestimonials && existingTestimonials.length > 0;
-  } catch (err) {
-    console.error('Error in checkTestimonialsExist:', err);
+    return (count || 0) > 0;
+  } catch (error) {
+    logger.error('Error checking testimonials:', error);
     return false;
   }
-};
+}
 
 /**
- * Seeds testimonials only if they don't already exist
- * Should be called only in development or during initial setup
+ * Initialize testimonials in development mode if they don't exist
+ * This function is optimized to:
+ * 1. Only run in development mode
+ * 2. Check if testimonials already exist before trying to create them
+ * 3. Only try to initialize testimonials once per session
  */
 export const initializeTestimonials = async (): Promise<void> => {
-  if (process.env.NODE_ENV === 'production') {
-    // Skip seeding in production
-    console.log('Skipping testimonial seeding in production');
+  // Skip if not in development or already initialized in this session
+  if (process.env.NODE_ENV !== 'development' || testimonialsInitialized) {
     return;
   }
   
   try {
+    // Mark as initialized to prevent multiple attempts in the same session
+    testimonialsInitialized = true;
+    
+    // Check if testimonials already exist
     const testimonialsExist = await checkTestimonialsExist();
     
-    if (!testimonialsExist) {
-      console.log('No testimonials found, seeding the database...');
-      const testimonials = getTestimonials();
-      
-      const { error } = await supabase
-        .from('testimonials')
-        .insert(testimonials);
-      
-      if (error) {
-        console.error('Error seeding testimonials:', error);
-      } else {
-        console.log('Successfully seeded testimonials');
-      }
-    } else {
-      console.log('Testimonials already exist in the database');
+    if (testimonialsExist) {
+      logger.info('Testimonials already exist, skipping initialization');
+      return;
     }
+    
+    // If no testimonials exist, seed them
+    logger.info('No testimonials found, seeding initial data');
+    await seedTestimonialsData();
+    logger.info('Testimonials seeded successfully');
   } catch (error) {
-    console.error('Error in initializeTestimonials:', error);
+    logger.error('Error initializing testimonials:', error);
+  }
+};
+
+/**
+ * Reset testimonials (for development/testing use only)
+ * This will delete all testimonials and re-seed them
+ */
+export const resetTestimonials = async (): Promise<void> => {
+  if (process.env.NODE_ENV !== 'development') {
+    logger.warn('resetTestimonials called in production - operation not allowed');
+    return;
+  }
+  
+  try {
+    // Delete all existing testimonials
+    const { error: deleteError } = await supabase
+      .from('testimonials')
+      .delete()
+      .not('id', 'is', null);
+      
+    if (deleteError) {
+      throw deleteError;
+    }
+    
+    // Reset the initialized flag
+    testimonialsInitialized = false;
+    
+    // Re-seed testimonials
+    await seedTestimonialsData();
+    logger.info('Testimonials reset successfully');
+  } catch (error) {
+    logger.error('Error resetting testimonials:', error);
   }
 };

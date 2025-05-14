@@ -1,43 +1,44 @@
 
 import React from 'react';
+import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { PatientFilters } from '@/types';
 
 export interface PatientEmptyStateProps {
   hasSearchFilter?: boolean;
+  filters?: PatientFilters;
 }
 
-const PatientEmptyState: React.FC<PatientEmptyStateProps> = ({ hasSearchFilter = false }) => {
-  const navigate = useNavigate();
-
+const PatientEmptyState: React.FC<PatientEmptyStateProps> = ({ hasSearchFilter = false, filters }) => {
+  const hasActiveFilters = hasSearchFilter || 
+                          (filters && (filters.search || 
+                                     filters.status !== 'active' || 
+                                     filters.startDate || 
+                                     filters.endDate));
+                                    
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="text-center">
-        <div className="bg-gray-100 rounded-full p-4 mb-4 inline-flex">
-          <PlusCircle className="h-10 w-10 text-gray-400" />
-        </div>
-        
-        <h3 className="text-xl font-medium mb-2">
-          {hasSearchFilter 
-            ? 'Nenhum paciente encontrado'
-            : 'Nenhum paciente cadastrado'}
-        </h3>
-        
-        <p className="text-gray-500 mb-6 max-w-md">
-          {hasSearchFilter
-            ? 'Tente ajustar seus filtros de busca ou cadastre um novo paciente.'
-            : 'Comece adicionando seu primeiro paciente para iniciar o acompanhamento nutricional.'}
-        </p>
-        
-        <Button
-          onClick={() => navigate('/patients/new')}
-          className="flex items-center bg-nutri-green hover:bg-nutri-green-dark"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Adicionar Paciente
-        </Button>
+    <div className="flex flex-col items-center justify-center py-12">
+      <div className="rounded-full bg-gray-100 p-3 mb-4">
+        <Users className="h-8 w-8 text-gray-400" />
       </div>
+      <h3 className="text-lg font-medium mb-2">
+        {hasActiveFilters 
+          ? 'Nenhum paciente encontrado' 
+          : 'Nenhum paciente cadastrado'}
+      </h3>
+      <p className="text-sm text-gray-500 text-center mb-4">
+        {hasActiveFilters 
+          ? 'Tente ajustar seus filtros para encontrar o que procura.'
+          : 'Comece adicionando seu primeiro paciente.'}
+      </p>
+      {!hasActiveFilters && (
+        <Button asChild>
+          <Link to="/patients/new">
+            Adicionar paciente
+          </Link>
+        </Button>
+      )}
     </div>
   );
 };
