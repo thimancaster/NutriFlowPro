@@ -1,3 +1,4 @@
+
 import { User } from "@supabase/supabase-js";
 import { ConsultationData } from "@/types";
 
@@ -7,6 +8,16 @@ export interface ToastProps {
   variant?: "default" | "destructive";
   duration?: number;
   action?: React.ReactNode;
+}
+
+export interface Toast {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  variant?: "default" | "destructive";
+  duration?: number;
+  open: boolean;
 }
 
 export interface ToastApi {

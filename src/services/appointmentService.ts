@@ -1,20 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment } from '@/types';
-import { convertDatesToISOString } from '@/utils/dateUtils';
-
-interface AppointmentInsertPayload {
-  user_id?: string;
-  patient_id?: string;
-  date: string;
-  type: string;
-  start_time?: string;
-  end_time?: string;
-  notes?: string;
-  status?: string;
-  measurements?: any;
-  recommendations?: string;
-}
+import { convertDatesToISOString, prepareForSupabase } from '@/utils/dateUtils';
 
 export const AppointmentService = {
   /**
@@ -54,19 +41,21 @@ export const AppointmentService = {
   async createAppointment(appointmentData: Partial<Appointment>) {
     try {
       // Convert Date objects to ISO strings and ensure required fields
-      const preparedData: AppointmentInsertPayload = {
-        ...convertDatesToISOString(appointmentData),
-        // Ensure required fields
-        date: appointmentData.date 
-          ? (appointmentData.date instanceof Date 
-            ? appointmentData.date.toISOString() 
-            : String(appointmentData.date))
-          : new Date().toISOString(),
-        type: appointmentData.type || 'default'
-      };
+      if (!appointmentData.date && appointmentData.start_time) {
+        // If date is missing but start_time exists, use start_time as date
+        appointmentData.date = appointmentData.start_time instanceof Date 
+          ? appointmentData.start_time.toISOString()
+          : appointmentData.start_time;
+      }
+
+      // Ensure type field
+      if (!appointmentData.type && appointmentData.appointment_type_id) {
+        appointmentData.type = appointmentData.appointment_type_id;
+      } else if (!appointmentData.type) {
+        appointmentData.type = 'default';
+      }
       
-      // Remove the id if it exists (let Supabase generate it)
-      delete (preparedData as any).id;
+      const preparedData = prepareForSupabase(appointmentData, true);
       
       const { data, error } = await supabase
         .from('appointments')
@@ -88,11 +77,17 @@ export const AppointmentService = {
    */
   async updateAppointment(id: string, appointmentData: Partial<Appointment>) {
     try {
-      // Remove id from update data
-      const { id: _, ...dataToUpdate } = appointmentData;
+      // Ensure date field exists
+      if (!appointmentData.date && appointmentData.start_time) {
+        // If date is missing but start_time exists, use start_time as date
+        appointmentData.date = appointmentData.start_time instanceof Date 
+          ? appointmentData.start_time.toISOString()
+          : appointmentData.start_time;
+      }
       
-      // Convert all Date objects to ISO strings
-      const preparedData = convertDatesToISOString(dataToUpdate);
+      // Convert all Date objects to ISO strings and remove id
+      const preparedData = prepareForSupabase({ ...appointmentData }, false);
+      delete preparedData.id; // Remove ID from update data
       
       const { data, error } = await supabase
         .from('appointments')

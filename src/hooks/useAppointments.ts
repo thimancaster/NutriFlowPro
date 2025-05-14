@@ -1,16 +1,26 @@
 
 import { useAppointments as useAppointmentQuery } from './appointments/useAppointmentQuery';
 import { useAppointmentActions } from './appointments/useAppointmentActions';
+import { useAppointmentMutations } from './appointments/useAppointmentMutations';
 
 // Update the hook to accept a patientId parameter
 export const useAppointments = (patientId?: string) => {
+  const query = useAppointmentQuery();
   const {
-    appointments,
+    data: appointments = [],
     isLoading,
     isError,
     error,
-    appointmentsByDate
-  } = useAppointmentQuery();
+    refetch
+  } = query;
+  
+  // Create a structured wrapper for appointments by date for calendar view
+  const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, appointment) => {
+    const dateKey = appointment.date?.split('T')[0] || '';
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(appointment);
+    return acc;
+  }, {});
   
   const {
     selectedAppointment,
@@ -19,18 +29,58 @@ export const useAppointments = (patientId?: string) => {
     handleEditAppointment,
     handleCloseDialog,
     handleSaveAppointment,
-    handleDeleteAppointment,
-    handleCancelAppointment,
-    isSubmitting,
     isCanceling
   } = useAppointmentActions();
+  
+  const {
+    saveAppointment,
+    cancelAppointment,
+    deleteAppointment
+  } = useAppointmentMutations();
 
   // Create aliases for expected method names
-  const createAppointment = handleSaveAppointment;
-  const updateAppointment = handleSaveAppointment;
-  const deleteAppointment = handleDeleteAppointment;
-  const cancelAppointment = handleCancelAppointment;
-  const fetchAppointments = () => {}; // Placeholder, should be implemented if needed
+  const createAppointment = async (appointmentData: any) => {
+    try {
+      const result = await saveAppointment.mutateAsync(appointmentData);
+      return { success: true, data: result };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  };
+  
+  const updateAppointment = async (id: string, appointmentData: any) => {
+    try {
+      const result = await saveAppointment.mutateAsync({...appointmentData, id});
+      return { success: true, data: result };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  };
+  
+  const handleDeleteAppointment = async (id: string) => {
+    try {
+      await deleteAppointment.mutateAsync(id);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  };
+  
+  const handleCancelAppointment = async (id: string) => {
+    try {
+      await cancelAppointment.mutateAsync(id);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  };
+  
+  const fetchAppointments = () => {
+    refetch();
+    return { success: true };
+  };
+  
+  const isSubmitting = saveAppointment.isPending;
 
   return {
     appointments,
@@ -40,8 +90,8 @@ export const useAppointments = (patientId?: string) => {
     fetchAppointments,
     createAppointment,
     updateAppointment,
-    deleteAppointment,
-    cancelAppointment,
+    deleteAppointment: handleDeleteAppointment,
+    cancelAppointment: handleCancelAppointment,
     appointmentsByDate,
     // Original properties from useAppointmentActions
     selectedAppointment,
@@ -50,8 +100,6 @@ export const useAppointments = (patientId?: string) => {
     handleEditAppointment,
     handleCloseDialog,
     handleSaveAppointment,
-    handleDeleteAppointment,
-    handleCancelAppointment,
     isSubmitting,
     isCanceling
   };

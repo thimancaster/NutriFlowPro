@@ -13,7 +13,7 @@ interface MealPlanGeneratorUIProps {
   mealDistribution: Record<string, MealDistributionItem>;
   totalMealPercent: number;
   isSaving: boolean;
-  handleMealPercentChange: (mealKey: string, newValue: number) => void;
+  handleMealPercentChange: (mealKey: string, newValue: number | number[]) => void;
   handleSaveMealPlan: () => Promise<void>;
   handleAddMeal?: () => void;
   handleRemoveMeal?: (mealKey: string) => void;

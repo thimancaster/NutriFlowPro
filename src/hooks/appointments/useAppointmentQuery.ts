@@ -34,10 +34,15 @@ export const usePatientAppointments = (patientId: string) => {
       if (error) throw error;
       
       // Map to return proper patient name
-      return data.map(appointment => ({
-        ...appointment,
-        patientName: appointment.patients?.name
-      })) as unknown as Appointment[];
+      return data.map(appointment => {
+        // Create a properly typed object
+        const result: Partial<Appointment> = {
+          ...appointment,
+          patientName: appointment.patients?.name
+        };
+        
+        return result as Appointment;
+      });
     },
     enabled: !!user && !!patientId
   });
@@ -80,20 +85,26 @@ export const useMonthlyAppointments = (date: Date = new Date()) => {
       
       // Map to return proper patient name and parse dates
       return data.map(appointment => {
-        const result = {
+        // Create a properly typed object
+        const result: Partial<Appointment> = {
           ...appointment,
           patientName: appointment.patients?.name,
         };
 
         // Add start_time and end_time for compatibility (mapped from date)
         if (appointment.date) {
-          const dateObj = parseISO(appointment.date);
-          result.start_time = dateObj;
-          result.end_time = dateObj;
+          try {
+            const dateObj = parseISO(appointment.date);
+            // Add as string to match the API's expectations
+            result.start_time = appointment.date;
+            result.end_time = appointment.date;
+          } catch (e) {
+            console.error("Error parsing date:", e);
+          }
         }
 
-        return result;
-      }) as unknown as Appointment[];
+        return result as Appointment;
+      });
     },
     enabled: !!user
   });
@@ -119,8 +130,7 @@ export const useAppointments = () => {
           notes,
           date,
           created_at,
-          updated_at,
-          appointment_type_id
+          updated_at
         `)
         .eq('user_id', user.id)
         .order('date', { ascending: true });
@@ -128,10 +138,16 @@ export const useAppointments = () => {
       if (error) throw error;
       
       // Map to return proper patient name
-      return data.map(appointment => ({
-        ...appointment,
-        patientName: appointment.patients?.name
-      })) as unknown as Appointment[];
+      return data.map(appointment => {
+        const appointmentData: Partial<Appointment> = {
+          ...appointment,
+          patientName: appointment.patients?.name,
+          // Add appointment_type_id mapped from type for compatibility
+          appointment_type_id: appointment.type
+        };
+        
+        return appointmentData as Appointment;
+      });
     },
     enabled: !!user
   });

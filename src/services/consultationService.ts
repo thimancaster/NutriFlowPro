@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ConsultationData } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { prepareForSupabase } from '@/utils/dateUtils';
 
 export const ConsultationService = {
   /**
@@ -18,26 +18,24 @@ export const ConsultationService = {
         height: consultationData.height,
         age: typeof consultationData.age === 'string' ? parseInt(consultationData.age) : consultationData.age,
         gender: consultationData.gender,
-        objective: consultationData.objective,
-        activityLevel: consultationData.activityLevel,
+        goal: consultationData.objective, // Map objective to goal field
+        activity_level: consultationData.activityLevel,
         tipo: consultationData.tipo || 'primeira_consulta',
-        results: {
-          bmr: consultationData.results?.bmr || 0,
-          get: consultationData.results?.get || 0,
-          adjustment: consultationData.results?.adjustment || 0,
-          vet: consultationData.results?.vet || 0,
-          macros: {
-            carbs: consultationData.results?.macros?.carbs || 0,
-            protein: consultationData.results?.macros?.protein || 0,
-            fat: consultationData.results?.macros?.fat || 0,
-            proteinPerKg: consultationData.results?.macros?.proteinPerKg || 0
-          }
-        }
+        status: 'em_andamento',
+        bmr: consultationData.results?.bmr || 0,
+        tdee: consultationData.results?.vet || 0, // Map vet to tdee
+        protein: consultationData.results?.macros?.protein || 0,
+        carbs: consultationData.results?.macros?.carbs || 0,
+        fats: consultationData.results?.macros?.fat || 0
+        // Other fields will be filled with defaults by Supabase
       };
+      
+      // Prepare for Supabase (handle dates, etc.)
+      const preparedData = prepareForSupabase(formattedData, false);
       
       const { data, error } = await supabase
         .from('calculations')
-        .upsert(formattedData)
+        .upsert(preparedData)
         .select('*')
         .single();
       
@@ -86,6 +84,20 @@ export const ConsultationService = {
       // Format the data to match the expected structure
       const formattedData = {
         ...data,
+        objective: data.goal, // Map goal to objective
+        activityLevel: data.activity_level,
+        results: {
+          bmr: data.bmr,
+          get: data.tdee, // For backward compatibility
+          vet: data.tdee,
+          adjustment: 0, // Default value
+          macros: {
+            carbs: data.carbs,
+            protein: data.protein,
+            fat: data.fats,
+            proteinPerKg: data.weight > 0 ? data.protein / data.weight : 0
+          }
+        },
         patient: {
           id: data.patients?.id,
           name: data.patients?.name,

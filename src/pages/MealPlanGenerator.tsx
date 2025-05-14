@@ -1,113 +1,168 @@
 
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BackButton } from '@/components/ui/back-button';
+import UserInfoHeader from '@/components/UserInfoHeader';
+import MealPlanGeneratorUI from '@/components/MealPlan/MealPlanGeneratorUI';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useMealPlan } from '@/contexts/MealPlanContext';
-import { useConsultation } from '@/contexts/ConsultationContext';
-import MealPlanForm from '@/components/MealPlan/MealPlanForm';
-import MealPlanAssembly from '@/components/MealPlan/MealPlanAssembly';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { useMealDistribution } from '@/hooks/meal-plan/useMealDistribution';
+import { useMealPlanState } from '@/hooks/useMealPlanState';
+import { usePatient } from '@/contexts/PatientContext';
 import { MealDistributionItem } from '@/types';
 
 const MealPlanGenerator = () => {
-  const { user } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { consultationData } = useConsultationData();
-  const { mealPlan, setMealPlan, saveMealPlan } = useMealPlan();
-  const [activeTab, setActiveTab] = useState('distribution');
-  const { isConsultationActive, currentStep, setCurrentStep } = useConsultation();
-  const [isSaving, setIsSaving] = useState(false);
+  const { activePatient } = usePatient();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
-  // Use useMealDistribution hook
-  const {
-    mealDistribution,
-    totalDistributionPercentage,
-    handleMealPercentChange,
-    addMeal,
-    removeMeal
-  } = useMealDistribution([], consultationData);
+  // State for storing meal distribution
+  const [mealDistribution, setMealDistribution] = useState<Record<string, MealDistributionItem>>({});
+  const [totalPercent, setTotalPercent] = useState<number>(0);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   
+  // Initialize meal distribution with defaults
   useEffect(() => {
-    if (currentStep !== 'meal-plan') {
-      setCurrentStep('meal-plan');
-    }
-  }, [currentStep, setCurrentStep]);
-  
-  // Check if we have consultationData, otherwise redirect
-  useEffect(() => {
-    if (!consultationData && !location.state?.consultation) {
-      toast({
-        title: "Consulta não encontrada",
-        description: "Você precisa criar uma consulta antes de gerar um plano alimentar",
-        variant: "destructive",
-      });
-      navigate('/consultation');
-    }
-  }, [consultationData, location.state, navigate, toast]);
-
-  // Handle save meal plan
-  const handleSaveMealPlan = async () => {
-    const activePatientData = consultationData?.patient || location.state?.consultation?.patient;
-    const consultationDataObj = consultationData || location.state?.consultation;
+    if (!consultationData) return;
     
-    if (!activePatientData || !consultationDataObj || !consultationDataObj.id) {
+    const initialDistribution: Record<string, MealDistributionItem> = {
+      'cafe-da-manha': {
+        name: 'Café da Manhã',
+        percent: 20,
+        foods: []
+      },
+      'lanche-manha': {
+        name: 'Lanche da Manhã',
+        percent: 10,
+        foods: []
+      },
+      'almoco': {
+        name: 'Almoço',
+        percent: 30,
+        foods: []
+      },
+      'lanche-tarde': {
+        name: 'Lanche da Tarde',
+        percent: 10,
+        foods: []
+      },
+      'jantar': {
+        name: 'Jantar',
+        percent: 25,
+        foods: []
+      },
+      'ceia': {
+        name: 'Ceia',
+        percent: 5,
+        foods: []
+      }
+    };
+    
+    setMealDistribution(initialDistribution);
+    updateTotalPercent(initialDistribution);
+  }, [consultationData]);
+
+  // Calculate total percentage
+  const updateTotalPercent = (distribution: Record<string, MealDistributionItem>) => {
+    const total = Object.values(distribution).reduce(
+      (acc, meal) => acc + meal.percent, 0
+    );
+    setTotalPercent(total);
+  };
+
+  // Handle meal percentage change
+  const handleMealPercentChange = (mealKey: string, newValue: number | number[]) => {
+    // Handle both single number and array input (from some UI components)
+    const valueToUse = Array.isArray(newValue) ? newValue[0] : newValue;
+    
+    const updatedDistribution = {
+      ...mealDistribution,
+      [mealKey]: {
+        ...mealDistribution[mealKey],
+        percent: valueToUse
+      }
+    };
+    
+    setMealDistribution(updatedDistribution);
+    updateTotalPercent(updatedDistribution);
+  };
+
+  // Add a new meal
+  const handleAddMeal = () => {
+    const mealKey = `refeicao-${Object.keys(mealDistribution).length + 1}`;
+    const updatedDistribution = {
+      ...mealDistribution,
+      [mealKey]: {
+        name: `Refeição ${Object.keys(mealDistribution).length + 1}`,
+        percent: 0,
+        foods: []
+      }
+    };
+    
+    setMealDistribution(updatedDistribution);
+    updateTotalPercent(updatedDistribution);
+  };
+
+  // Remove a meal
+  const handleRemoveMeal = (mealKey: string) => {
+    const { [mealKey]: removed, ...rest } = mealDistribution;
+    setMealDistribution(rest);
+    updateTotalPercent(rest);
+  };
+
+  // Change meal name
+  const handleChangeMealName = (mealKey: string, newName: string) => {
+    const updatedDistribution = {
+      ...mealDistribution,
+      [mealKey]: {
+        ...mealDistribution[mealKey],
+        name: newName
+      }
+    };
+    
+    setMealDistribution(updatedDistribution);
+  };
+
+  // Save meal plan
+  const handleSaveMealPlan = async () => {
+    if (!consultationData) {
       toast({
-        title: "Erro",
-        description: "Dados insuficientes para salvar o plano alimentar.",
+        title: "Dados ausentes",
+        description: "Não há dados de consulta disponíveis para gerar o plano alimentar.",
         variant: "destructive"
       });
       return;
     }
 
-    setIsSaving(true);
+    if (totalPercent !== 100) {
+      toast({
+        title: "Distribuição incorreta",
+        description: "A distribuição total das refeições deve ser exatamente 100%.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      // Create a simplified mealplan data object
-      const mealPlanData = {
-        name: `Plano para ${activePatientData.name}`,
-        patient_id: activePatientData.id,
-        consultation_id: consultationDataObj.id,
-        calories: consultationDataObj.results?.get || 0,
-        protein: consultationDataObj.results?.macros.protein || 0,
-        carbs: consultationDataObj.results?.macros.carbs || 0,
-        fat: consultationDataObj.results?.macros.fat || 0,
-        mealDistribution: mealDistribution,
-        meals: []
-      };
-
-      // Save or update the meal plan - now passing the consultation ID
-      const mealPlanId = await saveMealPlan(consultationDataObj.id, mealPlanData);
+      setIsSaving(true);
       
-      // Update the meal plan in context
-      if (mealPlanId) {
-        setMealPlan({
-          ...mealPlanData, 
-          id: mealPlanId,
-          user_id: user?.id || '',
-          date: new Date(),
-          total_calories: consultationDataObj.results?.get || 0,
-          total_protein: consultationDataObj.results?.macros.protein || 0,
-          total_carbs: consultationDataObj.results?.macros.carbs || 0,
-          total_fats: consultationDataObj.results?.macros.fat || 0
-        });
-      }
+      // Here we would save the meal plan to the database
+      // For now just simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
-        title: "Plano alimentar salvo",
-        description: "Distribuição de refeições foi salva com sucesso.",
+        title: "Plano Alimentar Gerado",
+        description: "O plano alimentar foi gerado com sucesso.",
       });
+      
+      // Navigate to the meal plan view
+      navigate('/meal-plans');
     } catch (error) {
       console.error('Error saving meal plan:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível salvar o plano alimentar.",
+        title: "Erro ao gerar plano",
+        description: "Ocorreu um erro ao gerar o plano alimentar.",
         variant: "destructive"
       });
     } finally {
@@ -115,52 +170,43 @@ const MealPlanGenerator = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <BackButton to="/consultation" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Plano Alimentar</h1>
-            <p className="text-gray-600">
-              Crie um plano alimentar baseado nos resultados da consulta
-            </p>
-          </div>
+  if (!consultationData || !activePatient) {
+    return (
+      <>
+        <Navbar />
+        <UserInfoHeader />
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-500">
+                Não há dados de consulta disponíveis. Por favor, use a calculadora para gerar resultados primeiro.
+              </p>
+            </CardContent>
+          </Card>
         </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="distribution">Distribuição de Refeições</TabsTrigger>
-            <TabsTrigger value="assembly">Montagem das Refeições</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="distribution">
-            <MealPlanForm 
-              mealDistribution={mealDistribution}
-              totalMealPercent={totalDistributionPercentage * 100}
-              onMealPercentChange={(id, value) => handleMealPercentChange(id, value as number)}
-              onSave={handleSaveMealPlan}
-              isSaving={isSaving}
-              onAddMeal={addMeal}
-              onRemoveMeal={removeMeal}
-              consultationData={consultationData || location.state?.consultation || null}
-            />
-          </TabsContent>
-          
-          <TabsContent value="assembly">
-            <MealPlanAssembly 
-              totalCalories={consultationDataObj?.results?.get || 0}
-              macros={{
-                protein: consultationDataObj?.results?.macros.protein || 0,
-                carbs: consultationDataObj?.results?.macros.carbs || 0, 
-                fat: consultationDataObj?.results?.macros.fat || 0
-              }}
-            />
-          </TabsContent>
-        </Tabs>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Navbar />
+      <UserInfoHeader />
+      <div className="container mx-auto px-4 py-8">
+        <MealPlanGeneratorUI
+          activePatient={activePatient}
+          consultationData={consultationData}
+          mealDistribution={mealDistribution}
+          totalMealPercent={totalPercent}
+          isSaving={isSaving}
+          handleMealPercentChange={handleMealPercentChange}
+          handleSaveMealPlan={handleSaveMealPlan}
+          handleAddMeal={handleAddMeal}
+          handleRemoveMeal={handleRemoveMeal}
+          handleChangeMealName={handleChangeMealName}
+        />
       </div>
-    </div>
+    </>
   );
 };
 

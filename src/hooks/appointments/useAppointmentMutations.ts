@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, addMinutes } from 'date-fns';
 import { AppointmentType, Appointment } from '@/types';
-import { prepareForSupabase } from '@/utils/dateUtils';
+import { convertDatesToISOString, prepareForSupabase } from '@/utils/dateUtils';
 
 export const useAppointmentMutations = () => {
   const { user } = useAuth();
@@ -14,6 +14,18 @@ export const useAppointmentMutations = () => {
   const saveAppointment = useMutation({
     mutationFn: async (appointment: Partial<Appointment>) => {
       if (!user) throw new Error('User not authenticated');
+      
+      // Ensure we have a type field for Supabase
+      if (!appointment.type && appointment.appointment_type_id) {
+        appointment.type = appointment.appointment_type_id;
+      }
+      
+      // Ensure we have a date field for Supabase
+      if (!appointment.date && appointment.start_time) {
+        appointment.date = typeof appointment.start_time === 'string' 
+          ? appointment.start_time 
+          : appointment.start_time.toISOString();
+      }
       
       // Calculate end_time if it doesn't exist and we have appointment_type_id and start_time
       if (appointment.appointment_type_id && appointment.start_time && !appointment.end_time) {
@@ -36,7 +48,7 @@ export const useAppointmentMutations = () => {
       if (appointment.id) {
         // Update existing appointment
         // Prepare data for Supabase by converting dates and removing ID
-        const preparedData = prepareForSupabase(appointment, true);
+        const preparedData = prepareForSupabase({ ...appointment }, false);
         
         const { data, error } = await supabase
           .from('appointments')
@@ -49,17 +61,16 @@ export const useAppointmentMutations = () => {
         return data[0];
       } else {
         // Create new appointment
-        // Prepare appointment data for Supabase
-        const appointmentData = {
-          ...appointment,
-          user_id: user.id,
-          // Map properties required by the Supabase table schema
-          date: appointment.start_time, // Use start_time as the date for required field
-          type: appointment.appointment_type_id || 'default' // Required field in Supabase schema
-        };
+        // Ensure required fields are present
+        if (!appointment.date) {
+          throw new Error('Date is required for appointment creation');
+        }
+        if (!appointment.type) {
+          throw new Error('Type is required for appointment creation');
+        }
         
-        // Convert dates and remove ID if present
-        const preparedData = prepareForSupabase(appointmentData, true);
+        // Prepare appointment data for Supabase
+        const preparedData = prepareForSupabase({ ...appointment }, true);
         
         const { data, error } = await supabase
           .from('appointments')

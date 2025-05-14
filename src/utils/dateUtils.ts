@@ -63,3 +63,21 @@ export function formatDateForSupabase(date: Date | string | null | undefined): s
   
   return date.toISOString();
 }
+
+/**
+ * Prepares data for Supabase by converting dates to ISO strings and optionally removing ID
+ * @param data Object with data to prepare
+ * @param removeId Whether to remove the id property (useful for inserts)
+ */
+export function prepareForSupabase<T extends Record<string, any>>(data: T, removeId: boolean = false): Omit<T, 'id'> | T {
+  // First convert all dates to ISO strings
+  const processed = convertDatesToISOString(data);
+  
+  // Then remove ID if requested (typically for insert operations)
+  if (removeId && 'id' in processed) {
+    const { id, ...rest } = processed;
+    return rest as Omit<T, 'id'>;
+  }
+  
+  return processed;
+}

@@ -129,11 +129,9 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id" | "open">;
-
-function toast(props: Toast) {
+function toast(props: ToastProps) {
   const id = Math.random().toString(36).slice(2, 9);
-  const update = (props: Toast) => {
+  const update = (props: ToastProps) => {
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
@@ -182,4 +180,9 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+// Create a typed version of the toast function that matches our ToastApi interface
+const typedToast = (props: ToastProps) => {
+  return toast(props);
+};
+
+export { useToast, toast, typedToast };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import CalculatorInputs from './CalculatorInputs';
 import MacroDistributionInputs from './MacroDistributionInputs';
@@ -9,15 +10,22 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, User } from 'lucide-react';
 import useCalculatorState from './useCalculatorState';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast, typedToast } from '@/hooks/use-toast';
 import { usePatient } from '@/contexts/PatientContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
+import { ToastProps } from './types';
 
 const CalculatorTool = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { activePatient } = usePatient();
   const { setConsultationData } = useConsultationData();
+  
+  // Create a wrapper for toast that matches the expected type
+  const toastWrapper = {
+    toast: (props: ToastProps) => toast(props),
+    dismiss: (id?: string) => {}
+  };
   
   // Combine useCalculatorState with local state management
   const {
@@ -44,7 +52,7 @@ const CalculatorTool = () => {
     handleGenerateMealPlan,
     isSavingPatient
   } = useCalculatorState({ 
-    toast: { toast, dismiss: (id?: string) => {} }, 
+    toast: toastWrapper, 
     user, 
     setConsultationData, 
     activePatient 
