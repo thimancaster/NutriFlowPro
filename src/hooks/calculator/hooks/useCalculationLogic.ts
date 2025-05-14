@@ -1,8 +1,5 @@
-
 import { useState } from 'react';
 import { CalculatorState } from '@/components/calculator/types';
-import { calculateMacrosByObjective } from '@/components/calculator/utils/calculations';
-import { validateInputsForCalculation } from '@/components/calculator/utils/validation';
 import { useToast } from '@/hooks/use-toast';
 
 // Type for calculation results
@@ -56,6 +53,82 @@ export const useCalculationLogic = (calculatorState: CalculatorState) => {
     return bmr * factor;
   };
 
+  // Calculate macros based on objective
+  const calculateMacrosByObjective = (
+    objective: string,
+    tee: number,
+    weight: number,
+    lowCarbOption: boolean = false,
+    gender: string = 'female'
+  ): { carbs: number; protein: number; fat: number } => {
+    // Default macro distribution (carbs/protein/fat percentages)
+    let carbsPercent = 0.50;
+    let proteinPercent = 0.25;
+    let fatPercent = 0.25;
+    
+    // Adjust based on objective
+    switch (objective) {
+      case 'emagrecimento':
+        carbsPercent = lowCarbOption ? 0.25 : 0.40;
+        proteinPercent = 0.35;
+        fatPercent = lowCarbOption ? 0.40 : 0.25;
+        // Apply a caloric deficit
+        tee = tee * 0.85;
+        break;
+      case 'hipertrofia':
+        carbsPercent = 0.50;
+        proteinPercent = 0.30;
+        fatPercent = 0.20;
+        // Apply a caloric surplus
+        tee = tee * 1.10;
+        break;
+      case 'manutenção':
+      default:
+        // Keep default distribution
+        break;
+    }
+    
+    // Calculate grams of each macronutrient
+    const proteinGrams = Math.round((tee * proteinPercent) / 4); // 4 calories per gram
+    const carbsGrams = Math.round((tee * carbsPercent) / 4); // 4 calories per gram
+    const fatGrams = Math.round((tee * fatPercent) / 9); // 9 calories per gram
+    
+    return {
+      carbs: carbsGrams,
+      protein: proteinGrams,
+      fat: fatGrams
+    };
+  };
+
+  // Validate inputs for calculation
+  const validateInputsForCalculation = (state: CalculatorState): string | null => {
+    if (!state.weight || !state.height || !state.age) {
+      return "Preencha todos os campos obrigatórios: peso, altura e idade.";
+    }
+    
+    const weight = parseFloat(state.weight);
+    const height = parseFloat(state.height);
+    const age = parseFloat(state.age);
+    
+    if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+      return "Os valores numéricos são inválidos.";
+    }
+    
+    if (weight <= 0 || weight > 300) {
+      return "Peso deve estar entre 1 e 300 kg.";
+    }
+    
+    if (height <= 0 || height > 250) {
+      return "Altura deve estar entre 1 e 250 cm.";
+    }
+    
+    if (age <= 0 || age > 120) {
+      return "Idade deve estar entre 1 e 120 anos.";
+    }
+    
+    return null;
+  };
+
   // Perform all calculations
   const performCalculations = (): CalculationResults => {
     // Validate inputs first
@@ -81,7 +154,7 @@ export const useCalculationLogic = (calculatorState: CalculatorState) => {
         calculatorState.objective,
         tee,
         Number(calculatorState.weight),
-        calculatorState.useLowCarb || false,
+        calculatorState.lowCarbOption || false,
         calculatorState.gender
       );
       

@@ -76,8 +76,20 @@ export const createAppointments = async (appointments: Partial<Appointment>[]) =
       throw new Error('No appointments provided');
     }
     
+    // Ensure each appointment has the required fields
+    appointments.forEach(appointment => {
+      if (!appointment.date) {
+        throw new Error('Date is required for all appointments');
+      }
+      if (!appointment.type) {
+        throw new Error('Type is required for all appointments');
+      }
+    });
+    
     // Prepare each appointment for database insertion
-    const preparedAppointments = appointments.map(appointment => prepareForSupabase(appointment, true));
+    const preparedAppointments = appointments.map(appointment => 
+      prepareForSupabase(appointment, true)
+    );
     
     const { data, error } = await supabase
       .from('appointments')

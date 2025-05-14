@@ -48,6 +48,15 @@ export const useAppointmentMutations = () => {
       // Set the user_id for the appointment
       appointmentData.user_id = user.id;
       
+      // Prepare the required fields
+      if (!appointmentData.date) {
+        throw new Error('Date is required for appointment');
+      }
+      
+      if (!appointmentData.type) {
+        throw new Error('Type is required for appointment');
+      }
+      
       if (appointment.id) {
         // Prepare data for update by removing ID
         const preparedData = prepareForSupabase({ ...appointmentData }, false);
@@ -62,20 +71,12 @@ export const useAppointmentMutations = () => {
         if (error) throw error;
         return data[0];
       } else {
-        // Ensure required fields are present
-        if (!appointmentData.date) {
-          throw new Error('Date is required for appointment creation');
-        }
-        if (!appointmentData.type) {
-          throw new Error('Type is required for appointment creation');
-        }
-        
         // Prepare appointment data for Supabase
         const preparedData = prepareForSupabase({ ...appointmentData }, true);
         
         const { data, error } = await supabase
           .from('appointments')
-          .insert(preparedData)
+          .insert([preparedData])
           .select();
           
         if (error) throw error;

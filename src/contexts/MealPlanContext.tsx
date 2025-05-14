@@ -68,7 +68,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const { data, error } = await supabase
         .from('meal_plans')
-        .insert(preparedData)
+        .insert([preparedData])
         .select();
 
       if (error) throw error;
@@ -153,7 +153,13 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (error) throw error;
 
-      return { success: true, data: data as MealPlan[] };
+      // Convert dates from string to Date objects
+      const mealPlansWithDates = data.map(plan => ({
+        ...plan,
+        date: new Date(plan.date)
+      })) as unknown as MealPlan[];
+
+      return { success: true, data: mealPlansWithDates };
     } catch (error: any) {
       console.error("Error getting meal plans:", error);
       return { success: false, error: error.message };
@@ -176,7 +182,13 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (error) throw error;
 
-      return { success: true, data: data as MealPlan };
+      // Convert date from string to Date object
+      const mealPlanWithDate = {
+        ...data,
+        date: new Date(data.date)
+      } as unknown as MealPlan;
+
+      return { success: true, data: mealPlanWithDate };
     } catch (error: any) {
       console.error("Error getting meal plan:", error);
       return { success: false, error: error.message };

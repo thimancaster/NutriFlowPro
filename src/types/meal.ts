@@ -1,63 +1,54 @@
 
+// Meal and MealPlan related type definitions
+
 export interface MealItem {
+  id?: string;
   name: string;
   portion: string;
   calories: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  category?: string;
   selected?: boolean;
 }
 
 export interface Meal {
+  id?: string;
   name: string;
-  time: string;
+  time?: string;
   calories: number;
-  proteinPercent: number;
-  carbsPercent: number;
-  fatPercent: number;
   protein: number;
   carbs: number;
   fat: number;
   foods: MealItem[];
+  proteinPercent?: number;
+  carbsPercent?: number;
+  fatPercent?: number;
 }
 
 export interface MealDistributionItem {
-  id: string; // Added this property that was being used but not defined
-  name: string;
-  order?: number;
-  description?: string;
-  protein: number;
-  carbs: number;
-  fat: number;
-  calories: number;
-  percent: number;
-  percentage?: number;  // For backward compatibility
-  suggestions?: string[];
-  foods?: MealFood[];
-}
-
-export interface MealFood {
   id: string;
   name: string;
-  portion: string;
-  calories: number;
+  percent: number;
+  foods: any[];
   protein: number;
   carbs: number;
   fat: number;
+  calories: number;
 }
 
 export interface MealPlan {
   id: string;
-  user_id: string;
-  patient_id: string;
+  user_id?: string;
+  patient_id?: string;
   date: Date;
   meals: Meal[];
-  mealDistribution?: MealDistributionItem[];
+  mealDistribution?: Record<string, any>;
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at?: string;
+  updated_at?: string;
 }

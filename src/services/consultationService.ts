@@ -9,6 +9,13 @@ export const ConsultationService = {
    */
   async saveConsultation(consultationData: Partial<ConsultationData>) {
     try {
+      // Ensure required fields are present
+      if (!consultationData.weight || !consultationData.height || 
+          !consultationData.gender || !consultationData.activity_level || 
+          !consultationData.objective) {
+        throw new Error('Missing required consultation fields');
+      }
+      
       // Format the data to match the database schema
       const formattedData = {
         id: consultationData.id || uuidv4(),
@@ -35,7 +42,7 @@ export const ConsultationService = {
       
       const { data, error } = await supabase
         .from('calculations')
-        .upsert(preparedData)
+        .upsert([preparedData])
         .select('*')
         .single();
       
@@ -57,58 +64,54 @@ export const ConsultationService = {
   },
   
   /**
-   * Get consultation by ID
+   * Auto-save a consultation in progress
    */
-  async getConsultation(id: string) {
+  async autoSaveConsultation(consultationId: string, updates: Record<string, any>) {
     try {
+      if (!consultationId) {
+        throw new Error('Consultation ID is required for auto-save');
+      }
+      
+      // Format the data for update
+      const formattedData = {
+        ...updates,
+        last_auto_save: new Date().toISOString()
+      };
+      
+      // Prepare for Supabase
+      const preparedData = prepareForSupabase(formattedData, false);
+      
       const { data, error } = await supabase
         .from('calculations')
-        .select('*, patients(id, name, gender, birth_date)')
-        .eq('id', id)
-        .single();
+        .update([preparedData])
+        .eq('id', consultationId)
+        .select();
       
       if (error) throw error;
       
-      // Calculate age based on birth date if available
-      let age = data.age;
-      if (data.patients?.birth_date) {
-        const birthDate = new Date(data.patients.birth_date);
-        const today = new Date();
-        age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
-      }
+      return true;
+    } catch (error) {
+      console.error('Error auto-saving consultation:', error);
+      return false;
+    }
+  },
+  
+  /**
+   * Update consultation status
+   */
+  async updateConsultationStatus(consultationId: string, status: 'em_andamento' | 'completo') {
+    try {
+      const { data, error } = await supabase
+        .from('calculations')
+        .update([{ status }])
+        .eq('id', consultationId)
+        .select();
       
-      // Format the data to match the expected structure
-      const formattedData = {
-        ...data,
-        objective: data.goal, // Map goal to objective
-        activityLevel: data.activity_level,
-        results: {
-          bmr: data.bmr,
-          get: data.tdee, // For backward compatibility
-          vet: data.tdee,
-          adjustment: 0, // Default value
-          macros: {
-            carbs: data.carbs,
-            protein: data.protein,
-            fat: data.fats,
-            proteinPerKg: data.weight > 0 ? data.protein / data.weight : 0
-          }
-        },
-        patient: {
-          id: data.patients?.id,
-          name: data.patients?.name,
-          gender: data.patients?.gender,
-          age: age
-        }
-      };
+      if (error) throw error;
       
-      return { success: true, data: formattedData };
+      return { success: true, data };
     } catch (error: any) {
-      console.error('Error fetching consultation:', error);
+      console.error('Error updating consultation status:', error);
       return { success: false, error: error.message };
     }
   },

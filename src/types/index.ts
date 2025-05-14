@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   aud: string;
@@ -86,6 +87,15 @@ export interface ConsultationData {
     };
   };
   [key: string]: any;
+}
+
+// Define Macros interface
+export interface Macros {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  proteinPerKg?: number;
 }
 
 // Re-export from other type files
