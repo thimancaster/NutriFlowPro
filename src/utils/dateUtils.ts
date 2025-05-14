@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 /**
@@ -64,4 +63,12 @@ export const convertStringsToDates = (obj: Record<string, any>): Record<string, 
   });
   
   return result;
+};
+
+/**
+ * Helper function to convert dates in an object to ISO strings
+ * @deprecated Use prepareForSupabase instead
+ */
+export const convertDatesToISOString = (obj: Record<string, any>): Record<string, any> => {
+  return prepareForSupabase(obj);
 };

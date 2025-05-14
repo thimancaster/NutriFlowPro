@@ -35,7 +35,11 @@ const PatientListActions = ({ patient, onViewDetail, onStatusChange }: PatientLi
     
     try {
       const newStatus = patient.status === 'active' ? 'archived' : 'active';
-      const result = await PatientService.updatePatientStatus(patient.id, user.id, newStatus);
+      const result = await PatientService.updatePatientStatus(
+        patient.id, 
+        user.id,
+        newStatus
+      );
 
       if (result.success) {
         toast({

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -82,36 +83,65 @@ const Consultation = () => {
       return;
     }
     
-    // Create complete consultation data object
-    const fullConsultationData: ConsultationData = {
-      id: consultationId || uuidv4(),
-      user_id: supabase.auth.getUser()?.data?.user?.id || '',
-      patient_id: patientId,
-      patient: {
-        id: patientId,
-        name: patientData?.name || '',
-        gender: formData.sex === 'M' ? 'M' : 'F', 
-        age: formData.age ? parseInt(formData.age) : 0
-      },
-      weight: parseFloat(formData.weight),
-      height: parseFloat(formData.height),
-      objective: formData.objective,
-      activityLevel: formData.activityLevel,
-      gender: formData.sex === 'M' ? 'male' : 'female',
-      created_at: new Date().toISOString(),
-      tipo: formData.consultationType || 'primeira_consulta',
-      results: results
-    };
-    
-    // Save consultation data to context
-    setConsultationData(fullConsultationData);
-    
-    toast({
-      title: "Consulta salva com sucesso",
-      description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
-    });
-    
-    navigate('/meal-plan-generator');
+    // Get the current user's ID
+    let userId = '';
+    try {
+      // Use getSession instead of getUser to get current session
+      const session = supabase.auth.getSession();
+      // We'll handle the promise properly
+      session.then(response => {
+        userId = response?.data?.session?.user?.id || '';
+        
+        // Create complete consultation data object
+        const fullConsultationData: ConsultationData = {
+          id: consultationId || uuidv4(),
+          user_id: userId,
+          patient_id: patientId,
+          patient: {
+            id: patientId,
+            name: patientData?.name || '',
+            gender: formData.sex === 'M' ? 'M' : 'F', 
+            age: formData.age ? parseInt(formData.age) : 0
+          },
+          weight: parseFloat(formData.weight),
+          height: parseFloat(formData.height),
+          objective: formData.objective,
+          activityLevel: formData.activityLevel,
+          gender: formData.sex === 'M' ? 'male' : 'female',
+          created_at: new Date().toISOString(),
+          tipo: formData.consultationType || 'primeira_consulta',
+          results: {
+            bmr: results.tmb,
+            get: results.get,
+            adjustment: 0,
+            vet: results.get,
+            macros: {
+              carbs: results.macros.carbs,
+              protein: results.macros.protein,
+              fat: results.macros.fat,
+              proteinPerKg: 0
+            }
+          }
+        };
+        
+        // Save consultation data to context
+        setConsultationData(fullConsultationData);
+        
+        toast({
+          title: "Consulta salva com sucesso",
+          description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
+        });
+        
+        navigate('/meal-plan-generator');
+      });
+    } catch (error) {
+      console.error("Error getting user:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível obter o ID do usuário atual",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleNext = () => {

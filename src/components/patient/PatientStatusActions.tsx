@@ -15,6 +15,7 @@ import { Archive, ArchiveRestore } from 'lucide-react';
 import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface PatientStatusActionsProps {
   patient: Patient;
@@ -23,6 +24,7 @@ interface PatientStatusActionsProps {
 
 const PatientStatusActions: React.FC<PatientStatusActionsProps> = ({ patient, onStatusChange }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   
@@ -34,7 +36,11 @@ const PatientStatusActions: React.FC<PatientStatusActionsProps> = ({ patient, on
     
     try {
       const newStatus = isArchived ? 'active' : 'archived';
-      const result = await PatientService.updatePatientStatus(patient.id, newStatus);
+      const result = await PatientService.updatePatientStatus(
+        patient.id, 
+        user?.id || '', 
+        newStatus
+      );
       
       if (!result.success) {
         throw new Error(result.error || `Falha ao ${isArchived ? 'reativar' : 'arquivar'} paciente`);

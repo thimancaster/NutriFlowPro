@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, addMinutes } from 'date-fns';
 import { AppointmentType, Appointment } from '@/types';
-import { convertDatesToISOString, prepareForSupabase } from '@/utils/dateUtils';
+import { prepareForSupabase } from '@/utils/dateUtils';
 
 export const useAppointmentMutations = () => {
   const { user } = useAuth();

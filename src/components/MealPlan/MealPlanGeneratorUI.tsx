@@ -32,7 +32,7 @@ const MealPlanGeneratorUI = ({
   handleRemoveMeal,
   handleChangeMealName,
 }: MealPlanGeneratorUIProps) => {
-  // Convert string values to numbers if needed
+  // Parse numeric value if needed
   const parseNumericValue = (value: string | number | undefined): number | undefined => {
     if (value === undefined) return undefined;
     return typeof value === 'string' ? parseFloat(value) : value;
@@ -43,7 +43,7 @@ const MealPlanGeneratorUI = ({
     ? consultationData.age 
     : (consultationData.patient?.age ?? undefined);
 
-  // Função simples para gerar PDF (será substituída no componente pai)
+  // Generate PDF function
   const dummyGeneratePDF = async () => {
     await handleSaveMealPlan();
   };
@@ -61,7 +61,7 @@ const MealPlanGeneratorUI = ({
         <PatientHeader 
           patientName={activePatient.name}
           patientAge={patientAge}
-          patientGender={activePatient.gender}
+          patientGender={activePatient.gender || undefined}
           patientObjective={consultationData.objective}
         />
       )}

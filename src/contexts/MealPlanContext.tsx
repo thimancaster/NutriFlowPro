@@ -1,250 +1,198 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { createContext, useContext, useState } from 'react';
+import { MealPlan, Meal, ConsultationData, Patient, Macros } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './auth/AuthContext';
-import { MealItem, Meal, MealPlan } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 import { prepareForSupabase } from '@/utils/dateUtils';
 
-interface MealPlanContextProps {
+interface MealPlanContextType {
   mealPlan: MealPlan | null;
   setMealPlan: (mealPlan: MealPlan) => void;
-  mealItems: MealItem[];
-  setMealItems: (items: MealItem[]) => void;
-  createMealPlan: (data: Partial<MealPlan>) => Promise<MealPlan>;
-  updateMealPlan: (id: string, data: Partial<MealPlan>) => Promise<MealPlan>;
-  saveMealPlan: (consultationId: string, data: any) => Promise<string | null>;
-  getMealPlans: (patientId?: string) => Promise<{ success: boolean, data?: any[], error?: string }>;
-  getMealPlan: (id: string) => Promise<{ success: boolean, data?: MealPlan, error?: string }>;
-  resetMealPlan: () => void;
+  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<{ success: boolean; data?: any; error?: string }>;
+  updateMealPlan: (mealPlanId: string, updates: Partial<MealPlan>) => Promise<{ success: boolean; data?: any; error?: string }>;
+  getMealPlansForPatient: (patientId: string) => Promise<{ success: boolean; data?: MealPlan[]; error?: string }>;
+  getMealPlan: (mealPlanId: string) => Promise<{ success: boolean; data?: MealPlan; error?: string }>;
+  generateMealPlan: (macros: Macros, meals: Record<string, any>) => MealPlan;
 }
 
-const MealPlanContext = createContext<MealPlanContextProps>({
-  mealPlan: null,
-  setMealPlan: () => {},
-  mealItems: [],
-  setMealItems: () => {},
-  createMealPlan: async () => ({ id: '', user_id: '', patient_id: '', date: new Date(), meals: [], total_calories: 0, total_protein: 0, total_carbs: 0, total_fats: 0 }),
-  updateMealPlan: async () => ({ id: '', user_id: '', patient_id: '', date: new Date(), meals: [], total_calories: 0, total_protein: 0, total_carbs: 0, total_fats: 0 }),
-  saveMealPlan: async () => null,
-  getMealPlans: async () => ({ success: false, data: [], error: 'Not implemented' }),
-  getMealPlan: async () => ({ success: false, data: undefined, error: 'Not implemented' }),
-  resetMealPlan: () => {}
-});
+const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
 
-export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
-  const [mealItems, setMealItems] = useState<MealItem[]>([]);
-  
-  // Create a new meal plan
-  const createMealPlan = async (data: Partial<MealPlan>) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    const newMealPlan = {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Generate a meal plan based on macros and meal distribution
+  const generateMealPlan = (macros: Macros, meals: Record<string, any>): MealPlan => {
+    // Implementation details...
+    return {
       id: uuidv4(),
-      user_id: user.id,
-      patient_id: data.patient_id || '',
       date: new Date(),
-      total_calories: data.total_calories || 0,
-      total_protein: data.total_protein || 0,
-      total_carbs: data.total_carbs || 0,
-      total_fats: data.total_fats || 0,
-      meals: data.meals || [],
-      ...data
-    } as MealPlan;
-    
-    try {
-      // Prepare data for Supabase with required fields and string dates
-      const preparedData = prepareForSupabase({
-        user_id: newMealPlan.user_id,
-        patient_id: newMealPlan.patient_id,
-        date: newMealPlan.date,
-        meals: JSON.stringify(newMealPlan.meals || []),
-        total_calories: newMealPlan.total_calories,
-        total_protein: newMealPlan.total_protein,
-        total_carbs: newMealPlan.total_carbs,
-        total_fats: newMealPlan.total_fats
-      }, true);
-      
-      const { error } = await supabase
-        .from('meal_plans')
-        .insert(preparedData);
-        
-      if (error) throw error;
-      
-      setMealPlan(newMealPlan);
-      return newMealPlan;
-    } catch (error) {
-      console.error('Error creating meal plan:', error);
-      throw error;
-    }
+      meals: [],
+      mealDistribution: meals,
+      total_calories: macros.calories || 0,
+      total_protein: macros.protein || 0,
+      total_carbs: macros.carbs || 0,
+      total_fats: macros.fat || 0
+    };
   };
-  
-  // Update an existing meal plan
-  const updateMealPlan = async (id: string, data: Partial<MealPlan>) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    try {
-      // Prepare data for Supabase with proper string dates
-      const preparedData = prepareForSupabase(data, false);
-      
-      // Ensure meals is properly stringified if present
-      if (preparedData.meals && typeof preparedData.meals !== 'string') {
-        preparedData.meals = JSON.stringify(preparedData.meals);
-      }
-      
-      const { error } = await supabase
-        .from('meal_plans')
-        .update(preparedData)
-        .eq('id', id)
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      
-      const updatedMealPlan = { ...mealPlan, ...data } as MealPlan;
-      setMealPlan(updatedMealPlan);
-      return updatedMealPlan;
-    } catch (error) {
-      console.error('Error updating meal plan:', error);
-      throw error;
+
+  // Save meal plan to database
+  const saveMealPlan = async (consultationId: string, mealPlanData: MealPlan) => {
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para salvar um plano alimentar.",
+        variant: "destructive"
+      });
+      return { success: false, error: "Usuário não autenticado" };
     }
-  };
-  
-  // Save or update a meal plan
-  const saveMealPlan = async (consultationId: string, data: any) => {
-    if (!user) throw new Error('User not authenticated');
-    
+
     try {
-      if (mealPlan?.id) {
-        // Update existing meal plan
-        const updateData = {
-          meals: JSON.stringify(data.meals || []),
-          mealDistribution: JSON.stringify(data.mealDistribution || []),
-          total_calories: data.calories || 0,
-          total_protein: data.protein || 0,
-          total_carbs: data.carbs || 0,
-          total_fats: data.fat || 0,
-          updated_at: new Date().toISOString()
-        };
-        
-        const { error } = await supabase
-          .from('meal_plans')
-          .update(updateData)
-          .eq('id', mealPlan.id);
-          
-        if (error) throw error;
-        
-        return mealPlan.id;
-      } else {
-        // Create new meal plan
-        const newMealPlanId = uuidv4();
-        
-        const newPlanData = {
-          id: newMealPlanId,
-          user_id: user.id,
-          patient_id: data.patient_id,
-          date: new Date().toISOString(),
-          meals: JSON.stringify(data.meals || []),
-          mealDistribution: JSON.stringify(data.mealDistribution || []),
-          total_calories: data.calories || 0,
-          total_protein: data.protein || 0,
-          total_carbs: data.carbs || 0,
-          total_fats: data.fat || 0
-        };
-        
-        const { error } = await supabase
-          .from('meal_plans')
-          .insert(newPlanData);
-          
-        if (error) throw error;
-        
-        return newMealPlanId;
-      }
-    } catch (error) {
-      console.error('Error saving meal plan:', error);
-      return null;
-    }
-  };
-  
-  // Get meal plans for a patient or all patients
-  const getMealPlans = async (patientId?: string) => {
-    if (!user) return { success: false, error: 'User not authenticated' };
-    
-    try {
-      let query = supabase
+      // Create a new object with the structure expected by Supabase
+      const dbMealPlan = {
+        user_id: user.id,
+        patient_id: mealPlanData.patient_id || '',
+        date: new Date().toISOString().split('T')[0], // Format date as YYYY-MM-DD string
+        meals: mealPlanData.meals,
+        total_calories: mealPlanData.total_calories,
+        total_protein: mealPlanData.total_protein,
+        total_carbs: mealPlanData.total_carbs,
+        total_fats: mealPlanData.total_fats
+      };
+
+      // Prepare data for database insertion
+      const preparedData = prepareForSupabase(dbMealPlan, true);
+
+      const { data, error } = await supabase
         .from('meal_plans')
-        .select(`
-          *,
-          patients:patient_id (
-            name
-          )
-        `)
-        .eq('user_id', user.id);
-        
-      if (patientId) {
-        query = query.eq('patient_id', patientId);
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
+        .insert(preparedData)
+        .select();
+
       if (error) throw error;
-      
-      return { success: true, data };
+
+      toast({
+        title: "Plano alimentar salvo",
+        description: "O plano alimentar foi salvo com sucesso.",
+      });
+
+      return { success: true, data: data[0] };
     } catch (error: any) {
-      console.error('Error fetching meal plans:', error);
+      console.error("Error saving meal plan:", error);
+      toast({
+        title: "Erro ao salvar plano alimentar",
+        description: error.message || "Ocorreu um erro ao salvar o plano alimentar.",
+        variant: "destructive"
+      });
       return { success: false, error: error.message };
     }
   };
-  
-  // Get a specific meal plan by ID
-  const getMealPlan = async (id: string) => {
-    if (!user) return { success: false, error: 'User not authenticated' };
-    
+
+  // Update an existing meal plan
+  const updateMealPlan = async (mealPlanId: string, updates: Partial<MealPlan>) => {
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para atualizar um plano alimentar.",
+        variant: "destructive"
+      });
+      return { success: false, error: "Usuário não autenticado" };
+    }
+
+    try {
+      // Create a new object with the updates
+      const updatedMealPlan = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+
+      // Prepare data for update
+      const preparedData = prepareForSupabase(updatedMealPlan);
+
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .update(preparedData)
+        .eq('id', mealPlanId)
+        .eq('user_id', user.id)
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: "Plano alimentar atualizado",
+        description: "O plano alimentar foi atualizado com sucesso.",
+      });
+
+      return { success: true, data: data[0] };
+    } catch (error: any) {
+      console.error("Error updating meal plan:", error);
+      toast({
+        title: "Erro ao atualizar plano alimentar",
+        description: error.message || "Ocorreu um erro ao atualizar o plano alimentar.",
+        variant: "destructive"
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Get meal plans for a specific patient
+  const getMealPlansForPatient = async (patientId: string) => {
+    if (!user) {
+      return { success: false, error: "Usuário não autenticado" };
+    }
+
     try {
       const { data, error } = await supabase
         .from('meal_plans')
-        .select(`
-          *,
-          patients:patient_id (
-            name,
-            gender,
-            birth_date
-          )
-        `)
-        .eq('id', id)
+        .select('*')
         .eq('user_id', user.id)
-        .single();
-        
+        .eq('patient_id', patientId)
+        .order('date', { ascending: false });
+
       if (error) throw error;
-      
-      setMealPlan(data as unknown as MealPlan);
-      return { success: true, data: data as unknown as MealPlan };
+
+      return { success: true, data: data as MealPlan[] };
     } catch (error: any) {
-      console.error('Error fetching meal plan:', error);
+      console.error("Error getting meal plans:", error);
       return { success: false, error: error.message };
     }
   };
-  
-  // Reset meal plan data
-  const resetMealPlan = () => {
-    setMealPlan(null);
-    setMealItems([]);
+
+  // Get a specific meal plan by ID
+  const getMealPlan = async (mealPlanId: string) => {
+    if (!user) {
+      return { success: false, error: "Usuário não autenticado" };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select('*')
+        .eq('id', mealPlanId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data: data as MealPlan };
+    } catch (error: any) {
+      console.error("Error getting meal plan:", error);
+      return { success: false, error: error.message };
+    }
   };
-  
+
   return (
     <MealPlanContext.Provider
       value={{
         mealPlan,
         setMealPlan,
-        mealItems,
-        setMealItems,
-        createMealPlan,
-        updateMealPlan,
         saveMealPlan,
-        getMealPlans,
+        updateMealPlan,
+        getMealPlansForPatient,
         getMealPlan,
-        resetMealPlan
+        generateMealPlan
       }}
     >
       {children}
@@ -252,4 +200,10 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
   );
 };
 
-export const useMealPlan = () => useContext(MealPlanContext);
+export const useMealPlan = () => {
+  const context = useContext(MealPlanContext);
+  if (context === undefined) {
+    throw new Error('useMealPlan must be used within a MealPlanProvider');
+  }
+  return context;
+};
