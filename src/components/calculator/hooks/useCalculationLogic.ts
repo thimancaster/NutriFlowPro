@@ -1,132 +1,203 @@
+import { useState } from 'react';
+import { CalculatorState } from '@/components/calculator/types';
+import { useToast } from '@/hooks/use-toast';
 
-import { useCallback } from 'react';
-import { CalculatorState, UseCalculationLogicProps } from '../types';
-import { calculateBMR, calculateMacros, calculateTEE } from '../utils/calculations';
-import { v4 as uuidv4 } from 'uuid';
+// Type for calculation results
+export interface CalculationResults {
+  bmr: number | null;
+  tee: number | null;
+  macros: { carbs: number; protein: number; fat: number } | null;
+}
 
-/**
- * Hook to manage calculator calculation logic
- */
-export const useCalculationLogic = ({
-  setBmr,
-  setTee,
-  setMacros,
-  setConsultationData,
-  toast,
-  user,
-  tempPatientId,
-  setTempPatientId
-}: UseCalculationLogicProps) => {
-  // Calculate results based on calculator state
-  const calculateResults = useCallback(async (state: CalculatorState) => {
-    // Validate required fields
-    if (!state.weight || !state.height || !state.age) {
-      toast.toast({
-        title: "Campos incompletos",
-        description: "Preencha peso, altura e idade para calcular.",
-        variant: "destructive"
-      });
-      return;
+// Hook for handling calculation logic
+export const useCalculationLogic = (calculatorState: CalculatorState) => {
+  // State for calculation results
+  const [results, setResults] = useState<CalculationResults>({
+    bmr: null,
+    tee: null, 
+    macros: null
+  });
+  
+  const { toast } = useToast();
+
+  // Calculate BMR (Basal Metabolic Rate)
+  const calculateBMR = (state: CalculatorState): number => {
+    const { weight, height, age, gender } = state;
+    
+    // Convert inputs to numbers
+    const weightNum = Number(weight);
+    const heightNum = Number(height);
+    const ageNum = Number(age);
+    
+    // Use the Harris-Benedict equation
+    if (gender === 'male') {
+      return 88.362 + (13.397 * weightNum) + (4.799 * heightNum) - (5.677 * ageNum);
+    } else {
+      return 447.593 + (9.247 * weightNum) + (3.098 * heightNum) - (4.330 * ageNum);
+    }
+  };
+  
+  // Calculate TEE (Total Energy Expenditure)
+  const calculateTEE = (bmr: number, activityLevel: string): number => {
+    // Activity factor mapping based on activity level
+    const activityFactors: { [key: string]: number } = {
+      sedentario: 1.2,
+      leve: 1.375,
+      moderado: 1.55,
+      alto: 1.725,
+      extremo: 1.9
+    };
+    
+    const factor = activityFactors[activityLevel] || 1.2; // Default to sedentary if not found
+    
+    return bmr * factor;
+  };
+
+  // Calculate macros based on objective
+  const calculateMacrosByObjective = (
+    objective: string,
+    tee: number,
+    weight: number,
+    lowCarbOption: boolean = false,
+    gender: string = 'female'
+  ): { carbs: number; protein: number; fat: number } => {
+    // Default macro distribution (carbs/protein/fat percentages)
+    let carbsPercent = 0.50;
+    let proteinPercent = 0.25;
+    let fatPercent = 0.25;
+    
+    // Adjust based on objective
+    switch (objective) {
+      case 'emagrecimento':
+        carbsPercent = lowCarbOption ? 0.25 : 0.40;
+        proteinPercent = 0.35;
+        fatPercent = lowCarbOption ? 0.40 : 0.25;
+        // Apply a caloric deficit
+        tee = tee * 0.85;
+        break;
+      case 'hipertrofia':
+        carbsPercent = 0.50;
+        proteinPercent = 0.30;
+        fatPercent = 0.20;
+        // Apply a caloric surplus
+        tee = tee * 1.10;
+        break;
+      case 'manutenção':
+      default:
+        // Keep default distribution
+        break;
     }
     
-    // Parse values
-    const weightVal = parseFloat(state.weight);
-    const heightVal = parseFloat(state.height);
+    // Calculate grams of each macronutrient
+    const proteinGrams = Math.round((tee * proteinPercent) / 4); // 4 calories per gram
+    const carbsGrams = Math.round((tee * carbsPercent) / 4); // 4 calories per gram
+    const fatGrams = Math.round((tee * fatPercent) / 9); // 9 calories per gram
     
-    // Validate numeric values
-    if (isNaN(weightVal) || isNaN(heightVal)) {
-      toast.toast({
-        title: "Valores inválidos",
-        description: "Peso e altura devem ser números válidos.",
+    return {
+      carbs: carbsGrams,
+      protein: proteinGrams,
+      fat: fatGrams
+    };
+  };
+
+  // Validate inputs for calculation
+  const validateInputsForCalculation = (state: CalculatorState): string | null => {
+    if (!state.weight || !state.height || !state.age) {
+      return "Preencha todos os campos obrigatórios: peso, altura e idade.";
+    }
+    
+    const weight = parseFloat(state.weight);
+    const height = parseFloat(state.height);
+    const age = parseFloat(state.age);
+    
+    if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+      return "Os valores numéricos são inválidos.";
+    }
+    
+    if (weight <= 0 || weight > 300) {
+      return "Peso deve estar entre 1 e 300 kg.";
+    }
+    
+    if (height <= 0 || height > 250) {
+      return "Altura deve estar entre 1 e 250 cm.";
+    }
+    
+    if (age <= 0 || age > 120) {
+      return "Idade deve estar entre 1 e 120 anos.";
+    }
+    
+    return null;
+  };
+
+  // Perform all calculations
+  const performCalculations = (): CalculationResults => {
+    // Validate inputs first
+    const validationError = validateInputsForCalculation(calculatorState);
+    if (validationError) {
+      toast({
+        title: "Dados incompletos",
+        description: validationError,
         variant: "destructive"
       });
-      return;
+      return { bmr: null, tee: null, macros: null };
     }
     
     try {
-      // Calculate BMR using Mifflin-St Jeor equation
-      const calculatedBmr = calculateBMR(
-        state.gender,
-        state.weight,
-        state.height,
-        state.age
+      // Calculate BMR
+      const bmr = calculateBMR(calculatorState);
+      
+      // Calculate TEE based on activity level
+      const tee = calculateTEE(bmr, calculatorState.activityLevel);
+      
+      // Calculate macros based on objective and TEE
+      const macros = calculateMacrosByObjective(
+        calculatorState.objective,
+        tee,
+        Number(calculatorState.weight),
+        calculatorState.lowCarbOption || false,
+        calculatorState.gender
       );
       
-      // Calculate TEE using activity factor
-      const calculatedTee = calculateTEE(
-        calculatedBmr,
-        state.activityLevel,
-        state.objective
-      );
-      
-      // Calculate macronutrients based on TEE and distribution
-      const calculatedMacros = calculateMacros(
-        calculatedTee.vet,  // Use VET (adjusted TEE)
-        state.carbsPercentage,
-        state.proteinPercentage,
-        state.fatPercentage,
-        weightVal // pass weight in kg for protein per kg calculation
-      );
-      
-      // Update state with calculated values
-      setBmr(calculatedBmr);
-      setTee(calculatedTee.vet);
-      setMacros(calculatedMacros);
-      
-      // Generate a temporary patient ID if one doesn't exist
-      const patientId = tempPatientId || uuidv4();
-      if (!tempPatientId) {
-        setTempPatientId(patientId);
-      }
-      
-      // Prepare consultation data
-      if (setConsultationData) {
-        setConsultationData({
-          id: uuidv4(),
-          user_id: user?.id,
-          patient_id: patientId,
-          patient: {
-            id: patientId,
-            name: state.patientName,
-            gender: state.gender === 'male' ? 'M' : 'F',
-            age: parseInt(state.age)
-          },
-          weight: parseFloat(state.weight),
-          height: parseFloat(state.height),
-          objective: state.objective,
-          activityLevel: state.activityLevel,
-          gender: state.gender,
-          created_at: new Date().toISOString(),
-          tipo: state.consultationType,
-          results: {
-            bmr: calculatedBmr,
-            get: calculatedTee.get,
-            adjustment: calculatedTee.adjustment,
-            vet: calculatedTee.vet,
-            macros: {
-              carbs: calculatedMacros.carbs,
-              protein: calculatedMacros.protein,
-              fat: calculatedMacros.fat,
-              proteinPerKg: calculatedMacros.proteinPerKg
-            }
-          }
-        });
-      }
-      
-      // Show a toast for success
-      toast.toast({
-        title: "Cálculo realizado",
-        description: `TMB: ${calculatedBmr} kcal, VET: ${calculatedTee.vet} kcal`,
-      });
-    } catch (error: any) {
-      console.error('Calculation error:', error);
-      toast.toast({
-        title: "Erro no cálculo",
-        description: error.message || "Ocorreu um erro ao calcular. Verifique os dados e tente novamente.",
+      return { bmr, tee, macros };
+    } catch (error) {
+      console.error("Error in calculation:", error);
+      toast({
+        title: "Erro de cálculo",
+        description: "Ocorreu um erro ao realizar os cálculos. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
+      return { bmr: null, tee: null, macros: null };
     }
-  }, [setBmr, setTee, setMacros, setConsultationData, toast, user, tempPatientId, setTempPatientId]);
-
-  return { calculateResults };
+  };
+  
+  // Function to trigger calculations and update state
+  const calculateResults = () => {
+    const newResults = performCalculations();
+    setResults(newResults);
+    return newResults;
+  };
+  
+  // Check if the form has errors
+  const hasErrors = (): boolean => {
+    const requiredFields = ['weight', 'height', 'age'];
+    
+    for (const field of requiredFields) {
+      if (!calculatorState[field]) {
+        toast({
+          title: "Dados incompletos",
+          description: `Por favor, preencha o campo ${field}.`,
+          variant: "destructive"
+        });
+        return true;
+      }
+    }
+    
+    return false;
+  };
+  
+  return {
+    results,
+    calculateResults,
+    hasErrors
+  };
 };

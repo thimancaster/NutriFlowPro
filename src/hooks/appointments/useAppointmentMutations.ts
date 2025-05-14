@@ -1,138 +1,127 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { parseISO, addMinutes } from 'date-fns';
-import { AppointmentType, Appointment } from '@/types';
-import { prepareForSupabase } from '@/utils/dateUtils';
+import { AppointmentType } from '@/types/appointment';
+import { useToast } from '@/hooks/use-toast';
+
+// Function to format dates for Supabase
+const formatDateForSupabase = (date: Date): string => {
+  return date.toISOString();
+};
 
 export const useAppointmentMutations = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
-  
-  // Create or update appointment
-  const saveAppointment = useMutation({
-    mutationFn: async (appointment: Partial<Appointment>) => {
-      if (!user) throw new Error('User not authenticated');
-      
-      // Create a new object with the right structure for Supabase
-      const appointmentData: Record<string, any> = { ...appointment };
-      
-      // Ensure we have a type field for Supabase
-      if (!appointmentData.type && appointment.appointment_type_id) {
-        appointmentData.type = appointment.appointment_type_id;
-      }
-      
-      // Ensure we have a date field for Supabase
-      if (!appointmentData.date && appointment.start_time) {
-        appointmentData.date = typeof appointment.start_time === 'string' 
-          ? appointment.start_time 
-          : appointment.start_time.toISOString();
-      }
-      
-      // Calculate end_time if it doesn't exist and we have appointment_type_id and start_time
-      if (appointment.appointment_type_id && appointment.start_time && !appointment.end_time) {
-        // Find the appointment type in the client-side cache
-        const appointmentTypes = (window.appointmentTypes || []) as AppointmentType[];
-        const appointmentType = appointmentTypes.find(type => type.id === appointment.appointment_type_id);
-        
-        if (appointmentType) {
-          const startTime = typeof appointment.start_time === 'string' 
-            ? parseISO(appointment.start_time) 
-            : appointment.start_time;
-            
-          appointmentData.end_time = addMinutes(startTime, appointmentType.duration_minutes);
-        }
-      }
-      
-      // Set the user_id for the appointment
-      appointmentData.user_id = user.id;
-      
-      // Prepare the required fields
-      if (!appointmentData.date) {
-        throw new Error('Date is required for appointment');
-      }
-      
-      if (!appointmentData.type) {
-        throw new Error('Type is required for appointment');
-      }
-      
-      if (appointment.id) {
-        // Prepare data for update by removing ID
-        const preparedData = prepareForSupabase({ ...appointmentData }, false);
-        
-        const { data, error } = await supabase
-          .from('appointments')
-          .update(preparedData)
-          .eq('id', appointment.id)
-          .eq('user_id', user.id)
-          .select();
-          
-        if (error) throw error;
-        return data[0];
-      } else {
-        // Prepare appointment data for Supabase
-        const preparedData = prepareForSupabase({ ...appointmentData }, true);
-        
-        const { data, error } = await supabase
-          .from('appointments')
-          .insert([preparedData])
-          .select();
-          
-        if (error) throw error;
-        return data[0];
-      }
-    },
-    onSuccess: () => {
-      // Invalidate relevant queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    }
-  });
-  
-  // Cancel appointment
-  const cancelAppointment = useMutation({
-    mutationFn: async (appointmentId: string) => {
-      if (!user) throw new Error('User not authenticated');
-      
+  const { toast } = useToast();
+
+  // Create appointment mutation
+  const createAppointmentMutation = useMutation({
+    mutationFn: async (appointmentData: any) => {
+      // Format the date for Supabase
+      const formattedData = {
+        ...appointmentData,
+        date: formatDateForSupabase(appointmentData.date)
+      };
+
       const { data, error } = await supabase
         .from('appointments')
-        .update({ status: 'canceled' })
-        .eq('id', appointmentId)
-        .eq('user_id', user.id)
+        .insert(formattedData)
         .select();
-        
-      if (error) throw error;
+
+      if (error) {
+        throw new Error(`Error creating appointment: ${error.message}`);
+      }
+
       return data[0];
     },
     onSuccess: () => {
-      // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    }
+      toast({
+        title: 'Consulta agendada',
+        description: 'A consulta foi agendada com sucesso.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao agendar consulta',
+        description: error.message || 'Ocorreu um erro ao agendar a consulta.',
+        variant: 'destructive',
+      });
+    },
   });
-  
-  // Delete appointment
-  const deleteAppointment = useMutation({
-    mutationFn: async (appointmentId: string) => {
-      if (!user) throw new Error('User not authenticated');
-      
+
+  // Update appointment mutation
+  const updateAppointmentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      // Format the date for Supabase if it exists
+      const formattedData = {
+        ...data,
+        date: data.date ? formatDateForSupabase(data.date) : undefined
+      };
+
+      const { data: updatedData, error } = await supabase
+        .from('appointments')
+        .update(formattedData)
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        throw new Error(`Error updating appointment: ${error.message}`);
+      }
+
+      return updatedData[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast({
+        title: 'Consulta atualizada',
+        description: 'A consulta foi atualizada com sucesso.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao atualizar consulta',
+        description: error.message || 'Ocorreu um erro ao atualizar a consulta.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete appointment mutation
+  const deleteAppointmentMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('appointments')
         .delete()
-        .eq('id', appointmentId)
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      return { id: appointmentId };
+        .eq('id', id);
+
+      if (error) {
+        throw new Error(`Error deleting appointment: ${error.message}`);
+      }
+
+      return id;
     },
     onSuccess: () => {
-      // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    }
+      toast({
+        title: 'Consulta cancelada',
+        description: 'A consulta foi cancelada com sucesso.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao cancelar consulta',
+        description: error.message || 'Ocorreu um erro ao cancelar a consulta.',
+        variant: 'destructive',
+      });
+    },
   });
-  
+
   return {
-    saveAppointment,
-    cancelAppointment,
-    deleteAppointment
+    createAppointment: createAppointmentMutation.mutate,
+    updateAppointment: updateAppointmentMutation.mutate,
+    deleteAppointment: deleteAppointmentMutation.mutate,
+    isCreating: createAppointmentMutation.isPending,
+    isUpdating: updateAppointmentMutation.isPending,
+    isDeleting: deleteAppointmentMutation.isPending,
   };
 };

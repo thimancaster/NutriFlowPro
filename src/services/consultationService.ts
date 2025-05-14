@@ -1,124 +1,94 @@
-import { supabase } from '@/integrations/supabase/client';
-import { ConsultationData } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
-import { prepareForSupabase } from '@/utils/dateUtils';
 
-export const ConsultationService = {
-  /**
-   * Save the consultation data to the database
-   */
-  async saveConsultation(consultationData: Partial<ConsultationData>) {
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+
+export const consultationService = {
+  // Save consultation data
+  async saveConsultation(consultationData: any) {
     try {
       // Ensure required fields are present
-      if (!consultationData.weight || !consultationData.height || 
-          !consultationData.gender || !consultationData.activity_level || 
-          !consultationData.objective) {
-        throw new Error('Missing required consultation fields');
+      const requiredFields = ['weight', 'height', 'age', 'gender', 'activity_level', 'goal', 'status', 'tipo'];
+      const missingFields = requiredFields.filter(field => !consultationData[field]);
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
       }
       
-      // Format the data to match the database schema
+      // Format the data for Supabase
       const formattedData = {
         id: consultationData.id || uuidv4(),
+        weight: Number(consultationData.weight),
+        height: Number(consultationData.height),
+        age: Number(consultationData.age),
+        gender: consultationData.gender,
+        activity_level: consultationData.activity_level,
+        goal: consultationData.goal,
+        bmr: Number(consultationData.bmr || 0),
+        tdee: Number(consultationData.tdee || 0),
+        protein: Number(consultationData.protein || 0),
+        carbs: Number(consultationData.carbs || 0),
+        fats: Number(consultationData.fats || 0),
         user_id: consultationData.user_id,
         patient_id: consultationData.patient_id,
-        weight: consultationData.weight,
-        height: consultationData.height,
-        age: typeof consultationData.age === 'string' ? parseInt(consultationData.age) : consultationData.age,
-        gender: consultationData.gender,
-        goal: consultationData.objective, // Map objective to goal field
-        activity_level: consultationData.activityLevel,
-        tipo: consultationData.tipo || 'primeira_consulta',
-        status: 'em_andamento',
-        bmr: consultationData.results?.bmr || 0,
-        tdee: consultationData.results?.vet || 0, // Map vet to tdee
-        protein: consultationData.results?.macros?.protein || 0,
-        carbs: consultationData.results?.macros?.carbs || 0,
-        fats: consultationData.results?.macros?.fat || 0
-        // Other fields will be filled with defaults by Supabase
+        tipo: consultationData.tipo,
+        status: consultationData.status,
+        notes: consultationData.notes || '',
+        measurements: consultationData.measurements || {}
       };
-      
-      // Prepare for Supabase (handle dates, etc.)
-      const preparedData = prepareForSupabase(formattedData, false);
-      
+
       const { data, error } = await supabase
         .from('calculations')
-        .upsert([preparedData])
-        .select('*')
+        .insert([formattedData])
+        .select();
+
+      if (error) {
+        throw new Error(`Error saving consultation: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data: data[0], 
+        message: 'Consultation saved successfully' 
+      };
+    } catch (error: any) {
+      console.error('Error in saveConsultation:', error);
+      return { 
+        success: false, 
+        message: error.message || 'Failed to save consultation' 
+      };
+    }
+  },
+
+  // Get a specific consultation
+  async getConsultation(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('calculations')
+        .select(`
+          *,
+          patients(id, name, email, phone, gender)
+        `)
+        .eq('id', id)
         .single();
-      
-      if (error) throw error;
-      
+
+      if (error) {
+        throw new Error(`Error fetching consultation: ${error.message}`);
+      }
+
       return { 
         success: true, 
         data,
-        message: 'Consultation saved successfully'
+        message: 'Consultation retrieved successfully' 
       };
     } catch (error: any) {
-      console.error('Error saving consultation:', error);
       return { 
         success: false, 
-        error: error.message,
-        message: 'Error saving consultation'
+        message: error.message || 'Failed to retrieve consultation' 
       };
     }
   },
-  
-  /**
-   * Auto-save a consultation in progress
-   */
-  async autoSaveConsultation(consultationId: string, updates: Record<string, any>) {
-    try {
-      if (!consultationId) {
-        throw new Error('Consultation ID is required for auto-save');
-      }
-      
-      // Format the data for update
-      const formattedData = {
-        ...updates,
-        last_auto_save: new Date().toISOString()
-      };
-      
-      // Prepare for Supabase
-      const preparedData = prepareForSupabase(formattedData, false);
-      
-      const { data, error } = await supabase
-        .from('calculations')
-        .update([preparedData])
-        .eq('id', consultationId)
-        .select();
-      
-      if (error) throw error;
-      
-      return true;
-    } catch (error) {
-      console.error('Error auto-saving consultation:', error);
-      return false;
-    }
-  },
-  
-  /**
-   * Update consultation status
-   */
-  async updateConsultationStatus(consultationId: string, status: 'em_andamento' | 'completo') {
-    try {
-      const { data, error } = await supabase
-        .from('calculations')
-        .update([{ status }])
-        .eq('id', consultationId)
-        .select();
-      
-      if (error) throw error;
-      
-      return { success: true, data };
-    } catch (error: any) {
-      console.error('Error updating consultation status:', error);
-      return { success: false, error: error.message };
-    }
-  },
-  
-  /**
-   * Get consultations for a patient
-   */
+
+  // Get consultations for a specific patient
   async getPatientConsultations(patientId: string) {
     try {
       const { data, error } = await supabase
@@ -126,13 +96,47 @@ export const ConsultationService = {
         .select('*')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      return { success: true, data };
+
+      if (error) {
+        throw new Error(`Error fetching patient consultations: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data, 
+        message: 'Patient consultations retrieved successfully' 
+      };
     } catch (error: any) {
-      console.error('Error fetching patient consultations:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        message: error.message || 'Failed to retrieve patient consultations' 
+      };
+    }
+  },
+
+  // Update an existing consultation
+  async updateConsultation(id: string, updates: any) {
+    try {
+      const { data, error } = await supabase
+        .from('calculations')
+        .update(updates)
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        throw new Error(`Error updating consultation: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data: data[0], 
+        message: 'Consultation updated successfully' 
+      };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to update consultation' 
+      };
     }
   }
 };

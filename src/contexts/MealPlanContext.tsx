@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { MealPlan, Meal, ConsultationData, Patient, Macros } from '@/types';
+import { MealPlan, Meal, ConsultationData, Patient, MealDistributionItem } from '@/types/meal';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './auth/AuthContext';
@@ -14,7 +14,7 @@ interface MealPlanContextType {
   updateMealPlan: (mealPlanId: string, updates: Partial<MealPlan>) => Promise<{ success: boolean; data?: any; error?: string }>;
   getMealPlansForPatient: (patientId: string) => Promise<{ success: boolean; data?: MealPlan[]; error?: string }>;
   getMealPlan: (mealPlanId: string) => Promise<{ success: boolean; data?: MealPlan; error?: string }>;
-  generateMealPlan: (macros: Macros, meals: Record<string, any>) => MealPlan;
+  generateMealPlan: (macros: any, meals: MealDistributionItem[]) => MealPlan;
 }
 
 const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
@@ -25,7 +25,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { toast } = useToast();
 
   // Generate a meal plan based on macros and meal distribution
-  const generateMealPlan = (macros: Macros, meals: Record<string, any>): MealPlan => {
+  const generateMealPlan = (macros: any, meals: MealDistributionItem[]): MealPlan => {
     // Implementation details...
     return {
       id: uuidv4(),
@@ -68,7 +68,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const { data, error } = await supabase
         .from('meal_plans')
-        .insert([preparedData])
+        .insert(preparedData)
         .select();
 
       if (error) throw error;
@@ -105,7 +105,9 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Create a new object with the updates
       const updatedMealPlan = {
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        // Convert date to string if it exists in the updates
+        ...(updates.date && { date: updates.date instanceof Date ? updates.date.toISOString().split('T')[0] : updates.date })
       };
 
       // Prepare data for update
@@ -157,9 +159,9 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const mealPlansWithDates = data.map(plan => ({
         ...plan,
         date: new Date(plan.date)
-      })) as unknown as MealPlan[];
+      }));
 
-      return { success: true, data: mealPlansWithDates };
+      return { success: true, data: mealPlansWithDates as unknown as MealPlan[] };
     } catch (error: any) {
       console.error("Error getting meal plans:", error);
       return { success: false, error: error.message };
@@ -186,9 +188,9 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const mealPlanWithDate = {
         ...data,
         date: new Date(data.date)
-      } as unknown as MealPlan;
+      };
 
-      return { success: true, data: mealPlanWithDate };
+      return { success: true, data: mealPlanWithDate as unknown as MealPlan };
     } catch (error: any) {
       console.error("Error getting meal plan:", error);
       return { success: false, error: error.message };

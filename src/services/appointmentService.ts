@@ -1,118 +1,183 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Appointment } from '@/types';
-import { prepareForSupabase } from '@/utils/dateUtils';
+import { v4 as uuidv4 } from 'uuid';
+import { AppointmentStatus, AppointmentType } from '@/types/appointment';
 
-/**
- * Get all appointments for the current user
- */
-export const getAppointments = async (
-  userId: string,
-  options: { 
-    patientId?: string,
-    status?: string, 
-    startDate?: Date, 
-    endDate?: Date,
-    limit?: number
-  } = {}
-) => {
-  try {
-    let query = supabase
-      .from('appointments')
-      .select(`
-        *,
-        patients (
-          name
-        )
-      `)
-      .eq('user_id', userId)
-      .order('date', { ascending: true });
-      
-    // Add filters if provided
-    if (options.patientId) {
-      query = query.eq('patient_id', options.patientId);
-    }
-    
-    if (options.status) {
-      query = query.eq('status', options.status);
-    }
-    
-    if (options.startDate) {
-      query = query.gte('date', options.startDate.toISOString());
-    }
-    
-    if (options.endDate) {
-      query = query.lte('date', options.endDate.toISOString());
-    }
-    
-    if (options.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    return { 
-      success: true, 
-      data: data || [] 
-    };
-  } catch (error: any) {
-    console.error('Error getting appointments:', error.message);
-    return { 
-      success: false, 
-      error: error.message,
-      data: [] 
-    };
-  }
+// Function to format dates for Supabase
+const formatDateForSupabase = (date: Date): string => {
+  return date.toISOString();
 };
 
-/**
- * Create multiple appointments at once (bulk create)
- */
-export const createAppointments = async (appointments: Partial<Appointment>[]) => {
-  try {
-    if (!appointments || appointments.length === 0) {
-      throw new Error('No appointments provided');
-    }
-    
-    // Ensure each appointment has the required fields
-    appointments.forEach(appointment => {
-      if (!appointment.date) {
-        throw new Error('Date is required for all appointments');
-      }
-      if (!appointment.type) {
-        throw new Error('Type is required for all appointments');
-      }
-    });
-    
-    // Prepare each appointment for database insertion
-    const preparedAppointments = appointments.map(appointment => 
-      prepareForSupabase(appointment, true)
-    );
-    
-    const { data, error } = await supabase
-      .from('appointments')
-      .insert(preparedAppointments)
-      .select();
-      
-    if (error) throw error;
-    
-    return { 
-      success: true, 
-      data
-    };
-  } catch (error: any) {
-    console.error('Error creating appointments:', error.message);
-    return { 
-      success: false, 
-      error: error.message 
-    };
-  }
-};
+export const appointmentService = {
+  // Get all appointments for a user
+  async getAppointments(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients(id, name, email, phone)
+        `)
+        .eq('user_id', userId)
+        .order('date', { ascending: true });
 
-// Export all functions
-export const AppointmentService = {
-  getAppointments,
-  createAppointments
+      if (error) {
+        throw new Error(`Error fetching appointments: ${error.message}`);
+      }
+
+      return { success: true, data };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to retrieve appointments' 
+      };
+    }
+  },
+
+  // Get a single appointment by ID
+  async getAppointment(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients(id, name, email, phone, gender, birth_date)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw new Error(`Error fetching appointment: ${error.message}`);
+      }
+
+      return { success: true, data };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to retrieve appointment' 
+      };
+    }
+  },
+
+  // Create a new appointment
+  async createAppointment(appointmentData: any) {
+    try {
+      // Format the date for Supabase
+      const formattedData = {
+        ...appointmentData,
+        id: uuidv4(),
+        date: formatDateForSupabase(appointmentData.date)
+      };
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert(formattedData)
+        .select();
+
+      if (error) {
+        throw new Error(`Error creating appointment: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data: data[0], 
+        message: 'Appointment created successfully' 
+      };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to create appointment' 
+      };
+    }
+  },
+
+  // Create multiple appointments at once
+  async createBulkAppointments(appointmentsData: any[]) {
+    try {
+      // Format each appointment's date for Supabase
+      const formattedData = appointmentsData.map(appointment => ({
+        ...appointment,
+        id: appointment.id || uuidv4(),
+        date: formatDateForSupabase(appointment.date),
+        type: appointment.type || AppointmentType.FIRST_VISIT,
+        status: appointment.status || AppointmentStatus.SCHEDULED
+      }));
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert(formattedData)
+        .select();
+
+      if (error) {
+        throw new Error(`Error creating appointments: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data, 
+        message: 'Appointments created successfully' 
+      };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to create appointments' 
+      };
+    }
+  },
+
+  // Update an existing appointment
+  async updateAppointment(id: string, appointmentData: any) {
+    try {
+      // Format the date for Supabase if it exists
+      const formattedData = {
+        ...appointmentData,
+        ...(appointmentData.date && { date: formatDateForSupabase(appointmentData.date) })
+      };
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .update(formattedData)
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        throw new Error(`Error updating appointment: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data: data[0], 
+        message: 'Appointment updated successfully' 
+      };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to update appointment' 
+      };
+    }
+  },
+
+  // Delete an appointment
+  async deleteAppointment(id: string) {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw new Error(`Error deleting appointment: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        message: 'Appointment deleted successfully' 
+      };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Failed to delete appointment' 
+      };
+    }
+  }
 };

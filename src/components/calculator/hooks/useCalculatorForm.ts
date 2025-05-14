@@ -20,7 +20,7 @@ export const useCalculatorForm = () => {
   
   // Setter functions for each state property
   const setPatientName = (value: string) => setCalculatorState(prev => ({ ...prev, patientName: value }));
-  const setGender = (value: string) => setCalculatorState(prev => ({ ...prev, gender: value }));
+  const setGender = (value: "male" | "female") => setCalculatorState(prev => ({ ...prev, gender: value }));
   const setAge = (value: string) => setCalculatorState(prev => ({ ...prev, age: value }));
   const setWeight = (value: string) => setCalculatorState(prev => ({ ...prev, weight: value }));
   const setHeight = (value: string) => setCalculatorState(prev => ({ ...prev, height: value }));

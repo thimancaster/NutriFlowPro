@@ -46,7 +46,7 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
       
       return {
         name: dist.name,
-        time: dist.time,
+        time: dist.time || '', // Ensure time always has a value
         proteinPercent: dist.proteinPercent,
         carbsPercent: dist.carbsPercent,
         fatPercent: dist.fatPercent,

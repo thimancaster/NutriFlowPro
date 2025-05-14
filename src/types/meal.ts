@@ -16,15 +16,15 @@ export interface MealItem {
 export interface Meal {
   id?: string;
   name: string;
-  time?: string;
+  time: string; // Changed from optional to required
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
   foods: MealItem[];
-  proteinPercent?: number;
-  carbsPercent?: number;
-  fatPercent?: number;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
 }
 
 export interface MealDistributionItem {
@@ -36,6 +36,7 @@ export interface MealDistributionItem {
   carbs: number;
   fat: number;
   calories: number;
+  suggestions?: string[]; // Add suggestions property
 }
 
 export interface MealPlan {
