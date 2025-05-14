@@ -1,10 +1,17 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Loader2, UserPlus, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from 'lucide-react';
 import { CalculatorResultsProps } from './types';
+import {
+  MetricCard,
+  CalorieAdjustmentBadge,
+  MacroDistributionGrid,
+  CalorieSummary,
+  NutritionInfo,
+  ActionButtons
+} from './results';
 
 const CalculatorResults = ({
   bmr,
@@ -42,55 +49,23 @@ const CalculatorResults = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-nutri-gray-light">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              Taxa Metabólica Basal
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 ml-1 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Energia necessária para funções vitais em repouso, calculada pela fórmula de Mifflin-St Jeor</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardTitle>
-            <CardDescription>TMB</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-nutri-green-dark">{bmr} kcal</p>
-            <p className="text-sm text-gray-600 mt-2">
-              Energia mínima para sustentar funções vitais em repouso
-            </p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="Taxa Metabólica Basal"
+          description="TMB"
+          value={`${bmr} kcal`}
+          infoText="Energia necessária para funções vitais em repouso, calculada pela fórmula de Mifflin-St Jeor"
+          valueColor="text-nutri-green-dark"
+          subtitle="Energia mínima para sustentar funções vitais em repouso"
+        />
 
-        <Card className="bg-nutri-gray-light">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              Gasto Energético Total
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 ml-1 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">TMB × Fator de Atividade (sem ajustes)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardTitle>
-            <CardDescription>GET</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-nutri-blue">{baseGet} kcal</p>
-            <p className="text-sm text-gray-600 mt-2">
-              Calorias gastas incluindo atividade física
-            </p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="Gasto Energético Total"
+          description="GET"
+          value={`${baseGet} kcal`}
+          infoText="TMB × Fator de Atividade (sem ajustes)"
+          valueColor="text-nutri-blue"
+          subtitle="Calorias gastas incluindo atividade física"
+        />
 
         <Card className="bg-nutri-gray-light">
           <CardHeader className="pb-2">
@@ -111,15 +86,7 @@ const CalculatorResults = ({
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-nutri-blue-dark">{tee} kcal</p>
-            <div className="mt-2 text-sm flex items-center">
-              <span className={`px-2 py-1 rounded-full ${calorieAdjustment > 0 ? 'bg-green-100 text-green-800' : calorieAdjustment < 0 ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                {calorieAdjustment > 0 
-                  ? `+${calorieAdjustment} kcal (superávit)` 
-                  : calorieAdjustment < 0 
-                  ? `${calorieAdjustment} kcal (déficit)` 
-                  : 'Manutenção'}
-              </span>
-            </div>
+            <CalorieAdjustmentBadge calorieAdjustment={calorieAdjustment} />
           </CardContent>
         </Card>
       </div>
@@ -133,101 +100,31 @@ const CalculatorResults = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Carboidratos</p>
-                <p className="text-2xl font-bold text-nutri-green">{macros.carbs}g</p>
-                <p className="text-sm">{parseInt(carbsPercentage)}% / {macros.carbs * 4} kcal</p>
-              </div>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Proteínas</p>
-                <p className="text-2xl font-bold text-nutri-blue">{macros.protein}g</p>
-                <p className="text-sm">{parseInt(proteinPercentage)}% / {macros.protein * 4} kcal</p>
-                {macros.proteinPerKg && (
-                  <div>
-                    <p className="mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs inline-block">
-                      {macros.proteinPerKg.toFixed(1)} g/kg
-                    </p>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger className="ml-1">
-                          <Info className="h-3 w-3 inline text-blue-600" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-xs">Referência: {proteinReferenceRange.min} - {proteinReferenceRange.max} g/kg</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
-              </div>
-              <div className="bg-amber-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Gorduras</p>
-                <p className="text-2xl font-bold text-amber-600">{macros.fat}g</p>
-                <p className="text-sm">{parseInt(fatPercentage)}% / {macros.fat * 9} kcal</p>
-              </div>
-            </div>
+            <MacroDistributionGrid
+              macros={macros}
+              carbsPercentage={carbsPercentage}
+              proteinPercentage={proteinPercentage}
+              fatPercentage={fatPercentage}
+              proteinReferenceRange={proteinReferenceRange}
+            />
 
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <h3 className="text-base font-medium mb-2">Resumo Calórico</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Calorias do plano:</p>
-                  <p className="text-lg font-semibold">{(macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9)} kcal</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Meta calórica:</p>
-                  <p className="text-lg font-semibold">{tee} kcal</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Diferença:</p>
-                  <p className={`text-lg font-semibold ${Math.abs((macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9) - tee) <= 10 ? 'text-green-600' : 'text-amber-600'}`}>
-                    {Math.round((macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9)) - tee} kcal
-                  </p>
-                </div>
-              </div>
-            </div>
+            <CalorieSummary 
+              macros={macros} 
+              tee={tee} 
+            />
 
-            <div className="mt-4 bg-blue-50 p-3 rounded border border-blue-200">
-              <h4 className="text-sm font-medium text-blue-800">Informações Adicionais</h4>
-              <ul className="mt-1 text-xs text-blue-800 space-y-1">
-                <li>• Carboidratos e proteínas fornecem 4 kcal/g</li>
-                <li>• Gorduras fornecem 9 kcal/g</li>
-                {macros.proteinPerKg && (
-                  <li>• Recomendação de proteína: {macros.proteinPerKg.toFixed(1)} g/kg de peso corporal</li>
-                )}
-              </ul>
-            </div>
+            <NutritionInfo macros={macros} />
           </CardContent>
         </Card>
       )}
 
-      <div className="flex flex-wrap gap-3 justify-center mt-4">
-        {user && hasPatientName && (
-          <Button 
-            onClick={handleSavePatient}
-            variant="outline"
-            className="border-nutri-blue text-nutri-blue flex items-center gap-2"
-            disabled={isSavingPatient}
-          >
-            {isSavingPatient ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <UserPlus className="h-4 w-4 mr-1" />
-            )}
-            Salvar Paciente
-          </Button>
-        )}
-        
-        <Button 
-          onClick={handleGenerateMealPlan} 
-          className="bg-nutri-green hover:bg-nutri-green-dark flex items-center gap-2"
-          size="default"
-        >
-          Gerar Plano Alimentar
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <ActionButtons
+        handleSavePatient={handleSavePatient}
+        handleGenerateMealPlan={handleGenerateMealPlan}
+        isSavingPatient={isSavingPatient}
+        hasPatientName={hasPatientName}
+        user={user}
+      />
     </div>
   );
 };
