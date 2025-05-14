@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { MealPlan, Meal, ConsultationData, Patient, MealDistributionItem } from '@/types/meal';
+import { MealPlan, Meal, MealDistributionItem } from '@/types/meal';
+import { ConsultationData, Patient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './auth/AuthContext';
@@ -65,10 +66,11 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Prepare data for database insertion
       const preparedData = prepareForSupabase(dbMealPlan, true);
-
+      
+      // Use upsert to handle both insert and update cases
       const { data, error } = await supabase
         .from('meal_plans')
-        .insert(preparedData)
+        .upsert(preparedData)
         .select();
 
       if (error) throw error;
@@ -159,9 +161,9 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const mealPlansWithDates = data.map(plan => ({
         ...plan,
         date: new Date(plan.date)
-      }));
+      })) as unknown as MealPlan[];
 
-      return { success: true, data: mealPlansWithDates as unknown as MealPlan[] };
+      return { success: true, data: mealPlansWithDates };
     } catch (error: any) {
       console.error("Error getting meal plans:", error);
       return { success: false, error: error.message };
@@ -188,9 +190,9 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const mealPlanWithDate = {
         ...data,
         date: new Date(data.date)
-      };
+      } as unknown as MealPlan;
 
-      return { success: true, data: mealPlanWithDate as unknown as MealPlan };
+      return { success: true, data: mealPlanWithDate };
     } catch (error: any) {
       console.error("Error getting meal plan:", error);
       return { success: false, error: error.message };

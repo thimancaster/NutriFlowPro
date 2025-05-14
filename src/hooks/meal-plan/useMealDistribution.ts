@@ -1,112 +1,86 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { MealDistributionItem } from '@/types/meal';
 import { v4 as uuidv4 } from 'uuid';
-import { MealDistributionItem } from '@/types';
 
-const DEFAULT_MEAL_DISTRIBUTION = [
-  { 
-    id: 'breakfast',
-    name: 'Café da Manhã', 
-    percent: 0.25, 
-    protein: 0, 
-    carbs: 0, 
-    fat: 0, 
-    calories: 0,
-    suggestions: []
-  },
-  { 
-    id: 'lunch',
-    name: 'Almoço', 
-    percent: 0.30, 
-    protein: 0, 
-    carbs: 0, 
-    fat: 0, 
-    calories: 0,
-    suggestions: []
-  },
-  { 
-    id: 'dinner',
-    name: 'Jantar', 
-    percent: 0.25, 
-    protein: 0, 
-    carbs: 0, 
-    fat: 0, 
-    calories: 0,
-    suggestions: []
-  },
-  { 
-    id: 'snack',
-    name: 'Lanche', 
-    percent: 0.20, 
-    protein: 0, 
-    carbs: 0, 
-    fat: 0, 
-    calories: 0,
-    suggestions: []
-  }
-];
+interface UseMealDistributionProps {
+  initialDistribution?: MealDistributionItem[];
+  consultationData?: any;
+}
 
-export const useMealDistribution = (initialDistribution = [], consultationData = null) => {
-  // Define initial meal distribution if not provided
-  const [mealDistribution, setMealDistribution] = useState<MealDistributionItem[]>(() => {
-    if (initialDistribution && initialDistribution.length > 0) {
-      return initialDistribution.map(meal => ({
-        ...meal,
-        id: meal.id || uuidv4(),
-        percent: meal.percentage ? meal.percentage / 100 : meal.percent || 0,
-      }));
-    }
-    return DEFAULT_MEAL_DISTRIBUTION as MealDistributionItem[];
-  });
-
-  // Calculate total distribution percentage
-  const totalDistributionPercentage = mealDistribution.reduce(
-    (total, meal) => total + meal.percent, 
-    0
+export const useMealDistribution = (initialDistribution: MealDistributionItem[] = [], consultationData?: any) => {
+  // Initialize meal distribution with default values or from saved state
+  const [mealDistribution, setMealDistribution] = useState<MealDistributionItem[]>(
+    initialDistribution.length > 0 ? initialDistribution : getDefaultMealDistribution()
   );
-
+  
+  // Calculate and track the total distribution percentage
+  const [totalDistributionPercentage, setTotalDistributionPercentage] = useState(0);
+  
+  // Update total percentage when distribution changes
+  useEffect(() => {
+    const total = mealDistribution.reduce((sum, meal) => sum + (meal.percent || 0), 0) / 100;
+    setTotalDistributionPercentage(total);
+  }, [mealDistribution]);
+  
   // Handle meal percentage change
   const handleMealPercentChange = (mealId: string, newPercent: number) => {
-    const updatedDistribution = mealDistribution.map(meal => {
-      if (meal.id === mealId) {
-        // Calculate the new percentage value
-        const newValue = newPercent / 100;
-        
-        return { 
-          ...meal, 
-          percent: newValue,
-          // Update the calories distribution if consultation data available
-          calories: consultationData?.results?.vet ? consultationData.results.vet * newValue : meal.calories
-        };
-      }
-      return meal;
-    });
-    
-    setMealDistribution(updatedDistribution);
+    setMealDistribution(prevMeals => 
+      prevMeals.map(meal => 
+        meal.id === mealId 
+          ? { ...meal, percent: newPercent } 
+          : meal
+      )
+    );
   };
-
+  
   // Add a new meal to the distribution
   const addMeal = () => {
     const newMeal: MealDistributionItem = {
       id: uuidv4(),
-      name: 'Nova Refeição',
-      percent: 0.1, // Default 10%
+      name: `Refeição ${mealDistribution.length + 1}`,
+      percent: 0,
       protein: 0,
       carbs: 0,
       fat: 0,
       calories: 0,
-      suggestions: []
+      foods: [],
     };
     
-    setMealDistribution([...mealDistribution, newMeal]);
+    setMealDistribution(prevMeals => [...prevMeals, newMeal]);
   };
   
   // Remove a meal from the distribution
   const removeMeal = (mealId: string) => {
-    const updatedDistribution = mealDistribution.filter(meal => meal.id !== mealId);
-    setMealDistribution(updatedDistribution);
+    setMealDistribution(prevMeals => prevMeals.filter(meal => meal.id !== mealId));
   };
-
+  
+  // Default meal distribution setup
+  function getDefaultMealDistribution(): MealDistributionItem[] {
+    return [
+      createDefaultMeal('Café da manhã', 25),
+      createDefaultMeal('Lanche da manhã', 10),
+      createDefaultMeal('Almoço', 30),
+      createDefaultMeal('Lanche da tarde', 10),
+      createDefaultMeal('Jantar', 20),
+      createDefaultMeal('Ceia', 5)
+    ];
+  }
+  
+  // Helper function to create a default meal
+  function createDefaultMeal(name: string, percent: number): MealDistributionItem {
+    return {
+      id: uuidv4(),
+      name,
+      percent,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      calories: 0,
+      foods: []
+    };
+  }
+  
   return {
     mealDistribution,
     setMealDistribution,

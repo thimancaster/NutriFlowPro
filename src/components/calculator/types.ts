@@ -13,9 +13,9 @@ export interface CalculatorState {
   gender: "male" | "female";
   activityLevel: string;
   objective: string;
-  carbsPercentage: string; // Changed to string to match actual usage
-  proteinPercentage: string; // Changed to string to match actual usage
-  fatPercentage: string; // Changed to string to match actual usage
+  carbsPercentage: string; 
+  proteinPercentage: string;
+  fatPercentage: string;
   patientName: string;
   consultationType: string;
   lowCarbOption?: boolean;
@@ -31,6 +31,7 @@ export interface CalculatorResults {
     carbs: number | null;
     protein: number | null;
     fat: number | null;
+    proteinPerKg?: number | null;
   } | null;
 }
 
@@ -60,7 +61,7 @@ export interface CalculatorInputsProps {
 export interface CalculatorResultsProps {
   bmr: number | null;
   tee: number | null;
-  macros: { carbs: number, protein: number, fat: number } | null;
+  macros: { carbs: number, protein: number, fat: number, proteinPerKg?: number } | null;
   carbsPercentage: string;
   proteinPercentage: string;
   fatPercentage: string;
@@ -77,14 +78,6 @@ export interface UseCalculatorFormProps {
 }
 
 export interface UseCalculatorResultsProps {
-  onSave?: (results: any) => void;
-  calculateResults: (state: CalculatorState) => void;
-  bmr: number | null;
-  tee: number | null;
-  macros: { carbs: number, protein: number, fat: number } | null;
-}
-
-export interface UseCalculationLogicProps {
   setBmr: (value: number) => void;
   setTee: (value: number) => void;
   setMacros: (value: any) => void;
@@ -96,8 +89,8 @@ export interface UseCalculationLogicProps {
 }
 
 export interface UsePatientActionsProps {
-  selectedPatient: any;
-  setSelectedPatient: (patient: any) => void;
+  selectedPatient?: any;
+  setSelectedPatient?: (patient: any) => void;
   onPatientSelect?: (patient: any) => void;
   toast: ToastApi;
 }

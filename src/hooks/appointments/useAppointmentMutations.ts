@@ -1,7 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AppointmentType } from '@/types/appointment';
 import { useToast } from '@/hooks/use-toast';
 
 // Function to format dates for Supabase
@@ -14,12 +13,13 @@ export const useAppointmentMutations = () => {
   const { toast } = useToast();
 
   // Create appointment mutation
-  const createAppointmentMutation = useMutation({
+  const createAppointment = useMutation({
     mutationFn: async (appointmentData: any) => {
-      // Format the date for Supabase
+      // Format dates for Supabase if they exist
       const formattedData = {
         ...appointmentData,
-        date: formatDateForSupabase(appointmentData.date)
+        date: appointmentData.date ? formatDateForSupabase(new Date(appointmentData.date)) : undefined,
+        type: appointmentData.type || 'default'
       };
 
       const { data, error } = await supabase
@@ -50,12 +50,12 @@ export const useAppointmentMutations = () => {
   });
 
   // Update appointment mutation
-  const updateAppointmentMutation = useMutation({
+  const updateAppointment = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      // Format the date for Supabase if it exists
+      // Format dates for Supabase if they exist
       const formattedData = {
         ...data,
-        date: data.date ? formatDateForSupabase(data.date) : undefined
+        date: data.date ? formatDateForSupabase(new Date(data.date)) : undefined
       };
 
       const { data: updatedData, error } = await supabase
@@ -87,7 +87,7 @@ export const useAppointmentMutations = () => {
   });
 
   // Delete appointment mutation
-  const deleteAppointmentMutation = useMutation({
+  const deleteAppointment = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('appointments')
@@ -115,13 +115,46 @@ export const useAppointmentMutations = () => {
       });
     },
   });
+  
+  // Cancel appointment mutation
+  const cancelAppointmentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('appointments')
+        .update({ status: 'canceled' })
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        throw new Error(`Error canceling appointment: ${error.message}`);
+      }
+
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast({
+        title: 'Consulta cancelada',
+        description: 'A consulta foi cancelada com sucesso.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao cancelar consulta',
+        description: error.message || 'Ocorreu um erro ao cancelar a consulta.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   return {
-    createAppointment: createAppointmentMutation.mutate,
-    updateAppointment: updateAppointmentMutation.mutate,
-    deleteAppointment: deleteAppointmentMutation.mutate,
-    isCreating: createAppointmentMutation.isPending,
-    isUpdating: updateAppointmentMutation.isPending,
-    isDeleting: deleteAppointmentMutation.isPending,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment,
+    cancelAppointment: cancelAppointmentMutation,
+    isCreating: createAppointment.isPending,
+    isUpdating: updateAppointment.isPending,
+    isDeleting: deleteAppointment.isPending,
+    isCanceling: cancelAppointmentMutation.isPending,
   };
 };

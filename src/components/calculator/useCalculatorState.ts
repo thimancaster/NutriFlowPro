@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
 import { usePatientActions } from './hooks/usePatientActions';
-import { CalculatorState, UseCalculatorStateProps } from './types';
+import { CalculatorState, UseCalculatorStateProps, ToastApi } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -34,10 +34,10 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   // Initialize state for calculation results
   const [bmr, setBmr] = useState<number | null>(null);
   const [tee, setTee] = useState<number | null>(null);
-  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(null);
+  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number, proteinPerKg?: number } | null>(null);
   
   // Get results handlers with the state setters
-  const { calculateResults: performCalculation } = useCalculatorResults({
+  const { calculateResults } = useCalculatorResults({
     setBmr,
     setTee,
     setMacros,
@@ -50,16 +50,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   
   // Get patient actions
   const { selectedPatient, setSelectedPatient, savePatient } = usePatientActions({
-    toast,
-    onPatientSelect: (patient) => {
-      if (patient) {
-        setPatientName(patient.name || '');
-        setAge(patient.age?.toString() || '');
-        setWeight(patient.weight?.toString() || '');
-        setHeight(patient.height?.toString() || '');
-        setGender(patient.gender === 'male' ? 'male' : 'female');
-      }
-    }
+    toast
   });
   
   // Populate form when activePatient changes
@@ -97,11 +88,11 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   };
   
   // Wrapper for calculation function
-  const calculateResults = async (state: CalculatorState) => {
+  const handleCalculateResults = async (state: CalculatorState) => {
     setIsCalculating(true);
     
     try {
-      const results = await performCalculation(state);
+      const results = await calculateResults(state);
       return results;
     } catch (error) {
       console.error('Error calculating results:', error);
@@ -161,31 +152,23 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         const fatPercentage = parseInt(calculatorState.fatPercentage || '0');
         
         const consultationData = {
+          id: uuidv4(),
           user_id: user?.id,
           patient_id: patientId,
           date: new Date(),
-          patient: { name: calculatorState.patientName },
-          inputs: {
-            weight: parseFloat(calculatorState.weight),
-            height: parseInt(calculatorState.height),
-            age: parseInt(calculatorState.age),
-            gender: calculatorState.gender,
-            activityLevel: calculatorState.activityLevel,
-            objective: calculatorState.objective,
-            consultationType: calculatorState.consultationType
-          },
-          results: {
-            bmr,
-            vet: tee,
-            macros: {
-              carbs: macros.carbs,
-              protein: macros.protein,
-              fat: macros.fat,
-              carbsPercentage,
-              proteinPercentage,
-              fatPercentage
-            }
-          }
+          weight: parseFloat(calculatorState.weight),
+          height: parseInt(calculatorState.height),
+          age: parseInt(calculatorState.age),
+          gender: calculatorState.gender,
+          activity_level: calculatorState.activityLevel,
+          objective: calculatorState.objective,
+          consultation_type: calculatorState.consultationType,
+          bmr,
+          vet: tee,
+          carbs_percentage: carbsPercentage,
+          protein_percentage: proteinPercentage,
+          fat_percentage: fatPercentage,
+          patient: { name: calculatorState.patientName }
         };
         
         setConsultationData(consultationData);
@@ -246,7 +229,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setProfile,
     setConsultationType,
     isCalculating,
-    calculateResults,
+    calculateResults: handleCalculateResults,
     clearCalculatorData,
     bmr,
     tee,

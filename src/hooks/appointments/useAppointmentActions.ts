@@ -8,7 +8,7 @@ export const useAppointmentActions = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const { toast } = useToast();
-  const { saveAppointment, cancelAppointment } = useAppointmentMutations();
+  const { createAppointment, updateAppointment, cancelAppointment } = useAppointmentMutations();
   
   // Open dialog to create a new appointment
   const handleNewAppointment = () => {
@@ -31,10 +31,14 @@ export const useAppointmentActions = () => {
   // Save appointment (create or update)
   const handleSaveAppointment = async (data: Partial<Appointment>) => {
     try {
-      await saveAppointment.mutateAsync({
-        ...data,
-        id: selectedAppointment?.id
-      });
+      if (selectedAppointment?.id) {
+        await updateAppointment.mutateAsync({
+          id: selectedAppointment.id,
+          data
+        });
+      } else {
+        await createAppointment.mutateAsync(data);
+      }
       
       toast({
         title: selectedAppointment ? 'Agendamento atualizado' : 'Agendamento criado',
@@ -81,7 +85,7 @@ export const useAppointmentActions = () => {
     handleCloseDialog,
     handleSaveAppointment,
     handleCancelAppointment,
-    isSaving: saveAppointment.isPending,
+    isSaving: createAppointment.isPending || updateAppointment.isPending,
     isCanceling: cancelAppointment.isPending
   };
 };

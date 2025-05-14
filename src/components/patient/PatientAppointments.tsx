@@ -21,7 +21,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
   const { data: appointments, isLoading, refetch } = usePatientAppointments(patientId);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const { saveAppointment, cancelAppointment } = useAppointmentMutations();
+  const { createAppointment, updateAppointment, cancelAppointment } = useAppointmentMutations();
   const { toast } = useToast();
   
   // Group appointments by status
@@ -58,10 +58,16 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
       const appointmentData = {
         ...data,
         patient_id: patientId,
-        id: selectedAppointment?.id
       };
       
-      await saveAppointment.mutateAsync(appointmentData);
+      if (selectedAppointment?.id) {
+        await updateAppointment.mutateAsync({
+          id: selectedAppointment.id, 
+          data: appointmentData
+        });
+      } else {
+        await createAppointment.mutateAsync(appointmentData);
+      }
       
       toast({
         title: selectedAppointment ? 'Agendamento atualizado' : 'Agendamento criado',

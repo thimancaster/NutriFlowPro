@@ -1,163 +1,79 @@
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { handleGenerateMealPlan as generateMealPlan } from '../handlers/mealPlanHandlers';
-import { CalculatorState, ToastApi } from '../types';
-
-const AUTO_SAVE_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+import { useState } from 'react';
+import { ToastApi, UsePatientActionsProps } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Hook to manage patient-related actions in the calculator
+ * Hook to manage patient actions
  */
 export const usePatientActions = ({
-  calculatorState,
-  bmr,
-  tee,
-  macros,
-  tempPatientId,
-  setConsultationData,
   toast,
-  user
-}: {
-  calculatorState: CalculatorState;
-  bmr: number | null;
-  tee: number | null;
-  macros: { carbs: number, protein: number, fat: number } | null;
-  tempPatientId: string | null;
-  setConsultationData: (data: any) => void;
-  toast: ToastApi;
-  user: any;
-}) => {
-  const [isSavingPatient, setIsSavingPatient] = useState(false);
-  const [lastAutoSaveTime, setLastAutoSaveTime] = useState<Date | null>(null);
-  const [consultationId, setConsultationId] = useState<string | null>(null);
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const navigate = useNavigate();
+  onPatientSelect
+}: UsePatientActionsProps) => {
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  // Clear auto-save timer on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current);
-      }
-    };
-  }, []);
-  
-  // Initialize auto-save when we have a valid consultation ID
-  useEffect(() => {
-    if (consultationId && user) {
-      // Clear any existing timer
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current);
-      }
-      
-      // Set up auto-save timer
-      autoSaveTimerRef.current = setInterval(async () => {
-        try {
-          if (!calculatorState || !bmr || !tee || !macros) return;
-          
-          // Import auto-save function dynamically
-          const { handleAutoSaveConsultation } = await import('../handlers/consultationHandlers');
-          
-          const success = await handleAutoSaveConsultation(
-            consultationId,
-            {
-              bmr,
-              tdee: tee,
-              weight: parseFloat(calculatorState.weight),
-              height: parseFloat(calculatorState.height),
-              age: parseInt(calculatorState.age),
-              gender: calculatorState.gender,
-              protein: macros.protein,
-              carbs: macros.carbs,
-              fats: macros.fat,
-              activity_level: calculatorState.activityLevel,
-              goal: calculatorState.objective
-            }
-          );
-          
-          if (success) {
-            setLastAutoSaveTime(new Date());
-            console.log('Auto-saved consultation data:', new Date().toLocaleTimeString());
-          }
-        } catch (error) {
-          console.error('Auto-save error:', error);
-        }
-      }, AUTO_SAVE_INTERVAL);
-    }
+  // Save patient data to database or local storage
+  const savePatient = async (patientData: any) => {
+    setIsLoading(true);
     
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current);
-      }
-    };
-  }, [consultationId, user, calculatorState, bmr, tee, macros]);
-  
-  const handleSavePatient = useCallback(async () => {
-    if (!user) {
-      toast.toast({
-        title: "Erro",
-        description: "Você precisa estar logado para salvar pacientes.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Import and call savePatient function from patientHandlers
-    // Dynamically import to avoid circular dependencies
     try {
-      setIsSavingPatient(true);
-      const { handleSavePatient } = await import('../handlers/patientHandlers');
-      
-      const savedData = await handleSavePatient(
-        calculatorState,
-        user,
-        navigate,
-        toast,
-        setIsSavingPatient
-      );
-      
-      // Store the consultation ID for auto-save if it exists
-      if (savedData && savedData.consultationId) {
-        setConsultationId(savedData.consultationId);
-        setLastAutoSaveTime(new Date());
+      // If the patient has an ID, update existing record
+      if (patientData.id) {
+        const { data, error } = await supabase
+          .from('patients')
+          .upsert(patientData)
+          .select();
+        
+        if (error) throw error;
+        
+        toast.toast({
+          title: 'Paciente atualizado',
+          description: 'Os dados do paciente foram atualizados com sucesso.',
+        });
+        
+        setSelectedPatient(data[0]);
+        return { success: true, data: data[0] };
+      } else {
+        // Create new patient
+        const newPatient = {
+          ...patientData,
+          id: uuidv4()
+        };
+        
+        const { data, error } = await supabase
+          .from('patients')
+          .insert(newPatient)
+          .select();
+        
+        if (error) throw error;
+        
+        toast.toast({
+          title: 'Paciente cadastrado',
+          description: 'O paciente foi cadastrado com sucesso.',
+        });
+        
+        setSelectedPatient(data[0]);
+        return { success: true, data: data[0] };
       }
-      
-      // Show confirmation
-      toast.toast({
-        title: "Paciente salvo",
-        description: "O paciente foi salvo com sucesso."
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving patient:', error);
       toast.toast({
-        title: "Erro ao salvar paciente",
-        description: "Ocorreu um erro ao salvar o paciente.",
-        variant: "destructive"
+        title: 'Erro ao salvar paciente',
+        description: error.message || 'Ocorreu um erro ao salvar os dados do paciente.',
+        variant: 'destructive'
       });
+      return { success: false, message: error.message };
     } finally {
-      setIsSavingPatient(false);
+      setIsLoading(false);
     }
-  }, [calculatorState, bmr, tee, macros, tempPatientId, user, toast, navigate, setConsultationData]);
-  
-  const handleGenerateMealPlan = useCallback(() => {
-    generateMealPlan(
-      calculatorState,
-      bmr,
-      tee,
-      macros,
-      tempPatientId,
-      setConsultationData,
-      navigate,
-      toast
-    );
-  }, [calculatorState, bmr, tee, macros, tempPatientId, setConsultationData, navigate, toast]);
-  
+  };
+
   return {
-    handleSavePatient,
-    handleGenerateMealPlan,
-    isSavingPatient,
-    lastAutoSaveTime,
-    consultationId
+    selectedPatient,
+    setSelectedPatient,
+    savePatient,
+    isLoading
   };
 };

@@ -1,8 +1,8 @@
 
 import { dbCache } from "./dbCache";
 import { PatientService } from "./patient";
-import { ConsultationService } from "./consultationService";
-import { MealPlanService } from "./mealPlanService";
+import { consultationService } from "./consultationService";
+import { mealPlanService } from "./mealPlanService";
 
 /**
  * Service to handle all database interactions
@@ -14,14 +14,13 @@ export const DatabaseService = {
   getPatient: PatientService.getPatient,
   
   // Consultation-related operations
-  saveConsultation: ConsultationService.saveConsultation,
-  autoSaveConsultation: ConsultationService.autoSaveConsultation,
-  updateConsultationStatus: ConsultationService.updateConsultationStatus,
-  getPatientConsultations: ConsultationService.getPatientConsultations,
+  saveConsultation: consultationService.saveConsultation,
+  updateConsultationStatus: consultationService.updateConsultationStatus,
+  getPatientConsultations: consultationService.getPatientConsultations,
   
   // Meal plan-related operations
-  saveMealPlan: MealPlanService.saveMealPlan,
-  getPatientMealPlans: MealPlanService.getPatientMealPlans,
+  saveMealPlan: mealPlanService.saveMealPlan,
+  getPatientMealPlans: mealPlanService.getPatientMealPlans,
   
   /**
    * Clear all database service caches

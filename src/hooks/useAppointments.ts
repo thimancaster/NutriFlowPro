@@ -41,25 +41,25 @@ export const useAppointments = (patientId?: string) => {
   } = useAppointmentActions();
   
   const {
-    saveAppointment,
-    cancelAppointment,
-    deleteAppointment
+    createAppointment,
+    updateAppointment,
+    deleteAppointment,
+    cancelAppointment
   } = useAppointmentMutations();
 
-  // Create aliases for expected method names
-  const createAppointment = async (appointmentData: any) => {
+  // Create aliases for expected method names to maintain compatibility
+  const saveAppointment = async (appointmentData: any) => {
     try {
-      const result = await saveAppointment.mutateAsync(appointmentData);
-      return { success: true, data: result };
-    } catch (error: any) {
-      return { success: false, error };
-    }
-  };
-  
-  const updateAppointment = async (id: string, appointmentData: any) => {
-    try {
-      const result = await saveAppointment.mutateAsync({...appointmentData, id});
-      return { success: true, data: result };
+      if (appointmentData.id) {
+        const result = await updateAppointment.mutateAsync({
+          id: appointmentData.id,
+          data: appointmentData
+        });
+        return { success: true, data: result };
+      } else {
+        const result = await createAppointment.mutateAsync(appointmentData);
+        return { success: true, data: result };
+      }
     } catch (error: any) {
       return { success: false, error };
     }
@@ -88,7 +88,7 @@ export const useAppointments = (patientId?: string) => {
     return { success: true };
   };
   
-  const isSubmitting = saveAppointment.isPending;
+  const isSubmitting = createAppointment.isPending || updateAppointment.isPending;
 
   return {
     appointments,
@@ -100,6 +100,7 @@ export const useAppointments = (patientId?: string) => {
     updateAppointment,
     deleteAppointment: handleDeleteAppointment,
     cancelAppointment: handleCancelAppointment,
+    saveAppointment,
     appointmentsByDate,
     // Original properties from useAppointmentActions
     selectedAppointment,
