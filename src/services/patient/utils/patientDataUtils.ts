@@ -77,3 +77,22 @@ export const preparePatientForDb = (patientData: Partial<Patient>): any => {
   
   return dbPatientData;
 };
+
+/**
+ * Helper function to remove undefined values from an object
+ * This prevents overwriting existing values with null in the database
+ */
+export const cleanUndefinedValues = (obj: Record<string, any>): Record<string, any> => {
+  if (!obj) return {};
+  
+  const cleanedObj: Record<string, any> = {};
+  
+  Object.entries(obj).forEach(([key, value]) => {
+    // Only include values that are not undefined
+    if (value !== undefined) {
+      cleanedObj[key] = value;
+    }
+  });
+  
+  return cleanedObj;
+};
