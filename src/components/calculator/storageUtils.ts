@@ -1,50 +1,72 @@
 
-import { storageUtils } from '@/utils/storageUtils';
-import { CalculatorState, CalculatorResults } from './types';
-import { CALCULATOR_RESULTS_KEY } from './utils/initialState';
+import { CalculatorState } from './types';
+import { logger } from '@/utils/logger';
 
-// Save calculator state to storage
+// Storage key constants
+const CALCULATOR_STATE_KEY = 'calculatorState';
+const CALCULATOR_RESULTS_KEY = 'calculatorResults';
+
+// Save calculator state to localStorage
 export function saveCalculatorState(state: CalculatorState): void {
-  storageUtils.setLocalItem('nutriflow_calculator_state', state);
+  try {
+    localStorage.setItem(CALCULATOR_STATE_KEY, JSON.stringify(state));
+  } catch (error) {
+    logger.error('Error saving calculator state:', error);
+  }
 }
 
-// Save calculator results to storage
+// Get calculator state from localStorage
+export function getCalculatorState(): CalculatorState | null {
+  try {
+    const savedState = localStorage.getItem(CALCULATOR_STATE_KEY);
+    return savedState ? JSON.parse(savedState) : null;
+  } catch (error) {
+    logger.error('Error getting calculator state:', error);
+    return null;
+  }
+}
+
+// Save calculator results to localStorage
 export function saveCalculatorResults(
-  bmr: number,
-  tee: number,
-  macros: { 
-    carbs: number;
-    protein: number;
-    fat: number;
-  },
+  bmr: number, 
+  tee: number, 
+  macros: { carbs: number; protein: number; fat: number; proteinPerKg?: number },
   tempPatientId: string | null
 ): void {
-  storageUtils.setLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY, {
-    bmr,
-    tee,
-    macros,
-    tempPatientId
-  });
+  try {
+    localStorage.setItem(CALCULATOR_RESULTS_KEY, JSON.stringify({
+      bmr,
+      tee,
+      macros,
+      tempPatientId
+    }));
+  } catch (error) {
+    logger.error('Error saving calculator results:', error);
+  }
 }
 
-// Get calculator state from storage
-export function getCalculatorState(): CalculatorState | null {
-  return storageUtils.getLocalItem<CalculatorState>('nutriflow_calculator_state');
+// Get calculator results from localStorage
+export function getCalculatorResults(): {
+  bmr: number;
+  tee: number;
+  macros: { carbs: number; protein: number; fat: number; proteinPerKg?: number };
+  tempPatientId: string | null;
+} | null {
+  try {
+    const savedResults = localStorage.getItem(CALCULATOR_RESULTS_KEY);
+    return savedResults ? JSON.parse(savedResults) : null;
+  } catch (error) {
+    logger.error('Error getting calculator results:', error);
+    return null;
+  }
 }
 
-// Get calculator results from storage
-export function getCalculatorResults(): CalculatorResults | null {
-  return storageUtils.getLocalItem<CalculatorResults>(CALCULATOR_RESULTS_KEY);
-}
-
-// Save consultation data to storage
-export function saveConsultationData(consultationData: any): void {
-  storageUtils.setLocalItem('nutriflow_consultation_data', consultationData);
-}
-
-// Clear all calculator data from storage
+// Clear all calculator data from localStorage
 export function clearCalculatorData(): void {
-  storageUtils.removeLocalItem('nutriflow_calculator_state');
-  storageUtils.removeLocalItem(CALCULATOR_RESULTS_KEY);
-  storageUtils.removeLocalItem('nutriflow_consultation_data');
+  try {
+    localStorage.removeItem(CALCULATOR_STATE_KEY);
+    localStorage.removeItem(CALCULATOR_RESULTS_KEY);
+  } catch (error) {
+    logger.error('Error clearing calculator data:', error);
+  }
 }

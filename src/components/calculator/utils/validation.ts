@@ -1,83 +1,70 @@
 
-/**
- * Validate calculator inputs for basic requirements and reasonable values
- */
-export function validateCalculatorInputs(
-  age: string, 
-  weight: string, 
-  height: string,
-  gender: string,
-  carbsPercentage: string,
-  proteinPercentage: string,
-  fatPercentage: string,
-  toast: any
-): boolean {
-  // Basic validation for required fields
-  if (!age || !weight || !height) {
-    toast({
-      title: "Campos obrigatórios",
-      description: "Por favor, preencha todos os campos necessários.",
-      variant: "destructive"
-    });
-    return false;
-  }
+import { CalculatorState } from '../types';
 
-  // Validate gender is selected
-  if (!gender) {
-    toast({
-      title: "Campo obrigatório",
-      description: "Por favor, selecione o sexo do paciente.",
-      variant: "destructive"
-    });
-    return false;
+/**
+ * Validates calculator input state
+ * @returns String with error message or null if valid
+ */
+export function validateCalculatorInputs(state: CalculatorState): string | null {
+  // Required fields
+  if (!state.patientName.trim()) {
+    return 'Nome do paciente é obrigatório';
+  }
+  if (!state.age || isNaN(Number(state.age)) || Number(state.age) <= 0 || Number(state.age) > 120) {
+    return 'Idade inválida';
+  }
+  if (!state.weight || isNaN(Number(state.weight)) || Number(state.weight) <= 0 || Number(state.weight) > 300) {
+    return 'Peso inválido';
+  }
+  if (!state.height || isNaN(Number(state.height)) || Number(state.height) <= 0 || Number(state.height) > 250) {
+    return 'Altura inválida';
   }
   
-  // Validate reasonable values
-  const ageVal = parseFloat(age);
-  const weightVal = parseFloat(weight);
-  const heightVal = parseFloat(height);
-  
-  if (isNaN(ageVal) || ageVal <= 0 || ageVal > 120) {
-    toast({
-      title: "Valor inválido",
-      description: "A idade deve estar entre 1 e 120 anos.",
-      variant: "destructive"
-    });
-    return false;
+  // Validate gender
+  if (!['male', 'female'].includes(state.gender)) {
+    return 'Sexo inválido';
   }
   
-  if (isNaN(weightVal) || weightVal <= 0 || weightVal > 300) {
-    toast({
-      title: "Valor inválido",
-      description: "O peso deve estar entre 1 e 300 kg.",
-      variant: "destructive"
-    });
-    return false;
+  // Validate activity level
+  if (!['sedentario', 'leve', 'moderado', 'intenso', 'muito_intenso'].includes(state.activityLevel)) {
+    return 'Nível de atividade inválido';
   }
   
-  if (isNaN(heightVal) || heightVal <= 0 || heightVal > 250) {
-    toast({
-      title: "Valor inválido",
-      description: "A altura deve estar entre 1 e 250 cm.",
-      variant: "destructive"
-    });
-    return false;
+  // Validate objective
+  if (!['emagrecimento', 'manutenção', 'hipertrofia'].includes(state.objective)) {
+    return 'Objetivo inválido';
   }
   
-  // Validate macro percentages sum to 100%
-  const carbsVal = parseFloat(carbsPercentage);
-  const proteinVal = parseFloat(proteinPercentage);
-  const fatVal = parseFloat(fatPercentage);
+  // Validate macro percentages
+  const carbsPercent = Number(state.carbsPercentage);
+  const proteinPercent = Number(state.proteinPercentage);
+  const fatPercent = Number(state.fatPercentage);
   
-  const totalPercentage = carbsVal + proteinVal + fatVal;
-  if (Math.abs(totalPercentage - 100) > 0.1) {  // Allow small rounding errors
-    toast({
-      title: "Distribuição inválida",
-      description: `A soma dos percentuais de macronutrientes deve ser 100%. Atualmente: ${totalPercentage}%.`,
-      variant: "destructive"
-    });
-    return false;
+  if (
+    isNaN(carbsPercent) || isNaN(proteinPercent) || isNaN(fatPercent) ||
+    carbsPercent < 0 || proteinPercent < 0 || fatPercent < 0
+  ) {
+    return 'Percentuais de macronutrientes inválidos';
   }
   
-  return true;
+  // Check if percentages add up to 100%
+  if (Math.abs(carbsPercent + proteinPercent + fatPercent - 100) > 1) {
+    return 'Percentuais de macronutrientes devem somar 100%';
+  }
+  
+  return null;
+}
+
+/**
+ * Validate numeric input
+ * @returns True if valid
+ */
+export function isNumericInputValid(value: string): boolean {
+  // Allow empty values (for clearing inputs)
+  if (!value) {
+    return true;
+  }
+  
+  // Check if it's a valid number
+  return /^\d*\.?\d*$/.test(value);
 }

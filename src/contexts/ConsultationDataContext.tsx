@@ -1,140 +1,91 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { usePatient } from '@/contexts/PatientContext';
-import { storageUtils } from '@/utils/storageUtils';
-import { DatabaseService } from '@/services/databaseService';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { ConsultationData } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@/utils/logger';
 
 interface ConsultationDataContextType {
   consultationData: ConsultationData | null;
-  setConsultationData: (data: ConsultationData | null) => void;
-  saveConsultation: () => Promise<string | undefined>;
-  autoSaveConsultation: (consultationId: string, data: any) => Promise<boolean>;
-  updateConsultationStatus: (consultationId: string, status: 'em_andamento' | 'completo') => Promise<boolean>;
+  setConsultationData: (data: ConsultationData) => void;
+  clearConsultationData: () => void;
+  updateConsultationField: <K extends keyof ConsultationData>(
+    field: K,
+    value: ConsultationData[K]
+  ) => void;
 }
 
-const ConsultationDataContext = createContext<ConsultationDataContextType | undefined>(undefined);
+const ConsultationDataContext = createContext<ConsultationDataContextType | null>(null);
 
-export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const { activePatient } = usePatient();
+export const ConsultationDataProvider = ({ children }: { children: ReactNode }) => {
+  const [consultationData, setConsultationDataState] = useState<ConsultationData | null>(null);
 
-  // Check for consultation data in sessionStorage on mount
-  useEffect(() => {
-    const storedConsultation = storageUtils.getSessionItem('consultationData');
-    if (storedConsultation) {
-      setConsultationData(storedConsultation);
+  // Set consultation data
+  const setConsultationData = (data: ConsultationData) => {
+    logger.info('Setting consultation data:', data);
+    setConsultationDataState(data);
+    
+    try {
+      // Save to sessionStorage
+      sessionStorage.setItem('consultationData', JSON.stringify(data));
+    } catch (error) {
+      logger.error('Error saving consultation data to sessionStorage:', error);
+    }
+  };
+
+  // Clear consultation data
+  const clearConsultationData = () => {
+    setConsultationDataState(null);
+    sessionStorage.removeItem('consultationData');
+  };
+
+  // Update a specific field in consultation data
+  const updateConsultationField = <K extends keyof ConsultationData>(
+    field: K,
+    value: ConsultationData[K]
+  ) => {
+    if (!consultationData) {
+      // Create new consultation data if none exists
+      const newData: ConsultationData = {
+        id: uuidv4(),
+        created_at: new Date().toISOString(),
+        // Add any other required fields
+        [field]: value,
+      } as unknown as ConsultationData;
+      
+      setConsultationData(newData);
+      return;
+    }
+    
+    // Update existing consultation data
+    const updatedData = {
+      ...consultationData,
+      [field]: value,
+    };
+    
+    setConsultationData(updatedData);
+  };
+
+  // Load from sessionStorage on initial render
+  React.useEffect(() => {
+    try {
+      const savedData = sessionStorage.getItem('consultationData');
+      if (savedData) {
+        setConsultationDataState(JSON.parse(savedData));
+      }
+    } catch (error) {
+      logger.error('Error loading consultation data from sessionStorage:', error);
     }
   }, []);
 
-  // Update sessionStorage when consultation data changes
-  useEffect(() => {
-    if (consultationData) {
-      storageUtils.setSessionItem('consultationData', consultationData);
-    } else {
-      storageUtils.removeSessionItem('consultationData');
-    }
-  }, [consultationData]);
-
-  const saveConsultation = async (): Promise<string | undefined> => {
-    if (!user?.id || !activePatient?.id || !consultationData) {
-      toast({
-        title: "Erro",
-        description: "Dados insuficientes para salvar a consulta",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Convert string values to numbers for database
-      const dbConsultationData: ConsultationData = {
-        ...consultationData,
-        // Ensure weight, height, and age are numbers for the database
-        weight: typeof consultationData.weight === 'string' ? 
-          parseFloat(consultationData.weight) : consultationData.weight,
-        height: typeof consultationData.height === 'string' ? 
-          parseFloat(consultationData.height) : consultationData.height,
-        age: typeof consultationData.age === 'string' ? 
-          parseInt(consultationData.age) : consultationData.age,
-      };
-      
-      // Use DatabaseService instead of direct Supabase call
-      const result = await DatabaseService.saveConsultation(
-        user.id,
-        activePatient.id,
-        dbConsultationData,
-        consultationData.consultationType || 'primeira_consulta'
-      );
-
-      if (!result.success) throw new Error(result.error);
-      
-      toast({
-        title: "Consulta salva",
-        description: "Os dados da consulta foram salvos com sucesso."
-      });
-      
-      return result.data.id;
-    } catch (error: any) {
-      console.error('Error saving consultation:', error);
-      toast({
-        title: "Erro ao salvar consulta",
-        description: error.message,
-        variant: "destructive"
-      });
-      return undefined;
-    }
-  };
-  
-  const autoSaveConsultation = async (consultationId: string, data: any): Promise<boolean> => {
-    try {
-      if (!consultationId) return false;
-      
-      const result = await DatabaseService.autoSaveConsultation(consultationId, data);
-      return result.success;
-    } catch (error) {
-      console.error('Auto-save error:', error);
-      return false;
-    }
-  };
-  
-  const updateConsultationStatus = async (consultationId: string, status: 'em_andamento' | 'completo'): Promise<boolean> => {
-    try {
-      if (!consultationId) return false;
-      
-      const result = await DatabaseService.updateConsultationStatus(consultationId, status);
-      
-      if (result.success) {
-        toast({
-          title: status === 'completo' ? "Consulta finalizada" : "Status atualizado",
-          description: status === 'completo' 
-            ? "A consulta foi marcada como completa." 
-            : "O status da consulta foi atualizado."
-        });
-      }
-      
-      return result.success;
-    } catch (error) {
-      console.error('Status update error:', error);
-      return false;
-    }
+  const value = {
+    consultationData,
+    setConsultationData,
+    clearConsultationData,
+    updateConsultationField,
   };
 
   return (
-    <ConsultationDataContext.Provider
-      value={{
-        consultationData,
-        setConsultationData,
-        saveConsultation,
-        autoSaveConsultation,
-        updateConsultationStatus
-      }}
-    >
+    <ConsultationDataContext.Provider value={value}>
       {children}
     </ConsultationDataContext.Provider>
   );
@@ -142,7 +93,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
 
 export const useConsultationData = () => {
   const context = useContext(ConsultationDataContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useConsultationData must be used within a ConsultationDataProvider');
   }
   return context;

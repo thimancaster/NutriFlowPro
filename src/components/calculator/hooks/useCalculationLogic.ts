@@ -1,55 +1,50 @@
 
-import { useState, useCallback } from 'react';
-import { validateCalculatorInputs } from '../utils/validation';
-import { calculateBMR, calculateTEE, calculateMacros } from '../utils/calculations';
-import { CalculatorState } from '../types';
-import { ConsultationData } from '@/types';
+import { useCallback } from 'react';
+import { CalculatorState, UseCalculationLogicProps } from '../types';
+import { calculateBMR, calculateMacros, calculateTEE } from '../utils/calculations';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Hook for calculation logic in the calculator
+ * Hook to manage calculator calculation logic
  */
 export const useCalculationLogic = ({
   setBmr,
   setTee,
   setMacros,
-  tempPatientId,
-  setTempPatientId,
   setConsultationData,
   toast,
-  user
-}: {
-  setBmr: (value: number) => void;
-  setTee: (value: number) => void;
-  setMacros: (value: any) => void;
-  tempPatientId: string | null;
-  setTempPatientId: (value: string | null) => void;
-  setConsultationData: (value: any) => void;
-  toast: any;
-  user: any;
-}) => {
-  // Keep track of calculation state
-  const [isCalculating, setIsCalculating] = useState(false);
-
-  // Main calculation function
+  user,
+  tempPatientId,
+  setTempPatientId
+}: UseCalculationLogicProps) => {
+  // Calculate results based on calculator state
   const calculateResults = useCallback(async (state: CalculatorState) => {
-    // Validate inputs
-    if (!validateCalculatorInputs(
-      state.age,
-      state.weight, 
-      state.height,
-      state.gender,
-      state.carbsPercentage,
-      state.proteinPercentage,
-      state.fatPercentage,
-      toast
-    )) {
+    // Validate required fields
+    if (!state.weight || !state.height || !state.age) {
+      toast({
+        title: "Campos incompletos",
+        description: "Preencha peso, altura e idade para calcular.",
+        variant: "destructive"
+      });
       return;
     }
-
+    
+    // Parse values
+    const weightVal = parseFloat(state.weight);
+    const heightVal = parseFloat(state.height);
+    
+    // Validate numeric values
+    if (isNaN(weightVal) || isNaN(heightVal)) {
+      toast({
+        title: "Valores inválidos",
+        description: "Peso e altura devem ser números válidos.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
-      setIsCalculating(true);
-      
-      // Calculate BMR using the Mifflin-St Jeor formula
+      // Calculate BMR using Mifflin-St Jeor equation
       const calculatedBmr = calculateBMR(
         state.gender,
         state.weight,
@@ -57,91 +52,81 @@ export const useCalculationLogic = ({
         state.age
       );
       
-      // Calculate GET and VET with adjustments
-      const { get, vet, adjustment } = calculateTEE(
-        calculatedBmr, 
+      // Calculate TEE using activity factor
+      const calculatedTee = calculateTEE(
+        calculatedBmr,
         state.activityLevel,
         state.objective
       );
       
-      // Calculate macronutrient distribution
+      // Calculate macronutrients based on TEE and distribution
       const calculatedMacros = calculateMacros(
-        vet, // Use VET (adjusted value) for macro calculation
+        calculatedTee.vet,  // Use VET (adjusted TEE)
         state.carbsPercentage,
         state.proteinPercentage,
         state.fatPercentage,
-        parseFloat(state.weight)
+        weightVal // pass weight in kg for protein per kg calculation
       );
       
-      // Update state with calculations
+      // Update state with calculated values
       setBmr(calculatedBmr);
-      setTee(vet); // We set TEE to the adjusted value (VET)
+      setTee(calculatedTee.vet);
       setMacros(calculatedMacros);
       
-      // Create ID for temporary patient if needed
+      // Generate a temporary patient ID if one doesn't exist
+      const patientId = tempPatientId || uuidv4();
       if (!tempPatientId) {
-        setTempPatientId(`temp_${Date.now()}`);
+        setTempPatientId(patientId);
       }
       
-      // Create consultation-like data structure for compatibility with other modules
-      const consultationData: ConsultationData = {
-        weight: parseFloat(state.weight),
-        height: parseFloat(state.height),
-        age: parseInt(state.age),
-        sex: state.gender === 'male' ? 'M' : 'F',
-        objective: state.objective,
-        profile: state.profile,
-        activityLevel: state.activityLevel,
-        results: {
-          tmb: calculatedBmr,
-          get: get, // Unadjusted value
-          vet: vet, // Adjusted value (GET + adjustment)
-          adjustment: adjustment, // Add the adjustment value explicitly
-          macros: {
-            protein: calculatedMacros.protein,
-            carbs: calculatedMacros.carbs,
-            fat: calculatedMacros.fat,
-            proteinPerKg: calculatedMacros.proteinPerKg
+      // Prepare consultation data
+      if (setConsultationData) {
+        setConsultationData({
+          id: uuidv4(),
+          user_id: user?.id,
+          patient_id: patientId,
+          patient: {
+            id: patientId,
+            name: state.patientName,
+            gender: state.gender === 'male' ? 'M' : 'F',
+            age: parseInt(state.age)
+          },
+          weight: parseFloat(state.weight),
+          height: parseFloat(state.height),
+          objective: state.objective,
+          activityLevel: state.activityLevel,
+          gender: state.gender,
+          created_at: new Date().toISOString(),
+          tipo: state.consultationType,
+          results: {
+            bmr: calculatedBmr,
+            get: calculatedTee.get,
+            adjustment: calculatedTee.adjustment,
+            vet: calculatedTee.vet,
+            macros: {
+              carbs: calculatedMacros.carbs,
+              protein: calculatedMacros.protein,
+              fat: calculatedMacros.fat,
+              proteinPerKg: calculatedMacros.proteinPerKg
+            }
           }
-        }
-      };
+        });
+      }
       
-      // Store the consultation data for use in other parts of the app
-      setConsultationData(consultationData);
-      
-      // Show success toast
+      // Show a toast for success
       toast({
         title: "Cálculo realizado",
-        description: "Os resultados nutricionais foram calculados com sucesso."
+        description: `TMB: ${calculatedBmr} kcal, VET: ${calculatedTee.vet} kcal`,
       });
-      
-    } catch (error) {
-      console.error('Error calculating results:', error);
+    } catch (error: any) {
+      console.error('Calculation error:', error);
       toast({
         title: "Erro no cálculo",
-        description: "Ocorreu um erro ao calcular os resultados. Por favor, tente novamente.",
+        description: error.message || "Ocorreu um erro ao calcular. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
-    } finally {
-      setIsCalculating(false);
     }
-  }, [setBmr, setTee, setMacros, tempPatientId, setTempPatientId, setConsultationData, toast]);
+  }, [setBmr, setTee, setMacros, setConsultationData, toast, user, tempPatientId, setTempPatientId]);
 
-  // Helper function to get the numeric value for activity factor
-  const getActivityFactorValue = (activityLevel: string): number => {
-    const activityFactors: Record<string, number> = {
-      'sedentario': 1.2,
-      'leve': 1.375,
-      'moderado': 1.55,
-      'intenso': 1.725,
-      'muito_intenso': 1.9
-    };
-    
-    return activityFactors[activityLevel.toLowerCase()] || 1.55;
-  };
-
-  return {
-    calculateResults,
-    isCalculating
-  };
+  return { calculateResults };
 };

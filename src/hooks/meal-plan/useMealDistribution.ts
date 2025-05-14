@@ -11,17 +11,17 @@ export const useMealDistribution = (
     initialDistribution.length > 0 
       ? initialDistribution 
       : [
-          { id: uuidv4(), name: 'Café da manhã', percentage: 0.25 },
-          { id: uuidv4(), name: 'Lanche da manhã', percentage: 0.1 },
-          { id: uuidv4(), name: 'Almoço', percentage: 0.3 },
-          { id: uuidv4(), name: 'Lanche da tarde', percentage: 0.1 },
-          { id: uuidv4(), name: 'Jantar', percentage: 0.25 }
+          { id: uuidv4(), name: 'Café da manhã', percent: 25 },
+          { id: uuidv4(), name: 'Lanche da manhã', percent: 10 },
+          { id: uuidv4(), name: 'Almoço', percent: 30 },
+          { id: uuidv4(), name: 'Lanche da tarde', percent: 10 },
+          { id: uuidv4(), name: 'Jantar', percent: 25 }
         ]
   );
 
   // Calculate total percentage
   const totalDistributionPercentage = mealDistribution.reduce(
-    (total, meal) => total + meal.percentage,
+    (total, meal) => total + (meal.percent / 100),
     0
   );
 
@@ -29,7 +29,7 @@ export const useMealDistribution = (
   const handleMealPercentChange = (id: string, newValue: number) => {
     setMealDistribution(prev => 
       prev.map(meal => 
-        meal.id === id ? { ...meal, percentage: newValue / 100 } : meal
+        meal.id === id ? { ...meal, percent: newValue } : meal
       )
     );
   };
@@ -39,7 +39,7 @@ export const useMealDistribution = (
     const newMeal: MealDistributionItem = {
       id: uuidv4(),
       name: `Refeição ${mealDistribution.length + 1}`,
-      percentage: 0.0
+      percent: 0
     };
     setMealDistribution(prev => [...prev, newMeal]);
   };

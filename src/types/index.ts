@@ -1,103 +1,111 @@
-export interface Address {
-  street: string;
-  number: string;
-  city: string;
-  state: string;
-  zipCode: string;
-}
 
-export interface Goal {
-  id: string;
-  name: string;
-  description?: string;
-}
+import { User } from '@supabase/supabase-js';
+import { Json } from '@/integrations/supabase/types';
+
+// Extend the available types with our application-specific types
+export * from './appointment';
+export * from './meal';
 
 export interface Patient {
-  id?: string;
+  id: string;
+  user_id?: string;
   name: string;
   email?: string;
   phone?: string;
-  birthDate?: string;
-  birth_date?: string; // For backward compatibility
+  birth_date?: string;
   gender?: string;
-  weight?: number;
-  height?: number;
-  address?: Address;
-  goals?: {
-    primary?: string;
-    secondary?: string;
-  };
-  status?: 'active' | 'archived';
-  created_at?: string | Date;
-  updated_at?: string | Date;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  avatar_url?: string;
+  address?: string;
   created_at?: string;
   updated_at?: string;
+  notes?: string;
+  goals?: {
+    weight?: number;
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fats?: number;
+    objective?: string;
+    profile?: string;
+  };
+  measurements?: {
+    weight?: number;
+    height?: number;
+    waist?: number;
+    hip?: number;
+  }[];
 }
 
-export interface ConsultationData {
-  id?: string;
-  patient_id?: string;
-  user_id?: string;
-  date?: string;
-  type?: string;
-  consultationType?: string;
-  notes?: string;
-  objective?: string;
-  age?: number;
-  results?: {
-    get: number;  // GET (Gasto Energético Total)
-    gbm?: number; // Gasto Basal Metabólico
-    macros: {
-      protein: number;
-      carbs: number;
-      fat: number;
-    };
-  };
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  total?: number;
+}
+
+export interface PatientFilters {
+  search?: string;
+  status?: 'active' | 'archived' | 'all';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface MealDistributionItem {
+  id: string;
+  name: string;
+  percent: number;
 }
 
 export interface MealPlan {
   id?: string;
   name: string;
   patient_id: string;
-  consultation_id?: string;
+  consultation_id: string;
   calories: number;
-  totalCalories?: number; // For backward compatibility
   protein: number;
-  totalProtein?: number; // For backward compatibility
   carbs: number;
-  totalCarbs?: number; // For backward compatibility
   fat: number;
-  totalFat?: number; // For backward compatibility
-  total_calories?: number; // For backward compatibility
-  total_protein?: number; // For backward compatibility
-  total_carbs?: number; // For backward compatibility
-  total_fats?: number; // For backward compatibility
+  mealDistribution: MealDistributionItem[];
   meals: any[];
-  mealDistribution: any[];
-  date?: string;
   created_at?: string;
-  createdAt?: string; // For backward compatibility
+  updated_at?: string;
+  user_id?: string;
 }
 
-// Extend the MealDistributionItem interface
-export interface MealDistributionItem {
-  id?: string;
-  name: string;
-  percent: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  calories: number; 
-  time?: string;
-  suggestions?: string[];
+export interface ConsultationData {
+  id: string;
+  user_id?: string;
+  patient_id?: string;
+  patient?: {
+    id: string;
+    name: string;
+    gender?: string | null;
+    age?: number;
+  };
+  created_at?: string;
+  weight?: number;
+  height?: number;
+  objective?: string;
+  activityLevel?: string;
+  gender?: string;
+  tipo?: 'primeira_consulta' | 'retorno';
+  results?: {
+    bmr: number;
+    get: number;
+    adjustment: number;
+    vet: number;
+    macros: {
+      carbs: number;
+      protein: number;
+      fat: number;
+      proteinPerKg?: number;
+    }
+  }
 }
 
-export * from './appointment';
+// User profile with extra fields
+export interface UserProfile extends User {
+  name?: string;
+  crn?: string; 
+  specialty?: string;
+  clinic_name?: string;
+  photo_url?: string;
+}

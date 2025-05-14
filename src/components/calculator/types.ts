@@ -1,6 +1,9 @@
 
-import { Json } from '@/integrations/supabase/types';
+import { User } from '@supabase/supabase-js';
+import { ConsultationData } from '@/types';
+import { ToastApi } from '@/hooks/use-toast';
 
+// Calculator state type
 export interface CalculatorState {
   patientName: string;
   gender: string;
@@ -12,66 +15,11 @@ export interface CalculatorState {
   carbsPercentage: string;
   proteinPercentage: string;
   fatPercentage: string;
+  profile: string;
   consultationType: 'primeira_consulta' | 'retorno';
-  profile: string;
 }
 
-export interface CalculatorResults {
-  bmr: number;
-  tee: number;
-  macros: {
-    carbs: number;
-    protein: number;
-    fat: number;
-    proteinPerKg?: number;
-  };
-  tempPatientId?: string | null;
-  status?: 'em_andamento' | 'completo';
-}
-
-export interface UseCalculatorStateProps {
-  toast: any;
-  user: any;
-  setConsultationData: (data: any) => void;
-  activePatient?: any;
-}
-
-export interface ConsultationData {
-  weight: string | number;
-  height: string | number;
-  age: string | number;
-  sex: string;
-  objective: string;
-  profile: string;
-  activityLevel: string;
-  results: {
-    tmb: number;
-    get: number;
-    adjustment?: number;
-    vet?: number; // Add VET property here to match usage in useCalculationLogic.ts
-    macros: {
-      protein: number;
-      carbs: number;
-      fat: number;
-      proteinPerKg?: number;
-    }
-  }
-}
-
-export interface CalculatorResultsProps {
-  bmr: number | null;
-  tee: number | null;
-  macros: { carbs: number; protein: number; fat: number; proteinPerKg?: number } | null;
-  carbsPercentage: string;
-  proteinPercentage: string;
-  fatPercentage: string;
-  handleSavePatient: () => void;
-  handleGenerateMealPlan: () => void;
-  isSavingPatient: boolean;
-  hasPatientName: boolean;
-  user: any;
-}
-
+// Calculator inputs props
 export interface CalculatorInputsProps {
   patientName: string;
   setPatientName: (value: string) => void;
@@ -87,14 +35,78 @@ export interface CalculatorInputsProps {
   setObjective: (value: string) => void;
   activityLevel: string;
   setActivityLevel: (value: string) => void;
-  consultationType: string;
-  setConsultationType: (value: string) => void;
+  consultationType: 'primeira_consulta' | 'retorno';
+  setConsultationType: (value: 'primeira_consulta' | 'retorno') => void;
   profile: string;
   setProfile: (value: string) => void;
-  user: any;
+  user: User | null;
   activePatient?: any;
 }
 
+// Calculator results props
+export interface CalculatorResultsProps {
+  bmr: number | null;
+  tee: number | null;
+  macros: {
+    carbs: number;
+    protein: number;
+    fat: number;
+    proteinPerKg?: number;
+  } | null;
+  carbsPercentage: string;
+  proteinPercentage: string;
+  fatPercentage: string;
+  handleSavePatient: () => void;
+  handleGenerateMealPlan: () => void;
+  isSavingPatient: boolean;
+  hasPatientName: boolean;
+  user: User | null;
+}
+
+// Calculator actions props
+export interface CalculatorActionsProps {
+  isCalculating: boolean;
+  calculateResults: () => void;
+}
+
+// useCalculatorState props
+export interface UseCalculatorStateProps {
+  toast: ToastApi;
+  user: User | null;
+  setConsultationData: (data: ConsultationData) => void;
+  activePatient?: any;
+}
+
+// useCalculationLogic props
+export interface UseCalculationLogicProps {
+  setBmr: (value: number) => void;
+  setTee: (value: number) => void;
+  setMacros: (value: { carbs: number; protein: number; fat: number; proteinPerKg?: number }) => void;
+  tempPatientId: string | null;
+  setTempPatientId: (value: string | null) => void;
+  setConsultationData?: (data: ConsultationData) => void;
+  toast: ToastApi;
+  user: User | null;
+}
+
+// usePatientActions props
+export interface UsePatientActionsProps {
+  calculatorState: CalculatorState;
+  bmr: number | null;
+  tee: number | null;
+  macros: {
+    carbs: number;
+    protein: number;
+    fat: number;
+    proteinPerKg?: number;
+  } | null;
+  tempPatientId: string | null;
+  setConsultationData?: (data: ConsultationData) => void;
+  toast: ToastApi;
+  user: User | null;
+}
+
+// MacroDistributionInputs props
 export interface MacroDistributionInputsProps {
   carbsPercentage: string;
   setCarbsPercentage: (value: string) => void;
@@ -102,12 +114,7 @@ export interface MacroDistributionInputsProps {
   setProteinPercentage: (value: string) => void;
   fatPercentage: string;
   setFatPercentage: (value: string) => void;
-  bmr?: number | null;
-  tee?: number | null;
-  objective?: string;
-}
-
-export interface CalculatorActionsProps {
-  isCalculating: boolean;
-  calculateResults: () => void;
+  bmr: number | null;
+  tee: number | null;
+  objective: string;
 }

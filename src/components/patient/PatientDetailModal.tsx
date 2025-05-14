@@ -1,105 +1,126 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Patient } from '@/types';
-
-// Import the extracted components
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { 
+  Dialog, 
+  DialogContent,
+  DialogHeader,
+} from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PatientModalHeader from './modal/PatientModalHeader';
-import PatientStatusIndicator from './modal/PatientStatusIndicator';
-import PatientActionButtons from './modal/PatientActionButtons';
 import PatientTabNavigation from './modal/PatientTabNavigation';
-import PatientArchiveDialog from './modal/PatientArchiveDialog';
-
-// Import tab content components
 import PatientBasicInfo from './PatientBasicInfo';
 import PatientAppointments from './PatientAppointments';
-import PatientMealPlans from './PatientMealPlans';
 import PatientEvaluations from './PatientEvaluations';
-import PatientEvolution from './PatientEvolution';
 import PatientNotes from './PatientNotes';
-
-// Import custom hook for actions
+import PatientEvolution from './PatientEvolution';
+import PatientMealPlans from './PatientMealPlans';
+import PatientArchiveDialog from './modal/PatientArchiveDialog';
+import PatientActionButtons from './modal/PatientActionButtons';
+import { Patient } from '@/types';
 import { usePatientModalActions } from '@/hooks/patient/usePatientModalActions';
+import { logger } from '@/utils/logger';
 
 interface PatientDetailModalProps {
-  patient: Patient | null;
-  open: boolean;
+  patient: Patient;
+  isOpen: boolean;
   onClose: () => void;
-  onStatusChange?: () => void;
+  onStatusChange: () => void;
 }
 
-const PatientDetailModal = ({ patient, open, onClose, onStatusChange }: PatientDetailModalProps) => {
-  const {
-    isArchiveDialogOpen,
-    setIsArchiveDialogOpen,
-    isLoading,
-    handleEditClick,
-    handleArchiveClick,
-    handleReactivateClick,
-    handleNewAppointment,
-    handleStatusChange
-  } = usePatientModalActions({ onClose, onStatusChange });
+const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
+  patient,
+  isOpen,
+  onClose,
+  onStatusChange
+}) => {
+  const [activeTab, setActiveTab] = useState('info');
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   
-  if (!patient) return null;
+  const { 
+    handleArchivePatient, 
+    handleUpdatePatient,
+    handleUpdatePatientNotes,
+    isArchiving 
+  } = usePatientModalActions(patient, onStatusChange, onClose);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    logger.info(`Changed to tab: ${value}`);
+  };
+
+  // Handle notes update
+  const handleNotesUpdate = async (notes: string) => {
+    try {
+      await handleUpdatePatientNotes(notes);
+    } catch (error) {
+      logger.error('Error updating patient notes:', error);
+    }
+  };
   
   return (
     <>
-      <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          
-          <DialogHeader>
-            <PatientModalHeader patient={patient} onClose={onClose} />
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl p-0 h-[85vh] flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
+            <PatientModalHeader 
+              patient={patient}
+              onArchive={() => setShowArchiveDialog(true)}
+            />
           </DialogHeader>
           
-          <div className="mb-5 flex items-center justify-between">
-            <PatientStatusIndicator status={patient.status} />
+          <Tabs 
+            value={activeTab} 
+            onValueChange={handleTabChange}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            <div className="px-6 border-b">
+              <PatientTabNavigation />
+            </div>
             
-            <PatientActionButtons 
-              patient={patient}
-              onEdit={() => handleEditClick(patient.id)}
-              onArchive={handleArchiveClick}
-              onReactivate={handleReactivateClick}
-              onNewAppointment={handleNewAppointment}
-            />
-          </div>
-          
-          <Tabs defaultValue="info" className="w-full">
-            <PatientTabNavigation />
-            
-            <TabsContent value="info">
-              <PatientBasicInfo patient={patient} />
-            </TabsContent>
-            
-            <TabsContent value="appointments">
-              <PatientAppointments patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="meal-plans">
-              <PatientMealPlans patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="evaluations">
-              <PatientEvaluations patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="evolution">
-              <PatientEvolution patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="notes">
-              <PatientNotes patientId={patient.id} notes={patient.notes} />
-            </TabsContent>
+            <div className="flex-1 overflow-auto p-6">
+              <TabsContent value="info" className="m-0 h-full">
+                <PatientBasicInfo patient={patient} onUpdatePatient={handleUpdatePatient} />
+              </TabsContent>
+              
+              <TabsContent value="appointments" className="m-0 h-full">
+                <PatientAppointments patient={patient} />
+              </TabsContent>
+              
+              <TabsContent value="evaluations" className="m-0 h-full">
+                <PatientEvaluations patient={patient} />
+              </TabsContent>
+              
+              <TabsContent value="evolution" className="m-0 h-full">
+                <PatientEvolution patient={patient} />
+              </TabsContent>
+              
+              <TabsContent value="mealplans" className="m-0 h-full">
+                <PatientMealPlans patient={patient} />
+              </TabsContent>
+              
+              <TabsContent value="notes" className="m-0 h-full">
+                <PatientNotes 
+                  initialNotes={patient.notes || ''} 
+                  onSaveNotes={handleNotesUpdate} 
+                />
+              </TabsContent>
+            </div>
           </Tabs>
+          
+          <div className="px-6 py-4 border-t">
+            <PatientActionButtons onClose={onClose} />
+          </div>
         </DialogContent>
       </Dialog>
       
       <PatientArchiveDialog 
-        patient={patient}
-        open={isArchiveDialogOpen}
-        onOpenChange={setIsArchiveDialogOpen}
-        onConfirm={() => handleStatusChange(patient)}
-        isLoading={isLoading}
+        isOpen={showArchiveDialog}
+        onClose={() => setShowArchiveDialog(false)}
+        onArchive={handleArchivePatient}
+        isArchiving={isArchiving}
+        patientName={patient.name}
       />
     </>
   );

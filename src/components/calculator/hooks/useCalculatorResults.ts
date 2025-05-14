@@ -17,7 +17,7 @@ export const useCalculatorResults = () => {
     return savedResults?.tee || null;
   });
   
-  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number } | null>(() => {
+  const [macros, setMacros] = useState<{ carbs: number, protein: number, fat: number, proteinPerKg?: number } | null>(() => {
     const savedResults = getCalculatorResults();
     return savedResults?.macros || null;
   });
