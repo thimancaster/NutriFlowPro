@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import MealGeneratorSettings from './MealPlan/MealGeneratorSettings';
 import MealGeneratorResults from './MealPlan/MealGeneratorResults';
@@ -7,13 +7,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useMealGeneratorState } from '@/hooks/useMealGeneratorState';
 
+/**
+ * MealPlanGenerator component used for generating meal plans 
+ * based on user settings
+ */
 const MealPlanGenerator = () => {
+  const [activeTab, setActiveTab] = useState<string>('settings');
+  
   const {
     mealPlan,
     generatorSettings,
     handleSettingsChange,
     generateMealPlan
   } = useMealGeneratorState();
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  // Handle generate meal plan and switch to results tab
+  const handleGenerateMealPlan = () => {
+    generateMealPlan();
+    if (mealPlan) {
+      setActiveTab('result');
+    }
+  };
 
   return (
     <div>
@@ -24,8 +43,9 @@ const MealPlanGenerator = () => {
             Crie um plano alimentar personalizado com base nas necessidades do paciente
           </CardDescription>
         </CardHeader>
+        
         <CardContent>
-          <Tabs defaultValue="settings">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="settings">Configurações</TabsTrigger>
               <TabsTrigger value="result" disabled={!mealPlan}>Resultado</TabsTrigger>
@@ -43,9 +63,10 @@ const MealPlanGenerator = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
+        
         <CardFooter className="flex justify-end">
           <Button 
-            onClick={generateMealPlan}
+            onClick={handleGenerateMealPlan}
             className="bg-nutri-green hover:bg-nutri-green-dark"
           >
             Gerar Plano Alimentar

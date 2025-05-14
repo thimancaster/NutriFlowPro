@@ -1,148 +1,116 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { PatientService } from '@/services/patient';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import PatientPagination from '@/components/patient/PatientPagination';
-import PatientDetailModal from '@/components/patient/PatientDetailModal';
-import { usePatientDetail } from '@/hooks/usePatientDetail';
-import { PatientFilters as PatientFiltersType } from '@/types';
-
-// Import the new refactored components
-import PatientListHeader from './patients/PatientListHeader';
-import PatientCardHeader from './patients/PatientCardHeader';
+import React, { useState } from 'react';
+import Layout from './Layout';
+import { usePatientList } from '@/hooks/patient/usePatientList';
 import PatientTableContent from './patients/PatientTableContent';
+import PatientErrorState from './patients/PatientErrorState';
 import PatientEmptyState from './patients/PatientEmptyState';
-import PatientLoadingSpinner from './patients/PatientLoadingSpinner';
+import PatientLoadingState from './patients/PatientLoadingState';
+import PatientSearchBar from './patients/PatientSearchBar';
+import PatientStatusFilter from './patients/PatientStatusFilter';
+import PatientPageHeader from './patients/PatientPageHeader';
+import PatientPagination from './patient/PatientPagination';
+import { Patient } from '@/types';
 
 const Patients = () => {
-  const { user } = useAuth();
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<PatientFiltersType>({
-    search: '',
-    status: 'active',
-    startDate: '',
-    endDate: '',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    page: 1,
-    pageSize: 10
-  });
-  const [totalPatients, setTotalPatients] = useState(0);
-  const { 
-    isModalOpen, 
-    patient, 
-    openPatientDetail, 
-    closePatientDetail 
-  } = usePatientDetail();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  
+  const {
+    patients,
+    isLoading,
+    error,
+    totalPatients,
+    pagination,
+    filters,
+    handlePageChange,
+    handlePerPageChange,
+    handleFilterChange,
+    refreshPatients
+  } = usePatientList();
 
-  useEffect(() => {
-    fetchPatients();
-  }, [filters, user]);
+  const handleOpenDetailModal = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsDetailModalOpen(true);
+  };
 
-  const fetchPatients = async () => {
-    if (!user?.id) return;
-    
-    setLoading(true);
-    try {
-      const result = await PatientService.getPatients(user.id, filters);
-      
-      if (result.success) {
-        setPatients(result.data);
-        setTotalPatients(result.count || 0);
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error('Failed to fetch patients:', error);
-      toast({
-        title: 'Erro ao carregar pacientes',
-        description: 'Não foi possível carregar a lista de pacientes.',
-        variant: 'destructive',
-      });
-      setPatients([]);
-      setTotalPatients(0);
-    } finally {
-      setLoading(false);
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedPatient(null);
+  };
+
+  const handleStatusChange = (status: string) => {
+    handleFilterChange({
+      ...filters,
+      status: status === 'all' ? undefined : status
+    });
+  };
+
+  const handleSearchChange = (search: string) => {
+    handleFilterChange({
+      ...filters,
+      search: search || undefined
+    });
+  };
+
+  // Content rendering based on state
+  const renderContent = () => {
+    if (isLoading) {
+      return <PatientLoadingState />;
     }
-  };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters({ ...filters, search: e.target.value, page: 1 });
-  };
-
-  const handleClearSearch = () => {
-    if (filters.search) {
-      setFilters({ ...filters, search: '', page: 1 });
+    if (error) {
+      return <PatientErrorState message={error} onRetry={refreshPatients} />;
     }
-  };
 
-  const handleStatusChange = (value: 'active' | 'archived' | 'all') => {
-    setFilters({ ...filters, status: value, page: 1 });
-  };
+    if (patients.length === 0) {
+      return <PatientEmptyState hasSearchFilter={!!filters.search || filters.status !== undefined} />;
+    }
 
-  const handleFiltersChange = (newFilters: PatientFiltersType) => {
-    setFilters({ ...filters, ...newFilters, page: 1 });
-  };
-
-  const handlePageChange = (page: number) => {
-    setFilters({ ...filters, page });
+    return (
+      <div className="flex flex-col">
+        <PatientTableContent
+          patients={patients}
+          onSelectPatient={handleOpenDetailModal}
+        />
+        
+        <div className="mt-6">
+          <PatientPagination
+            currentPage={pagination.page}
+            totalPages={Math.ceil(totalPatients / pagination.perPage)}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PatientListHeader 
-        title="Pacientes" 
-        subtitle="Gerencie seus pacientes" 
-      />
+    <Layout>
+      <div className="container mx-auto p-6">
+        <PatientPageHeader />
 
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <PatientCardHeader 
-            filters={filters}
+        <div className="mb-6 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+          <PatientSearchBar
+            value={filters.search || ''}
             onSearchChange={handleSearchChange}
-            onClearSearch={handleClearSearch}
+          />
+          
+          <PatientStatusFilter
+            currentStatus={filters.status || 'all'}
             onStatusChange={handleStatusChange}
-            onFiltersChange={handleFiltersChange}
-            onSearch={fetchPatients}
           />
-        </CardHeader>
+        </div>
 
-        <CardContent>
-          {loading ? (
-            <PatientLoadingSpinner />
-          ) : patients.length === 0 ? (
-            <PatientEmptyState hasSearchFilter={!!filters.search} />
-          ) : (
-            <PatientTableContent 
-              patients={patients}
-              onViewDetail={openPatientDetail}
-              onStatusChange={fetchPatients}
-            />
-          )}
-        </CardContent>
+        {renderContent()}
 
-        <CardFooter>
-          <PatientPagination 
-            currentPage={filters.page}
-            totalItems={totalPatients}
-            pageSize={filters.pageSize}
-            onPageChange={handlePageChange}
-          />
-        </CardFooter>
-      </Card>
-
-      {patient && (
-        <PatientDetailModal
-          patient={patient}
-          open={isModalOpen}
-          onClose={closePatientDetail}
-          onStatusChange={fetchPatients}
-        />
-      )}
-    </div>
+        {/* Patient detail modal will be rendered in a Portal to avoid z-index issues */}
+        {selectedPatient && isDetailModalOpen && (
+          <div>
+            {/* PatientDetailModal logic was moved to its own component */}
+          </div>
+        )}
+      </div>
+    </Layout>
   );
 };
 

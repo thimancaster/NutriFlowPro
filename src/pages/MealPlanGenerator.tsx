@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MealPlan as AppMealPlan, MealDistributionItem } from '@/types'; 
 import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -13,6 +12,7 @@ import MealPlanForm from '@/components/MealPlan/MealPlanForm';
 import MealPlanAssembly from '@/components/MealPlan/MealPlanAssembly';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import useMealDistribution from '@/hooks/meal-plan/useMealDistribution';
+import { MealDistributionItem } from '@/types';
 
 const MealPlanGenerator = () => {
   const { user } = useAuth();
@@ -32,7 +32,7 @@ const MealPlanGenerator = () => {
     handleMealPercentChange,
     addMeal,
     removeMeal
-  } = useMealDistribution();
+  } = useMealDistribution([], consultationData);
   
   useEffect(() => {
     if (currentStep !== 'meal-plan') {
@@ -70,7 +70,7 @@ const MealPlanGenerator = () => {
 
     try {
       // Create a simplified mealplan data object
-      const mealPlanData: AppMealPlan = {
+      const mealPlanData = {
         name: `Plano para ${activePatientData.name}`,
         patient_id: activePatientData.id,
         consultation_id: consultationDataObj.id,
@@ -130,7 +130,7 @@ const MealPlanGenerator = () => {
             <MealPlanForm 
               mealDistribution={mealDistribution}
               totalPercent={totalDistributionPercentage * 100}
-              onMealPercentChange={(id, value) => handleMealPercentChange(id, value)}
+              onMealPercentChange={(id, value) => handleMealPercentChange(id, value as number)}
               onSave={handleSaveMealPlan}
               isSaving={isSaving}
               onAddMeal={addMeal}

@@ -1,27 +1,43 @@
 
 import React from 'react';
-import { PatientFilters } from '@/hooks/usePatient';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export interface PatientEmptyStateProps {
-  filters?: PatientFilters;
+  hasSearchFilter?: boolean;
 }
 
-export const PatientEmptyState: React.FC<PatientEmptyStateProps> = ({ filters }) => {
+const PatientEmptyState: React.FC<PatientEmptyStateProps> = ({ hasSearchFilter = false }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="bg-gray-50 rounded-full p-6 mb-5">
-        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 14h.01M12 17h.01M12 20h.01M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" />
-        </svg>
+    <div className="flex flex-col items-center justify-center py-12 px-4">
+      <div className="text-center">
+        <div className="bg-gray-100 rounded-full p-4 mb-4 inline-flex">
+          <PlusCircle className="h-10 w-10 text-gray-400" />
+        </div>
+        
+        <h3 className="text-xl font-medium mb-2">
+          {hasSearchFilter 
+            ? 'Nenhum paciente encontrado'
+            : 'Nenhum paciente cadastrado'}
+        </h3>
+        
+        <p className="text-gray-500 mb-6 max-w-md">
+          {hasSearchFilter
+            ? 'Tente ajustar seus filtros de busca ou cadastre um novo paciente.'
+            : 'Comece adicionando seu primeiro paciente para iniciar o acompanhamento nutricional.'}
+        </p>
+        
+        <Button
+          onClick={() => navigate('/patients/new')}
+          className="flex items-center bg-nutri-green hover:bg-nutri-green-dark"
+        >
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Adicionar Paciente
+        </Button>
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum paciente encontrado</h3>
-      <p className="text-gray-500 max-w-md mb-6">
-        {filters && filters.searchTerm 
-          ? "Não encontramos pacientes com esse termo de pesquisa. Tente usar palavras-chave diferentes."
-          : filters && filters.status !== 'all'
-          ? `Não há pacientes com o status "${filters.status}" no momento.`
-          : "Você ainda não tem pacientes cadastrados. Comece adicionando um novo paciente agora mesmo!"}
-      </p>
     </div>
   );
 };

@@ -1,96 +1,76 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Patient } from '@/types';
 import { dbCache } from '@/services/dbCache';
+import { Patient, PaginationParams, PatientFilters } from '@/types';
+import { formatPatientFromDb } from '../utils/patientDataUtils';
 
-export interface PatientFilter {
-  searchTerm?: string;
-  status?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  page?: number;
-  perPage?: number;
-}
-
+/**
+ * Get patients from the database with pagination and filtering
+ * @param pagination Pagination parameters (page, perPage)
+ * @param filters Optional filter parameters
+ * @returns Object containing the patients data, error info, and count
+ */
 export const getPatients = async (
-  userId: string,
-  filter: PatientFilter = {}
-): Promise<{data: Patient[] | null, error: Error | null, count: number}> => {
+  pagination: PaginationParams = { page: 0, perPage: 10 },
+  filters: PatientFilters = {}
+): Promise<{ 
+  data: Patient[], 
+  error: Error | null,
+  count: number 
+}> => {
+  const { page, perPage } = pagination;
+  const start = page * perPage;
+  const end = start + perPage - 1;
+
   try {
-    const { searchTerm, status = 'all', sortBy = 'updated_at', sortOrder = 'desc', page = 1, perPage = 10 } = filter;
-    
-    // Calculate pagination values
-    const from = (page - 1) * perPage;
-    const to = from + perPage - 1;
-    
-    // Start building the query
     let query = supabase
       .from('patients')
-      .select('*', { count: 'exact' });
-    
-    // Add user filter
-    query = query.eq('user_id', userId);
-    
-    // Add search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
-      query = query.ilike('name', `%${searchTerm}%`);
+      .select('*', { count: 'exact' })
+      .order('name', { ascending: true });
+
+    // Add filters if they exist
+    if (filters.search) {
+      query = query.ilike('name', `%${filters.search}%`);
     }
-    
-    // Add status filter if not 'all'
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
+
+    if (filters.status === 'active') {
+      query = query.is('archived_at', null);
+    } else if (filters.status === 'archived') {
+      query = query.not('archived_at', 'is', null);
     }
-    
-    // Add sorting and pagination
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' }).range(from, to);
-    
-    // Execute query
+
+    // Add range for pagination
+    query = query.range(start, end);
+
     const { data, error, count } = await query;
-    
+
     if (error) {
-      throw error;
-    }
-    
-    // Process the data to normalize structures
-    const processedData = data?.map(patient => {
-      let goals = patient.goals;
-      let address = patient.address;
-      
-      // Handle goals field
-      if (typeof goals === 'string') {
-        try {
-          goals = JSON.parse(goals);
-        } catch (e) {
-          goals = {};
-        }
-      }
-      
-      // Handle address field
-      if (typeof address === 'string') {
-        try {
-          address = JSON.parse(address);
-        } catch (e) {
-          address = {};
-        }
-      }
-      
+      console.error('Error fetching patients:', error);
       return {
-        ...patient,
-        goals: goals || {},
-        address: address || {}
+        data: [],
+        error: new Error(error.message),
+        count: 0
       };
-    }) as Patient[];
-    
+    }
+
+    // Process the patients data
+    const formattedPatients = data
+      ? data.map(patient => formatPatientFromDb(patient))
+      : [];
+
     return {
-      data: processedData,
+      data: formattedPatients,
       error: null,
       count: count || 0
     };
+
   } catch (error) {
-    console.error('Error fetching patients:', error);
+    console.error('Error in getPatients:', error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error fetching patients";
+    
     return {
-      data: null,
-      error: error as Error,
+      data: [],
+      error: new Error(errorMessage),
       count: 0
     };
   }

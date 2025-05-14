@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import {
   HashRouter,
@@ -32,7 +33,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PatientAnthropometry from './pages/PatientAnthropometry';
 import Index from './pages/Index';
 import AddTestimonial from './pages/AddTestimonial';
-import { seedTestimonials } from './utils/seedTestimonials';
+import { initializeTestimonials } from './utils/seedDataUtils';
 import { supabase } from './integrations/supabase/client';
 import Appointments from './pages/Appointments';
 
@@ -47,10 +48,12 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  // Seed testimonials when the app loads
+  // Only initialize testimonials in development
   useEffect(() => {
-    console.log('App loaded, seeding testimonials...');
-    seedTestimonials();
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Development mode: initializing testimonials if needed');
+      initializeTestimonials();
+    }
   }, []);
 
   // Handle auth state changes, especially for OAuth providers like Google

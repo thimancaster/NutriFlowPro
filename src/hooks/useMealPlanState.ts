@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Patient, ConsultationData, MealPlan } from '@/types';
+import { Patient, ConsultationData, MealPlan, MealDistributionItem } from '@/types';
 import { useMealDistribution } from './meal-plan/useMealDistribution';
 import { useMealPlanActions } from './meal-plan/useMealPlanActions';
 
@@ -24,14 +24,14 @@ export const useMealPlanState = ({
   // Use the meal distribution hook
   const {
     mealDistribution,
-    totalMealPercent,
+    totalDistributionPercentage,
     handleMealPercentChange,
     addMeal,
     removeMeal
-  } = useMealDistribution({
-    initialDistribution: mealPlan?.mealDistribution || [],
+  } = useMealDistribution(
+    mealPlan?.mealDistribution || [], 
     consultationData
-  });
+  );
 
   // Use the meal plan actions hook
   const {
@@ -48,7 +48,7 @@ export const useMealPlanState = ({
 
   return {
     mealDistribution,
-    totalMealPercent,
+    totalMealPercent: totalDistributionPercentage * 100,
     isSaving,
     handleMealPercentChange,
     handleSaveMealPlan,
