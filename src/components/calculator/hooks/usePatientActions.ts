@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { handleGenerateMealPlan as generateMealPlan } from '../handlers/mealPlanHandlers';
-import { CalculatorState } from '../types';
+import { CalculatorState, ToastApi } from '../types';
 
 const AUTO_SAVE_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
 
@@ -25,7 +25,7 @@ export const usePatientActions = ({
   macros: { carbs: number, protein: number, fat: number } | null;
   tempPatientId: string | null;
   setConsultationData: (data: any) => void;
-  toast: any;
+  toast: ToastApi;
   user: any;
 }) => {
   const [isSavingPatient, setIsSavingPatient] = useState(false);
@@ -95,7 +95,7 @@ export const usePatientActions = ({
   
   const handleSavePatient = useCallback(async () => {
     if (!user) {
-      toast({
+      toast.toast({
         title: "Erro",
         description: "Você precisa estar logado para salvar pacientes.",
         variant: "destructive"
@@ -124,13 +124,13 @@ export const usePatientActions = ({
       }
       
       // Show confirmation
-      toast({
+      toast.toast({
         title: "Paciente salvo",
         description: "O paciente foi salvo com sucesso."
       });
     } catch (error) {
       console.error('Error saving patient:', error);
-      toast({
+      toast.toast({
         title: "Erro ao salvar paciente",
         description: "Ocorreu um erro ao salvar o paciente.",
         variant: "destructive"

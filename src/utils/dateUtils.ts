@@ -1,83 +1,62 @@
 
 /**
- * Utility functions for date handling and conversion for Supabase
+ * Utility functions for handling dates and preparing data for Supabase
  */
 
 /**
- * Converts Date objects to ISO strings in an object or array recursively
- * This is useful for Supabase which expects string dates
+ * Converts Date objects to ISO strings for Supabase
+ * @param obj The object containing date fields
+ * @param removeId Whether to remove the id field (for inserts)
+ * @returns A new object with dates converted to strings
  */
-export function convertDatesToISOString(obj: any): any {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
+export const prepareForSupabase = (obj: Record<string, any>, removeId: boolean = false): Record<string, any> => {
+  if (!obj) return {};
   
-  // Handle Date objects
-  if (obj instanceof Date) {
-    return obj.toISOString();
-  }
+  const result: Record<string, any> = { ...obj };
   
-  // Handle arrays
-  if (Array.isArray(obj)) {
-    return obj.map(item => convertDatesToISOString(item));
-  }
-  
-  // Handle objects
-  const result: { [key: string]: any } = {};
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      result[key] = convertDatesToISOString(obj[key]);
+  // Convert Date objects to ISO strings
+  Object.entries(result).forEach(([key, value]) => {
+    // Convert Date objects to ISO strings
+    if (value instanceof Date) {
+      result[key] = value.toISOString();
     }
+    
+    // Handle nested objects (except arrays that might cause infinite recursion)
+    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      result[key] = prepareForSupabase(value, false);
+    }
+  });
+  
+  // Remove ID for insert operations if requested
+  if (removeId && 'id' in result) {
+    delete result.id;
   }
   
   return result;
-}
+};
 
 /**
- * Safely parses ISO date strings back to Date objects
+ * Converts dates from strings to Date objects
+ * @param obj The object containing date fields as strings
+ * @returns A new object with dates as Date objects
  */
-export function parseISODate(dateString: string | null | undefined): Date | undefined {
-  if (!dateString) return undefined;
+export const convertDatesToISOString = (obj: Record<string, any>): Record<string, any> => {
+  if (!obj) return {};
   
-  try {
-    return new Date(dateString);
-  } catch (error) {
-    console.error("Invalid date string:", dateString);
-    return undefined;
-  }
-}
-
-/**
- * Properly formats a date or date string for Supabase queries
- */
-export function formatDateForSupabase(date: Date | string | null | undefined): string | undefined {
-  if (!date) return undefined;
+  const result: Record<string, any> = { ...obj };
   
-  if (typeof date === 'string') {
-    try {
-      return new Date(date).toISOString();
-    } catch (error) {
-      return undefined;
+  // Convert Date objects to ISO strings
+  Object.entries(result).forEach(([key, value]) => {
+    // Convert Date objects to ISO strings
+    if (value instanceof Date) {
+      result[key] = value.toISOString();
     }
-  }
+    
+    // Handle nested objects (except arrays)
+    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      result[key] = convertDatesToISOString(value);
+    }
+  });
   
-  return date.toISOString();
-}
-
-/**
- * Prepares data for Supabase by converting dates to ISO strings and optionally removing ID
- * @param data Object with data to prepare
- * @param removeId Whether to remove the id property (useful for inserts)
- */
-export function prepareForSupabase<T extends Record<string, any>>(data: T, removeId: boolean = false): Omit<T, 'id'> | T {
-  // First convert all dates to ISO strings
-  const processed = convertDatesToISOString(data);
-  
-  // Then remove ID if requested (typically for insert operations)
-  if (removeId && 'id' in processed) {
-    const { id, ...rest } = processed;
-    return rest as Omit<T, 'id'>;
-  }
-  
-  return processed;
-}
+  return result;
+};

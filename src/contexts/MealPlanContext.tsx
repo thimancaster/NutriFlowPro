@@ -65,9 +65,9 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
         total_protein: newMealPlan.total_protein,
         total_carbs: newMealPlan.total_carbs,
         total_fats: newMealPlan.total_fats
-      });
+      }, true);
       
-      // Now using the utility to handle dates and insert data correctly
+      // Now using the utility to handle dates correctly
       const { error } = await supabase
         .from('meal_plans')
         .insert(preparedData);
@@ -88,7 +88,7 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     try {
       // Prepare data for Supabase - removing id and converting dates
-      const preparedData = prepareForSupabase(data, true);
+      const preparedData = prepareForSupabase(data, false);
       
       const { error } = await supabase
         .from('meal_plans')
@@ -124,8 +124,8 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
           updated_at: new Date()
         };
         
-        // Prepare data for Supabase
-        const preparedData = prepareForSupabase(updateData);
+        // Prepare data for Supabase - convert dates to strings
+        const preparedData = prepareForSupabase(updateData, false);
         
         const { error } = await supabase
           .from('meal_plans')
@@ -152,7 +152,7 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
           total_fats: data.fat || 0
         };
         
-        // Prepare data for Supabase - remove id since we'll use it in the equality check
+        // Prepare data for Supabase - remove id and convert dates
         const preparedData = prepareForSupabase(newPlanData, true);
         
         const { error } = await supabase

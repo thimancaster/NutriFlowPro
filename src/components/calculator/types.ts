@@ -1,13 +1,14 @@
 
 import { User } from "@supabase/supabase-js";
 import { ConsultationData } from "@/types";
+import { ToastActionElement } from "@/components/ui/toast";
 
 export interface ToastProps {
   title?: string;
   description?: string;
   variant?: "default" | "destructive";
   duration?: number;
-  action?: React.ReactNode;
+  action?: ToastActionElement;
 }
 
 export interface Toast {

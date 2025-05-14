@@ -15,14 +15,17 @@ export const useAppointmentMutations = () => {
     mutationFn: async (appointment: Partial<Appointment>) => {
       if (!user) throw new Error('User not authenticated');
       
+      // Create a new object with the right structure for Supabase
+      const appointmentData: Record<string, any> = { ...appointment };
+      
       // Ensure we have a type field for Supabase
-      if (!appointment.type && appointment.appointment_type_id) {
-        appointment.type = appointment.appointment_type_id;
+      if (!appointmentData.type && appointment.appointment_type_id) {
+        appointmentData.type = appointment.appointment_type_id;
       }
       
       // Ensure we have a date field for Supabase
-      if (!appointment.date && appointment.start_time) {
-        appointment.date = typeof appointment.start_time === 'string' 
+      if (!appointmentData.date && appointment.start_time) {
+        appointmentData.date = typeof appointment.start_time === 'string' 
           ? appointment.start_time 
           : appointment.start_time.toISOString();
       }
@@ -38,17 +41,16 @@ export const useAppointmentMutations = () => {
             ? parseISO(appointment.start_time) 
             : appointment.start_time;
             
-          appointment.end_time = addMinutes(startTime, appointmentType.duration_minutes);
+          appointmentData.end_time = addMinutes(startTime, appointmentType.duration_minutes);
         }
       }
       
       // Set the user_id for the appointment
-      appointment.user_id = user.id;
+      appointmentData.user_id = user.id;
       
       if (appointment.id) {
-        // Update existing appointment
-        // Prepare data for Supabase by converting dates and removing ID
-        const preparedData = prepareForSupabase({ ...appointment }, false);
+        // Prepare data for update by removing ID
+        const preparedData = prepareForSupabase({ ...appointmentData }, false);
         
         const { data, error } = await supabase
           .from('appointments')
@@ -60,17 +62,16 @@ export const useAppointmentMutations = () => {
         if (error) throw error;
         return data[0];
       } else {
-        // Create new appointment
         // Ensure required fields are present
-        if (!appointment.date) {
+        if (!appointmentData.date) {
           throw new Error('Date is required for appointment creation');
         }
-        if (!appointment.type) {
+        if (!appointmentData.type) {
           throw new Error('Type is required for appointment creation');
         }
         
         // Prepare appointment data for Supabase
-        const preparedData = prepareForSupabase({ ...appointment }, true);
+        const preparedData = prepareForSupabase({ ...appointmentData }, true);
         
         const { data, error } = await supabase
           .from('appointments')

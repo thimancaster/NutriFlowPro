@@ -84,12 +84,6 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     }
   }, [activePatient]);
 
-  // Create wrapper for toast to match expected interface
-  const toastWrapper: ToastApi = {
-    toast,
-    dismiss: (id?: string) => {}
-  };
-
   // Calculation logic
   const { calculateResults } = useCalculationLogic({
     setBmr,
@@ -98,7 +92,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     tempPatientId,
     setTempPatientId,
     setConsultationData,
-    toast: toastWrapper,
+    toast,
     user
   });
   
@@ -114,7 +108,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     macros,
     tempPatientId,
     setConsultationData,
-    toast: toastWrapper,
+    toast,
     user
   });
   
