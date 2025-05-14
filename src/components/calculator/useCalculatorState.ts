@@ -39,8 +39,12 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   // Get the calculator results hooks
   const { bmr, tee, macros, setCarbs, calculateMacros } = useCalculatorResults();
   
-  // Get patient actions
-  const { handleSavePatient: savePatient, handleGenerateMealPlan, isSavingPatient: isPatientSaving } = usePatientActions({ toast });
+  // Get patient actions - properly extract the properties we need
+  const { 
+    handleSavePatient: savePatient, 
+    handleGenerateMealPlan, 
+    isSavingPatient: isPatientSaving 
+  } = usePatientActions({ toast });
   
   // State for selected patient
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
@@ -87,7 +91,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         parseInt(state.proteinPercentage) || 0,
         parseInt(state.carbPercentage) || 0,
         parseInt(state.fatPercentage) || 0,
-        state.weight
+        parseFloat(state.weight.toString()) // Convert string to number
       );
       
       // Return the calculated results
@@ -171,7 +175,13 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
           carbs_percentage: carbsPercentage,
           protein_percentage: proteinPercentage,
           fat_percentage: fatPercentage,
-          patient: { name: calculatorState.patientName }
+          patient: { name: calculatorState.patientName },
+          results: {
+            get: tee,
+            adjustment: 500,
+            vet: tee,
+            macros: macros
+          }
         };
         
         setConsultationData(consultationData);

@@ -28,7 +28,29 @@ export const usePatient = (patientId?: string | null) => {
         
         if (error) throw new Error(error.message);
         
-        setPatient(data as Patient);
+        // Convert the database response to the Patient type
+        const patientData: Patient = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          gender: data.gender,
+          birth_date: data.birth_date,
+          age: data.age,
+          weight: data.weight,
+          height: data.height,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          address: data.address,
+          notes: data.notes,
+          user_id: data.user_id,
+          status: data.status,
+          goals: data.goals,
+          secondaryPhone: data.secondaryPhone,
+          cpf: data.cpf
+        };
+        
+        setPatient(patientData);
       } catch (err: any) {
         console.error('Error fetching patient:', err);
         setError(err);

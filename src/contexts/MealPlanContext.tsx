@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConsultationData, Patient, MealPlan } from '@/types';
@@ -35,8 +36,9 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
 
   async function saveConsultation(data: any) {
     try {
+      // For calculation data instead of consultation_data
       const { data: updatedData, error } = await supabase
-        .from('consultation_data')
+        .from('calculations')
         .upsert(data, { onConflict: 'id' })
         .select()
         .single();
@@ -52,17 +54,19 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
     }
   }
 
-  async function saveMealPlan(consultationId: string, mealPlan: MealPlan) {
+  async function saveMealPlan(consultationId: string, mealPlanData: MealPlan) {
     try {
       // Format date for Supabase
       const formattedData = {
-        ...mealPlan,
-        date: format(mealPlan.date, 'yyyy-MM-dd'),
-        meals: JSON.stringify(mealPlan.meals),
-        total_calories: Number(mealPlan.total_calories),
-        total_protein: Number(mealPlan.total_protein),
-        total_carbs: Number(mealPlan.total_carbs), 
-        total_fats: Number(mealPlan.total_fats),
+        id: mealPlanData.id,
+        user_id: mealPlanData.user_id,
+        patient_id: mealPlanData.patient_id,
+        date: format(mealPlanData.date, 'yyyy-MM-dd'),
+        meals: JSON.stringify(mealPlanData.meals),
+        total_calories: Number(mealPlanData.total_calories),
+        total_protein: Number(mealPlanData.total_protein),
+        total_carbs: Number(mealPlanData.total_carbs), 
+        total_fats: Number(mealPlanData.total_fats),
         consultation_id: consultationId
       };
       
@@ -79,32 +83,6 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
       return { success: false, error };
     }
   }
-
-// Example of a function that would fix the insert issue:
-async function saveMealPlan(mealPlanData: Record<string, any>) {
-  try {
-    // Format date for Supabase
-    const formattedData = {
-      ...mealPlanData,
-      date: format(mealPlanData.date, 'yyyy-MM-dd'),
-      meals: JSON.stringify(mealPlanData.meals),
-      total_calories: Number(mealPlanData.total_calories),
-      total_protein: Number(mealPlanData.total_protein),
-      total_carbs: Number(mealPlanData.total_carbs), 
-      total_fats: Number(mealPlanData.total_fats)
-    };
-    
-    const { data, error } = await supabase
-      .from('meal_plans')
-      .insert(formattedData);
-      
-    if (error) throw error;
-    return { success: true, data };
-  } catch (error) {
-    console.error('Error saving meal plan:', error);
-    return { success: false, error };
-  }
-}
 
   const value: MealPlanContextProps = {
     activePatient,

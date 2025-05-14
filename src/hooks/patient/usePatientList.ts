@@ -1,143 +1,171 @@
 
-import { useCallback, useEffect, useState } from 'react';
-import { getSortedPatients } from '@/services/patient';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFilters, PaginationParams } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 
-// Default filters for the patient list
-const defaultFilters: PatientFilters = {
-  status: 'active',
-  sortBy: 'name',
-  sortOrder: 'asc',
-  page: 1,
-  pageSize: 10
-};
-
-export const usePatientList = (initialFilters?: Partial<PatientFilters>) => {
+export const usePatientList = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [totalPatients, setTotalPatients] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  
+  // Initialize with default filters
   const [filters, setFilters] = useState<PatientFilters>({
-    ...defaultFilters,
-    ...initialFilters
+    status: 'active',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    page: 1,
+    pageSize: 10
+  });
+  
+  // Pagination state
+  const [pagination, setPagination] = useState<PaginationParams>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    offset: 0
   });
 
-  // Convert PatientFilters to PaginationParams
-  const getPaginationParams = useCallback((filters: PatientFilters): PaginationParams => {
-    const { page = 1, pageSize = 10 } = filters;
-    const offset = (page - 1) * pageSize;
-    return {
-      limit: pageSize,
-      offset,
-      page,
-      perPage: pageSize
-    };
-  }, []);
+  useEffect(() => {
+    if (user) {
+      fetchPatients();
+    }
+  }, [user, filters]);
 
-  // Function to fetch patients
-  const fetchPatients = useCallback(async () => {
-    if (!user) return;
+  // Fetch patients based on current filters
+  const fetchPatients = async () => {
+    if (!user?.id) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const paginationParams = getPaginationParams(filters);
+      // Calculate offset based on page and pageSize
+      const offset = ((filters.page || 1) - 1) * (filters.pageSize || 10);
       
-      const result = await getSortedPatients(
-        user.id,
-        filters.status || 'active',
-        filters.sortBy || 'name',
-        filters.sortOrder || 'asc',
-        filters.search || '',
-        filters.startDate,
-        filters.endDate,
-        paginationParams
-      );
+      // Start building the query
+      let query = supabase
+        .from('patients')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
       
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch patients');
+      // Apply status filter if not set to 'all'
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
       }
       
-      setPatients(result.data.patients);
-      setTotalPatients(result.data.total);
+      // Apply search filter if provided
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
+      }
+      
+      // Apply date range filters if provided
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate);
+      }
+      
+      if (filters.endDate) {
+        // Add one day to include the end date fully
+        const endDate = new Date(filters.endDate);
+        endDate.setDate(endDate.getDate() + 1);
+        query = query.lt('created_at', endDate.toISOString().split('T')[0]);
+      }
+      
+      // Apply sorting
+      if (filters.sortBy) {
+        query = query.order(filters.sortBy, { 
+          ascending: filters.sortOrder === 'asc' 
+        });
+      }
+      
+      // Apply pagination
+      query = query.range(offset, offset + (filters.pageSize || 10) - 1);
+      
+      // Execute the query
+      const { data, error, count } = await query;
+      
+      if (error) throw new Error(error.message);
+      
+      // Update pagination with total count
+      setPagination({
+        page: filters.page || 1,
+        limit: filters.pageSize || 10,
+        total: count || 0,
+        offset
+      });
+      
+      setPatients(data || []);
     } catch (err: any) {
       console.error('Error fetching patients:', err);
-      setError(err.message || 'Failed to fetch patients');
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch patients',
-        variant: 'destructive',
-      });
+      setError(err);
     } finally {
       setIsLoading(false);
     }
-  }, [user, filters, toast, getPaginationParams]);
-  
-  // Initial fetch and when filters change
-  useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
-  
-  // Handle filter changes
-  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
-    setFilters(prevFilters => ({
-      ...prevFilters,
-      ...newFilters,
-      // Reset to first page if filters other than pagination change
-      ...(Object.keys(newFilters).some(key => !['page', 'pageSize'].includes(key)) 
-        ? { page: 1 }
-        : {}
-      )
-    }));
   };
   
-  // Handle page change
+  // Function to update filters
+  const updateFilters = (newFilters: Partial<PatientFilters>) => {
+    // Reset to page 1 when changing filters
+    if (newFilters.search || newFilters.status || newFilters.sortBy || 
+        newFilters.sortOrder || newFilters.startDate || newFilters.endDate) {
+      newFilters.page = 1;
+    }
+    
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+  
+  // Function to handle page changes
   const handlePageChange = (page: number) => {
-    handleFilterChange({ page });
+    updateFilters({ page });
   };
   
-  // Handle per page change
-  const handlePerPageChange = (pageSize: number) => {
-    handleFilterChange({ pageSize, page: 1 });
+  // Function to handle page size changes
+  const handlePageSizeChange = (pageSize: number) => {
+    updateFilters({ pageSize, page: 1 });
   };
   
-  // Handle status change (archive/unarchive)
-  const handleStatusChange = () => {
-    // Refetch without changing filters to reflect the status change
-    fetchPatients();
+  // Calculate total pages
+  const totalPages = Math.ceil((pagination.total || 0) / (filters.pageSize || 10));
+  
+  // Function to archive/unarchive a patient
+  const togglePatientStatus = async (patientId: string, newStatus: 'active' | 'archived') => {
+    if (!user?.id) return { success: false, error: 'Not authenticated' };
+    
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .update({ status: newStatus })
+        .eq('id', patientId)
+        .eq('user_id', user.id);
+      
+      if (error) throw new Error(error.message);
+      
+      // Refresh the patient list
+      await fetchPatients();
+      
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error toggling patient status:', err);
+      return { success: false, error: err.message };
+    }
   };
-  
-  const isError = error !== null;
-  
-  // Add pagination object with BOTH sets of property names for compatibility
-  const pagination = {
-    currentPage: filters.page || 1,
-    totalPages: Math.ceil(totalPatients / (filters.pageSize || 10)),
-    itemsPerPage: filters.pageSize || 10,
-    totalItems: totalPatients,
-    // Also include these properties to match what components expect:
-    page: filters.page || 1,
-    limit: filters.pageSize || 10
-  };
-  
+
   return {
     patients,
-    totalPatients,
     isLoading,
-    isError,
     error,
     filters,
-    refetch: fetchPatients,
-    refreshPatients: fetchPatients, // Alias for refetch
-    pagination,
-    handleFilterChange,
+    pagination: {
+      page: filters.page || 1,
+      pageSize: filters.pageSize || 10,
+      total: pagination.total || 0,
+      totalPages
+    },
+    updateFilters,
     handlePageChange,
-    handlePerPageChange,
-    handleStatusChange
+    handlePageSizeChange,
+    fetchPatients,
+    togglePatientStatus
   };
 };

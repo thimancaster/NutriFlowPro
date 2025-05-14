@@ -3,8 +3,9 @@ import { useAppointments as useAppointmentQuery } from './appointments/useAppoin
 import { useAppointmentActions } from './appointments/useAppointmentActions';
 import { useAppointmentMutations } from './appointments/useAppointmentMutations';
 
-// Update the hook to accept a patientId parameter
+// Update the hook to accept an optional patientId parameter
 export const useAppointments = (patientId?: string) => {
+  // Pass the patientId to the query hook
   const query = useAppointmentQuery(patientId);
   const {
     data: appointments = [],
@@ -51,13 +52,13 @@ export const useAppointments = (patientId?: string) => {
   const saveAppointment = async (appointmentData: any) => {
     try {
       if (appointmentData.id) {
-        await updateAppointment.mutate({
+        await updateAppointment.mutateAsync({
           id: appointmentData.id,
           data: appointmentData
         });
         return { success: true };
       } else {
-        await createAppointment.mutate(appointmentData);
+        await createAppointment.mutateAsync(appointmentData);
         return { success: true };
       }
     } catch (error: any) {
@@ -67,7 +68,7 @@ export const useAppointments = (patientId?: string) => {
   
   const handleDeleteAppointment = async (id: string) => {
     try {
-      await deleteAppointment.mutate(id);
+      await deleteAppointment.mutateAsync(id);
       return { success: true };
     } catch (error: any) {
       return { success: false, error };
@@ -76,7 +77,7 @@ export const useAppointments = (patientId?: string) => {
   
   const handleCancelAppointment = async (id: string) => {
     try {
-      await cancelAppointment.mutate(id);
+      await cancelAppointment.mutateAsync(id);
       return { success: true };
     } catch (error: any) {
       return { success: false, error };

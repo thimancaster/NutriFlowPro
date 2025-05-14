@@ -53,7 +53,7 @@ export const usePatientFormSubmit = ({
 
     try {
       // Format data for Supabase
-      const patientData = {
+      const patientData: any = {
         name: formData.name,
         gender: formData.sex,
         birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null, // Format as YYYY-MM-DD

@@ -38,6 +38,12 @@ export const useMealPlanActions = ({
     setIsSaving(true);
 
     try {
+      // Convert array to object with IDs as keys
+      const mealDistributionObject: Record<string, MealDistributionItem> = {};
+      mealDistribution.forEach(meal => {
+        mealDistributionObject[meal.id] = meal;
+      });
+      
       // Prepare the meal plan data
       const mealPlanData = {
         id: mealPlan?.id || uuidv4(),
@@ -56,7 +62,7 @@ export const useMealPlanActions = ({
           fatPercent: 0,     // This would need to be calculated
           foods: [] // Initially empty, to be filled later
         })),
-        mealDistribution,
+        mealDistribution: mealDistributionObject,
         total_calories: consultationData.results.vet || 0,
         total_protein: consultationData.results.macros.protein || 0,
         total_carbs: consultationData.results.macros.carbs || 0,

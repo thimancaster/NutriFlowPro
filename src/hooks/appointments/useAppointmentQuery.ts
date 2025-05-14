@@ -1,154 +1,50 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { Appointment } from '@/types';
 
-export const usePatientAppointments = (patientId: string) => {
-  const { user } = useAuth();
+// Function to fetch appointments
+const fetchAppointments = async (userId?: string, patientId?: string) => {
+  if (!userId) return [];
   
-  return useQuery({
-    queryKey: ['patientAppointments', patientId],
-    queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          user_id,
-          patient_id,
-          patients:patient_id (name),
-          type,
-          status,
-          notes,
-          date,
-          created_at,
-          updated_at
-        `)
-        .eq('user_id', user.id)
-        .eq('patient_id', patientId)
-        .order('date', { ascending: false });
-        
-      if (error) throw error;
-      
-      // Map to return proper patient name
-      return data.map(appointment => {
-        // Create a properly typed object
-        const result: Partial<Appointment> = {
-          ...appointment,
-          patientName: appointment.patients?.name
-        };
-        
-        return result as Appointment;
-      });
-    },
-    enabled: !!user && !!patientId
-  });
+  // Start building the query
+  let query = supabase
+    .from('appointments')
+    .select(`
+      *,
+      patients(name)
+    `)
+    .eq('user_id', userId);
+  
+  // Filter by patient_id if provided
+  if (patientId) {
+    query = query.eq('patient_id', patientId);
+  }
+  
+  // Order by date, most recent first
+  query = query.order('date', { ascending: false });
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  // Transform the data to include patientName
+  return data.map((appt: any) => ({
+    ...appt,
+    patientName: appt.patients?.name
+  })) as Appointment[];
 };
 
-export const useMonthlyAppointments = (date: Date = new Date()) => {
-  const { user } = useAuth();
-  const monthStart = startOfMonth(date);
-  const monthEnd = endOfMonth(date);
-  
-  // Format the dates for the query
-  const startDate = format(monthStart, 'yyyy-MM-dd');
-  const endDate = format(monthEnd, 'yyyy-MM-dd');
-  
-  return useQuery({
-    queryKey: ['appointments', 'monthly', startDate, endDate],
-    queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          user_id,
-          patient_id,
-          patients:patient_id (name),
-          type,
-          status,
-          notes,
-          date,
-          created_at,
-          updated_at
-        `)
-        .eq('user_id', user.id)
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: true });
-        
-      if (error) throw error;
-      
-      // Map to return proper patient name and parse dates
-      return data.map(appointment => {
-        // Create a properly typed object
-        const result: Partial<Appointment> = {
-          ...appointment,
-          patientName: appointment.patients?.name,
-        };
-
-        // Add start_time and end_time for compatibility (mapped from date)
-        if (appointment.date) {
-          try {
-            const dateObj = parseISO(appointment.date);
-            // Add as string to match the API's expectations
-            result.start_time = appointment.date;
-            result.end_time = appointment.date;
-          } catch (e) {
-            console.error("Error parsing date:", e);
-          }
-        }
-
-        return result as Appointment;
-      });
-    },
-    enabled: !!user
-  });
-};
-
-export const useAppointments = () => {
+// Hook to use appointment query
+export const useAppointmentQuery = (patientId?: string) => {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['appointments'],
-    queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          user_id,
-          patient_id,
-          patients:patient_id (name),
-          type,
-          status,
-          notes,
-          date,
-          created_at,
-          updated_at
-        `)
-        .eq('user_id', user.id)
-        .order('date', { ascending: true });
-        
-      if (error) throw error;
-      
-      // Map to return proper patient name
-      return data.map(appointment => {
-        const appointmentData: Partial<Appointment> = {
-          ...appointment,
-          patientName: appointment.patients?.name,
-          // Add appointment_type_id mapped from type for compatibility
-          appointment_type_id: appointment.type
-        };
-        
-        return appointmentData as Appointment;
-      });
-    },
-    enabled: !!user
+    queryKey: ['appointments', user?.id, patientId],
+    queryFn: () => fetchAppointments(user?.id, patientId),
+    enabled: !!user?.id
   });
 };

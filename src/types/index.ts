@@ -22,11 +22,11 @@ export interface ConsultationData {
     name: string;
     age?: number;
   };
-  results?: {
+  results: {
     get: number;
     adjustment: number;
     vet: number;
-    macros?: {
+    macros: {
       protein: number;
       carbs: number;
       fat: number;
@@ -41,13 +41,13 @@ export interface Patient {
   email?: string;
   phone?: string;
   gender?: string;
-  birth_date?: Date;
+  birth_date?: string; // Changed from Date to string to match database
   age?: number;
   weight?: number;
   height?: number;
-  created_at?: Date;
-  updated_at?: Date;
-  address?: string;
+  created_at?: string; // Changed from Date to string
+  updated_at?: string; // Changed from Date to string
+  address?: any; // Changed from string to any to support object properties
   notes?: string;
   user_id?: string;
   status?: 'active' | 'archived';
@@ -68,6 +68,7 @@ export interface PaginationParams {
   page: number;
   limit: number;
   total?: number;
+  offset?: number; // Added missing property
 }
 
 export interface PatientFilters {
@@ -75,6 +76,10 @@ export interface PatientFilters {
   status?: 'active' | 'archived' | 'all';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  startDate?: string; // Added missing property
+  endDate?: string; // Added missing property
+  page?: number; // Added missing property
+  pageSize?: number; // Added missing property
 }
 
 export interface AddressDetails {

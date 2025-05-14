@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Patient } from '@/types';
+import { Patient, AddressDetails } from '@/types';
 import { useAddressState } from './useAddressState';
 
 interface FormState {
@@ -50,15 +50,16 @@ export const usePatientFormState = (editPatient?: Patient, initialData?: any) =>
         status: editPatient.status || 'active',
       });
 
-      if (editPatient.address) {
+      if (editPatient.address && typeof editPatient.address === 'object') {
+        const addressObj = editPatient.address as AddressDetails;
         setAddress({
-          cep: editPatient.address.cep || '',
-          street: editPatient.address.street || '',
-          number: editPatient.address.number || '',
-          complement: editPatient.address.complement || '',
-          neighborhood: editPatient.address.neighborhood || '',
-          city: editPatient.address.city || '',
-          state: editPatient.address.state || '',
+          cep: addressObj.cep || '',
+          street: addressObj.street || '',
+          number: addressObj.number || '',
+          complement: addressObj.complement || '',
+          neighborhood: addressObj.neighborhood || '',
+          city: addressObj.city || '',
+          state: addressObj.state || '',
         });
       }
 
