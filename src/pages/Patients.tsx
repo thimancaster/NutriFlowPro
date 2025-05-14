@@ -81,12 +81,14 @@ const Patients = () => {
         </Card>
         
         {/* Patient Detail Modal */}
-        <PatientDetailModal
-          open={isModalOpen}
-          onClose={closePatientDetail}
-          patient={patient}
-          onStatusChange={handleStatusChange}
-        />
+        {patient && (
+          <PatientDetailModal
+            open={isModalOpen}
+            onClose={closePatientDetail}
+            patient={patient}
+            onStatusChange={handleStatusChange}
+          />
+        )}
       </div>
     </div>
   );

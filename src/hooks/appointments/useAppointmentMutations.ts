@@ -1,166 +1,112 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Appointment } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { parseISO, addMinutes } from 'date-fns';
+import { AppointmentType, Appointment } from '@/types';
 
 export const useAppointmentMutations = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Create appointment mutation
-  const createAppointmentMutation = useMutation({
-    mutationFn: async (appointmentData: Partial<Appointment>) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Format dates to ISO string if they are Date objects
-      const startTime = typeof appointmentData.start_time === 'object' 
-        ? format(appointmentData.start_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX") 
-        : appointmentData.start_time;
-        
-      const endTime = typeof appointmentData.end_time === 'object'
-        ? format(appointmentData.end_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX")
-        : appointmentData.end_time;
-
-      // Get the date from the start_time for the date field
-      const date = typeof startTime === 'string' ? startTime.split('T')[0] : '';
-
-      // Map the appointment data to match the database structure
-      const dbAppointmentData = {
-        user_id: user.id,
-        patient_id: appointmentData.patient_id,
-        title: appointmentData.title,
-        start_time: startTime,
-        end_time: endTime,
-        duration_minutes: appointmentData.duration_minutes,
-        notes: appointmentData.notes,
-        status: appointmentData.status || 'scheduled',
-        type: appointmentData.title || 'consultation', // Use title as type if not provided
-        date: date // Use start_time date part for the date field
-      };
-
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert(dbAppointmentData)
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      return data[0];
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    }
-  });
-
-  // Update appointment mutation
-  const updateAppointmentMutation = useMutation({
-    mutationFn: async ({ id, ...appointmentData }: { id: string; [key: string]: any }) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Format dates to ISO string if they are Date objects
-      const startTime = typeof appointmentData.start_time === 'object' 
-        ? format(appointmentData.start_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX") 
-        : appointmentData.start_time;
-        
-      const endTime = typeof appointmentData.end_time === 'object'
-        ? format(appointmentData.end_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX")
-        : appointmentData.end_time;
+  // Create or update appointment
+  const saveAppointment = useMutation({
+    mutationFn: async (appointment: Partial<Appointment>) => {
+      if (!user) throw new Error('User not authenticated');
       
-      // Get the date from the start_time for the date field
-      const date = typeof startTime === 'string' ? startTime.split('T')[0] : '';
-
-      // Map the appointment data to match the database structure
-      const dbAppointmentData = {
-        patient_id: appointmentData.patient_id,
-        title: appointmentData.title,
-        start_time: startTime,
-        end_time: endTime,
-        duration_minutes: appointmentData.duration_minutes,
-        notes: appointmentData.notes,
-        status: appointmentData.status,
-        type: appointmentData.title || 'consultation', // Use title as type if not provided
-        date: date // Use start_time date part for the date field
-      };
-
-      const { data, error } = await supabase
-        .from('appointments')
-        .update(dbAppointmentData)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select();
-
-      if (error) {
-        throw error;
+      // Calculate end_time if it doesn't exist and we have appointment_type_id and start_time
+      if (appointment.appointment_type_id && appointment.start_time && !appointment.end_time) {
+        // Find the appointment type in the client-side cache
+        const appointmentTypes = (window.appointmentTypes || []) as AppointmentType[];
+        const appointmentType = appointmentTypes.find(type => type.id === appointment.appointment_type_id);
+        
+        if (appointmentType) {
+          const startTime = typeof appointment.start_time === 'string' 
+            ? parseISO(appointment.start_time) 
+            : appointment.start_time;
+            
+          appointment.end_time = addMinutes(startTime, appointmentType.duration_minutes);
+        }
       }
-
-      return data[0];
+      
+      // Set the user_id for the appointment
+      appointment.user_id = user.id;
+      
+      if (appointment.id) {
+        // Update existing appointment
+        const { data, error } = await supabase
+          .from('appointments')
+          .update(appointment)
+          .eq('id', appointment.id)
+          .eq('user_id', user.id)
+          .select();
+          
+        if (error) throw error;
+        return data[0];
+      } else {
+        // Create new appointment
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert({
+            ...appointment,
+            user_id: user.id
+          })
+          .select();
+          
+        if (error) throw error;
+        return data[0];
+      }
     },
     onSuccess: () => {
+      // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
     }
   });
-
-  // Delete appointment mutation
-  const deleteAppointmentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) {
-        throw error;
-      }
-
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    }
-  });
-
-  // Cancel appointment mutation (update status to cancelled)
-  const cancelAppointmentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
+  
+  // Cancel appointment
+  const cancelAppointment = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('appointments')
         .update({ status: 'canceled' })
-        .eq('id', id)
+        .eq('id', appointmentId)
         .eq('user_id', user.id)
         .select();
-
-      if (error) {
-        throw error;
-      }
-
+        
+      if (error) throw error;
       return data[0];
     },
     onSuccess: () => {
+      // Invalidate relevant queries to refetch data
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+    }
+  });
+  
+  // Delete appointment
+  const deleteAppointment = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId)
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      return { id: appointmentId };
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
     }
   });
   
   return {
-    createAppointmentMutation,
-    updateAppointmentMutation,
-    deleteAppointmentMutation,
-    cancelAppointmentMutation
+    saveAppointment,
+    cancelAppointment,
+    deleteAppointment
   };
 };

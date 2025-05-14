@@ -31,3 +31,4 @@ export type AppointmentType = {
   duration_minutes: number;
   color?: string;
 };
+

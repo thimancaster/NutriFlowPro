@@ -21,7 +21,7 @@ export interface User {
 export interface Patient {
   id: string;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
   name: string;
   email?: string | null;
   phone?: string | null;
@@ -45,6 +45,8 @@ export interface PatientFilters {
   endDate?: string;
   page?: number;
   pageSize?: number;
+  limit?: number;
+  offset?: number;
   [key: string]: any;
 }
 

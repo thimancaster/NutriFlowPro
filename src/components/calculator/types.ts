@@ -81,7 +81,9 @@ export interface MacroDistributionInputsProps {
   setProteinPercentage: (value: string) => void;
   fatPercentage: string;
   setFatPercentage: (value: string) => void;
-  // Remove bmr, tee, and objective props as they're not used in the component
+  bmr: number | null;
+  tee: number | null;
+  objective: string;
 }
 
 export interface UseCalculationLogicProps {
@@ -94,4 +96,3 @@ export interface UseCalculationLogicProps {
   tempPatientId: string | null;
   setTempPatientId: (value: string | null) => void;
 }
-

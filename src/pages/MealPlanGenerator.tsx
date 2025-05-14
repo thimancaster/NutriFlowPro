@@ -11,7 +11,7 @@ import { useConsultation } from '@/contexts/ConsultationContext';
 import MealPlanForm from '@/components/MealPlan/MealPlanForm';
 import MealPlanAssembly from '@/components/MealPlan/MealPlanAssembly';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import useMealDistribution from '@/hooks/meal-plan/useMealDistribution';
+import { useMealDistribution } from '@/hooks/meal-plan/useMealDistribution';
 import { MealDistributionItem } from '@/types';
 
 const MealPlanGenerator = () => {
@@ -87,7 +87,16 @@ const MealPlanGenerator = () => {
       
       // Update the meal plan in context
       if (mealPlanId) {
-        setMealPlan({...mealPlanData, id: mealPlanId});
+        setMealPlan({
+          ...mealPlanData, 
+          id: mealPlanId,
+          user_id: user?.id || '',
+          date: new Date(),
+          total_calories: consultationDataObj.results?.get || 0,
+          total_protein: consultationDataObj.results?.macros.protein || 0,
+          total_carbs: consultationDataObj.results?.macros.carbs || 0,
+          total_fats: consultationDataObj.results?.macros.fat || 0
+        });
       }
       
       toast({
@@ -129,7 +138,7 @@ const MealPlanGenerator = () => {
           <TabsContent value="distribution">
             <MealPlanForm 
               mealDistribution={mealDistribution}
-              totalPercent={totalDistributionPercentage * 100}
+              totalMealPercent={totalDistributionPercentage * 100}
               onMealPercentChange={(id, value) => handleMealPercentChange(id, value as number)}
               onSave={handleSaveMealPlan}
               isSaving={isSaving}
@@ -141,11 +150,11 @@ const MealPlanGenerator = () => {
           
           <TabsContent value="assembly">
             <MealPlanAssembly 
-              totalCalories={consultationData?.results?.get || 0}
+              totalCalories={consultationDataObj?.results?.get || 0}
               macros={{
-                protein: consultationData?.results?.macros.protein || 0,
-                carbs: consultationData?.results?.macros.carbs || 0, 
-                fat: consultationData?.results?.macros.fat || 0
+                protein: consultationDataObj?.results?.macros.protein || 0,
+                carbs: consultationDataObj?.results?.macros.carbs || 0, 
+                fat: consultationDataObj?.results?.macros.fat || 0
               }}
             />
           </TabsContent>

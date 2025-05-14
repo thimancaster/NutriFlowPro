@@ -1,82 +1,87 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { appointmentKeys } from './queryKeys';
-import { AppointmentService } from '@/services/appointmentService';
+import { useState } from 'react';
+import { useAppointmentMutations } from './useAppointmentMutations';
+import { useToast } from '@/hooks/use-toast';
 import { Appointment } from '@/types';
 
 export const useAppointmentActions = () => {
-  const queryClient = useQueryClient();
-
-  // Create appointment mutation
-  const createMutation = useMutation({
-    mutationFn: (appointmentData: Partial<Appointment>) => 
-      AppointmentService.createAppointment(appointmentData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const { saveAppointment, cancelAppointment } = useAppointmentMutations();
+  
+  // Open dialog to create a new appointment
+  const handleNewAppointment = () => {
+    setSelectedAppointment(null);
+    setFormDialogOpen(true);
+  };
+  
+  // Open dialog to edit an existing appointment
+  const handleEditAppointment = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setFormDialogOpen(true);
+  };
+  
+  // Close the form dialog
+  const handleCloseDialog = () => {
+    setFormDialogOpen(false);
+    setSelectedAppointment(null);
+  };
+  
+  // Save appointment (create or update)
+  const handleSaveAppointment = async (data: Partial<Appointment>) => {
+    try {
+      await saveAppointment.mutateAsync({
+        ...data,
+        id: selectedAppointment?.id
+      });
+      
+      toast({
+        title: selectedAppointment ? 'Agendamento atualizado' : 'Agendamento criado',
+        description: selectedAppointment 
+          ? 'As alterações foram salvas com sucesso.' 
+          : 'O novo agendamento foi criado com sucesso.',
+      });
+      
+      handleCloseDialog();
+    } catch (error: any) {
+      console.error('Error saving appointment:', error);
+      toast({
+        title: 'Erro',
+        description: `Não foi possível salvar o agendamento: ${error.message}`,
+        variant: 'destructive',
+      });
     }
-  });
-
-  // Update appointment mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: Partial<Appointment> }) => 
-      AppointmentService.updateAppointment(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
+  };
+  
+  // Cancel an appointment
+  const handleCancelAppointment = async (appointmentId: string) => {
+    try {
+      await cancelAppointment.mutateAsync(appointmentId);
+      
+      toast({
+        title: 'Agendamento cancelado',
+        description: 'O agendamento foi cancelado com sucesso.',
+      });
+    } catch (error: any) {
+      console.error('Error canceling appointment:', error);
+      toast({
+        title: 'Erro',
+        description: `Não foi possível cancelar o agendamento: ${error.message}`,
+        variant: 'destructive',
+      });
     }
-  });
-
-  // Cancel appointment mutation
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => 
-      AppointmentService.updateAppointment(id, { status: 'canceled' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
-    }
-  });
-
-  // Delete appointment mutation
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => 
-      AppointmentService.deleteAppointment(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
-    }
-  });
-
-  // Function to create a new appointment
-  const createAppointment = async (appointmentData: Partial<Appointment>) => {
-    return createMutation.mutateAsync(appointmentData);
   };
-
-  // Function to update an appointment
-  const updateAppointment = async (id: string, data: Partial<Appointment>) => {
-    return updateMutation.mutateAsync({ id, data });
-  };
-
-  // Function to cancel an appointment
-  const cancelAppointment = async (id: string) => {
-    return cancelMutation.mutateAsync(id);
-  };
-
-  // Function to delete an appointment
-  const deleteAppointment = async (id: string) => {
-    return deleteMutation.mutateAsync(id);
-  };
-
-  // Function to refetch appointments
-  const fetchAppointments = () => {
-    queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
-  };
-
+  
   return {
-    createAppointment,
-    updateAppointment,
-    cancelAppointment,
-    deleteAppointment,
-    fetchAppointments,
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isCanceling: cancelMutation.isPending,
-    isDeleting: deleteMutation.isPending
+    selectedAppointment,
+    formDialogOpen,
+    handleNewAppointment,
+    handleEditAppointment,
+    handleCloseDialog,
+    handleSaveAppointment,
+    handleCancelAppointment,
+    isSaving: saveAppointment.isPending,
+    isCanceling: cancelAppointment.isPending
   };
 };

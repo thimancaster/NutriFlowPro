@@ -11,6 +11,9 @@ const MacroDistributionInputs: React.FC<MacroDistributionInputsProps> = ({
   setProteinPercentage,
   fatPercentage,
   setFatPercentage,
+  bmr,
+  tee,
+  objective,
 }) => {
   // Helpers to validate numeric inputs
   const handleNumericInputChange = (

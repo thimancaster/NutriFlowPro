@@ -56,7 +56,7 @@ export const useMealDistribution = (initialDistribution = [], consultationData =
         percent: meal.percentage ? meal.percentage / 100 : meal.percent || 0,
       }));
     }
-    return DEFAULT_MEAL_DISTRIBUTION;
+    return DEFAULT_MEAL_DISTRIBUTION as MealDistributionItem[];
   });
 
   // Calculate total distribution percentage

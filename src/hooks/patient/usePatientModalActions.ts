@@ -1,87 +1,89 @@
 
 import { useState } from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Patient } from '@/types';
+import { updatePatientStatus, updatePatient } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
-import { PatientService } from '@/services/patient';
 
-export const usePatientModalActions = ({ patient, onStatusChange, onClose }) => {
-  const [isArchiving, setIsArchiving] = useState(false);
+interface UsePatientModalActionsProps {
+  patient: Patient;
+  onStatusChange: () => void;
+  onClose: () => void;
+}
+
+export const usePatientModalActions = ({
+  patient,
+  onStatusChange,
+  onClose
+}: UsePatientModalActionsProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
-
-  // Handle archiving/unarchiving a patient
+  const [isArchiving, setIsArchiving] = useState(false);
+  
+  // Archive patient
   const handleArchivePatient = async () => {
-    setIsArchiving(true);
+    if (!user) return;
     
+    setIsArchiving(true);
     try {
-      const newStatus = patient.status === 'active' ? 'archived' : 'active';
-      await PatientService.updatePatientStatus(patient.id, newStatus);
+      const result = await updatePatientStatus(patient.id, user.id, 'archived');
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
       
       toast({
-        title: patient.status === 'active' ? "Paciente arquivado" : "Paciente reativado",
-        description: patient.status === 'active' 
-          ? "O paciente foi arquivado com sucesso" 
-          : "O paciente foi reativado com sucesso"
+        title: 'Paciente arquivado',
+        description: `O paciente ${patient.name} foi arquivado com sucesso.`,
       });
       
-      // Notify parent component to refresh the list
       onStatusChange();
-      
-      // Close the modal
       onClose();
     } catch (error: any) {
+      console.error('Error archiving patient:', error);
       toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao atualizar o status do paciente",
-        variant: "destructive"
+        title: 'Erro',
+        description: `Não foi possível arquivar o paciente: ${error.message}`,
+        variant: 'destructive',
       });
     } finally {
       setIsArchiving(false);
     }
   };
   
-  // Handle updating patient data
-  const handleUpdatePatient = async (updatedData) => {
+  // Update patient
+  const handleUpdatePatient = async (updatedData: Partial<Patient>) => {
+    if (!user) return;
+    
     try {
-      await PatientService.updatePatient(patient.id, updatedData);
+      const result = await updatePatient(patient.id, user.id, updatedData);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
       
       toast({
-        title: "Atualizado",
-        description: "Dados do paciente atualizados com sucesso"
+        title: 'Paciente atualizado',
+        description: 'As informações do paciente foram atualizadas com sucesso.',
       });
       
-      // Notify parent component to refresh the list
-      onStatusChange();
+      return result.data;
     } catch (error: any) {
+      console.error('Error updating patient:', error);
       toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao atualizar os dados do paciente",
-        variant: "destructive"
+        title: 'Erro',
+        description: `Não foi possível atualizar o paciente: ${error.message}`,
+        variant: 'destructive',
       });
       throw error;
     }
   };
   
-  // Handle updating patient notes specifically
-  const handleUpdatePatientNotes = async (notes) => {
-    try {
-      await PatientService.updatePatient(patient.id, { notes });
-      
-      toast({
-        title: "Atualizado",
-        description: "Observações do paciente atualizadas com sucesso"
-      });
-      
-      // Notify parent component to refresh the list
-      onStatusChange();
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao atualizar as observações do paciente",
-        variant: "destructive"
-      });
-      throw error;
-    }
+  // Update patient notes
+  const handleUpdatePatientNotes = async (notes: string) => {
+    return handleUpdatePatient({ notes });
   };
-
+  
   return {
     isArchiving,
     handleArchivePatient,

@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateBMR, calculateTEE, calculateMacros } from '@/components/calculator/utils/calculations';
 import { saveCalculatorResults } from '@/components/calculator/storageUtils';
-import { ConsultationData } from '@/types';
+import { ConsultationData, ToastApi } from '@/types';
 import { UseCalculationLogicProps } from '@/components/calculator/types';
 
 export const useCalculationLogic = ({

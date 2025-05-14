@@ -8,53 +8,54 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Patient } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 interface PatientArchiveDialogProps {
-  patient: Patient;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-  isLoading: boolean;
+  onClose: () => void;
+  onArchive: () => Promise<void>;
+  isArchiving: boolean;
+  patientName: string;
 }
 
-const PatientArchiveDialog = ({
-  patient,
+const PatientArchiveDialog: React.FC<PatientArchiveDialogProps> = ({
   open,
-  onOpenChange,
-  onConfirm,
-  isLoading
-}: PatientArchiveDialogProps) => {
-  const isActive = patient.status === 'active';
-  const action = isActive ? 'arquivar' : 'reativar';
-  
+  onClose,
+  onArchive,
+  isArchiving,
+  patientName
+}) => {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {isActive ? 'Arquivar paciente' : 'Reativar paciente'}
-          </AlertDialogTitle>
+          <AlertDialogTitle>Arquivar paciente</AlertDialogTitle>
           <AlertDialogDescription>
-            {isActive 
-              ? 'Tem certeza que deseja arquivar este paciente? Pacientes arquivados não aparecerão na listagem principal.'
-              : 'Tem certeza que deseja reativar este paciente? Pacientes reativados voltarão a aparecer na listagem principal.'
-            }
+            Você está prestes a arquivar o paciente <strong>{patientName}</strong>. 
+            Pacientes arquivados não aparecem na listagem principal, 
+            mas podem ser restaurados mais tarde.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm}
-            disabled={isLoading}
-            className={isActive ? 'bg-red-600 hover:bg-red-700' : ''}
+          <AlertDialogCancel disabled={isArchiving}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              onArchive();
+            }}
+            disabled={isArchiving}
+            className="bg-red-600 hover:bg-red-700"
           >
-            {isLoading 
-              ? 'Processando...' 
-              : isActive ? 'Sim, arquivar' : 'Sim, reativar'
-            }
+            {isArchiving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Arquivando...
+              </>
+            ) : (
+              'Arquivar'
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
