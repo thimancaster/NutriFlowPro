@@ -5,7 +5,7 @@ import { useAppointmentMutations } from './appointments/useAppointmentMutations'
 
 // Update the hook to accept a patientId parameter
 export const useAppointments = (patientId?: string) => {
-  const query = useAppointmentQuery();
+  const query = useAppointmentQuery(patientId);
   const {
     data: appointments = [],
     isLoading,
@@ -51,14 +51,14 @@ export const useAppointments = (patientId?: string) => {
   const saveAppointment = async (appointmentData: any) => {
     try {
       if (appointmentData.id) {
-        const result = await updateAppointment.mutateAsync({
+        await updateAppointment.mutate({
           id: appointmentData.id,
           data: appointmentData
         });
-        return { success: true, data: result };
+        return { success: true };
       } else {
-        const result = await createAppointment.mutateAsync(appointmentData);
-        return { success: true, data: result };
+        await createAppointment.mutate(appointmentData);
+        return { success: true };
       }
     } catch (error: any) {
       return { success: false, error };
@@ -67,7 +67,7 @@ export const useAppointments = (patientId?: string) => {
   
   const handleDeleteAppointment = async (id: string) => {
     try {
-      await deleteAppointment.mutateAsync(id);
+      await deleteAppointment.mutate(id);
       return { success: true };
     } catch (error: any) {
       return { success: false, error };
@@ -76,7 +76,7 @@ export const useAppointments = (patientId?: string) => {
   
   const handleCancelAppointment = async (id: string) => {
     try {
-      await cancelAppointment.mutateAsync(id);
+      await cancelAppointment.mutate(id);
       return { success: true };
     } catch (error: any) {
       return { success: false, error };

@@ -18,7 +18,21 @@ export interface ConsultationData {
   carbs_percentage: number;
   protein_percentage: number;
   fat_percentage: number;
-  patient: { name: string };
+  patient?: { 
+    name: string;
+    age?: number;
+  };
+  results?: {
+    get: number;
+    adjustment: number;
+    vet: number;
+    macros?: {
+      protein: number;
+      carbs: number;
+      fat: number;
+      proteinPerKg?: number;
+    }
+  };
 }
 
 export interface Patient {
@@ -36,4 +50,43 @@ export interface Patient {
   address?: string;
   notes?: string;
   user_id?: string;
+  status?: 'active' | 'archived';
+  goals?: {
+    objective?: string;
+    profile?: string;
+    weight?: number;
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fats?: number;
+  };
+  secondaryPhone?: string;
+  cpf?: string;
 }
+
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  total?: number;
+}
+
+export interface PatientFilters {
+  search?: string;
+  status?: 'active' | 'archived' | 'all';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface AddressDetails {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+}
+
+// Forward export the MealDistributionItem and related types
+export * from './meal';
+export * from './appointment';

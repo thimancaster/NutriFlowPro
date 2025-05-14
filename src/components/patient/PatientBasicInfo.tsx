@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { Patient } from '@/types';
+import { format } from 'date-fns';
 
 interface PatientBasicInfoProps {
   patient: Patient;
@@ -7,6 +9,13 @@ interface PatientBasicInfoProps {
 }
 
 const PatientBasicInfo: React.FC<PatientBasicInfoProps> = ({ patient, onUpdatePatient }) => {
+  // Format birth date if it exists
+  const formattedBirthDate = patient.birth_date 
+    ? typeof patient.birth_date === 'string'
+      ? patient.birth_date
+      : format(patient.birth_date, 'dd/MM/yyyy')
+    : 'Não informado';
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -27,7 +36,7 @@ const PatientBasicInfo: React.FC<PatientBasicInfoProps> = ({ patient, onUpdatePa
         
         <div>
           <p className="text-sm font-medium text-gray-500">Data de Nascimento</p>
-          <p className="text-gray-900">{patient.birth_date || 'Não informado'}</p>
+          <p className="text-gray-900">{formattedBirthDate}</p>
         </div>
         
         <div>

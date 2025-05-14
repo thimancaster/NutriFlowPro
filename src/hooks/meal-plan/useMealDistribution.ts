@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { MealDistributionItem } from '@/types/meal';
+import { MealDistributionItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface UseMealDistributionProps {
@@ -45,6 +45,7 @@ export const useMealDistribution = (initialDistribution: MealDistributionItem[] 
       fat: 0,
       calories: 0,
       foods: [],
+      suggestions: []
     };
     
     setMealDistribution(prevMeals => [...prevMeals, newMeal]);
@@ -77,7 +78,8 @@ export const useMealDistribution = (initialDistribution: MealDistributionItem[] 
       carbs: 0,
       fat: 0,
       calories: 0,
-      foods: []
+      foods: [],
+      suggestions: []
     };
   }
   

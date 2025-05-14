@@ -36,7 +36,7 @@ export interface MealDistributionItem {
   carbs: number;
   fat: number;
   calories: number;
-  suggestions?: string[]; // Add suggestions property
+  suggestions?: string[]; // Added suggestions property
 }
 
 export interface MealPlan {
@@ -45,7 +45,7 @@ export interface MealPlan {
   patient_id?: string;
   date: Date;
   meals: Meal[];
-  mealDistribution?: Record<string, any>;
+  mealDistribution?: Record<string, MealDistributionItem>;
   total_calories: number;
   total_protein: number;
   total_carbs: number;

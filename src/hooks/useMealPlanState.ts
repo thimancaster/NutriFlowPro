@@ -21,7 +21,7 @@ export const useMealPlanState = ({
   saveConsultation,
   saveMealPlan
 }: UseMealPlanStateProps) => {
-  // Use the meal distribution hook
+  // Use the meal distribution hook with proper initialization
   const {
     mealDistribution,
     totalDistributionPercentage,
@@ -29,7 +29,10 @@ export const useMealPlanState = ({
     addMeal,
     removeMeal
   } = useMealDistribution(
-    mealPlan?.mealDistribution || [], 
+    // Make sure we properly convert the mealDistribution to an array format
+    mealPlan?.mealDistribution 
+      ? Object.values(mealPlan.mealDistribution) 
+      : [], 
     consultationData
   );
 

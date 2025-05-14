@@ -8,7 +8,7 @@ import MealPlanForm from '@/components/MealPlan/MealPlanForm';
 import { MealDistributionItem, ConsultationData } from '@/types';
 
 interface MealPlanGeneratorUIProps {
-  activePatient: { name: string; gender: string | null };
+  activePatient: { name: string; gender: string | null; age?: number };
   consultationData: ConsultationData;
   mealDistribution: Record<string, MealDistributionItem>;
   totalMealPercent: number;
@@ -38,10 +38,12 @@ const MealPlanGeneratorUI = ({
     return typeof value === 'string' ? parseFloat(value) : value;
   };
 
-  // Get patient age from consultationData
-  const patientAge = consultationData.age !== undefined 
-    ? consultationData.age 
-    : (consultationData.patient?.age ?? undefined);
+  // Get patient age from multiple possible sources
+  const patientAge = activePatient.age !== undefined 
+    ? activePatient.age 
+    : (consultationData.age !== undefined 
+      ? consultationData.age 
+      : (consultationData.patient?.age ?? undefined));
 
   // Generate PDF function
   const dummyGeneratePDF = async () => {

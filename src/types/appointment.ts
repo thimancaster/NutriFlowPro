@@ -33,3 +33,5 @@ export type AppointmentType = {
   duration_minutes: number;
   color?: string;
 };
+
+export type AppointmentStatus = 'scheduled' | 'completed' | 'canceled' | 'rescheduled';

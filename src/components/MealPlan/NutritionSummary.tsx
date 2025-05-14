@@ -7,24 +7,30 @@ interface NutritionSummaryProps {
 }
 
 const NutritionSummary = ({ consultationData }: NutritionSummaryProps) => {
+  // Safely access nested properties with fallbacks
+  const calories = consultationData?.results?.get || 0;
+  const protein = consultationData?.results?.macros?.protein || 0;
+  const carbs = consultationData?.results?.macros?.carbs || 0;
+  const fat = consultationData?.results?.macros?.fat || 0;
+
   return (
     <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-nutri-gray-light rounded-lg p-3 text-center">
           <p className="text-sm text-gray-500 mb-1">Total Calorias</p>
-          <p className="text-xl font-bold text-nutri-blue">{consultationData?.results?.get || 0} kcal</p>
+          <p className="text-xl font-bold text-nutri-blue">{calories} kcal</p>
         </div>
         <div className="bg-nutri-gray-light rounded-lg p-3 text-center">
           <p className="text-sm text-gray-500 mb-1">Proteínas</p>
-          <p className="text-xl font-bold text-nutri-blue">{consultationData?.results?.macros?.protein || 0}g</p>
+          <p className="text-xl font-bold text-nutri-blue">{protein}g</p>
         </div>
         <div className="bg-nutri-gray-light rounded-lg p-3 text-center">
           <p className="text-sm text-gray-500 mb-1">Carboidratos</p>
-          <p className="text-xl font-bold text-nutri-green">{consultationData?.results?.macros?.carbs || 0}g</p>
+          <p className="text-xl font-bold text-nutri-green">{carbs}g</p>
         </div>
         <div className="bg-nutri-gray-light rounded-lg p-3 text-center">
           <p className="text-sm text-gray-500 mb-1">Gorduras</p>
-          <p className="text-xl font-bold text-amber-500">{consultationData?.results?.macros?.fat || 0}g</p>
+          <p className="text-xl font-bold text-amber-500">{fat}g</p>
         </div>
       </div>
     </div>
