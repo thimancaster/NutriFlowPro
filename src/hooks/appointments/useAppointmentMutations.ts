@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { format } from 'date-fns';
 
 export const useAppointmentMutations = () => {
   const { user } = useAuth();
@@ -15,18 +16,30 @@ export const useAppointmentMutations = () => {
         throw new Error('User not authenticated');
       }
 
+      // Format dates to ISO string if they are Date objects
+      const startTime = typeof appointmentData.start_time === 'object' 
+        ? format(appointmentData.start_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX") 
+        : appointmentData.start_time;
+        
+      const endTime = typeof appointmentData.end_time === 'object'
+        ? format(appointmentData.end_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX")
+        : appointmentData.end_time;
+
+      // Get the date from the start_time for the date field
+      const date = typeof startTime === 'string' ? startTime.split('T')[0] : '';
+
       // Map the appointment data to match the database structure
       const dbAppointmentData = {
         user_id: user.id,
         patient_id: appointmentData.patient_id,
         title: appointmentData.title,
-        start_time: appointmentData.start_time,
-        end_time: appointmentData.end_time,
+        start_time: startTime,
+        end_time: endTime,
         duration_minutes: appointmentData.duration_minutes,
         notes: appointmentData.notes,
         status: appointmentData.status || 'scheduled',
         type: appointmentData.title || 'consultation', // Use title as type if not provided
-        date: appointmentData.start_time // Use start_time for the date field
+        date: date // Use start_time date part for the date field
       };
 
       const { data, error } = await supabase
@@ -52,17 +65,29 @@ export const useAppointmentMutations = () => {
         throw new Error('User not authenticated');
       }
 
+      // Format dates to ISO string if they are Date objects
+      const startTime = typeof appointmentData.start_time === 'object' 
+        ? format(appointmentData.start_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX") 
+        : appointmentData.start_time;
+        
+      const endTime = typeof appointmentData.end_time === 'object'
+        ? format(appointmentData.end_time as Date, "yyyy-MM-dd'T'HH:mm:ssXXX")
+        : appointmentData.end_time;
+      
+      // Get the date from the start_time for the date field
+      const date = typeof startTime === 'string' ? startTime.split('T')[0] : '';
+
       // Map the appointment data to match the database structure
       const dbAppointmentData = {
         patient_id: appointmentData.patient_id,
         title: appointmentData.title,
-        start_time: appointmentData.start_time,
-        end_time: appointmentData.end_time,
+        start_time: startTime,
+        end_time: endTime,
         duration_minutes: appointmentData.duration_minutes,
         notes: appointmentData.notes,
         status: appointmentData.status,
         type: appointmentData.title || 'consultation', // Use title as type if not provided
-        date: appointmentData.start_time // Use start_time for the date field
+        date: date // Use start_time date part for the date field
       };
 
       const { data, error } = await supabase
@@ -116,7 +141,7 @@ export const useAppointmentMutations = () => {
 
       const { data, error } = await supabase
         .from('appointments')
-        .update({ status: 'cancelled' })
+        .update({ status: 'canceled' })
         .eq('id', id)
         .eq('user_id', user.id)
         .select();

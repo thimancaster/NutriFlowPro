@@ -15,3 +15,14 @@ export interface Appointment {
   appointment_type_id?: string;
   patientName?: string;
 }
+
+export interface AppointmentType {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  user_id: string;
+  description?: string;
+  color?: string;
+  created_at?: string;
+  updated_at?: string;
+}
