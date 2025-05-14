@@ -1,11 +1,21 @@
 
-import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateBMR, calculateTEE, calculateMacros } from '@/components/calculator/utils/calculations';
-import { saveCalculatorResults } from '@/components/calculator/storageUtils';
+import { CalculatorState } from '@/components/calculator/types';
+import { User } from '@supabase/supabase-js';
 import { ConsultationData, ToastApi } from '@/types';
-import { UseCalculationLogicProps } from '@/components/calculator/types';
+
+export interface UseCalculationLogicProps {
+  setBmr: (value: number | null) => void;
+  setTee: (value: number | null) => void;
+  setMacros: (value: any | null) => void;
+  setConsultationData?: (data: ConsultationData) => void;
+  toast: ToastApi;
+  user: User | null;
+  tempPatientId: string | null;
+  setTempPatientId: (value: string | null) => void;
+}
 
 export const useCalculationLogic = ({
   setBmr,
@@ -19,119 +29,185 @@ export const useCalculationLogic = ({
 }: UseCalculationLogicProps) => {
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const performCalculation = useCallback(async (calculatorState) => {
+  const calculateResults = async (state: CalculatorState) => {
     setIsCalculating(true);
     
     try {
-      const {
-        patientName,
-        gender,
-        age,
-        weight,
-        height,
-        objective,
-        activityLevel,
-        carbsPercentage,
-        proteinPercentage,
-        fatPercentage,
-        profile,
-        consultationType
-      } = calculatorState;
+      // Parse numerical inputs
+      const age = parseInt(state.age);
+      const weight = parseFloat(state.weight);
+      const height = parseFloat(state.height);
+      const carbsPercentage = parseInt(state.carbsPercentage) / 100;
+      const proteinPercentage = parseInt(state.proteinPercentage) / 100;
+      const fatPercentage = parseInt(state.fatPercentage) / 100;
       
-      // Make sure required fields are filled
-      if (!patientName || !age || !weight || !height) {
-        toast({
-          title: "Dados incompletos",
-          description: "Preencha todos os campos obrigatórios",
+      // Validate inputs
+      if (isNaN(age) || isNaN(weight) || isNaN(height)) {
+        toast.toast({
+          title: "Dados inválidos",
+          description: "Por favor, insira valores numéricos válidos para idade, peso e altura.",
           variant: "destructive"
         });
+        setIsCalculating(false);
         return;
       }
       
-      // Calculate BMR (Basal Metabolic Rate)
-      const calculatedBmr = calculateBMR(gender, weight, height, age);
-      setBmr(calculatedBmr);
-      
-      // Calculate TEE (Total Energy Expenditure)
-      const { get, adjustment, vet } = calculateTEE(calculatedBmr, activityLevel, objective);
-      setTee(vet);
-      
-      // Calculate macronutrients distribution
-      const calculatedMacros = calculateMacros(
-        vet,
-        carbsPercentage,
-        proteinPercentage,
-        fatPercentage,
-        parseFloat(weight)
-      );
-      setMacros(calculatedMacros);
-      
-      // Generate a temporary patient ID if not exists
-      const patientTempId = tempPatientId || uuidv4();
-      if (!tempPatientId) {
-        setTempPatientId(patientTempId);
+      // Calculate BMR using Mifflin-St Jeor equation
+      let bmrValue: number;
+      if (state.gender === 'male') {
+        bmrValue = 10 * weight + 6.25 * height - 5 * age + 5;
+      } else {
+        bmrValue = 10 * weight + 6.25 * height - 5 * age - 161;
       }
       
-      // Save results to localStorage for persistence
-      saveCalculatorResults(calculatedBmr, vet, calculatedMacros, patientTempId);
+      // Apply activity multiplier
+      let activityMultiplier: number;
+      switch (state.activityLevel) {
+        case 'sedentary':
+          activityMultiplier = 1.2;
+          break;
+        case 'light':
+          activityMultiplier = 1.375;
+          break;
+        case 'moderate':
+          activityMultiplier = 1.55;
+          break;
+        case 'active':
+          activityMultiplier = 1.725;
+          break;
+        case 'very_active':
+          activityMultiplier = 1.9;
+          break;
+        default:
+          activityMultiplier = 1.55; // Default to moderate
+      }
       
-      // If we have consultation data context, update it
-      if (setConsultationData && user) {
-        const consultationData: ConsultationData = {
+      const teeValue = bmrValue * activityMultiplier;
+      
+      // Apply goal adjustment
+      let goalAdjustment: number = 0;
+      switch (state.objective) {
+        case 'loss':
+          goalAdjustment = -500;
+          break;
+        case 'gain':
+          goalAdjustment = 500;
+          break;
+        default:
+          goalAdjustment = 0; // Maintenance
+      }
+      
+      const adjustedCalories = teeValue + goalAdjustment;
+      
+      // Calculate macros
+      const carbsCalories = adjustedCalories * carbsPercentage;
+      const proteinCalories = adjustedCalories * proteinPercentage;
+      const fatCalories = adjustedCalories * fatPercentage;
+      
+      const carbsGrams = carbsCalories / 4;
+      const proteinGrams = proteinCalories / 4;
+      const fatGrams = fatCalories / 9;
+      
+      // Calculate protein per kg
+      const proteinPerKg = proteinGrams / weight;
+      
+      // Set state
+      setBmr(Math.round(bmrValue));
+      setTee(Math.round(teeValue));
+      setMacros({
+        carbs: Math.round(carbsGrams),
+        protein: Math.round(proteinGrams),
+        fat: Math.round(fatGrams),
+        proteinPerKg: parseFloat(proteinPerKg.toFixed(1))
+      });
+      
+      // Save calculation to database if user is authenticated
+      if (user) {
+        const calculationData = {
           id: uuidv4(),
           user_id: user.id,
-          patient_id: patientTempId,
-          patient: {
-            id: patientTempId,
-            name: patientName,
-            gender: gender === 'male' ? 'M' : 'F',
-            age: parseInt(age)
-          },
-          weight: parseFloat(weight),
-          height: parseFloat(height),
-          objective,
-          activityLevel,
-          gender,
-          created_at: new Date().toISOString(),
-          tipo: consultationType,
-          results: {
-            bmr: calculatedBmr,
-            get,
-            adjustment,
-            vet,
-            macros: {
-              ...calculatedMacros,
-              proteinPerKg: calculatedMacros.proteinPerKg || 0
-            }
-          }
+          patient_id: tempPatientId,
+          patient_name: state.patientName,
+          age,
+          weight,
+          height,
+          gender: state.gender,
+          activity_level: state.activityLevel,
+          goal: state.objective,
+          bmr: Math.round(bmrValue),
+          tdee: Math.round(teeValue),
+          carbs: Math.round(carbsGrams),
+          protein: Math.round(proteinGrams),
+          fats: Math.round(fatGrams),
+          protein_per_kg: parseFloat(proteinPerKg.toFixed(1)),
+          type: state.consultationType,
+          profile: state.profile
         };
         
-        setConsultationData(consultationData);
-        
-        toast({
-          title: "Cálculo concluído",
-          description: "Os resultados foram calculados com sucesso."
-        });
-      } else {
-        toast({
-          title: "Cálculo concluído",
-          description: "Os resultados foram calculados, mas a consulta não foi salva."
-        });
+        try {
+          const { error } = await supabase
+            .from('calculations')
+            .insert(calculationData);
+            
+          if (error) {
+            throw error;
+          }
+          
+          // Prepare consultation data for context
+          if (setConsultationData) {
+            const consultationData: ConsultationData = {
+              id: calculationData.id,
+              user_id: user.id,
+              patient_id: tempPatientId || '',
+              patient: {
+                id: tempPatientId || '',
+                name: state.patientName,
+                gender: state.gender === 'male' ? 'M' : 'F', 
+                age: age
+              },
+              weight,
+              height,
+              objective: state.objective,
+              activityLevel: state.activityLevel,
+              gender: state.gender,
+              created_at: new Date().toISOString(),
+              tipo: state.consultationType,
+              results: {
+                bmr: Math.round(bmrValue),
+                get: Math.round(teeValue),
+                adjustment: goalAdjustment,
+                vet: Math.round(adjustedCalories),
+                macros: {
+                  carbs: Math.round(carbsGrams),
+                  protein: Math.round(proteinGrams),
+                  fat: Math.round(fatGrams),
+                  proteinPerKg: parseFloat(proteinPerKg.toFixed(1))
+                }
+              }
+            };
+            
+            setConsultationData(consultationData);
+          }
+        } catch (error) {
+          console.error('Error saving calculation:', error);
+          toast.toast({
+            title: "Erro ao salvar cálculo",
+            description: "Ocorreu um erro ao salvar os dados do cálculo.",
+            variant: "destructive"
+          });
+        }
       }
-    } catch (error: any) {
-      console.error("Erro ao calcular:", error);
-      toast({
-        title: "Erro no cálculo",
-        description: error.message || "Ocorreu um erro ao calcular os resultados.",
+    } catch (error) {
+      toast.toast({
+        title: "Erro ao calcular",
+        description: "Ocorreu um erro ao processar o cálculo.",
         variant: "destructive"
       });
+      console.error('Calculation error:', error);
     } finally {
       setIsCalculating(false);
     }
-  }, [setBmr, setTee, setMacros, setConsultationData, toast, user, tempPatientId, setTempPatientId]);
-
-  return {
-    isCalculating,
-    performCalculation
   };
+
+  return { isCalculating, calculateResults };
 };

@@ -55,19 +55,18 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
     } as MealPlan;
     
     try {
-      // Remove id for insertion and convert dates to strings
+      // Prepare data for Supabase with required fields and string dates
       const preparedData = prepareForSupabase({
         user_id: newMealPlan.user_id,
         patient_id: newMealPlan.patient_id,
         date: newMealPlan.date,
-        meals: newMealPlan.meals || [],
+        meals: JSON.stringify(newMealPlan.meals || []),
         total_calories: newMealPlan.total_calories,
         total_protein: newMealPlan.total_protein,
         total_carbs: newMealPlan.total_carbs,
         total_fats: newMealPlan.total_fats
       }, true);
       
-      // Now using the utility to handle dates correctly
       const { error } = await supabase
         .from('meal_plans')
         .insert(preparedData);
@@ -87,8 +86,13 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (!user) throw new Error('User not authenticated');
     
     try {
-      // Prepare data for Supabase - removing id and converting dates
+      // Prepare data for Supabase with proper string dates
       const preparedData = prepareForSupabase(data, false);
+      
+      // Ensure meals is properly stringified if present
+      if (preparedData.meals && typeof preparedData.meals !== 'string') {
+        preparedData.meals = JSON.stringify(preparedData.meals);
+      }
       
       const { error } = await supabase
         .from('meal_plans')
@@ -115,21 +119,18 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (mealPlan?.id) {
         // Update existing meal plan
         const updateData = {
-          meals: data.meals || [],
-          mealDistribution: data.mealDistribution || [],
+          meals: JSON.stringify(data.meals || []),
+          mealDistribution: JSON.stringify(data.mealDistribution || []),
           total_calories: data.calories || 0,
           total_protein: data.protein || 0,
           total_carbs: data.carbs || 0,
           total_fats: data.fat || 0,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         };
-        
-        // Prepare data for Supabase - convert dates to strings
-        const preparedData = prepareForSupabase(updateData, false);
         
         const { error } = await supabase
           .from('meal_plans')
-          .update(preparedData)
+          .update(updateData)
           .eq('id', mealPlan.id);
           
         if (error) throw error;
@@ -143,21 +144,18 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
           id: newMealPlanId,
           user_id: user.id,
           patient_id: data.patient_id,
-          date: new Date(),
-          meals: data.meals || [],
-          mealDistribution: data.mealDistribution || [],
+          date: new Date().toISOString(),
+          meals: JSON.stringify(data.meals || []),
+          mealDistribution: JSON.stringify(data.mealDistribution || []),
           total_calories: data.calories || 0,
           total_protein: data.protein || 0,
           total_carbs: data.carbs || 0,
           total_fats: data.fat || 0
         };
         
-        // Prepare data for Supabase - remove id and convert dates
-        const preparedData = prepareForSupabase(newPlanData, true);
-        
         const { error } = await supabase
           .from('meal_plans')
-          .insert(preparedData);
+          .insert(newPlanData);
           
         if (error) throw error;
         

@@ -58,6 +58,7 @@ export const savePatient = async (patientData: Partial<Patient>, userId: string)
 };
 
 // Helper to update patient status
+// Modified to accept a required userId parameter
 export const updatePatientStatus = async (
   patientId: string, 
   userId: string, 

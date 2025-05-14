@@ -1,60 +1,65 @@
 
-/**
- * Utility functions for handling dates and preparing data for Supabase
- */
+import { Json } from '@/integrations/supabase/types';
 
 /**
- * Converts Date objects to ISO strings for Supabase
- * @param obj The object containing date fields
- * @param removeId Whether to remove the id field (for inserts)
- * @returns A new object with dates converted to strings
+ * Prepares data for Supabase by converting Date objects to strings
+ * and ensuring required fields are present
  */
-export const prepareForSupabase = (obj: Record<string, any>, removeId: boolean = false): Record<string, any> => {
-  if (!obj) return {};
+export const prepareForSupabase = (
+  data: Record<string, any>, 
+  isInsert: boolean = false
+): Record<string, any> => {
+  if (!data) return {};
   
-  const result: Record<string, any> = { ...obj };
+  // Create a copy to avoid modifying the original
+  const result: Record<string, any> = { ...data };
+  
+  // Remove id for insert operations (let Supabase generate it)
+  if (isInsert && result.id) {
+    delete result.id;
+  }
   
   // Convert Date objects to ISO strings
-  Object.entries(result).forEach(([key, value]) => {
-    // Convert Date objects to ISO strings
+  Object.keys(result).forEach(key => {
+    const value = result[key];
+    
     if (value instanceof Date) {
       result[key] = value.toISOString();
-    }
-    
-    // Handle nested objects (except arrays that might cause infinite recursion)
-    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+    } else if (
+      value && 
+      typeof value === 'object' && 
+      !Array.isArray(value) && 
+      !(value instanceof Date) &&
+      !(value as Json)
+    ) {
+      // Recursively handle nested objects
       result[key] = prepareForSupabase(value, false);
     }
   });
-  
-  // Remove ID for insert operations if requested
-  if (removeId && 'id' in result) {
-    delete result.id;
-  }
   
   return result;
 };
 
 /**
- * Converts dates from strings to Date objects
- * @param obj The object containing date fields as strings
- * @returns A new object with dates as Date objects
+ * Converts string dates to Date objects for consistent client-side handling
  */
-export const convertDatesToISOString = (obj: Record<string, any>): Record<string, any> => {
+export const convertStringsToDates = (obj: Record<string, any>): Record<string, any> => {
   if (!obj) return {};
   
   const result: Record<string, any> = { ...obj };
   
-  // Convert Date objects to ISO strings
-  Object.entries(result).forEach(([key, value]) => {
-    // Convert Date objects to ISO strings
-    if (value instanceof Date) {
-      result[key] = value.toISOString();
-    }
+  // Date fields that should be converted
+  const dateFields = ['created_at', 'updated_at', 'date', 'start_time', 'end_time', 'birth_date', 'subscription_start', 'subscription_end'];
+  
+  Object.keys(result).forEach(key => {
+    const value = result[key];
     
-    // Handle nested objects (except arrays)
-    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-      result[key] = convertDatesToISOString(value);
+    // Check if this is a date field with a string value that looks like a date
+    if (dateFields.includes(key) && typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
+      result[key] = new Date(value);
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // Recursively handle nested objects
+      result[key] = convertStringsToDates(value);
     }
   });
   

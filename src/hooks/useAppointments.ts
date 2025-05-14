@@ -16,7 +16,14 @@ export const useAppointments = (patientId?: string) => {
   
   // Create a structured wrapper for appointments by date for calendar view
   const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, appointment) => {
-    const dateKey = appointment.date?.split('T')[0] || '';
+    // Use start_time as fallback when date is not available
+    const dateString = appointment.start_time || '';
+    const dateKey = typeof dateString === 'string' 
+      ? dateString.split('T')[0] 
+      : dateString instanceof Date 
+        ? dateString.toISOString().split('T')[0] 
+        : '';
+        
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(appointment);
     return acc;

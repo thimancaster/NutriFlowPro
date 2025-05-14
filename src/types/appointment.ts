@@ -10,8 +10,10 @@ export interface Appointment {
   notes?: string;
   status: string;
   appointment_type_id?: string;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at?: string | Date;
+  updated_at?: string | Date;
+  date?: string | Date; // Added date property which exists in the database
+  type?: string; // Added type property which exists in the database
 }
 
 export interface AppointmentFormData {
@@ -31,4 +33,3 @@ export type AppointmentType = {
   duration_minutes: number;
   color?: string;
 };
-

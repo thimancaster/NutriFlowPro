@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Archive, RotateCcw } from 'lucide-react';
@@ -5,6 +6,7 @@ import { Patient } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { PatientService } from '@/services/patient';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface PatientListActionsProps {
   patient: Patient;
@@ -15,15 +17,25 @@ interface PatientListActionsProps {
 const PatientListActions = ({ patient, onViewDetail, onStatusChange }: PatientListActionsProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleEditClick = () => {
     navigate(`/patients/edit/${patient.id}`);
   };
 
   const handleArchiveClick = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const newStatus = patient.status === 'active' ? 'archived' : 'active';
-      const result = await PatientService.updatePatientStatus(patient.id, newStatus);
+      const result = await PatientService.updatePatientStatus(patient.id, user.id, newStatus);
 
       if (result.success) {
         toast({
