@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -48,6 +47,20 @@ const MealPlanGenerator = () => {
     }
   }, [consultationData, location.state, navigate, toast]);
 
+  // Adapt for the updated saveMealPlan function signature
+  const adaptedSaveMealPlan = async (mealPlanData: AppMealPlan) => {
+    const consultId = consultationData?.id || location.state?.consultation?.id;
+    if (!consultId) {
+      toast({
+        title: "Erro",
+        description: "ID da consulta não encontrado",
+        variant: "destructive",
+      });
+      return;
+    }
+    return saveMealPlan(consultId, mealPlanData);
+  };
+
   const {
     mealDistribution,
     totalMealPercent,
@@ -62,7 +75,7 @@ const MealPlanGenerator = () => {
     mealPlan: mealPlan as AppMealPlan,
     setMealPlan,
     saveConsultation,
-    saveMealPlan
+    saveMealPlan: adaptedSaveMealPlan
   });
 
   // Create a record from array to match the expected type

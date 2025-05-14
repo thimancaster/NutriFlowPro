@@ -10,7 +10,7 @@ import { MealPlan } from '@/types';
 interface MealPlanContextType {
   mealPlan: MealPlan | null;
   setMealPlan: (plan: MealPlan | null) => void;
-  saveMealPlan: () => Promise<string | undefined>;
+  saveMealPlan: (consultationId: string) => Promise<string | undefined>;
 }
 
 const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
@@ -39,7 +39,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [mealPlan]);
 
-  const saveMealPlan = async (): Promise<string | undefined> => {
+  const saveMealPlan = async (consultationId: string): Promise<string | undefined> => {
     if (!user?.id || !activePatient?.id || !mealPlan) {
       toast({
         title: "Erro",
@@ -66,7 +66,7 @@ export const MealPlanProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const result = await DatabaseService.saveMealPlan(
         user.id,
         activePatient.id,
-        '0', // This should be replaced with the actual consultationId
+        consultationId, // Agora usando o consultationId passado como parâmetro
         completeMealPlan
       );
 

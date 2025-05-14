@@ -12,7 +12,7 @@ type UseMealPlanStateProps = {
   mealPlan: MealPlan | null;
   setMealPlan: (mealPlan: MealPlan) => void;
   saveConsultation: (data: any) => Promise<any>;
-  saveMealPlan: (mealPlan: MealPlan) => Promise<any>;
+  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
 };
 
 export const useMealPlanState = ({
@@ -127,8 +127,8 @@ export const useMealPlanState = ({
         meals: []
       };
 
-      // Save or update the meal plan
-      await saveMealPlan(mealPlanData);
+      // Save or update the meal plan - now passing the consultation ID
+      await saveMealPlan(consultationData.id, mealPlanData);
       
       // Update the meal plan in context
       setMealPlan(mealPlanData);
