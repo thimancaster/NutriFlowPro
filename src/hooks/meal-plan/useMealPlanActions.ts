@@ -1,17 +1,17 @@
 
-import { useState, useCallback } from 'react';
-import { MealPlan, Patient, ConsultationData, MealDistributionItem } from '@/types';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { Patient, ConsultationData, MealPlan, MealDistributionItem } from '@/types';
 
-type UseMealPlanActionsProps = {
+interface UseMealPlanActionsProps {
   activePatient: Patient | null;
   consultationData: ConsultationData | null;
   mealPlan: MealPlan | null;
   setMealPlan: (mealPlan: MealPlan) => void;
   mealDistribution: MealDistributionItem[];
-  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
-};
+  saveMealPlan: (consultationId: string, mealPlan: any) => Promise<any>;
+}
 
 export const useMealPlanActions = ({
   activePatient,
@@ -24,12 +24,12 @@ export const useMealPlanActions = ({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Handle save meal plan
-  const handleSaveMealPlan = useCallback(async () => {
-    if (!activePatient || !consultationData) {
+  // Function to handle saving the meal plan
+  const handleSaveMealPlan = async () => {
+    if (!consultationData || !consultationData.id || !activePatient) {
       toast({
         title: "Erro",
-        description: "Dados insuficientes para salvar o plano alimentar.",
+        description: "Dados da consulta ou paciente não encontrados",
         variant: "destructive"
       });
       return;
@@ -38,42 +38,53 @@ export const useMealPlanActions = ({
     setIsSaving(true);
 
     try {
-      // Create a simplified mealplan data object
-      const mealPlanData: MealPlan = {
-        name: `Plano para ${activePatient.name}`,
+      // Prepare the meal plan data
+      const mealPlanData = {
+        id: mealPlan?.id || uuidv4(),
+        user_id: consultationData.user_id,
         patient_id: activePatient.id,
-        consultation_id: consultationData.id,
-        calories: consultationData.results?.get || 0,
-        protein: consultationData.results?.macros.protein || 0,
-        carbs: consultationData.results?.macros.carbs || 0,
-        fat: consultationData.results?.macros.fat || 0,
-        mealDistribution: mealDistribution,
-        meals: []
+        date: new Date(),
+        meals: mealDistribution.map(meal => ({
+          name: meal.name,
+          time: "", // This could be set based on meal name or user input
+          calories: meal.calories,
+          protein: meal.protein,
+          carbs: meal.carbs,
+          fat: meal.fat,
+          proteinPercent: 0, // This would need to be calculated
+          carbsPercent: 0,   // This would need to be calculated
+          fatPercent: 0,     // This would need to be calculated
+          foods: [] // Initially empty, to be filled later
+        })),
+        mealDistribution,
+        total_calories: consultationData.results.vet || 0,
+        total_protein: consultationData.results.macros.protein || 0,
+        total_carbs: consultationData.results.macros.carbs || 0,
+        total_fats: consultationData.results.macros.fat || 0
       };
 
-      // Save or update the meal plan - now passing the consultation ID
-      await saveMealPlan(consultationData.id, mealPlanData);
-      
-      // Update the meal plan in context
-      setMealPlan(mealPlanData);
-      
-      toast({
-        title: "Plano alimentar salvo",
-        description: "Distribuição de refeições foi salva com sucesso.",
-      });
-      
-      // Navigate to the next step in the wizard
-    } catch (error) {
-      console.error('Error saving meal plan:', error);
+      // Save the meal plan
+      const result = await saveMealPlan(consultationData.id, mealPlanData);
+
+      if (result.success) {
+        setMealPlan(mealPlanData);
+        toast({
+          title: "Plano salvo",
+          description: "Plano alimentar salvo com sucesso"
+        });
+      } else {
+        throw new Error(result.error || "Erro ao salvar o plano alimentar");
+      }
+    } catch (error: any) {
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o plano alimentar.",
+        description: error.message || "Não foi possível salvar o plano alimentar",
         variant: "destructive"
       });
     } finally {
       setIsSaving(false);
     }
-  }, [activePatient, consultationData, toast, saveMealPlan, setMealPlan, mealDistribution]);
+  };
 
   return {
     isSaving,

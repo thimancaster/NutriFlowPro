@@ -1,126 +1,84 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 
-interface UsePatientModalActionsProps {
-  patient: Patient;
-  onStatusChange: () => void;
-  onClose: () => void;
-}
-
-export const usePatientModalActions = ({
-  patient,
-  onStatusChange,
-  onClose
-}: UsePatientModalActionsProps) => {
+export const usePatientModalActions = ({ patient, onStatusChange, onClose }) => {
   const [isArchiving, setIsArchiving] = useState(false);
   const { toast } = useToast();
 
-  // Handle archiving a patient
+  // Handle archiving/unarchiving a patient
   const handleArchivePatient = async () => {
     setIsArchiving(true);
     
     try {
-      // Determine the new status (toggle between archived and active)
-      const newStatus = patient.status === 'archived' ? 'active' : 'archived';
+      const newStatus = patient.status === 'active' ? 'archived' : 'active';
+      await PatientService.updatePatientStatus(patient.id, newStatus);
       
-      // Call API to update patient status
-      const result = await PatientService.updatePatientStatus(patient.id, newStatus, patient.user_id);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Falha ao atualizar o status do paciente");
-      }
-      
-      // Show success toast
       toast({
-        title: newStatus === 'archived' ? "Paciente arquivado" : "Paciente ativado",
-        description: newStatus === 'archived' 
-          ? "O paciente foi arquivado com sucesso."
-          : "O paciente foi ativado com sucesso."
+        title: patient.status === 'active' ? "Paciente arquivado" : "Paciente reativado",
+        description: patient.status === 'active' 
+          ? "O paciente foi arquivado com sucesso" 
+          : "O paciente foi reativado com sucesso"
       });
       
-      // Update local state and close modals
+      // Notify parent component to refresh the list
       onStatusChange();
+      
+      // Close the modal
       onClose();
     } catch (error: any) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o status do paciente",
+        description: error.message || "Ocorreu um erro ao atualizar o status do paciente",
         variant: "destructive"
       });
     } finally {
       setIsArchiving(false);
     }
   };
-
-  // Handle updating patient basic info
-  const handleUpdatePatient = async (updatedData: Partial<Patient>) => {
+  
+  // Handle updating patient data
+  const handleUpdatePatient = async (updatedData) => {
     try {
-      // Validate required fields
-      if (!updatedData.name || !updatedData.gender) {
-        toast({
-          title: "Dados incompletos",
-          description: "Nome e gênero são campos obrigatórios",
-          variant: "destructive"
-        });
-        return;
-      }
+      await PatientService.updatePatient(patient.id, updatedData);
       
-      // Merge updated data with existing patient data
-      const mergedData = { ...patient, ...updatedData, user_id: patient.user_id };
-      
-      // Call API to update patient
-      const result = await PatientService.savePatient(mergedData);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Falha ao atualizar o paciente");
-      }
-      
-      // Show success toast
       toast({
-        title: "Paciente atualizado",
-        description: "Os dados do paciente foram atualizados com sucesso."
+        title: "Atualizado",
+        description: "Dados do paciente atualizados com sucesso"
       });
       
-      // Update local state
-      onStatusChange(); // Refresh patient list
+      // Notify parent component to refresh the list
+      onStatusChange();
     } catch (error: any) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o paciente",
+        description: error.message || "Ocorreu um erro ao atualizar os dados do paciente",
         variant: "destructive"
       });
+      throw error;
     }
   };
-
-  // Handle updating patient notes
-  const handleUpdatePatientNotes = async (notes: string) => {
+  
+  // Handle updating patient notes specifically
+  const handleUpdatePatientNotes = async (notes) => {
     try {
-      // Call API to update patient
-      const result = await PatientService.savePatient({ 
-        ...patient, 
-        notes, 
-        user_id: patient.user_id 
-      });
+      await PatientService.updatePatient(patient.id, { notes });
       
-      if (!result.success) {
-        throw new Error(result.error || "Falha ao salvar as anotações");
-      }
-      
-      // Show success toast
       toast({
-        title: "Anotações salvas",
-        description: "As anotações do paciente foram salvas com sucesso."
+        title: "Atualizado",
+        description: "Observações do paciente atualizadas com sucesso"
       });
+      
+      // Notify parent component to refresh the list
+      onStatusChange();
     } catch (error: any) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível salvar as anotações",
+        description: error.message || "Ocorreu um erro ao atualizar as observações do paciente",
         variant: "destructive"
       });
-      throw error; // Re-throw to allow handling in the component
+      throw error;
     }
   };
 

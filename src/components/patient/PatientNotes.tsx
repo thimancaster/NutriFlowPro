@@ -7,11 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface PatientNotesProps {
   patientId: string;
-  notes?: string | null;
+  content?: string | null;
+  onSave: (notes: string) => Promise<void>;
 }
 
-const PatientNotes = ({ patientId, notes: initialNotes }: PatientNotesProps) => {
-  const [notes, setNotes] = useState(initialNotes || '');
+const PatientNotes = ({ patientId, content: initialContent, onSave }: PatientNotesProps) => {
+  const [notes, setNotes] = useState(initialContent || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -21,7 +22,7 @@ const PatientNotes = ({ patientId, notes: initialNotes }: PatientNotesProps) => 
   };
   
   const handleCancelClick = () => {
-    setNotes(initialNotes || '');
+    setNotes(initialContent || '');
     setIsEditing(false);
   };
   
@@ -29,13 +30,11 @@ const PatientNotes = ({ patientId, notes: initialNotes }: PatientNotesProps) => 
     setIsSaving(true);
     
     try {
-      // This will be implemented in future tasks
-      // Placeholder for PatientService.updatePatientNotes method
-      toast({
-        description: "Funcionalidade em desenvolvimento"
-      });
-      
+      await onSave(notes);
       setIsEditing(false);
+      toast({
+        description: "Observações salvas com sucesso"
+      });
     } catch (error: any) {
       toast({
         title: "Erro",

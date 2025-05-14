@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   aud: string;
@@ -20,9 +21,11 @@ export interface User {
 export interface Patient {
   id: string;
   created_at: string;
+  updated_at?: string;
   name: string;
   email?: string | null;
   phone?: string | null;
+  secondaryPhone?: string | null;
   birth_date?: string | null;
   gender?: 'M' | 'F' | null;
   cpf?: string | null;
@@ -48,6 +51,8 @@ export interface PatientFilters {
 export interface PaginationParams {
   limit: number;
   offset: number;
+  page?: number;
+  perPage?: number;
 }
 
 export interface ConsultationData {
@@ -82,12 +87,6 @@ export interface ConsultationData {
   [key: string]: any;
 }
 
-export interface MealDistributionItem {
-  name: string;
-  percent: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  suggestions?: string[];
-}
+// Re-export from other type files
+export * from './appointment';
+export * from './meal';

@@ -2,13 +2,13 @@
 import { User } from "@supabase/supabase-js";
 import { ConsultationData } from "@/types";
 
-export type ToastApi = {
+export interface ToastApi {
   toast: (props: {
     title?: string;
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
-};
+}
 
 export interface CalculatorState {
   patientName: string;

@@ -1,121 +1,73 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PaginationParams, PatientFilters } from '@/types';
-import { logger } from '@/utils/logger';
+import { PatientFilters, PaginationParams, Patient } from '@/types';
+import { formatPatientData } from '../utils/patientDataUtils';
 
-/**
- * Format a patient record from database format to application format
- */
-const formatPatientFromDb = (data: any): Patient => {
-  return {
-    id: data.id,
-    name: data.name || '',
-    email: data.email || '',
-    phone: data.phone || '',
-    secondaryPhone: data.secondary_phone || '',
-    birthDate: data.birth_date ? new Date(data.birth_date) : undefined,
-    sex: data.sex || '',
-    address: data.address || {},
-    objective: data.objective || '',
-    notes: data.notes || '',
-    profile: data.profile || '',
-    cpf: data.cpf || '',
-    archived_at: data.archived_at,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    user_id: data.user_id
-  };
-};
-
-/**
- * Get patients from the database with pagination and filtering
- * @param pagination Pagination parameters (page, perPage)
- * @param filters Optional filter parameters
- * @returns Object containing the patients data, error info, and count
- */
-export const getPatients = async (
-  pagination: PaginationParams = { page: 0, perPage: 10 },
-  filters: PatientFilters = {
-    page: 1,
-    pageSize: 10,
-    status: 'active',
-    sortBy: 'name',
-    sortOrder: 'asc'
-  }
-): Promise<{ 
-  data: Patient[], 
-  error: Error | null,
-  count: number 
-}> => {
-  const { page, perPage } = pagination;
-  const start = page * perPage;
-  const end = start + perPage - 1;
-
+export async function getPatients(filters: PatientFilters = {}, pagination?: PaginationParams) {
   try {
+    // Start building the query
     let query = supabase
       .from('patients')
       .select('*', { count: 'exact' });
-      
-    // Add sorting
-    if (filters.sortBy && filters.sortOrder) {
-      query = query.order(filters.sortBy, { ascending: filters.sortOrder === 'asc' });
-    } else {
-      query = query.order('name', { ascending: true });
-    }
 
-    // Add filters if they exist
+    // Apply filters
     if (filters.search) {
-      query = query.ilike('name', `%${filters.search}%`);
+      query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
     }
 
-    if (filters.status === 'active') {
-      query = query.is('archived_at', null);
-    } else if (filters.status === 'archived') {
-      query = query.not('archived_at', 'is', null);
+    if (filters.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status);
     }
-    
-    // Date range filters
+
+    // Apply date range filter if provided
     if (filters.startDate) {
       query = query.gte('created_at', filters.startDate);
     }
-    
+
     if (filters.endDate) {
       query = query.lte('created_at', filters.endDate);
     }
 
-    // Add range for pagination
-    query = query.range(start, end);
+    // Apply sorting
+    if (filters.sortBy) {
+      const order = filters.sortOrder === 'desc' ? false : true;
+      query = query.order(filters.sortBy, { ascending: order });
+    } else {
+      // Default sorting by created_at descending
+      query = query.order('created_at', { ascending: false });
+    }
 
+    // Apply pagination if provided
+    if (pagination) {
+      query = query.range(
+        (pagination.page ?? 0) * (pagination.perPage ?? 10),
+        (pagination.page ?? 0) * (pagination.perPage ?? 10) + (pagination.perPage ?? 10) - 1
+      );
+    }
+
+    // Execute the query
     const { data, error, count } = await query;
 
     if (error) {
-      logger.error('Error fetching patients:', error);
-      return {
-        data: [],
-        error: new Error(error.message),
-        count: 0
-      };
+      throw error;
     }
 
-    // Process the patients data
-    const formattedPatients = data
-      ? data.map(patient => formatPatientFromDb(patient))
-      : [];
+    // Format the data and return
+    const formattedData = data?.map(patient => formatPatientData(patient)) || [];
 
     return {
-      data: formattedPatients,
-      error: null,
-      count: count || 0
+      success: true,
+      data: formattedData,
+      count
     };
 
-  } catch (error) {
-    logger.error('Error in getPatients:', error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error fetching patients";
-    
+  } catch (error: any) {
+    console.error('Error fetching patients:', error);
     return {
+      success: false,
+      error: error.message,
       data: [],
-      error: new Error(errorMessage),
       count: 0
     };
   }
-};
+}

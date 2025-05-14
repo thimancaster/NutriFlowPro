@@ -46,3 +46,18 @@ export interface MealFood {
   carbs: number;
   fat: number;
 }
+
+export interface MealPlan {
+  id: string;
+  user_id: string;
+  patient_id: string;
+  date: Date;
+  meals: Meal[];
+  mealDistribution?: MealDistributionItem[];
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fats: number;
+  created_at?: Date;
+  updated_at?: Date;
+}
