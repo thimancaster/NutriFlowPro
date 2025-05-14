@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import MealGeneratorSettings from './MealPlan/MealGeneratorSettings';
-import MealGeneratorResults from './MealPlan/MealGeneratorResults';
+import MealGeneratorSettings from '@/components/MealPlan/MealGeneratorSettings';
+import MealGeneratorResults from '@/components/MealPlan/MealGeneratorResults';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useMealGeneratorState } from '@/hooks/useMealGeneratorState';
