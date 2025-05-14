@@ -23,7 +23,7 @@ export interface Meal {
 }
 
 export interface MealDistributionItem {
-  id: string;
+  id: string; // Added this property that was being used but not defined
   name: string;
   order?: number;
   description?: string;

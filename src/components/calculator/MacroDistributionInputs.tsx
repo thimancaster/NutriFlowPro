@@ -1,8 +1,21 @@
-
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { MacroDistributionInputsProps } from './types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
+interface MacroDistributionInputsProps {
+  carbsPercentage: string;
+  setCarbsPercentage: (value: string) => void;
+  proteinPercentage: string;
+  setProteinPercentage: (value: string) => void;
+  fatPercentage: string;
+  setFatPercentage: (value: string) => void;
+  bmr: number; // Added required prop
+  tee: number; // Added required prop
+  objective: string; // Added required prop
+}
 
 const MacroDistributionInputs: React.FC<MacroDistributionInputsProps> = ({
   carbsPercentage,

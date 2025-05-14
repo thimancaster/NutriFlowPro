@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './auth/AuthContext';
 import { MealItem, Meal, MealPlan } from '@/types';
+import { prepareForSupabase } from '@/utils/dateUtils';
 
 interface MealPlanContextProps {
   mealPlan: MealPlan | null;
@@ -54,19 +55,22 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
     } as MealPlan;
     
     try {
+      // Remove id for insertion and convert dates to strings
+      const preparedData = prepareForSupabase({
+        user_id: newMealPlan.user_id,
+        patient_id: newMealPlan.patient_id,
+        date: newMealPlan.date,
+        meals: newMealPlan.meals || [],
+        total_calories: newMealPlan.total_calories,
+        total_protein: newMealPlan.total_protein,
+        total_carbs: newMealPlan.total_carbs,
+        total_fats: newMealPlan.total_fats
+      });
+      
+      // Now using the utility to handle dates and insert data correctly
       const { error } = await supabase
         .from('meal_plans')
-        .insert({
-          id: newMealPlan.id,
-          user_id: newMealPlan.user_id,
-          patient_id: newMealPlan.patient_id,
-          date: newMealPlan.date,
-          meals: newMealPlan.meals || [],
-          total_calories: newMealPlan.total_calories,
-          total_protein: newMealPlan.total_protein,
-          total_carbs: newMealPlan.total_carbs,
-          total_fats: newMealPlan.total_fats
-        });
+        .insert(preparedData);
         
       if (error) throw error;
       
@@ -83,9 +87,12 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (!user) throw new Error('User not authenticated');
     
     try {
+      // Prepare data for Supabase - removing id and converting dates
+      const preparedData = prepareForSupabase(data, true);
+      
       const { error } = await supabase
         .from('meal_plans')
-        .update(data)
+        .update(preparedData)
         .eq('id', id)
         .eq('user_id', user.id);
         
@@ -107,17 +114,22 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       if (mealPlan?.id) {
         // Update existing meal plan
+        const updateData = {
+          meals: data.meals || [],
+          mealDistribution: data.mealDistribution || [],
+          total_calories: data.calories || 0,
+          total_protein: data.protein || 0,
+          total_carbs: data.carbs || 0,
+          total_fats: data.fat || 0,
+          updated_at: new Date()
+        };
+        
+        // Prepare data for Supabase
+        const preparedData = prepareForSupabase(updateData);
+        
         const { error } = await supabase
           .from('meal_plans')
-          .update({
-            meals: data.meals || [],
-            mealDistribution: data.mealDistribution || [],
-            total_calories: data.calories || 0,
-            total_protein: data.protein || 0,
-            total_carbs: data.carbs || 0,
-            total_fats: data.fat || 0,
-            updated_at: new Date()
-          })
+          .update(preparedData)
           .eq('id', mealPlan.id);
           
         if (error) throw error;
@@ -127,20 +139,25 @@ export const MealPlanProvider: React.FC<{ children: ReactNode }> = ({ children }
         // Create new meal plan
         const newMealPlanId = uuidv4();
         
+        const newPlanData = {
+          id: newMealPlanId,
+          user_id: user.id,
+          patient_id: data.patient_id,
+          date: new Date(),
+          meals: data.meals || [],
+          mealDistribution: data.mealDistribution || [],
+          total_calories: data.calories || 0,
+          total_protein: data.protein || 0,
+          total_carbs: data.carbs || 0,
+          total_fats: data.fat || 0
+        };
+        
+        // Prepare data for Supabase - remove id since we'll use it in the equality check
+        const preparedData = prepareForSupabase(newPlanData, true);
+        
         const { error } = await supabase
           .from('meal_plans')
-          .insert({
-            id: newMealPlanId,
-            user_id: user.id,
-            patient_id: data.patient_id,
-            date: new Date(),
-            meals: data.meals || [],
-            mealDistribution: data.mealDistribution || [],
-            total_calories: data.calories || 0,
-            total_protein: data.protein || 0,
-            total_carbs: data.carbs || 0,
-            total_fats: data.fat || 0
-          });
+          .insert(preparedData);
           
         if (error) throw error;
         

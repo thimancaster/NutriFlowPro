@@ -101,6 +101,11 @@ export const usePatientList = (initialFilters?: Partial<PatientFilters>) => {
     handleFilterChange({ page });
   };
   
+  // Handle per page change - Adding this function
+  const handlePerPageChange = (pageSize: number) => {
+    handleFilterChange({ pageSize, page: 1 });
+  };
+  
   // Handle status change (archive/unarchive)
   const handleStatusChange = () => {
     // Refetch without changing filters to reflect the status change
@@ -108,6 +113,14 @@ export const usePatientList = (initialFilters?: Partial<PatientFilters>) => {
   };
   
   const isError = error !== null;
+  
+  // Add pagination object for the components that need it
+  const pagination = {
+    currentPage: filters.page || 1,
+    totalPages: Math.ceil(totalPatients / (filters.pageSize || 10)),
+    itemsPerPage: filters.pageSize || 10,
+    totalItems: totalPatients
+  };
   
   return {
     patients,
@@ -117,8 +130,11 @@ export const usePatientList = (initialFilters?: Partial<PatientFilters>) => {
     error,
     filters,
     refetch: fetchPatients,
+    refreshPatients: fetchPatients, // Alias for refetch
+    pagination, // Added pagination object
     handleFilterChange,
     handlePageChange,
+    handlePerPageChange, // Added function for changing items per page
     handleStatusChange
   };
 };

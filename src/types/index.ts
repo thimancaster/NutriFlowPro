@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   aud: string;
@@ -92,3 +91,22 @@ export interface ConsultationData {
 // Re-export from other type files
 export * from './appointment';
 export * from './meal';
+
+// Add or update ToastApi and ToastProps interfaces
+export interface ToastProps {
+  id?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  variant?: 'default' | 'destructive' | 'success';
+  duration?: number;
+  action?: React.ReactNode;
+}
+
+export interface ToastApi {
+  toast: (props: ToastProps) => {
+    id: string;
+    dismiss: () => void;
+    update: (props: Partial<ToastProps>) => void;
+  };
+  dismiss: (toastId?: string) => void;
+}

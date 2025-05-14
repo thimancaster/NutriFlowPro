@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, addMinutes } from 'date-fns';
 import { AppointmentType, Appointment } from '@/types';
+import { prepareForSupabase } from '@/utils/dateUtils';
 
 export const useAppointmentMutations = () => {
   const { user } = useAuth();
@@ -34,9 +35,12 @@ export const useAppointmentMutations = () => {
       
       if (appointment.id) {
         // Update existing appointment
+        // Prepare data for Supabase by converting dates and removing ID
+        const preparedData = prepareForSupabase(appointment, true);
+        
         const { data, error } = await supabase
           .from('appointments')
-          .update(appointment)
+          .update(preparedData)
           .eq('id', appointment.id)
           .eq('user_id', user.id)
           .select();
@@ -45,12 +49,21 @@ export const useAppointmentMutations = () => {
         return data[0];
       } else {
         // Create new appointment
+        // Prepare appointment data for Supabase
+        const appointmentData = {
+          ...appointment,
+          user_id: user.id,
+          // Map properties required by the Supabase table schema
+          date: appointment.start_time, // Use start_time as the date for required field
+          type: appointment.appointment_type_id || 'default' // Required field in Supabase schema
+        };
+        
+        // Convert dates and remove ID if present
+        const preparedData = prepareForSupabase(appointmentData, true);
+        
         const { data, error } = await supabase
           .from('appointments')
-          .insert({
-            ...appointment,
-            user_id: user.id
-          })
+          .insert(preparedData)
           .select();
           
         if (error) throw error;

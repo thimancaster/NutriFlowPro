@@ -54,12 +54,25 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
     logger.info(`Changed to tab: ${value}`);
   };
 
-  // Handle notes update
-  const handleNotesUpdate = async (notes: string) => {
+  // Fix the Promise<void> return type issue
+  const handlePatientUpdate = async (updatedData: Partial<Patient>): Promise<void> => {
+    try {
+      await handleUpdatePatient(updatedData);
+      // No need to return anything, just awaiting the promise
+    } catch (error) {
+      logger.error('Error updating patient:', error);
+      // Still returning void (undefined)
+    }
+  };
+
+  // Handle notes update with void return type
+  const handleNotesUpdate = async (notes: string): Promise<void> => {
     try {
       await handleUpdatePatientNotes(notes);
+      // No return value needed
     } catch (error) {
       logger.error('Error updating patient notes:', error);
+      // Still returning void (undefined)
     }
   };
   
@@ -85,7 +98,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
             
             <div className="flex-1 overflow-auto p-6">
               <TabsContent value="info" className="m-0 h-full">
-                <PatientBasicInfo patient={patient} onUpdatePatient={handleUpdatePatient} />
+                <PatientBasicInfo patient={patient} onUpdatePatient={handlePatientUpdate} />
               </TabsContent>
               
               <TabsContent value="appointments" className="m-0 h-full">
