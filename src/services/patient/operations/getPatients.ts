@@ -2,24 +2,25 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-// Define our response types explicitly and separately to avoid recursive type definitions
-interface PatientsData {
+// Define our response types explicitly and separately 
+// Using a plain object type instead of an interface to avoid potential circular references
+type PatientsData = {
   patients: Patient[];
   total: number;
-}
+};
 
-interface SuccessResponse {
+type SuccessResponse = {
   success: true;
   data: PatientsData;
-}
+};
 
-interface ErrorResponse {
+type ErrorResponse = {
   success: false;
   error: string;
-}
+};
 
 // Use a union type to represent either success or error
-type PatientsResponse = SuccessResponse | ErrorResponse;
+export type PatientsResponse = SuccessResponse | ErrorResponse;
 
 export const getPatients = async (
   userId: string, 
@@ -49,7 +50,7 @@ export const getPatients = async (
     
     if (error) throw error;
     
-    // Return success response with properly typed data
+    // Create and return success response
     return {
       success: true,
       data: {
@@ -59,7 +60,7 @@ export const getPatients = async (
     };
   } catch (error: any) {
     console.error('Error in getPatients:', error.message);
-    // Return error response
+    // Create and return error response
     return {
       success: false,
       error: error.message
@@ -120,7 +121,7 @@ export const getSortedPatients = async (
     
     if (error) throw error;
     
-    // Return success response with properly typed data
+    // Create and return success response
     return {
       success: true,
       data: {
@@ -130,7 +131,7 @@ export const getSortedPatients = async (
     };
   } catch (error: any) {
     console.error('Error in getSortedPatients:', error.message);
-    // Return error response
+    // Create and return error response
     return {
       success: false,
       error: error.message
