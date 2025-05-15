@@ -11,6 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-nutri-blue text-white hover:bg-white hover:text-nutri-blue border border-nutri-blue hover:shadow-md active:scale-[0.98]",
+        primary: "bg-nutri-green text-white hover:bg-white hover:text-nutri-green border border-nutri-green hover:shadow-md active:scale-[0.98]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md active:scale-[0.98]",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-md active:scale-[0.98]",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md active:scale-[0.98]",
