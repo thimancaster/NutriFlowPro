@@ -2,13 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-// Define our response types explicitly and separately 
-// Using a plain object type instead of an interface to avoid potential circular references
+// Define simple primitive types to avoid recursion
 type PatientsData = {
   patients: Patient[];
   total: number;
 };
 
+// Use separate types for success and error responses
 type SuccessResponse = {
   success: true;
   data: PatientsData;
@@ -19,7 +19,7 @@ type ErrorResponse = {
   error: string;
 };
 
-// Use a union type to represent either success or error
+// Export a clear union type without recursive references
 export type PatientsResponse = SuccessResponse | ErrorResponse;
 
 export const getPatients = async (
