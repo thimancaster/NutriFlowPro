@@ -37,5 +37,5 @@ export const useAppointmentTypes = () => {
   }, []);
   
   // Return the appointmentTypes directly in the object
-  return { appointmentTypes, isLoading };
+  return { types: appointmentTypes, isLoading };
 };

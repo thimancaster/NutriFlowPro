@@ -1,52 +1,49 @@
 
+import React from 'react';
 import { useAppointmentTypes } from '@/hooks/useAppointmentTypes';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { AppointmentType } from '@/types';
 
 interface AppointmentTypeSelectProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-const AppointmentTypeSelect = ({ value, onChange }: AppointmentTypeSelectProps) => {
-  const { appointmentTypes, isLoading } = useAppointmentTypes();
+const AppointmentTypeSelect: React.FC<AppointmentTypeSelectProps> = ({ value, onChange }) => {
+  const { types, isLoading } = useAppointmentTypes();
   
-  // Make appointment types available to the form hook
-  if (!window.appointmentTypes && appointmentTypes.length > 0) {
-    window.appointmentTypes = appointmentTypes;
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Tipo</Label>
+        <div className="col-span-3 h-10 rounded-md bg-gray-100 animate-pulse"></div>
+      </div>
+    );
   }
   
   return (
     <div className="grid grid-cols-4 items-center gap-4">
       <Label htmlFor="appointment_type_id" className="text-right">
-        Tipo de Consulta
+        Tipo
       </Label>
-      <div className="col-span-3">
-        <Select 
-          name="appointment_type_id"
-          value={value || ''} 
-          onValueChange={onChange}
-          disabled={isLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o tipo de consulta" />
-          </SelectTrigger>
-          <SelectContent>
-            {appointmentTypes.map(type => (
+      <Select
+        value={value}
+        onValueChange={onChange}
+      >
+        <SelectTrigger id="appointment_type_id" className="col-span-3">
+          <SelectValue placeholder="Selecione o tipo de consulta" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Tipos de Consulta</SelectLabel>
+            {types.map((type) => (
               <SelectItem key={type.id} value={type.id}>
-                {type.name} ({type.duration_minutes} min)
+                {type.name} ({type.duration_minutes}min)
               </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </div>
   );
 };

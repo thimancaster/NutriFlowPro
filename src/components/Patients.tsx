@@ -46,6 +46,11 @@ const Patients = () => {
     });
   };
 
+  // Modified to accept a status parameter
+  const onStatusChange = (status: "active" | "archived" | "all") => {
+    handleStatusChange(status);
+  };
+
   // Content rendering based on state
   const renderContent = () => {
     if (isLoading) {
@@ -98,7 +103,7 @@ const Patients = () => {
           
           <PatientStatusFilter
             currentStatus={filters.status || 'active'}
-            onStatusChange={handleStatusChange}
+            onStatusChange={onStatusChange}
           />
         </div>
 

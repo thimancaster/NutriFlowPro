@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ConsultationData } from "@/types";
 
 interface ConsultationFormProps {
   formData: {
@@ -17,18 +18,28 @@ interface ConsultationFormProps {
     consultationType?: string;
     consultationStatus?: string;
   };
+  consultation?: ConsultationData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   lastAutoSave?: Date | null;
+  onFormChange?: (data: Partial<ConsultationData>) => void;
+  patient?: any;
+  patients?: any[];
+  autoSaveStatus?: "idle" | "saving" | "success" | "error";
 }
 
 const ConsultationForm = ({ 
   formData, 
+  consultation,
   handleInputChange, 
   handleSelectChange, 
   onSubmit,
-  lastAutoSave
+  lastAutoSave,
+  onFormChange,
+  patient,
+  patients,
+  autoSaveStatus
 }: ConsultationFormProps) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -150,6 +161,24 @@ const ConsultationForm = ({
       {lastAutoSave && (
         <div className="text-xs text-gray-500 italic">
           Último salvamento automático: {lastAutoSave.toLocaleTimeString()}
+        </div>
+      )}
+      
+      {autoSaveStatus === 'saving' && (
+        <div className="text-xs text-gray-500 italic">
+          Salvando alterações...
+        </div>
+      )}
+      
+      {autoSaveStatus === 'success' && (
+        <div className="text-xs text-green-500 italic">
+          Alterações salvas com sucesso
+        </div>
+      )}
+      
+      {autoSaveStatus === 'error' && (
+        <div className="text-xs text-red-500 italic">
+          Erro ao salvar alterações
         </div>
       )}
       

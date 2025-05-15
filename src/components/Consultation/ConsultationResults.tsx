@@ -1,8 +1,10 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ConsultationData } from '@/types';
 
 interface ConsultationResultsProps {
-  results: {
+  results?: {
     tmb: number;
     fa: number;
     get: number;
@@ -12,26 +14,49 @@ interface ConsultationResultsProps {
       fat: number;
     };
   };
+  consultation?: ConsultationData;
+  onSave?: () => Promise<void>;
+  isSaving?: boolean;
 }
 
-const ConsultationResults: React.FC<ConsultationResultsProps> = ({ results }) => {
+const ConsultationResults: React.FC<ConsultationResultsProps> = ({ 
+  results, 
+  consultation,
+  onSave,
+  isSaving
+}) => {
+  const displayResults = results || (consultation?.results ? {
+    tmb: consultation.results.bmr,
+    fa: consultation.results.vet || 0,
+    get: consultation.results.get,
+    macros: {
+      protein: consultation.results.macros.protein,
+      carbs: consultation.results.macros.carbs,
+      fat: consultation.results.macros.fat
+    }
+  } : undefined);
+
+  if (!displayResults) {
+    return <div className="text-center py-8">No results available</div>;
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
           <h3 className="text-sm text-gray-500 mb-1">Taxa Metabólica Basal</h3>
-          <p className="text-3xl font-bold text-nutri-blue">{results.tmb}</p>
+          <p className="text-3xl font-bold text-nutri-blue">{displayResults.tmb}</p>
           <p className="text-sm text-gray-500">kcal/dia</p>
         </div>
         
         <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
           <h3 className="text-sm text-gray-500 mb-1">Fator de Atividade</h3>
-          <p className="text-3xl font-bold text-nutri-green">{results.fa}</p>
+          <p className="text-3xl font-bold text-nutri-green">{displayResults.fa}</p>
         </div>
         
         <div className="bg-nutri-gray-light rounded-xl p-4 text-center">
           <h3 className="text-sm text-gray-500 mb-1">Gasto Energético Total</h3>
-          <p className="text-3xl font-bold text-purple-600">{results.get}</p>
+          <p className="text-3xl font-bold text-purple-600">{displayResults.get}</p>
           <p className="text-sm text-gray-500">kcal/dia</p>
         </div>
       </div>
@@ -41,31 +66,43 @@ const ConsultationResults: React.FC<ConsultationResultsProps> = ({ results }) =>
       <div className="space-y-6">
         <MacroProgressBar 
           label="Proteínas"
-          value={results.macros.protein}
-          totalMacros={results.macros.protein + results.macros.carbs + results.macros.fat}
-          totalCalories={results.get}
+          value={displayResults.macros.protein}
+          totalMacros={displayResults.macros.protein + displayResults.macros.carbs + displayResults.macros.fat}
+          totalCalories={displayResults.get}
           caloriesPerGram={4}
           colorClass="bg-nutri-blue"
         />
         
         <MacroProgressBar 
           label="Carboidratos"
-          value={results.macros.carbs}
-          totalMacros={results.macros.protein + results.macros.carbs + results.macros.fat}
-          totalCalories={results.get}
+          value={displayResults.macros.carbs}
+          totalMacros={displayResults.macros.protein + displayResults.macros.carbs + displayResults.macros.fat}
+          totalCalories={displayResults.get}
           caloriesPerGram={4}
           colorClass="bg-nutri-green"
         />
         
         <MacroProgressBar 
           label="Gorduras"
-          value={results.macros.fat}
-          totalMacros={results.macros.protein + results.macros.carbs + results.macros.fat}
-          totalCalories={results.get}
+          value={displayResults.macros.fat}
+          totalMacros={displayResults.macros.protein + displayResults.macros.carbs + displayResults.macros.fat}
+          totalCalories={displayResults.get}
           caloriesPerGram={9}
           colorClass="bg-amber-500"
         />
       </div>
+
+      {onSave && (
+        <div className="mt-8">
+          <Button 
+            onClick={onSave} 
+            disabled={isSaving} 
+            className="w-full"
+          >
+            {isSaving ? 'Salvando...' : 'Salvar Consulta'}
+          </Button>
+        </div>
+      )}
     </>
   );
 };

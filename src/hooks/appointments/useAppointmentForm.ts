@@ -32,7 +32,7 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
     patient_id: '',
     start_time: '',
     appointment_type_id: 'initial',
-    status: 'scheduled',
+    status: 'scheduled' as AppointmentStatus,
     title: '',
     notes: '',
     recommendations: '',
@@ -68,11 +68,11 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
         console.error('Error parsing date:', error);
       }
       
-      const updatedFormData = {
+      const updatedFormData: Partial<Appointment> = {
         patient_id: appointment.patient_id || '',
         start_time: formattedDate,
         appointment_type_id: appointment.appointment_type_id || appointment.type || 'initial',
-        status: appointment.status || 'scheduled',
+        status: appointment.status || 'scheduled' as AppointmentStatus,
         title: appointment.title || '',
         notes: appointment.notes || '',
         recommendations: appointment.recommendations || '',
@@ -81,18 +81,18 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
       setFormData(updatedFormData);
       form.reset(updatedFormData as any);
     } else {
-      const emptyFormData = {
+      const emptyFormData: Partial<Appointment> = {
         patient_id: '',
         start_time: '',
         appointment_type_id: 'initial',
-        status: 'scheduled',
+        status: 'scheduled' as AppointmentStatus,
         title: '',
         notes: '',
         recommendations: '',
       };
       
       setFormData(emptyFormData);
-      form.reset(emptyFormData);
+      form.reset(emptyFormData as any);
       setDefaultDate(undefined);
     }
   }, [appointment, form]);
@@ -104,7 +104,13 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
   };
   
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      if (name === 'status') {
+        return { ...prev, [name]: value as AppointmentStatus };
+      }
+      return { ...prev, [name]: value };
+    });
+    
     form.setValue(name as any, value);
   };
   
