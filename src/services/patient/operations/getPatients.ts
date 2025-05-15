@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PaginationParams } from '@/types';
+import { Patient } from '@/types';
 
 export const getPatients = async (
   userId: string, 

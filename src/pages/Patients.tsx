@@ -34,7 +34,7 @@ const Patients = () => {
     isError,
     handlePageChange,
     handleFilterChange,
-    handleStatusChange, // Updated - renamed to match usage
+    handleStatusChange,
     togglePatientStatus,
     refetch
   } = usePatientList();
@@ -43,12 +43,6 @@ const Patients = () => {
   const handlePatientStatusToggle = async () => {
     if (!patient) return;
     await togglePatientStatus(patient.id, patient.status === 'active' ? 'archived' : 'active');
-  };
-
-  // Wrapper function for status change to match expected signature
-  const onStatusChangeWrapper = () => {
-    // This is a wrapper to make TypeScript happy
-    // The actual implementation will use handleStatusChange which requires a parameter
   };
 
   return (
