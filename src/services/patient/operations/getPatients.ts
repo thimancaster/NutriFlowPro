@@ -25,7 +25,7 @@ export type GetPatientsErrorResponse = {
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
 // Define a simplified type for database records with primitive types only
-type PatientRecordRaw = Record<string, unknown>;
+type PatientRecordRaw = Record<string, any>;
 
 export const getPatients = async (
   userId: string, 
