@@ -36,33 +36,42 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a query without chaining to avoid excessive type instantiation
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Avoid type instantiation issues by constructing query parameters first
+    const query = {
+      table: 'patients',
+      select: '*',
+      count: 'exact' as const,
+      filters: {
+        user_id: userId,
+        status: status !== 'all' ? status : undefined
+      },
+      pagination: {
+        from: paginationParams?.offset || 0,
+        to: (paginationParams?.offset || 0) + (paginationParams?.limit || 9999) - 1
+      }
+    };
     
-    // Apply user filter
-    query = query.eq('user_id', userId);
+    // Build and execute query manually to avoid deep type instantiation
+    let dbQuery = supabase.from(query.table).select(query.select, { count: query.count });
+    dbQuery = dbQuery.eq('user_id', query.filters.user_id);
     
-    // Apply status filter if not 'all'
-    if (status !== 'all') {
-      query = query.eq('status', status);
+    if (query.filters.status) {
+      dbQuery = dbQuery.eq('status', query.filters.status);
     }
     
-    // Apply pagination with safe defaults
-    const offset = paginationParams?.offset || 0;
-    const limit = paginationParams?.limit || 9999;
-    query = query.range(offset, offset + limit - 1);
+    dbQuery = dbQuery.range(query.pagination.from, query.pagination.to);
     
-    // Execute query
-    const { data, error, count } = await query;
+    // Execute the constructed query
+    const { data, error, count } = await dbQuery;
     
     if (error) throw error;
     
-    // Process data safely to avoid excessive type instantiation
+    // Process data with minimal type operations
     const patients: Patient[] = [];
-    if (data && Array.isArray(data)) {
-      // Use simple iteration over the array
+    if (data) {
       for (let i = 0; i < data.length; i++) {
-        patients.push(convertDbToPatient(data[i] as PatientRecordRaw));
+        const patientRecord = data[i] as PatientRecordRaw;
+        patients.push(convertDbToPatient(patientRecord));
       }
     }
     
@@ -97,54 +106,67 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start query construction without excessive chaining
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Avoid type instantiation issues by constructing query parameters first
+    const query = {
+      table: 'patients',
+      select: '*',
+      count: 'exact' as const,
+      filters: {
+        user_id: userId,
+        status: status !== 'all' ? status : undefined,
+        search: search || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
+      },
+      sort: {
+        column: sortBy,
+        ascending: sortOrder === 'asc'
+      },
+      pagination: {
+        from: paginationParams?.offset ?? 0,
+        to: (paginationParams?.offset ?? 0) + (paginationParams?.limit ?? 9999) - 1
+      }
+    };
     
-    // Apply user filter
-    query = query.eq('user_id', userId);
+    // Build and execute query step by step to avoid deep type instantiation
+    let dbQuery = supabase.from(query.table).select(query.select, { count: query.count });
     
-    // Apply status filter if not 'all'
-    if (status !== 'all') {
-      query = query.eq('status', status);
+    // Apply filters
+    dbQuery = dbQuery.eq('user_id', query.filters.user_id);
+    
+    if (query.filters.status) {
+      dbQuery = dbQuery.eq('status', query.filters.status);
     }
     
-    // Apply search filter if provided
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+    if (query.filters.search) {
+      dbQuery = dbQuery.or(`name.ilike.%${query.filters.search}%,email.ilike.%${query.filters.search}%,cpf.ilike.%${query.filters.search}%`);
     }
     
-    // Apply date range filter if provided
-    if (startDate) {
-      query = query.gte('created_at', startDate);
+    if (query.filters.startDate) {
+      dbQuery = dbQuery.gte('created_at', query.filters.startDate);
     }
     
-    if (endDate) {
-      query = query.lte('created_at', endDate);
+    if (query.filters.endDate) {
+      dbQuery = dbQuery.lte('created_at', query.filters.endDate);
     }
     
     // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    dbQuery = dbQuery.order(query.sort.column, { ascending: query.sort.ascending });
     
-    // Apply pagination with safe handling of undefined values
-    if (paginationParams) {
-      query = query.range(
-        paginationParams.offset,
-        paginationParams.offset + paginationParams.limit - 1
-      );
-    } else {
-      query = query.range(0, 9999); // Default range if no pagination
-    }
+    // Apply pagination
+    dbQuery = dbQuery.range(query.pagination.from, query.pagination.to);
     
     // Execute query
-    const { data, error, count } = await query;
+    const { data, error, count } = await dbQuery;
     
     if (error) throw error;
     
-    // Process data safely to avoid excessive type instantiation
+    // Process data with minimal type operations
     const patients: Patient[] = [];
-    if (data && Array.isArray(data)) {
+    if (data) {
       for (let i = 0; i < data.length; i++) {
-        patients.push(convertDbToPatient(data[i] as PatientRecordRaw));
+        const patientRecord = data[i] as PatientRecordRaw;
+        patients.push(convertDbToPatient(patientRecord));
       }
     }
     
