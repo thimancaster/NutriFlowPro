@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
@@ -33,12 +34,13 @@ const Patients = () => {
     isError,
     handlePageChange,
     handleFilterChange,
-    handleStatusChange,
+    handleStatusChange: handleFilterStatusChange, // Rename to avoid conflict
     togglePatientStatus,
     refetch
   } = usePatientList();
   
-  const handleStatusChange = async () => {
+  // Function to handle patient status change in the detail modal
+  const handlePatientStatusToggle = async () => {
     if (!patient) return;
     await togglePatientStatus(patient.id, patient.status === 'active' ? 'archived' : 'active');
   };
@@ -73,7 +75,7 @@ const Patients = () => {
                 totalItems={pagination.total}
                 filters={filters}
                 onViewDetail={openPatientDetail}
-                onStatusChange={handleStatusChange}
+                onStatusChange={handleFilterStatusChange}
                 onPageChange={handlePageChange}
               />
             )}
@@ -85,7 +87,7 @@ const Patients = () => {
             isOpen={isModalOpen}
             onClose={closePatientDetail}
             patient={patient}
-            onStatusChange={() => handleStatusChange(patient.status === 'active' ? 'archived' : 'active')}
+            onStatusChange={handlePatientStatusToggle}
           />
         )}
       </div>

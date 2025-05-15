@@ -1,120 +1,96 @@
-import { useAppointments as useAppointmentQuery } from './appointments/useAppointmentQuery';
-import { useAppointmentActions } from './appointments/useAppointmentActions';
-import { useAppointmentMutations } from './appointments/useAppointmentMutations';
 
-// Update the hook to accept an optional patientId parameter
-export const useAppointments = (patientId?: string) => {
-  // Pass the patientId to the query hook
-  const query = useAppointmentQuery();
-  const {
-    data: appointments = [],
-    isLoading,
-    isError,
-    error,
-    refetch
-  } = query;
+import { useState, useEffect } from 'react';
+import { Appointment } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { format } from 'date-fns';
+
+export const useAppointments = (options?: { 
+  patientId?: string; 
+  status?: string;
+  startDate?: Date;
+  endDate?: Date;
+}) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { user } = useAuth();
   
-  // Create a structured wrapper for appointments by date for calendar view
-  const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, appointment) => {
-    let dateKey = '';
-    
-    if (appointment.start_time) {
-      dateKey = new Date(appointment.start_time).toISOString().split('T')[0];
-    } else if (appointment.date) {
-      dateKey = new Date(appointment.date).toISOString().split('T')[0];
+  const fetchAppointments = async () => {
+    if (!user) {
+      setAppointments([]);
+      setIsLoading(false);
+      return;
     }
     
-    if (dateKey && !acc[dateKey]) {
-      acc[dateKey] = [];
-    }
+    setIsLoading(true);
     
-    if (dateKey) {
-      acc[dateKey].push(appointment);
-    }
-    
-    return acc;
-  }, {});
-
-  const {
-    selectedAppointment,
-    formDialogOpen,
-    handleNewAppointment,
-    handleEditAppointment,
-    handleCloseDialog,
-    handleSaveAppointment,
-    isCanceling
-  } = useAppointmentActions();
-  
-  const {
-    createAppointment,
-    updateAppointment,
-    deleteAppointment,
-    cancelAppointment
-  } = useAppointmentMutations();
-
-  // Create aliases for expected method names to maintain compatibility
-  const saveAppointment = async (appointmentData: any) => {
     try {
-      if (appointmentData.id) {
-        const result = await updateAppointment.mutateAsync({
-          id: appointmentData.id,
-          data: appointmentData
-        });
-        return { success: true, data: result };
-      } else {
-        const result = await createAppointment.mutateAsync(appointmentData);
-        return { success: true, data: result };
+      let query = supabase
+        .from('appointments')
+        .select('*');
+      
+      // Filter by user_id
+      query = query.eq('user_id', user.id);
+      
+      // Apply optional filters
+      if (options?.patientId) {
+        query = query.eq('patient_id', options.patientId);
       }
-    } catch (error: any) {
-      return { success: false, error };
+      
+      if (options?.status) {
+        query = query.eq('status', options.status);
+      }
+      
+      if (options?.startDate) {
+        const formattedDate = format(options.startDate, 'yyyy-MM-dd');
+        query = query.gte('date', formattedDate);
+      }
+      
+      if (options?.endDate) {
+        const formattedDate = format(options.endDate, 'yyyy-MM-dd');
+        query = query.lte('date', formattedDate);
+      }
+      
+      // Order by date descending
+      query = query.order('date', { ascending: false });
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      const formattedAppointments: Appointment[] = (data || []).map(item => ({
+        id: item.id,
+        patient_id: item.patient_id || '',
+        date: item.date || '',
+        type: item.type || '',
+        status: item.status || 'scheduled',
+        notes: item.notes || '',
+        recommendations: item.recommendations || '',
+        measurements: item.measurements || {},
+        created_at: item.created_at || '',
+        updated_at: item.updated_at || '',
+        user_id: item.user_id || '',
+        patient: null // Will be populated elsewhere if needed
+      }));
+      
+      setAppointments(formattedAppointments);
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const handleDeleteAppointment = async (id: string) => {
-    try {
-      const result = await deleteAppointment.mutateAsync(id);
-      return { success: true, data: result };
-    } catch (error: any) {
-      return { success: false, error };
-    }
-  };
+  useEffect(() => {
+    fetchAppointments();
+  }, [user, options?.patientId, options?.status, options?.startDate, options?.endDate]);
   
-  const handleCancelAppointment = async (id: string) => {
-    try {
-      const result = await cancelAppointment.mutateAsync(id);
-      return { success: true, data: result };
-    } catch (error: any) {
-      return { success: false, error };
-    }
-  };
-  
-  const fetchAppointments = () => {
-    refetch();
-    return { success: true };
-  };
-  
-  const isSubmitting = createAppointment.isPending || updateAppointment.isPending;
-
   return {
     appointments,
     isLoading,
-    isError,
     error,
-    fetchAppointments,
-    createAppointment,
-    updateAppointment,
-    deleteAppointment: handleDeleteAppointment,
-    cancelAppointment: handleCancelAppointment,
-    saveAppointment,
-    appointmentsByDate,
-    // Original properties from useAppointmentActions
-    selectedAppointment,
-    formDialogOpen,
-    handleNewAppointment,
-    handleEditAppointment,
-    handleCloseDialog,
-    handleSaveAppointment,
-    isSubmitting,
-    isCanceling
+    refetch: fetchAppointments
   };
 };

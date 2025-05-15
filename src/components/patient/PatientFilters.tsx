@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PatientFilters as PatientFilterType } from '@/types';
@@ -21,11 +22,12 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
   onSearch 
 }) => {
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
+  // Use dateFrom/dateTo instead of startDate/endDate
   const [startDate, setStartDate] = useState<Date | undefined>(
-    filters.startDate ? new Date(filters.startDate) : undefined
+    filters.dateFrom ? new Date(filters.dateFrom) : undefined
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-    filters.endDate ? new Date(filters.endDate) : undefined
+    filters.dateTo ? new Date(filters.dateTo) : undefined
   );
   
   const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
@@ -49,11 +51,10 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
       if (date) {
         onFiltersChange({
           ...filters,
-          startDate: date.toISOString().split('T')[0],
           dateFrom: date.toISOString().split('T')[0]
         });
       } else {
-        const { startDate, dateFrom, ...rest } = filters;
+        const { dateFrom, ...rest } = filters;
         onFiltersChange(rest);
       }
     } else {
@@ -61,11 +62,10 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
       if (date) {
         onFiltersChange({
           ...filters,
-          endDate: date.toISOString().split('T')[0],
           dateTo: date.toISOString().split('T')[0]
         });
       } else {
-        const { endDate, dateTo, ...rest } = filters;
+        const { dateTo, ...rest } = filters;
         onFiltersChange(rest);
       }
     }

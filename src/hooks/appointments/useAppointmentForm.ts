@@ -1,7 +1,22 @@
 
 import { useState, useEffect } from 'react';
-import { format, addMinutes, parseISO } from 'date-fns';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Appointment } from '@/types';
+import { format, isValid, parseISO } from 'date-fns';
+
+// Create schema for appointment
+const appointmentSchema = z.object({
+  patient_id: z.string().min(1, 'Patient is required'),
+  date: z.string().min(1, 'Date is required'),
+  type: z.string().min(1, 'Appointment type is required'),
+  status: z.string().min(1, 'Status is required'),
+  notes: z.string().optional(),
+  recommendations: z.string().optional(),
+});
+
+export type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
 interface UseAppointmentFormProps {
   appointment: Appointment | null;
@@ -9,106 +24,77 @@ interface UseAppointmentFormProps {
 }
 
 export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentFormProps) => {
-  const [formData, setFormData] = useState<Partial<Appointment> & {duration_minutes?: number}>({
-    patient_id: '',
-    title: '',
-    start_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    end_time: format(addMinutes(new Date(), 60), "yyyy-MM-dd'T'HH:mm"),
-    duration_minutes: 60,
-    appointment_type_id: '',
-    notes: '',
-    status: 'scheduled'
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [defaultDate, setDefaultDate] = useState<Date | undefined>(undefined);
+  
+  const form = useForm<AppointmentFormValues>({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      patient_id: '',
+      date: '',
+      type: 'initial',
+      status: 'scheduled',
+      notes: '',
+      recommendations: '',
+    },
   });
   
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Initialize form with appointment data when editing
+  // Set form values when appointment changes
   useEffect(() => {
     if (appointment) {
-      const startTime = typeof appointment.start_time === 'string'
-        ? parseISO(appointment.start_time)
-        : appointment.start_time;
-        
-      const endTime = typeof appointment.end_time === 'string'
-        ? parseISO(appointment.end_time)
-        : appointment.end_time;
+      // Format date for the form
+      let formattedDate = '';
+      try {
+        // Try to parse the date string
+        const parsedDate = parseISO(appointment.date);
+        if (isValid(parsedDate)) {
+          formattedDate = format(parsedDate, "yyyy-MM-dd'T'HH:mm");
+          setDefaultDate(parsedDate);
+        }
+      } catch (error) {
+        console.error('Error parsing date:', error);
+      }
       
-      setFormData({
-        ...appointment,
-        start_time: format(startTime, "yyyy-MM-dd'T'HH:mm"),
-        end_time: format(endTime, "yyyy-MM-dd'T'HH:mm"),
+      form.reset({
+        patient_id: appointment.patient_id,
+        date: formattedDate,
+        type: appointment.type,
+        status: appointment.status,
+        notes: appointment.notes,
+        recommendations: appointment.recommendations,
       });
-    }
-  }, [appointment]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    
-    setFormData(prev => {
-      // If changing start_time, update end_time based on duration
-      if (name === 'start_time') {
-        const startDate = new Date(value);
-        const endDate = addMinutes(startDate, prev.duration_minutes || 60);
-        return { 
-          ...prev, 
-          [name]: value,
-          end_time: format(endDate, "yyyy-MM-dd'T'HH:mm")
-        };
-      }
-      
-      // For other fields, just update the value
-      return { ...prev, [name]: value };
-    });
-  };
-  
-  const handleSelectChange = (name: string, value: string) => {
-    // Special handling for appointment type selection
-    if (name === 'appointment_type_id' && value) {
-      handleAppointmentTypeChange(name, value);
     } else {
-      handleChange({ target: { name, value } } as React.ChangeEvent<HTMLSelectElement>);
+      form.reset({
+        patient_id: '',
+        date: '',
+        type: 'initial',
+        status: 'scheduled',
+        notes: '',
+        recommendations: '',
+      });
+      setDefaultDate(undefined);
     }
-  };
+  }, [appointment, form]);
   
-  const handleAppointmentTypeChange = (name: string, value: string) => {
-    setFormData(prev => {
-      // Get the appointment type duration (would be passed from parent)
-      const appointmentType = window.appointmentTypes?.find(type => type.id === value);
-      
-      if (appointmentType) {
-        const startDate = prev.start_time ? new Date(prev.start_time as string) : new Date();
-        const endDate = addMinutes(startDate, appointmentType.duration_minutes);
-        
-        return { 
-          ...prev, 
-          [name]: value,
-          duration_minutes: appointmentType.duration_minutes,
-          end_time: format(endDate, "yyyy-MM-dd'T'HH:mm")
-        };
-      }
-      
-      return { ...prev, [name]: value };
-    });
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: AppointmentFormValues) => {
     setIsSubmitting(true);
-    
     try {
-      // Remove duration_minutes before submitting as it's not in the Appointment type
-      const { duration_minutes, ...submissionData } = formData;
-      await onSubmit(submissionData);
+      await onSubmit({
+        ...values,
+        // Additional fields if needed
+      });
+      form.reset();
+    } catch (error) {
+      console.error('Error submitting appointment form:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return {
-    formData,
+    form,
     isSubmitting,
-    handleChange,
-    handleSelectChange,
-    handleSubmit
+    defaultDate,
+    handleSubmit: form.handleSubmit(handleSubmit),
   };
 };

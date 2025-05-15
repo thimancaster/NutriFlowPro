@@ -1,218 +1,247 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ConsultationWizard } from '@/components/Consultation/ConsultationWizard';
+import { ConsultationForm } from '@/components/Consultation/ConsultationForm';
+import { ConsultationResults } from '@/components/Consultation/ConsultationResults';
 import { useToast } from '@/hooks/use-toast';
-import PatientHeader from '@/components/Anthropometry/PatientHeader';
-import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import { supabase } from '@/integrations/supabase/client';
-import { useConsultation } from '@/contexts/ConsultationContext';
-import { Patient, ConsultationData } from '@/types';
-import { getObjectiveFromGoals, calculateAge } from '@/utils/patientUtils';
-import ConsultationForm from '@/components/Consultation/ConsultationForm';
-import ConsultationResults from '@/components/Consultation/ConsultationResults';
-import { useConsultationForm } from '@/hooks/useConsultationForm';
-import usePatientData from './ConsultationHooks/usePatientData';
-import useAutoSave from './ConsultationHooks/useAutoSave';
-import { v4 as uuidv4 } from 'uuid';
+import { consultationService } from '@/services';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { usePatient } from '@/hooks/usePatient';
+import { ConsultationData } from '@/types';
+import { usePatientOptions } from '@/hooks/usePatientOptions';
+import { useAutoSave } from './ConsultationHooks/useAutoSave';
+import { usePatientData } from './ConsultationHooks/usePatientData';
+
+const emptyConsultation: ConsultationData = {
+  patient: {
+    name: '',
+  },
+  date: new Date().toISOString().split('T')[0],
+  anthropometry: {
+    weight: 0,
+    height: 0,
+    age: 0,
+    gender: 'female',
+    activityFactor: 1.2,
+    bodyFat: null,
+  },
+  nutritionalObjectives: {
+    objective: 'maintenance',
+    customCalories: null,
+  },
+  macroDistribution: {
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+  },
+  results: {
+    bmr: 0,
+    tdee: 0,
+    adjustedCalories: 0,
+    proteinGrams: 0,
+    carbsGrams: 0,
+    fatGrams: 0,
+  },
+  recommendations: '',
+  notes: '',
+};
 
 const Consultation = () => {
-  const { toast } = useToast();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { activePatient, setActivePatient, consultationData, setConsultationData } = useConsultation();
-  const [patientId, setPatientId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [step, setStep] = useState(1);
+  const [consultation, setConsultation] = useState<ConsultationData>(emptyConsultation);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { patient } = usePatient(consultation?.patient_id);
+  const { patients } = usePatientOptions();
   
-  const patientData = location.state?.patientData || activePatient;
-  const repeatConsultation = location.state?.repeatConsultation;
+  const { saveConsultation, autoSaveStatus } = useAutoSave(id);
+  const { updatePatientData } = usePatientData();
   
-  // Initialize form with any repeat consultation data if available
-  const initialFormData = repeatConsultation ? {
-    weight: repeatConsultation.weight?.toString() || '',
-    height: repeatConsultation.height?.toString() || '',
-    sex: repeatConsultation.sex || 'M',
-    objective: repeatConsultation.objective || 'manutenção',
-    profile: repeatConsultation.profile || 'magro',
-    activityLevel: repeatConsultation.activityLevel || 'moderado',
-    consultationType: repeatConsultation.tipo || 'primeira_consulta',
-    consultationStatus: repeatConsultation.status || 'em_andamento'
-  } : {};
-  
-  const { 
-    formData, 
-    results, 
-    handleInputChange, 
-    handleSelectChange, 
-    setFormData,
-    lastAutoSave,
-    setLastAutoSave,
-    consultationId,
-    setConsultationId
-  } = useConsultationForm(initialFormData);
-  
+  // Load existing consultation if id is provided
   useEffect(() => {
-    if (patientData && patientData.id) {
-      setPatientId(patientData.id);
-    }
-  }, [patientData]);
-  
-  const isSaving = useAutoSave({
-    consultationId,
-    formData,
-    results,
-    setLastAutoSave
-  });
-  
-  // Fetch patient data if not available
-  usePatientData({
-    patientData,
-    setActivePatient,
-    setFormData
-  });
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    const fetchConsultation = async () => {
+      if (!id || id === 'new') return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('consultations')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        
+        // Transform data to match ConsultationData type
+        const consultationData: ConsultationData = {
+          patient: {
+            name: '',
+          },
+          patient_id: data.patient_id,
+          date: data.date || new Date().toISOString().split('T')[0],
+          anthropometry: data.anthropometry || {
+            weight: 0,
+            height: 0,
+            age: 0,
+            gender: 'female',
+            activityFactor: 1.2,
+            bodyFat: null,
+          },
+          nutritionalObjectives: data.nutritional_objectives || {
+            objective: 'maintenance',
+            customCalories: null,
+          },
+          macroDistribution: data.macro_distribution || {
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+          },
+          results: data.results || {
+            bmr: 0,
+            tdee: 0,
+            adjustedCalories: 0,
+            proteinGrams: 0,
+            carbsGrams: 0,
+            fatGrams: 0,
+          },
+          recommendations: data.recommendations || '',
+          notes: data.notes || '',
+          // Don't include created_at as it's not in the ConsultationData type
+        };
+        
+        // Find patient in the list
+        const patientInfo = patients.find(p => p.id === data.patient_id);
+        if (patientInfo) {
+          consultationData.patient.name = patientInfo.name;
+        }
+        
+        setConsultation(consultationData);
+      } catch (err) {
+        console.error('Error loading consultation:', err);
+        toast({
+          title: 'Error',
+          description: `Failed to load consultation: ${(err as Error).message}`,
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    if (!patientId) {
+    if (user) {
+      fetchConsultation();
+    }
+  }, [id, user, toast, patients]);
+  
+  const handleFormChange = (data: Partial<ConsultationData>) => {
+    setConsultation(prev => ({
+      ...prev,
+      ...data,
+    }));
+    
+    // Auto-save when changes are made
+    saveConsultation({
+      ...consultation,
+      ...data,
+    });
+  };
+  
+  const handleStepChange = (newStep: number) => {
+    setStep(newStep);
+  };
+  
+  const handleSaveConsultation = async () => {
+    if (!user) {
       toast({
-        title: "Erro",
-        description: "ID do paciente não encontrado",
-        variant: "destructive"
+        title: 'Error',
+        description: 'You must be logged in to save a consultation',
+        variant: 'destructive',
       });
       return;
     }
     
-    // Get the current user's ID
-    let userId = '';
+    setIsSubmitting(true);
+    
     try {
-      // Use getSession instead of getUser to get current session
-      const session = supabase.auth.getSession();
-      // We'll handle the promise properly
-      session.then(response => {
-        userId = response?.data?.session?.user?.id || '';
-        
-        // Create complete consultation data object
-        const fullConsultationData: ConsultationData = {
-          id: consultationId || uuidv4(),
-          user_id: userId,
-          patient_id: patientId,
-          patient: {
-            name: patientData?.name || '',
-            age: consultationData.age,
-            id: patientId,
-          },
-          weight: parseFloat(formData.weight),
-          height: parseFloat(formData.height),
-          objective: formData.objective,
-          activity_level: formData.activityLevel,
-          gender: formData.sex === 'M' ? 'male' : 'female',
-          created_at: new Date().toISOString(),
-          bmr: results.tmb,
-          tdee: results.get,
-          protein: results.macros.protein,
-          carbs: results.macros.carbs,
-          fats: results.macros.fat,
-          results: {
-            bmr: results.tmb,
-            get: results.get,
-            adjustment: 0,
-            vet: results.get,
-            macros: {
-              protein: results.macros.protein,
-              carbs: results.macros.carbs,
-              fat: results.macros.fat,
-            }
-          }
-        };
-        
-        // Save consultation data to context
-        setConsultationData(fullConsultationData);
-        
+      const result = await consultationService.saveConsultation({
+        id: id !== 'new' ? id : undefined,
+        patient_id: consultation.patient_id || '',
+        date: consultation.date,
+        anthropometry: consultation.anthropometry,
+        nutritional_objectives: consultation.nutritionalObjectives,
+        macro_distribution: consultation.macroDistribution,
+        results: consultation.results,
+        recommendations: consultation.recommendations,
+        notes: consultation.notes,
+        user_id: user.id,
+      });
+      
+      if (result.id) {
         toast({
-          title: "Consulta salva com sucesso",
-          description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
+          title: 'Success',
+          description: 'Consultation saved successfully',
         });
         
-        navigate('/meal-plan-generator');
-      });
-    } catch (error) {
-      console.error("Error getting user:", error);
+        // Update patient data if this is a new consultation
+        if (consultation.patient_id) {
+          await updatePatientData(consultation.patient_id, {
+            measurements: {
+              weight: consultation.anthropometry.weight,
+              height: consultation.anthropometry.height,
+            },
+          });
+        }
+        
+        // Redirect to the saved consultation
+        if (id === 'new') {
+          navigate(`/consultation/${result.id}`);
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to save consultation',
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      console.error('Error saving consultation:', err);
       toast({
-        title: "Erro",
-        description: "Não foi possível obter o ID do usuário atual",
-        variant: "destructive"
+        title: 'Error',
+        description: `Failed to save consultation: ${(err as Error).message}`,
+        variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  const handleNext = () => {
-    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-  };
-  
-  const handleBack = () => {
-    navigate('/patients');
-  };
-  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <ConsultationWizard 
-          currentStep={1} 
-          onNext={handleNext} 
-          onBack={handleBack}
-          canGoNext={formData.weight && formData.height && formData.age ? true : false}
-          nextButtonLabel="Gerar Plano Alimentar"
-        >
-          <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Nova Consulta</h1>
-          
-          {patientData && (
-            <PatientHeader 
-              patientName={patientData.name}
-              patientAge={formData.age ? parseInt(formData.age) : undefined}
-              patientGender={patientData.gender}
-              patientObjective={formData.objective}
-            />
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1">
-              <Card className="nutri-card shadow-lg border-none">
-                <CardHeader>
-                  <CardTitle>Dados da Consulta</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ConsultationForm 
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    handleSelectChange={handleSelectChange}
-                    onSubmit={handleSubmit}
-                    lastAutoSave={lastAutoSave}
-                  />
-                  
-                  {isSaving && (
-                    <div className="text-xs text-blue-500 mt-2">
-                      Salvando alterações...
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="md:col-span-2">
-              <Card className="nutri-card shadow-lg border-none">
-                <CardHeader>
-                  <CardTitle>Resultados do Cálculo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ConsultationResults results={results} />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </ConsultationWizard>
-      </div>
+    <div className="container mx-auto py-8 px-4">
+      <ConsultationWizard
+        currentStep={step}
+        onStepChange={handleStepChange}
+        isLoading={isLoading}
+      >
+        <ConsultationForm
+          consultation={consultation}
+          onFormChange={handleFormChange}
+          patient={patient}
+          patients={patients}
+          autoSaveStatus={autoSaveStatus}
+        />
+        
+        <ConsultationResults
+          consultation={consultation}
+          onSave={handleSaveConsultation}
+          isSaving={isSubmitting}
+        />
+      </ConsultationWizard>
     </div>
   );
 };

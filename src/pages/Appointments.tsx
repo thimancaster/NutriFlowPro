@@ -1,166 +1,152 @@
+
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Appointment } from '@/types';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/Navbar';
-import UserInfoHeader from '@/components/UserInfoHeader';
+import { appointmentService } from '@/services';
 import AppointmentList from '@/components/appointment/AppointmentList';
 import AppointmentFormDialog from '@/components/appointment/AppointmentFormDialog';
-import { Helmet } from 'react-helmet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, Plus, RefreshCw } from 'lucide-react';
-import { Appointment } from '@/types';
 
 const Appointments = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const { appointments, isLoading, fetchAppointments, createAppointment, updateAppointment, deleteAppointment, cancelAppointment, appointmentsByDate } = useAppointments();
+  const { user } = useAuth();
   const { toast } = useToast();
-
-  const handleSubmit = async (appointmentData: Partial<Appointment>): Promise<void> => {
+  
+  // Fetch appointments
+  const { appointments, isLoading, error, refetch } = useAppointments();
+  
+  const handleCreateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
     try {
-      const result = await createAppointment.mutateAsync(appointmentData);
-      if (result) {
+      if (!user) return;
+      
+      const result = await appointmentService.createAppointment({
+        ...appointmentData,
+        user_id: user.id
+      });
+      
+      if (result.success) {
         toast({
-          title: "Consulta Agendada",
-          description: "A consulta foi agendada com sucesso."
+          title: 'Appointment created',
+          description: 'The appointment has been successfully created.',
         });
         setIsFormOpen(false);
+        refetch();
+      } else if (result.error) {
+        toast({
+          title: 'Error',
+          description: `Failed to create appointment: ${result.error}`,
+          variant: 'destructive',
+        });
       }
-    } catch (error: any) {
+    } catch (err) {
+      console.error('Error creating appointment:', err);
       toast({
-        title: "Erro ao agendar consulta",
-        description: error?.message || "Ocorreu um erro ao tentar agendar a consulta.",
-        variant: "destructive"
+        title: 'Error',
+        description: `An unexpected error occurred: ${(err as Error).message}`,
+        variant: 'destructive',
       });
     }
   };
-
+  
+  const handleUpdateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
+    try {
+      if (!user || !selectedAppointment) return;
+      
+      const result = await appointmentService.updateAppointment(
+        selectedAppointment.id,
+        appointmentData
+      );
+      
+      if (result.success) {
+        toast({
+          title: 'Appointment updated',
+          description: 'The appointment has been successfully updated.',
+        });
+        setIsFormOpen(false);
+        setSelectedAppointment(null);
+        refetch();
+      } else if (result.error) {
+        toast({
+          title: 'Error',
+          description: `Failed to update appointment: ${result.error}`,
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      console.error('Error updating appointment:', err);
+      toast({
+        title: 'Error',
+        description: `An unexpected error occurred: ${(err as Error).message}`,
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const handleDeleteAppointment = async (id: string): Promise<void> => {
+    try {
+      const result = await appointmentService.deleteAppointment(id);
+      
+      if (result.success) {
+        toast({
+          title: 'Appointment deleted',
+          description: 'The appointment has been successfully deleted.',
+        });
+        refetch();
+      } else if (result.error) {
+        toast({
+          title: 'Error',
+          description: `Failed to delete appointment: ${result.error}`,
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+      toast({
+        title: 'Error',
+        description: `An unexpected error occurred: ${(err as Error).message}`,
+        variant: 'destructive',
+      });
+    }
+  };
+  
   const handleEditAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setIsFormOpen(true);
   };
-
-  const handleUpdateAppointment = async (id: string, appointmentData: Partial<Appointment>) => {
-    try {
-      const result = await updateAppointment.mutateAsync({ 
-        id, 
-        data: appointmentData 
-      });
-      toast({
-        title: "Consulta Atualizada",
-        description: "As informações da consulta foram atualizadas com sucesso."
-      });
-      setIsFormOpen(false);
-      setSelectedAppointment(null);
-      return { success: true, data: result };
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar consulta",
-        description: error?.message || "Ocorreu um erro ao tentar atualizar a consulta.",
-        variant: "destructive"
-      });
-      return { success: false, error };
-    }
+  
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setSelectedAppointment(null);
   };
-
-  const handleCancelAppointment = async (id: string) => {
-    const result = await cancelAppointment(id);
-    if (result.success) {
-      toast({
-        title: "Consulta Cancelada",
-        description: "A consulta foi cancelada com sucesso."
-      });
+  
+  const handleSubmit = async (data: Partial<Appointment>): Promise<void> => {
+    if (selectedAppointment) {
+      await handleUpdateAppointment(data);
     } else {
-      toast({
-        title: "Erro ao cancelar consulta",
-        description: result.error?.message || "Ocorreu um erro ao tentar cancelar a consulta.",
-        variant: "destructive"
-      });
+      await handleCreateAppointment(data);
     }
-    return result;
   };
-
+  
   return (
-    <>
-      <Helmet>
-        <title>Agendamentos - NutriFlow Pro</title>
-      </Helmet>
-      <Navbar />
-      <UserInfoHeader />
+    <div className="container mx-auto p-6">
+      <AppointmentList 
+        appointments={appointments}
+        isLoading={isLoading}
+        error={error}
+        onAddNew={() => setIsFormOpen(true)}
+        onEdit={handleEditAppointment}
+        onDelete={handleDeleteAppointment}
+      />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Agendamentos</h1>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => fetchAppointments()}
-              className="flex items-center gap-1"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Atualizar
-            </Button>
-            
-            <Button 
-              onClick={() => {
-                setSelectedAppointment(null);
-                setIsFormOpen(true);
-              }}
-              className="bg-nutri-blue hover:bg-nutri-blue-dark flex items-center gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Agendamento
-            </Button>
-          </div>
-        </div>
-        
-        <Tabs defaultValue="list">
-          <TabsList className="mb-4">
-            <TabsTrigger value="list" className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              Lista
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              Calendário
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="list">
-            <AppointmentList 
-              appointments={appointments}
-              isLoading={isLoading}
-              onEdit={handleEditAppointment}
-              onCancel={handleCancelAppointment}
-            />
-          </TabsContent>
-          
-          <TabsContent value="calendar">
-            <div className="bg-white rounded-lg p-6 shadow">
-              <p className="text-center text-gray-500">
-                Visualização de calendário em breve!
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        {isFormOpen && (
-          <AppointmentFormDialog
-            isOpen={isFormOpen}
-            onClose={() => {
-              setIsFormOpen(false);
-              setSelectedAppointment(null);
-            }}
-            onSubmit={selectedAppointment 
-              ? (data) => handleUpdateAppointment(selectedAppointment.id!, data)
-              : handleSubmit
-            }
-            appointment={selectedAppointment}
-          />
-        )}
-      </main>
-    </>
+      <AppointmentFormDialog
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
+        appointment={selectedAppointment}
+        onSubmit={handleSubmit}
+      />
+    </div>
   );
 };
 

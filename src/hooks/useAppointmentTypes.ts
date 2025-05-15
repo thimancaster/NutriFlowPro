@@ -1,42 +1,40 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { AppointmentType } from '@/types';
 
+// This hook provides a list of appointment types
 export const useAppointmentTypes = () => {
-  const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([]);
+  const [types, setTypes] = useState<AppointmentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
+  
   useEffect(() => {
-    const fetchAppointmentTypes = async () => {
+    // In a real application, you might fetch this from an API
+    // but for now we'll use hardcoded values
+    const fetchTypes = async () => {
+      setIsLoading(true);
       try {
-        // Fetch from database or use hard-coded values for now
-        // In a real app, you'd fetch from your appointment_types table
+        // Simulating API call
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Temporary hard-coded types
-        const types: AppointmentType[] = [
-          { id: '1', name: 'Primeira Consulta', duration_minutes: 60 },
-          { id: '2', name: 'Retorno', duration_minutes: 45 },
-          { id: '3', name: 'Avaliação', duration_minutes: 30 },
-          { id: '4', name: 'Outro', duration_minutes: 60 }
+        // Default types
+        const defaultTypes: AppointmentType[] = [
+          { id: 'initial', name: 'Avaliação Inicial', description: 'Primeira consulta com o paciente' },
+          { id: 'followup', name: 'Acompanhamento', description: 'Consulta de rotina para acompanhamento' },
+          { id: 'reevaluation', name: 'Reavaliação', description: 'Consulta para reavaliar progresso' },
+          { id: 'other', name: 'Outro', description: 'Outro tipo de consulta' },
         ];
         
-        setAppointmentTypes(types);
-      } catch (err) {
-        console.error('Error fetching appointment types:', err);
-        setError(err as Error);
+        setTypes(defaultTypes);
+      } catch (error) {
+        console.error('Error fetching appointment types:', error);
+        setTypes([]);
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchAppointmentTypes();
+    
+    fetchTypes();
   }, []);
-
-  return {
-    appointmentTypes,
-    isLoading,
-    error
-  };
+  
+  return { types, isLoading };
 };
