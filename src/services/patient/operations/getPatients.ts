@@ -36,32 +36,22 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Avoid type instantiation issues by constructing query parameters first
-    const query = {
-      table: 'patients',
-      select: '*',
-      count: 'exact' as const,
-      filters: {
-        user_id: userId,
-        status: status !== 'all' ? status : undefined
-      },
-      pagination: {
-        from: paginationParams?.offset || 0,
-        to: (paginationParams?.offset || 0) + (paginationParams?.limit || 9999) - 1
-      }
-    };
+    // Start with the base query using the literal table name
+    let dbQuery = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Build and execute query manually to avoid deep type instantiation
-    let dbQuery = supabase.from(query.table).select(query.select, { count: query.count });
-    dbQuery = dbQuery.eq('user_id', query.filters.user_id);
+    // Apply filters
+    dbQuery = dbQuery.eq('user_id', userId);
     
-    if (query.filters.status) {
-      dbQuery = dbQuery.eq('status', query.filters.status);
+    if (status !== 'all') {
+      dbQuery = dbQuery.eq('status', status);
     }
     
-    dbQuery = dbQuery.range(query.pagination.from, query.pagination.to);
+    // Apply pagination
+    const offset = paginationParams?.offset || 0;
+    const limit = paginationParams?.limit || 9999;
+    dbQuery = dbQuery.range(offset, offset + limit - 1);
     
-    // Execute the constructed query
+    // Execute the query
     const { data, error, count } = await dbQuery;
     
     if (error) throw error;
@@ -106,55 +96,35 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Avoid type instantiation issues by constructing query parameters first
-    const query = {
-      table: 'patients',
-      select: '*',
-      count: 'exact' as const,
-      filters: {
-        user_id: userId,
-        status: status !== 'all' ? status : undefined,
-        search: search || undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined
-      },
-      sort: {
-        column: sortBy,
-        ascending: sortOrder === 'asc'
-      },
-      pagination: {
-        from: paginationParams?.offset ?? 0,
-        to: (paginationParams?.offset ?? 0) + (paginationParams?.limit ?? 9999) - 1
-      }
-    };
-    
-    // Build and execute query step by step to avoid deep type instantiation
-    let dbQuery = supabase.from(query.table).select(query.select, { count: query.count });
+    // Start with base query using literal table name
+    let dbQuery = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply filters
-    dbQuery = dbQuery.eq('user_id', query.filters.user_id);
+    dbQuery = dbQuery.eq('user_id', userId);
     
-    if (query.filters.status) {
-      dbQuery = dbQuery.eq('status', query.filters.status);
+    if (status !== 'all') {
+      dbQuery = dbQuery.eq('status', status);
     }
     
-    if (query.filters.search) {
-      dbQuery = dbQuery.or(`name.ilike.%${query.filters.search}%,email.ilike.%${query.filters.search}%,cpf.ilike.%${query.filters.search}%`);
+    if (search) {
+      dbQuery = dbQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
-    if (query.filters.startDate) {
-      dbQuery = dbQuery.gte('created_at', query.filters.startDate);
+    if (startDate) {
+      dbQuery = dbQuery.gte('created_at', startDate);
     }
     
-    if (query.filters.endDate) {
-      dbQuery = dbQuery.lte('created_at', query.filters.endDate);
+    if (endDate) {
+      dbQuery = dbQuery.lte('created_at', endDate);
     }
     
     // Apply sorting
-    dbQuery = dbQuery.order(query.sort.column, { ascending: query.sort.ascending });
+    dbQuery = dbQuery.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination
-    dbQuery = dbQuery.range(query.pagination.from, query.pagination.to);
+    const offset = paginationParams?.offset ?? 0;
+    const limit = paginationParams?.limit ?? 9999;
+    dbQuery = dbQuery.range(offset, offset + limit - 1);
     
     // Execute query
     const { data, error, count } = await dbQuery;
