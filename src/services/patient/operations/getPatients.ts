@@ -2,24 +2,25 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-// Define completely flat primitive types
+// Define primitive types with no circular references
 export type PatientsData = {
   patients: Array<Patient>;
   total: number;
 };
 
-// Define separate response types with flat structures
+// Define success response type
 export type GetPatientsSuccessResponse = {
   success: true;
   data: PatientsData;
 };
 
+// Define error response type
 export type GetPatientsErrorResponse = {
   success: false;
   error: string;
 };
 
-// Use union type for responses
+// Use union type for the response
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
 export const getPatients = async (
