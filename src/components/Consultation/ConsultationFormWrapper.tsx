@@ -4,7 +4,7 @@ import ConsultationForm from './ConsultationForm';
 import { useConsultationForm } from '@/hooks/useConsultationForm';
 import { ConsultationData } from '@/types';
 import { Patient } from '@/types/patient';
-import { Sex } from '@/types/consultation';
+import { Sex, Objective, Profile, ActivityLevel, ConsultationType, ConsultationStatus } from '@/types/consultation';
 
 interface PatientOption {
   id: string;
@@ -33,11 +33,11 @@ const ConsultationFormWrapper: React.FC<ConsultationFormWrapperProps> = ({
     height: consultation.height?.toString() || '',
     age: consultation.age?.toString() || '',
     sex: (consultation.gender === 'male' ? 'M' : 'F') as Sex,
-    objective: consultation.goal || consultation.objective || 'manutenção',
-    profile: 'magro', // Default profile
-    activityLevel: consultation.activity_level || 'moderado',
-    consultationType: 'primeira_consulta',
-    consultationStatus: 'em_andamento',
+    objective: (consultation.goal || consultation.objective || 'manutenção') as Objective,
+    profile: 'magro' as Profile, // Default profile
+    activityLevel: (consultation.activity_level || 'moderado') as ActivityLevel,
+    consultationType: 'primeira_consulta' as ConsultationType,
+    consultationStatus: 'em_andamento' as ConsultationStatus,
   };
 
   const { 

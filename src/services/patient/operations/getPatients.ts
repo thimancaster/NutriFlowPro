@@ -4,7 +4,7 @@ import { Patient } from '@/types';
 
 // Define completely non-recursive primitive types
 export type PatientsData = {
-  patients: Patient[];
+  patients: Array<Patient>;
   total: number;
 };
 
