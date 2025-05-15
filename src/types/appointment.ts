@@ -5,7 +5,10 @@ export interface Appointment {
   id: string;
   patient_id: string;
   date: string;
+  start_time?: string;
+  end_time?: string;
   type: string;
+  appointment_type_id?: string;
   status: AppointmentStatus;
   notes: string;
   recommendations: string;
@@ -13,6 +16,8 @@ export interface Appointment {
   updated_at?: string;
   user_id?: string;
   patient?: any;
+  title?: string;
+  patientName?: string;
 }
 
 export interface AppointmentType {
@@ -20,4 +25,5 @@ export interface AppointmentType {
   name: string;
   color: string;
   description?: string;
+  duration_minutes?: number;
 }

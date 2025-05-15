@@ -1,3 +1,4 @@
+
 import { Json } from '@/integrations/supabase/types';
 
 export interface Patient {
@@ -27,6 +28,12 @@ export interface Patient {
   age?: number;
   weight?: number;
   height?: number;
+}
+
+export interface PatientOption {
+  id: string;
+  name: string;
+  email?: string;
 }
 
 export interface PatientFilters {

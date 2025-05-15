@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { usePatientAppointments } from '@/hooks/appointments/useAppointmentQuery';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
   
   // Group appointments by status
   const upcomingAppointments = appointments?.filter(
-    app => app.status !== 'canceled' && app.status !== 'completed'
+    app => app.status !== 'cancelled' && app.status !== 'completed'
   ) || [];
   
   const pastAppointments = appointments?.filter(
@@ -34,7 +35,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
   ) || [];
   
   const canceledAppointments = appointments?.filter(
-    app => app.status === 'canceled'
+    app => app.status === 'cancelled'
   ) || [];
   
   const handleNewAppointment = () => {
@@ -110,7 +111,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
         return <Badge className="bg-blue-500">Agendado</Badge>;
       case 'completed':
         return <Badge className="bg-green-500">Concluído</Badge>;
-      case 'canceled':
+      case 'cancelled':
         return <Badge className="bg-red-500">Cancelado</Badge>;
       case 'rescheduled':
         return <Badge className="bg-amber-500">Reagendado</Badge>;
@@ -120,13 +121,13 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
   };
   
   const renderAppointmentCard = (appointment: Appointment) => {
-    const startTime = typeof appointment.start_time === 'string' 
-      ? parseISO(appointment.start_time) 
-      : appointment.start_time;
+    const startTime = appointment.start_time ? 
+      (typeof appointment.start_time === 'string' ? parseISO(appointment.start_time) : appointment.start_time) : 
+      parseISO(appointment.date);
       
-    const endTime = typeof appointment.end_time === 'string' 
-      ? parseISO(appointment.end_time) 
-      : appointment.end_time;
+    const endTime = appointment.end_time ? 
+      (typeof appointment.end_time === 'string' ? parseISO(appointment.end_time) : appointment.end_time) : 
+      parseISO(appointment.date);
     
     return (
       <Card key={appointment.id} className="mb-3">
@@ -152,7 +153,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
           )}
           
           <div className="flex justify-end mt-3">
-            {appointment.status !== 'canceled' && appointment.status !== 'completed' && (
+            {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
               <>
                 <Button 
                   variant="outline" 
@@ -171,7 +172,7 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
               </>
             )}
             
-            {(appointment.status === 'canceled' || appointment.status === 'completed') && (
+            {(appointment.status === 'cancelled' || appointment.status === 'completed') && (
               <Button 
                 variant="outline" 
                 size="sm"

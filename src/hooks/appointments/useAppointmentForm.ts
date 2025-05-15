@@ -59,7 +59,7 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
       let formattedDate = '';
       try {
         // Try to parse the date string
-        const parsedDate = parseISO(appointment.date || '');
+        const parsedDate = parseISO(appointment.date || appointment.start_time || '');
         if (isValid(parsedDate)) {
           formattedDate = format(parsedDate, "yyyy-MM-dd'T'HH:mm");
           setDefaultDate(parsedDate);
@@ -120,10 +120,14 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
       // For Appointment status, ensure it's a valid AppointmentStatus type
       const status = values.status as AppointmentStatus;
       
-      await onSubmit({
+      // Map start_time to date for backend compatibility
+      const submissionData = {
         ...values,
+        date: values.start_time,
         status
-      });
+      };
+      
+      await onSubmit(submissionData);
       form.reset();
     } catch (error) {
       console.error('Error submitting appointment form:', error);

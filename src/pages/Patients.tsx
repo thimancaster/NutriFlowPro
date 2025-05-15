@@ -34,7 +34,7 @@ const Patients = () => {
     isError,
     handlePageChange,
     handleFilterChange,
-    handleStatusChange: handleFilterStatusChange, // Rename to avoid conflict
+    handleStatusChange, // Updated - renamed to match usage
     togglePatientStatus,
     refetch
   } = usePatientList();
@@ -75,7 +75,7 @@ const Patients = () => {
                 totalItems={pagination.total}
                 filters={filters}
                 onViewDetail={openPatientDetail}
-                onStatusChange={handleFilterStatusChange}
+                onStatusChange={handleStatusChange}
                 onPageChange={handlePageChange}
               />
             )}

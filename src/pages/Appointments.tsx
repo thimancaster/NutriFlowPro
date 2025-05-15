@@ -134,7 +134,7 @@ const Appointments = () => {
       <AppointmentList 
         appointments={appointments}
         isLoading={isLoading}
-        error={error}
+        error={error ? new Error(error) : undefined}
         onAddNew={() => setIsFormOpen(true)}
         onEdit={handleEditAppointment}
         onDelete={handleDeleteAppointment}

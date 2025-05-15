@@ -11,6 +11,15 @@ import { useSaveConsultation } from '@/hooks/useSaveConsultation';
 import useAutoSave from './ConsultationHooks/useAutoSave';
 import usePatientData from './ConsultationHooks/usePatientData';
 
+// Wrapper for updatePatientData to match expected signature
+const patientDataUpdateWrapper = async (
+  patientId: string, 
+  updateData: any
+): Promise<void> => {
+  const { updatePatientData } = usePatientData();
+  await updatePatientData(patientId, updateData);
+}
+
 const Consultation = () => {
   const { id } = useParams<{ id: string }>();
   const [step, setStep] = useState(1);
@@ -23,6 +32,8 @@ const Consultation = () => {
   const { handleSaveConsultation, isSubmitting } = useSaveConsultation();
   
   const handleFormChange = (data: Partial<ConsultationData>) => {
+    if (!consultation) return;
+    
     const updatedConsultation = {
       ...consultation,
       ...data,
@@ -39,6 +50,7 @@ const Consultation = () => {
   };
   
   const handleSaveConsultationClick = async () => {
+    if (!consultation) return;
     await handleSaveConsultation(id, consultation, updatePatientData);
   };
   
@@ -49,7 +61,7 @@ const Consultation = () => {
         onStepChange={handleStepChange}
         isLoading={isLoading}
       >
-        {step === 1 && (
+        {step === 1 && consultation && (
           <ConsultationFormWrapper
             consultation={consultation}
             onFormChange={handleFormChange}
@@ -59,7 +71,7 @@ const Consultation = () => {
           />
         )}
         
-        {step === 2 && (
+        {step === 2 && consultation && consultation.results && (
           <ConsultationResults
             results={consultation.results}
             onSave={handleSaveConsultationClick}

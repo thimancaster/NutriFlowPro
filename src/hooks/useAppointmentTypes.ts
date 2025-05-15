@@ -18,10 +18,10 @@ export const useAppointmentTypes = () => {
         
         // Default types
         const defaultTypes: AppointmentType[] = [
-          { id: 'initial', name: 'Avaliação Inicial', duration_minutes: 60, description: 'Primeira consulta com o paciente' },
-          { id: 'followup', name: 'Acompanhamento', duration_minutes: 45, description: 'Consulta de rotina para acompanhamento' },
-          { id: 'reevaluation', name: 'Reavaliação', duration_minutes: 50, description: 'Consulta para reavaliar progresso' },
-          { id: 'other', name: 'Outro', duration_minutes: 30, description: 'Outro tipo de consulta' },
+          { id: 'initial', name: 'Avaliação Inicial', duration_minutes: 60, description: 'Primeira consulta com o paciente', color: '#4B83F0' },
+          { id: 'followup', name: 'Acompanhamento', duration_minutes: 45, description: 'Consulta de rotina para acompanhamento', color: '#4CAF50' },
+          { id: 'reevaluation', name: 'Reavaliação', duration_minutes: 50, description: 'Consulta para reavaliar progresso', color: '#FF9800' },
+          { id: 'other', name: 'Outro', duration_minutes: 30, description: 'Outro tipo de consulta', color: '#9C27B0' },
         ];
         
         setAppointmentTypes(defaultTypes);

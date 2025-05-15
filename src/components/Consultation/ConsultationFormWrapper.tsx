@@ -3,7 +3,13 @@ import React from 'react';
 import ConsultationForm from './ConsultationForm';
 import { useConsultationForm } from '@/hooks/useConsultationForm';
 import { ConsultationData } from '@/types';
-import { Patient, PatientOption } from '@/types/patient';
+import { Patient } from '@/types/patient';
+
+interface PatientOption {
+  id: string;
+  name: string;
+  email?: string;
+}
 
 interface ConsultationFormWrapperProps {
   consultation: ConsultationData;

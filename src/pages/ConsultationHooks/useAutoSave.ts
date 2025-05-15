@@ -94,7 +94,8 @@ const useAutoSave = (id?: string) => {
     saveConsultation,
     autoSaveStatus,
     lastAutoSave,
-    isSaving
+    isSaving,
+    setLastAutoSave
   };
 };
 

@@ -38,7 +38,7 @@ const AppointmentTypeSelect: React.FC<AppointmentTypeSelectProps> = ({ value, on
             <SelectLabel>Tipos de Consulta</SelectLabel>
             {types.map((type) => (
               <SelectItem key={type.id} value={type.id}>
-                {type.name} ({type.duration_minutes}min)
+                {type.name} ({type.duration_minutes || 30}min)
               </SelectItem>
             ))}
           </SelectGroup>
