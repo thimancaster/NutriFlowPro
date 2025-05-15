@@ -16,10 +16,10 @@ export const useAppointmentTypes = () => {
         
         // Temporary hard-coded types
         const types: AppointmentType[] = [
-          { id: '1', name: 'Primeira Consulta', duration_minutes: 60, value: 'first', label: 'Primeira Consulta' },
-          { id: '2', name: 'Retorno', duration_minutes: 45, value: 'followup', label: 'Retorno' },
-          { id: '3', name: 'Avaliação', duration_minutes: 30, value: 'evaluation', label: 'Avaliação' },
-          { id: '4', name: 'Outro', duration_minutes: 60, value: 'other', label: 'Outro' }
+          { id: '1', name: 'Primeira Consulta', duration_minutes: 60 },
+          { id: '2', name: 'Retorno', duration_minutes: 45 },
+          { id: '3', name: 'Avaliação', duration_minutes: 30 },
+          { id: '4', name: 'Outro', duration_minutes: 60 }
         ];
         
         setAppointmentTypes(types);

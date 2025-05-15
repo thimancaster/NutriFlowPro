@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Appointment } from '@/types';
@@ -65,9 +66,9 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
   appointments.forEach(appointment => {
     if (!appointment.start_time) return;
     
-    const startTime = appointment.start_time instanceof Date 
-      ? appointment.start_time 
-      : parseISO(appointment.start_time as string);
+    const startTime = typeof appointment.start_time === 'string'
+      ? parseISO(appointment.start_time)
+      : appointment.start_time;
       
     const dateKey = format(startTime, 'yyyy-MM-dd');
     
@@ -91,24 +92,24 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {appointmentsByDate[dateKey]
               .sort((a, b) => {
-                const aTime = a.start_time instanceof Date 
-                  ? a.start_time.getTime() 
-                  : new Date(a.start_time).getTime();
+                const aTime = typeof a.start_time === 'string'
+                  ? new Date(a.start_time).getTime()
+                  : a.start_time.getTime();
                   
-                const bTime = b.start_time instanceof Date 
-                  ? b.start_time.getTime() 
-                  : new Date(b.start_time).getTime();
+                const bTime = typeof b.start_time === 'string'
+                  ? new Date(b.start_time).getTime()
+                  : b.start_time.getTime();
                   
                 return aTime - bTime;
               })
               .map(appointment => {
-                const startTime = appointment.start_time instanceof Date 
-                  ? appointment.start_time 
-                  : parseISO(appointment.start_time as string);
+                const startTime = typeof appointment.start_time === 'string'
+                  ? parseISO(appointment.start_time)
+                  : appointment.start_time;
                   
-                const endTime = appointment.end_time instanceof Date 
-                  ? appointment.end_time 
-                  : parseISO(appointment.end_time as string);
+                const endTime = typeof appointment.end_time === 'string'
+                  ? parseISO(appointment.end_time)
+                  : appointment.end_time;
                   
                 // Calculate duration in minutes
                 const durationMinutes = Math.round(

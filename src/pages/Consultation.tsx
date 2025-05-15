@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -99,14 +100,19 @@ const Consultation = () => {
           patient: {
             name: patientData?.name || '',
             age: consultationData.age,
+            id: patientId,
           },
           weight: parseFloat(formData.weight),
           height: parseFloat(formData.height),
           objective: formData.objective,
-          activityLevel: formData.activityLevel,
+          activity_level: formData.activityLevel,
           gender: formData.sex === 'M' ? 'male' : 'female',
           created_at: new Date().toISOString(),
-          tipo: formData.consultationType || 'primeira_consulta',
+          bmr: results.tmb,
+          tdee: results.get,
+          protein: results.macros.protein,
+          carbs: results.macros.carbs,
+          fats: results.macros.fat,
           results: {
             bmr: results.tmb,
             get: results.get,

@@ -4,6 +4,7 @@ import { Patient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInYears } from 'date-fns';
+import { Json } from '@/integrations/supabase/types';
 
 // Function to calculate age from birth_date
 const calculateAge = (birthDate: string | undefined): number => {
@@ -13,6 +14,18 @@ const calculateAge = (birthDate: string | undefined): number => {
   } catch (e) {
     console.error("Error calculating age:", e);
     return 0;
+  }
+};
+
+// Helper function to safely parse JSON fields
+const safeParseJson = (jsonField: Json | null, defaultValue: any = {}) => {
+  if (!jsonField) return defaultValue;
+  if (typeof jsonField === 'object') return jsonField;
+  try {
+    return JSON.parse(jsonField as string) || defaultValue;
+  } catch (e) {
+    console.error("Error parsing JSON:", e);
+    return defaultValue;
   }
 };
 
@@ -38,20 +51,24 @@ export const usePatient = (patientId?: string) => {
 
         if (error) throw error;
 
+        // Parse JSON fields
+        const measurementsData = safeParseJson(data.measurements, {});
+        const goalsData = safeParseJson(data.goals, {});
+        
         // Transform the data to include derived fields
         const enhancedPatient: Patient = {
           ...data,
           age: calculateAge(data.birth_date),
-          // Access weight and height safely from measurements object
-          weight: data.measurements && typeof data.measurements === 'object' ? 
-            (data.measurements as any).weight || 0 : 0,
-          height: data.measurements && typeof data.measurements === 'object' ? 
-            (data.measurements as any).height || 0 : 0,
+          weight: measurementsData.weight || 0,
+          height: measurementsData.height || 0,
           status: data.status || 'active',
-          // Add other derived fields here as needed
+          goals: {
+            objective: goalsData.objective || '',
+            profile: goalsData.profile || '',
+          },
         };
 
-        // Add any other properties that might be optional
+        // Add any other optional properties that might be missing
         if (data.secondaryPhone) enhancedPatient.secondaryPhone = data.secondaryPhone;
         if (data.cpf) enhancedPatient.cpf = data.cpf;
         

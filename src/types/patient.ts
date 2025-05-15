@@ -39,15 +39,6 @@ export interface PatientFilters {
   sortDirection?: 'asc' | 'desc';
 }
 
-export interface PaginationParams {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  limit?: number;
-  offset?: number;
-}
-
 export interface AddressDetails {
   cep?: string;
   street?: string;

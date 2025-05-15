@@ -1,3 +1,4 @@
+
 export * from './appointment';
 export * from './meal';
 export * from './patient';
@@ -21,7 +22,9 @@ export interface ConsultationData {
   patient?: {
     name: string;
     age?: number;
+    id?: string;
   };
+  patient_id?: string;
   results: {
     bmr: number;
     get: number;
@@ -31,6 +34,7 @@ export interface ConsultationData {
       protein: number;
       carbs: number;
       fat: number;
+      proteinPerKg?: number;
     }
   };
 }
@@ -48,19 +52,9 @@ export interface PatientFilters {
   search?: string;
   status?: 'active' | 'archived' | 'all';
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  startDate?: string;
-  endDate?: string;
+  sortDirection?: 'asc' | 'desc'; // Changed from sortOrder
+  dateFrom?: string;
+  dateTo?: string;
   page?: number;
   pageSize?: number;
-}
-
-export interface AddressDetails {
-  cep?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
 }

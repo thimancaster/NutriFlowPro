@@ -19,15 +19,22 @@ export const useAppointments = (patientId?: string) => {
   const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, appointment) => {
     // Use start_time as fallback when date is not available
     const dateField = appointment.start_time || appointment.date || '';
-    const dateString = dateField;
-    const dateKey = typeof dateString === 'string' 
-      ? dateString.split('T')[0] 
-      : dateString instanceof Date 
-        ? dateString.toISOString().split('T')[0] 
-        : '';
-        
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(appointment);
+    let dateKey = '';
+    
+    if (typeof dateField === 'string') {
+      dateKey = dateField.split('T')[0];
+    } else if (dateField instanceof Date) {
+      dateKey = dateField.toISOString().split('T')[0];
+    }
+    
+    if (dateKey && !acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+    
+    if (dateKey) {
+      acc[dateKey].push(appointment);
+    }
+    
     return acc;
   }, {});
   
@@ -52,14 +59,14 @@ export const useAppointments = (patientId?: string) => {
   const saveAppointment = async (appointmentData: any) => {
     try {
       if (appointmentData.id) {
-        await updateAppointment.mutateAsync({
+        const result = await updateAppointment.mutateAsync({
           id: appointmentData.id,
           data: appointmentData
         });
-        return { success: true };
+        return { success: true, data: result };
       } else {
-        await createAppointment.mutateAsync(appointmentData);
-        return { success: true };
+        const result = await createAppointment.mutateAsync(appointmentData);
+        return { success: true, data: result };
       }
     } catch (error: any) {
       return { success: false, error };
@@ -68,8 +75,8 @@ export const useAppointments = (patientId?: string) => {
   
   const handleDeleteAppointment = async (id: string) => {
     try {
-      await deleteAppointment.mutateAsync(id);
-      return { success: true };
+      const result = await deleteAppointment.mutateAsync(id);
+      return { success: true, data: result };
     } catch (error: any) {
       return { success: false, error };
     }
@@ -77,8 +84,8 @@ export const useAppointments = (patientId?: string) => {
   
   const handleCancelAppointment = async (id: string) => {
     try {
-      await cancelAppointment.mutateAsync(id);
-      return { success: true };
+      const result = await cancelAppointment.mutateAsync(id);
+      return { success: true, data: result };
     } catch (error: any) {
       return { success: false, error };
     }

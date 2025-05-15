@@ -81,7 +81,7 @@ const Patients = () => {
             isOpen={isModalOpen}
             onClose={closePatientDetail}
             patient={patient}
-            onStatusChange={handleStatusChange}
+            onStatusChange={() => handleStatusChange(patient.status === 'active' ? 'archived' : 'active')}
           />
         )}
       </div>

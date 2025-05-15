@@ -25,13 +25,13 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
   // Initialize form with appointment data when editing
   useEffect(() => {
     if (appointment) {
-      const startTime = appointment.start_time instanceof Date 
-        ? appointment.start_time 
-        : parseISO(appointment.start_time as string);
+      const startTime = typeof appointment.start_time === 'string'
+        ? parseISO(appointment.start_time)
+        : appointment.start_time;
         
-      const endTime = appointment.end_time instanceof Date 
-        ? appointment.end_time 
-        : parseISO(appointment.end_time as string);
+      const endTime = typeof appointment.end_time === 'string'
+        ? parseISO(appointment.end_time)
+        : appointment.end_time;
       
       setFormData({
         ...appointment,

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppointments } from '@/hooks/useAppointments';
@@ -18,19 +19,21 @@ const Appointments = () => {
   const { toast } = useToast();
 
   const handleCreateAppointment = async (appointmentData: Partial<Appointment>) => {
-    const { success, error } = await createAppointment.mutateAsync(appointmentData);
-    if (success) {
+    try {
+      const result = await createAppointment.mutateAsync(appointmentData);
       toast({
         title: "Consulta Agendada",
         description: "A consulta foi agendada com sucesso."
       });
       setIsFormOpen(false);
-    } else {
+      return { success: true, data: result };
+    } catch (error: any) {
       toast({
         title: "Erro ao agendar consulta",
         description: error?.message || "Ocorreu um erro ao tentar agendar a consulta.",
         variant: "destructive"
       });
+      return { success: false, error };
     }
   };
 
@@ -40,29 +43,31 @@ const Appointments = () => {
   };
 
   const handleUpdateAppointment = async (id: string, appointmentData: Partial<Appointment>) => {
-    const { success, error } = await updateAppointment.mutateAsync({ 
-      id: appointment.id, 
-      data: appointment 
-    });
-    if (success) {
+    try {
+      const result = await updateAppointment.mutateAsync({ 
+        id, 
+        data: appointmentData 
+      });
       toast({
         title: "Consulta Atualizada",
         description: "As informações da consulta foram atualizadas com sucesso."
       });
       setIsFormOpen(false);
       setSelectedAppointment(null);
-    } else {
+      return { success: true, data: result };
+    } catch (error: any) {
       toast({
         title: "Erro ao atualizar consulta",
         description: error?.message || "Ocorreu um erro ao tentar atualizar a consulta.",
         variant: "destructive"
       });
+      return { success: false, error };
     }
   };
 
   const handleCancelAppointment = async (id: string) => {
-    const { success, error } = await cancelAppointment(id);
-    if (success) {
+    const result = await cancelAppointment(id);
+    if (result.success) {
       toast({
         title: "Consulta Cancelada",
         description: "A consulta foi cancelada com sucesso."
@@ -70,10 +75,11 @@ const Appointments = () => {
     } else {
       toast({
         title: "Erro ao cancelar consulta",
-        description: error?.message || "Ocorreu um erro ao tentar cancelar a consulta.",
+        description: result.error?.message || "Ocorreu um erro ao tentar cancelar a consulta.",
         variant: "destructive"
       });
     }
+    return result;
   };
 
   return (

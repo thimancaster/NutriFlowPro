@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Patient } from '@/types';
+import { Patient, AddressDetails } from '@/types';
 import { format } from 'date-fns';
 
 interface PatientBasicInfoProps {
@@ -15,6 +15,27 @@ const PatientBasicInfo: React.FC<PatientBasicInfoProps> = ({ patient, onUpdatePa
       ? patient.birth_date
       : format(patient.birth_date, 'dd/MM/yyyy')
     : 'Não informado';
+
+  // Format address for display
+  const formatAddress = (address: string | AddressDetails | undefined): string => {
+    if (!address) return 'Não informado';
+    
+    if (typeof address === 'string') {
+      return address;
+    }
+    
+    // If address is an object, format it
+    const parts = [
+      address.street,
+      address.number && `n° ${address.number}`,
+      address.complement,
+      address.neighborhood && `${address.neighborhood},`,
+      address.city && `${address.city},`,
+      address.state
+    ].filter(Boolean);
+    
+    return parts.join(' ') || 'Não informado';
+  };
 
   return (
     <div className="space-y-4">
@@ -46,7 +67,7 @@ const PatientBasicInfo: React.FC<PatientBasicInfoProps> = ({ patient, onUpdatePa
         
         <div>
           <p className="text-sm font-medium text-gray-500">Endereço</p>
-          <p className="text-gray-900">{patient.address || 'Não informado'}</p>
+          <p className="text-gray-900">{formatAddress(patient.address)}</p>
         </div>
       </div>
 
