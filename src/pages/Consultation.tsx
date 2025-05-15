@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ConsultationWizard } from '@/components/Consultation/ConsultationWizard';
-import { ConsultationForm } from '@/components/Consultation/ConsultationForm';
-import { ConsultationResults } from '@/components/Consultation/ConsultationResults';
+import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
+import ConsultationForm from '@/components/Consultation/ConsultationForm';
+import ConsultationResults from '@/components/Consultation/ConsultationResults';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { consultationService } from '@/services';
@@ -11,8 +10,8 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/hooks/usePatient';
 import { ConsultationData } from '@/types';
 import { usePatientOptions } from '@/hooks/usePatientOptions';
-import { useAutoSave } from './ConsultationHooks/useAutoSave';
-import { usePatientData } from './ConsultationHooks/usePatientData';
+import useAutoSave from './ConsultationHooks/useAutoSave';
+import usePatientData from './ConsultationHooks/usePatientData';
 
 const emptyConsultation: ConsultationData = {
   patient: {
@@ -63,7 +62,74 @@ const Consultation = () => {
   const { saveConsultation, autoSaveStatus } = useAutoSave(id);
   const { updatePatientData } = usePatientData();
   
-  // Load existing consultation if id is provided
+  const fetchConsultation = async () => {
+    if (!id || id === 'new') return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('consultations')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      
+      // Transform data to match ConsultationData type
+      const consultationData: ConsultationData = {
+        patient: {
+          name: '',
+        },
+        patient_id: data.patient_id,
+        date: data.date || new Date().toISOString().split('T')[0],
+        anthropometry: data.anthropometry || {
+          weight: 0,
+          height: 0,
+          age: 0,
+          gender: 'female',
+          activityFactor: 1.2,
+          bodyFat: null,
+        },
+        nutritionalObjectives: data.nutritional_objectives || {
+          objective: 'maintenance',
+          customCalories: null,
+        },
+        macroDistribution: data.macro_distribution || {
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+        },
+        results: data.results || {
+          bmr: 0,
+          tdee: 0,
+          adjustedCalories: 0,
+          proteinGrams: 0,
+          carbsGrams: 0,
+          fatGrams: 0,
+        },
+        recommendations: data.recommendations || '',
+        notes: data.notes || '',
+      };
+      
+      // Find patient in the list
+      const patientInfo = patients.find(p => p.id === data.patient_id);
+      if (patientInfo) {
+        consultationData.patient.name = patientInfo.name;
+      }
+      
+      setConsultation(consultationData);
+    } catch (err) {
+      console.error('Error loading consultation:', err);
+      toast({
+        title: 'Error',
+        description: `Failed to load consultation: ${(err as Error).message}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
     const fetchConsultation = async () => {
       if (!id || id === 'new') return;

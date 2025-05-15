@@ -1,3 +1,4 @@
 
 // Re-export from the patient directory
-export { usePatientForm } from './patient/usePatientForm';
+import { usePatientForm } from './patient/usePatientForm';
+export { usePatientForm };

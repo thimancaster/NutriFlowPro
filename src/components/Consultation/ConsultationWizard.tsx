@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,7 @@ const WIZARD_STEPS = [
 
 interface ConsultationWizardProps {
   currentStep: number;
+  onStepChange?: (step: number) => void;
   onNext?: () => void;
   onBack?: () => void;
   canGoNext?: boolean;
@@ -26,10 +27,12 @@ interface ConsultationWizardProps {
   nextButtonLabel?: string;
   showStepButtons?: boolean;
   children?: React.ReactNode;
+  isLoading?: boolean;
 }
 
-const ConsultationWizard = ({
+const ConsultationWizard: React.FC<ConsultationWizardProps> = ({
   currentStep,
+  onStepChange,
   onNext,
   onBack,
   canGoNext = true,
@@ -39,8 +42,9 @@ const ConsultationWizard = ({
   backButtonLabel = 'Voltar',
   nextButtonLabel = 'Avançar',
   showStepButtons = true,
-  children
-}: ConsultationWizardProps) => {
+  children,
+  isLoading = false
+}) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { activePatient } = useConsultation();
@@ -109,6 +113,11 @@ const ConsultationWizard = ({
   };
 
   const handleStepClick = (stepIndex: number) => {
+    if (onStepChange) {
+      onStepChange(stepIndex);
+      return;
+    }
+    
     // Navigate directly to a completed step
     switch (stepIndex) {
       case 0:
@@ -134,7 +143,13 @@ const ConsultationWizard = ({
       />
       
       <div className="my-6">
-        {children}
+        {isLoading ? (
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-nutri-green"></div>
+          </div>
+        ) : (
+          children
+        )}
       </div>
       
       {showStepButtons && (
