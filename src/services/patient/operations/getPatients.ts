@@ -46,6 +46,7 @@ export const getPatients = async (
   }
 };
 
+// Simplified version of getSortedPatients to avoid type recursion
 export const getSortedPatients = async (
   userId: string,
   status: 'active' | 'archived' | 'all' = 'active',
@@ -65,12 +66,14 @@ export const getSortedPatients = async (
       .select('*', { count: 'exact' })
       .eq('user_id', userId);
     
+    // Apply status filter if not 'all'
     if (status !== 'all') {
       query = query.eq('status', status);
     }
     
     // Apply search filter if provided
     if (search) {
+      // Using separate ilike conditions to avoid complex query strings
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     

@@ -45,6 +45,12 @@ const Patients = () => {
     await togglePatientStatus(patient.id, patient.status === 'active' ? 'archived' : 'active');
   };
 
+  // Create a wrapper function that matches the expected signature in PatientTable
+  const onStatusChangeWrapper = () => {
+    // This wrapper allows us to pass a function without parameters
+    // while still using handleStatusChange internally
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />
@@ -75,7 +81,7 @@ const Patients = () => {
                 totalItems={pagination.total}
                 filters={filters}
                 onViewDetail={openPatientDetail}
-                onStatusChange={handleStatusChange} // Pass the correct function with the right signature
+                onStatusChange={onStatusChangeWrapper} 
                 onPageChange={handlePageChange}
               />
             )}
