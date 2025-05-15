@@ -1,32 +1,30 @@
 
-export interface AppointmentType {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  value?: string;
-  label?: string;
-}
-
-export interface AppointmentStatus {
-  value: string;
-  label: string;
-}
+import { Json } from '@/integrations/supabase/types';
 
 export interface Appointment {
   id: string;
   user_id?: string;
   patient_id?: string;
-  date: Date | string;
-  start_time: Date | string;
-  end_time: Date | string;
-  title: string;
-  appointment_type_id?: string;
-  type: string;
-  status: string;
-  notes?: string;
-  recommendations?: string;
-  measurements?: any;
-  patientName?: string;
+  date?: string;
+  measurements?: Json;
   created_at?: string;
   updated_at?: string;
+  type?: string;
+  status?: AppointmentStatus;
+  notes?: string;
+  recommendations?: string;
+  // Added fields for proper TypeScript support
+  title?: string;
+  start_time?: string;
+  end_time?: string;
+  appointment_type_id?: string;
+  patientName?: string;
+}
+
+export type AppointmentStatus = 'scheduled' | 'completed' | 'canceled' | 'no-show';
+
+export interface AppointmentType {
+  id: string;
+  name: string;
+  duration_minutes: number;
 }

@@ -67,6 +67,7 @@ export const usePatientFormSubmit = ({
         cpf: formData.cpf || null,
         user_id: userId,
         status: formData.status,
+        // Use address as an object rather than string
         address: Object.values(address).some(value => value) ? address : null,
         notes: notes || null,
         goals: {

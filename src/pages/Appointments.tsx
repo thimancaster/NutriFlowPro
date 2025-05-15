@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppointments } from '@/hooks/useAppointments';
@@ -19,7 +18,7 @@ const Appointments = () => {
   const { toast } = useToast();
 
   const handleCreateAppointment = async (appointmentData: Partial<Appointment>) => {
-    const { success, error } = await createAppointment(appointmentData);
+    const { success, error } = await createAppointment.mutateAsync(appointmentData);
     if (success) {
       toast({
         title: "Consulta Agendada",
@@ -41,7 +40,10 @@ const Appointments = () => {
   };
 
   const handleUpdateAppointment = async (id: string, appointmentData: Partial<Appointment>) => {
-    const { success, error } = await updateAppointment(id, appointmentData);
+    const { success, error } = await updateAppointment.mutateAsync({ 
+      id: appointment.id, 
+      data: appointment 
+    });
     if (success) {
       toast({
         title: "Consulta Atualizada",

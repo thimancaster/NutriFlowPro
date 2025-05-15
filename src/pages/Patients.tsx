@@ -26,27 +26,18 @@ const Patients = () => {
   // Use the patient list hook for fetching and filtering patients
   const {
     patients,
+    totalPatients,
     pagination,
     filters,
     isLoading,
     error,
+    isError,
     handlePageChange,
     handleFilterChange,
     handleStatusChange,
     togglePatientStatus,
     refetch
-  } = usePatientList({
-    initialFilters: {
-      status: 'active',
-      sortBy: 'name',
-      sortOrder: 'asc'
-    },
-    initialPage: 1,
-    initialPageSize: 10
-  });
-  
-  // Calculate if there's an error
-  const isError = error !== null;
+  } = usePatientList();
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
@@ -78,7 +69,7 @@ const Patients = () => {
                 totalItems={pagination.total}
                 filters={filters}
                 onViewDetail={openPatientDetail}
-                onStatusChange={() => handleStatusChange(filters.status || 'active')}
+                onStatusChange={handleStatusChange}
                 onPageChange={handlePageChange}
               />
             )}
@@ -90,7 +81,7 @@ const Patients = () => {
             isOpen={isModalOpen}
             onClose={closePatientDetail}
             patient={patient}
-            onStatusChange={() => handleStatusChange(filters.status || 'active')}
+            onStatusChange={handleStatusChange}
           />
         )}
       </div>

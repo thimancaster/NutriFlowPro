@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -98,10 +97,8 @@ const Consultation = () => {
           user_id: userId,
           patient_id: patientId,
           patient: {
-            id: patientId,
             name: patientData?.name || '',
-            gender: formData.sex === 'M' ? 'M' : 'F', 
-            age: formData.age ? parseInt(formData.age) : 0
+            age: consultationData.age,
           },
           weight: parseFloat(formData.weight),
           height: parseFloat(formData.height),
@@ -116,10 +113,9 @@ const Consultation = () => {
             adjustment: 0,
             vet: results.get,
             macros: {
-              carbs: results.macros.carbs,
               protein: results.macros.protein,
+              carbs: results.macros.carbs,
               fat: results.macros.fat,
-              proteinPerKg: 0
             }
           }
         };

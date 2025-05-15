@@ -7,7 +7,10 @@ const formatDateForSupabase = (date: Date): string => {
   return date.toISOString();
 };
 
-// Fix the error with AppointmentType and AppointmentStatus being used as values
+// Fix the problematic parts where AppointmentType and AppointmentStatus are used as values
+export const AppointmentTypeOptions = ['Primeira Consulta', 'Retorno', 'Avaliação'] as const;
+export const AppointmentStatusOptions = ['scheduled', 'completed', 'canceled', 'no-show'] as const;
+
 const getAppointmentTypes = () => {
   return [
     { value: 'first', label: 'Primeira Consulta' },

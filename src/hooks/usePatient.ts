@@ -42,8 +42,11 @@ export const usePatient = (patientId?: string) => {
         const enhancedPatient: Patient = {
           ...data,
           age: calculateAge(data.birth_date),
-          weight: data.measurements?.weight || 0,
-          height: data.measurements?.height || 0,
+          // Access weight and height safely from measurements object
+          weight: data.measurements && typeof data.measurements === 'object' ? 
+            (data.measurements as any).weight || 0 : 0,
+          height: data.measurements && typeof data.measurements === 'object' ? 
+            (data.measurements as any).height || 0 : 0,
           status: data.status || 'active',
           // Add other derived fields here as needed
         };

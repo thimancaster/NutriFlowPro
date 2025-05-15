@@ -1,5 +1,5 @@
 
-import { MealPlan } from '@/types';
+import { MealPlan, MealItem, MealDistributionItem } from '@/types/meal';
 
 export interface MealPlanSettings {
   numMeals: string;
@@ -104,7 +104,7 @@ export function generateMealPlanData(
   }
   
   // Generate meals
-  const meals = Array.from({ length: mealCount }, (_, i) => {
+  const meals: MealItem[] = Array.from({ length: mealCount }, (_, i) => {
     // Calculate macros for this meal
     const mealProtein = Math.round((caloriesPerMeal * proteinPercentage) / 4); // 4 calories per gram
     const mealCarbs = Math.round((caloriesPerMeal * carbsPercentage) / 4); // 4 calories per gram
@@ -132,12 +132,17 @@ export function generateMealPlanData(
     return {
       mealNumber: i + 1,
       name: mealName,
+      time: '', // Add required time property
       calories: caloriesPerMeal,
       protein: mealProtein,
       carbs: mealCarbs,
       fat: mealFats,
       percentage: 100 / mealCount,
-      foodSuggestions: [...proteinFoods, ...carbFoods, ...fatFoods]
+      proteinPercent: proteinPercentage * 100,
+      carbsPercent: carbsPercentage * 100,
+      fatPercent: fatsPercentage * 100,
+      foodSuggestions: [...proteinFoods, ...carbFoods, ...fatFoods],
+      foods: [] // Add required foods property
     };
   });
   
@@ -155,7 +160,7 @@ export function generateMealPlanData(
     carbs: totalCarbs,
     fat: totalFats,
     meals: meals,
-    mealDistribution: [], // Initialize as empty array
+    mealDistribution: {}, // Initialize as empty object instead of array
     date: new Date().toISOString().split('T')[0]
   };
 }

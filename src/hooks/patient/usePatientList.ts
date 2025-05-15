@@ -5,7 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFilters, PaginationParams } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
-export const usePatientList = () => {
+export const usePatientList = (options?: {
+  initialFilters?: Partial<PatientFilters>;
+  initialPage?: number;
+  initialPageSize?: number;
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -18,18 +22,19 @@ export const usePatientList = () => {
   const [filters, setFilters] = useState<PatientFilters>({
     search: '',
     status: 'active',
-    dateFrom: '',
-    dateTo: '',
-    sortBy: 'name',
-    sortDirection: 'asc'
+    dateFrom: options?.initialFilters?.dateFrom || '',
+    dateTo: options?.initialFilters?.dateTo || '',
+    sortBy: options?.initialFilters?.sortBy || 'name',
+    sortDirection: options?.initialFilters?.sortDirection || 'asc'
   });
   
   // Pagination state
   const [pagination, setPagination] = useState<PaginationParams>({
-    page: 1,
-    pageSize: 10,
+    page: options?.initialPage || 1,
+    pageSize: options?.initialPageSize || 10,
     total: 0,
-    limit: 10,
+    totalPages: 0,
+    limit: options?.initialPageSize || 10,
     offset: 0
   });
   
@@ -92,7 +97,10 @@ export const usePatientList = () => {
       
       setPatients(transformedData);
       setTotalPatients(count || 0);
-      setPagination(prev => ({ ...prev, total: count || 0 }));
+      
+      // Calculate total pages
+      const totalPages = Math.ceil((count || 0) / pagination.pageSize);
+      setPagination(prev => ({ ...prev, total: count || 0, totalPages }));
     } catch (err) {
       console.error('Error fetching patients:', err);
       setError(err as Error);

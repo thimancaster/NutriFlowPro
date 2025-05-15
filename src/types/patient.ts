@@ -9,10 +9,16 @@ export interface Patient {
   secondaryPhone?: string;
   birth_date?: string;
   gender?: string;
-  address?: string;
+  address?: AddressDetails | string;
   cpf?: string;
-  goals?: Json;
-  measurements?: Json;
+  goals?: {
+    objective?: string;
+    profile?: string;
+  };
+  measurements?: {
+    weight?: number;
+    height?: number;
+  };
   notes?: string;
   created_at?: string;
   updated_at?: string;
@@ -37,6 +43,17 @@ export interface PaginationParams {
   page: number;
   pageSize: number;
   total: number;
+  totalPages: number;
   limit?: number;
   offset?: number;
+}
+
+export interface AddressDetails {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
 }
