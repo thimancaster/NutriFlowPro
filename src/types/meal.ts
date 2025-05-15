@@ -47,6 +47,8 @@ export interface MealDistributionItem {
 
 export interface MealPlan {
   id?: string;
+  title?: string; // Add title field
+  name?: string; // Keep name field for backward compatibility
   user_id?: string;
   patient_id?: string;
   date: Date | string;

@@ -152,8 +152,7 @@ export function generateMealPlanData(
   const totalFats = meals.reduce((sum, meal) => sum + meal.fat, 0);
   
   return {
-    id: '', // Add required id property 
-    title: `Plano Alimentar - ${new Date().toLocaleDateString()}`,
+    title: `Plano Alimentar - ${new Date().toLocaleDateString()}`, // Using title instead of name
     patient_id: '',  // This should be filled in by the parent component
     user_id: '', // Add required user_id property
     date: new Date(),
