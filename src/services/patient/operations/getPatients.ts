@@ -66,12 +66,13 @@ export const getPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
+    // Explicitly type the response and use PatientRecord as the intermediate type
     const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
     
     if (error) throw error;
     
-    // Transform PatientRecord array to Patient array
-    const patients = data ? data.map(record => record as unknown as Patient) : [];
+    // Use type assertion in two steps to avoid excessive type instantiation
+    const patients = data ? (data as unknown) as Patient[] : [];
     
     return {
       success: true,
@@ -138,12 +139,13 @@ export const getSortedPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
+    // Use the same approach as getPatients for type handling
     const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
     
     if (error) throw error;
     
-    // Transform PatientRecord array to Patient array
-    const patients = data ? data.map(record => record as unknown as Patient) : [];
+    // Use type assertion in two steps to avoid excessive type instantiation
+    const patients = data ? (data as unknown) as Patient[] : [];
     
     return {
       success: true,
