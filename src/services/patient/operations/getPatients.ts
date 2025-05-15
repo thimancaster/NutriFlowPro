@@ -25,7 +25,7 @@ export type GetPatientsErrorResponse = {
 // Use union type for the response
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
-// Define a simplified type for the raw database record
+// Define a simplified type for the raw database record with explicit primitive types
 interface PatientRecord {
   id: string;
   name: string;
@@ -34,8 +34,8 @@ interface PatientRecord {
   birth_date?: string | null;
   gender?: string | null;
   address?: string | null;
-  goals?: unknown;
-  measurements?: unknown;
+  goals?: any; // Using any to break circular reference
+  measurements?: any; // Using any to break circular reference
   notes?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -67,8 +67,9 @@ export const getPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Explicitly type the response with PatientRecord
-    const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
+    // Execute query without explicit typing in the variable declaration
+    const response = await query;
+    const { data, error, count } = response;
     
     if (error) throw error;
     
@@ -145,8 +146,9 @@ export const getSortedPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Explicitly type the response with PatientRecord
-    const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
+    // Execute query without explicit typing in the variable declaration
+    const response = await query;
+    const { data, error, count } = response;
     
     if (error) throw error;
     
