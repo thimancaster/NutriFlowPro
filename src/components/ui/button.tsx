@@ -10,14 +10,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-blue-500 text-white hover:bg-white hover:text-blue-500 border border-blue-500 hover:shadow-md active:scale-[0.98]",
+        default: "bg-nutri-blue text-white hover:bg-white hover:text-nutri-blue border border-nutri-blue hover:shadow-md active:scale-[0.98]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md active:scale-[0.98]",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-md active:scale-[0.98]",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md active:scale-[0.98]",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         nutri: "bg-nutri-green text-white hover:bg-white hover:text-nutri-green border border-nutri-green hover:shadow-md active:scale-[0.98]",
-        subscription: "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md active:scale-[0.98] border border-blue-400",
+        subscription: "bg-gradient-to-r from-nutri-blue-light to-nutri-blue-dark text-white hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md active:scale-[0.98] border border-blue-400",
+        "subscription-green": "bg-gradient-to-r from-nutri-green-light to-nutri-green-dark text-white hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md active:scale-[0.98] border border-green-400",
       },
       size: {
         default: "h-10 px-4 py-2",

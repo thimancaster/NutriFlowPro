@@ -6,6 +6,7 @@ import { Check, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBSCRIPTION_PRICES } from '@/constants/subscriptionConstants';
+import { Button } from '@/components/ui/button';
 
 const Pricing = () => {
   useEffect(() => {
@@ -78,12 +79,15 @@ const Pricing = () => {
               </ul>
             </CardContent>
             <CardFooter className="bg-gray-50 rounded-b-lg p-6">
-              <Link
-                to="/signup"
-                className="w-full bg-gray-500 text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-gray-600 transition-colors"
+              <Button
+                className="w-full"
+                variant="outline"
+                asChild
               >
-                Comece Agora
-              </Link>
+                <Link to="/signup">
+                  Comece Agora
+                </Link>
+              </Button>
             </CardFooter>
           </Card>
           
@@ -123,7 +127,7 @@ const Pricing = () => {
               <a 
                 onClick={() => importHotmart()}
                 href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d" 
-                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-blue-700 transition-colors"
+                className="hotmart-fb hotmart__button-checkout w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 h-10 px-4 py-2 bg-nutri-blue text-white hover:bg-white hover:text-nutri-blue border border-nutri-blue hover:shadow-md active:scale-[0.98] overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -175,11 +179,14 @@ const Pricing = () => {
               <a 
                 onClick={() => importHotmart()}
                 href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf" 
-                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-700 transition-colors"
+                className="hotmart-fb hotmart__button-checkout w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 h-10 px-4 py-2"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Assinar Pro Anual (Recomendado)
+                <span className="flex flex-col items-center">
+                  Assinar Pro Anual 
+                  <span className="text-xs opacity-90 mt-0.5">(recomendado)</span>
+                </span>
               </a>
             </CardFooter>
           </Card>

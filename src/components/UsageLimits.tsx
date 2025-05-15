@@ -96,8 +96,10 @@ const UsageLimits: React.FC = () => {
         {!isPremiumUser && (
           <Button 
             onClick={() => navigate('/subscription')}
-            className="w-full mt-2 bg-gradient-to-r from-blue-500 to-blue-600"
+            className="w-full mt-2"
+            variant="subscription"
             size="sm"
+            animation="shimmer"
           >
             Remover Limites
           </Button>

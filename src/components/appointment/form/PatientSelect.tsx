@@ -29,7 +29,7 @@ const PatientSelect = ({ value, onChange }: PatientSelectProps) => {
           onValueChange={(value) => onChange(value)}
           disabled={isLoading}
         >
-          <SelectTrigger>
+          <SelectTrigger className="transition-all duration-300 hover:border-nutri-green focus:border-nutri-green">
             <SelectValue placeholder="Selecione um paciente" />
           </SelectTrigger>
           <SelectContent>

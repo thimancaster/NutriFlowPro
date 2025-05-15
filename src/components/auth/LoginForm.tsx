@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,8 +149,8 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
 
         <Button
           type="submit"
-          className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg relative overflow-hidden"
           animation="shimmer"
+          className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -182,7 +181,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
       <div>
         <Button 
           variant="outline" 
-          className="w-full bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
+          className="w-full bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue"
           onClick={handleGoogleLogin}
           disabled={isGoogleLoading}
           animation="shimmer"

@@ -29,7 +29,6 @@ const PricingSection = () => {
 
   const importHotmart = () => {
     // This function is already handled in the useEffect
-    // Including as reference but not executing again
     console.log('Hotmart scripts already loaded');
   };
 
@@ -74,12 +73,15 @@ const PricingSection = () => {
             </ul>
             
             <div className="mt-auto">
-              <Link
-                to="/signup"
-                className="w-full bg-gray-500 text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-gray-600 transition-colors"
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                asChild
               >
-                Comece Agora
-              </Link>
+                <Link to="/signup">
+                  Comece Agora
+                </Link>
+              </Button>
             </div>
           </motion.div>
           
@@ -123,7 +125,7 @@ const PricingSection = () => {
               <a 
                 onClick={() => importHotmart()}
                 href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d" 
-                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-blue text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-nutri-blue-dark transition-colors transform hover:scale-105 duration-200"
+                className="hotmart-fb hotmart__button-checkout w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium py-3 px-6 bg-nutri-blue text-white hover:bg-white hover:text-nutri-blue border border-nutri-blue transition-all duration-300 hover:shadow-md active:scale-[0.98] relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -185,11 +187,14 @@ const PricingSection = () => {
               <a 
                 onClick={() => importHotmart()}
                 href="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf" 
-                className="hotmart-fb hotmart__button-checkout w-full bg-nutri-green text-white py-3 px-6 rounded-lg font-medium inline-flex justify-center items-center hover:bg-green-600 transition-colors transform hover:scale-105 duration-200"
+                className="hotmart-fb hotmart__button-checkout w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium py-3 px-6 bg-gradient-to-r from-nutri-green-light to-nutri-green-dark text-white border border-green-400 transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md active:scale-[0.98] relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Assinar Pro Anual (Recomendado)
+                <span className="flex flex-col items-center">
+                  Assinar Pro Anual 
+                  <span className="text-xs opacity-90 mt-0.5">(recomendado)</span>
+                </span>
               </a>
             </div>
           </motion.div>

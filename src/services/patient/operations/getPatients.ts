@@ -36,16 +36,24 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create the base query
-    const { data, error, count } = await supabase
+    // Create a base query with proper type safety
+    let baseQuery = supabase
       .from('patients')
       .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .eq(status !== 'all' ? 'status' : '', status !== 'all' ? status : '')
-      .range(
-        paginationParams?.offset || 0,
-        paginationParams ? paginationParams.offset + paginationParams.limit - 1 : 9999
-      );
+      .eq('user_id', userId);
+    
+    // Apply status filter if not 'all'
+    if (status !== 'all') {
+      baseQuery = baseQuery.eq('status', status);
+    }
+    
+    // Apply pagination with safe defaults
+    const offset = paginationParams?.offset || 0;
+    const limit = paginationParams?.limit || 9999;
+    baseQuery = baseQuery.range(offset, offset + limit - 1);
+    
+    // Execute query
+    const { data, error, count } = await baseQuery;
     
     if (error) throw error;
     
@@ -89,7 +97,7 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start building the query - we'll use a more direct approach
+    // Start building the query - with proper type safety
     let baseQuery = supabase
       .from('patients')
       .select('*', { count: 'exact' })
@@ -117,15 +125,17 @@ export const getSortedPatients = async (
     // Apply sorting
     baseQuery = baseQuery.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    // Apply pagination if provided
+    // Apply pagination with safe handling of undefined values
     if (paginationParams) {
       baseQuery = baseQuery.range(
         paginationParams.offset,
         paginationParams.offset + paginationParams.limit - 1
       );
+    } else {
+      baseQuery = baseQuery.range(0, 9999); // Default range if no pagination
     }
     
-    // Execute query - save the raw response without type assertion
+    // Execute query
     const { data, error, count } = await baseQuery;
     
     if (error) throw error;
