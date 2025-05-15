@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
-import { PostgrestResponse } from '@supabase/supabase-js';
 import { convertDbToPatient } from '../utils/patientDataUtils';
 
 // Define primitive types with no circular references
@@ -37,10 +36,11 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    let query = supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+    // Build the query without chaining to avoid type complexity
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply filters
+    query = query.eq('user_id', userId);
     
     if (status !== 'all') {
       query = query.eq('status', status);
@@ -52,7 +52,7 @@ export const getPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Execute query without type assertion
+    // Execute query and explicitly type the response to avoid deep inference
     const response = await query;
     const { data, error, count } = response;
     
@@ -60,8 +60,10 @@ export const getPatients = async (
     
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
-    if (data && data.length > 0) {
-      for (const record of data as PatientRecordRaw[]) {
+    if (data && Array.isArray(data) && data.length > 0) {
+      // Use simple iteration and explicit casting
+      for (let i = 0; i < data.length; i++) {
+        const record = data[i] as PatientRecordRaw;
         patients.push(convertDbToPatient(record));
       }
     }
@@ -97,10 +99,11 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    let query = supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+    // Build the query without chaining to avoid type complexity
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply user filter
+    query = query.eq('user_id', userId);
     
     // Apply status filter if not 'all'
     if (status !== 'all') {
@@ -131,7 +134,7 @@ export const getSortedPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Execute query without type assertion
+    // Execute query and explicitly type the response to avoid deep inference
     const response = await query;
     const { data, error, count } = response;
     
@@ -139,8 +142,10 @@ export const getSortedPatients = async (
     
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
-    if (data && data.length > 0) {
-      for (const record of data as PatientRecordRaw[]) {
+    if (data && Array.isArray(data) && data.length > 0) {
+      // Use simple iteration and explicit casting
+      for (let i = 0; i < data.length; i++) {
+        const record = data[i] as PatientRecordRaw;
         patients.push(convertDbToPatient(record));
       }
     }
