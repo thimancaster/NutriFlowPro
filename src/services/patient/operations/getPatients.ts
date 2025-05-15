@@ -36,23 +36,24 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with the base query using the literal table name
-    let dbQuery = supabase.from('patients').select('*', { count: 'exact' });
+    // Start with the base query
+    const baseQuery = supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
-    // Apply filters
-    dbQuery = dbQuery.eq('user_id', userId);
+    // Apply status filter if not 'all'
+    const statusQuery = status !== 'all' 
+      ? baseQuery.eq('status', status)
+      : baseQuery;
     
-    if (status !== 'all') {
-      dbQuery = dbQuery.eq('status', status);
-    }
-    
-    // Apply pagination
+    // Calculate pagination values
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 9999;
-    dbQuery = dbQuery.range(offset, offset + limit - 1);
     
-    // Execute the query
-    const { data, error, count } = await dbQuery;
+    // Execute the query with pagination
+    const { data, error, count } = await statusQuery
+      .range(offset, offset + limit - 1);
     
     if (error) throw error;
     
@@ -96,38 +97,42 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with base query using literal table name
-    let dbQuery = supabase.from('patients').select('*', { count: 'exact' });
+    // Start with base query
+    const baseQuery = supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
-    // Apply filters
-    dbQuery = dbQuery.eq('user_id', userId);
+    // Build query step by step without chaining too many operations
+    let finalQuery = baseQuery;
     
+    // Apply status filter
     if (status !== 'all') {
-      dbQuery = dbQuery.eq('status', status);
+      finalQuery = finalQuery.eq('status', status);
     }
     
+    // Apply search filter
     if (search) {
-      dbQuery = dbQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      finalQuery = finalQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
+    // Apply date filters
     if (startDate) {
-      dbQuery = dbQuery.gte('created_at', startDate);
+      finalQuery = finalQuery.gte('created_at', startDate);
     }
     
     if (endDate) {
-      dbQuery = dbQuery.lte('created_at', endDate);
+      finalQuery = finalQuery.lte('created_at', endDate);
     }
     
-    // Apply sorting
-    dbQuery = dbQuery.order(sortBy, { ascending: sortOrder === 'asc' });
-    
-    // Apply pagination
+    // Calculate pagination values
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 9999;
-    dbQuery = dbQuery.range(offset, offset + limit - 1);
     
-    // Execute query
-    const { data, error, count } = await dbQuery;
+    // Execute query with sorting and pagination
+    const { data, error, count } = await finalQuery
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(offset, offset + limit - 1);
     
     if (error) throw error;
     
