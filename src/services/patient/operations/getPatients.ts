@@ -2,13 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-// Define basic types without circular references
+// Define completely non-recursive primitive types
 export type PatientsData = {
   patients: Patient[];
   total: number;
 };
 
-// Define separate, non-recursive response types
+// Define separate response types with primitive structures
 export type GetPatientsSuccessResponse = {
   success: true;
   data: PatientsData;
@@ -19,7 +19,7 @@ export type GetPatientsErrorResponse = {
   error: string;
 };
 
-// Export a union type using the primitive types
+// Use union type with primitive components
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
 export const getPatients = async (
@@ -51,20 +51,22 @@ export const getPatients = async (
     if (error) throw error;
     
     // Create and return success response
-    return {
+    const successResponse: GetPatientsSuccessResponse = {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
+    return successResponse;
   } catch (error: any) {
     console.error('Error in getPatients:', error.message);
     // Create and return error response
-    return {
+    const errorResponse: GetPatientsErrorResponse = {
       success: false,
       error: error.message
     };
+    return errorResponse;
   }
 };
 
@@ -121,20 +123,22 @@ export const getSortedPatients = async (
     
     if (error) throw error;
     
-    // Create and return success response
-    return {
+    // Create and return success response with explicit type
+    const successResponse: GetPatientsSuccessResponse = {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
+    return successResponse;
   } catch (error: any) {
     console.error('Error in getSortedPatients:', error.message);
-    // Create and return error response
-    return {
+    // Create and return error response with explicit type
+    const errorResponse: GetPatientsErrorResponse = {
       success: false,
       error: error.message
     };
+    return errorResponse;
   }
 };
