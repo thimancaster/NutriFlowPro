@@ -24,7 +24,7 @@ export type GetPatientsErrorResponse = {
 // Use union type for the response
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
-// Define a simplified type for database records with primitive types only
+// Define a simple type for raw database records to avoid deep type instantiation
 type PatientRecordRaw = Record<string, any>;
 
 export const getPatients = async (
@@ -36,32 +36,36 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with the base query
-    const baseQuery = supabase
+    // Start with a simple query structure
+    const query = supabase
       .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+      .select('*', { count: 'exact' });
     
-    // Apply status filter if not 'all'
-    const statusQuery = status !== 'all' 
-      ? baseQuery.eq('status', status)
-      : baseQuery;
+    // Add user filter
+    query.eq('user_id', userId);
+    
+    // Add status filter if not 'all'
+    if (status !== 'all') {
+      query.eq('status', status);
+    }
     
     // Calculate pagination values
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 9999;
     
-    // Execute the query with pagination
-    const { data, error, count } = await statusQuery
-      .range(offset, offset + limit - 1);
+    // Add pagination
+    query.range(offset, offset + limit - 1);
+    
+    // Execute the query
+    const { data, error, count } = await query;
     
     if (error) throw error;
     
     // Process data with minimal type operations
     const patients: Patient[] = [];
     if (data) {
-      for (let i = 0; i < data.length; i++) {
-        const patientRecord = data[i] as PatientRecordRaw;
+      for (const record of data) {
+        const patientRecord = record as PatientRecordRaw;
         patients.push(convertDbToPatient(patientRecord));
       }
     }
@@ -97,50 +101,53 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with base query
-    const baseQuery = supabase
+    // Start with simple query structure
+    const query = supabase
       .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+      .select('*', { count: 'exact' });
     
-    // Build query step by step without chaining too many operations
-    let finalQuery = baseQuery;
+    // Add user filter
+    query.eq('user_id', userId);
     
-    // Apply status filter
+    // Add status filter
     if (status !== 'all') {
-      finalQuery = finalQuery.eq('status', status);
+      query.eq('status', status);
     }
     
-    // Apply search filter
+    // Add search filter
     if (search) {
-      finalQuery = finalQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
-    // Apply date filters
+    // Add date filters
     if (startDate) {
-      finalQuery = finalQuery.gte('created_at', startDate);
+      query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      finalQuery = finalQuery.lte('created_at', endDate);
+      query.lte('created_at', endDate);
     }
+    
+    // Add sorting
+    query.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Calculate pagination values
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 9999;
     
-    // Execute query with sorting and pagination
-    const { data, error, count } = await finalQuery
-      .order(sortBy, { ascending: sortOrder === 'asc' })
-      .range(offset, offset + limit - 1);
+    // Add pagination
+    query.range(offset, offset + limit - 1);
+    
+    // Execute the query
+    const { data, error, count } = await query;
     
     if (error) throw error;
     
     // Process data with minimal type operations
     const patients: Patient[] = [];
     if (data) {
-      for (let i = 0; i < data.length; i++) {
-        const patientRecord = data[i] as PatientRecordRaw;
+      for (const record of data) {
+        const patientRecord = record as PatientRecordRaw;
         patients.push(convertDbToPatient(patientRecord));
       }
     }
