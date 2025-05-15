@@ -4,6 +4,7 @@ import ConsultationForm from './ConsultationForm';
 import { useConsultationForm } from '@/hooks/useConsultationForm';
 import { ConsultationData } from '@/types';
 import { Patient } from '@/types/patient';
+import { Sex } from '@/types/consultation';
 
 interface PatientOption {
   id: string;
@@ -26,12 +27,12 @@ const ConsultationFormWrapper: React.FC<ConsultationFormWrapperProps> = ({
   patients,
   autoSaveStatus 
 }) => {
-  // Initialize form with consultation data
+  // Initialize form with consultation data, ensuring proper types
   const initialData = {
     weight: consultation.weight?.toString() || '',
     height: consultation.height?.toString() || '',
     age: consultation.age?.toString() || '',
-    sex: consultation.gender === 'male' ? 'M' : 'F',
+    sex: (consultation.gender === 'male' ? 'M' : 'F') as Sex,
     objective: consultation.goal || consultation.objective || 'manutenção',
     profile: 'magro', // Default profile
     activityLevel: consultation.activity_level || 'moderado',
