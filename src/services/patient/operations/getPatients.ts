@@ -25,23 +25,8 @@ export type GetPatientsErrorResponse = {
 // Use union type for the response
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
-// Define a simplified type for the raw database record with explicit primitive types
-interface PatientRecord {
-  id: string;
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-  birth_date?: string | null;
-  gender?: string | null;
-  address?: string | null;
-  goals?: any; // Using any to break circular reference
-  measurements?: any; // Using any to break circular reference
-  notes?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  user_id?: string | null;
-  status?: string | null;
-}
+// Define a simplified type for database records with primitive types only
+type PatientRecordRaw = Record<string, unknown>;
 
 export const getPatients = async (
   userId: string, 
@@ -67,7 +52,7 @@ export const getPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Execute query without explicit typing in the variable declaration
+    // Execute query without type assertion
     const response = await query;
     const { data, error, count } = response;
     
@@ -76,7 +61,7 @@ export const getPatients = async (
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
     if (data && data.length > 0) {
-      for (const record of data) {
+      for (const record of data as PatientRecordRaw[]) {
         patients.push(convertDbToPatient(record));
       }
     }
@@ -146,7 +131,7 @@ export const getSortedPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Execute query without explicit typing in the variable declaration
+    // Execute query without type assertion
     const response = await query;
     const { data, error, count } = response;
     
@@ -155,7 +140,7 @@ export const getSortedPatients = async (
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
     if (data && data.length > 0) {
-      for (const record of data) {
+      for (const record of data as PatientRecordRaw[]) {
         patients.push(convertDbToPatient(record));
       }
     }
