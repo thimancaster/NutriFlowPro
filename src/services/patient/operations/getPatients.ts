@@ -40,19 +40,22 @@ export const getPatients = async (
     
     if (error) throw error;
     
-    return {
+    const response: PatientsResponse = {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
+    
+    return response;
   } catch (error: any) {
     console.error('Error in getPatients:', error.message);
-    return {
+    const errorResponse: PatientsResponse = {
       success: false,
       error: error.message
     };
+    return errorResponse;
   }
 };
 
@@ -109,18 +112,21 @@ export const getSortedPatients = async (
     
     if (error) throw error;
     
-    return {
+    const response: PatientsResponse = {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
+    
+    return response;
   } catch (error: any) {
     console.error('Error in getSortedPatients:', error.message);
-    return {
+    const errorResponse: PatientsResponse = {
       success: false,
       error: error.message
     };
+    return errorResponse;
   }
 };
