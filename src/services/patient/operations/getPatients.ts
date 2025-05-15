@@ -2,6 +2,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
+// Define the return type explicitly to avoid recursive type resolution
+interface PatientsResponse {
+  success: boolean;
+  data?: {
+    patients: Patient[];
+    total: number;
+  };
+  error?: string;
+}
+
 export const getPatients = async (
   userId: string, 
   status: 'active' | 'archived' | 'all' = 'active',
@@ -9,7 +19,7 @@ export const getPatients = async (
     limit: number;
     offset: number;
   }
-) => {
+): Promise<PatientsResponse> => {
   try {
     let query = supabase
       .from('patients')
@@ -59,7 +69,7 @@ export const getSortedPatients = async (
     limit: number;
     offset: number;
   }
-) => {
+): Promise<PatientsResponse> => {
   try {
     let query = supabase
       .from('patients')
