@@ -1,101 +1,43 @@
 
-// Simple animation utility for auth components
+import { cn } from "@/lib/utils";
 
-export type AnimationTiming = 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'linear';
-export type AnimationType = 'fade' | 'scale' | 'slide' | 'rotate';
-
-export interface AnimationOptions {
-  duration?: number;
-  delay?: number;
-  timing?: AnimationTiming;
-  type?: AnimationType;
-  direction?: 'in' | 'out';
-}
-
-/**
- * Gets tailwind classes for animation based on options
- */
-export const getAnimationClasses = (options: AnimationOptions = {}): string => {
-  const {
-    duration = 300,
-    delay = 0,
-    timing = 'ease-out',
-    type = 'fade',
-    direction = 'in'
-  } = options;
-
-  // Base animation classes
-  let animationClass = 'transition-all ';
+// Button animation styles
+export const getButtonAnimationClass = (type?: string) => {
+  const baseAnimation = "transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]";
   
-  // Duration
-  if (duration === 300) {
-    animationClass += 'duration-300 ';
-  } else if (duration === 500) {
-    animationClass += 'duration-500 ';
-  } else if (duration === 700) {
-    animationClass += 'duration-700 ';
-  } else {
-    animationClass += `duration-[${duration}ms] `;
-  }
-  
-  // Delay
-  if (delay > 0) {
-    animationClass += `delay-[${delay}ms] `;
-  }
-  
-  // Timing function
-  switch (timing) {
-    case 'ease-in':
-      animationClass += 'ease-in ';
-      break;
-    case 'ease-out':
-      animationClass += 'ease-out ';
-      break;
-    case 'ease-in-out':
-      animationClass += 'ease-in-out ';
-      break;
-    case 'linear':
-      animationClass += 'linear ';
-      break;
-    default:
-      animationClass += 'ease ';
-  }
-
-  // Animation type
-  if (type === 'fade' && direction === 'in') {
-    animationClass += 'animate-fade-in ';
-  } else if (type === 'fade' && direction === 'out') {
-    animationClass += 'animate-fade-out ';
-  } else if (type === 'scale' && direction === 'in') {
-    animationClass += 'animate-scale-in ';
-  } else if (type === 'scale' && direction === 'out') {
-    animationClass += 'animate-scale-out ';
-  }
-
-  return animationClass.trim();
-};
-
-/**
- * Gets a staggered animation delay for list items
- */
-export const getStaggeredDelay = (index: number, baseDelay: number = 50): number => {
-  return baseDelay * index;
-};
-
-/**
- * Apply hover animation classes
- */
-export const getHoverAnimationClasses = (type: 'scale' | 'lift' | 'glow' | 'underline'): string => {
   switch (type) {
-    case 'scale':
-      return 'hover-scale';
-    case 'lift':
-      return 'hover-lift';
-    case 'glow':
-      return 'hover:shadow-lg hover:shadow-primary/20';
-    case 'underline':
-      return 'text-link';
+    case 'shimmer':
+      return cn(baseAnimation, "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent");
+    case 'pulse':
+      return cn(baseAnimation, "animate-pulse");
+    case 'bounce':
+      return cn(baseAnimation, "hover:animate-bounce");
     default:
-      return '';
+      return baseAnimation;
   }
+};
+
+// Component animation styles for fade-in and scale effects
+export const getComponentAnimationClass = (type?: string) => {
+  switch (type) {
+    case 'fade-in':
+      return "animate-fade-in";
+    case 'scale-in':
+      return "animate-scale-in";
+    case 'slide-in-from-left':
+      return "animate-slide-in-from-left";
+    case 'slide-in-from-right':
+      return "animate-slide-in-from-right";
+    case 'slide-in-from-top':
+      return "animate-slide-in-from-top";
+    case 'slide-in-from-bottom':
+      return "animate-slide-in-from-bottom";
+    default:
+      return "";
+  }
+};
+
+// Avatar and profile element animations
+export const getAvatarAnimationClass = () => {
+  return "transition-all duration-300 hover:shadow-md hover:scale-105 hover:ring-2 hover:ring-nutri-green hover:ring-opacity-50";
 };

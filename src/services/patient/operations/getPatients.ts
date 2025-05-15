@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
+import { PostgrestResponse } from '@supabase/supabase-js';
 
 // Define primitive types with no circular references
 export type PatientsData = {
@@ -22,6 +23,24 @@ export type GetPatientsErrorResponse = {
 
 // Use union type for the response
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
+
+// Define a simplified type for the raw database record
+interface PatientRecord {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  address?: string | null;
+  goals?: unknown;
+  measurements?: unknown;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  user_id?: string | null;
+  status?: string | null;
+}
 
 export const getPatients = async (
   userId: string, 
@@ -47,14 +66,17 @@ export const getPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    const { data, error, count } = await query;
+    const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
     
     if (error) throw error;
+    
+    // Transform PatientRecord array to Patient array
+    const patients = data ? data.map(record => record as unknown as Patient) : [];
     
     return {
       success: true,
       data: {
-        patients: data as Patient[],
+        patients,
         total: count || 0
       }
     };
@@ -116,14 +138,17 @@ export const getSortedPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    const { data, error, count } = await query;
+    const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
     
     if (error) throw error;
+    
+    // Transform PatientRecord array to Patient array
+    const patients = data ? data.map(record => record as unknown as Patient) : [];
     
     return {
       success: true,
       data: {
-        patients: data as Patient[],
+        patients,
         total: count || 0
       }
     };
