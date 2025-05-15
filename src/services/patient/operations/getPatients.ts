@@ -34,14 +34,15 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Build query parts separately to avoid deep type instantiation
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Start with basic query
+    const query = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Apply filters directly
-    query = query.eq('user_id', userId);
+    // Apply user filter
+    query.eq('user_id', userId);
     
+    // Apply status filter if not 'all'
     if (status !== 'all') {
-      query = query.eq('status', status);
+      query.eq('status', status);
     }
     
     // Set up pagination
@@ -53,7 +54,7 @@ export const getPatients = async (
     
     if (error) throw error;
     
-    // Transform data with minimal type operations
+    // Transform data
     const patients: Patient[] = [];
     if (data) {
       for (const record of data as RawPatientRecord[]) {
@@ -91,32 +92,35 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Build query parts separately to avoid deep type instantiation
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Start with basic query
+    const query = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Apply filters directly
-    query = query.eq('user_id', userId);
+    // Apply user filter
+    query.eq('user_id', userId);
     
+    // Apply status filter if not 'all'
     if (status !== 'all') {
-      query = query.eq('status', status);
+      query.eq('status', status);
     }
     
+    // Apply search if provided
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
+    // Apply date filters if provided
     if (startDate) {
-      query = query.gte('created_at', startDate);
+      query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query = query.lte('created_at', endDate);
+      query.lte('created_at', endDate);
     }
     
-    // Apply sorting directly
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    // Apply sorting
+    query.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    // Set up pagination
+    // Apply pagination
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 9999;
     
@@ -125,7 +129,7 @@ export const getSortedPatients = async (
     
     if (error) throw error;
     
-    // Transform data with minimal type operations
+    // Transform data
     const patients: Patient[] = [];
     if (data) {
       for (const record of data as RawPatientRecord[]) {
