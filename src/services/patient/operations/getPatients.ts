@@ -2,15 +2,24 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-// Define the return type explicitly to avoid recursive type resolution
-interface PatientsResponse {
-  success: boolean;
-  data?: {
-    patients: Patient[];
-    total: number;
-  };
-  error?: string;
+// Define our response types explicitly and separately to avoid recursive type definitions
+interface PatientsData {
+  patients: Patient[];
+  total: number;
 }
+
+interface SuccessResponse {
+  success: true;
+  data: PatientsData;
+}
+
+interface ErrorResponse {
+  success: false;
+  error: string;
+}
+
+// Use a union type to represent either success or error
+type PatientsResponse = SuccessResponse | ErrorResponse;
 
 export const getPatients = async (
   userId: string, 
@@ -40,26 +49,25 @@ export const getPatients = async (
     
     if (error) throw error;
     
-    const response: PatientsResponse = {
+    // Return success response with properly typed data
+    return {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
-    
-    return response;
   } catch (error: any) {
     console.error('Error in getPatients:', error.message);
-    const errorResponse: PatientsResponse = {
+    // Return error response
+    return {
       success: false,
       error: error.message
     };
-    return errorResponse;
   }
 };
 
-// Simplified version of getSortedPatients to avoid type recursion
+// Function for getting sorted patients
 export const getSortedPatients = async (
   userId: string,
   status: 'active' | 'archived' | 'all' = 'active',
@@ -112,21 +120,20 @@ export const getSortedPatients = async (
     
     if (error) throw error;
     
-    const response: PatientsResponse = {
+    // Return success response with properly typed data
+    return {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
-    
-    return response;
   } catch (error: any) {
     console.error('Error in getSortedPatients:', error.message);
-    const errorResponse: PatientsResponse = {
+    // Return error response
+    return {
       success: false,
       error: error.message
     };
-    return errorResponse;
   }
 };
