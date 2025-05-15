@@ -26,4 +26,5 @@ export interface Patient {
   };
   secondaryPhone?: string;
   cpf?: string;
+  measurements?: any;
 }

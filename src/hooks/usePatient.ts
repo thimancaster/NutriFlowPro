@@ -53,7 +53,6 @@ export const usePatient = (patientId?: string | null) => {
             {},
           secondaryPhone: data.secondaryPhone || undefined,
           cpf: data.cpf || undefined,
-          // Add default values for required Patient fields that might be missing
           measurements: data.measurements || {},
         };
         

@@ -1,37 +1,24 @@
 
+export interface AppointmentType {
+  value: string;
+  label: string;
+}
+
+export interface AppointmentStatus {
+  value: string;
+  label: string;
+}
+
 export interface Appointment {
   id: string;
-  user_id: string;
-  patient_id: string;
-  patientName?: string;
-  start_time: string | Date;
-  end_time: string | Date;
-  title?: string;
-  notes?: string;
+  user_id?: string;
+  patient_id?: string;
+  date: Date | string;
+  type: string;
   status: string;
-  appointment_type_id?: string;
-  created_at?: string | Date;
-  updated_at?: string | Date;
-  date?: string | Date; // Added date property which exists in the database
-  type?: string; // Added type property which exists in the database
-}
-
-export interface AppointmentFormData {
-  patient_id: string;
-  appointment_type_id?: string;
-  title?: string;
-  start_time: string;
-  end_time: string;
   notes?: string;
-  status?: string;
+  recommendations?: string;
+  measurements?: any;
+  created_at?: string;
+  updated_at?: string;
 }
-
-export type AppointmentType = {
-  id: string;
-  name: string;
-  description?: string;
-  duration_minutes: number;
-  color?: string;
-};
-
-export type AppointmentStatus = 'scheduled' | 'completed' | 'canceled' | 'rescheduled';

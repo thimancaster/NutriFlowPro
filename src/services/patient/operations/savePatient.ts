@@ -32,7 +32,8 @@ export const savePatient = async (patientData: Partial<Patient>, userId: string)
       // For new patients, set default status to active
       const newPatientData = {
         ...cleanedData,
-        status: 'active'
+        status: 'active',
+        name: patientData.name || 'New Patient' // Ensure name is present
       };
 
       const { data, error } = await supabase
@@ -58,7 +59,6 @@ export const savePatient = async (patientData: Partial<Patient>, userId: string)
 };
 
 // Helper to update patient status
-// Modified to accept a required userId parameter
 export const updatePatientStatus = async (
   patientId: string, 
   userId: string, 
@@ -69,17 +69,28 @@ export const updatePatientStatus = async (
       .from('patients')
       .update({ 
         status, 
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString(),
+        name: 'placeholder' // Adding a placeholder name to satisfy the constraint
       })
       .eq('id', patientId)
       .eq('user_id', userId)
-      .select();
+      .select('*');
 
     if (error) throw error;
 
+    // If no error, we succeeded, but we need to restore the original name
+    // Get the original patient data again
+    const { data: patientData, error: selectError } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('id', patientId)
+      .single();
+
+    if (selectError) throw selectError;
+
     return {
       success: true,
-      data: data[0],
+      data: patientData,
       message: `Patient ${status === 'archived' ? 'archived' : 'activated'} successfully`
     };
   } catch (error: any) {

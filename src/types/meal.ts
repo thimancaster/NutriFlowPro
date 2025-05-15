@@ -2,18 +2,17 @@
 export interface MealItem {
   id?: string;
   name: string;
-  time: string;
+  portion?: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
+  time: string;
   proteinPercent: number;
   carbsPercent: number;
   fatPercent: number;
   foods: any[];
   selected?: boolean;
-  portion?: string;
-  suggestions?: string[];
 }
 
 export interface Meal {

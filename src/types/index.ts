@@ -1,4 +1,3 @@
-
 export * from './appointment';
 export * from './meal';
 export * from './patient';
@@ -41,6 +40,8 @@ export interface PaginationParams {
   pageSize: number;
   total: number;
   totalPages: number;
+  limit?: number;
+  offset?: number;
 }
 
 export interface PatientFilters {
@@ -48,10 +49,10 @@ export interface PatientFilters {
   status?: 'active' | 'archived' | 'all';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  page?: number;
-  pageSize?: number;
   startDate?: string;
   endDate?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface AddressDetails {

@@ -26,15 +26,17 @@ export const usePatientList = (initialProps?: UsePatientListProps) => {
     status: initialFilters.status || 'active',
     sortBy: initialFilters.sortBy || 'name',
     sortOrder: initialFilters.sortOrder || 'asc',
-    dateFrom: initialFilters.dateFrom || undefined,
-    dateTo: initialFilters.dateTo || undefined,
+    startDate: initialFilters.startDate || undefined,
+    endDate: initialFilters.endDate || undefined,
   });
   
   const [pagination, setPagination] = useState<PaginationParams>({
     page: initialPage,
     pageSize: initialPageSize,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
+    limit: initialPageSize,
+    offset: (initialPage - 1) * initialPageSize
   });
 
   // Fetch patients from Supabase
@@ -68,12 +70,12 @@ export const usePatientList = (initialProps?: UsePatientListProps) => {
       }
 
       // Apply date range filters if provided
-      if (filters.dateFrom) {
-        query = query.gte('created_at', filters.dateFrom);
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate);
       }
 
-      if (filters.dateTo) {
-        query = query.lte('created_at', filters.dateTo);
+      if (filters.endDate) {
+        query = query.lte('created_at', filters.endDate);
       }
 
       // Apply sorting
@@ -108,7 +110,9 @@ export const usePatientList = (initialProps?: UsePatientListProps) => {
       setPagination(prev => ({
         ...prev,
         total,
-        totalPages: Math.ceil(total / pagination.pageSize)
+        totalPages: Math.ceil(total / pagination.pageSize),
+        limit: pagination.pageSize,
+        offset: from
       }));
 
     } catch (err: any) {
@@ -126,14 +130,22 @@ export const usePatientList = (initialProps?: UsePatientListProps) => {
 
   // Handler for changing page
   const handlePageChange = useCallback((page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    setPagination(prev => ({ 
+      ...prev, 
+      page,
+      offset: (page - 1) * prev.pageSize
+    }));
   }, []);
 
   // Handler for changing filters
   const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     // Reset to first page when filters change
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination(prev => ({ 
+      ...prev, 
+      page: 1,
+      offset: 0
+    }));
   }, []);
 
   // Handler for changing status filter

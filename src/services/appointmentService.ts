@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { AppointmentStatus, AppointmentType } from '@/types/appointment';
@@ -6,6 +5,25 @@ import { AppointmentStatus, AppointmentType } from '@/types/appointment';
 // Function to format dates for Supabase
 const formatDateForSupabase = (date: Date): string => {
   return date.toISOString();
+};
+
+// Fix the error with AppointmentType and AppointmentStatus being used as values
+const getAppointmentTypes = () => {
+  return [
+    { value: 'first', label: 'Primeira Consulta' },
+    { value: 'followup', label: 'Retorno' },
+    { value: 'evaluation', label: 'Avaliação' },
+    { value: 'other', label: 'Outro' },
+  ];
+};
+
+const getAppointmentStatuses = () => {
+  return [
+    { value: 'scheduled', label: 'Agendado' },
+    { value: 'confirmed', label: 'Confirmado' },
+    { value: 'completed', label: 'Realizado' },
+    { value: 'canceled', label: 'Cancelado' },
+  ];
 };
 
 export const appointmentService = {

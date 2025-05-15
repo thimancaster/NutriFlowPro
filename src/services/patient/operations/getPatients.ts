@@ -5,7 +5,10 @@ import { Patient, PaginationParams } from '@/types';
 export const getPatients = async (
   userId: string, 
   status: 'active' | 'archived' | 'all' = 'active',
-  paginationParams?: PaginationParams
+  paginationParams?: {
+    limit: number;
+    offset: number;
+  }
 ) => {
   try {
     let query = supabase
@@ -51,7 +54,10 @@ export const getSortedPatients = async (
   search: string = '',
   startDate?: string,
   endDate?: string,
-  paginationParams?: PaginationParams
+  paginationParams?: {
+    limit: number;
+    offset: number;
+  }
 ) => {
   try {
     let query = supabase

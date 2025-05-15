@@ -26,7 +26,7 @@ const Patients = () => {
     handleFilterChange,
     handleStatusChange,
     togglePatientStatus,
-    refetchPatients
+    refetch
   } = usePatientList();
 
   const handleOpenDetailModal = (patient: Patient) => {
@@ -55,7 +55,7 @@ const Patients = () => {
     if (error) {
       return <PatientErrorState 
         errorMessage={error.message} 
-        onRetry={refetchPatients} 
+        onRetry={refetch} 
       />;
     }
 
