@@ -36,35 +36,25 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Build the query without chaining to avoid type complexity
-    let query = supabase.from('patients').select('*', { count: 'exact' });
-    
-    // Apply filters
-    query = query.eq('user_id', userId);
-    
-    if (status !== 'all') {
-      query = query.eq('status', status);
-    }
-    
-    // Apply pagination if provided
-    if (paginationParams) {
-      const { limit, offset } = paginationParams;
-      query = query.range(offset, offset + limit - 1);
-    }
-    
-    // Execute query and explicitly type the response to avoid deep inference
-    const response = await query;
-    const { data, error, count } = response;
+    // Create the base query
+    const { data, error, count } = await supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+      .eq(status !== 'all' ? 'status' : '', status !== 'all' ? status : '')
+      .range(
+        paginationParams?.offset || 0,
+        paginationParams ? paginationParams.offset + paginationParams.limit - 1 : 9999
+      );
     
     if (error) throw error;
     
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
-    if (data && Array.isArray(data) && data.length > 0) {
-      // Use simple iteration and explicit casting
+    if (data && Array.isArray(data)) {
+      // Use simple iteration over the array
       for (let i = 0; i < data.length; i++) {
-        const record = data[i] as PatientRecordRaw;
-        patients.push(convertDbToPatient(record));
+        patients.push(convertDbToPatient(data[i] as PatientRecordRaw));
       }
     }
     
@@ -99,54 +89,53 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Build the query without chaining to avoid type complexity
-    let query = supabase.from('patients').select('*', { count: 'exact' });
-    
-    // Apply user filter
-    query = query.eq('user_id', userId);
+    // Start building the query - we'll use a more direct approach
+    let baseQuery = supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
     // Apply status filter if not 'all'
     if (status !== 'all') {
-      query = query.eq('status', status);
+      baseQuery = baseQuery.eq('status', status);
     }
     
     // Apply search filter if provided
     if (search) {
-      // Using separate ilike conditions to avoid complex query strings
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      baseQuery = baseQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
     // Apply date range filter if provided
     if (startDate) {
-      query = query.gte('created_at', startDate);
+      baseQuery = baseQuery.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query = query.lte('created_at', endDate);
+      baseQuery = baseQuery.lte('created_at', endDate);
     }
     
     // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    baseQuery = baseQuery.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination if provided
     if (paginationParams) {
-      const { limit, offset } = paginationParams;
-      query = query.range(offset, offset + limit - 1);
+      baseQuery = baseQuery.range(
+        paginationParams.offset,
+        paginationParams.offset + paginationParams.limit - 1
+      );
     }
     
-    // Execute query and explicitly type the response to avoid deep inference
-    const response = await query;
-    const { data, error, count } = response;
+    // Execute query - save the raw response without type assertion
+    const { data, error, count } = await baseQuery;
     
     if (error) throw error;
     
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
-    if (data && Array.isArray(data) && data.length > 0) {
-      // Use simple iteration and explicit casting
+    if (data && Array.isArray(data)) {
+      // Use simple iteration over the array
       for (let i = 0; i < data.length; i++) {
-        const record = data[i] as PatientRecordRaw;
-        patients.push(convertDbToPatient(record));
+        patients.push(convertDbToPatient(data[i] as PatientRecordRaw));
       }
     }
     
