@@ -25,16 +25,17 @@ const NavbarMobileMenu = ({
   if (!isOpen) return null;
 
   return (
-    <div className="md:hidden">
+    <div className="md:hidden animate-fade-in">
       <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-        {navigationItems.map((item) => (
+        {navigationItems.map((item, index) => (
           <Link
             key={item.path}
             to={item.path}
-            className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-nutri-blue"
+            className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-nutri-blue transition-all duration-200"
             onClick={onClose}
+            style={{ animationDelay: `${index * 50}ms` }}
           >
-            <span className="mr-2">{item.icon}</span>
+            <span className="mr-2 transition-transform duration-200 group-hover:scale-110">{item.icon}</span>
             {item.name}
           </Link>
         ))}
@@ -43,8 +44,8 @@ const NavbarMobileMenu = ({
       <div className="pt-4 pb-3 border-t border-gray-200">
         <div className="flex items-center px-5">
           <div className="flex-shrink-0">
-            <Avatar className="h-10 w-10 bg-nutri-blue text-white">
-              <AvatarFallback>
+            <Avatar className="h-10 w-10 border-2 border-white shadow-md bg-gradient-to-r from-nutri-blue-light to-nutri-blue text-white">
+              <AvatarFallback className="font-bold">
                 {user?.email?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
@@ -61,7 +62,7 @@ const NavbarMobileMenu = ({
         <div className="mt-3 px-2 space-y-1">
           <Button
             variant="ghost"
-            className="flex w-full justify-start"
+            className="flex w-full justify-start hover:bg-red-50 hover:text-red-500 transition-all duration-200"
             onClick={async () => {
               await onLogout();
               onClose();

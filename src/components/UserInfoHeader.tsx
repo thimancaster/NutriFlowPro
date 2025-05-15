@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { useAuthState } from '@/hooks/useAuthState';
-import { Star, Crown, Shield, User } from 'lucide-react';
+import { Star, Crown, Shield, User, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
@@ -88,11 +88,11 @@ const UserInfoHeader = () => {
   }
 
   return (
-    <div className={`p-4 flex justify-between items-center ${isPremium 
+    <div className={`p-4 flex justify-between items-center animate-fade-in ${isPremium 
       ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' 
       : 'bg-blue-50'}`}>
       <div className="flex items-center space-x-4">
-        <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+        <Avatar className="h-10 w-10 border-2 border-white shadow-lg ring-2 ring-blue-500/20 transition-all duration-300 hover:scale-110 hover:shadow-xl">
           {userProfile?.photo_url ? (
             <AvatarImage 
               src={userProfile.photo_url} 
@@ -101,51 +101,53 @@ const UserInfoHeader = () => {
                 console.error("Error loading avatar image:", e);
                 (e.target as HTMLImageElement).src = "/placeholder.svg";
               }}
+              className="hover-lift"
             />
           ) : (
-            <AvatarFallback className="bg-blue-100">
-              <User className="h-5 w-5 text-blue-500" />
+            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+              <User className="h-5 w-5 text-white" />
             </AvatarFallback>
           )}
         </Avatar>
         <div>
           <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
-          {userProfile.crn && <Badge variant="secondary" className="ml-2">CRN: {userProfile.crn}</Badge>}
+          {userProfile.crn && <Badge variant="secondary" className="ml-2 hover-scale">CRN: {userProfile.crn}</Badge>}
           
           {isPremium && (
             <Badge 
               variant="outline" 
-              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm"
+              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm hover-scale"
             >
-              <Crown className="h-3 w-3 text-amber-500 fill-yellow-400" />
+              <Crown className="h-3 w-3 text-amber-500 fill-yellow-400 animate-pulse-soft" />
               Premium
             </Badge>
           )}
         </div>
       </div>
       
-      <div className="flex items-center">
+      <div className="flex items-center gap-3">
         {!isPremium && (
           <Link 
             to="/subscription" 
-            className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center mr-4"
+            className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center transition-all duration-200 hover:scale-105"
           >
-            <Star className="h-4 w-4 mr-1" />
+            <Star className="h-4 w-4 mr-1 animate-pulse-soft" />
             Upgrade para Premium
           </Link>
         )}
 
         {isPremium && (
-          <div className="text-sm text-amber-700 flex items-center mr-4">
-            <Shield className="h-4 w-4 mr-1 text-amber-500" />
+          <div className="text-sm text-amber-700 flex items-center">
+            <Shield className="h-4 w-4 mr-1 text-amber-500 animate-pulse-soft" />
             Benefícios Premium Ativos
           </div>
         )}
         
         <Link 
           to="/settings" 
-          className="text-sm bg-white px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+          className="text-sm bg-white px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center gap-1"
         >
+          <Settings className="h-3 w-3" />
           Configurações
         </Link>
       </div>

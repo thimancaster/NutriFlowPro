@@ -6,17 +6,18 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 transition-all duration-200",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden will-change-transform transition-all duration-300",
   {
     variants: {
       variant: {
-        default: "bg-blue-500 text-white hover:bg-white hover:text-blue-500 border border-blue-500",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        default: "bg-blue-500 text-white hover:bg-white hover:text-blue-500 border border-blue-500 hover:shadow-md active:scale-[0.98]",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md active:scale-[0.98]",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-md active:scale-[0.98]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md active:scale-[0.98]",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        nutri: "bg-nutri-green text-white hover:bg-white hover:text-nutri-green border border-nutri-green",
+        nutri: "bg-nutri-green text-white hover:bg-white hover:text-nutri-green border border-nutri-green hover:shadow-md active:scale-[0.98]",
+        subscription: "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md active:scale-[0.98] border border-blue-400",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -24,10 +25,16 @@ const buttonVariants = cva(
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
       },
+      animation: {
+        default: "",
+        shimmer: "after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100",
+        pulse: "animate-pulse-soft",
+      }
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      animation: "default",
     },
   }
 )
@@ -39,11 +46,11 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, animation, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, animation, className }))}
         ref={ref}
         {...props}
       />

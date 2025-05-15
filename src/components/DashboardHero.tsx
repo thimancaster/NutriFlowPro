@@ -9,24 +9,37 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue rounded-2xl p-8 text-white shadow-xl">
-      <h2 className="text-2xl md:text-3xl font-bold mb-4">Bem-vindo ao NutriFlow Pro</h2>
-      <p className="text-lg opacity-90 mb-6 max-w-2xl">
-        O sistema completo para nutricionistas que desejam otimizar seus processos e entregar resultados excepcionais para seus pacientes.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        <Button 
-          variant="outline" 
-          className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-colors duration-200"
-          onClick={() => navigate('/calculator')}>
-          Iniciar Agora
-        </Button>
-        <Button 
-          variant="outline"
-          className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-colors duration-200"
-          onClick={() => navigate('/recursos')}>
-          Conhecer Recursos
-        </Button>
+    <div className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue rounded-2xl p-8 text-white shadow-xl relative overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2 blur-xl"></div>
+      </div>
+      
+      <div className="relative z-10">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 animate-fade-in">Bem-vindo ao NutriFlow Pro</h2>
+        <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
+          O sistema completo para nutricionistas que desejam otimizar seus processos e entregar resultados excepcionais para seus pacientes.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button 
+            variant="outline" 
+            className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-all duration-300 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98]"
+            onClick={() => navigate('/calculator')}
+            animation="shimmer"
+          >
+            Iniciar Agora
+          </Button>
+          <Button 
+            variant="outline"
+            className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-all duration-300 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98]"
+            onClick={() => navigate('/recursos')}
+            animation="shimmer"
+          >
+            Conhecer Recursos
+          </Button>
+        </div>
       </div>
     </div>
   );

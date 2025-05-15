@@ -41,33 +41,41 @@ const DashboardQuickActions: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="nutri-card shadow-lg border-none">
+      <Card className="nutri-card shadow-lg border-none hover-lift overflow-hidden">
         <CardHeader>
           <CardTitle>Ferramentas Rápidas</CardTitle>
           <CardDescription>Acesso rápido às ferramentas mais utilizadas</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
           <Link to="/calculator" className="w-full">
-            <Button className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue hover:opacity-90 h-auto py-4 w-full flex flex-col items-center">
+            <Button 
+              className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue hover:opacity-90 h-auto py-4 w-full flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+              animation="shimmer"
+            >
               <span className="text-sm mb-1">Calcular</span>
               <span className="text-xs">TMB & GET</span>
             </Button>
           </Link>
           <Button 
-            className="bg-gradient-to-r from-teal-500 to-teal-600 hover:opacity-90 h-auto py-4 flex flex-col items-center"
+            className="bg-gradient-to-r from-teal-500 to-teal-600 hover:opacity-90 h-auto py-4 flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+            animation="shimmer"
             onClick={() => navigate('/calculator')}
           >
             <span className="text-sm mb-1">Distribuir</span>
             <span className="text-xs">Macronutrientes</span>
           </Button>
           <Link to="/meal-plans" className="w-full">
-            <Button className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 h-auto py-4 w-full flex flex-col items-center">
+            <Button 
+              className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 h-auto py-4 w-full flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+              animation="shimmer"
+            >
               <span className="text-sm mb-1">Plano</span>
               <span className="text-xs">Alimentar</span>
             </Button>
           </Link>
           <Button 
-            className="bg-gradient-to-r from-gray-600 to-gray-700 hover:opacity-90 h-auto py-4 flex flex-col items-center"
+            className="bg-gradient-to-r from-gray-600 to-gray-700 hover:opacity-90 h-auto py-4 flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+            animation="shimmer"
             onClick={() => navigate('/patients')}
           >
             <span className="text-sm mb-1">Relatório</span>
@@ -76,7 +84,7 @@ const DashboardQuickActions: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="nutri-card shadow-lg border-none relative overflow-hidden">
+      <Card className="nutri-card shadow-lg border-none relative overflow-hidden hover-lift">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-green-500/10 z-0"></div>
         <CardHeader className="relative z-10">
           <CardTitle>Status da Versão</CardTitle>
@@ -94,7 +102,7 @@ const DashboardQuickActions: React.FC = () => {
                 <Skeleton className="h-6 w-24" />
               ) : (
                 <span className={`px-2 py-0.5 rounded-full text-sm text-white ${
-                  isPremiumUser ? 'bg-gradient-to-r from-blue-400 to-blue-500' : 'bg-gray-400'
+                  isPremiumUser ? 'bg-gradient-to-r from-blue-400 to-blue-500 animate-pulse-soft' : 'bg-gray-400'
                 }`}>
                   {isPremiumUser ? 'Premium' : 'Freemium'}
                 </span>
@@ -111,19 +119,20 @@ const DashboardQuickActions: React.FC = () => {
               )}
             </div>
             <Button 
-              className={`w-full mt-3 ${
+              className={`w-full mt-3 transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
                 isPremiumUser 
                   ? 'bg-green-500 hover:bg-green-600' 
                   : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'
               }`}
               onClick={handleUpgrade}
+              animation="shimmer"
             >
               <Star className="h-4 w-4 mr-2" /> 
               {isPremiumUser ? 'Gerenciar Assinatura' : 'Atualizar para Pro'}
             </Button>
           </div>
         </CardContent>
-        <div className="absolute bottom-0 right-0 -mb-4 -mr-4 text-blue-100 opacity-20">
+        <div className="absolute bottom-0 right-0 -mb-4 -mr-4 text-blue-100 opacity-20 animate-pulse-soft">
           <Star className="h-32 w-32" />
         </div>
       </Card>

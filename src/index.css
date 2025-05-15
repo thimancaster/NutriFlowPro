@@ -54,6 +54,16 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Smooth scrolling and transitions */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus styles */
+  :focus {
+    @apply outline-none ring-2 ring-primary ring-opacity-50;
+  }
 }
 
 @layer components {
@@ -65,8 +75,20 @@
     @apply rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-nutri-green;
   }
 
+  /* Enhanced button styles with animations */
   .nutri-button {
-    @apply px-6 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply relative px-6 py-2 rounded-lg font-medium transition-all duration-300 
+           hover:shadow-md active:shadow-inner active:scale-[0.98]
+           will-change-transform overflow-hidden;
+  }
+
+  .nutri-button::after {
+    @apply content-[''] absolute top-0 left-0 w-full h-full bg-white/20 opacity-0 
+           transition-opacity duration-300 pointer-events-none;
+  }
+
+  .nutri-button:hover::after {
+    @apply opacity-100;
   }
 
   .nutri-button-primary {
@@ -75,5 +97,67 @@
   
   .nutri-button-secondary {
     @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark;
+  }
+
+  /* Avatar enhancements */
+  .avatar-enhanced {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-md
+           hover:ring-2 hover:ring-white hover:ring-opacity-70;
+  }
+  
+  /* Animation utilities */
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out hover:scale-[1.03] active:scale-[0.98];
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  .shimmer-effect {
+    @apply bg-gradient-to-r from-transparent via-white/20 to-transparent
+           bg-[length:200%_100%] animate-shimmer;
+  }
+  
+  .subtle-pulse {
+    @apply animate-pulse-soft;
+  }
+  
+  .float-animation {
+    @apply animate-float;
+  }
+}
+
+@layer utilities {
+  /* Interactive text link animation */
+  .text-link {
+    @apply relative inline-block text-nutri-blue;
+  }
+  
+  .text-link::after {
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-nutri-blue 
+           transition-all duration-300 ease-out;
+  }
+  
+  .text-link:hover::after {
+    @apply w-full;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  /* Gradient effects */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+  
+  .text-gradient-blue {
+    @apply text-gradient from-nutri-blue to-nutri-blue-light;
+  }
+  
+  .text-gradient-green {
+    @apply text-gradient from-nutri-green to-nutri-green-light;
   }
 }

@@ -88,23 +88,24 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
   };
 
   return (
-    <div className="px-6 py-8 sm:px-8">
+    <div className="px-6 py-8 sm:px-8 animate-fade-in">
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-blue-100 mb-1 flex items-center">
             <Mail className="h-4 w-4 mr-1.5 text-blue-200" />
             E-mail
           </label>
-          <div className="relative">
+          <div className="relative overflow-hidden rounded-md group">
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pl-3 transition-all duration-200 hover:bg-white/30"
+              className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pl-3 transition-all duration-200 hover:bg-white/30 group-hover:shadow-lg"
               placeholder="seu@email.com"
               required
             />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-shimmer pointer-events-none"></div>
           </div>
         </div>
 
@@ -114,19 +115,22 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
               <Lock className="h-4 w-4 mr-1.5 text-blue-200" />
               Senha
             </label>
-            <Link to="/forgot-password" className="text-sm text-blue-200 hover:text-white transition-colors">
+            <Link to="/forgot-password" className="text-sm text-blue-200 hover:text-white transition-colors text-link">
               Esqueci minha senha
             </Link>
           </div>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pl-3 transition-all duration-200 hover:bg-white/30"
-            placeholder="••••••••"
-            required
-          />
+          <div className="relative overflow-hidden rounded-md group">
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pl-3 transition-all duration-200 hover:bg-white/30"
+              placeholder="••••••••"
+              required
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-shimmer pointer-events-none"></div>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -134,7 +138,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
             id="rememberMe" 
             checked={rememberMe} 
             onCheckedChange={(checked) => setRememberMe(!!checked)}
-            className="data-[state=checked]:bg-white data-[state=checked]:text-nutri-blue" 
+            className="data-[state=checked]:bg-white data-[state=checked]:text-nutri-blue transition-all duration-150 hover:scale-110" 
           />
           <label
             htmlFor="rememberMe"
@@ -146,7 +150,8 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
 
         <Button
           type="submit"
-          className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg relative overflow-hidden"
+          animation="shimmer"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -177,9 +182,10 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
       <div>
         <Button 
           variant="outline" 
-          className="w-full bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-nutri-blue transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
           onClick={handleGoogleLogin}
           disabled={isGoogleLoading}
+          animation="shimmer"
         >
           {isGoogleLoading ? (
             <Loader2 className="h-5 w-5 mr-2 animate-spin" />
@@ -210,7 +216,7 @@ const LoginForm = ({ onGoogleLogin }: LoginFormProps) => {
       <div className="mt-8 text-center">
         <p className="text-blue-100">
           Não tem uma conta?{" "}
-          <Link to="/register" className="text-white hover:underline font-medium transition-colors">
+          <Link to="/register" className="text-white hover:underline font-medium transition-colors text-link">
             Criar conta
           </Link>
         </p>

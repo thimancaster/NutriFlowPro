@@ -27,7 +27,7 @@ const NavbarDesktopMenu = ({ navigationItems, onLogout }: NavbarDesktopMenuProps
           <Link
             key={item.path}
             to={item.path}
-            className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-nutri-blue"
+            className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-nutri-blue transition-all duration-200 hover:scale-105"
           >
             {item.name}
           </Link>
@@ -36,12 +36,17 @@ const NavbarDesktopMenu = ({ navigationItems, onLogout }: NavbarDesktopMenuProps
 
       <div className="ml-4 flex items-center">
         <div className="flex items-center">
-          <Avatar className="h-8 w-8 bg-nutri-blue text-white">
-            <AvatarFallback>
+          <Avatar className="h-8 w-8 border-2 border-white shadow-sm bg-nutri-blue text-white ring-2 ring-nutri-blue/20">
+            <AvatarFallback className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue text-white font-bold">
               {user?.email?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="ml-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onLogout} 
+            className="ml-2 hover-scale hover:bg-red-50 hover:text-red-500"
+          >
             <LogOut className="h-4 w-4 mr-1" />
             Logout
           </Button>
