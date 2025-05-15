@@ -35,23 +35,26 @@ export const usePatient = (patientId?: string | null) => {
           email: data.email,
           phone: data.phone,
           gender: data.gender,
-          birth_date: data.birth_date, // Keep as string, handle display conversion when needed
-          age: data.age || undefined,
-          weight: data.weight || undefined,
-          height: data.height || undefined,
+          birth_date: data.birth_date, 
           created_at: data.created_at,
           updated_at: data.updated_at,
           address: data.address,
           notes: data.notes,
           user_id: data.user_id,
+          // Optional fields with defaults if not present
+          age: data.age || undefined,
+          weight: data.weight || undefined,
+          height: data.height || undefined,
           status: data.status || 'active',
           // Safely convert goals from JSON to object
           goals: data.goals ? 
             (typeof data.goals === 'string' ? 
               JSON.parse(data.goals) : data.goals) : 
             {},
-          secondaryPhone: data.secondaryPhone,
-          cpf: data.cpf
+          secondaryPhone: data.secondaryPhone || undefined,
+          cpf: data.cpf || undefined,
+          // Add default values for required Patient fields that might be missing
+          measurements: data.measurements || {},
         };
         
         setPatient(patientData);

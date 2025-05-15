@@ -19,7 +19,7 @@ export interface MealItem {
 export interface Meal {
   id?: string;
   name: string;
-  time?: string;
+  time: string; // Changed from optional to required
   calories: number;
   protein: number;
   carbs: number;
@@ -59,4 +59,5 @@ export interface MealPlan {
   total_fats: number;
   created_at?: string | Date;
   updated_at?: string | Date;
+  consultation_id?: string;
 }

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Printer, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateMealPlanPDF } from '@/utils/pdfExport';
-import { Patient, MealPlan } from '@/types';
+import { Patient } from '@/types';
+import { MealPlan } from '@/types/meal';
 
 interface PdfActionButtonsProps {
   activePatient: Patient;

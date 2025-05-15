@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan } from '@/types';
+import { MealPlan } from '@/types/meal';
+import { format } from 'date-fns';
 
 export const MealPlanService = {
   /**
@@ -60,14 +61,30 @@ export const MealPlanService = {
   /**
    * Create a new meal plan
    */
-  async createMealPlan(consultationId: string, mealPlanData: Partial<MealPlan>) {
+  async createMealPlan(consultationId: string, mealPlanData: MealPlan) {
     try {
+      // Format date for Supabase
+      const formattedDate = typeof mealPlanData.date === 'string' 
+        ? mealPlanData.date 
+        : format(mealPlanData.date, 'yyyy-MM-dd');
+      
+      // Prepare meal plan data for database
+      const dbMealPlan = {
+        id: mealPlanData.id,
+        user_id: mealPlanData.user_id,
+        patient_id: mealPlanData.patient_id,
+        date: formattedDate,
+        meals: JSON.stringify(mealPlanData.meals),
+        total_calories: mealPlanData.total_calories,
+        total_protein: mealPlanData.total_protein,
+        total_carbs: mealPlanData.total_carbs,
+        total_fats: mealPlanData.total_fats
+      };
+
+      // Add consultation_id as a custom field in the query
       const { data, error } = await supabase
         .from('meal_plans')
-        .insert([{
-          ...mealPlanData,
-          consultation_id: consultationId,
-        }])
+        .insert([{ ...dbMealPlan, consultation_id: consultationId }])
         .select('*')
         .single();
       
@@ -85,9 +102,22 @@ export const MealPlanService = {
    */
   async updateMealPlan(id: string, mealPlanData: Partial<MealPlan>) {
     try {
+      // Format date for Supabase if present
+      const formattedData: any = { ...mealPlanData };
+      
+      if (formattedData.date) {
+        formattedData.date = typeof formattedData.date === 'string' 
+          ? formattedData.date 
+          : format(formattedData.date, 'yyyy-MM-dd');
+      }
+      
+      if (formattedData.meals) {
+        formattedData.meals = JSON.stringify(formattedData.meals);
+      }
+      
       const { data, error } = await supabase
         .from('meal_plans')
-        .update(mealPlanData)
+        .update(formattedData)
         .eq('id', id)
         .select('*')
         .single();

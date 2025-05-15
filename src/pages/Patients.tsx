@@ -26,22 +26,27 @@ const Patients = () => {
   // Use the patient list hook for fetching and filtering patients
   const {
     patients,
-    totalPatients,
+    pagination,
     filters,
     isLoading,
     error,
-    isError,
-    refetch,
     handlePageChange,
     handleFilterChange,
-    handleStatusChange
+    handleStatusChange,
+    togglePatientStatus,
+    refetch
   } = usePatientList({
-    page: 1,
-    pageSize: 10,
-    status: 'active',
-    sortBy: 'name',
-    sortOrder: 'asc'
+    initialFilters: {
+      status: 'active',
+      sortBy: 'name',
+      sortOrder: 'asc'
+    },
+    initialPage: 1,
+    initialPageSize: 10
   });
+  
+  // Calculate if there's an error
+  const isError = error !== null;
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
@@ -52,41 +57,40 @@ const Patients = () => {
         <PatientFiltersComponent 
           filters={filters}
           onFiltersChange={handleFilterChange}
-          onSearch={refetch}
+          onSearch={() => refetch()}
         />
         
         <Card>
           <CardHeader className="pb-2">
-            <PatientTableHeader totalItems={totalPatients} />
+            <PatientTableHeader totalItems={pagination.total} />
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <PatientLoadingState />
             ) : isError ? (
               <PatientErrorState 
-                errorMessage={error || "Failed to load patients"} 
-                onRetry={refetch} 
+                errorMessage={error?.message || "Failed to load patients"} 
+                onRetry={() => refetch()} 
               />
             ) : (
               <PatientTable
                 patients={patients}
-                totalItems={totalPatients}
+                totalItems={pagination.total}
                 filters={filters}
                 onViewDetail={openPatientDetail}
-                onStatusChange={handleStatusChange}
+                onStatusChange={() => handleStatusChange(filters.status || 'active')}
                 onPageChange={handlePageChange}
               />
             )}
           </CardContent>
         </Card>
         
-        {/* PatientDetailModal with corrected props */}
         {patient && (
           <PatientDetailModal
             isOpen={isModalOpen}
             onClose={closePatientDetail}
             patient={patient}
-            onStatusChange={handleStatusChange}
+            onStatusChange={() => handleStatusChange(filters.status || 'active')}
           />
         )}
       </div>
