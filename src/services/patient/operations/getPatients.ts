@@ -36,24 +36,24 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a base query with proper type safety
-    let baseQuery = supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+    // Create a query without chaining to avoid excessive type instantiation
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply user filter
+    query = query.eq('user_id', userId);
     
     // Apply status filter if not 'all'
     if (status !== 'all') {
-      baseQuery = baseQuery.eq('status', status);
+      query = query.eq('status', status);
     }
     
     // Apply pagination with safe defaults
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 9999;
-    baseQuery = baseQuery.range(offset, offset + limit - 1);
+    query = query.range(offset, offset + limit - 1);
     
     // Execute query
-    const { data, error, count } = await baseQuery;
+    const { data, error, count } = await query;
     
     if (error) throw error;
     
@@ -97,53 +97,52 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start building the query - with proper type safety
-    let baseQuery = supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+    // Start query construction without excessive chaining
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply user filter
+    query = query.eq('user_id', userId);
     
     // Apply status filter if not 'all'
     if (status !== 'all') {
-      baseQuery = baseQuery.eq('status', status);
+      query = query.eq('status', status);
     }
     
     // Apply search filter if provided
     if (search) {
-      baseQuery = baseQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
     // Apply date range filter if provided
     if (startDate) {
-      baseQuery = baseQuery.gte('created_at', startDate);
+      query = query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      baseQuery = baseQuery.lte('created_at', endDate);
+      query = query.lte('created_at', endDate);
     }
     
     // Apply sorting
-    baseQuery = baseQuery.order(sortBy, { ascending: sortOrder === 'asc' });
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination with safe handling of undefined values
     if (paginationParams) {
-      baseQuery = baseQuery.range(
+      query = query.range(
         paginationParams.offset,
         paginationParams.offset + paginationParams.limit - 1
       );
     } else {
-      baseQuery = baseQuery.range(0, 9999); // Default range if no pagination
+      query = query.range(0, 9999); // Default range if no pagination
     }
     
     // Execute query
-    const { data, error, count } = await baseQuery;
+    const { data, error, count } = await query;
     
     if (error) throw error;
     
     // Process data safely to avoid excessive type instantiation
     const patients: Patient[] = [];
     if (data && Array.isArray(data)) {
-      // Use simple iteration over the array
       for (let i = 0; i < data.length; i++) {
         patients.push(convertDbToPatient(data[i] as PatientRecordRaw));
       }
