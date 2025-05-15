@@ -1,44 +1,43 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ConsultationData } from '@/types';
 
 interface ConsultationResultsProps {
   results?: {
-    tmb: number;
-    fa: number;
+    bmr: number;
     get: number;
+    vet: number;
+    adjustment: number;
     macros: {
       protein: number;
       carbs: number;
       fat: number;
+      proteinPerKg?: number;
     };
   };
-  consultation?: ConsultationData;
   onSave?: () => Promise<void>;
   isSaving?: boolean;
 }
 
 const ConsultationResults: React.FC<ConsultationResultsProps> = ({ 
   results, 
-  consultation,
   onSave,
   isSaving
 }) => {
-  const displayResults = results || (consultation?.results ? {
-    tmb: consultation.results.bmr,
-    fa: consultation.results.vet || 0,
-    get: consultation.results.get,
-    macros: {
-      protein: consultation.results.macros.protein,
-      carbs: consultation.results.macros.carbs,
-      fat: consultation.results.macros.fat
-    }
-  } : undefined);
-
-  if (!displayResults) {
+  if (!results) {
     return <div className="text-center py-8">No results available</div>;
   }
+
+  const displayResults = {
+    tmb: results.bmr,
+    fa: results.vet || 0,
+    get: results.get,
+    macros: {
+      protein: results.macros.protein,
+      carbs: results.macros.carbs,
+      fat: results.macros.fat
+    }
+  };
 
   return (
     <>

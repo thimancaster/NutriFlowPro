@@ -22,18 +22,18 @@ const useAutoSave = (id?: string) => {
       setIsSaving(true);
       setAutoSaveStatus('saving');
       
-      // Handle both legacy and new ConsultationData structure
+      // Extract values, handling both legacy and new ConsultationData structure
       const bmr = consultation.results?.bmr || consultation.bmr;
-      const tdee = consultation.results?.get || consultation.results?.tdee || consultation.tdee;
-      const weight = consultation.anthropometry?.weight || consultation.weight;
-      const height = consultation.anthropometry?.height || consultation.height;
-      const age = consultation.anthropometry?.age || consultation.age || 0;
-      const gender = consultation.anthropometry?.gender || consultation.gender;
-      const protein = consultation.macroDistribution?.protein || consultation.results?.macros?.protein || consultation.protein;
-      const carbs = consultation.macroDistribution?.carbs || consultation.results?.macros?.carbs || consultation.carbs;
-      const fats = consultation.macroDistribution?.fat || consultation.results?.macros?.fat || consultation.fats;
-      const activity_level = consultation.anthropometry?.activityFactor?.toString() || consultation.activity_level;
-      const goal = consultation.nutritionalObjectives?.objective || consultation.goal || consultation.objective;
+      const tdee = consultation.results?.get || consultation.tdee;
+      const weight = consultation.weight;
+      const height = consultation.height;
+      const age = consultation.age || 0;
+      const gender = consultation.gender;
+      const protein = consultation.results?.macros.protein || consultation.protein;
+      const carbs = consultation.results?.macros.carbs || consultation.carbs;
+      const fats = consultation.results?.macros.fat || consultation.fats;
+      const activity_level = consultation.activity_level?.toString();
+      const goal = consultation.goal || consultation.objective;
       
       // Update consultation data with current values
       const success = await handleAutoSaveConsultation(

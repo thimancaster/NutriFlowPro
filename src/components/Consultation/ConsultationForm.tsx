@@ -1,12 +1,10 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ConsultationData } from "@/types";
 
-interface ConsultationFormProps {
+export interface ConsultationFormProps {
   formData: {
     weight: string;
     height: string;
@@ -18,29 +16,21 @@ interface ConsultationFormProps {
     consultationType?: string;
     consultationStatus?: string;
   };
-  consultation?: ConsultationData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   lastAutoSave?: Date | null;
-  onFormChange?: (data: Partial<ConsultationData>) => void;
-  patient?: any;
-  patients?: any[];
   autoSaveStatus?: "idle" | "saving" | "success" | "error";
 }
 
-const ConsultationForm = ({ 
+const ConsultationForm: React.FC<ConsultationFormProps> = ({ 
   formData, 
-  consultation,
   handleInputChange, 
   handleSelectChange, 
   onSubmit,
   lastAutoSave,
-  onFormChange,
-  patient,
-  patients,
   autoSaveStatus
-}: ConsultationFormProps) => {
+}) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
