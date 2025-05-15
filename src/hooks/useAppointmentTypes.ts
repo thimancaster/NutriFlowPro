@@ -1,115 +1,42 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { AppointmentType } from '@/types';
 
 export const useAppointmentTypes = () => {
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
-
-  const fetchAppointmentTypes = useCallback(async () => {
-    if (!user) {
-      setAppointmentTypes([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      // Use type casting to work around the table name not being in the TypeScript types yet
-      const { data, error } = await (supabase
-        .from('appointment_types' as any)
-        .select('*')
-        .eq('user_id', user.id) as any);
-        
-      if (error) {
-        console.error('Error fetching appointment types:', error);
-        throw error;
-      }
-      
-      // Cast to the correct type
-      setAppointmentTypes(data as AppointmentType[]);
-    } catch (error) {
-      console.error('Error in fetchAppointmentTypes:', error);
-      setAppointmentTypes([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    const fetchAppointmentTypes = async () => {
+      try {
+        // Fetch from database or use hard-coded values for now
+        // In a real app, you'd fetch from your appointment_types table
+        
+        // Temporary hard-coded types
+        const types: AppointmentType[] = [
+          { id: '1', name: 'Primeira Consulta', duration_minutes: 60, value: 'first', label: 'Primeira Consulta' },
+          { id: '2', name: 'Retorno', duration_minutes: 45, value: 'followup', label: 'Retorno' },
+          { id: '3', name: 'Avaliação', duration_minutes: 30, value: 'evaluation', label: 'Avaliação' },
+          { id: '4', name: 'Outro', duration_minutes: 60, value: 'other', label: 'Outro' }
+        ];
+        
+        setAppointmentTypes(types);
+      } catch (err) {
+        console.error('Error fetching appointment types:', err);
+        setError(err as Error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchAppointmentTypes();
-  }, [fetchAppointmentTypes]);
-
-  const createAppointmentType = async (data: Partial<AppointmentType>) => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    
-    try {
-      const { error } = await (supabase
-        .from('appointment_types' as any)
-        .insert({
-          ...data,
-          user_id: user.id
-        }) as any);
-        
-      if (error) throw error;
-      
-      await fetchAppointmentTypes();
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error creating appointment type:', error);
-      return { success: false, error: error.message };
-    }
-  };
-
-  const updateAppointmentType = async (id: string, data: Partial<AppointmentType>) => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    
-    try {
-      const { error } = await (supabase
-        .from('appointment_types' as any)
-        .update(data)
-        .eq('id', id)
-        .eq('user_id', user.id) as any);
-        
-      if (error) throw error;
-      
-      await fetchAppointmentTypes();
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error updating appointment type:', error);
-      return { success: false, error: error.message };
-    }
-  };
-
-  const deleteAppointmentType = async (id: string) => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    
-    try {
-      const { error } = await (supabase
-        .from('appointment_types' as any)
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id) as any);
-        
-      if (error) throw error;
-      
-      await fetchAppointmentTypes();
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error deleting appointment type:', error);
-      return { success: false, error: error.message };
-    }
-  };
+  }, []);
 
   return {
     appointmentTypes,
     isLoading,
-    fetchAppointmentTypes,
-    createAppointmentType,
-    updateAppointmentType,
-    deleteAppointmentType
+    error
   };
 };

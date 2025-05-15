@@ -117,8 +117,8 @@ export const appointmentService = {
         ...appointment,
         id: appointment.id || uuidv4(),
         date: formatDateForSupabase(appointment.date),
-        type: appointment.type || AppointmentType.FIRST_VISIT,
-        status: appointment.status || AppointmentStatus.SCHEDULED
+        type: appointment.type || 'first',
+        status: appointment.status || 'scheduled'
       }));
 
       const { data, error } = await supabase

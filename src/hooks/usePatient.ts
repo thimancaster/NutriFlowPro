@@ -1,23 +1,33 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { differenceInYears } from 'date-fns';
 
-export const usePatient = (patientId?: string | null) => {
+// Function to calculate age from birth_date
+const calculateAge = (birthDate: string | undefined): number => {
+  if (!birthDate) return 0;
+  try {
+    return differenceInYears(new Date(), new Date(birthDate));
+  } catch (e) {
+    console.error("Error calculating age:", e);
+    return 0;
+  }
+};
+
+export const usePatient = (patientId?: string) => {
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPatient = async () => {
       if (!patientId) {
-        setPatient(null);
+        setLoading(false);
         return;
       }
-
-      setIsLoading(true);
-      setError(null);
 
       try {
         const { data, error } = await supabase
@@ -25,55 +35,40 @@ export const usePatient = (patientId?: string | null) => {
           .select('*')
           .eq('id', patientId)
           .single();
-        
-        if (error) throw new Error(error.message);
-        
-        // Convert the database response to the Patient type
-        const patientData: Patient = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          gender: data.gender,
-          birth_date: data.birth_date, 
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-          address: data.address,
-          notes: data.notes,
-          user_id: data.user_id,
-          // Optional fields with defaults if not present
-          age: data.age || undefined,
-          weight: data.weight || undefined,
-          height: data.height || undefined,
+
+        if (error) throw error;
+
+        // Transform the data to include derived fields
+        const enhancedPatient: Patient = {
+          ...data,
+          age: calculateAge(data.birth_date),
+          weight: data.measurements?.weight || 0,
+          height: data.measurements?.height || 0,
           status: data.status || 'active',
-          // Safely convert goals from JSON to object
-          goals: data.goals ? 
-            (typeof data.goals === 'string' ? 
-              JSON.parse(data.goals) : data.goals) : 
-            {},
-          secondaryPhone: data.secondaryPhone || undefined,
-          cpf: data.cpf || undefined,
-          measurements: data.measurements || {},
+          // Add other derived fields here as needed
         };
+
+        // Add any other properties that might be optional
+        if (data.secondaryPhone) enhancedPatient.secondaryPhone = data.secondaryPhone;
+        if (data.cpf) enhancedPatient.cpf = data.cpf;
         
-        setPatient(patientData);
-      } catch (err: any) {
+        // Set the transformed patient data
+        setPatient(enhancedPatient);
+      } catch (err) {
         console.error('Error fetching patient:', err);
-        setError(err);
-        setPatient(null);
+        setError(err as Error);
+        toast({
+          title: 'Error',
+          description: `Failed to load patient: ${(err as Error).message}`,
+          variant: 'destructive',
+        });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchPatient();
-  }, [patientId]);
+  }, [patientId, toast]);
 
-  return {
-    patient,
-    isLoading,
-    error,
-    activePatient,
-    setActivePatient
-  };
+  return { patient, loading, error };
 };

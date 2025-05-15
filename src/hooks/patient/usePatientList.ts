@@ -1,188 +1,184 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFilters, PaginationParams } from '@/types';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/use-toast';
 
-interface UsePatientListProps {
-  initialFilters?: Partial<PatientFilters>;
-  initialPage?: number;
-  initialPageSize?: number;
-}
-
-export const usePatientList = (initialProps?: UsePatientListProps) => {
+export const usePatientList = () => {
   const { user } = useAuth();
-  const initialFilters = initialProps?.initialFilters || {};
-  const initialPage = initialProps?.initialPage || 1;
-  const initialPageSize = initialProps?.initialPageSize || 10;
-
+  const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [totalPatients, setTotalPatients] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [totalPatients, setTotalPatients] = useState(0);
+  const [isError, setIsError] = useState(false);
+  
+  // Filters state
   const [filters, setFilters] = useState<PatientFilters>({
-    search: initialFilters.search || '',
-    status: initialFilters.status || 'active',
-    sortBy: initialFilters.sortBy || 'name',
-    sortOrder: initialFilters.sortOrder || 'asc',
-    startDate: initialFilters.startDate || undefined,
-    endDate: initialFilters.endDate || undefined,
+    search: '',
+    status: 'active',
+    dateFrom: '',
+    dateTo: '',
+    sortBy: 'name',
+    sortDirection: 'asc'
   });
   
+  // Pagination state
   const [pagination, setPagination] = useState<PaginationParams>({
-    page: initialPage,
-    pageSize: initialPageSize,
+    page: 1,
+    pageSize: 10,
     total: 0,
-    totalPages: 0,
-    limit: initialPageSize,
-    offset: (initialPage - 1) * initialPageSize
+    limit: 10,
+    offset: 0
   });
-
-  // Fetch patients from Supabase
+  
   const fetchPatients = useCallback(async () => {
     if (!user) return;
-
+    
     setIsLoading(true);
     setError(null);
-
+    setIsError(false);
+    
     try {
-      // Calculate pagination values
-      const from = (pagination.page - 1) * pagination.pageSize;
-      const to = from + pagination.pageSize - 1;
-
-      // Start building the query
       let query = supabase
         .from('patients')
         .select('*', { count: 'exact' });
-
-      // Filter by user ID
-      query = query.eq('user_id', user.id);
-
-      // Filter by status if provided
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-
-      // Apply search if provided
+      
+      // Apply filters
       if (filters.search) {
         query = query.ilike('name', `%${filters.search}%`);
       }
-
-      // Apply date range filters if provided
-      if (filters.startDate) {
-        query = query.gte('created_at', filters.startDate);
+      
+      // If we need status filtering (you'd need to add this column to your patients table)
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
       }
-
-      if (filters.endDate) {
-        query = query.lte('created_at', filters.endDate);
+      
+      // Date filters if provided
+      if (filters.dateFrom) {
+        query = query.gte('created_at', filters.dateFrom);
       }
-
+      
+      if (filters.dateTo) {
+        query = query.lte('created_at', filters.dateTo);
+      }
+      
+      // Apply user_id filter to only show the user's patients
+      query = query.eq('user_id', user.id);
+      
       // Apply sorting
       if (filters.sortBy) {
-        query = query.order(filters.sortBy, {
-          ascending: filters.sortOrder === 'asc'
+        query = query.order(filters.sortBy, { 
+          ascending: filters.sortDirection === 'asc' 
         });
       }
-
+      
       // Apply pagination
-      query = query.range(from, to);
-
-      // Execute the query
+      const { limit, offset } = pagination;
+      if (limit && offset !== undefined) {
+        query = query.range(offset, offset + limit - 1);
+      }
+      
       const { data, error, count } = await query;
-
-      if (error) throw new Error(error.message);
-
-      // Process the data
-      const processedData = data.map(item => {
-        return {
-          ...item,
-          // Convert string dates to Date objects if needed
-          status: item.status || 'active', // Add status field if it doesn't exist
-        } as Patient;
-      });
-
-      setPatients(processedData);
       
-      const total = count || 0;
-      setTotalPatients(total);
+      if (error) throw error;
       
-      setPagination(prev => ({
-        ...prev,
-        total,
-        totalPages: Math.ceil(total / pagination.pageSize),
-        limit: pagination.pageSize,
-        offset: from
+      // Transform data if needed
+      const transformedData = data.map(patient => ({
+        ...patient,
+        status: patient.status || 'active', // Default to active if not specified
       }));
-
-    } catch (err: any) {
-      setError(err);
-      logger.error('Error fetching patients:', err);
+      
+      setPatients(transformedData);
+      setTotalPatients(count || 0);
+      setPagination(prev => ({ ...prev, total: count || 0 }));
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+      setError(err as Error);
+      setIsError(true);
+      
+      toast({
+        title: 'Error',
+        description: `Failed to load patients: ${(err as Error).message}`,
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [user, filters, pagination.page, pagination.pageSize]);
-
-  // Fetch patients on component mount or when dependencies change
+  }, [user, filters, pagination, toast]);
+  
+  // Fetch on mount and when dependencies change
   useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
-
-  // Handler for changing page
-  const handlePageChange = useCallback((page: number) => {
+    if (user) {
+      fetchPatients();
+    }
+  }, [user, fetchPatients]);
+  
+  // Handle filter changes
+  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setPagination(prev => ({ ...prev, page: 1, offset: 0 })); // Reset to first page
+  };
+  
+  // Handle status filter change specifically
+  const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
+    handleFilterChange({ status });
+  };
+  
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    const offset = (page - 1) * pagination.pageSize;
     setPagination(prev => ({ 
       ...prev, 
       page,
-      offset: (page - 1) * prev.pageSize
+      offset,
+      limit: prev.pageSize
     }));
-  }, []);
-
-  // Handler for changing filters
-  const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    // Reset to first page when filters change
-    setPagination(prev => ({ 
-      ...prev, 
-      page: 1,
-      offset: 0
-    }));
-  }, []);
-
-  // Handler for changing status filter
-  const handleStatusChange = useCallback((status: 'active' | 'archived' | 'all') => {
-    handleFilterChange({ status });
-  }, [handleFilterChange]);
-
-  // Toggle patient status (archive/unarchive)
-  const togglePatientStatus = useCallback(async (patientId: string, newStatus: 'active' | 'archived') => {
+  };
+  
+  // Toggle patient status between active/archived
+  const togglePatientStatus = async (patientId: string, newStatus: 'active' | 'archived') => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('patients')
         .update({ status: newStatus })
-        .eq('id', patientId);
+        .eq('id', patientId)
+        .eq('user_id', user.id);
       
-      if (error) throw new Error(error.message);
+      if (error) throw error;
       
-      // Update the local state
+      // Update local state
       setPatients(prev => 
-        prev.map(p => 
-          p.id === patientId ? { ...p, status: newStatus } : p
+        prev.map(patient => 
+          patient.id === patientId 
+            ? { ...patient, status: newStatus } 
+            : patient
         )
       );
       
-      return { success: true };
-    } catch (err: any) {
-      logger.error('Error toggling patient status:', err);
-      return { success: false, error: err.message };
+      toast({
+        title: 'Success',
+        description: `Patient ${newStatus === 'active' ? 'activated' : 'archived'} successfully.`,
+      });
+      
+      // Re-fetch to ensure sync with server
+      fetchPatients();
+    } catch (err) {
+      console.error('Error updating patient status:', err);
+      
+      toast({
+        title: 'Error',
+        description: `Failed to update patient status: ${(err as Error).message}`,
+        variant: 'destructive',
+      });
     }
-  }, []);
-
-  // Define isError from error state
-  const isError = error !== null;
+  };
   
-  // Add refetch method
   const refetch = fetchPatients;
-
+  
   return {
     patients,
     totalPatients,
