@@ -1,47 +1,39 @@
 
-// Add this if it doesn't exist already
 export interface MealDistributionItem {
-  id: string;
   name: string;
-  percent: number;
+  percentage: number;
+  calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  calories: number;
-  foods: any[];
-  description?: string;
-  time?: string;
-  percentage?: number;
-  suggestions?: string[];
 }
 
-// Make sure Meal type has the required properties
-export interface Meal {
-  id?: string;
+export interface MealItem {
+  mealNumber?: number;
   name: string;
-  time: string; // Changed from optional to required
+  time: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
+  percentage: number;
   proteinPercent: number;
   carbsPercent: number;
   fatPercent: number;
+  foodSuggestions?: string[];
   foods: any[];
 }
 
-// Add MealPlan type if not defined
 export interface MealPlan {
-  id?: string;
+  id: string;
+  title: string; // This is what we'll use instead of 'name'
+  patient_id: string;
+  user_id: string;
   date: Date | string;
-  meals: any[];
-  mealDistribution?: Record<string, MealDistributionItem>;
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
-  patient_id?: string;
-  user_id?: string;
-  created_at?: string | Date;
-  updated_at?: string | Date;
+  meals: MealItem[];
+  mealDistribution: Record<string, MealDistributionItem>;
 }

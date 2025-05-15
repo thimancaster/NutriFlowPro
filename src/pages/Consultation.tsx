@@ -51,7 +51,7 @@ const Consultation = () => {
   
   const handleSaveConsultationClick = async () => {
     if (!consultation) return;
-    await handleSaveConsultation(id, consultation, updatePatientData);
+    await handleSaveConsultation(id, consultation, patientDataUpdateWrapper);
   };
   
   return (

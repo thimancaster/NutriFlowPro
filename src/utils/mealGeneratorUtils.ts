@@ -153,15 +153,17 @@ export function generateMealPlanData(
   
   // Create meal plan object with all required properties for MealPlan type
   return {
-    name: `Plano Alimentar - ${new Date().toLocaleDateString()}`,
+    id: '', // Add required id property 
+    title: `Plano Alimentar - ${new Date().toLocaleDateString()}`, // Use title instead of name for MealPlan
     patient_id: '',  // This should be filled in by the parent component
-    calories: totalCals,
-    protein: totalProtein,
-    carbs: totalCarbs,
-    fat: totalFats,
+    user_id: '', // Add required user_id property
+    date: new Date(),
+    total_calories: totalCals,
+    total_protein: totalProtein,
+    total_carbs: totalCarbs,
+    total_fats: totalFats,
     meals: meals,
-    mealDistribution: {}, // Initialize as empty object instead of array
-    date: new Date().toISOString().split('T')[0]
+    mealDistribution: {} // Initialize as empty object instead of array
   };
 }
 
