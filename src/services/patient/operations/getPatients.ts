@@ -2,13 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 
-// Define completely non-recursive primitive types
+// Define completely flat primitive types
 export type PatientsData = {
   patients: Array<Patient>;
   total: number;
 };
 
-// Define separate response types with primitive structures
+// Define separate response types with flat structures
 export type GetPatientsSuccessResponse = {
   success: true;
   data: PatientsData;
@@ -19,7 +19,7 @@ export type GetPatientsErrorResponse = {
   error: string;
 };
 
-// Use union type with primitive components
+// Use union type for responses
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
 export const getPatients = async (
@@ -50,23 +50,19 @@ export const getPatients = async (
     
     if (error) throw error;
     
-    // Create and return success response
-    const successResponse: GetPatientsSuccessResponse = {
+    return {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
-    return successResponse;
   } catch (error: any) {
     console.error('Error in getPatients:', error.message);
-    // Create and return error response
-    const errorResponse: GetPatientsErrorResponse = {
+    return {
       success: false,
       error: error.message
     };
-    return errorResponse;
   }
 };
 
@@ -123,22 +119,18 @@ export const getSortedPatients = async (
     
     if (error) throw error;
     
-    // Create and return success response with explicit type
-    const successResponse: GetPatientsSuccessResponse = {
+    return {
       success: true,
       data: {
         patients: data as Patient[],
         total: count || 0
       }
     };
-    return successResponse;
   } catch (error: any) {
     console.error('Error in getSortedPatients:', error.message);
-    // Create and return error response with explicit type
-    const errorResponse: GetPatientsErrorResponse = {
+    return {
       success: false,
       error: error.message
     };
-    return errorResponse;
   }
 };
