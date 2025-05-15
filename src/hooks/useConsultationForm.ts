@@ -1,30 +1,42 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { 
+  ConsultationFormState, 
+  ConsultationResults,
+  Sex,
+  Objective,
+  Profile,
+  ActivityLevel,
+  ConsultationType,
+  ConsultationStatus
+} from '@/types/consultation';
 
-export interface ConsultationFormState {
-  weight: string;
-  height: string;
-  age: string;
-  sex: string;
-  objective: string;
-  profile: string;
-  activityLevel: string;
-  consultationType?: string;
-  consultationStatus?: string;
+export interface UseConsultationFormReturn {
+  formData: ConsultationFormState;
+  results: ConsultationResults;
+  setFormData: (data: ConsultationFormState) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSelectChange: (name: string, value: string) => void;
+  lastAutoSave: Date | null;
+  setLastAutoSave: (date: Date | null) => void;
+  consultationId: string | null;
+  setConsultationId: (id: string | null) => void;
 }
 
-export interface ConsultationResults {
-  tmb: number;
-  fa: number;
-  get: number;
+const initialResults: ConsultationResults = {
+  tmb: 0,
+  fa: 0,
+  get: 0,
   macros: {
-    protein: number;
-    carbs: number;
-    fat: number;
+    protein: 0,
+    carbs: 0,
+    fat: 0
   }
-}
+};
 
-export const useConsultationForm = (initialData: Partial<ConsultationFormState> = {}) => {
+export const useConsultationForm = (
+  initialData: Partial<ConsultationFormState> = {}
+): UseConsultationFormReturn => {
   const [formData, setFormData] = useState<ConsultationFormState>({
     weight: initialData.weight || '',
     height: initialData.height || '',
@@ -37,17 +49,7 @@ export const useConsultationForm = (initialData: Partial<ConsultationFormState> 
     consultationStatus: initialData.consultationStatus || 'em_andamento'
   });
   
-  const [results, setResults] = useState<ConsultationResults>({
-    tmb: 0,
-    fa: 0,
-    get: 0,
-    macros: {
-      protein: 0,
-      carbs: 0,
-      fat: 0
-    }
-  });
-  
+  const [results, setResults] = useState<ConsultationResults>(initialResults);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const [consultationId, setConsultationId] = useState<string | null>(null);
 
@@ -64,7 +66,7 @@ export const useConsultationForm = (initialData: Partial<ConsultationFormState> 
 
   // Calculate BMR and macros whenever weight, height, age, sex changes
   useEffect(() => {
-    const calculateResults = () => {
+    const calculateNutritionValues = () => {
       // Only calculate if all required fields are filled
       if (!formData.weight || !formData.height || !formData.age) {
         return;
@@ -80,7 +82,7 @@ export const useConsultationForm = (initialData: Partial<ConsultationFormState> 
       }
 
       // Calculate BMR based on sex (Mifflin-St Jeor equation)
-      let bmr;
+      let bmr: number;
       if (formData.sex === 'M') {
         bmr = 10 * weight + 6.25 * height - 5 * age + 5;
       } else {
@@ -88,50 +90,16 @@ export const useConsultationForm = (initialData: Partial<ConsultationFormState> 
       }
 
       // Calculate TDEE based on activity level
-      let activityFactor = 1.2; // Default sedentary
-      switch (formData.activityLevel) {
-        case 'sedentario':
-          activityFactor = 1.2;
-          break;
-        case 'leve':
-          activityFactor = 1.375;
-          break;
-        case 'moderado':
-          activityFactor = 1.55;
-          break;
-        case 'intenso':
-          activityFactor = 1.725;
-          break;
-        case 'muito_intenso':
-          activityFactor = 1.9;
-          break;
-      }
-
+      let activityFactor = getActivityFactor(formData.activityLevel);
       const tdee = bmr * activityFactor;
 
       // Calculate macros based on objective
-      let proteinPercentage = 0.2; // Default
-      let carbsPercentage = 0.5;
-      let fatPercentage = 0.3;
-
-      switch (formData.objective) {
-        case 'emagrecimento':
-          proteinPercentage = 0.3;
-          carbsPercentage = 0.4;
-          fatPercentage = 0.3;
-          break;
-        case 'hipertrofia':
-          proteinPercentage = 0.3;
-          carbsPercentage = 0.5;
-          fatPercentage = 0.2;
-          break;
-        // manutenção uses default values
-      }
-
+      const macroDistribution = getMacroDistributionByObjective(formData.objective);
+      
       // Calculate macros in grams
-      const protein = Math.round((tdee * proteinPercentage) / 4); // 4 calories per gram
-      const carbs = Math.round((tdee * carbsPercentage) / 4); // 4 calories per gram
-      const fat = Math.round((tdee * fatPercentage) / 9); // 9 calories per gram
+      const protein = Math.round((tdee * macroDistribution.protein) / 4); // 4 calories per gram
+      const carbs = Math.round((tdee * macroDistribution.carbs) / 4); // 4 calories per gram
+      const fat = Math.round((tdee * macroDistribution.fat) / 9); // 9 calories per gram
 
       setResults({
         tmb: Math.round(bmr),
@@ -145,7 +113,7 @@ export const useConsultationForm = (initialData: Partial<ConsultationFormState> 
       });
     };
 
-    calculateResults();
+    calculateNutritionValues();
   }, [formData.weight, formData.height, formData.age, formData.sex, formData.activityLevel, formData.objective]);
 
   return {
@@ -159,4 +127,37 @@ export const useConsultationForm = (initialData: Partial<ConsultationFormState> 
     consultationId,
     setConsultationId
   };
+};
+
+// Helper function to get activity factor
+const getActivityFactor = (activityLevel: ActivityLevel): number => {
+  switch (activityLevel) {
+    case 'sedentario':
+      return 1.2;
+    case 'leve':
+      return 1.375;
+    case 'moderado':
+      return 1.55;
+    case 'intenso':
+      return 1.725;
+    case 'muito_intenso':
+      return 1.9;
+    default:
+      return 1.2;
+  }
+};
+
+// Helper function to get macro distribution based on objective
+const getMacroDistributionByObjective = (
+  objective: Objective
+): { protein: number; carbs: number; fat: number } => {
+  switch (objective) {
+    case 'emagrecimento':
+      return { protein: 0.3, carbs: 0.4, fat: 0.3 };
+    case 'hipertrofia':
+      return { protein: 0.3, carbs: 0.5, fat: 0.2 };
+    case 'manutenção':
+    default:
+      return { protein: 0.2, carbs: 0.5, fat: 0.3 };
+  }
 };
