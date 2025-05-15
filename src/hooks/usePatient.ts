@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Patient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,28 +50,24 @@ export const usePatient = (patientId?: string) => {
 
         if (error) throw error;
 
-        // Parse JSON fields
-        const measurementsData = safeParseJson(data.measurements, {});
-        const goalsData = safeParseJson(data.goals, {});
+        // Transform the data
+        const measurementsData = safeParseJson(data.measurements, {}) as any;
+        const goalsData = safeParseJson(data.goals, {}) as any;
         
-        // Transform the data to include derived fields
         const enhancedPatient: Patient = {
           ...data,
           age: calculateAge(data.birth_date),
-          weight: measurementsData.weight || 0,
-          height: measurementsData.height || 0,
+          measurements: {
+            weight: measurementsData.weight || 0,
+            height: measurementsData.height || 0,
+          },
           status: data.status || 'active',
           goals: {
             objective: goalsData.objective || '',
             profile: goalsData.profile || '',
-          },
+          }
         };
 
-        // Add any other optional properties that might be missing
-        if (data.secondaryPhone) enhancedPatient.secondaryPhone = data.secondaryPhone;
-        if (data.cpf) enhancedPatient.cpf = data.cpf;
-        
-        // Set the transformed patient data
         setPatient(enhancedPatient);
       } catch (err) {
         console.error('Error fetching patient:', err);

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppointments } from '@/hooks/useAppointments';
@@ -18,22 +17,22 @@ const Appointments = () => {
   const { appointments, isLoading, fetchAppointments, createAppointment, updateAppointment, deleteAppointment, cancelAppointment, appointmentsByDate } = useAppointments();
   const { toast } = useToast();
 
-  const handleCreateAppointment = async (appointmentData: Partial<Appointment>) => {
+  const handleSubmit = async (appointmentData: Partial<Appointment>): Promise<void> => {
     try {
       const result = await createAppointment.mutateAsync(appointmentData);
-      toast({
-        title: "Consulta Agendada",
-        description: "A consulta foi agendada com sucesso."
-      });
-      setIsFormOpen(false);
-      return { success: true, data: result };
+      if (result) {
+        toast({
+          title: "Consulta Agendada",
+          description: "A consulta foi agendada com sucesso."
+        });
+        setIsFormOpen(false);
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao agendar consulta",
         description: error?.message || "Ocorreu um erro ao tentar agendar a consulta.",
         variant: "destructive"
       });
-      return { success: false, error };
     }
   };
 
@@ -155,7 +154,7 @@ const Appointments = () => {
             }}
             onSubmit={selectedAppointment 
               ? (data) => handleUpdateAppointment(selectedAppointment.id!, data)
-              : handleCreateAppointment
+              : handleSubmit
             }
             appointment={selectedAppointment}
           />

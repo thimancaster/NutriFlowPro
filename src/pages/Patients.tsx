@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
@@ -39,6 +38,11 @@ const Patients = () => {
     refetch
   } = usePatientList();
   
+  const handleStatusChange = async () => {
+    if (!patient) return;
+    await togglePatientStatus(patient.id, patient.status === 'active' ? 'archived' : 'active');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Navbar />

@@ -1,4 +1,3 @@
-
 import { useAppointments as useAppointmentQuery } from './appointments/useAppointmentQuery';
 import { useAppointmentActions } from './appointments/useAppointmentActions';
 import { useAppointmentMutations } from './appointments/useAppointmentMutations';
@@ -17,14 +16,12 @@ export const useAppointments = (patientId?: string) => {
   
   // Create a structured wrapper for appointments by date for calendar view
   const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, appointment) => {
-    // Use start_time as fallback when date is not available
-    const dateField = appointment.start_time || appointment.date || '';
     let dateKey = '';
     
-    if (typeof dateField === 'string') {
-      dateKey = dateField.split('T')[0];
-    } else if (dateField instanceof Date) {
-      dateKey = dateField.toISOString().split('T')[0];
+    if (appointment.start_time) {
+      dateKey = new Date(appointment.start_time).toISOString().split('T')[0];
+    } else if (appointment.date) {
+      dateKey = new Date(appointment.date).toISOString().split('T')[0];
     }
     
     if (dateKey && !acc[dateKey]) {
@@ -37,7 +34,7 @@ export const useAppointments = (patientId?: string) => {
     
     return acc;
   }, {});
-  
+
   const {
     selectedAppointment,
     formDialogOpen,

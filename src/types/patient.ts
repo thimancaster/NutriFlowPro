@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export interface Patient {
@@ -33,10 +32,14 @@ export interface Patient {
 export interface PatientFilters {
   search: string;
   status: 'active' | 'archived' | 'all';
+  startDate?: string;
+  endDate?: string;
   dateFrom?: string;
   dateTo?: string;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
 }
 
 export interface AddressDetails {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PatientFilters as PatientFilterType } from '@/types';
@@ -36,11 +35,11 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
     });
   };
   
-  const handleSortChange = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+  const handleSortChange = (sortBy: string, sortDirection: 'asc' | 'desc') => {
     onFiltersChange({
       ...filters,
       sortBy,
-      sortOrder
+      sortDirection
     });
   };
   
@@ -50,10 +49,11 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
       if (date) {
         onFiltersChange({
           ...filters,
-          startDate: date.toISOString().split('T')[0]
+          startDate: date.toISOString().split('T')[0],
+          dateFrom: date.toISOString().split('T')[0]
         });
       } else {
-        const { startDate, ...rest } = filters;
+        const { startDate, dateFrom, ...rest } = filters;
         onFiltersChange(rest);
       }
     } else {
@@ -61,10 +61,11 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
       if (date) {
         onFiltersChange({
           ...filters,
-          endDate: date.toISOString().split('T')[0]
+          endDate: date.toISOString().split('T')[0],
+          dateTo: date.toISOString().split('T')[0]
         });
       } else {
-        const { endDate, ...rest } = filters;
+        const { endDate, dateTo, ...rest } = filters;
         onFiltersChange(rest);
       }
     }
@@ -88,7 +89,7 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
       pageSize: filters.pageSize,
       status: 'active',
       sortBy: 'name',
-      sortOrder: 'asc'
+      sortDirection: 'asc'
     });
   };
   
@@ -112,7 +113,7 @@ const PatientFilters: React.FC<PatientFiltersProps> = ({
             />
             
             <SortFilter 
-              value={`${filters.sortBy || 'name'}:${filters.sortOrder || 'asc'}`} 
+              value={`${filters.sortBy || 'name'}:${filters.sortDirection || 'asc'}`} 
               onChange={handleSortChange} 
             />
             
