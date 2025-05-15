@@ -29,7 +29,7 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
       />
       
       <AppointmentTypeSelect 
-        value={formData.appointment_type_id || ''} 
+        value={formData.appointment_type_id || formData.type || ''} 
         onChange={(value) => handleSelectChange('appointment_type_id', value)} 
       />
 
@@ -43,6 +43,7 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
           value={formData.title || ''}
           onChange={handleChange}
           className="col-span-3"
+          placeholder="Título da consulta"
           required
         />
       </div>
@@ -63,22 +64,6 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
       </div>
 
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="end_time" className="text-right">
-          Término
-        </Label>
-        <Input
-          id="end_time"
-          name="end_time"
-          type="datetime-local"
-          value={typeof formData.end_time === 'string' ? formData.end_time : ''}
-          onChange={handleChange}
-          className="col-span-3"
-          required
-          disabled // Auto-calculated based on start time and duration
-        />
-      </div>
-
-      <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="notes" className="text-right">
           Observações
         </Label>
@@ -89,6 +74,7 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
           onChange={handleChange}
           className="col-span-3"
           rows={3}
+          placeholder="Observações sobre a consulta"
         />
       </div>
 

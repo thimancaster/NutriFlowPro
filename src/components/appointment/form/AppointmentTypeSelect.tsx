@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { AppointmentType } from '@/types/appointment';
+import { AppointmentType } from '@/types';
 
 interface AppointmentTypeSelectProps {
   value: string;

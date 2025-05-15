@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
@@ -37,7 +38,7 @@ const emptyConsultation: ConsultationData = {
   },
   results: {
     bmr: 0,
-    tdee: 0,
+    tdee: 0, // Changed from tdee to match the result structure
     adjustedCalories: 0,
     proteinGrams: 0,
     carbsGrams: 0,
@@ -68,7 +69,7 @@ const Consultation = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('consultations')
+        .from('calculations') // Using calculations table instead of consultations
         .select('*')
         .eq('id', id)
         .single();
@@ -81,33 +82,32 @@ const Consultation = () => {
           name: '',
         },
         patient_id: data.patient_id,
-        date: data.date || new Date().toISOString().split('T')[0],
-        anthropometry: data.anthropometry || {
-          weight: 0,
-          height: 0,
-          age: 0,
-          gender: 'female',
-          activityFactor: 1.2,
+        anthropometry: {
+          weight: data.weight || 0,
+          height: data.height || 0,
+          age: data.age || 0,
+          gender: data.gender === 'male' ? 'male' : 'female',
+          activityFactor: parseActivityFactor(data.activity_level),
           bodyFat: null,
         },
-        nutritionalObjectives: data.nutritional_objectives || {
-          objective: 'maintenance',
+        nutritionalObjectives: {
+          objective: data.goal || 'maintenance',
           customCalories: null,
         },
-        macroDistribution: data.macro_distribution || {
-          protein: 0,
-          carbs: 0,
-          fat: 0,
+        macroDistribution: {
+          protein: data.protein || 0,
+          carbs: data.carbs || 0,
+          fat: data.fats || 0,
         },
-        results: data.results || {
-          bmr: 0,
-          tdee: 0,
-          adjustedCalories: 0,
-          proteinGrams: 0,
-          carbsGrams: 0,
-          fatGrams: 0,
+        results: {
+          bmr: data.bmr || 0,
+          tdee: data.tdee || 0,
+          adjustedCalories: 0, // Calculate based on goal
+          proteinGrams: 0, // Calculate from macros
+          carbsGrams: 0,   // Calculate from macros
+          fatGrams: 0,     // Calculate from macros
         },
-        recommendations: data.recommendations || '',
+        recommendations: data.notes || '',
         notes: data.notes || '',
       };
       
@@ -130,80 +130,23 @@ const Consultation = () => {
     }
   };
   
+  // Helper function to parse activity level to activity factor
+  const parseActivityFactor = (activityLevel: string | null): number => {
+    switch (activityLevel) {
+      case 'sedentario': return 1.2;
+      case 'leve': return 1.375;
+      case 'moderado': return 1.55;
+      case 'intenso': return 1.725;
+      case 'muito_intenso': return 1.9;
+      default: return 1.2;
+    }
+  };
+  
   useEffect(() => {
-    const fetchConsultation = async () => {
-      if (!id || id === 'new') return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('consultations')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (error) throw error;
-        
-        // Transform data to match ConsultationData type
-        const consultationData: ConsultationData = {
-          patient: {
-            name: '',
-          },
-          patient_id: data.patient_id,
-          date: data.date || new Date().toISOString().split('T')[0],
-          anthropometry: data.anthropometry || {
-            weight: 0,
-            height: 0,
-            age: 0,
-            gender: 'female',
-            activityFactor: 1.2,
-            bodyFat: null,
-          },
-          nutritionalObjectives: data.nutritional_objectives || {
-            objective: 'maintenance',
-            customCalories: null,
-          },
-          macroDistribution: data.macro_distribution || {
-            protein: 0,
-            carbs: 0,
-            fat: 0,
-          },
-          results: data.results || {
-            bmr: 0,
-            tdee: 0,
-            adjustedCalories: 0,
-            proteinGrams: 0,
-            carbsGrams: 0,
-            fatGrams: 0,
-          },
-          recommendations: data.recommendations || '',
-          notes: data.notes || '',
-          // Don't include created_at as it's not in the ConsultationData type
-        };
-        
-        // Find patient in the list
-        const patientInfo = patients.find(p => p.id === data.patient_id);
-        if (patientInfo) {
-          consultationData.patient.name = patientInfo.name;
-        }
-        
-        setConsultation(consultationData);
-      } catch (err) {
-        console.error('Error loading consultation:', err);
-        toast({
-          title: 'Error',
-          description: `Failed to load consultation: ${(err as Error).message}`,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     if (user) {
       fetchConsultation();
     }
-  }, [id, user, toast, patients]);
+  }, [id, user, patients]);
   
   const handleFormChange = (data: Partial<ConsultationData>) => {
     setConsultation(prev => ({

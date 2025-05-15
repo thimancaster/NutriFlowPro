@@ -33,10 +33,10 @@ const Appointments = () => {
         });
         setIsFormOpen(false);
         refetch();
-      } else if (result.error) {
+      } else {
         toast({
           title: 'Error',
-          description: `Failed to create appointment: ${result.error}`,
+          description: `Failed to create appointment: ${result.message}`,
           variant: 'destructive',
         });
       }
@@ -67,10 +67,10 @@ const Appointments = () => {
         setIsFormOpen(false);
         setSelectedAppointment(null);
         refetch();
-      } else if (result.error) {
+      } else {
         toast({
           title: 'Error',
-          description: `Failed to update appointment: ${result.error}`,
+          description: `Failed to update appointment: ${result.message}`,
           variant: 'destructive',
         });
       }
@@ -94,10 +94,10 @@ const Appointments = () => {
           description: 'The appointment has been successfully deleted.',
         });
         refetch();
-      } else if (result.error) {
+      } else {
         toast({
           title: 'Error',
-          description: `Failed to delete appointment: ${result.error}`,
+          description: `Failed to delete appointment: ${result.message}`,
           variant: 'destructive',
         });
       }

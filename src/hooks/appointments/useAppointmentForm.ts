@@ -3,17 +3,19 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Appointment } from '@/types';
+import { Appointment, AppointmentStatus } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
 
 // Create schema for appointment
 const appointmentSchema = z.object({
   patient_id: z.string().min(1, 'Patient is required'),
-  date: z.string().min(1, 'Date is required'),
-  type: z.string().min(1, 'Appointment type is required'),
+  start_time: z.string().min(1, 'Date and time are required'),
+  appointment_type_id: z.string().min(1, 'Appointment type is required'),
   status: z.string().min(1, 'Status is required'),
+  title: z.string().optional(),
   notes: z.string().optional(),
   recommendations: z.string().optional(),
+  end_time: z.string().optional(),
 });
 
 export type AppointmentFormValues = z.infer<typeof appointmentSchema>;
@@ -26,16 +28,27 @@ interface UseAppointmentFormProps {
 export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [defaultDate, setDefaultDate] = useState<Date | undefined>(undefined);
+  const [formData, setFormData] = useState<Partial<Appointment>>({
+    patient_id: '',
+    start_time: '',
+    appointment_type_id: 'initial',
+    status: 'scheduled',
+    title: '',
+    notes: '',
+    recommendations: '',
+  });
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       patient_id: '',
-      date: '',
-      type: 'initial',
+      start_time: '',
+      appointment_type_id: 'initial',
       status: 'scheduled',
+      title: '',
       notes: '',
       recommendations: '',
+      end_time: '',
     },
   });
   
@@ -46,7 +59,7 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
       let formattedDate = '';
       try {
         // Try to parse the date string
-        const parsedDate = parseISO(appointment.date);
+        const parsedDate = parseISO(appointment.date || '');
         if (isValid(parsedDate)) {
           formattedDate = format(parsedDate, "yyyy-MM-dd'T'HH:mm");
           setDefaultDate(parsedDate);
@@ -55,33 +68,55 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
         console.error('Error parsing date:', error);
       }
       
-      form.reset({
-        patient_id: appointment.patient_id,
-        date: formattedDate,
-        type: appointment.type,
-        status: appointment.status,
-        notes: appointment.notes,
-        recommendations: appointment.recommendations,
-      });
+      const updatedFormData = {
+        patient_id: appointment.patient_id || '',
+        start_time: formattedDate,
+        appointment_type_id: appointment.appointment_type_id || appointment.type || 'initial',
+        status: appointment.status || 'scheduled',
+        title: appointment.title || '',
+        notes: appointment.notes || '',
+        recommendations: appointment.recommendations || '',
+      };
+      
+      setFormData(updatedFormData);
+      form.reset(updatedFormData as any);
     } else {
-      form.reset({
+      const emptyFormData = {
         patient_id: '',
-        date: '',
-        type: 'initial',
+        start_time: '',
+        appointment_type_id: 'initial',
         status: 'scheduled',
+        title: '',
         notes: '',
         recommendations: '',
-      });
+      };
+      
+      setFormData(emptyFormData);
+      form.reset(emptyFormData);
       setDefaultDate(undefined);
     }
   }, [appointment, form]);
   
-  const handleSubmit = async (values: AppointmentFormValues) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    form.setValue(name as any, value);
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    form.setValue(name as any, value);
+  };
+  
+  const handleSubmitForm = async (values: AppointmentFormValues) => {
     setIsSubmitting(true);
     try {
+      // For Appointment status, ensure it's a valid AppointmentStatus type
+      const status = values.status as AppointmentStatus;
+      
       await onSubmit({
         ...values,
-        // Additional fields if needed
+        status
       });
       form.reset();
     } catch (error) {
@@ -93,8 +128,11 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
   
   return {
     form,
+    formData,
     isSubmitting,
     defaultDate,
-    handleSubmit: form.handleSubmit(handleSubmit),
+    handleChange,
+    handleSelectChange,
+    handleSubmit: form.handleSubmit(handleSubmitForm),
   };
 };

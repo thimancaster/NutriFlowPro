@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Appointment } from '@/types';
+import { Appointment, AppointmentStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { format } from 'date-fns';
@@ -59,20 +59,30 @@ export const useAppointments = (options?: {
       
       if (error) throw error;
       
-      const formattedAppointments: Appointment[] = (data || []).map(item => ({
-        id: item.id,
-        patient_id: item.patient_id || '',
-        date: item.date || '',
-        type: item.type || '',
-        status: item.status || 'scheduled',
-        notes: item.notes || '',
-        recommendations: item.recommendations || '',
-        measurements: item.measurements || {},
-        created_at: item.created_at || '',
-        updated_at: item.updated_at || '',
-        user_id: item.user_id || '',
-        patient: null // Will be populated elsewhere if needed
-      }));
+      const formattedAppointments: Appointment[] = (data || []).map(item => {
+        // Ensure status is one of the allowed AppointmentStatus values
+        let status: AppointmentStatus = 'scheduled';
+        
+        if (item.status === 'completed') status = 'completed';
+        else if (item.status === 'canceled') status = 'canceled';
+        else if (item.status === 'no-show') status = 'no-show';
+        else if (item.status === 'rescheduled') status = 'rescheduled';
+        
+        return {
+          id: item.id,
+          patient_id: item.patient_id || '',
+          date: item.date || '',
+          type: item.type || '',
+          status,
+          notes: item.notes || '',
+          recommendations: item.recommendations || '',
+          measurements: item.measurements || {},
+          created_at: item.created_at || '',
+          updated_at: item.updated_at || '',
+          user_id: item.user_id || '',
+          patient: null // Will be populated elsewhere if needed
+        };
+      });
       
       setAppointments(formattedAppointments);
     } catch (err) {

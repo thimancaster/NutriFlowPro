@@ -4,7 +4,7 @@ import { AppointmentType } from '@/types';
 
 // This hook provides a list of appointment types
 export const useAppointmentTypes = () => {
-  const [types, setTypes] = useState<AppointmentType[]>([]);
+  const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -18,16 +18,16 @@ export const useAppointmentTypes = () => {
         
         // Default types
         const defaultTypes: AppointmentType[] = [
-          { id: 'initial', name: 'Avaliação Inicial', description: 'Primeira consulta com o paciente' },
-          { id: 'followup', name: 'Acompanhamento', description: 'Consulta de rotina para acompanhamento' },
-          { id: 'reevaluation', name: 'Reavaliação', description: 'Consulta para reavaliar progresso' },
-          { id: 'other', name: 'Outro', description: 'Outro tipo de consulta' },
+          { id: 'initial', name: 'Avaliação Inicial', duration_minutes: 60, description: 'Primeira consulta com o paciente' },
+          { id: 'followup', name: 'Acompanhamento', duration_minutes: 45, description: 'Consulta de rotina para acompanhamento' },
+          { id: 'reevaluation', name: 'Reavaliação', duration_minutes: 50, description: 'Consulta para reavaliar progresso' },
+          { id: 'other', name: 'Outro', duration_minutes: 30, description: 'Outro tipo de consulta' },
         ];
         
-        setTypes(defaultTypes);
+        setAppointmentTypes(defaultTypes);
       } catch (error) {
         console.error('Error fetching appointment types:', error);
-        setTypes([]);
+        setAppointmentTypes([]);
       } finally {
         setIsLoading(false);
       }
@@ -36,5 +36,6 @@ export const useAppointmentTypes = () => {
     fetchTypes();
   }, []);
   
-  return { types, isLoading };
+  // Return the appointmentTypes directly in the object
+  return { appointmentTypes, isLoading };
 };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -165,15 +164,15 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
                       <div className="bg-blue-100 text-blue-800 h-12 w-12 rounded-full flex items-center justify-center font-medium">
-                        {formatAppointmentTime(appointment.date)}
+                        {formatAppointmentTime(appointment.date || '')}
                       </div>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium">
-                        {appointment.patient?.name || 'Paciente não encontrado'}
+                        {appointment.patient?.name || appointment.patientName || 'Paciente não encontrado'}
                       </h4>
                       <p className="text-sm text-gray-500">
-                        {formatAppointmentDate(appointment.date)}
+                        {formatAppointmentDate(appointment.date || '')}
                       </p>
                       <div className="flex mt-1 space-x-2">
                         <Badge variant="outline" className={statusColors[appointment.status as keyof typeof statusColors]}>

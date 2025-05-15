@@ -87,7 +87,7 @@ export const appointmentService = {
       const formattedData = {
         ...appointmentData,
         id: uuidv4(),
-        date: formatDateForSupabase(appointmentData.date)
+        date: formatDateForSupabase(new Date(appointmentData.date || appointmentData.start_time))
       };
 
       const { data, error } = await supabase
@@ -102,12 +102,13 @@ export const appointmentService = {
       return { 
         success: true, 
         data: data[0], 
-        message: 'Appointment created successfully' 
+        message: 'Appointment created successfully',
       };
     } catch (error: any) {
       return { 
         success: false, 
-        message: error.message || 'Failed to create appointment' 
+        message: error.message || 'Failed to create appointment',
+        error: error.message || 'Unknown error',
       };
     }
   },
@@ -152,7 +153,8 @@ export const appointmentService = {
       // Format the date for Supabase if it exists
       const formattedData = {
         ...appointmentData,
-        ...(appointmentData.date && { date: formatDateForSupabase(appointmentData.date) })
+        ...(appointmentData.date && { date: formatDateForSupabase(new Date(appointmentData.date)) }),
+        ...(appointmentData.start_time && { date: formatDateForSupabase(new Date(appointmentData.start_time)) })
       };
 
       const { data, error } = await supabase
@@ -168,12 +170,13 @@ export const appointmentService = {
       return { 
         success: true, 
         data: data[0], 
-        message: 'Appointment updated successfully' 
+        message: 'Appointment updated successfully',
       };
     } catch (error: any) {
       return { 
         success: false, 
-        message: error.message || 'Failed to update appointment' 
+        message: error.message || 'Failed to update appointment',
+        error: error.message || 'Unknown error',
       };
     }
   },
@@ -192,12 +195,13 @@ export const appointmentService = {
 
       return { 
         success: true, 
-        message: 'Appointment deleted successfully' 
+        message: 'Appointment deleted successfully',
       };
     } catch (error: any) {
       return { 
         success: false, 
-        message: error.message || 'Failed to delete appointment' 
+        message: error.message || 'Failed to delete appointment',
+        error: error.message || 'Unknown error',
       };
     }
   }
