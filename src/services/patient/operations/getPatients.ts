@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 import { PostgrestResponse } from '@supabase/supabase-js';
+import { convertDbToPatient } from '../utils/patientDataUtils';
 
 // Define primitive types with no circular references
 export type PatientsData = {
@@ -66,13 +67,18 @@ export const getPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Explicitly type the response and use PatientRecord as the intermediate type
+    // Explicitly type the response with PatientRecord
     const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
     
     if (error) throw error;
     
-    // Use type assertion in two steps to avoid excessive type instantiation
-    const patients = data ? (data as unknown) as Patient[] : [];
+    // Process data safely to avoid excessive type instantiation
+    const patients: Patient[] = [];
+    if (data && data.length > 0) {
+      for (const record of data) {
+        patients.push(convertDbToPatient(record));
+      }
+    }
     
     return {
       success: true,
@@ -139,13 +145,18 @@ export const getSortedPatients = async (
       query = query.range(offset, offset + limit - 1);
     }
     
-    // Use the same approach as getPatients for type handling
+    // Explicitly type the response with PatientRecord
     const { data, error, count }: PostgrestResponse<PatientRecord> = await query;
     
     if (error) throw error;
     
-    // Use type assertion in two steps to avoid excessive type instantiation
-    const patients = data ? (data as unknown) as Patient[] : [];
+    // Process data safely to avoid excessive type instantiation
+    const patients: Patient[] = [];
+    if (data && data.length > 0) {
+      for (const record of data) {
+        patients.push(convertDbToPatient(record));
+      }
+    }
     
     return {
       success: true,
