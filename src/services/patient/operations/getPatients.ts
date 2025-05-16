@@ -23,37 +23,15 @@ export type GetPatientsErrorResponse = {
 // Union type for response
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
-export const getPatients = async (
-  userId: string, 
-  status: 'active' | 'archived' | 'all' = 'active',
-  paginationParams?: {
-    limit: number;
-    offset: number;
-  }
+/**
+ * Helper function to execute a patient query and format the response
+ * @param queryFn Function that builds and executes the Supabase query
+ */
+const executePatientQuery = async (
+  queryFn: () => Promise<{ data: any[] | null; error: any; count: number | null }>
 ): Promise<PatientsResponse> => {
   try {
-    // Apply pagination
-    const offset = paginationParams?.offset || 0;
-    const limit = paginationParams?.limit || 50;
-    
-    // Create base query
-    const query = supabase.from('patients').select('*', { count: 'exact' });
-    
-    // Apply user filter
-    query.eq('user_id', userId);
-    
-    // Apply status filter conditionally
-    if (status !== 'all') {
-      query.eq('status', status);
-    }
-    
-    // Apply pagination
-    const from = offset;
-    const to = offset + limit - 1;
-    
-    // Execute query with pagination range
-    const result = await query.range(from, to);
-    const { data, error, count } = result;
+    const { data, error, count } = await queryFn();
     
     if (error) throw error;
     
@@ -77,7 +55,7 @@ export const getPatients = async (
       }
     };
   } catch (error: any) {
-    logger.error('Error in getPatients:', error.message);
+    logger.error('Error in patient query:', error.message);
     return {
       success: false,
       error: error.message
@@ -85,6 +63,42 @@ export const getPatients = async (
   }
 };
 
+/**
+ * Get patients with basic filtering
+ */
+export const getPatients = async (
+  userId: string, 
+  status: 'active' | 'archived' | 'all' = 'active',
+  paginationParams?: {
+    limit: number;
+    offset: number;
+  }
+): Promise<PatientsResponse> => {
+  // Apply pagination
+  const offset = paginationParams?.offset || 0;
+  const limit = paginationParams?.limit || 50;
+  const from = offset;
+  const to = offset + limit - 1;
+  
+  return executePatientQuery(async () => {
+    // Create a type-safe query builder function instead of chaining methods
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply filters separately
+    query = query.eq('user_id', userId);
+    
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+    
+    // Execute with pagination
+    return await query.range(from, to);
+  });
+};
+
+/**
+ * Get patients with advanced sorting and filtering
+ */
 export const getSortedPatients = async (
   userId: string,
   status: 'active' | 'archived' | 'all' = 'active',
@@ -98,71 +112,40 @@ export const getSortedPatients = async (
     offset: number;
   }
 ): Promise<PatientsResponse> => {
-  try {
-    // Apply pagination
-    const offset = paginationParams?.offset ?? 0;
-    const limit = paginationParams?.limit ?? 50;
+  // Apply pagination
+  const offset = paginationParams?.offset ?? 0;
+  const limit = paginationParams?.limit ?? 50;
+  const from = offset;
+  const to = offset + limit - 1;
+  
+  return executePatientQuery(async () => {
+    // Create simple query without chaining to avoid deep type instantiation
+    let query = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Create base query
-    const query = supabase.from('patients').select('*', { count: 'exact' });
+    // Apply filters separately
+    query = query.eq('user_id', userId);
     
-    // Apply user filter
-    query.eq('user_id', userId);
-    
-    // Apply status filter if not "all"
     if (status !== 'all') {
-      query.eq('status', status);
+      query = query.eq('status', status);
     }
     
-    // Apply search filter if present
     if (search) {
-      query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      // Use explicit variable for search filter to avoid nesting
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
-    // Apply date range filters if present
     if (startDate) {
-      query.gte('created_at', startDate);
+      query = query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query.lte('created_at', endDate);
+      query = query.lte('created_at', endDate);
     }
     
     // Apply sorting
-    query.order(sortBy, { ascending: sortOrder === 'asc' });
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    // Execute query with pagination range
-    const from = offset;
-    const to = offset + limit - 1;
-    const result = await query.range(from, to);
-    const { data, error, count } = result;
-    
-    if (error) throw error;
-    
-    // Transform data with error handling
-    const patients: Patient[] = [];
-    if (Array.isArray(data)) {
-      for (const record of data) {
-        try {
-          patients.push(convertDbToPatient(record));
-        } catch (err) {
-          logger.error('Error converting patient record:', err);
-        }
-      }
-    }
-    
-    return {
-      success: true,
-      data: {
-        patients,
-        total: count || 0
-      }
-    };
-  } catch (error: any) {
-    logger.error('Error in getSortedPatients:', error.message);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
+    // Execute with pagination
+    return await query.range(from, to);
+  });
 };
