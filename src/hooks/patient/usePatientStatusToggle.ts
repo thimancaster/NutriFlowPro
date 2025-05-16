@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { updatePatientStatus } from '@/services/patient/operations/updatePatientStatus';
 
 /**
  * Hook for toggling patient status
@@ -13,14 +14,9 @@ export const usePatientStatusToggle = (userId: string | undefined, onSuccess?: (
     if (!userId) return;
     
     try {
-      // Since status might not be in the database yet, we're using a placeholder
-      const { error } = await supabase
-        .from('patients')
-        .update({ /* status: newStatus */ })
-        .eq('id', patientId)
-        .eq('user_id', userId);
+      const result = await updatePatientStatus(patientId, userId, newStatus);
       
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error);
       
       toast({
         title: 'Success',

@@ -24,26 +24,7 @@ export type GetPatientsErrorResponse = {
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
 /**
- * Create a simplified query with explicit typings to avoid deep type instantiation
- */
-const buildPatientsQuery = (userId: string, status: string) => {
-  // Instead of chaining methods, use variables and explicit types
-  const query = supabase.from('patients');
-  const select = query.select('*', { count: 'exact' });
-  
-  // Apply user filter
-  if (status !== 'all') {
-    return select.eq('user_id', userId).eq('status', status);
-  } else {
-    return select.eq('user_id', userId);
-  }
-};
-
-/**
  * Process database results into a standardized response format
- * @param data - The raw data from the database
- * @param count - The count of total records
- * @param error - Any error that occurred during the query
  */
 const processQueryResults = (
   data: any[] | null, 
@@ -91,8 +72,14 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Get base query
-    const query = buildPatientsQuery(userId, status);
+    // Build query directly without helper function to avoid deep instantiation
+    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply filters directly
+    let query = baseQuery.eq('user_id', userId);
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
 
     // Apply pagination separately
     const offset = paginationParams?.offset || 0;
