@@ -20,7 +20,7 @@ const memoryCache = new Map<string, {data: SubscriptionData, timestamp: number}>
 // Optimized refetch settings to prevent excessive API calls
 const OPTIMIZED_REFETCH_SETTINGS = {
   staleTime: 5 * 60 * 1000, // 5 minutes stale time
-  cacheTime: 30 * 60 * 1000, // 30 minutes cache time
+  gcTime: 30 * 60 * 1000, // 30 minutes cache time (replacing deprecated cacheTime)
   refetchOnWindowFocus: false, // Disabled to avoid calls on focus
   refetchOnMount: true,
   refetchOnReconnect: false, // Disabled to avoid calls on reconnection

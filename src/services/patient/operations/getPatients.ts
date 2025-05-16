@@ -34,11 +34,10 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a direct query without chaining
-    let query = supabase.from('patients');
-    
-    // Select with count
-    query = query.select('*', { count: 'exact' });
+    // Start with select query
+    let query = supabase
+      .from('patients')
+      .select('*', { count: 'exact' });
     
     // Apply user filter
     query = query.eq('user_id', userId);
@@ -95,11 +94,10 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a direct query without chaining
-    let query = supabase.from('patients');
-    
-    // Select with count
-    query = query.select('*', { count: 'exact' });
+    // Start with select query
+    let query = supabase
+      .from('patients')
+      .select('*', { count: 'exact' });
     
     // Apply user filter
     query = query.eq('user_id', userId);
