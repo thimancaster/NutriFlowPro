@@ -19,7 +19,7 @@ interface TextFieldProps {
   isLoading?: boolean;
 }
 
-const TextField = ({
+export const TextField = ({
   id,
   name,
   label,
