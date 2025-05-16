@@ -34,17 +34,15 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with select query
-    let query = supabase
+    // Build the query step by step without complex chaining
+    const query = supabase
       .from('patients')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
-    // Apply user filter
-    query = query.eq('user_id', userId);
-    
-    // Apply status filter
+    // Apply status filter if not "all"
     if (status !== 'all') {
-      query = query.eq('status', status);
+      query.eq('status', status);
     }
     
     // Set up pagination
@@ -94,35 +92,33 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with select query
-    let query = supabase
+    // Build the query step by step without complex chaining
+    const query = supabase
       .from('patients')
-      .select('*', { count: 'exact' });
-    
-    // Apply user filter
-    query = query.eq('user_id', userId);
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
     // Apply status filter
     if (status !== 'all') {
-      query = query.eq('status', status);
+      query.eq('status', status);
     }
     
     // Apply search filter
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
     // Date filters
     if (startDate) {
-      query = query.gte('created_at', startDate);
+      query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query = query.lte('created_at', endDate);
+      query.lte('created_at', endDate);
     }
     
     // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    query.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination
     const offset = paginationParams?.offset ?? 0;
