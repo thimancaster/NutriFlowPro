@@ -38,3 +38,6 @@ export const SelectField = ({
     </div>
   );
 };
+
+// Add default export
+export default SelectField;

@@ -25,3 +25,6 @@ export const DateField = ({
     </div>
   );
 };
+
+// Add default export
+export default DateField;

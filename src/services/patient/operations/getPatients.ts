@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 import { convertDbToPatient } from '../utils/patientDataUtils';
@@ -34,7 +33,7 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Use any for intermediate query to avoid deep type instantiation
+    // Use simple variable assignments to avoid deep type instantiation
     let query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
@@ -97,7 +96,7 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Use any for intermediate query to avoid deep type instantiation
+    // Use simple variable assignments to avoid deep type instantiation
     let query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter

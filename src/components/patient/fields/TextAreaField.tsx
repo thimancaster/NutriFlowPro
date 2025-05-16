@@ -34,3 +34,6 @@ export const TextAreaField = ({
     </div>
   );
 };
+
+// Add default export
+export default TextAreaField;

@@ -40,3 +40,6 @@ export const RadioGroupField = ({
     </div>
   );
 };
+
+// Add default export
+export default RadioGroupField;

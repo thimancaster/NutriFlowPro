@@ -141,7 +141,7 @@ export const usePatientList = (options?: {
           
           return {
             ...patient,
-            status: patient.status || 'active', // Default to active if not specified in DB
+            status: patient.status || 'active', // Add a default status if not present in the database
             goals: {
               objective: goalsData.objective || '',
               profile: goalsData.profile || '',
@@ -159,7 +159,7 @@ export const usePatientList = (options?: {
             ...patient,
             id: patient.id,
             name: patient.name || 'Unknown Patient',
-            status: 'active',
+            status: 'active', // Provide default status
             goals: { objective: '', profile: '' },
             measurements: { weight: 0, height: 0 }
           };
