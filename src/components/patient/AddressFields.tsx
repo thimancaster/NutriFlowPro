@@ -1,6 +1,9 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { TextField, SelectField } from './fields';
 import { formatCep } from '@/utils/patientValidation';
+import { fetchAddressByCep } from '@/services/cepService';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddressFieldsProps {
   address: {
@@ -18,6 +21,9 @@ interface AddressFieldsProps {
 }
 
 const AddressFields = ({ address, onChange, errors, validateField }: AddressFieldsProps) => {
+  const { toast } = useToast();
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({ ...address, [name]: value });
@@ -25,6 +31,44 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
 
   const handleSelectChange = (name: string, value: string) => {
     onChange({ ...address, [name]: value });
+  };
+
+  const handleCepBlur = async () => {
+    if (address.cep && address.cep.length === 9) { // CEP format: 00000-000
+      try {
+        setIsLoadingCep(true);
+        const cepData = await fetchAddressByCep(address.cep);
+        
+        if (cepData) {
+          onChange({
+            ...address,
+            street: cepData.logradouro || address.street,
+            neighborhood: cepData.bairro || address.neighborhood,
+            city: cepData.localidade || address.city,
+            state: cepData.uf || address.state,
+          });
+          toast({
+            title: "CEP encontrado",
+            description: "Endereço preenchido automaticamente",
+          });
+        } else {
+          toast({
+            title: "CEP não encontrado",
+            description: "Verifique o CEP informado",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+        toast({
+          title: "Erro ao consultar CEP",
+          description: "Não foi possível obter os dados do endereço",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingCep(false);
+      }
+    }
   };
 
   return (
@@ -38,7 +82,11 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
         mask={formatCep}
         placeholder="00000-000"
         error={errors['address.cep']}
-        onBlur={() => validateField('address.cep', address.cep)}
+        onBlur={() => {
+          validateField('address.cep', address.cep);
+          handleCepBlur();
+        }}
+        isLoading={isLoadingCep}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TextField

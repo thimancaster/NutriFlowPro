@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,9 +114,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-2xl font-bold">Consultas</CardTitle>
-        <Button onClick={onAddNew} className="bg-nutri-green hover:bg-nutri-green-dark">
-          <PlusCircle className="mr-2 h-4 w-4" /> Nova Consulta
-        </Button>
+        {/* "Nova Consulta" button removed from header */}
       </CardHeader>
       <CardContent>
         {isLoading ? (

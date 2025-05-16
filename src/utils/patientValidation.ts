@@ -14,6 +14,40 @@ const cepRegex = /^\d{5}-\d{3}$/;
 // Email validation
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+// CPF validation function
+export const validateCpf = (cpf: string): boolean => {
+  // Remove non-numeric characters
+  cpf = cpf.replace(/[^\d]/g, '');
+
+  // Check if CPF has 11 digits
+  if (cpf.length !== 11) return false;
+
+  // Check for known invalid CPFs (all repeated digits)
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  // Calculate first verification digit
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+  let remainder = 11 - (sum % 11);
+  const firstDigit = remainder > 9 ? 0 : remainder;
+
+  // Calculate second verification digit
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+  remainder = 11 - (sum % 11);
+  const secondDigit = remainder > 9 ? 0 : remainder;
+
+  // Check if calculated verification digits match the last two digits of the CPF
+  return (
+    parseInt(cpf.charAt(9)) === firstDigit &&
+    parseInt(cpf.charAt(10)) === secondDigit
+  );
+};
+
 // Address schema for validation
 const addressSchema = z.object({
   cep: z.string().regex(cepRegex, { message: "CEP inválido: Use o formato XXXXX-XXX" }).or(z.string().length(0)).optional(),
@@ -33,7 +67,11 @@ export const patientSchema = z.object({
   secondaryPhone: z.string().regex(phoneRegex, { message: "Telefone secundário inválido: Use o formato (XX) XXXXX-XXXX" }).or(z.string().length(0)).optional(),
   sex: z.enum(["M", "F", "O"], { message: "Selecione o gênero" }),
   birthDate: z.date({ required_error: "Data de nascimento é obrigatória" }),
-  cpf: z.string().regex(cpfRegex, { message: "CPF inválido: Use o formato XXX.XXX.XXX-XX" }).or(z.string().length(0)).optional(),
+  cpf: z.string().regex(cpfRegex, { message: "CPF inválido: Use o formato XXX.XXX.XXX-XX" })
+       .refine(
+         (cpf) => cpf.length === 0 || validateCpf(cpf), 
+         { message: "CPF inválido: dígitos verificadores não conferem" }
+       ),
   objective: z.string().min(1, { message: "Objetivo é obrigatório" }),
   profile: z.string().min(1, { message: "Perfil é obrigatório" }),
   address: addressSchema.optional(),
@@ -57,6 +95,21 @@ export const validateField = (field: string, value: any): string | null => {
           return null;
         }
       }
+      return null;
+    }
+    
+    // Special case for CPF validation
+    if (field === 'cpf' && value && value.length > 0) {
+      // First check the format
+      if (!cpfRegex.test(value)) {
+        return "CPF inválido: Use o formato XXX.XXX.XXX-XX";
+      }
+      
+      // Then check the mathematical validation
+      if (!validateCpf(value)) {
+        return "CPF inválido: dígitos verificadores não conferem";
+      }
+      
       return null;
     }
     

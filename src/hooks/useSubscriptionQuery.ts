@@ -20,12 +20,12 @@ const memoryCache = new Map<string, {data: SubscriptionData, timestamp: number}>
 // Optimized refetch settings to prevent excessive API calls
 const OPTIMIZED_REFETCH_SETTINGS = {
   staleTime: 5 * 60 * 1000, // 5 minutes stale time
-  gcTime: 30 * 60 * 1000, // 30 minutes cache time (replacing deprecated cacheTime)
+  gcTime: 30 * 60 * 1000, // 30 minutes cache time
   refetchOnWindowFocus: false, // Disabled to avoid calls on focus
-  refetchOnMount: true,
+  refetchOnMount: false, // Changed to false to reduce initial notifications
   refetchOnReconnect: false, // Disabled to avoid calls on reconnection
-  retry: 1, // Reduced to minimize excessive calls on failure
-  retryDelay: 5000 // 5 seconds between retries
+  retry: 0, // Reduced to 0 to minimize excessive calls on failure
+  retryDelay: 10000 // 10 seconds between retries
 };
 
 /**
@@ -38,6 +38,8 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
   const errorToastShown = React.useRef(false);
   // Track if the query is currently running to prevent duplicates
   const isQueryRunningRef = React.useRef(false);
+  // Track if initial toast has been shown to prevent multiple toasts
+  const initialToastShown = React.useRef(false);
 
   // Force the same query key for all users unless logged in with specific ID
   const queryKey = user?.id ? [SUBSCRIPTION_QUERY_KEY, user.id] : [SUBSCRIPTION_QUERY_KEY, 'anonymous'];
@@ -47,13 +49,22 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
     queryKey: queryKey,
     queryFn: async (): Promise<SubscriptionData> => {
       try {
+        // Don't query if user isn't authenticated
+        if (!isAuthenticated || !user) {
+          return {
+            isPremium: false,
+            role: 'user',
+            email: null
+          };
+        }
+        
         // Check if query is already running to prevent duplicate calls
         if (isQueryRunningRef.current) {
           console.log("Query already running, using cached or default data");
           
           // Return cache if available
           const cachedData = memoryCache.get(cacheKey);
-          if (cachedData && (Date.now() - cachedData.timestamp) < 60000) { // 1 minute cache
+          if (cachedData && (Date.now() - cachedData.timestamp) < 300000) { // 5 minutes cache
             return cachedData.data;
           }
           
@@ -68,18 +79,9 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
         isQueryRunningRef.current = true;
         
         try {
-          // Don't query if user isn't authenticated
-          if (!isAuthenticated || !user) {
-            return {
-              isPremium: false,
-              role: 'user',
-              email: null
-            };
-          }
-  
-          // Use memory cache if available and recent
+          // Use memory cache if available and recent to prevent unnecessary database calls
           const cachedData = memoryCache.get(cacheKey);
-          if (cachedData && (Date.now() - cachedData.timestamp) < 60000) { // 1 minute cache
+          if (cachedData && (Date.now() - cachedData.timestamp) < 300000) { // 5 minutes cache
             return cachedData.data;
           }
   
@@ -112,19 +114,20 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           if (error) {
             console.warn("Erro ao buscar dados da assinatura:", error);
             
-            // Only show toast once
-            if (!errorToastShown.current) {
+            // Only show toast once and only during initial load, not on retries/refetches
+            if (!errorToastShown.current && !initialToastShown.current) {
               toast({
                 title: "Erro ao buscar dados da assinatura",
                 description: "Usando configurações padrão.",
                 variant: "destructive",
               });
               errorToastShown.current = true;
+              initialToastShown.current = true;
               
-              // Reset after 5 minutes
+              // Reset after 15 minutes to avoid persistent messages
               setTimeout(() => {
                 errorToastShown.current = false;
-              }, 300000);
+              }, 900000);
             }
             
             // Return default data based on email
@@ -161,12 +164,13 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
             timestamp: Date.now()
           });
           
+          initialToastShown.current = true;
           return result;
         } finally {
-          // Reset running flag after short delay to prevent immediate re-runs
+          // Reset running flag after delay to prevent immediate re-runs
           setTimeout(() => {
             isQueryRunningRef.current = false;
-          }, 1000);
+          }, 3000);
         }
       } catch (error: any) {
         console.error("Erro na consulta de assinatura:", error);
