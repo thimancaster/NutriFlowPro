@@ -34,13 +34,10 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a query builder function to avoid deep type instantiation
-    const createQuery = () => supabase.from('patients').select('*', { count: 'exact' });
+    // Use a factory function to create a fresh query instance
+    const query = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Start with fresh query instance
-    const query = createQuery();
-    
-    // Apply filters
+    // Apply filters directly
     query.eq('user_id', userId);
     
     if (status !== 'all') {
@@ -94,13 +91,10 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a query builder function to avoid deep type instantiation
-    const createQuery = () => supabase.from('patients').select('*', { count: 'exact' });
+    // Create a simple query without complex chaining
+    const query = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Start with fresh query instance
-    const query = createQuery();
-    
-    // Apply filters
+    // Apply filters directly
     query.eq('user_id', userId);
     
     if (status !== 'all') {
