@@ -34,49 +34,43 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create query components separately without chaining
-    let queryData;
-    let queryError;
-    let queryCount = 0;
+    // Variables to store our results
+    let data, error, count;
     
-    // Create the base query first
-    const baseQueryResult = await supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .then(result => {
-        // Filter by status if needed
-        if (status !== 'all') {
-          return supabase
-            .from('patients')
-            .select('*', { count: 'exact' })
-            .eq('user_id', userId)
-            .eq('status', status);
-        }
-        return result;
-      });
-    
-    // Apply pagination separately
+    // Apply pagination
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 50;
     
-    // Execute final query with range
-    const { data, error, count } = await supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .range(offset, offset + limit - 1);
+    // Build and execute query directly without chaining too many methods
+    if (status === 'all') {
+      const result = await supabase
+        .from('patients')
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId)
+        .range(offset, offset + limit - 1);
+      
+      data = result.data;
+      error = result.error;
+      count = result.count;
+    } else {
+      const result = await supabase
+        .from('patients')
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId)
+        .eq('status', status)
+        .range(offset, offset + limit - 1);
+      
+      data = result.data;
+      error = result.error;
+      count = result.count;
+    }
     
-    queryData = data;
-    queryError = error;
-    queryCount = count || 0;
-    
-    if (queryError) throw queryError;
+    if (error) throw error;
     
     // Transform data with error handling
     const patients: Patient[] = [];
-    if (queryData && Array.isArray(queryData)) {
-      for (const record of queryData as RawPatientRecord[]) {
+    if (data && Array.isArray(data)) {
+      for (const record of data as RawPatientRecord[]) {
         try {
           patients.push(convertDbToPatient(record));
         } catch (err) {
@@ -90,7 +84,7 @@ export const getPatients = async (
       success: true,
       data: {
         patients,
-        total: queryCount
+        total: count || 0
       }
     };
   } catch (error: any) {
@@ -116,45 +110,40 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Apply filters progressively by executing separate queries
-    let queryData;
-    let queryError;
-    let queryCount = 0;
-    
     // Apply pagination
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 50;
     
-    // Construct the base query
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Start with base query
+    let baseQuery = supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
     
-    // Apply user filter (required)
-    query = query.eq('user_id', userId);
-    
-    // Apply status filter
+    // Apply status filter if not "all"
     if (status !== 'all') {
-      query = query.eq('status', status);
+      baseQuery = baseQuery.eq('status', status);
     }
     
-    // Apply search filter if specified
+    // Apply search filter if provided
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      baseQuery = baseQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
-    // Apply date filters if specified
+    // Apply date filters if provided
     if (startDate) {
-      query = query.gte('created_at', startDate);
+      baseQuery = baseQuery.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query = query.lte('created_at', endDate);
+      baseQuery = baseQuery.lte('created_at', endDate);
     }
     
     // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    const sortQuery = baseQuery.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    // Execute the final query with pagination
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
+    // Finally apply pagination and execute
+    const { data, error, count } = await sortQuery.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
