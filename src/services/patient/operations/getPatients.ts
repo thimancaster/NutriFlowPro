@@ -1,164 +1,93 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Patient } from '@/types';
-import { convertDbToPatient } from '../utils/patientDataUtils';
-import { logger } from '@/utils/logger';
+import { PostgrestError } from '@supabase/supabase-js';
 
-// Define simple response types without complex nesting
-export type PatientsData = {
-  patients: Array<Patient>;
-  total: number;
+// Define simple types to avoid excessive type instantiation
+type BasicPatientData = {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  gender?: string | null;
+  status?: string;
+  created_at?: string;
+  [key: string]: any;
 };
 
-export type GetPatientsSuccessResponse = {
-  success: true;
-  data: PatientsData;
-};
-
-export type GetPatientsErrorResponse = {
-  success: false;
-  error: string;
-};
-
-// Union type for response
-export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
-
-/**
- * Process database results into a standardized response format
- */
-const processQueryResults = (
-  data: any[] | null, 
-  count: number | null, 
-  error: any
-): PatientsResponse => {
-  if (error) {
-    logger.error('Error in patient query:', error.message);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-
-  // Transform data with error handling
-  const patients: Patient[] = [];
-  if (Array.isArray(data)) {
-    for (const record of data) {
-      try {
-        patients.push(convertDbToPatient(record));
-      } catch (err) {
-        logger.error('Error converting patient record:', err);
-      }
-    }
-  }
-  
-  return {
-    success: true,
-    data: {
-      patients,
-      total: count || 0
-    }
-  };
+type PatientResponse = {
+  success: boolean;
+  data?: BasicPatientData[];
+  error?: string;
+  count?: number;
 };
 
 /**
- * Get patients with basic filtering
+ * Get list of patients with optional filtering
  */
 export const getPatients = async (
-  userId: string, 
-  status: 'active' | 'archived' | 'all' = 'active',
-  paginationParams?: {
-    limit: number;
-    offset: number;
-  }
-): Promise<PatientsResponse> => {
-  try {
-    // Build query directly without helper function to avoid deep instantiation
-    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
-    
-    // Apply filters directly
-    let query = baseQuery.eq('user_id', userId);
-    if (status !== 'all') {
-      query = query.eq('status', status);
-    }
-
-    // Apply pagination separately
-    const offset = paginationParams?.offset || 0;
-    const limit = paginationParams?.limit || 50;
-    
-    // Execute query with explicit range parameters
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
-    
-    // Process results using the helper function
-    return processQueryResults(data, count, error);
-  } catch (error: any) {
-    logger.error('Error in getPatients:', error.message);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-/**
- * Get patients with advanced sorting and filtering
- */
-export const getSortedPatients = async (
   userId: string,
-  status: 'active' | 'archived' | 'all' = 'active',
-  sortBy: string = 'name',
-  sortOrder: 'asc' | 'desc' = 'asc',
-  search: string = '',
-  startDate?: string,
-  endDate?: string,
-  paginationParams?: {
-    limit: number;
-    offset: number;
+  options?: {
+    status?: 'active' | 'archived';
+    limit?: number;
+    from?: number;
+    orderBy?: string;
+    orderDirection?: 'asc' | 'desc';
+    search?: string;
   }
-): Promise<PatientsResponse> => {
+) => {
   try {
-    // Apply pagination
-    const offset = paginationParams?.offset ?? 0;
-    const limit = paginationParams?.limit ?? 50;
-    
-    // Start with simple query to avoid chaining
-    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
-    
-    // Apply filters step by step
-    let query = baseQuery.eq('user_id', userId);
-    
-    // Apply status filter if not "all"
-    if (status !== 'all') {
-      query = query.eq('status', status);
+    // Start building the query
+    let query = supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
+
+    // Apply status filter if provided
+    if (options?.status) {
+      query = query.eq('status', options.status);
     }
-    
+
     // Apply search filter if provided
-    if (search) {
-      // Create search filter with explicit or conditions
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+    if (options?.search) {
+      const searchTerm = `%${options.search}%`;
+      query = query.or(`name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`);
     }
-    
-    // Apply date filters if provided
-    if (startDate) {
-      query = query.gte('created_at', startDate);
+
+    // Apply ordering if provided
+    if (options?.orderBy) {
+      const direction = options?.orderDirection || 'asc';
+      query = query.order(options.orderBy, { ascending: direction === 'asc' });
+    } else {
+      // Default ordering by created_at
+      query = query.order('created_at', { ascending: false });
     }
-    
-    if (endDate) {
-      query = query.lte('created_at', endDate);
+
+    // Apply pagination if provided
+    if (options?.limit) {
+      query = query.limit(options.limit);
     }
-    
-    // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-    
-    // Execute with pagination
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
-    
-    // Process results using the helper function
-    return processQueryResults(data, count, error);
-  } catch (error: any) {
-    logger.error('Error in getSortedPatients:', error.message);
+
+    if (options?.from !== undefined) {
+      query = query.range(options.from, (options.from + (options.limit || 10)) - 1);
+    }
+
+    // Execute the query
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      data,
+      count
+    } as PatientResponse;
+  } catch (error) {
+    console.error('Error fetching patients:', (error as PostgrestError).message);
     return {
       success: false,
-      error: error.message
-    };
+      error: (error as PostgrestError).message
+    } as PatientResponse;
   }
 };

@@ -12,6 +12,11 @@ export function calculateBMR(
   const heightVal = parseFloat(height);
   const ageVal = parseFloat(age);
   
+  if (isNaN(weightVal) || isNaN(heightVal) || isNaN(ageVal)) {
+    console.error('Invalid input values for BMR calculation');
+    return 0;
+  }
+  
   let calculatedBmr;
   if (gender === 'male') {
     // Men: (10 * weight) + (6.25 * height) - (5 * age) + 5
@@ -38,6 +43,11 @@ export function calculateMacros(
   const carbsPercent = parseFloat(carbsPercentage) / 100;
   const proteinPercent = parseFloat(proteinPercentage) / 100;
   const fatPercent = parseFloat(fatPercentage) / 100;
+  
+  if (isNaN(carbsPercent) || isNaN(proteinPercent) || isNaN(fatPercent) || isNaN(tee)) {
+    console.error('Invalid percentages or TEE for macro calculation');
+    return { carbs: 0, protein: 0, fat: 0, proteinPerKg: 0 };
+  }
   
   const carbs = Math.round((tee * carbsPercent) / 4); // 4 calories per gram of carbs
   const protein = Math.round((tee * proteinPercent) / 4); // 4 calories per gram of protein
@@ -66,7 +76,13 @@ export function getActivityFactor(activityLevel: string): number {
     'muito_intenso': 1.9
   };
   
-  return activityFactors[activityLevel.toLowerCase()] || 1.55; // Default to moderate if not found
+  const factor = activityFactors[activityLevel.toLowerCase()];
+  if (!factor) {
+    console.warn(`Activity level '${activityLevel}' not found, defaulting to moderate`);
+    return 1.55; // Default to moderate if not found
+  }
+  
+  return factor;
 }
 
 /**
@@ -79,7 +95,13 @@ export function getCaloricAdjustment(objective: string): number {
     'hipertrofia': 300
   };
   
-  return adjustments[objective.toLowerCase()] || 0;
+  const adjustment = adjustments[objective.toLowerCase()];
+  if (adjustment === undefined) {
+    console.warn(`Objective '${objective}' not found, defaulting to 0 adjustment`);
+    return 0;
+  }
+  
+  return adjustment;
 }
 
 /**
@@ -90,6 +112,12 @@ export function calculateTEE(bmr: number, activityLevel: string, objective: stri
   adjustment: number;
   vet: number;
 } {
+  // Only continue if BMR is valid
+  if (isNaN(bmr) || bmr <= 0) {
+    console.error('Invalid BMR value for TEE calculation:', bmr);
+    return { get: 0, adjustment: 0, vet: 0 };
+  }
+  
   const activityFactor = getActivityFactor(activityLevel);
   const get = Math.round(bmr * activityFactor);
   const adjustment = getCaloricAdjustment(objective);

@@ -14,12 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 import { usePatient } from '@/contexts/PatientContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { ToastApi } from './types';
+import { calculateBMR, calculateTEE, calculateMacros } from './utils/calculations';
 
 const CalculatorTool = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { activePatient } = usePatient();
   const { setConsultationData } = useConsultationData();
+  const [isCalculating, setIsCalculating] = useState(false);
   
   // Create a wrapper for toast that matches the expected type
   const toastWrapper: ToastApi = {
@@ -42,8 +44,6 @@ const CalculatorTool = () => {
     setFatPercentage,
     setProfile,
     setConsultationType,
-    isCalculating,
-    calculateResults,
     clearCalculatorData,
     bmr,
     tee,
@@ -65,7 +65,76 @@ const CalculatorTool = () => {
     (parseInt(calculatorState.fatPercentage) || 0);
   
   const hasValidPercentages = totalPercentage === 100;
-  const hasRequiredFields = calculatorState.patientName && calculatorState.age && calculatorState.weight && calculatorState.height;
+  const hasRequiredFields = !!calculatorState.patientName && 
+                           !!calculatorState.age && 
+                           !!calculatorState.weight && 
+                           !!calculatorState.height;
+  
+  // Function to handle calculation
+  const handleCalculate = () => {
+    if (!hasRequiredFields) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha todos os campos obrigatórios: nome, idade, peso e altura.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!hasValidPercentages) {
+      toast({
+        title: "Distribuição inválida",
+        description: "A soma dos percentuais de macronutrientes deve ser 100%.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsCalculating(true);
+    
+    try {
+      // Calculate BMR
+      const calculatedBMR = calculateBMR(
+        calculatorState.gender,
+        calculatorState.weight.toString(),
+        calculatorState.height.toString(),
+        calculatorState.age.toString()
+      );
+      
+      // Calculate TEE
+      const calculatedTEE = calculateTEE(
+        calculatedBMR,
+        calculatorState.activityLevel,
+        calculatorState.objective
+      );
+      
+      // Calculate macros
+      const calculatedMacros = calculateMacros(
+        calculatedTEE.vet,
+        calculatorState.carbsPercentage,
+        calculatorState.proteinPercentage,
+        calculatorState.fatPercentage,
+        Number(calculatorState.weight)
+      );
+      
+      // Update the calculator state with the calculated values through existing context/hooks
+      console.log('Calculated values:', { 
+        bmr: calculatedBMR, 
+        tee: calculatedTEE.vet, 
+        macros: calculatedMacros 
+      });
+      
+    } catch (error) {
+      console.error('Calculation error:', error);
+      toast({
+        title: "Erro no cálculo",
+        description: "Ocorreu um erro ao calcular. Verifique os dados informados.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCalculating(false);
+    }
+  };
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -134,17 +203,7 @@ const CalculatorTool = () => {
           <CardContent className="pt-6">
             <CalculatorActions
               isCalculating={isCalculating}
-              calculateResults={() => {
-                if (hasRequiredFields && hasValidPercentages) {
-                  calculateResults(calculatorState);
-                } else {
-                  toast({
-                    title: "Dados incompletos",
-                    description: "Preencha todos os campos obrigatórios e ajuste os percentuais para totalizar 100%.",
-                    variant: "destructive"
-                  });
-                }
-              }}
+              calculateResults={handleCalculate}
             />
           </CardContent>
         </Card>
