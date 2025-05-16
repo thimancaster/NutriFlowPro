@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
 import { convertDbToPatient } from '../utils/patientDataUtils';
