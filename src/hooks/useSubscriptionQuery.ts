@@ -1,11 +1,10 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { SUBSCRIPTION_QUERY_KEY, PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
 import { useToast } from "./use-toast";
-import { validatePremiumStatus } from "@/utils/subscriptionUtils";
 import { User } from "@supabase/supabase-js";
 import React from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SubscriptionData {
   isPremium: boolean;
@@ -55,7 +54,6 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           // Return cache if available
           const cachedData = memoryCache.get(cacheKey);
           if (cachedData && (Date.now() - cachedData.timestamp) < 60000) { // 1 minute cache
-            console.log("Using memory cache for subscription data");
             return cachedData.data;
           }
           
@@ -70,7 +68,7 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
         isQueryRunningRef.current = true;
         
         try {
-          // Não buscar se o usuário não estiver autenticado
+          // Don't query if user isn't authenticated
           if (!isAuthenticated || !user) {
             return {
               isPremium: false,
@@ -82,18 +80,17 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           // Use memory cache if available and recent
           const cachedData = memoryCache.get(cacheKey);
           if (cachedData && (Date.now() - cachedData.timestamp) < 60000) { // 1 minute cache
-            console.log("Using memory cache for subscription data");
             return cachedData.data;
           }
   
-          // Verificar emails premium direto (rápido fail-fast)
+          // Check premium emails directly (fast fail-fast)
           if (user.email && PREMIUM_EMAILS.includes(user.email)) {
             const result = {
               isPremium: true,
               role: 'premium',
               email: user.email,
               subscriptionStart: new Date().toISOString(),
-              subscriptionEnd: null // Sem data de expiração para e-mails premium
+              subscriptionEnd: null // No expiration date for premium emails
             };
             
             // Update memory cache
@@ -105,105 +102,37 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
             return result;
           }
   
-          // Verificar status premium usando a função segura do banco
-          try {
-            const isPremium = await validatePremiumStatus(user.id, user.email);
+          // Check if user has subscriber record
+          const { data, error } = await supabase
+            .from("subscribers")
+            .select("is_premium, role, email, subscription_start, subscription_end")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (error) {
+            console.warn("Erro ao buscar dados da assinatura:", error);
             
-            // Em vez de consultar o banco de dados toda vez, armazenamos o valor em cache
-            const roleData = isPremium ? 'premium' : 'user';
-            
-            // Retornar dados em cache primeiro se disponível
-            const cachedSubData = localStorage.getItem(`subscription_${user.id}`);
-            if (cachedSubData) {
-              const parsed = JSON.parse(cachedSubData);
-              // Apenas use o cache se o status premium for o mesmo
-              if (parsed.isPremium === isPremium) {
-                const result = {
-                  isPremium,
-                  role: roleData,
-                  email: user.email,
-                  subscriptionStart: parsed.subscriptionStart,
-                  subscriptionEnd: parsed.subscriptionEnd
-                };
-                
-                // Update memory cache
-                memoryCache.set(cacheKey, {
-                  data: result,
-                  timestamp: Date.now()
-                });
-                
-                return result;
-              }
-            }
-            
-            // Se não tiver cache ou cache inválido, consulta o banco
-            const { data, error } = await supabase
-              .from("subscribers")
-              .select("is_premium, role, email, subscription_start, subscription_end")
-              .eq("user_id", user.id)
-              .maybeSingle();
-  
-            if (error) {
-              console.warn("Erro ao buscar dados da assinatura:", error);
-              
-              // Apenas mostra toast uma vez
-              if (!errorToastShown.current) {
-                toast({
-                  title: "Erro ao buscar dados da assinatura",
-                  description: "Usando configurações padrão.",
-                  variant: "destructive",
-                });
-                errorToastShown.current = true;
-                
-                // Reset após 5 minutos
-                setTimeout(() => {
-                  errorToastShown.current = false;
-                }, 300000);
-              }
-              
-              // Retorna dados baseados no status premium já verificado
-              const result = {
-                isPremium,
-                role: roleData,
-                email: user.email
-              };
-              
-              // Update memory cache
-              memoryCache.set(cacheKey, {
-                data: result,
-                timestamp: Date.now()
+            // Only show toast once
+            if (!errorToastShown.current) {
+              toast({
+                title: "Erro ao buscar dados da assinatura",
+                description: "Usando configurações padrão.",
+                variant: "destructive",
               });
+              errorToastShown.current = true;
               
-              return result;
+              // Reset after 5 minutes
+              setTimeout(() => {
+                errorToastShown.current = false;
+              }, 300000);
             }
-  
-            const result = {
-              isPremium,
-              role: roleData,
-              email: data ? data.email : user.email,
-              subscriptionStart: data ? data.subscription_start : null,
-              subscriptionEnd: data ? data.subscription_end : null
-            };
             
-            // Salva no cache
-            localStorage.setItem(`subscription_${user.id}`, JSON.stringify(result));
-            
-            // Update memory cache
-            memoryCache.set(cacheKey, {
-              data: result,
-              timestamp: Date.now()
-            });
-            
-            return result;
-          } catch (e) {
-            console.error("Erro na validação premium:", e);
-            
-            // Verificação de fallback direta para emails premium
-            const isPremium = user.email ? PREMIUM_EMAILS.includes(user.email) : false;
+            // Return default data based on email
+            const isPremiumEmail = user.email ? PREMIUM_EMAILS.includes(user.email) : false;
             
             const result = {
-              isPremium,
-              role: isPremium ? 'premium' : 'user',
+              isPremium: isPremiumEmail,
+              role: isPremiumEmail ? 'premium' : 'user',
               email: user.email
             };
             
@@ -215,19 +144,40 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
             
             return result;
           }
+
+          // Build response from database or determine from email
+          const isPremium = data?.is_premium || false;
+          const result = {
+            isPremium,
+            role: data?.role || 'user',
+            email: data?.email || user.email,
+            subscriptionStart: data?.subscription_start,
+            subscriptionEnd: data?.subscription_end
+          };
+          
+          // Update memory cache
+          memoryCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+          });
+          
+          return result;
         } finally {
-          isQueryRunningRef.current = false;
+          // Reset running flag after short delay to prevent immediate re-runs
+          setTimeout(() => {
+            isQueryRunningRef.current = false;
+          }, 1000);
         }
       } catch (error: any) {
         console.error("Erro na consulta de assinatura:", error);
         isQueryRunningRef.current = false;
         
-        // Verificação de fallback: em caso de erro, ainda verificamos o e-mail
+        // Default to checking email on error
         const isPremium = user?.email ? PREMIUM_EMAILS.includes(user.email) : false;
         
         const result = {
           isPremium,
-          role: 'user',
+          role: isPremium ? 'premium' : 'user',
           email: user?.email || null
         };
         

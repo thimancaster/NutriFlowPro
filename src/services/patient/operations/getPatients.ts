@@ -34,14 +34,18 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Use a factory function to create a fresh query instance
-    const query = supabase.from('patients').select('*', { count: 'exact' });
+    // Create a direct query without chaining
+    let query = supabase.from('patients');
     
-    // Apply filters directly
-    query.eq('user_id', userId);
+    // Select with count
+    query = query.select('*', { count: 'exact' });
     
+    // Apply user filter
+    query = query.eq('user_id', userId);
+    
+    // Apply status filter
     if (status !== 'all') {
-      query.eq('status', status);
+      query = query.eq('status', status);
     }
     
     // Set up pagination
@@ -91,30 +95,36 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Create a simple query without complex chaining
-    const query = supabase.from('patients').select('*', { count: 'exact' });
+    // Create a direct query without chaining
+    let query = supabase.from('patients');
     
-    // Apply filters directly
-    query.eq('user_id', userId);
+    // Select with count
+    query = query.select('*', { count: 'exact' });
     
+    // Apply user filter
+    query = query.eq('user_id', userId);
+    
+    // Apply status filter
     if (status !== 'all') {
-      query.eq('status', status);
+      query = query.eq('status', status);
     }
     
+    // Apply search filter
     if (search) {
-      query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
+    // Date filters
     if (startDate) {
-      query.gte('created_at', startDate);
+      query = query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query.lte('created_at', endDate);
+      query = query.lte('created_at', endDate);
     }
     
     // Apply sorting
-    query.order(sortBy, { ascending: sortOrder === 'asc' });
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination
     const offset = paginationParams?.offset ?? 0;

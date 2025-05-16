@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -7,7 +7,6 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { Star, Crown, Shield, User, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserProfile {
@@ -20,25 +19,21 @@ interface UserProfile {
 
 const UserInfoHeader = () => {
   const { toast } = useToast();
-  const { data: subscription, refetchSubscription, isLoading: subscriptionLoading } = useUserSubscription();
+  const { data: subscription, isLoading: subscriptionLoading } = useUserSubscription();
   const { user, isPremium: isAuthPremium } = useAuthState();
-  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   // Combinar as duas verificações para status premium
   const isPremium = isAuthPremium || (subscription?.isPremium || false);
   
   useEffect(() => {
-    // Força renovação dos dados da assinatura quando o componente monta
-    refetchSubscription();
-    
+    // Função para buscar o perfil do usuário
     const fetchUserProfile = async () => {
+      if (!user?.id) return;
+      
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          console.error("Nenhum usuário autenticado encontrado");
-          return;
-        }
+        setIsLoadingProfile(true);
         
         const { data: profile, error } = await supabase
           .from('users')
@@ -48,47 +43,37 @@ const UserInfoHeader = () => {
           
         if (error) {
           console.error('Erro ao buscar perfil do usuário:', error);
-          toast({
-            title: "Erro ao carregar perfil",
-            description: "Não foi possível carregar suas informações de perfil.",
-            variant: "destructive"
-          });
           return;
         }
           
         if (profile) {
-          console.log("Perfil do usuário carregado:", profile);
           setUserProfile(profile as UserProfile);
         }
       } catch (error) {
         console.error('Erro ao buscar perfil do usuário:', error);
+      } finally {
+        setIsLoadingProfile(false);
       }
     };
     
     fetchUserProfile();
-  }, [refetchSubscription, user?.id, toast]);
-
-  // Debug log para verificar status premium
-  useEffect(() => {
-    console.log("Status premium no UserInfoHeader:", {
-      isPremium,
-      isAuthPremium,
-      subscriptionPremium: subscription?.isPremium,
-      email: user?.email
-    });
-  }, [isPremium, isAuthPremium, subscription?.isPremium, user?.email]);
+  }, [user?.id]);
 
   // Estado de carregamento
-  if (subscriptionLoading || !userProfile) {
+  if ((subscriptionLoading || isLoadingProfile) && !userProfile) {
     return (
-      <div className="bg-blue-50 p-4 flex justify-between items-center animate-pulse">
-        <div className="h-6 bg-blue-200 rounded w-64"></div>
+      <div className="bg-blue-50 p-4 flex justify-between items-center">
+        <div className="animate-pulse flex items-center">
+          <div className="h-10 w-10 bg-blue-200 rounded-full"></div>
+          <div className="ml-4 h-4 bg-blue-200 rounded w-48"></div>
+        </div>
+        <div className="h-8 bg-blue-200 rounded w-32 animate-pulse"></div>
       </div>
     );
   }
 
   return (
-    <div className={`p-4 flex justify-between items-center animate-fade-in ${isPremium 
+    <div className={`p-4 flex justify-between items-center ${isPremium 
       ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200' 
       : 'bg-blue-50'}`}>
       <div className="flex items-center space-x-4">
@@ -97,10 +82,6 @@ const UserInfoHeader = () => {
             <AvatarImage 
               src={userProfile.photo_url} 
               alt={userProfile.name || 'Usuário'}
-              onError={(e) => {
-                console.error("Error loading avatar image:", e);
-                (e.target as HTMLImageElement).src = "/placeholder.svg";
-              }}
               className="hover-lift"
             />
           ) : (
@@ -110,15 +91,15 @@ const UserInfoHeader = () => {
           )}
         </Avatar>
         <div>
-          <span className="font-bold">Nutricionista:</span> {userProfile.name || 'Usuário'}
-          {userProfile.crn && <Badge variant="secondary" className="ml-2 hover-scale">CRN: {userProfile.crn}</Badge>}
+          <span className="font-bold">Nutricionista:</span> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}
+          {userProfile?.crn && <Badge variant="secondary" className="ml-2 hover-scale">CRN: {userProfile.crn}</Badge>}
           
           {isPremium && (
             <Badge 
               variant="outline" 
               className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm hover-scale"
             >
-              <Crown className="h-3 w-3 text-amber-500 fill-yellow-400 animate-pulse-soft" />
+              <Crown className="h-3 w-3 text-amber-500 fill-yellow-400" />
               Premium
             </Badge>
           )}
@@ -131,14 +112,14 @@ const UserInfoHeader = () => {
             to="/subscription" 
             className="text-sm text-nutri-blue hover:text-nutri-blue-dark flex items-center transition-all duration-200 hover:scale-105"
           >
-            <Star className="h-4 w-4 mr-1 animate-pulse-soft" />
+            <Star className="h-4 w-4 mr-1" />
             Upgrade para Premium
           </Link>
         )}
 
         {isPremium && (
           <div className="text-sm text-amber-700 flex items-center">
-            <Shield className="h-4 w-4 mr-1 text-amber-500 animate-pulse-soft" />
+            <Shield className="h-4 w-4 mr-1 text-amber-500" />
             Benefícios Premium Ativos
           </div>
         )}

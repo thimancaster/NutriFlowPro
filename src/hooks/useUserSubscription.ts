@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthState } from "./useAuthState";
 import { useSubscriptionQuery } from "./useSubscriptionQuery";
 import { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 export { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
 export type { SubscriptionData } from "./useSubscriptionQuery";
@@ -14,6 +14,7 @@ export type { SubscriptionData } from "./useSubscriptionQuery";
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
   const queryClient = useQueryClient();
+  const refetchInProgressRef = useRef(false);
   
   // Usar o hook de consulta de assinatura principal com configurações otimizadas
   const query = useSubscriptionQuery(user, isAuthenticated);
@@ -42,11 +43,24 @@ export const useUserSubscription = () => {
   }, [queryClient, user?.id]);
 
   /**
-   * Força uma atualização dos dados de assinatura com mensagem de log otimizada
+   * Força uma atualização dos dados de assinatura com controle para evitar múltiplas chamadas
    */
   const refetchSubscription = useCallback(async () => {
+    if (refetchInProgressRef.current) {
+      return;
+    }
+    
+    refetchInProgressRef.current = true;
     console.log("Atualizando dados de assinatura... (executando uma única vez)");
-    return query.refetch();
+    
+    try {
+      return await query.refetch();
+    } finally {
+      // Garantir que o sinalizador seja redefinido mesmo em caso de erro
+      setTimeout(() => {
+        refetchInProgressRef.current = false;
+      }, 5000); // Impedir novas tentativas por 5 segundos
+    }
   }, [query]);
 
   return {

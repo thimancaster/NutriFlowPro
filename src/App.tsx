@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   HashRouter,
   Routes,
@@ -11,19 +11,28 @@ import { supabase } from './integrations/supabase/client';
 import { publicRoutes, protectedRoutes } from './routes';
 import { logger } from './utils/logger';
 
-// Create a client with retry options
+// Create a client with improved retry options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
     },
   },
 });
 
 function App() {
+  // Use ref to track subscription to prevent memory leaks
+  const authSubscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
+  
   // Handle auth state changes, especially for OAuth providers like Google
   useEffect(() => {
+    // Clean up any existing subscription to prevent duplicates
+    if (authSubscriptionRef.current) {
+      authSubscriptionRef.current.unsubscribe();
+    }
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       logger.info("Auth state change event:", event);
       
@@ -63,11 +72,22 @@ function App() {
             logger.error("Error handling Google sign-in:", error);
           }
         }
+      } else if (event === 'SIGNED_OUT') {
+        // Clear any caches or local storage related to the user
+        localStorage.removeItem('activePatient');
+        queryClient.clear();
+        logger.info("User signed out, caches cleared");
       }
     });
 
+    // Store subscription reference for cleanup
+    authSubscriptionRef.current = subscription;
+
     return () => {
-      subscription.unsubscribe();
+      // Cleanup subscription on component unmount
+      if (authSubscriptionRef.current) {
+        authSubscriptionRef.current.unsubscribe();
+      }
     };
   }, []);
 
