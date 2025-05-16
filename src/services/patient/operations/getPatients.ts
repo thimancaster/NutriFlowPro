@@ -35,7 +35,7 @@ export const getPatients = async (
 ): Promise<PatientsResponse> => {
   try {
     // Use any for intermediate query to avoid deep type instantiation
-    let query: any = supabase.from('patients').select('*', { count: 'exact' });
+    let query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
     query = query.eq('user_id', userId);
@@ -47,18 +47,23 @@ export const getPatients = async (
     
     // Set up pagination
     const offset = paginationParams?.offset || 0;
-    const limit = paginationParams?.limit || 9999;
+    const limit = paginationParams?.limit || 50; // Reduced from 9999 to a more reasonable number
     
     // Execute query with range
     const { data, error, count } = await query.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
-    // Transform data
+    // Transform data with error handling
     const patients: Patient[] = [];
-    if (data) {
+    if (data && Array.isArray(data)) {
       for (const record of data as RawPatientRecord[]) {
-        patients.push(convertDbToPatient(record));
+        try {
+          patients.push(convertDbToPatient(record));
+        } catch (err) {
+          console.error('Error converting patient record:', err);
+          // Continue with other records even if one fails
+        }
       }
     }
     
@@ -93,7 +98,7 @@ export const getSortedPatients = async (
 ): Promise<PatientsResponse> => {
   try {
     // Use any for intermediate query to avoid deep type instantiation
-    let query: any = supabase.from('patients').select('*', { count: 'exact' });
+    let query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
     query = query.eq('user_id', userId);
@@ -122,18 +127,23 @@ export const getSortedPatients = async (
     
     // Apply pagination
     const offset = paginationParams?.offset ?? 0;
-    const limit = paginationParams?.limit ?? 9999;
+    const limit = paginationParams?.limit ?? 50; // Reduced from 9999 to a more reasonable number
     
     // Execute query with range
     const { data, error, count } = await query.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
-    // Transform data
+    // Transform data with error handling
     const patients: Patient[] = [];
-    if (data) {
+    if (data && Array.isArray(data)) {
       for (const record of data as RawPatientRecord[]) {
-        patients.push(convertDbToPatient(record));
+        try {
+          patients.push(convertDbToPatient(record));
+        } catch (err) {
+          console.error('Error converting patient record:', err);
+          // Continue with other records even if one fails
+        }
       }
     }
     

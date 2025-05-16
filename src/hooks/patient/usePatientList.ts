@@ -1,8 +1,8 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PatientFilters, PaginationParams } from '@/types';
+import { Patient, PatientFilters } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Json } from '@/integrations/supabase/types';
 
@@ -31,6 +31,10 @@ export const usePatientList = (options?: {
   const [error, setError] = useState<Error | null>(null);
   const [isError, setIsError] = useState(false);
   
+  // Use a ref for tracking fetch operations
+  const isFetchingRef = useRef(false);
+  const fetchTimeoutRef = useRef<number | null>(null);
+  
   // Filters state
   const [filters, setFilters] = useState<PatientFilters>({
     search: '',
@@ -42,7 +46,7 @@ export const usePatientList = (options?: {
   });
   
   // Pagination state
-  const [pagination, setPagination] = useState<PaginationParams>({
+  const [pagination, setPagination] = useState({
     page: options?.initialPage || 1,
     pageSize: options?.initialPageSize || 10,
     total: 0,
@@ -51,14 +55,36 @@ export const usePatientList = (options?: {
     offset: 0
   });
   
-  const fetchPatients = useCallback(async () => {
-    if (!user) return;
+  // Clear fetch timeout to prevent memory leaks
+  const clearFetchTimeout = useCallback(() => {
+    if (fetchTimeoutRef.current !== null) {
+      window.clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = null;
+    }
+  }, []);
+  
+  // Debounced fetch function
+  const debouncedFetch = useCallback((delay = 300) => {
+    clearFetchTimeout();
     
+    fetchTimeoutRef.current = window.setTimeout(() => {
+      fetchPatients();
+    }, delay);
+    
+    return () => clearFetchTimeout();
+  }, [clearFetchTimeout]);
+  
+  const fetchPatients = useCallback(async () => {
+    // Prevent multiple simultaneous fetches
+    if (!user || isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
     setIsError(false);
     
     try {
+      console.log("Fetching patients with filters:", filters);
       let query = supabase
         .from('patients')
         .select('*', { count: 'exact' });
@@ -99,28 +125,46 @@ export const usePatientList = (options?: {
         query = query.range(offset, offset + limit - 1);
       }
       
+      console.log("Executing query:", JSON.stringify(query));
       const { data, error, count } = await query;
       
       if (error) throw error;
+      console.log("Query returned data:", data?.length, "items");
       
       // Transform data to match Patient type
-      const transformedData: Patient[] = data.map(patient => {
-        const measurementsData = safeParseJson(patient.measurements, {});
-        const goalsData = safeParseJson(patient.goals, {});
-        
-        return {
-          ...patient,
-          status: 'active', // Default to active if not specified in DB
-          goals: {
-            objective: goalsData.objective || '',
-            profile: goalsData.profile || '',
-          },
-          measurements: {
-            weight: measurementsData.weight || 0,
-            height: measurementsData.height || 0,
-          },
-        };
-      });
+      const transformedData: Patient[] = data?.map(patient => {
+        try {
+          const measurementsData = safeParseJson(patient.measurements, {});
+          const goalsData = safeParseJson(patient.goals, {});
+          const addressData = typeof patient.address === 'string' ? 
+            safeParseJson(patient.address, {}) : patient.address || {};
+          
+          return {
+            ...patient,
+            status: patient.status || 'active', // Default to active if not specified in DB
+            goals: {
+              objective: goalsData.objective || '',
+              profile: goalsData.profile || '',
+            },
+            measurements: {
+              weight: measurementsData.weight || 0,
+              height: measurementsData.height || 0,
+            },
+            address: addressData
+          };
+        } catch (err) {
+          console.error("Error transforming patient data:", err);
+          // Return a basic patient object to prevent the entire list from failing
+          return {
+            ...patient,
+            id: patient.id,
+            name: patient.name || 'Unknown Patient',
+            status: 'active',
+            goals: { objective: '', profile: '' },
+            measurements: { weight: 0, height: 0 }
+          };
+        }
+      }) || [];
       
       setPatients(transformedData);
       setTotalPatients(count || 0);
@@ -128,41 +172,48 @@ export const usePatientList = (options?: {
       // Calculate total pages
       const totalPages = Math.ceil((count || 0) / pagination.pageSize);
       setPagination(prev => ({ ...prev, total: count || 0, totalPages }));
+      console.log("Patient list updated successfully");
     } catch (err) {
       console.error('Error fetching patients:', err);
       setError(err as Error);
       setIsError(true);
       
       toast({
-        title: 'Error',
-        description: `Failed to load patients: ${(err as Error).message}`,
+        title: 'Erro',
+        description: `Falha ao carregar pacientes: ${(err as Error).message}`,
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, [user, filters, pagination, toast]);
   
   // Fetch on mount and when dependencies change
   useEffect(() => {
     if (user) {
-      fetchPatients();
+      debouncedFetch(500);
     }
-  }, [user, fetchPatients]);
+    
+    return () => {
+      clearFetchTimeout();
+    };
+  }, [user, debouncedFetch, clearFetchTimeout]);
   
   // Handle filter changes
-  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
+  const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPagination(prev => ({ ...prev, page: 1, offset: 0 })); // Reset to first page
-  };
+    debouncedFetch(300); 
+  }, [debouncedFetch]);
   
   // Handle status filter change specifically
-  const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
+  const handleStatusChange = useCallback((status: 'active' | 'archived' | 'all') => {
     handleFilterChange({ status });
-  };
+  }, [handleFilterChange]);
   
   // Handle pagination
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     const offset = (page - 1) * pagination.pageSize;
     setPagination(prev => ({ 
       ...prev, 
@@ -170,10 +221,11 @@ export const usePatientList = (options?: {
       offset,
       limit: prev.pageSize
     }));
-  };
+    debouncedFetch(100);
+  }, [pagination.pageSize, debouncedFetch]);
   
   // Toggle patient status between active/archived
-  const togglePatientStatus = async (patientId: string, newStatus: 'active' | 'archived') => {
+  const togglePatientStatus = useCallback(async (patientId: string, newStatus: 'active' | 'archived') => {
     if (!user) return;
     
     try {
@@ -202,7 +254,7 @@ export const usePatientList = (options?: {
       });
       
       // Re-fetch to ensure sync with server
-      fetchPatients();
+      debouncedFetch(500);
     } catch (err) {
       console.error('Error updating patient status:', err);
       
@@ -212,9 +264,11 @@ export const usePatientList = (options?: {
         variant: 'destructive',
       });
     }
-  };
+  }, [user, toast, debouncedFetch]);
   
-  const refetch = fetchPatients;
+  const refetch = useCallback(() => {
+    fetchPatients();
+  }, [fetchPatients]);
   
   return {
     patients,

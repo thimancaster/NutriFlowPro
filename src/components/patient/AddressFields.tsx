@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { TextField, SelectField } from './fields';
+import TextField from './fields/TextField';
+import { SelectField } from './fields';
 import { formatCep } from '@/utils/patientValidation';
 import { fetchAddressByCep } from '@/services/cepService';
 import { useToast } from '@/hooks/use-toast';

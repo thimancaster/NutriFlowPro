@@ -85,4 +85,5 @@ export const TextField = ({
   );
 };
 
+// Also export as default for compatibility
 export default TextField;

@@ -16,6 +16,9 @@ const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 // CPF validation function
 export const validateCpf = (cpf: string): boolean => {
+  // Empty CPF is considered valid (since it's optional)
+  if (!cpf || cpf.trim() === '') return true;
+  
   // Remove non-numeric characters
   cpf = cpf.replace(/[^\d]/g, '');
 
@@ -66,8 +69,9 @@ export const patientSchema = z.object({
   phone: z.string().regex(phoneRegex, { message: "Telefone inválido: Use o formato (XX) XXXXX-XXXX" }).or(z.string().length(0)),
   secondaryPhone: z.string().regex(phoneRegex, { message: "Telefone secundário inválido: Use o formato (XX) XXXXX-XXXX" }).or(z.string().length(0)).optional(),
   sex: z.enum(["M", "F", "O"], { message: "Selecione o gênero" }),
-  birthDate: z.date({ required_error: "Data de nascimento é obrigatória" }),
+  birthDate: z.date({ required_error: "Data de nascimento é obrigatória" }).optional(),
   cpf: z.string().regex(cpfRegex, { message: "CPF inválido: Use o formato XXX.XXX.XXX-XX" })
+       .or(z.string().length(0))
        .refine(
          (cpf) => cpf.length === 0 || validateCpf(cpf), 
          { message: "CPF inválido: dígitos verificadores não conferem" }
@@ -84,6 +88,12 @@ export type PatientFormData = z.infer<typeof patientSchema>;
 // Validate specific field
 export const validateField = (field: string, value: any): string | null => {
   try {
+    // For empty optional fields, don't validate
+    if ((field === 'email' || field === 'phone' || field === 'secondaryPhone' || field === 'cpf') && 
+        (!value || value === '')) {
+      return null;
+    }
+    
     // Handle nested fields like address.cep
     if (field.includes('.')) {
       const [parentField, childField] = field.split('.');
@@ -113,6 +123,11 @@ export const validateField = (field: string, value: any): string | null => {
       return null;
     }
     
+    // Special case for birthDate
+    if (field === 'birthDate' && !value) {
+      return "Data de nascimento é obrigatória";
+    }
+    
     // Handle standard fields
     const fieldSchema = patientSchema.shape[field as keyof typeof patientSchema.shape];
     if (fieldSchema) {
@@ -121,6 +136,7 @@ export const validateField = (field: string, value: any): string | null => {
     }
     return null;
   } catch (error: any) {
+    console.error("Field validation error:", field, error);
     if (error.errors && error.errors.length > 0) {
       return error.errors[0].message;
     }
@@ -130,6 +146,7 @@ export const validateField = (field: string, value: any): string | null => {
 
 // CPF mask function
 export const formatCpf = (value: string) => {
+  if (!value) return '';
   return value
     .replace(/\D/g, '')
     .replace(/(\d{3})(\d)/, '$1.$2')
@@ -140,6 +157,7 @@ export const formatCpf = (value: string) => {
 
 // Phone mask function
 export const formatPhone = (value: string) => {
+  if (!value) return '';
   return value
     .replace(/\D/g, '')
     .replace(/(\d{2})(\d)/, '($1) $2')
@@ -149,6 +167,7 @@ export const formatPhone = (value: string) => {
 
 // CEP mask function
 export const formatCep = (value: string) => {
+  if (!value) return '';
   return value
     .replace(/\D/g, '')
     .replace(/(\d{5})(\d)/, '$1-$2')
