@@ -36,10 +36,8 @@ export const getPatients = async (
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 50;
     
-    // Build query directly without chaining to avoid deep type instantiation
-    const query = supabase
-      .from('patients')
-      .select('*', { count: 'exact' });
+    // Create base query
+    const query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
     query.eq('user_id', userId);
@@ -49,8 +47,13 @@ export const getPatients = async (
       query.eq('status', status);
     }
     
-    // Apply pagination using range instead of limit+offset to simplify
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
+    // Apply pagination
+    const from = offset;
+    const to = offset + limit - 1;
+    
+    // Execute query with pagination range
+    const result = await query.range(from, to);
+    const { data, error, count } = result;
     
     if (error) throw error;
     
@@ -100,10 +103,8 @@ export const getSortedPatients = async (
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 50;
     
-    // Create query without chaining to avoid deep type instantiation
-    const query = supabase
-      .from('patients')
-      .select('*', { count: 'exact' });
+    // Create base query
+    const query = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
     query.eq('user_id', userId);
@@ -130,8 +131,11 @@ export const getSortedPatients = async (
     // Apply sorting
     query.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    // Execute query with pagination
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
+    // Execute query with pagination range
+    const from = offset;
+    const to = offset + limit - 1;
+    const result = await query.range(from, to);
+    const { data, error, count } = result;
     
     if (error) throw error;
     
