@@ -24,60 +24,59 @@ export type GetPatientsErrorResponse = {
 export type PatientsResponse = GetPatientsSuccessResponse | GetPatientsErrorResponse;
 
 /**
- * Simple query builder helper to avoid excessive type instantiation
+ * Create a simplified query with explicit typings to avoid deep type instantiation
  */
 const buildPatientsQuery = (userId: string, status: string) => {
-  // Create base query
-  const query = supabase.from('patients').select('*', { count: 'exact' });
+  // Instead of chaining methods, use variables and explicit types
+  const query = supabase.from('patients');
+  const select = query.select('*', { count: 'exact' });
   
-  // Apply filters
-  const filterQuery = query.eq('user_id', userId);
-  
-  // Only apply status filter if not 'all'
+  // Apply user filter
   if (status !== 'all') {
-    return filterQuery.eq('status', status);
+    return select.eq('user_id', userId).eq('status', status);
+  } else {
+    return select.eq('user_id', userId);
   }
-  
-  return filterQuery;
 };
 
 /**
- * Helper function to execute a patient query and format the response
+ * Process database results into a standardized response format
+ * @param data - The raw data from the database
+ * @param count - The count of total records
+ * @param error - Any error that occurred during the query
  */
-const executePatientQuery = async (
-  queryFn: () => Promise<{ data: any[] | null; error: any; count: number | null }>
-): Promise<PatientsResponse> => {
-  try {
-    const { data, error, count } = await queryFn();
-    
-    if (error) throw error;
-    
-    // Transform data with error handling
-    const patients: Patient[] = [];
-    if (Array.isArray(data)) {
-      for (const record of data) {
-        try {
-          patients.push(convertDbToPatient(record));
-        } catch (err) {
-          logger.error('Error converting patient record:', err);
-        }
-      }
-    }
-    
-    return {
-      success: true,
-      data: {
-        patients,
-        total: count || 0
-      }
-    };
-  } catch (error: any) {
+const processQueryResults = (
+  data: any[] | null, 
+  count: number | null, 
+  error: any
+): PatientsResponse => {
+  if (error) {
     logger.error('Error in patient query:', error.message);
     return {
       success: false,
       error: error.message
     };
   }
+
+  // Transform data with error handling
+  const patients: Patient[] = [];
+  if (Array.isArray(data)) {
+    for (const record of data) {
+      try {
+        patients.push(convertDbToPatient(record));
+      } catch (err) {
+        logger.error('Error converting patient record:', err);
+      }
+    }
+  }
+  
+  return {
+    success: true,
+    data: {
+      patients,
+      total: count || 0
+    }
+  };
 };
 
 /**
@@ -92,37 +91,18 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Apply pagination
+    // Get base query
+    const query = buildPatientsQuery(userId, status);
+
+    // Apply pagination separately
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 50;
     
-    // Build the query step by step to avoid deep type instantiation
-    const baseQuery = buildPatientsQuery(userId, status);
+    // Execute query with explicit range parameters
+    const { data, error, count } = await query.range(offset, offset + limit - 1);
     
-    // Execute with pagination
-    const { data, error, count } = await baseQuery.range(offset, offset + limit - 1);
-    
-    if (error) throw error;
-    
-    // Transform data with error handling
-    const patients: Patient[] = [];
-    if (Array.isArray(data)) {
-      for (const record of data) {
-        try {
-          patients.push(convertDbToPatient(record));
-        } catch (err) {
-          logger.error('Error converting patient record:', err);
-        }
-      }
-    }
-    
-    return {
-      success: true,
-      data: {
-        patients,
-        total: count || 0
-      }
-    };
+    // Process results using the helper function
+    return processQueryResults(data, count, error);
   } catch (error: any) {
     logger.error('Error in getPatients:', error.message);
     return {
@@ -153,16 +133,24 @@ export const getSortedPatients = async (
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 50;
     
-    // Start with base query
-    let query = buildPatientsQuery(userId, status);
+    // Start with simple query to avoid chaining
+    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Apply additional filters
-    if (search) {
-      // Create search filter as a separate variable
-      const searchFilter = `name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`;
-      query = query.or(searchFilter);
+    // Apply filters step by step
+    let query = baseQuery.eq('user_id', userId);
+    
+    // Apply status filter if not "all"
+    if (status !== 'all') {
+      query = query.eq('status', status);
     }
     
+    // Apply search filter if provided
+    if (search) {
+      // Create search filter with explicit or conditions
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+    }
+    
+    // Apply date filters if provided
     if (startDate) {
       query = query.gte('created_at', startDate);
     }
@@ -177,27 +165,8 @@ export const getSortedPatients = async (
     // Execute with pagination
     const { data, error, count } = await query.range(offset, offset + limit - 1);
     
-    if (error) throw error;
-    
-    // Transform data with error handling
-    const patients: Patient[] = [];
-    if (Array.isArray(data)) {
-      for (const record of data) {
-        try {
-          patients.push(convertDbToPatient(record));
-        } catch (err) {
-          logger.error('Error converting patient record:', err);
-        }
-      }
-    }
-    
-    return {
-      success: true,
-      data: {
-        patients,
-        total: count || 0
-      }
-    };
+    // Process results using the helper function
+    return processQueryResults(data, count, error);
   } catch (error: any) {
     logger.error('Error in getSortedPatients:', error.message);
     return {
