@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { User, Plus } from 'lucide-react';
+import { CalculatorProvider } from '@/contexts/CalculatorContext';
 
 const CalculatorPage = () => {
   const { activePatient } = usePatient();
@@ -63,7 +64,9 @@ const CalculatorPage = () => {
         </CardContent>
       </Card>
       
-      <CalculatorTool />
+      <CalculatorProvider>
+        <CalculatorTool />
+      </CalculatorProvider>
     </div>
   );
 };
