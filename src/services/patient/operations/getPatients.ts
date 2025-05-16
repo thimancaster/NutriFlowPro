@@ -34,34 +34,49 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Initialize the query without chaining to avoid deep type instantiation
-    const query = supabase.from('patients');
+    // Create query components separately without chaining
+    let queryData;
+    let queryError;
+    let queryCount = 0;
     
-    // Build the query parts separately
-    const selectQuery = query.select('*', { count: 'exact' });
+    // Create the base query first
+    const baseQueryResult = await supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+      .then(result => {
+        // Filter by status if needed
+        if (status !== 'all') {
+          return supabase
+            .from('patients')
+            .select('*', { count: 'exact' })
+            .eq('user_id', userId)
+            .eq('status', status);
+        }
+        return result;
+      });
     
-    // Apply filters
-    const filteredQuery = selectQuery.eq('user_id', userId);
-    
-    // Create a new query with status filter if needed
-    let finalQuery = filteredQuery;
-    if (status !== 'all') {
-      finalQuery = filteredQuery.eq('status', status);
-    }
-    
-    // Set up pagination
+    // Apply pagination separately
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 50;
     
-    // Execute query with range
-    const { data, error, count } = await finalQuery.range(offset, offset + limit - 1);
+    // Execute final query with range
+    const { data, error, count } = await supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+      .range(offset, offset + limit - 1);
     
-    if (error) throw error;
+    queryData = data;
+    queryError = error;
+    queryCount = count || 0;
+    
+    if (queryError) throw queryError;
     
     // Transform data with error handling
     const patients: Patient[] = [];
-    if (data && Array.isArray(data)) {
-      for (const record of data as RawPatientRecord[]) {
+    if (queryData && Array.isArray(queryData)) {
+      for (const record of queryData as RawPatientRecord[]) {
         try {
           patients.push(convertDbToPatient(record));
         } catch (err) {
@@ -75,7 +90,7 @@ export const getPatients = async (
       success: true,
       data: {
         patients,
-        total: count || 0
+        total: queryCount
       }
     };
   } catch (error: any) {
@@ -101,41 +116,45 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Initialize the query without chaining to avoid deep type instantiation
-    const query = supabase.from('patients');
-    
-    // Start building the query
-    let builtQuery = query.select('*', { count: 'exact' })
-                          .eq('user_id', userId);
-    
-    // Apply status filter
-    if (status !== 'all') {
-      builtQuery = builtQuery.eq('status', status);
-    }
-    
-    // Apply search filter
-    if (search) {
-      builtQuery = builtQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
-    }
-    
-    // Apply date filters
-    if (startDate) {
-      builtQuery = builtQuery.gte('created_at', startDate);
-    }
-    
-    if (endDate) {
-      builtQuery = builtQuery.lte('created_at', endDate);
-    }
-    
-    // Apply sorting
-    builtQuery = builtQuery.order(sortBy, { ascending: sortOrder === 'asc' });
+    // Apply filters progressively by executing separate queries
+    let queryData;
+    let queryError;
+    let queryCount = 0;
     
     // Apply pagination
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 50;
     
-    // Execute query with range
-    const { data, error, count } = await builtQuery.range(offset, offset + limit - 1);
+    // Construct the base query
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Apply user filter (required)
+    query = query.eq('user_id', userId);
+    
+    // Apply status filter
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+    
+    // Apply search filter if specified
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+    }
+    
+    // Apply date filters if specified
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+    
+    // Apply sorting
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    
+    // Execute the final query with pagination
+    const { data, error, count } = await query.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
