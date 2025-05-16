@@ -34,15 +34,16 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Use simple variable assignments to avoid deep type instantiation
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Build the query in steps to avoid deep type instantiation
+    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
-    query = query.eq('user_id', userId);
+    const userQuery = baseQuery.eq('user_id', userId);
     
     // Apply status filter if needed
+    let statusQuery = userQuery;
     if (status !== 'all') {
-      query = query.eq('status', status);
+      statusQuery = userQuery.eq('status', status);
     }
     
     // Set up pagination
@@ -50,7 +51,7 @@ export const getPatients = async (
     const limit = paginationParams?.limit || 50; // Reduced from 9999 to a more reasonable number
     
     // Execute query with range
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
+    const { data, error, count } = await statusQuery.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
@@ -97,11 +98,11 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Use simple variable assignments to avoid deep type instantiation
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Build the query in steps to avoid deep type instantiation
+    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
     
     // Apply user filter
-    query = query.eq('user_id', userId);
+    let query = baseQuery.eq('user_id', userId);
     
     // Apply status filter
     if (status !== 'all') {
