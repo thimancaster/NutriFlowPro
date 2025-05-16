@@ -34,13 +34,15 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with basic query
-    const query = supabase.from('patients').select('*', { count: 'exact' });
+    // Create a query builder function to avoid deep type instantiation
+    const createQuery = () => supabase.from('patients').select('*', { count: 'exact' });
     
-    // Apply user filter
+    // Start with fresh query instance
+    const query = createQuery();
+    
+    // Apply filters
     query.eq('user_id', userId);
     
-    // Apply status filter if not 'all'
     if (status !== 'all') {
       query.eq('status', status);
     }
@@ -92,23 +94,23 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Start with basic query
-    const query = supabase.from('patients').select('*', { count: 'exact' });
+    // Create a query builder function to avoid deep type instantiation
+    const createQuery = () => supabase.from('patients').select('*', { count: 'exact' });
     
-    // Apply user filter
+    // Start with fresh query instance
+    const query = createQuery();
+    
+    // Apply filters
     query.eq('user_id', userId);
     
-    // Apply status filter if not 'all'
     if (status !== 'all') {
       query.eq('status', status);
     }
     
-    // Apply search if provided
     if (search) {
       query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
-    // Apply date filters if provided
     if (startDate) {
       query.gte('created_at', startDate);
     }
