@@ -34,43 +34,37 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Variables to store our results
-    let data, error, count;
+    // Direct variables to store results
+    let data, count;
     
     // Apply pagination
     const offset = paginationParams?.offset || 0;
     const limit = paginationParams?.limit || 50;
     
-    // Build and execute query directly without chaining too many methods
-    if (status === 'all') {
-      const result = await supabase
-        .from('patients')
-        .select('*', { count: 'exact' })
-        .eq('user_id', userId)
-        .range(offset, offset + limit - 1);
-      
-      data = result.data;
-      error = result.error;
-      count = result.count;
-    } else {
-      const result = await supabase
-        .from('patients')
-        .select('*', { count: 'exact' })
-        .eq('user_id', userId)
-        .eq('status', status)
-        .range(offset, offset + limit - 1);
-      
-      data = result.data;
-      error = result.error;
-      count = result.count;
+    // Build query with minimal nesting
+    let query = supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
+    
+    // Apply status filter if not "all"
+    if (status !== 'all') {
+      query = query.eq('status', status);
     }
     
-    if (error) throw error;
+    // Apply pagination and execute
+    const result = await query.range(offset, offset + limit - 1);
+    
+    // Extract data directly to avoid deep nesting
+    if (result.error) throw result.error;
+    
+    data = result.data || [];
+    count = result.count || 0;
     
     // Transform data with error handling
     const patients: Patient[] = [];
-    if (data && Array.isArray(data)) {
-      for (const record of data as RawPatientRecord[]) {
+    if (Array.isArray(data)) {
+      for (const record of data) {
         try {
           patients.push(convertDbToPatient(record));
         } catch (err) {
@@ -84,7 +78,7 @@ export const getPatients = async (
       success: true,
       data: {
         patients,
-        total: count || 0
+        total: count
       }
     };
   } catch (error: any) {
@@ -114,43 +108,44 @@ export const getSortedPatients = async (
     const offset = paginationParams?.offset ?? 0;
     const limit = paginationParams?.limit ?? 50;
     
-    // Start with base query
-    let baseQuery = supabase
+    // Build base query to avoid deep nesting
+    let query = supabase
       .from('patients')
       .select('*', { count: 'exact' })
       .eq('user_id', userId);
     
-    // Apply status filter if not "all"
+    // Apply filters sequentially
     if (status !== 'all') {
-      baseQuery = baseQuery.eq('status', status);
+      query = query.eq('status', status);
     }
     
-    // Apply search filter if provided
     if (search) {
-      baseQuery = baseQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
-    // Apply date filters if provided
     if (startDate) {
-      baseQuery = baseQuery.gte('created_at', startDate);
+      query = query.gte('created_at', startDate);
     }
     
     if (endDate) {
-      baseQuery = baseQuery.lte('created_at', endDate);
+      query = query.lte('created_at', endDate);
     }
     
     // Apply sorting
-    const sortQuery = baseQuery.order(sortBy, { ascending: sortOrder === 'asc' });
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
     
-    // Finally apply pagination and execute
-    const { data, error, count } = await sortQuery.range(offset, offset + limit - 1);
+    // Execute query
+    const result = await query.range(offset, offset + limit - 1);
     
-    if (error) throw error;
+    if (result.error) throw result.error;
+    
+    const data = result.data || [];
+    const count = result.count || 0;
     
     // Transform data with error handling
     const patients: Patient[] = [];
-    if (data && Array.isArray(data)) {
-      for (const record of data as RawPatientRecord[]) {
+    if (Array.isArray(data)) {
+      for (const record of data) {
         try {
           patients.push(convertDbToPatient(record));
         } catch (err) {
@@ -164,7 +159,7 @@ export const getSortedPatients = async (
       success: true,
       data: {
         patients,
-        total: count || 0
+        total: count
       }
     };
   } catch (error: any) {
