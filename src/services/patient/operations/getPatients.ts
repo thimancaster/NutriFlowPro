@@ -34,24 +34,27 @@ export const getPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Build the query in steps to avoid deep type instantiation
-    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
+    // Initialize the query without chaining to avoid deep type instantiation
+    const query = supabase.from('patients');
     
-    // Apply user filter
-    const userQuery = baseQuery.eq('user_id', userId);
+    // Build the query parts separately
+    const selectQuery = query.select('*', { count: 'exact' });
     
-    // Apply status filter if needed
-    let statusQuery = userQuery;
+    // Apply filters
+    const filteredQuery = selectQuery.eq('user_id', userId);
+    
+    // Create a new query with status filter if needed
+    let finalQuery = filteredQuery;
     if (status !== 'all') {
-      statusQuery = userQuery.eq('status', status);
+      finalQuery = filteredQuery.eq('status', status);
     }
     
     // Set up pagination
     const offset = paginationParams?.offset || 0;
-    const limit = paginationParams?.limit || 50; // Reduced from 9999 to a more reasonable number
+    const limit = paginationParams?.limit || 50;
     
     // Execute query with range
-    const { data, error, count } = await statusQuery.range(offset, offset + limit - 1);
+    const { data, error, count } = await finalQuery.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
@@ -98,40 +101,41 @@ export const getSortedPatients = async (
   }
 ): Promise<PatientsResponse> => {
   try {
-    // Build the query in steps to avoid deep type instantiation
-    const baseQuery = supabase.from('patients').select('*', { count: 'exact' });
+    // Initialize the query without chaining to avoid deep type instantiation
+    const query = supabase.from('patients');
     
-    // Apply user filter
-    let query = baseQuery.eq('user_id', userId);
+    // Start building the query
+    let builtQuery = query.select('*', { count: 'exact' })
+                          .eq('user_id', userId);
     
     // Apply status filter
     if (status !== 'all') {
-      query = query.eq('status', status);
+      builtQuery = builtQuery.eq('status', status);
     }
     
     // Apply search filter
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      builtQuery = builtQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
     }
     
     // Apply date filters
     if (startDate) {
-      query = query.gte('created_at', startDate);
+      builtQuery = builtQuery.gte('created_at', startDate);
     }
     
     if (endDate) {
-      query = query.lte('created_at', endDate);
+      builtQuery = builtQuery.lte('created_at', endDate);
     }
     
     // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    builtQuery = builtQuery.order(sortBy, { ascending: sortOrder === 'asc' });
     
     // Apply pagination
     const offset = paginationParams?.offset ?? 0;
-    const limit = paginationParams?.limit ?? 50; // Reduced from 9999 to a more reasonable number
+    const limit = paginationParams?.limit ?? 50;
     
     // Execute query with range
-    const { data, error, count } = await query.range(offset, offset + limit - 1);
+    const { data, error, count } = await builtQuery.range(offset, offset + limit - 1);
     
     if (error) throw error;
     
