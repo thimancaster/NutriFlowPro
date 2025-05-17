@@ -11,7 +11,8 @@ type BasicPatientData = {
   gender?: string | null;
   status?: string;
   created_at?: string;
-  [key: string]: any; // Allow additional properties
+  // Use a simpler indexer signature
+  [key: string]: any;
 };
 
 type PatientResponse = {
@@ -38,7 +39,7 @@ export const getPatients = async (
   }
 ): Promise<PatientResponse> => {
   try {
-    // Start building the query
+    // Create a simple initial query
     let query = supabase
       .from('patients')
       .select('*', { count: 'exact' })
@@ -89,6 +90,7 @@ export const getPatients = async (
       throw error;
     }
 
+    // Use type assertion without complex object construction
     return {
       success: true,
       data: data as BasicPatientData[],
