@@ -11,7 +11,7 @@ type BasicPatientData = {
   gender?: string | null;
   status?: string;
   created_at?: string;
-  [key: string]: any;
+  [key: string]: any; // Allow additional properties
 };
 
 type PatientResponse = {
@@ -27,14 +27,16 @@ type PatientResponse = {
 export const getPatients = async (
   userId: string,
   options?: {
-    status?: 'active' | 'archived';
+    status?: 'active' | 'archived' | 'all';
     limit?: number;
     from?: number;
     orderBy?: string;
     orderDirection?: 'asc' | 'desc';
     search?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }
-) => {
+): Promise<PatientResponse> => {
   try {
     // Start building the query
     let query = supabase
@@ -43,7 +45,7 @@ export const getPatients = async (
       .eq('user_id', userId);
 
     // Apply status filter if provided
-    if (options?.status) {
+    if (options?.status && options.status !== 'all') {
       query = query.eq('status', options.status);
     }
 
@@ -51,6 +53,15 @@ export const getPatients = async (
     if (options?.search) {
       const searchTerm = `%${options.search}%`;
       query = query.or(`name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`);
+    }
+
+    // Apply date filters
+    if (options?.dateFrom) {
+      query = query.gte('created_at', options.dateFrom);
+    }
+
+    if (options?.dateTo) {
+      query = query.lte('created_at', options.dateTo);
     }
 
     // Apply ordering if provided
@@ -80,14 +91,14 @@ export const getPatients = async (
 
     return {
       success: true,
-      data,
+      data: data as BasicPatientData[],
       count
-    } as PatientResponse;
+    };
   } catch (error) {
     console.error('Error fetching patients:', (error as PostgrestError).message);
     return {
       success: false,
       error: (error as PostgrestError).message
-    } as PatientResponse;
+    };
   }
 };
