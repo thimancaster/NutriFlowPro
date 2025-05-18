@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
-const TOAST_REMOVE_DELAY = 5000; // Changed from 1000000 to 5000ms (5 seconds)
+const TOAST_REMOVE_DELAY = 5000; // Definido para 5 segundos, tempo padrão para toasts
 
 export type ToastProps = {
   id?: string;
@@ -14,6 +14,7 @@ export type ToastProps = {
   action?: ToastActionElement;
   variant?: "default" | "destructive";
   open?: boolean;
+  duration?: number; // Adicionando opção de customizar duração
 };
 
 type ToasterToast = Required<Pick<ToastProps, "id">> & ToastProps & {
@@ -53,9 +54,9 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
-const addToRemoveQueue = (toastId: string) => {
+const addToRemoveQueue = (toastId: string, duration = TOAST_REMOVE_DELAY) => {
   if (toastTimeouts.has(toastId)) {
-    return;
+    clearTimeout(toastTimeouts.get(toastId));
   }
 
   const timeout = setTimeout(() => {
@@ -64,7 +65,7 @@ const addToRemoveQueue = (toastId: string) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     });
-  }, TOAST_REMOVE_DELAY);
+  }, duration);
 
   toastTimeouts.set(toastId, timeout);
 };
@@ -145,6 +146,8 @@ export type ToastApi = {
 
 function toast(props: ToastProps) {
   const id = props.id || Math.random().toString(36).slice(2, 9);
+  const duration = props.duration || TOAST_REMOVE_DELAY;
+  
   const update = (props: ToastProps) => {
     dispatch({
       type: "UPDATE_TOAST",
@@ -164,6 +167,9 @@ function toast(props: ToastProps) {
       open: true,
     },
   });
+  
+  // Configurar auto-dismiss após duração especificada
+  addToRemoveQueue(id, duration);
 
   return {
     id,

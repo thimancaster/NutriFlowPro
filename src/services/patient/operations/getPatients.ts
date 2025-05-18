@@ -39,57 +39,61 @@ export const getPatients = async (
   }
 ): Promise<PatientResponse> => {
   try {
-    // Create a basic query first - avoid building complex queries
-    const query = supabase
+    // Create query without chaining to avoid deep instantiation
+    let queryBuilder = supabase
       .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId);
+      .select('*', { count: 'exact' });
     
-    // Apply filters one by one
+    // Apply user ID filter
+    queryBuilder = queryBuilder.eq('user_id', userId);
+    
+    // Apply status filter if provided
     if (options?.status && options.status !== 'all') {
-      query.eq('status', options.status);
+      queryBuilder = queryBuilder.eq('status', options.status);
     }
 
-    // Apply search filter
+    // Apply search filter - use simple name search only
     if (options?.search) {
-      // Use a simple search approach
-      query.ilike('name', `%${options.search}%`);
+      queryBuilder = queryBuilder.ilike('name', `%${options.search}%`);
     }
 
     // Apply date filters
     if (options?.dateFrom) {
-      query.gte('created_at', options.dateFrom);
+      queryBuilder = queryBuilder.gte('created_at', options.dateFrom);
     }
 
     if (options?.dateTo) {
-      query.lte('created_at', options.dateTo);
+      queryBuilder = queryBuilder.lte('created_at', options.dateTo);
     }
 
     // Apply ordering
     if (options?.orderBy) {
       const direction = options?.orderDirection || 'asc';
-      query.order(options.orderBy, { ascending: direction === 'asc' });
+      queryBuilder = queryBuilder.order(options.orderBy, { ascending: direction === 'asc' });
     } else {
-      query.order('created_at', { ascending: false });
+      queryBuilder = queryBuilder.order('created_at', { ascending: false });
     }
 
     // Apply pagination
     if (options?.limit) {
-      query.limit(options.limit);
+      queryBuilder = queryBuilder.limit(options.limit);
     }
 
     if (options?.from !== undefined) {
-      query.range(options.from, (options.from + (options.limit || 10)) - 1);
+      const fromValue = options.from;
+      const limitValue = options.limit || 10;
+      const toValue = fromValue + limitValue - 1;
+      queryBuilder = queryBuilder.range(fromValue, toValue);
     }
 
     // Execute the query
-    const { data, error, count } = await query;
+    const { data, error, count } = await queryBuilder;
 
     if (error) {
       throw error;
     }
 
-    // Return the result with minimal type manipulation
+    // Return the result with explicit type casting
     return {
       success: true,
       data: data as BasicPatientData[],
