@@ -39,55 +39,63 @@ export const getPatients = async (
   }
 ): Promise<PatientResponse> => {
   try {
-    // Manually construct the query to avoid chaining complexity
-    let query = supabase.from('patients').select('*', { count: 'exact' });
+    // Build a simple query without complex chaining
+    const query = supabase.from('patients');
     
-    // Apply filters as separate operations to avoid complex chaining
-    query = query.eq('user_id', userId);
+    // First select with count
+    const selectQuery = query.select('*', { count: 'exact' });
     
+    // Add filters directly without reassignment
+    // User ID filter
+    selectQuery.eq('user_id', userId);
+    
+    // Status filter if provided
     if (options?.status && options.status !== 'all') {
-      query = query.eq('status', options.status);
+      selectQuery.eq('status', options.status);
     }
 
+    // Simple search on name
     if (options?.search) {
-      query = query.ilike('name', `%${options.search}%`);
+      selectQuery.ilike('name', `%${options.search}%`);
     }
 
+    // Date range filters
     if (options?.dateFrom) {
-      query = query.gte('created_at', options.dateFrom);
+      selectQuery.gte('created_at', options.dateFrom);
     }
 
     if (options?.dateTo) {
-      query = query.lte('created_at', options.dateTo);
+      selectQuery.lte('created_at', options.dateTo);
     }
 
     // Apply ordering
     if (options?.orderBy) {
-      const direction = options?.orderDirection || 'asc';
-      query = query.order(options.orderBy, { ascending: direction === 'asc' });
+      selectQuery.order(options.orderBy, { 
+        ascending: options.orderDirection === 'asc' 
+      });
     } else {
-      query = query.order('created_at', { ascending: false });
+      selectQuery.order('created_at', { ascending: false });
     }
 
     // Apply pagination
     if (options?.limit) {
-      query = query.limit(options.limit);
+      selectQuery.limit(options.limit);
     }
 
     if (options?.from !== undefined) {
       const from = options.from;
       const limit = options.limit || 10;
-      query = query.range(from, from + limit - 1);
+      selectQuery.range(from, from + limit - 1);
     }
 
     // Execute the query
-    const { data, error, count } = await query;
+    const { data, error, count } = await selectQuery;
 
     if (error) {
       throw error;
     }
 
-    // Use type assertion to avoid complex type inference
+    // Return the result with simple types
     return {
       success: true,
       data: data as BasicPatientData[],
