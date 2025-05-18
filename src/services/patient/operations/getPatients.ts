@@ -39,61 +39,55 @@ export const getPatients = async (
   }
 ): Promise<PatientResponse> => {
   try {
-    // Create query without chaining to avoid deep instantiation
-    let queryBuilder = supabase
-      .from('patients')
-      .select('*', { count: 'exact' });
+    // Manually construct the query to avoid chaining complexity
+    let query = supabase.from('patients').select('*', { count: 'exact' });
     
-    // Apply user ID filter
-    queryBuilder = queryBuilder.eq('user_id', userId);
+    // Apply filters as separate operations to avoid complex chaining
+    query = query.eq('user_id', userId);
     
-    // Apply status filter if provided
     if (options?.status && options.status !== 'all') {
-      queryBuilder = queryBuilder.eq('status', options.status);
+      query = query.eq('status', options.status);
     }
 
-    // Apply search filter - use simple name search only
     if (options?.search) {
-      queryBuilder = queryBuilder.ilike('name', `%${options.search}%`);
+      query = query.ilike('name', `%${options.search}%`);
     }
 
-    // Apply date filters
     if (options?.dateFrom) {
-      queryBuilder = queryBuilder.gte('created_at', options.dateFrom);
+      query = query.gte('created_at', options.dateFrom);
     }
 
     if (options?.dateTo) {
-      queryBuilder = queryBuilder.lte('created_at', options.dateTo);
+      query = query.lte('created_at', options.dateTo);
     }
 
     // Apply ordering
     if (options?.orderBy) {
       const direction = options?.orderDirection || 'asc';
-      queryBuilder = queryBuilder.order(options.orderBy, { ascending: direction === 'asc' });
+      query = query.order(options.orderBy, { ascending: direction === 'asc' });
     } else {
-      queryBuilder = queryBuilder.order('created_at', { ascending: false });
+      query = query.order('created_at', { ascending: false });
     }
 
     // Apply pagination
     if (options?.limit) {
-      queryBuilder = queryBuilder.limit(options.limit);
+      query = query.limit(options.limit);
     }
 
     if (options?.from !== undefined) {
-      const fromValue = options.from;
-      const limitValue = options.limit || 10;
-      const toValue = fromValue + limitValue - 1;
-      queryBuilder = queryBuilder.range(fromValue, toValue);
+      const from = options.from;
+      const limit = options.limit || 10;
+      query = query.range(from, from + limit - 1);
     }
 
     // Execute the query
-    const { data, error, count } = await queryBuilder;
+    const { data, error, count } = await query;
 
     if (error) {
       throw error;
     }
 
-    // Return the result with explicit type casting
+    // Use type assertion to avoid complex type inference
     return {
       success: true,
       data: data as BasicPatientData[],
