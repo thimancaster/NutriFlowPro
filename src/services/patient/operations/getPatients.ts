@@ -11,8 +11,6 @@ type BasicPatientData = {
   gender?: string | null;
   status?: string;
   created_at?: string;
-  // Use a simple indexer for additional properties
-  [key: string]: any;
 };
 
 type PatientResponse = {
@@ -39,63 +37,53 @@ export const getPatients = async (
   }
 ): Promise<PatientResponse> => {
   try {
-    // Build a simple query without complex chaining
-    const query = supabase.from('patients');
+    // Start with a simple base query
+    let { data, error, count } = await supabase
+      .from('patients')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+      .match(options?.status && options.status !== 'all' 
+        ? { status: options.status } 
+        : {})
+      .order(
+        options?.orderBy || 'created_at', 
+        { ascending: options?.orderDirection === 'asc' || false }
+      )
+      .limit(options?.limit || 50)
+      .range(
+        options?.from || 0,
+        options?.from !== undefined ? options.from + (options.limit || 10) - 1 : 49
+      );
     
-    // First select with count
-    const selectQuery = query.select('*', { count: 'exact' });
-    
-    // Add filters directly without reassignment
-    // User ID filter
-    selectQuery.eq('user_id', userId);
-    
-    // Status filter if provided
-    if (options?.status && options.status !== 'all') {
-      selectQuery.eq('status', options.status);
+    // Apply text search if provided - do it separately to avoid deep type issues
+    if (options?.search && data) {
+      data = data.filter(patient => 
+        patient.name?.toLowerCase().includes(options.search?.toLowerCase() || '')
+      );
     }
 
-    // Simple search on name
-    if (options?.search) {
-      selectQuery.ilike('name', `%${options.search}%`);
-    }
-
-    // Date range filters
-    if (options?.dateFrom) {
-      selectQuery.gte('created_at', options.dateFrom);
-    }
-
-    if (options?.dateTo) {
-      selectQuery.lte('created_at', options.dateTo);
-    }
-
-    // Apply ordering
-    if (options?.orderBy) {
-      selectQuery.order(options.orderBy, { 
-        ascending: options.orderDirection === 'asc' 
+    // Apply date filters if needed - do client-side to avoid deep chaining
+    if ((options?.dateFrom || options?.dateTo) && data) {
+      data = data.filter(patient => {
+        const createdAt = patient.created_at ? new Date(patient.created_at) : null;
+        if (!createdAt) return true;
+        
+        let match = true;
+        if (options?.dateFrom && createdAt < new Date(options.dateFrom)) {
+          match = false;
+        }
+        if (options?.dateTo && createdAt > new Date(options.dateTo)) {
+          match = false;
+        }
+        return match;
       });
-    } else {
-      selectQuery.order('created_at', { ascending: false });
     }
-
-    // Apply pagination
-    if (options?.limit) {
-      selectQuery.limit(options.limit);
-    }
-
-    if (options?.from !== undefined) {
-      const from = options.from;
-      const limit = options.limit || 10;
-      selectQuery.range(from, from + limit - 1);
-    }
-
-    // Execute the query
-    const { data, error, count } = await selectQuery;
 
     if (error) {
       throw error;
     }
 
-    // Return the result with simple types
+    // Return with simple types to avoid complex type inference
     return {
       success: true,
       data: data as BasicPatientData[],
