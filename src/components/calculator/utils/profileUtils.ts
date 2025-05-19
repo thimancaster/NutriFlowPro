@@ -10,9 +10,10 @@ export const stringToProfile = (value: string): Profile => {
       return 'eutrofico'; // Map old 'magro' to 'eutrofico'
     case 'obeso':
       return 'sobrepeso_obesidade'; // Map old 'obeso' to 'sobrepeso_obesidade'
+    case 'atleta':
+      return 'atleta';
     case 'eutrofico':
     case 'sobrepeso_obesidade':
-    case 'atleta':
       return value as Profile;
     default:
       return 'eutrofico'; // Default fallback

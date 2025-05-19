@@ -111,7 +111,7 @@ export const useCalculatorState = () => {
         
         setTeeObject({
           get,
-          adjustment: vet / get,
+          adjustment: vet - get,
           vet
         });
         
@@ -129,6 +129,10 @@ export const useCalculatorState = () => {
         
         setShowResults(true);
         setActiveTab('results');
+        
+        console.log("Calculation completed:", {
+          tmb, get, vet, macrosResult, summary
+        });
       } catch (error) {
         console.error("Calculation error:", error);
         toast({

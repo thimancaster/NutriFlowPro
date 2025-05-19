@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Label, 
@@ -11,14 +12,13 @@ import {
 } from '../../../components/ui';
 import { ArrowRight } from 'lucide-react';
 import { Profile } from '@/types/consultation';
-import { stringToProfile } from '@/components/calculator/utils/profileUtils';
 
 interface CalculatorFormProps {
   weight: number | '';
   height: number | '';
   age: number | '';
   sex: 'M' | 'F';
-  profile: Profile;
+  profile: Profile | string;
   isCalculating: boolean;
   onInputChange: (name: string, value: number | '') => void;
   onSexChange: (value: 'M' | 'F') => void;
@@ -96,9 +96,9 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
               <SelectValue placeholder="Selecione o perfil" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="magro">Peso normal</SelectItem>
+              <SelectItem value="eutrofico">Peso normal</SelectItem>
               <SelectItem value="atleta">Atleta</SelectItem>
-              <SelectItem value="obeso">Sobrepeso/Obesidade</SelectItem>
+              <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade</SelectItem>
             </SelectContent>
           </Select>
         </div>
