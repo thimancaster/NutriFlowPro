@@ -1,74 +1,46 @@
-import { Json } from '@/integrations/supabase/types';
 
 /**
- * Prepares data for Supabase by converting Date objects to strings
- * and ensuring required fields are present
+ * Format date to a readable string
+ * @param dateString Any valid date string or Date object
+ * @returns Formatted date string (e.g., "01 Jan 2025")
  */
-export const prepareForSupabase = (
-  data: Record<string, any>, 
-  isInsert: boolean = false
-): Record<string, any> => {
-  if (!data) return {};
+export const formatDate = (dateString: string | Date): string => {
+  if (!dateString) return 'N/A';
   
-  // Create a copy to avoid modifying the original
-  const result: Record<string, any> = { ...data };
+  const date = new Date(dateString);
   
-  // Remove id for insert operations (let Supabase generate it)
-  if (isInsert && result.id) {
-    delete result.id;
-  }
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'Invalid date';
   
-  // Convert Date objects to ISO strings
-  Object.keys(result).forEach(key => {
-    const value = result[key];
-    
-    if (value instanceof Date) {
-      result[key] = value.toISOString();
-    } else if (
-      value && 
-      typeof value === 'object' && 
-      !Array.isArray(value) && 
-      !(value instanceof Date) &&
-      !(value as Json)
-    ) {
-      // Recursively handle nested objects
-      result[key] = prepareForSupabase(value, false);
-    }
-  });
+  // Format date as "DD MMM YYYY"
+  const options: Intl.DateTimeFormatOptions = { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric' 
+  };
   
-  return result;
+  return date.toLocaleDateString('pt-BR', options);
 };
 
 /**
- * Converts string dates to Date objects for consistent client-side handling
+ * Format date to ISO string (YYYY-MM-DD)
+ * @param date Date object
+ * @returns ISO formatted date string
  */
-export const convertStringsToDates = (obj: Record<string, any>): Record<string, any> => {
-  if (!obj) return {};
-  
-  const result: Record<string, any> = { ...obj };
-  
-  // Date fields that should be converted
-  const dateFields = ['created_at', 'updated_at', 'date', 'start_time', 'end_time', 'birth_date', 'subscription_start', 'subscription_end'];
-  
-  Object.keys(result).forEach(key => {
-    const value = result[key];
-    
-    // Check if this is a date field with a string value that looks like a date
-    if (dateFields.includes(key) && typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-      result[key] = new Date(value);
-    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      // Recursively handle nested objects
-      result[key] = convertStringsToDates(value);
-    }
-  });
-  
-  return result;
+export const toISODateString = (date: Date): string => {
+  return date.toISOString().split('T')[0];
 };
 
 /**
- * Helper function to convert dates in an object to ISO strings
- * @deprecated Use prepareForSupabase instead
+ * Check if a date is today
+ * @param date Date to check
+ * @returns Boolean indicating if the date is today
  */
-export const convertDatesToISOString = (obj: Record<string, any>): Record<string, any> => {
-  return prepareForSupabase(obj);
+export const isToday = (date: Date): boolean => {
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
 };

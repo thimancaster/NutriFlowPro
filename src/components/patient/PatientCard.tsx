@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Patient } from '@/types/patient';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui';
+import { Badge } from '@/components/ui';
 import { formatDate } from '@/utils/dateUtils';
-import { calculateAge } from '@/utils/patientUtils';
+import { calculateAge, calculateBMI } from '@/utils/patient';
 
 interface PatientCardProps {
   patient: Patient;
@@ -14,7 +14,7 @@ interface PatientCardProps {
   className?: string;
 }
 
-export const PatientCard: React.FC<PatientCardProps> = ({
+const PatientCard: React.FC<PatientCardProps> = ({
   patient,
   variant = 'default',
   onClick,
@@ -30,19 +30,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     return <Badge variant="success">Ativo</Badge>;
   };
   
-  // Calcular IMC se houver dados suficientes
-  const calculateBMI = () => {
-    if (
-      patient.weight && 
-      patient.height && 
-      patient.height > 0
-    ) {
-      const heightInMeters = patient.height / 100;
-      const bmi = patient.weight / (heightInMeters * heightInMeters);
-      return bmi.toFixed(1);
-    }
-    return null;
-  };
+  // Calculate BMI if there's enough data
+  const bmi = patient.measurements?.weight && patient.measurements?.height 
+    ? calculateBMI(patient.measurements.weight, patient.measurements.height)
+    : null;
   
   // Compact variant for list items
   if (variant === 'compact') {
@@ -72,17 +63,17 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             {getStatusIndicator()}
           </div>
           
-          {patient.weight && patient.height && (
+          {patient.measurements && (
             <div className="mb-2">
               <p className="text-sm">
-                <span className="text-gray-500">Peso:</span> {patient.weight} kg
+                <span className="text-gray-500">Peso:</span> {patient.measurements.weight} kg
               </p>
               <p className="text-sm">
-                <span className="text-gray-500">Altura:</span> {patient.height} cm
+                <span className="text-gray-500">Altura:</span> {patient.measurements.height} cm
               </p>
-              {calculateBMI() && (
+              {bmi && (
                 <p className="text-sm">
-                  <span className="text-gray-500">IMC:</span> {calculateBMI()}
+                  <span className="text-gray-500">IMC:</span> {bmi}
                 </p>
               )}
             </div>
@@ -121,13 +112,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          {(patient.weight || patient.height) && (
+          {patient.measurements && (
             <div>
               <h3 className="text-sm font-medium mb-1">Medidas</h3>
-              {patient.weight && <p className="text-sm">Peso: {patient.weight} kg</p>}
-              {patient.height && <p className="text-sm">Altura: {patient.height} cm</p>}
-              {calculateBMI() && (
-                <p className="text-sm">IMC: {calculateBMI()}</p>
+              <p className="text-sm">Peso: {patient.measurements.weight} kg</p>
+              <p className="text-sm">Altura: {patient.measurements.height} cm</p>
+              {bmi && (
+                <p className="text-sm">IMC: {bmi}</p>
               )}
             </div>
           )}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Label, 
@@ -8,7 +9,7 @@ import {
   SelectValue,
   Button
 } from '../../../components/ui';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ActivityFormProps {
