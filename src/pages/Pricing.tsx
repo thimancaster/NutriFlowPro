@@ -81,7 +81,8 @@ const Pricing = () => {
             <CardFooter className="bg-gray-50 rounded-b-lg p-6">
               <Button
                 className="w-full"
-                variant="outline"
+                variant="nutri-outline"
+                animation="shimmer"
                 asChild
               >
                 <Link to="/signup">

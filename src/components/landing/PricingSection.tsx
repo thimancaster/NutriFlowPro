@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { CheckCircle, Star, Shield, Award, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -73,7 +74,8 @@ const PricingSection = () => {
             
             <div className="mt-auto">
               <Button 
-                variant="outline" 
+                variant="outline-nutri" 
+                animation="shimmer"
                 className="w-full" 
                 asChild
               >
