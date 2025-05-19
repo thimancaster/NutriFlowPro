@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,11 +10,10 @@ import { Slider } from '@/components/ui/slider';
 import { 
   calculateTMB, 
   calculateGET, 
-  calculateVET, 
-  calculateMacrosByProfile,
-  calculateCalorieSummary,
-  validateInputs
+  calculateVET,
+  calculateCalorieSummary
 } from '@/utils/nutritionCalculations';
+import { calculateMacrosByProfile } from '@/utils/macronutrientCalculations';
 import { 
   Calculator, 
   ArrowRight, 
