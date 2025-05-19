@@ -28,10 +28,10 @@ export interface CalculatorResults {
   get: number | null;
   adjustedGet: number | null;
   macros: {
-    carbs: number | null;
-    protein: number | null;
-    fat: number | null;
-    proteinPerKg?: number | null;
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg?: number;
   } | null;
 }
 
@@ -60,8 +60,17 @@ export interface CalculatorInputsProps {
 
 export interface CalculatorResultsProps {
   bmr: number | null;
-  tee: number | null;
-  macros: { carbs: number, protein: number, fat: number, proteinPerKg?: number } | null;
+  tee: {
+    get: number;
+    adjustment: number;
+    vet: number;
+  } | null;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg?: number;
+  } | null;
   carbsPercentage: string;
   proteinPercentage: string;
   fatPercentage: string;

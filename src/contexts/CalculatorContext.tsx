@@ -1,8 +1,15 @@
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { 
+  calculateTMB, 
+  calculateGET, 
+  calculateVET, 
+  calculateMacrosByProfile, 
+  calculateCalorieSummary 
+} from '@/utils/nutritionCalculations';
 
-// Definir os tipos para o estado da calculadora
+// Define types for the calculator state
 export type CalculatorState = {
   patientName: string;
   gender: 'male' | 'female';
@@ -19,16 +26,16 @@ export type CalculatorState = {
   bmr: number | null;
   tee: { get: number; adjustment: number; vet: number } | null;
   macros: {
-    carbs: number;
-    protein: number;
-    fat: number;
-    proteinPerKg: number;
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg?: number;
   } | null;
   isCalculating: boolean;
   errorMessage: string | null;
 };
 
-// Definir as ações do reducer
+// Define the actions for the reducer
 export type CalculatorAction = 
   | { type: 'SET_PATIENT_NAME'; payload: string }
   | { type: 'SET_GENDER'; payload: 'male' | 'female' }
@@ -44,12 +51,17 @@ export type CalculatorAction =
   | { type: 'SET_FAT_PERCENTAGE'; payload: string }
   | { type: 'SET_BMR'; payload: number }
   | { type: 'SET_TEE'; payload: { get: number; adjustment: number; vet: number } }
-  | { type: 'SET_MACROS'; payload: { carbs: number; protein: number; fat: number; proteinPerKg: number } }
+  | { type: 'SET_MACROS'; payload: { 
+      protein: { grams: number; kcal: number; percentage: number };
+      carbs: { grams: number; kcal: number; percentage: number };
+      fat: { grams: number; kcal: number; percentage: number };
+      proteinPerKg?: number;
+    } }
   | { type: 'SET_CALCULATING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'RESET' };
 
-// Estado inicial
+// Initial state
 const initialState: CalculatorState = {
   patientName: '',
   gender: 'female',
@@ -60,9 +72,9 @@ const initialState: CalculatorState = {
   activityLevel: 'moderado',
   consultationType: 'primeira_consulta',
   profile: 'magro',
-  carbsPercentage: '50',
-  proteinPercentage: '25',
-  fatPercentage: '25',
+  carbsPercentage: '',
+  proteinPercentage: '',
+  fatPercentage: '',
   bmr: null,
   tee: null,
   macros: null,
@@ -70,7 +82,7 @@ const initialState: CalculatorState = {
   errorMessage: null
 };
 
-// Função reducer
+// Reducer function
 function calculatorReducer(state: CalculatorState, action: CalculatorAction): CalculatorState {
   switch (action.type) {
     case 'SET_PATIENT_NAME':
@@ -114,7 +126,7 @@ function calculatorReducer(state: CalculatorState, action: CalculatorAction): Ca
   }
 }
 
-// Criar o contexto
+// Create the context
 type CalculatorContextType = {
   calculatorState: CalculatorState;
   calculatorDispatch: React.Dispatch<CalculatorAction>;
@@ -123,114 +135,79 @@ type CalculatorContextType = {
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
-// Provider
+// Provider component
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [calculatorState, calculatorDispatch] = useReducer(calculatorReducer, initialState);
 
-  // Função para calcular as necessidades nutricionais
+  // Function to calculate nutritional needs
   const calculateNutritionalNeeds = () => {
     try {
       calculatorDispatch({ type: 'SET_CALCULATING', payload: true });
       calculatorDispatch({ type: 'SET_ERROR', payload: null });
 
-      const { weight, height, age, gender, activityLevel, objective } = calculatorState;
+      const { weight, height, age, gender, activityLevel, objective, profile } = calculatorState;
 
       if (!weight || !height || !age) {
         throw new Error('Preencha os dados de peso, altura e idade para calcular.');
       }
 
-      // Calcular TMB usando a fórmula de Mifflin-St Jeor
-      const weightNum = Number(weight);
-      const heightNum = Number(height);
-      const ageNum = Number(age);
-
-      let bmr;
-      if (gender === 'male') {
-        bmr = (10 * weightNum) + (6.25 * heightNum) - (5 * ageNum) + 5;
-      } else {
-        bmr = (10 * weightNum) + (6.25 * heightNum) - (5 * ageNum) - 161;
-      }
-
-      // Arredondar a TMB para o número inteiro mais próximo
-      bmr = Math.round(bmr);
+      // Step 1: Calculate BMR (Taxa Metabólica Basal)
+      const bmr = calculateTMB(
+        weight, 
+        height, 
+        parseInt(age), 
+        gender === 'male' ? 'M' : 'F'
+      );
       calculatorDispatch({ type: 'SET_BMR', payload: bmr });
 
-      // Calcular fator de atividade
-      let activityFactor = 1.2; // Valor padrão sedentário
+      // Step 2: Calculate GET (Gasto Energético Total)
+      const get = calculateGET(bmr, activityLevel);
+
+      // Step 3: Calculate VET (Valor Energético Total - with objective adjustment)
+      const vet = calculateVET(get, objective);
       
-      switch (activityLevel) {
-        case 'sedentario':
-          activityFactor = 1.2;
-          break;
-        case 'leve':
-          activityFactor = 1.375;
-          break;
-        case 'moderado':
-          activityFactor = 1.55;
-          break;
-        case 'intenso':
-          activityFactor = 1.725;
-          break;
-        case 'muito_intenso':
-          activityFactor = 1.9;
-          break;
-        default:
-          activityFactor = 1.55; // Padrão moderado
-      }
+      // Calculate the adjustment value (difference between GET and VET)
+      const adjustment = vet - get;
 
-      // Calcular GET (Gasto Energético Total)
-      const get = Math.round(bmr * activityFactor);
-
-      // Calcular ajuste baseado no objetivo
-      let adjustment = 0;
-      switch (objective) {
-        case 'emagrecimento':
-          adjustment = -500;
-          break;
-        case 'hipertrofia':
-          adjustment = 300;
-          break;
-        case 'manutenção':
-        default:
-          adjustment = 0;
-      }
-
-      // Calcular VET (Valor Energético Total)
-      const vet = get + adjustment;
-
-      // Salvar TEE
+      // Save TEE (Total Energy Expenditure) data
       calculatorDispatch({ 
         type: 'SET_TEE', 
         payload: { get, adjustment, vet } 
       });
 
-      // Calcular macronutrientes
-      const carbsPercent = parseInt(calculatorState.carbsPercentage) / 100;
-      const proteinPercent = parseInt(calculatorState.proteinPercentage) / 100;
-      const fatPercent = parseInt(calculatorState.fatPercentage) / 100;
+      // Step 4: Calculate macronutrients based on profile
+      const macroResults = calculateMacrosByProfile(profile, weight, vet);
+      
+      // Format macros for the state
+      const macros = {
+        protein: macroResults.protein,
+        carbs: macroResults.carbs,
+        fat: macroResults.fats,
+        proteinPerKg: parseFloat((macroResults.protein.grams / weight).toFixed(1))
+      };
 
-      const totalPercent = carbsPercent + proteinPercent + fatPercent;
-      if (Math.abs(totalPercent - 1) > 0.01) { // Permitir pequenas diferenças de arredondamento
-        throw new Error('Os percentuais de macronutrientes devem somar 100%');
-      }
-
-      const carbs = Math.round((vet * carbsPercent) / 4); // 4kcal por grama de carboidrato
-      const protein = Math.round((vet * proteinPercent) / 4); // 4kcal por grama de proteína
-      const fat = Math.round((vet * fatPercent) / 9); // 9kcal por grama de gordura
-
-      // Calcular proteína por kg
-      const proteinPerKg = parseFloat((protein / weightNum).toFixed(2));
-
-      // Salvar macros
+      // Save macronutrient distribution
       calculatorDispatch({
         type: 'SET_MACROS',
-        payload: { carbs, protein, fat, proteinPerKg }
+        payload: macros
       });
 
-      // Mostrar toast de sucesso
+      // Also update the percentage fields for consistency
+      calculatorDispatch({ type: 'SET_PROTEIN_PERCENTAGE', payload: macroResults.protein.percentage.toString() });
+      calculatorDispatch({ type: 'SET_CARBS_PERCENTAGE', payload: macroResults.carbs.percentage.toString() });
+      calculatorDispatch({ type: 'SET_FAT_PERCENTAGE', payload: macroResults.fats.percentage.toString() });
+
+      // Calculate calorie summary
+      const summary = calculateCalorieSummary(vet, {
+        protein: { kcal: macroResults.protein.kcal },
+        fats: { kcal: macroResults.fats.kcal },
+        carbs: { kcal: macroResults.carbs.kcal }
+      });
+
+      // Show toast with success message
       toast({
         title: 'Cálculo realizado com sucesso',
-        description: `VET: ${vet} kcal | Proteína: ${protein}g | Carbs: ${carbs}g | Gorduras: ${fat}g`,
+        description: `VET: ${summary.targetCalories} kcal | PTN: ${macros.protein.grams}g | CHO: ${macros.carbs.grams}g | LIP: ${macros.fat.grams}g`,
         duration: 3000,
       });
 
@@ -258,7 +235,7 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
   );
 };
 
-// Hook para usar o contexto
+// Hook to use the context
 export const useCalculator = (): CalculatorContextType => {
   const context = useContext(CalculatorContext);
   if (context === undefined) {

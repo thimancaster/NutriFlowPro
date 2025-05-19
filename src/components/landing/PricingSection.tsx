@@ -74,7 +74,7 @@ const PricingSection = () => {
             
             <div className="mt-auto">
               <Button 
-                variant="outline-nutri" 
+                variant="nutri-outline" 
                 animation="shimmer"
                 className="w-full" 
                 asChild

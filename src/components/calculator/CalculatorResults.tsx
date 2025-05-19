@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from 'lucide-react';
 import { CalculatorResultsProps } from './types';
 import {
@@ -12,8 +11,9 @@ import {
   NutritionInfo,
   ActionButtons
 } from './results';
+import { calculateCalorieSummary } from '@/utils/nutritionCalculations';
 
-const CalculatorResults = ({
+const CalculatorResults: React.FC<CalculatorResultsProps> = ({
   bmr,
   tee,
   macros,
@@ -25,107 +25,129 @@ const CalculatorResults = ({
   isSavingPatient,
   hasPatientName,
   user
-}: CalculatorResultsProps) => {
-  if (bmr === null || tee === null) {
+}) => {
+  if (!bmr || !tee || !macros) {
     return (
-      <div className="text-center py-12">
-        <p className="text-lg text-gray-500">Complete os dados e calcule para ver os resultados</p>
-      </div>
+      <Card>
+        <CardContent className="py-10 text-center">
+          <p className="text-gray-500">Complete os dados e calcule para ver os resultados</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  // Calculate unadjusted GET (base activity level * BMR)
-  const baseGet = Math.round(bmr * 1.55); // Using moderate activity as reference
-  
-  // Calculate adjustment (difference between TEE and base GET)
-  const calorieAdjustment = tee - baseGet;
-  
-  // Calculate reference protein ranges for display
-  const proteinReferenceRange = {
-    min: 0.8, // Minimum recommendation (g/kg)
-    max: macros?.proteinPerKg && macros.proteinPerKg > 2 ? 2.5 : 2.0 // Higher range for athletic individuals
-  };
+  // Calculate calorie summary
+  const summary = calculateCalorieSummary(
+    tee.vet,
+    {
+      protein: { kcal: macros.protein.kcal },
+      fats: { kcal: macros.fat.kcal },
+      carbs: { kcal: macros.carbs.kcal }
+    }
+  );
+
+  // Check if user is premium (simplified mock check)
+  const isUserPremium = user?.is_premium || false;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard
-          title="Taxa Metabólica Basal"
-          description="TMB"
-          value={`${bmr} kcal`}
-          infoText="Energia necessária para funções vitais em repouso, calculada pela fórmula de Mifflin-St Jeor"
-          valueColor="text-nutri-green-dark"
-          subtitle="Energia mínima para sustentar funções vitais em repouso"
+    <Card className="shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center">
+          <span>Resultados do Cálculo</span>
+          <Info className="h-5 w-5 ml-2 text-nutri-blue opacity-70" />
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="space-y-6">
+        {/* Metrics */}
+        <div className="grid grid-cols-1 gap-4">
+          <MetricCard
+            title="Taxa Metabólica Basal"
+            description="TMB"
+            value={`${bmr} kcal`}
+            infoText="Energia necessária para funções vitais em repouso, calculada pela fórmula de Mifflin-St Jeor"
+            valueColor="text-nutri-green"
+            subtitle="(10 × peso) + (6.25 × altura) - (5 × idade) + fator sexo"
+          />
+          
+          <MetricCard
+            title="Gasto Energético Total"
+            description="GET"
+            value={`${tee.get} kcal`}
+            infoText="TMB × Fator de Atividade"
+            valueColor="text-nutri-blue"
+            subtitle="Calorias necessárias para manutenção do peso"
+          />
+          
+          <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-medium text-gray-900">Meta Calórica</h3>
+              <CalorieAdjustmentBadge 
+                adjustment={tee.adjustment} 
+                objective={carbsPercentage ? 'custom' : ''} 
+              />
+            </div>
+            <div className="text-2xl font-bold text-nutri-blue">{tee.vet} kcal</div>
+            <div className="text-sm text-gray-600 mt-1">VET (Valor Energético Total)</div>
+          </div>
+        </div>
+        
+        {/* Macronutrient Distribution */}
+        <div>
+          <h3 className="font-medium text-gray-900 mb-2">Distribuição de Macronutrientes</h3>
+          
+          {/* User has manually set percentages */}
+          {carbsPercentage && proteinPercentage && fatPercentage && (
+            <div className="grid grid-cols-3 gap-2 text-center mb-3">
+              <div className="bg-amber-50 p-2 rounded">
+                <div className="text-xs text-gray-500">Proteínas</div>
+                <div className="font-semibold">{proteinPercentage}%</div>
+              </div>
+              <div className="bg-blue-50 p-2 rounded">
+                <div className="text-xs text-gray-500">Carboidratos</div>
+                <div className="font-semibold">{carbsPercentage}%</div>
+              </div>
+              <div className="bg-purple-50 p-2 rounded">
+                <div className="text-xs text-gray-500">Gorduras</div>
+                <div className="font-semibold">{fatPercentage}%</div>
+              </div>
+            </div>
+          )}
+          
+          {/* Macro details */}
+          <MacroDistributionGrid 
+            macros={macros} 
+            proteinPerKg={macros.proteinPerKg}
+            weight={macros.protein.grams / (macros.proteinPerKg || 1)} // Calculate weight for per/kg display
+          />
+        </div>
+        
+        {/* Calorie Summary */}
+        <CalorieSummary
+          targetCalories={summary.targetCalories}
+          actualCalories={summary.actualCalories}
+          difference={summary.difference}
+          percentageDifference={summary.percentageDifference}
         />
-
-        <MetricCard
-          title="Gasto Energético Total"
-          description="GET"
-          value={`${baseGet} kcal`}
-          infoText="TMB × Fator de Atividade (sem ajustes)"
-          valueColor="text-nutri-blue"
-          subtitle="Calorias gastas incluindo atividade física"
+        
+        {/* Nutrition Info Block */}
+        <NutritionInfo
+          objective={carbsPercentage ? 'custom' : 'manutenção'}
+          activityLevel={'moderado'}
+          profile={'magro'}
         />
-
-        <Card className="bg-nutri-gray-light">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              Meta Calórica
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 ml-1 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">GET {calorieAdjustment >= 0 ? "+" : ""}{calorieAdjustment} kcal de ajuste conforme objetivo</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardTitle>
-            <CardDescription>VET (Valor Energético Total)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-nutri-blue-dark">{tee} kcal</p>
-            <CalorieAdjustmentBadge calorieAdjustment={calorieAdjustment} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {macros && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Distribuição de Macronutrientes</CardTitle>
-            <CardDescription>
-              {carbsPercentage}% Carboidratos, {proteinPercentage}% Proteínas, {fatPercentage}% Gorduras
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MacroDistributionGrid
-              macros={macros}
-              carbsPercentage={carbsPercentage}
-              proteinPercentage={proteinPercentage}
-              fatPercentage={fatPercentage}
-              proteinReferenceRange={proteinReferenceRange}
-            />
-
-            <CalorieSummary 
-              macros={macros} 
-              tee={tee} 
-            />
-
-            <NutritionInfo macros={macros} />
-          </CardContent>
-        </Card>
-      )}
-
-      <ActionButtons
-        handleSavePatient={handleSavePatient}
-        handleGenerateMealPlan={handleGenerateMealPlan}
-        isSavingPatient={isSavingPatient}
-        hasPatientName={hasPatientName}
-        user={user}
-      />
-    </div>
+        
+        {/* Action Buttons */}
+        <ActionButtons
+          onSavePatient={handleSavePatient}
+          onGenerateMealPlan={handleGenerateMealPlan}
+          isSaving={isSavingPatient}
+          hasResults={!!tee && !!macros}
+          hasPatientName={hasPatientName}
+          userIsPremium={isUserPremium}
+        />
+      </CardContent>
+    </Card>
   );
 };
 

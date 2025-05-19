@@ -2,26 +2,29 @@
 import React from 'react';
 
 interface CalorieAdjustmentBadgeProps {
-  calorieAdjustment: number;
+  adjustment: number;
+  objective: string;
 }
 
-const CalorieAdjustmentBadge = ({ calorieAdjustment }: CalorieAdjustmentBadgeProps) => {
+const CalorieAdjustmentBadge: React.FC<CalorieAdjustmentBadgeProps> = ({ 
+  adjustment, 
+  objective 
+}) => {
+  let bgColor = "bg-gray-100 text-gray-800";
+  let label = "Manutenção";
+  
+  if (adjustment < 0) {
+    bgColor = "bg-red-100 text-red-800";
+    label = "Déficit calórico";
+  } else if (adjustment > 0) {
+    bgColor = "bg-green-100 text-green-800";
+    label = "Superávit calórico";
+  }
+  
   return (
-    <div className="mt-2 text-sm flex items-center">
-      <span className={`px-2 py-1 rounded-full ${
-        calorieAdjustment > 0 
-          ? 'bg-green-100 text-green-800' 
-          : calorieAdjustment < 0 
-            ? 'bg-amber-100 text-amber-800' 
-            : 'bg-blue-100 text-blue-800'
-      }`}>
-        {calorieAdjustment > 0 
-          ? `+${calorieAdjustment} kcal (superávit)` 
-          : calorieAdjustment < 0 
-            ? `${calorieAdjustment} kcal (déficit)` 
-            : 'Manutenção'}
-      </span>
-    </div>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor}`}>
+      {label} ({adjustment > 0 ? '+' : ''}{adjustment} kcal)
+    </span>
   );
 };
 

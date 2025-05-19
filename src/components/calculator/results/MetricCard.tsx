@@ -1,55 +1,47 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Info } from 'lucide-react';
 
 interface MetricCardProps {
   title: string;
   description: string;
   value: string | number;
-  infoText?: string;
-  valueColor: string;
+  infoText: string;
+  valueColor?: string;
   subtitle?: string;
-  subtitleColor?: string;
 }
 
-const MetricCard = ({
+const MetricCard: React.FC<MetricCardProps> = ({
   title,
   description,
   value,
   infoText,
-  valueColor,
-  subtitle,
-  subtitleColor
-}: MetricCardProps) => {
+  valueColor = "text-nutri-blue",
+  subtitle
+}) => {
   return (
-    <Card className="bg-nutri-gray-light">
+    <Card className="bg-white border border-gray-100 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
+        <CardTitle className="text-lg flex items-center gap-1">
           {title}
-          {infoText && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 ml-1 text-gray-500" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">{infoText}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-gray-500" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">{infoText}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
-        {subtitle && (
-          <p className={`text-sm ${subtitleColor || 'text-gray-600'} mt-2`}>
-            {subtitle}
-          </p>
-        )}
+        <div className={`text-xl font-semibold ${valueColor}`}>{value}</div>
+        {subtitle && <div className="text-sm text-gray-500 mt-1">{subtitle}</div>}
       </CardContent>
     </Card>
   );

@@ -1,64 +1,102 @@
 
 import React from 'react';
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 
 interface MacroDistributionGridProps {
   macros: {
-    carbs: number;
-    protein: number;
-    fat: number;
-    proteinPerKg?: number;
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
   };
-  carbsPercentage: string;
-  proteinPercentage: string;
-  fatPercentage: string;
-  proteinReferenceRange: {
-    min: number;
-    max: number;
-  };
+  proteinPerKg?: number;
+  weight: number;
 }
 
-const MacroDistributionGrid = ({
+const MacroDistributionGrid: React.FC<MacroDistributionGridProps> = ({ 
   macros,
-  carbsPercentage,
-  proteinPercentage,
-  fatPercentage,
-  proteinReferenceRange
-}: MacroDistributionGridProps) => {
+  proteinPerKg,
+  weight
+}) => {
   return (
-    <div className="grid grid-cols-3 gap-4 text-center">
-      <div className="bg-green-50 p-4 rounded-lg">
-        <p className="text-sm text-gray-600">Carboidratos</p>
-        <p className="text-2xl font-bold text-nutri-green">{macros.carbs}g</p>
-        <p className="text-sm">{parseInt(carbsPercentage)}% / {macros.carbs * 4} kcal</p>
+    <div className="mt-4">
+      <div className="grid grid-cols-4 gap-2 font-medium text-sm text-gray-500 mb-2">
+        <div>Nutriente</div>
+        <div className="text-center">Gramas</div>
+        <div className="text-center">kcal</div>
+        <div className="text-center">%</div>
       </div>
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <p className="text-sm text-gray-600">Proteínas</p>
-        <p className="text-2xl font-bold text-nutri-blue">{macros.protein}g</p>
-        <p className="text-sm">{parseInt(proteinPercentage)}% / {macros.protein * 4} kcal</p>
-        {macros.proteinPerKg && (
-          <div>
-            <p className="mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs inline-block">
-              {macros.proteinPerKg.toFixed(1)} g/kg
-            </p>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger className="ml-1">
-                  <Info className="h-3 w-3 inline text-blue-600" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Referência: {proteinReferenceRange.min} - {proteinReferenceRange.max} g/kg</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
+      
+      {/* Protein Row */}
+      <div className="grid grid-cols-4 gap-2 py-3 border-t">
+        <div className="flex items-center">
+          <span className="font-medium">Proteína</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 ml-1 text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {proteinPerKg?.toFixed(1) || '0'} g/kg de peso corporal 
+                  <br />
+                  Total: {macros.protein.grams}g
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="text-center font-semibold">{macros.protein.grams}g</div>
+        <div className="text-center">{macros.protein.kcal}</div>
+        <div className="text-center">{macros.protein.percentage}%</div>
       </div>
-      <div className="bg-amber-50 p-4 rounded-lg">
-        <p className="text-sm text-gray-600">Gorduras</p>
-        <p className="text-2xl font-bold text-amber-600">{macros.fat}g</p>
-        <p className="text-sm">{parseInt(fatPercentage)}% / {macros.fat * 9} kcal</p>
+      
+      {/* Carbs Row */}
+      <div className="grid grid-cols-4 gap-2 py-3 border-t">
+        <div className="flex items-center">
+          <span className="font-medium">Carboidrato</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 ml-1 text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Calculado como resto calórico
+                  <br />
+                  {(macros.carbs.grams / weight).toFixed(1)} g/kg de peso corporal
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="text-center font-semibold">{macros.carbs.grams}g</div>
+        <div className="text-center">{macros.carbs.kcal}</div>
+        <div className="text-center">{macros.carbs.percentage}%</div>
+      </div>
+      
+      {/* Fat Row */}
+      <div className="grid grid-cols-4 gap-2 py-3 border-t">
+        <div className="flex items-center">
+          <span className="font-medium">Lipídio</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 ml-1 text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {(macros.fat.grams / weight).toFixed(1)} g/kg de peso corporal
+                  <br />
+                  Total: {macros.fat.grams}g
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="text-center font-semibold">{macros.fat.grams}g</div>
+        <div className="text-center">{macros.fat.kcal}</div>
+        <div className="text-center">{macros.fat.percentage}%</div>
       </div>
     </div>
   );

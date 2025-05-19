@@ -2,37 +2,47 @@
 import React from 'react';
 
 interface CalorieSummaryProps {
-  macros: {
-    carbs: number;
-    protein: number;
-    fat: number;
-  };
-  tee: number;
+  targetCalories: number;
+  actualCalories: number;
+  difference: number;
+  percentageDifference: number;
 }
 
-const CalorieSummary = ({ macros, tee }: CalorieSummaryProps) => {
-  const planCalories = Math.round((macros.carbs * 4) + (macros.protein * 4) + (macros.fat * 9));
-  const caloriesDifference = planCalories - tee;
+const CalorieSummary: React.FC<CalorieSummaryProps> = ({ 
+  targetCalories, 
+  actualCalories, 
+  difference, 
+  percentageDifference 
+}) => {
+  const hasDiscrepancy = Math.abs(difference) > 1; // Allow for tiny rounding differences
   
   return (
-    <div className="mt-6 pt-4 border-t border-gray-200">
-      <h3 className="text-base font-medium mb-2">Resumo Calórico</h3>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">Calorias do plano:</p>
-          <p className="text-lg font-semibold">{planCalories} kcal</p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-600">Meta calórica:</p>
-          <p className="text-lg font-semibold">{tee} kcal</p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-600">Diferença:</p>
-          <p className={`text-lg font-semibold ${Math.abs(caloriesDifference) <= 10 ? 'text-green-600' : 'text-amber-600'}`}>
-            {caloriesDifference} kcal
-          </p>
-        </div>
+    <div className="mt-4 space-y-2">
+      <h4 className="font-medium text-gray-800">Resumo Calórico</h4>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <div className="text-sm text-gray-600">Meta calórica (VET):</div>
+        <div className="font-medium text-right">{targetCalories} kcal</div>
       </div>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <div className="text-sm text-gray-600">Soma dos macronutrientes:</div>
+        <div className="font-medium text-right">{actualCalories} kcal</div>
+      </div>
+      
+      {hasDiscrepancy && (
+        <>
+          <div className="grid grid-cols-2 gap-2 border-t pt-2">
+            <div className="text-sm text-gray-600">Diferença:</div>
+            <div className={`font-medium text-right ${difference > 0 ? 'text-green-600' : difference < 0 ? 'text-red-600' : ''}`}>
+              {difference > 0 ? '+' : ''}{difference} kcal ({percentageDifference > 0 ? '+' : ''}{percentageDifference}%)
+            </div>
+          </div>
+          <div className="text-xs text-gray-500 italic">
+            Pequenas diferenças podem ocorrer devido a arredondamentos.
+          </div>
+        </>
+      )}
     </div>
   );
 };
