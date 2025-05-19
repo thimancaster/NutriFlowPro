@@ -23,14 +23,14 @@ const ActionButtons = ({
       {user && hasPatientName && (
         <Button 
           onClick={handleSavePatient}
-          variant="outline"
-          className="border-nutri-blue text-nutri-blue flex items-center gap-2"
+          variant="nutri-outline-blue"
           disabled={isSavingPatient}
+          animation="shimmer"
         >
           {isSavingPatient ? (
-            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <UserPlus className="h-4 w-4 mr-1" />
+            <UserPlus className="h-4 w-4" />
           )}
           Salvar Paciente
         </Button>
@@ -38,8 +38,8 @@ const ActionButtons = ({
       
       <Button 
         onClick={handleGenerateMealPlan} 
-        className="bg-nutri-green hover:bg-nutri-green-dark flex items-center gap-2"
-        size="default"
+        variant="primary"
+        animation="shimmer"
       >
         Gerar Plano Alimentar
         <ArrowRight className="h-4 w-4" />

@@ -18,10 +18,15 @@ const MealPlanHeader: React.FC<MealPlanHeaderProps> = ({
       <Button 
         onClick={generatePDF} 
         disabled={generating}
-        className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 border border-blue-500 transition-all duration-200"
+        variant="nutri-blue"
+        animation="shimmer"
       >
-        {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-        Exportar PDF
+        {generating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        {generating ? "Gerando..." : "Exportar PDF"}
       </Button>
     </div>
   );

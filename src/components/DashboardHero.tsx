@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Calculator } from 'lucide-react';
 
 interface DashboardHeroProps {}
 
@@ -25,18 +26,20 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button 
             variant="outline" 
-            className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-all duration-300 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98]"
+            className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white"
             onClick={() => navigate('/calculator')}
             animation="shimmer"
           >
+            <Calculator className="h-4 w-4" />
             Iniciar Agora
           </Button>
           <Button 
             variant="outline"
-            className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white transition-all duration-300 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98]"
+            className="bg-white text-nutri-blue border-white hover:bg-nutri-blue-light hover:text-white hover:border-white"
             onClick={() => navigate('/recursos')}
             animation="shimmer"
           >
+            <ArrowRight className="h-4 w-4" />
             Conhecer Recursos
           </Button>
         </div>

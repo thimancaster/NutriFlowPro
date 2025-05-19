@@ -15,12 +15,11 @@ const SaveActionButton: React.FC<SaveActionButtonProps> = ({ onSave, isSaving = 
       animation="shimmer"
       onClick={() => onSave()}
       disabled={isSaving}
-      className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
     >
       {isSaving ? (
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <FileText className="h-4 w-4 mr-2" />
+        <FileText className="h-4 w-4" />
       )}
       {isSaving ? "Salvando..." : "Salvar Plano"}
     </Button>

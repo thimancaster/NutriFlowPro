@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Calculator } from 'lucide-react';
+import { Calculator, Loader2 } from 'lucide-react';
 
 interface CalculatorActionsProps {
   isCalculating: boolean;
@@ -12,11 +12,16 @@ const CalculatorActions = ({ isCalculating, calculateResults }: CalculatorAction
   return (
     <Button 
       onClick={calculateResults} 
-      className="bg-nutri-green hover:bg-nutri-green-dark transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+      variant="primary"
+      animation="shimmer"
       disabled={isCalculating}
     >
-      <Calculator className="h-4 w-4 mr-2" />
-      Calcular
+      {isCalculating ? (
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      ) : (
+        <Calculator className="h-4 w-4 mr-2" />
+      )}
+      {isCalculating ? "Calculando..." : "Calcular"}
     </Button>
   );
 };

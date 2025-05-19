@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Calculator, Utensils, Star, FileText, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,37 +47,42 @@ const DashboardQuickActions: React.FC = () => {
           <CardDescription>Acesso rápido às ferramentas mais utilizadas</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
-          <Link to="/calculator" className="w-full">
-            <Button 
-              className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue hover:opacity-90 h-auto py-4 w-full flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-              animation="shimmer"
-            >
-              <span className="text-sm mb-1">Calcular</span>
-              <span className="text-xs">TMB & GET</span>
-            </Button>
-          </Link>
           <Button 
-            className="bg-gradient-to-r from-teal-500 to-teal-600 hover:opacity-90 h-auto py-4 flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+            onClick={() => navigate('/calculator')} 
+            className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue h-auto py-4 w-full flex flex-col items-center"
             animation="shimmer"
-            onClick={() => navigate('/calculator')}
           >
+            <Calculator className="h-5 w-5 mb-1" />
+            <span className="text-sm mb-1">Calcular</span>
+            <span className="text-xs">TMB & GET</span>
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/calculator')}
+            className="bg-gradient-to-r from-teal-500 to-teal-600 h-auto py-4 w-full flex flex-col items-center"
+            animation="shimmer"
+          >
+            <Utensils className="h-5 w-5 mb-1" />
             <span className="text-sm mb-1">Distribuir</span>
             <span className="text-xs">Macronutrientes</span>
           </Button>
-          <Link to="/meal-plans" className="w-full">
-            <Button 
-              className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 h-auto py-4 w-full flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-              animation="shimmer"
-            >
-              <span className="text-sm mb-1">Plano</span>
-              <span className="text-xs">Alimentar</span>
-            </Button>
-          </Link>
+          
           <Button 
-            className="bg-gradient-to-r from-gray-600 to-gray-700 hover:opacity-90 h-auto py-4 flex flex-col items-center transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+            onClick={() => navigate('/meal-plans')}
+            className="bg-gradient-to-r from-nutri-green to-nutri-green-dark h-auto py-4 w-full flex flex-col items-center"
             animation="shimmer"
-            onClick={() => navigate('/patients')}
           >
+            <FileText className="h-5 w-5 mb-1" />
+            <span className="text-sm mb-1">Plano</span>
+            <span className="text-xs">Alimentar</span>
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/patients')}
+            className="bg-gradient-to-r from-gray-600 to-gray-700 h-auto py-4 w-full flex flex-col items-center"
+            animation="shimmer"
+          >
+            <Users className="h-5 w-5 mb-1" />
             <span className="text-sm mb-1">Relatório</span>
             <span className="text-xs">Nutricional</span>
           </Button>
@@ -119,15 +124,12 @@ const DashboardQuickActions: React.FC = () => {
               )}
             </div>
             <Button 
-              className={`w-full mt-3 transform transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
-                isPremiumUser 
-                  ? 'bg-green-500 hover:bg-green-600' 
-                  : 'bg-gradient-to-r from-nutri-blue to-nutri-blue-dark hover:opacity-90'
-              }`}
+              className="w-full mt-3"
               onClick={handleUpgrade}
+              variant={isPremiumUser ? "subscription-green" : "subscription"}
               animation="shimmer"
             >
-              <Star className="h-4 w-4 mr-2" /> 
+              <Star className="h-4 w-4" />
               {isPremiumUser ? 'Gerenciar Assinatura' : 'Atualizar para Pro'}
             </Button>
           </div>
