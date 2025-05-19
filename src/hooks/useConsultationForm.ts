@@ -8,8 +8,12 @@ import {
   Profile,
   ActivityLevel,
   ConsultationType,
-  ConsultationStatus
+  ConsultationStatus,
+  PROTEIN_RATIOS,
+  LIPID_RATIOS,
+  CALORIE_VALUES
 } from '@/types/consultation';
+import { calculateMacrosByProfile } from '@/utils/macronutrientCalculations';
 
 export interface UseConsultationFormReturn {
   formData: ConsultationFormState;
@@ -43,7 +47,7 @@ export const useConsultationForm = (
     age: initialData.age || '',
     sex: initialData.sex || 'M',
     objective: initialData.objective || 'manutenção',
-    profile: initialData.profile || 'magro',
+    profile: initialData.profile || 'eutrofico',
     activityLevel: initialData.activityLevel || 'moderado',
     consultationType: initialData.consultationType || 'primeira_consulta',
     consultationStatus: initialData.consultationStatus || 'em_andamento'
@@ -91,30 +95,28 @@ export const useConsultationForm = (
 
       // Calculate TDEE based on activity level
       let activityFactor = getActivityFactor(formData.activityLevel);
-      const tdee = bmr * activityFactor;
-
-      // Calculate macros based on objective
-      const macroDistribution = getMacroDistributionByObjective(formData.objective);
+      const get = bmr * activityFactor;
       
-      // Calculate macros in grams
-      const protein = Math.round((tdee * macroDistribution.protein) / 4); // 4 calories per gram
-      const carbs = Math.round((tdee * macroDistribution.carbs) / 4); // 4 calories per gram
-      const fat = Math.round((tdee * macroDistribution.fat) / 9); // 9 calories per gram
+      // Apply objective adjustment to get VET
+      const vet = applyObjectiveAdjustment(get, formData.objective);
+
+      // Calculate macros using the weight-based approach
+      const macroResults = calculateMacrosByProfile(formData.profile, weight, vet);
 
       setResults({
         tmb: Math.round(bmr),
         fa: activityFactor,
-        get: Math.round(tdee),
+        get: Math.round(get),
         macros: {
-          protein,
-          carbs,
-          fat
+          protein: macroResults.protein.grams,
+          carbs: macroResults.carbs.grams,
+          fat: macroResults.fat.grams
         }
       });
     };
 
     calculateNutritionValues();
-  }, [formData.weight, formData.height, formData.age, formData.sex, formData.activityLevel, formData.objective]);
+  }, [formData.weight, formData.height, formData.age, formData.sex, formData.activityLevel, formData.objective, formData.profile]);
 
   return {
     formData,
@@ -147,17 +149,15 @@ const getActivityFactor = (activityLevel: ActivityLevel): number => {
   }
 };
 
-// Helper function to get macro distribution based on objective
-const getMacroDistributionByObjective = (
-  objective: Objective
-): { protein: number; carbs: number; fat: number } => {
+// Helper function to apply objective adjustment to GET
+const applyObjectiveAdjustment = (get: number, objective: Objective): number => {
   switch (objective) {
     case 'emagrecimento':
-      return { protein: 0.3, carbs: 0.4, fat: 0.3 };
+      return get * 0.8; // 20% deficit
     case 'hipertrofia':
-      return { protein: 0.3, carbs: 0.5, fat: 0.2 };
+      return get * 1.15; // 15% surplus
     case 'manutenção':
     default:
-      return { protein: 0.2, carbs: 0.5, fat: 0.3 };
+      return get; // No adjustment
   }
 };

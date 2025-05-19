@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +93,7 @@ const ConsultationForm: React.FC<ConsultationFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="objective">Objetivo</Label>
-          <Select value={formData.objective} onValueChange={(value) => handleSelectChange('objective', value)}>
+          <Select value={formData.objective} onValueChange={(value) => handleSelectChange('objective', value as Objective)}>
             <SelectTrigger id="objective">
               <SelectValue placeholder="Selecione o objetivo" />
             </SelectTrigger>
@@ -108,13 +107,13 @@ const ConsultationForm: React.FC<ConsultationFormProps> = ({
         
         <div>
           <Label htmlFor="profile">Perfil</Label>
-          <Select value={formData.profile} onValueChange={(value) => handleSelectChange('profile', value)}>
+          <Select value={formData.profile} onValueChange={(value) => handleSelectChange('profile', value as Profile)}>
             <SelectTrigger id="profile">
               <SelectValue placeholder="Selecione o perfil" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="magro">Magro</SelectItem>
-              <SelectItem value="obeso">Obeso</SelectItem>
+              <SelectItem value="eutrofico">Eutrófico (Peso normal)</SelectItem>
+              <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade</SelectItem>
               <SelectItem value="atleta">Atleta</SelectItem>
             </SelectContent>
           </Select>
@@ -124,7 +123,7 @@ const ConsultationForm: React.FC<ConsultationFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="activityLevel">Nível de Atividade</Label>
-          <Select value={formData.activityLevel} onValueChange={(value) => handleSelectChange('activityLevel', value)}>
+          <Select value={formData.activityLevel} onValueChange={(value) => handleSelectChange('activityLevel', value as ActivityLevel)}>
             <SelectTrigger id="activityLevel">
               <SelectValue placeholder="Selecione o nível" />
             </SelectTrigger>
@@ -142,7 +141,7 @@ const ConsultationForm: React.FC<ConsultationFormProps> = ({
           <Label htmlFor="consultationType">Tipo de Consulta</Label>
           <Select 
             value={formData.consultationType || 'primeira_consulta'} 
-            onValueChange={(value) => handleSelectChange('consultationType', value)}
+            onValueChange={(value) => handleSelectChange('consultationType', value as ConsultationType)}
           >
             <SelectTrigger id="consultationType">
               <SelectValue placeholder="Selecione o tipo" />
@@ -159,7 +158,7 @@ const ConsultationForm: React.FC<ConsultationFormProps> = ({
         <Label htmlFor="consultationStatus">Status da Consulta</Label>
         <Select 
           value={formData.consultationStatus || 'em_andamento'} 
-          onValueChange={(value) => handleSelectChange('consultationStatus', value)}
+          onValueChange={(value) => handleSelectChange('consultationStatus', value as ConsultationStatus)}
         >
           <SelectTrigger id="consultationStatus">
             <SelectValue placeholder="Selecione o status" />

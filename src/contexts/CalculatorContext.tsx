@@ -1,13 +1,12 @@
-
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { 
   calculateTMB, 
   calculateGET, 
-  calculateVET, 
-  calculateMacrosByProfile, 
-  calculateCalorieSummary 
+  calculateVET
 } from '@/utils/nutritionCalculations';
+import { calculateMacrosByProfile } from '@/utils/macronutrientCalculations';
+import { Profile } from '@/types/consultation';
 
 // Define types for the calculator state
 export type CalculatorState = {
@@ -19,17 +18,16 @@ export type CalculatorState = {
   objective: string;
   activityLevel: string;
   consultationType: string;
-  profile: string;
+  profile: Profile;
   carbsPercentage: string;
   proteinPercentage: string;
   fatPercentage: string;
   bmr: number | null;
   tee: { get: number; adjustment: number; vet: number } | null;
   macros: {
-    protein: { grams: number; kcal: number; percentage: number };
+    protein: { grams: number; kcal: number; percentage: number; perKg: number };
     carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg?: number;
+    fat: { grams: number; kcal: number; percentage: number; perKg: number };
   } | null;
   isCalculating: boolean;
   errorMessage: string | null;
@@ -45,17 +43,16 @@ export type CalculatorAction =
   | { type: 'SET_OBJECTIVE'; payload: string }
   | { type: 'SET_ACTIVITY_LEVEL'; payload: string }
   | { type: 'SET_CONSULTATION_TYPE'; payload: string }
-  | { type: 'SET_PROFILE'; payload: string }
+  | { type: 'SET_PROFILE'; payload: Profile }
   | { type: 'SET_CARBS_PERCENTAGE'; payload: string }
   | { type: 'SET_PROTEIN_PERCENTAGE'; payload: string }
   | { type: 'SET_FAT_PERCENTAGE'; payload: string }
   | { type: 'SET_BMR'; payload: number }
   | { type: 'SET_TEE'; payload: { get: number; adjustment: number; vet: number } }
   | { type: 'SET_MACROS'; payload: { 
-      protein: { grams: number; kcal: number; percentage: number };
+      protein: { grams: number; kcal: number; percentage: number; perKg: number };
       carbs: { grams: number; kcal: number; percentage: number };
-      fat: { grams: number; kcal: number; percentage: number };
-      proteinPerKg?: number;
+      fat: { grams: number; kcal: number; percentage: number; perKg: number };
     } }
   | { type: 'SET_CALCULATING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
@@ -71,7 +68,7 @@ const initialState: CalculatorState = {
   objective: 'manutenção',
   activityLevel: 'moderado',
   consultationType: 'primeira_consulta',
-  profile: 'magro',
+  profile: 'eutrofico',
   carbsPercentage: '',
   proteinPercentage: '',
   fatPercentage: '',
@@ -175,39 +172,24 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
         payload: { get, adjustment, vet } 
       });
 
-      // Step 4: Calculate macronutrients based on profile
+      // Step 4: Calculate macronutrients using the weight-based approach
       const macroResults = calculateMacrosByProfile(profile, weight, vet);
       
-      // Format macros for the state
-      const macros = {
-        protein: macroResults.protein,
-        carbs: macroResults.carbs,
-        fat: macroResults.fats,
-        proteinPerKg: parseFloat((macroResults.protein.grams / weight).toFixed(1))
-      };
-
       // Save macronutrient distribution
       calculatorDispatch({
         type: 'SET_MACROS',
-        payload: macros
+        payload: macroResults
       });
 
-      // Also update the percentage fields for consistency
+      // Update the percentage fields for display only (these are now derived values, not inputs)
       calculatorDispatch({ type: 'SET_PROTEIN_PERCENTAGE', payload: macroResults.protein.percentage.toString() });
       calculatorDispatch({ type: 'SET_CARBS_PERCENTAGE', payload: macroResults.carbs.percentage.toString() });
-      calculatorDispatch({ type: 'SET_FAT_PERCENTAGE', payload: macroResults.fats.percentage.toString() });
-
-      // Calculate calorie summary
-      const summary = calculateCalorieSummary(vet, {
-        protein: { kcal: macroResults.protein.kcal },
-        fats: { kcal: macroResults.fats.kcal },
-        carbs: { kcal: macroResults.carbs.kcal }
-      });
+      calculatorDispatch({ type: 'SET_FAT_PERCENTAGE', payload: macroResults.fat.percentage.toString() });
 
       // Show toast with success message
       toast({
         title: 'Cálculo realizado com sucesso',
-        description: `VET: ${summary.targetCalories} kcal | PTN: ${macros.protein.grams}g | CHO: ${macros.carbs.grams}g | LIP: ${macros.fat.grams}g`,
+        description: `VET: ${vet} kcal | PTN: ${macroResults.protein.grams}g (${macroResults.protein.perKg}g/kg) | CHO: ${macroResults.carbs.grams}g | LIP: ${macroResults.fat.grams}g (${macroResults.fat.perKg}g/kg)`,
         duration: 3000,
       });
 

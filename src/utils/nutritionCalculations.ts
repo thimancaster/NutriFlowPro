@@ -1,7 +1,7 @@
-
 /**
  * Nutrition calculation utilities
  * Implements TMB (Basal Metabolic Rate) and GET (Total Energy Expenditure) calculations
+ * Now using weight-based approach for macronutrients
  */
 
 // TMB calculation using Mifflin-St Jeor formula (standard for all profiles)
@@ -25,7 +25,7 @@ export function calculateTMB(
   }
 }
 
-// Legacy functions for testing compatibility
+// Legacy functions will be kept for backwards compatibility
 export const tmbMagrasMulheres = (weight: number, height: number, age: number): number => {
   return 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
 };
@@ -73,72 +73,7 @@ export function calculateVET(get: number, objective: string): number {
   return Math.round(get * factor);
 }
 
-// Calculate macronutrients based on profile and weight
-export function calculateMacrosByProfile(
-  profile: string,
-  weight: number,
-  vet: number
-): {
-  protein: { grams: number, kcal: number, percentage: number },
-  fats: { grams: number, kcal: number, percentage: number },
-  carbs: { grams: number, kcal: number, percentage: number }
-} {
-  let proteinGramsPerKg: number;
-  let fatsGramsPerKg: number;
-  
-  // Set protein and fat targets based on profile
-  switch(profile) {
-    case 'obeso':
-      proteinGramsPerKg = 2.0;  // 2.0g per kg for overweight/obese
-      fatsGramsPerKg = 0.5;     // 0.5g per kg for overweight/obese
-      break;
-    case 'atleta':
-      proteinGramsPerKg = 2.2;  // 2.2g per kg for athletes
-      fatsGramsPerKg = 0.8;     // 0.8g per kg for athletes
-      break;
-    case 'magro':
-    default:
-      proteinGramsPerKg = 1.6;  // 1.6g per kg for healthy/normal weight
-      fatsGramsPerKg = 1.0;     // 1.0g per kg for healthy/normal weight
-  }
-  
-  // Calculate protein
-  const proteinGrams = Math.round(weight * proteinGramsPerKg);
-  const proteinKcal = proteinGrams * 4;
-  
-  // Calculate fats
-  const fatGrams = Math.round(weight * fatsGramsPerKg);
-  const fatKcal = fatGrams * 9;
-  
-  // Calculate carbs as the caloric remainder
-  const carbsKcal = vet - (proteinKcal + fatKcal);
-  const carbsGrams = Math.round(carbsKcal / 4);
-  
-  // Calculate percentages
-  const proteinPercentage = Math.round((proteinKcal / vet) * 100);
-  const fatPercentage = Math.round((fatKcal / vet) * 100);
-  const carbsPercentage = Math.round((carbsKcal / vet) * 100);
-  
-  return {
-    protein: { 
-      grams: proteinGrams, 
-      kcal: proteinKcal, 
-      percentage: proteinPercentage 
-    },
-    fats: { 
-      grams: fatGrams, 
-      kcal: fatKcal, 
-      percentage: fatPercentage 
-    },
-    carbs: { 
-      grams: carbsGrams, 
-      kcal: carbsKcal, 
-      percentage: carbsPercentage 
-    }
-  };
-}
-
-// Legacy function for test compatibility
+// Calculate macronutrients legacy function - included for backward compatibility
 export function calculateMacros(calories: number, proteinPct: number, carbsPct: number, fatPct: number) {
   const protein = Math.round((calories * proteinPct) / 4);
   const carbs = Math.round((calories * carbsPct) / 4);
@@ -152,7 +87,7 @@ export function calculateCalorieSummary(
   vet: number,
   macros: {
     protein: { kcal: number },
-    fats: { kcal: number },
+    fats: { kcal: number } | { kcal: number },
     carbs: { kcal: number }
   }
 ): {
@@ -161,7 +96,10 @@ export function calculateCalorieSummary(
   difference: number,
   percentageDifference: number
 } {
-  const actualCalories = macros.protein.kcal + macros.fats.kcal + macros.carbs.kcal;
+  // Ensure fats property exists for both naming conventions
+  const fatsKcal = 'fats' in macros ? macros.fats.kcal : (macros as any).fat?.kcal || 0;
+  
+  const actualCalories = macros.protein.kcal + fatsKcal + macros.carbs.kcal;
   const difference = actualCalories - vet;
   const percentageDifference = Math.round((difference / vet) * 100 * 10) / 10; // Round to 1 decimal place
   
