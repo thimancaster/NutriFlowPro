@@ -1,4 +1,3 @@
-
 /**
  * Calculate age from birth date
  * @param birthDate - Birth date in string format (YYYY-MM-DD)
@@ -112,4 +111,90 @@ const formatAddressObject = (addressObj: any): string => {
   }
   
   return parts.join(', ');
+};
+
+/**
+ * Calculate the BMI (Body Mass Index) for a patient
+ * @param weight - Weight in kg
+ * @param height - Height in cm
+ * @returns Calculated BMI as a string with one decimal place, or null if data is insufficient
+ */
+export const calculateBMI = (weight?: number, height?: number): string | null => {
+  if (!weight || !height || height <= 0) return null;
+  
+  const heightInMeters = height / 100;
+  const bmi = weight / (heightInMeters * heightInMeters);
+  return bmi.toFixed(1);
+};
+
+/**
+ * Get patient's status information with color and icon
+ * @param patient - Patient object
+ * @returns Status information object
+ */
+export const getPatientStatusInfo = (patient: any) => {
+  // Status base
+  if (patient.status === 'archived') {
+    return {
+      label: 'Arquivado',
+      color: 'gray',
+      icon: 'archive',
+      bgColor: 'bg-gray-100',
+      textColor: 'text-gray-800'
+    };
+  }
+  
+  // Verificar última consulta
+  const lastAppointment = patient.last_appointment ? new Date(patient.last_appointment) : null;
+  const today = new Date();
+  
+  if (!lastAppointment) {
+    return {
+      label: 'Novo',
+      color: 'blue',
+      icon: 'user-plus',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-800'
+    };
+  }
+  
+  // Calcular dias desde a última consulta
+  const daysSinceLastAppointment = Math.floor((today.getTime() - lastAppointment.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Lógica de status baseada em dias
+  if (daysSinceLastAppointment > 90) {
+    return {
+      label: 'Atrasado',
+      color: 'red',
+      icon: 'alert-circle',
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-800'
+    };
+  } else if (daysSinceLastAppointment > 60) {
+    return {
+      label: 'Atenção',
+      color: 'amber',
+      icon: 'alert-triangle',
+      bgColor: 'bg-amber-100',
+      textColor: 'text-amber-800'
+    };
+  } else {
+    return {
+      label: 'Em dia',
+      color: 'green',
+      icon: 'check-circle',
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-800'
+    };
+  }
+};
+
+/**
+ * Get CSS classes for patient status badge
+ * @param patient - Patient object
+ * @returns CSS class string
+ */
+export const getStatusBadgeClasses = (patient: any) => {
+  const statusInfo = getPatientStatusInfo(patient);
+  return `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`;
 };

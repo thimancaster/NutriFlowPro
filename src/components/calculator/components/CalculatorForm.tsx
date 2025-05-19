@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Label, 
@@ -9,7 +8,7 @@ import {
   SelectTrigger, 
   SelectValue,
   Button
-} from '@/components/ui';
+} from '../../../components/ui';
 import { ArrowRight } from 'lucide-react';
 import { Profile } from '@/types/consultation';
 import { stringToProfile } from '@/components/calculator/utils/profileUtils';

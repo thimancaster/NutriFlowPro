@@ -1,15 +1,14 @@
-
 import React from 'react';
 import { 
   Label, 
-  Select,
+  Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue,
   Button
-} from '@/components/ui';
-import { ArrowRight, Info } from 'lucide-react';
+} from '../../../components/ui';
+import { ArrowRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ActivityFormProps {

@@ -14,16 +14,22 @@ export interface Patient {
   goals?: {
     objective?: string;
     profile?: string;
+    targetWeight?: number;
+    initialWeight?: number;
   };
   measurements?: {
     weight?: number;
     height?: number;
+    body_fat?: number;
+    muscle_mass?: number;
   };
   notes?: string;
   created_at?: string;
   updated_at?: string;
   user_id?: string;
   status: 'active' | 'archived';
+  last_appointment?: string;
+  next_appointment?: string;
   // Computed properties
   age?: number;
   weight?: number;
