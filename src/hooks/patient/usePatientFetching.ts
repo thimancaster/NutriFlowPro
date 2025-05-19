@@ -122,9 +122,13 @@ export const usePatientFetching = (
           const addressData = typeof patient.address === 'string' ? 
             safeParseJson(patient.address, {}) : patient.address || {};
           
+          // Ensure status is correctly typed as 'active' | 'archived'
+          const status: 'active' | 'archived' = 
+            patient.status === 'archived' ? 'archived' : 'active';
+          
           return {
             ...patient,
-            status: patient.status || 'active', // Use existing status or default to 'active'
+            status, // Use the properly typed status
             goals: {
               objective: goalsData.objective || '',
               profile: goalsData.profile || '',
@@ -142,7 +146,7 @@ export const usePatientFetching = (
             ...patient,
             id: patient.id,
             name: patient.name || 'Unknown Patient',
-            status: patient.status || 'active', // Use existing status or default to 'active'
+            status: (patient.status === 'archived' ? 'archived' : 'active') as 'active' | 'archived',
             goals: { objective: '', profile: '' },
             measurements: { weight: 0, height: 0 }
           };

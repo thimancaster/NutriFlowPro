@@ -12,7 +12,14 @@ import { Archive, Eye, MoreHorizontal, Pencil, RotateCcw, Trash } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
-import { Pagination } from '@/components/ui/pagination';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -109,6 +116,7 @@ const PatientTable: React.FC<PatientTableProps> = ({
   };
 
   const totalPages = Math.ceil(totalItems / (filters.pageSize || 10));
+  const currentPage = filters.page || 1;
 
   return (
     <div className="space-y-4">
@@ -179,11 +187,47 @@ const PatientTable: React.FC<PatientTableProps> = ({
       
       {totalPages > 1 && (
         <div className="flex justify-center mt-4">
-          <Pagination
-            currentPage={filters.page || 1}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) onPageChange(currentPage - 1);
+                  }} 
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                const pageNumber = i + 1;
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink 
+                      href="#" 
+                      isActive={currentPage === pageNumber}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onPageChange(pageNumber);
+                      }}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) onPageChange(currentPage + 1);
+                  }} 
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

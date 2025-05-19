@@ -23,7 +23,7 @@ export interface Patient {
   created_at?: string;
   updated_at?: string;
   user_id?: string;
-  status?: 'active' | 'archived';
+  status: 'active' | 'archived';
   // Computed properties
   age?: number;
   weight?: number;
