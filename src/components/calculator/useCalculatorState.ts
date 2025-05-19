@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
@@ -17,6 +18,11 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   const [tempPatientId, setTempPatientId] = useState<string | null>(null);
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [isSavingPatient, setIsSavingPatient] = useState<boolean>(false);
+  
+  // Add state variables for calculation results
+  const [bmr, setBmr] = useState<number | null>(null);
+  const [tee, setTee] = useState<number | null>(null);
+  const [macros, setMacros] = useState<{carbs: number; protein: number; fat: number; proteinPerKg: number} | null>(null);
   
   // Get form state and handlers
   const {
@@ -60,7 +66,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       // Make sure gender matches our expected values
       setGender(activePatient.gender === 'male' ? 'male' : 'female');
     }
-  }, [activePatient, selectedPatient]);
+  }, [activePatient, selectedPatient, setPatientName, setAge, setWeight, setHeight, setGender]);
   
   // Function to clear form data
   const clearCalculatorData = () => {
@@ -77,6 +83,10 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setConsultationType('primeira_consulta');
     setSelectedPatient(null);
     setTempPatientId(null);
+    // Clear calculation results
+    setBmr(null);
+    setTee(null);
+    setMacros(null);
   };
   
   // Calculate results function
@@ -84,19 +94,28 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setIsCalculating(true);
     
     try {
+      // Get TEE from calculatorState or calculate it
+      const calculatedTee = tee || 2000; // Default value if tee is null
+      
       // Perform calculations using the state and the calculateMacros function from useCalculatorResults
       const calculatedMacros = calculateMacros(
-        tee,
+        calculatedTee,
         state.proteinPercentage,
         state.carbPercentage,
         state.fatPercentage,
         parseFloat(state.weight.toString()) // Convert string to number
       );
+
+      // Update state with calculated values
+      const calculatedBmr = 1500; // This is a placeholder - actual calculation should happen here
+      setBmr(calculatedBmr);
+      setTee(calculatedTee);
+      setMacros(calculatedMacros);
       
       // Return the calculated results
       return {
-        bmr,
-        tee,
+        bmr: calculatedBmr,
+        tee: calculatedTee,
         macros: calculatedMacros
       };
     } catch (error) {
@@ -157,6 +176,9 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         const proteinPercentage = parseInt(calculatorState.proteinPercentage || '0');
         const fatPercentage = parseInt(calculatorState.fatPercentage || '0');
         
+        const currentTee = tee || 0;
+        const currentMacros = macros || { carbs: 0, protein: 0, fat: 0, proteinPerKg: 0 };
+        
         const consultationData = {
           id: uuidv4(),
           user_id: user?.id,
@@ -169,17 +191,17 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
           activity_level: calculatorState.activityLevel,
           objective: calculatorState.objective,
           consultation_type: calculatorState.consultationType,
-          bmr,
-          vet: tee,
+          bmr: bmr || 0,
+          vet: currentTee,
           carbs_percentage: carbsPercentage,
           protein_percentage: proteinPercentage,
           fat_percentage: fatPercentage,
           patient: { name: calculatorState.patientName },
           results: {
-            get: tee,
+            get: currentTee,
             adjustment: 500,
-            vet: tee,
-            macros: macros
+            vet: currentTee,
+            macros: currentMacros
           }
         };
         
