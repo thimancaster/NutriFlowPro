@@ -20,6 +20,7 @@ const MealPlanHeader: React.FC<MealPlanHeaderProps> = ({
         disabled={generating}
         variant="nutri-blue"
         animation="shimmer"
+        className="flex items-center gap-2"
       >
         {generating ? (
           <Loader2 className="h-4 w-4 animate-spin" />

@@ -14,8 +14,9 @@ const PatientActionButtons: React.FC<PatientActionButtonsProps> = ({ onCancel })
         variant="outline" 
         onClick={onCancel}
         size="sm"
+        className="flex items-center gap-1"
       >
-        <X className="h-4 w-4 mr-1" />
+        <X className="h-4 w-4" />
         Fechar
       </Button>
     </div>

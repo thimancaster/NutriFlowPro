@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { CheckCircle, Star, Shield, Award, Zap, BookOpen, FileText, Badge, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -134,7 +133,7 @@ const PricingSection = () => {
             </div>
           </motion.div>
           
-          {/* Plano Anual - Com desconto */}
+          {/* Plano Anual */}
           <motion.div 
             className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-xl p-8 border-2 border-nutri-blue relative w-full md:w-[calc(33%-1rem)] flex flex-col"
             initial={{ opacity: 0, y: 20 }}

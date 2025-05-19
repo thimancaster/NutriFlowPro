@@ -107,7 +107,7 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
         size="sm" 
         onClick={handleExportPDF} 
         disabled={isExporting}
-        className="flex items-center gap-1"
+        className="flex items-center gap-2"
       >
         {isExporting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -121,7 +121,7 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
         size="sm" 
         onClick={handlePrint} 
         disabled={isPrinting}
-        className="flex items-center gap-1 print:hidden"
+        className="flex items-center gap-2 print:hidden"
       >
         {isPrinting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

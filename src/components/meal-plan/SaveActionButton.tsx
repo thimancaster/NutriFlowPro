@@ -15,6 +15,7 @@ const SaveActionButton: React.FC<SaveActionButtonProps> = ({ onSave, isSaving = 
       animation="shimmer"
       onClick={() => onSave()}
       disabled={isSaving}
+      className="flex items-center gap-2"
     >
       {isSaving ? (
         <Loader2 className="h-4 w-4 animate-spin" />
