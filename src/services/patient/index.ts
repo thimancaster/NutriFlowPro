@@ -3,11 +3,13 @@
 import { getPatient } from './operations/getPatient';
 import { getPatients } from './operations/getPatients';
 import { savePatient, updatePatientStatus, updatePatient } from './operations/savePatient';
+import { deletePatient } from './operations/deletePatient';
 
 // Re-export the imported functions
 export { getPatient } from './operations/getPatient';
 export { getPatients } from './operations/getPatients';
 export { savePatient, updatePatientStatus, updatePatient } from './operations/savePatient';
+export { deletePatient } from './operations/deletePatient';
 
 // Create a PatientService object to maintain backward compatibility
 export const PatientService = {
@@ -15,5 +17,6 @@ export const PatientService = {
   getPatients,
   savePatient,
   updatePatientStatus,
-  updatePatient
+  updatePatient,
+  deletePatient
 };

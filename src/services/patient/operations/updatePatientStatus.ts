@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export const updatePatientStatus = async (patientId: string, userId: string, status: 'active' | 'archived') => {
   try {
+    console.log(`Updating patient ${patientId} to status ${status} for user ${userId}`);
+    
     const { data, error } = await supabase
       .from('patients')
       .update({ 
@@ -14,13 +16,18 @@ export const updatePatientStatus = async (patientId: string, userId: string, sta
       })
       .eq('id', patientId)
       .eq('user_id', userId)
-      .select('*');
+      .select();
+    
+    if (error) {
+      console.error("Supabase error:", error);
+      throw error;
+    }
 
-    if (error) throw error;
-
+    console.log("Status update successful:", data);
+    
     return {
       success: true,
-      data: data[0],
+      data: data?.[0],
       message: `Patient ${status === 'archived' ? 'archived' : 'activated'} successfully`
     };
   } catch (error: any) {

@@ -435,6 +435,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          status: string
           updated_at: string | null
           user_id: string | null
         }
@@ -450,6 +451,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          status?: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -465,6 +467,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          status?: string
           updated_at?: string | null
           user_id?: string | null
         }

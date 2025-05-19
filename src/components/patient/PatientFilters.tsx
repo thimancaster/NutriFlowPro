@@ -1,143 +1,67 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PatientFilters as PatientFilterType } from '@/types';
-import { 
-  SearchField, 
-  StatusFilter, 
-  SortFilter, 
-  DateFilter, 
-  FilterActions 
-} from './filters';
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { PatientFilters } from '@/types';
+import { Search } from 'lucide-react';
+import SearchField from './filters/SearchField';
+import StatusFilter from './filters/StatusFilter';
 
-interface PatientFiltersProps {
-  filters: PatientFilterType;
-  onFiltersChange: (filters: PatientFilterType) => void;
+interface PatientFiltersComponentProps {
+  filters: PatientFilters;
+  onFiltersChange: (filters: Partial<PatientFilters>) => void;
+  onStatusChange: (status: 'active' | 'archived' | 'all') => void;
   onSearch: () => void;
 }
 
-const PatientFilters: React.FC<PatientFiltersProps> = ({ 
-  filters, 
-  onFiltersChange, 
-  onSearch 
+const PatientFiltersComponent: React.FC<PatientFiltersComponentProps> = ({
+  filters,
+  onFiltersChange,
+  onStatusChange,
+  onSearch
 }) => {
-  const [searchTerm, setSearchTerm] = useState(filters.search || '');
-  // Use dateFrom/dateTo instead of startDate/endDate
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    filters.dateFrom ? new Date(filters.dateFrom) : undefined
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    filters.dateTo ? new Date(filters.dateTo) : undefined
-  );
-  
-  const handleStatusChange = (status: 'active' | 'archived' | 'all') => {
-    onFiltersChange({
-      ...filters,
-      status
-    });
+  const handleSearchChange = (value: string) => {
+    onFiltersChange({ search: value });
   };
-  
-  const handleSortChange = (sortBy: string, sortDirection: 'asc' | 'desc') => {
-    onFiltersChange({
-      ...filters,
-      sortBy,
-      sortDirection
-    });
+
+  const handleStatusFilterChange = (value: 'active' | 'archived' | 'all') => {
+    onStatusChange(value);
   };
-  
-  const handleDateChange = (type: 'start' | 'end', date?: Date) => {
-    if (type === 'start') {
-      setStartDate(date);
-      if (date) {
-        onFiltersChange({
-          ...filters,
-          dateFrom: date.toISOString().split('T')[0]
-        });
-      } else {
-        const { dateFrom, ...rest } = filters;
-        onFiltersChange(rest);
-      }
-    } else {
-      setEndDate(date);
-      if (date) {
-        onFiltersChange({
-          ...filters,
-          dateTo: date.toISOString().split('T')[0]
-        });
-      } else {
-        const { dateTo, ...rest } = filters;
-        onFiltersChange(rest);
-      }
-    }
-  };
-  
+
   const handleSearchClick = () => {
-    onFiltersChange({
-      ...filters,
-      search: searchTerm,
-      page: 1 // Reset to first page on new search
-    });
     onSearch();
   };
-  
-  const handleReset = () => {
-    setSearchTerm('');
-    setStartDate(undefined);
-    setEndDate(undefined);
-    onFiltersChange({
-      page: 1,
-      pageSize: filters.pageSize,
-      status: 'active',
-      sortBy: 'name',
-      sortDirection: 'asc'
-    });
-  };
-  
+
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-2">
-        <CardTitle>Filtrar Pacientes</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+    <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border space-y-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
           <SearchField 
-            value={searchTerm} 
-            onChange={setSearchTerm} 
+            value={filters.search || ''} 
+            onChange={handleSearchChange}
             onSearch={handleSearchClick}
           />
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <StatusFilter 
-              value={filters.status || 'active'} 
-              onChange={handleStatusChange} 
-            />
-            
-            <SortFilter 
-              value={`${filters.sortBy || 'name'}:${filters.sortDirection || 'asc'}`} 
-              onChange={handleSortChange} 
-            />
-            
-            <DateFilter 
-              label="Data inicial" 
-              date={startDate} 
-              onChange={(date) => handleDateChange('start', date)} 
-            />
-            
-            <DateFilter 
-              label="Data final" 
-              date={endDate} 
-              onChange={(date) => handleDateChange('end', date)} 
-            />
-          </div>
-          
-          <FilterActions 
-            onReset={handleReset} 
-            onSearch={handleSearchClick} 
+        </div>
+        
+        <div className="w-full md:w-48">
+          <StatusFilter 
+            value={filters.status} 
+            onChange={handleStatusFilterChange} 
           />
         </div>
-      </CardContent>
-    </Card>
+        
+        <div>
+          <Button 
+            variant="default" 
+            onClick={handleSearchClick}
+            className="w-full md:w-auto"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            Buscar
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default PatientFilters;
+export default PatientFiltersComponent;

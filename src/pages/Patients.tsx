@@ -2,8 +2,9 @@
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
-import { usePatientDetail } from '@/hooks/usePatientDetail';
+import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
 import { usePatientList } from '@/hooks/patient/usePatientList';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Import extracted components
 import PatientDetailModal from '@/components/patient/PatientDetailModal';
@@ -15,6 +16,8 @@ import PatientLoadingState from '@/components/patients/PatientLoadingState';
 import PatientErrorState from '@/components/patients/PatientErrorState';
 
 const Patients = () => {
+  const { user } = useAuth();
+  
   // Use the patient detail hook for viewing details
   const { 
     isModalOpen, 
@@ -35,20 +38,20 @@ const Patients = () => {
     handlePageChange,
     handleFilterChange,
     handleStatusChange,
-    togglePatientStatus,
     refetch
   } = usePatientList();
   
-  // Function to handle patient status change in the detail modal
-  const handlePatientStatusToggle = async () => {
-    if (!patient) return;
-    await togglePatientStatus(patient.id, patient.status === 'active' ? 'archived' : 'active');
-  };
-
-  // Create a wrapper function that matches the expected signature in PatientTable
-  const onStatusChangeWrapper = () => {
-    // This wrapper allows us to pass a function without parameters
-    // while still using handleStatusChange internally
+  // Function to handle patient status change and refresh
+  const handlePatientStatusChange = async () => {
+    refetch();
+    if (patient) {
+      // Refresh the patient details after status change
+      const updatedPatient = patients.find(p => p.id === patient.id);
+      if (updatedPatient) {
+        // Update local patient state with the refreshed data
+        openPatientDetail(updatedPatient);
+      }
+    }
   };
 
   return (
@@ -60,6 +63,7 @@ const Patients = () => {
         <PatientFiltersComponent 
           filters={filters}
           onFiltersChange={handleFilterChange}
+          onStatusChange={handleStatusChange}
           onSearch={() => refetch()}
         />
         
@@ -81,8 +85,9 @@ const Patients = () => {
                 totalItems={pagination.total}
                 filters={filters}
                 onViewDetail={openPatientDetail}
-                onStatusChange={onStatusChangeWrapper} 
+                onStatusChange={refetch}
                 onPageChange={handlePageChange}
+                userId={user?.id}
               />
             )}
           </CardContent>
@@ -93,7 +98,7 @@ const Patients = () => {
             isOpen={isModalOpen}
             onClose={closePatientDetail}
             patient={patient}
-            onStatusChange={handlePatientStatusToggle}
+            onStatusChange={handlePatientStatusChange}
           />
         )}
       </div>

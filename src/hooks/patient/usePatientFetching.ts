@@ -72,13 +72,12 @@ export const usePatientFetching = (
       
       // Apply filters
       if (filters.search) {
-        query = query.ilike('name', `%${filters.search}%`);
+        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
       }
       
-      // If we need status filtering
+      // Apply status filtering
       if (filters.status && filters.status !== 'all') {
-        // Use placeholder for status if it's not in the database yet
-        // query = query.eq('status', filters.status);
+        query = query.eq('status', filters.status);
       }
       
       // Date filters if provided
@@ -98,6 +97,9 @@ export const usePatientFetching = (
         query = query.order(filters.sortBy, { 
           ascending: filters.sortDirection === 'asc' 
         });
+      } else {
+        // Default sort by name if no sort specified
+        query = query.order('name', { ascending: true });
       }
       
       // Apply pagination
@@ -122,7 +124,7 @@ export const usePatientFetching = (
           
           return {
             ...patient,
-            status: 'active', // Add a default status if not present in the database
+            status: patient.status || 'active', // Use existing status or default to 'active'
             goals: {
               objective: goalsData.objective || '',
               profile: goalsData.profile || '',
@@ -140,7 +142,7 @@ export const usePatientFetching = (
             ...patient,
             id: patient.id,
             name: patient.name || 'Unknown Patient',
-            status: 'active', // Provide default status
+            status: patient.status || 'active', // Use existing status or default to 'active'
             goals: { objective: '', profile: '' },
             measurements: { weight: 0, height: 0 }
           };
@@ -178,7 +180,7 @@ export const usePatientFetching = (
     return () => {
       clearFetchTimeout();
     };
-  }, [userId, debouncedFetch, clearFetchTimeout]);
+  }, [userId, filters, pagination, debouncedFetch, clearFetchTimeout]);
 
   return {
     patients,

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,45 +9,62 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Patient } from '@/types';
 
 interface PatientArchiveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onArchive: () => void;
+  onArchive: () => Promise<void>;
   isArchiving: boolean;
   patientName: string;
+  status: 'active' | 'archived';
 }
 
-const PatientArchiveDialog = ({
+const PatientArchiveDialog: React.FC<PatientArchiveDialogProps> = ({
   open,
   onOpenChange,
   onArchive,
   isArchiving,
-  patientName
-}: PatientArchiveDialogProps) => {
+  patientName,
+  status
+}) => {
+  const isActive = status === 'active';
+  
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Arquivar paciente
+            {isActive ? 'Arquivar paciente' : 'Reativar paciente'}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja arquivar o paciente <strong>{patientName}</strong>? 
-            Pacientes arquivados não aparecerão na listagem principal.
+            {isActive ? (
+              <>Você está prestes a arquivar o paciente <strong>{patientName}</strong>. 
+              Pacientes arquivados não aparecem na listagem principal, 
+              mas podem ser restaurados mais tarde.</>
+            ) : (
+              <>Você está prestes a reativar o paciente <strong>{patientName}</strong>. 
+              Pacientes ativos aparecem na listagem principal.</>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isArchiving}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onArchive}
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              onArchive();
+            }}
             disabled={isArchiving}
-            className="bg-red-600 hover:bg-red-700"
+            className={isActive ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
           >
-            {isArchiving ? 'Processando...' : 'Sim, arquivar'}
+            {isArchiving ? (
+              `${isActive ? 'Arquivando...' : 'Reativando...'}`
+            ) : (
+              isActive ? 'Arquivar' : 'Reativar'
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

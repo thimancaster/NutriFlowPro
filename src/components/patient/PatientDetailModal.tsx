@@ -9,13 +9,16 @@ import {
 import { Tabs } from '@/components/ui/tabs';
 import PatientModalHeader from './modal/PatientModalHeader';
 import PatientTabNavigation from './modal/PatientTabNavigation';
-import PatientArchiveDialog from './modal/PatientArchiveDialog';
+import PatientArchiveDialog from './PatientArchiveDialog';
+import PatientDeleteDialog from './PatientDeleteDialog';
 import PatientActionButtons from './modal/PatientActionButtons';
 import PatientModalContent from './modal/PatientModalContent';
 import { Patient } from '@/types';
 import { usePatientModalActions } from '@/hooks/patient/usePatientModalActions';
 import { usePatientTabs } from '@/hooks/patient/usePatientTabs';
+import { usePatientDelete } from '@/hooks/patient/usePatientDelete';
 import { logger } from '@/utils/logger';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface PatientDetailModalProps {
   patient: Patient;
@@ -31,7 +34,9 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
   onStatusChange
 }) => {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { activeTab, handleTabChange } = usePatientTabs();
+  const { user } = useAuth();
   
   const { 
     handleArchivePatient, 
@@ -42,6 +47,11 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
     patient,
     onStatusChange,
     onClose
+  });
+
+  const { handleDeletePatient, isDeleting } = usePatientDelete(user?.id, () => {
+    onClose();
+    onStatusChange(); // Refresh the list after deletion
   });
 
   // Fix the Promise<void> return type issue
@@ -61,6 +71,10 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
       logger.error('Error updating patient notes:', error);
     }
   };
+
+  const handleDeleteConfirm = async (): Promise<void> => {
+    await handleDeletePatient(patient.id);
+  };
   
   return (
     <>
@@ -70,6 +84,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
             <PatientModalHeader 
               patient={patient}
               onArchive={() => setShowArchiveDialog(true)}
+              onDelete={() => setShowDeleteDialog(true)}
             />
           </DialogHeader>
           
@@ -99,9 +114,18 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
       
       <PatientArchiveDialog 
         open={showArchiveDialog}
-        onClose={() => setShowArchiveDialog(false)}
+        onOpenChange={setShowArchiveDialog}
         onArchive={handleArchivePatient}
         isArchiving={isArchiving}
+        patientName={patient.name}
+        status={patient.status || 'active'}
+      />
+
+      <PatientDeleteDialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onDelete={handleDeleteConfirm}
+        isDeleting={isDeleting}
         patientName={patient.name}
       />
     </>

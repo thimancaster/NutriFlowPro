@@ -1,16 +1,21 @@
 
 import React from 'react';
 import { Patient } from '@/types';
-import { Archive, RotateCcw, UserCog } from 'lucide-react';
+import { Archive, RotateCcw, Trash, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PatientStatusIndicator from './PatientStatusIndicator';
 
 interface PatientModalHeaderProps {
   patient: Patient;
   onArchive?: () => void;
+  onDelete?: () => void;
 }
 
-const PatientModalHeader: React.FC<PatientModalHeaderProps> = ({ patient, onArchive }) => {
+const PatientModalHeader: React.FC<PatientModalHeaderProps> = ({ 
+  patient, 
+  onArchive, 
+  onDelete 
+}) => {
   const isArchived = patient.status === 'archived';
 
   return (
@@ -25,26 +30,40 @@ const PatientModalHeader: React.FC<PatientModalHeaderProps> = ({ patient, onArch
         </p>
       </div>
 
-      {onArchive && (
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onArchive}
-          className={isArchived ? "text-green-600" : "text-red-600"}
-        >
-          {isArchived ? (
-            <>
-              <RotateCcw className="h-4 w-4 mr-1" />
-              Reativar
-            </>
-          ) : (
-            <>
-              <Archive className="h-4 w-4 mr-1" />
-              Arquivar
-            </>
-          )}
-        </Button>
-      )}
+      <div className="flex gap-2">
+        {onArchive && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onArchive}
+            className={isArchived ? "text-green-600" : "text-amber-600"}
+          >
+            {isArchived ? (
+              <>
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Reativar
+              </>
+            ) : (
+              <>
+                <Archive className="h-4 w-4 mr-1" />
+                Arquivar
+              </>
+            )}
+          </Button>
+        )}
+        
+        {onDelete && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onDelete}
+            className="text-red-600"
+          >
+            <Trash className="h-4 w-4 mr-1" />
+            Excluir
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

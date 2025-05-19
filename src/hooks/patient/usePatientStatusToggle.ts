@@ -1,6 +1,5 @@
 
 import { useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { updatePatientStatus } from '@/services/patient/operations/updatePatientStatus';
 
@@ -11,7 +10,14 @@ export const usePatientStatusToggle = (userId: string | undefined, onSuccess?: (
   const { toast } = useToast();
 
   const togglePatientStatus = useCallback(async (patientId: string, newStatus: 'active' | 'archived') => {
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: 'Error',
+        description: 'User not authenticated',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     try {
       const result = await updatePatientStatus(patientId, userId, newStatus);
