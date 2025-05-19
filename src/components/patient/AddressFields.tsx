@@ -35,12 +35,16 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
   };
 
   const handleCepBlur = async () => {
+    // Only proceed if we have a valid CEP format
     if (address.cep && address.cep.length === 9) { // CEP format: 00000-000
       try {
         setIsLoadingCep(true);
+        
+        // Fetch address data from CEP API
         const cepData = await fetchAddressByCep(address.cep);
         
         if (cepData) {
+          // Update form with retrieved address data
           onChange({
             ...address,
             street: cepData.logradouro || address.street,
@@ -48,6 +52,7 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
             city: cepData.localidade || address.city,
             state: cepData.uf || address.state,
           });
+          
           toast({
             title: "CEP encontrado",
             description: "Endereço preenchido automaticamente",
@@ -89,6 +94,7 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
         }}
         isLoading={isLoadingCep}
       />
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TextField
           id="street"
@@ -96,6 +102,8 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
           label="Rua"
           value={address.street || ''}
           onChange={handleAddressChange}
+          error={errors['address.street']}
+          onBlur={() => validateField('address.street', address.street)}
         />
         <TextField
           id="number"
@@ -103,22 +111,30 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
           label="Número"
           value={address.number || ''}
           onChange={handleAddressChange}
+          error={errors['address.number']}
+          onBlur={() => validateField('address.number', address.number)}
         />
       </div>
+      
       <TextField
         id="complement"
         name="complement"
         label="Complemento"
         value={address.complement || ''}
         onChange={handleAddressChange}
+        error={errors['address.complement']}
       />
+      
       <TextField
         id="neighborhood"
         name="neighborhood"
         label="Bairro"
         value={address.neighborhood || ''}
         onChange={handleAddressChange}
+        error={errors['address.neighborhood']}
+        onBlur={() => validateField('address.neighborhood', address.neighborhood)}
       />
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TextField
           id="city"
@@ -126,6 +142,8 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
           label="Cidade"
           value={address.city || ''}
           onChange={handleAddressChange}
+          error={errors['address.city']}
+          onBlur={() => validateField('address.city', address.city)}
         />
         <SelectField
           id="state"
@@ -161,6 +179,8 @@ const AddressFields = ({ address, onChange, errors, validateField }: AddressFiel
             { value: 'SE', label: 'Sergipe' },
             { value: 'TO', label: 'Tocantins' },
           ]}
+          error={errors['address.state']}
+          onBlur={() => validateField('address.state', address.state)}
         />
       </div>
     </>

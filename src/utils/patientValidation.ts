@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import { Json } from '@/integrations/supabase/types';
 
@@ -147,29 +146,41 @@ export const validateField = (field: string, value: any): string | null => {
 // CPF mask function
 export const formatCpf = (value: string) => {
   if (!value) return '';
-  return value
-    .replace(/\D/g, '')
+  
+  // Remove all non-numeric characters
+  const numbers = value.replace(/\D/g, '');
+  
+  // Apply CPF format (XXX.XXX.XXX-XX)
+  return numbers
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d{1,2})/, '$1-$2')
-    .replace(/(-\d{2})\d+?$/, '$1');
+    .replace(/(-\d{2})\d+?$/, '$1'); // Prevent more than 11 digits
 };
 
 // Phone mask function
 export const formatPhone = (value: string) => {
   if (!value) return '';
-  return value
-    .replace(/\D/g, '')
+  
+  // Remove all non-numeric characters
+  const numbers = value.replace(/\D/g, '');
+  
+  // Apply phone format ((XX) XXXXX-XXXX)
+  return numbers
     .replace(/(\d{2})(\d)/, '($1) $2')
     .replace(/(\d{5})(\d)/, '$1-$2')
-    .replace(/(-\d{4})\d+?$/, '$1');
+    .replace(/(-\d{4})\d+?$/, '$1'); // Prevent more than 11 digits
 };
 
 // CEP mask function
 export const formatCep = (value: string) => {
   if (!value) return '';
-  return value
-    .replace(/\D/g, '')
-    .replace(/(\d{5})(\d)/, '$1-$2')
-    .replace(/(-\d{3})\d+?$/, '$1');
+  
+  // Remove all non-numeric characters
+  const numbers = value.replace(/\D/g, '');
+  
+  // Apply CEP format (XXXXX-XXX)
+  return numbers
+    .replace(/(\d{5})(\d{0,3})/, '$1-$2')
+    .replace(/(-\d{3})\d+?$/, '$1'); // Prevent more than 8 digits
 };

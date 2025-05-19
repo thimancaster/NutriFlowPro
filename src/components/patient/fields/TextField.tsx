@@ -34,18 +34,20 @@ export const TextField = ({
   isLoading = false
 }: TextFieldProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value: inputValue } = e.target;
+    const inputValue = e.target.value;
     
     if (mask) {
-      // Create a new event with the masked value
+      // Create a new synthetic event with the masked value
       const maskedEvent = {
         ...e,
         target: {
           ...e.target,
+          name: e.target.name,
           value: mask(inputValue)
         }
-      };
-      onChange(maskedEvent as React.ChangeEvent<HTMLInputElement>);
+      } as React.ChangeEvent<HTMLInputElement>;
+      
+      onChange(maskedEvent);
     } else {
       onChange(e);
     }
