@@ -19,7 +19,7 @@ export const useUserSubscription = () => {
   // Usar o hook de consulta de assinatura principal com configurações otimizadas
   const query = useSubscriptionQuery(user, isAuthenticated);
   
-  // Determinar status premium de maneira segura
+  // Determinar status premium de maneira segura com fallback
   const isPremiumUser = query.data?.isPremium || false;
   
   // Determinar dados extras de assinatura
@@ -31,7 +31,7 @@ export const useUserSubscription = () => {
   };
 
   /**
-   * Invalida o cache de assinatura para forçar uma atualização
+   * Invalidida o cache de assinatura para forçar uma atualização
    * Com debounce interno para evitar múltiplas chamadas
    */
   const invalidateSubscriptionCache = useCallback(() => {
@@ -44,23 +44,41 @@ export const useUserSubscription = () => {
 
   /**
    * Força uma atualização dos dados de assinatura com controle para evitar múltiplas chamadas
+   * e com retry em caso de falha
    */
   const refetchSubscription = useCallback(async () => {
     if (refetchInProgressRef.current) {
+      console.log("Já existe um refetch em andamento, pulando...");
       return;
     }
     
     refetchInProgressRef.current = true;
-    console.log("Atualizando dados de assinatura... (executando uma única vez)");
+    console.log("Atualizando dados de assinatura...");
     
-    try {
-      return await query.refetch();
-    } finally {
-      // Garantir que o sinalizador seja redefinido mesmo em caso de erro
-      setTimeout(() => {
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (attempts < maxAttempts) {
+      try {
+        const result = await query.refetch();
         refetchInProgressRef.current = false;
-      }, 5000); // Impedir novas tentativas por 5 segundos
+        return result;
+      } catch (error) {
+        attempts++;
+        console.error(`Erro ao atualizar dados (tentativa ${attempts}/${maxAttempts}):`, error);
+        
+        if (attempts >= maxAttempts) {
+          refetchInProgressRef.current = false;
+          throw error;
+        }
+        
+        // Esperar antes de tentar novamente (com backoff exponencial)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1)));
+      }
     }
+    
+    // Garantir que o sinalizador seja redefinido mesmo em caso de erro
+    refetchInProgressRef.current = false;
   }, [query]);
 
   return {

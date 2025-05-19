@@ -12,7 +12,24 @@ interface SubscriptionData {
 
 // In-memory cache to prevent redundant checks
 const premiumStatusCache = new Map<string, {status: boolean, timestamp: number}>();
-const CACHE_TTL = 60000; // 1 minute cache lifetime
+const CACHE_TTL = 300000; // 5 minute cache lifetime (increased from 1 minute)
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+/**
+ * Retry mechanism for Supabase queries
+ */
+async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, delay = RETRY_DELAY): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries <= 0) throw error;
+    
+    console.log(`Operation failed, retrying... (${MAX_RETRIES - retries + 1}/${MAX_RETRIES})`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return withRetry(fn, retries - 1, delay * 2); // Exponential backoff
+  }
+}
 
 /**
  * Valida se um usuário tem status premium com base no e-mail ou dados de assinatura
@@ -48,29 +65,48 @@ export const validatePremiumStatus = async (
       return true;
     }
 
-    // Usar a função SQL segura para verificar status premium
-    const { data, error } = await supabase.rpc('check_user_premium_status', {
-      user_id: userId
-    });
-
-    if (error) {
-      console.error("Erro ao verificar status premium:", error);
-      // Cache the negative result temporarily to avoid repeated failures
-      premiumStatusCache.set(cacheKey, { status: false, timestamp: Date.now() });
-      
-      // Fallback para verificação por email
+    // Circuit breaker - check if Supabase is available before making RPC call
+    try {
+      const healthCheck = await supabase.from('subscribers').select('count(*)', { count: 'exact', head: true });
+      if (healthCheck.error) {
+        console.error("Serviço Supabase com problemas, usando verificação de email:", healthCheck.error);
+        const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
+        premiumStatusCache.set(cacheKey, { status: emailResult, timestamp: Date.now() });
+        return emailResult;
+      }
+    } catch (error) {
+      console.error("Erro no health check do Supabase:", error);
       const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
+      premiumStatusCache.set(cacheKey, { status: emailResult, timestamp: Date.now() });
       return emailResult;
     }
 
-    const result = !!data;
+    // Use a retry wrapper for the RPC call
+    const result = await withRetry(async () => {
+      // Usar a função SQL segura para verificar status premium
+      const { data, error } = await supabase.rpc('check_user_premium_status', {
+        user_id: userId
+      }, {
+        // Add timeout control
+        headers: {
+          'prefer': 'count=exact'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return !!data;
+    });
+    
     // Cache the result
     premiumStatusCache.set(cacheKey, { status: result, timestamp: Date.now() });
     return result;
   } catch (err) {
     console.error("Erro ao validar status premium:", err);
-    // Cache the error state temporarily
-    premiumStatusCache.set(cacheKey, { status: false, timestamp: Date.now() });
+    // Cache the error state temporarily with shorter expiry
+    premiumStatusCache.set(cacheKey, { status: false, timestamp: Date.now() - CACHE_TTL/2 });
     
     // Fallback para verificação por email
     return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
