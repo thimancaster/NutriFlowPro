@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
@@ -37,7 +36,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   } = useCalculatorForm();
   
   // Get the calculator results hooks
-  const { bmr, tee, macros, setCarbs, calculateMacros } = useCalculatorResults();
+  const { calculateMacros, setCarbs, calculateResults: calculateResultsFromHook } = useCalculatorResults();
   
   // Get patient actions - properly extract the properties we need
   const { 
@@ -88,9 +87,9 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       // Perform calculations using the state and the calculateMacros function from useCalculatorResults
       const calculatedMacros = calculateMacros(
         tee,
-        parseInt(state.proteinPercentage) || 0,
-        parseInt(state.carbPercentage) || 0,
-        parseInt(state.fatPercentage) || 0,
+        state.proteinPercentage,
+        state.carbPercentage,
+        state.fatPercentage,
         parseFloat(state.weight.toString()) // Convert string to number
       );
       

@@ -28,7 +28,7 @@ const CalculatorTool = () => {
     });
   };
   
-  // Check if we have all required data
+  // Check if we have all required fields
   const hasRequiredFields = !!calculatorState.patientName && 
                            !!calculatorState.age && 
                            !!calculatorState.weight && 
@@ -129,9 +129,9 @@ const CalculatorTool = () => {
           setGender={(value) => calculatorDispatch({ type: 'SET_GENDER', payload: value })}
           age={calculatorState.age}
           setAge={(value) => calculatorDispatch({ type: 'SET_AGE', payload: value })}
-          weight={calculatorState.weight}
+          weight={calculatorState.weight?.toString() || ''}
           setWeight={(value) => calculatorDispatch({ type: 'SET_WEIGHT', payload: value })}
-          height={calculatorState.height}
+          height={calculatorState.height?.toString() || ''}
           setHeight={(value) => calculatorDispatch({ type: 'SET_HEIGHT', payload: value })}
           objective={calculatorState.objective}
           setObjective={(value) => calculatorDispatch({ type: 'SET_OBJECTIVE', payload: value })}

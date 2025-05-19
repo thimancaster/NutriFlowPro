@@ -6,7 +6,8 @@ import {
   calculateTEE, 
 } from '../utils/calculations';
 
-const useCalculatorResults = () => {
+// Export as named export to match the import in useCalculatorState
+export const useCalculatorResults = () => {
   // Calculate BMR
   const calculateBasalMetabolicRate = useCallback((
     gender: string,
@@ -95,4 +96,5 @@ const useCalculatorResults = () => {
   };
 };
 
+// For backward compatibility
 export default useCalculatorResults;
