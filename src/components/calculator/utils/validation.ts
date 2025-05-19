@@ -1,51 +1,74 @@
 
-import { CalculatorState } from '@/contexts/CalculatorContext';
+/**
+ * Check if all required input fields have values
+ */
+export function validateRequiredFields(data: {
+  patientName?: string;
+  age?: string;
+  weight?: string | number;
+  height?: string | number;
+}): boolean {
+  return !!(data.patientName && data.age && data.weight && data.height);
+}
 
 /**
- * Validates whether the input is a valid numeric value
+ * Check if macro distribution percentages add up to 100%
  */
-export const isNumericInputValid = (value: string | number): boolean => {
-  if (typeof value === 'number') return !isNaN(value);
-  return /^\d*\.?\d*$/.test(value);
-};
+export function validateMacroPercentages(
+  carbs: string,
+  protein: string,
+  fat: string
+): boolean {
+  const carbsNum = parseInt(carbs) || 0;
+  const proteinNum = parseInt(protein) || 0;
+  const fatNum = parseInt(fat) || 0;
+  
+  const total = carbsNum + proteinNum + fatNum;
+  
+  // Allow for small rounding errors (within 1%)
+  return Math.abs(total - 100) < 1;
+}
 
 /**
- * Validates calculator inputs to ensure all required fields are present and valid
+ * Validate the state of the calculator
  */
-export const validateCalculatorInputs = (state: CalculatorState): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-  
-  // Check required fields
-  if (!state.weight) errors.push('Weight is required');
-  if (!state.height) errors.push('Height is required');
-  if (!state.age) errors.push('Age is required');
-  if (!state.gender) errors.push('Gender is required');
-  if (!state.activityLevel) errors.push('Activity level is required');
-  
-  // Validate numeric fields
-  if (state.weight && !isNumericInputValid(state.weight)) errors.push('Weight must be a valid number');
-  if (state.height && !isNumericInputValid(state.height)) errors.push('Height must be a valid number');
-  if (state.age && !isNumericInputValid(state.age)) errors.push('Age must be a valid number');
-  
-  // Check if macronutrient percentages sum to 100
-  const carbPercentage = parseInt(state.carbPercentage) || 0;
-  const proteinPercentage = parseInt(state.proteinPercentage) || 0;
-  const fatPercentage = parseInt(state.fatPercentage) || 0;
-  
-  if (carbPercentage + proteinPercentage + fatPercentage !== 100) {
-    errors.push('Macronutrient percentages must sum to 100%');
+export function validateCalculatorState(state: any): { 
+  isValid: boolean; 
+  error?: string 
+} {
+  if (!validateRequiredFields(state)) {
+    return { 
+      isValid: false, 
+      error: "Preencha todos os campos obrigatórios: nome, idade, peso e altura." 
+    };
   }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
-};
+
+  if (!validateMacroPercentages(
+    state.carbsPercentage, 
+    state.proteinPercentage, 
+    state.fatPercentage
+  )) {
+    return { 
+      isValid: false, 
+      error: "A soma dos percentuais de macronutrientes deve ser igual a 100%." 
+    };
+  }
+
+  return { isValid: true };
+}
 
 /**
- * Validates inputs required for calculation
+ * Validate numeric input value
  */
-export const validateInputsForCalculation = (state: CalculatorState): boolean => {
-  const { isValid } = validateCalculatorInputs(state);
-  return isValid;
-};
+export function validateNumericInput(value: string): boolean {
+  // Allow empty string or valid numbers (including decimals)
+  return value === '' || /^\d*\.?\d*$/.test(value);
+}
+
+/**
+ * Validate percentage input (0-100)
+ */
+export function validatePercentageInput(value: string): boolean {
+  const num = parseFloat(value);
+  return value === '' || (!isNaN(num) && num >= 0 && num <= 100);
+}

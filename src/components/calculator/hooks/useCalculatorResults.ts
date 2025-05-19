@@ -1,133 +1,98 @@
 
-import { useState, useEffect } from 'react';
-import { useCalculator } from '@/contexts/CalculatorContext';
-import { validateInputsForCalculation } from '../utils/validation';
+import { useCallback } from 'react';
+import { 
+  calculateBMR, 
+  calculateMacros, 
+  calculateTEE, 
+} from '../utils/calculations';
 
-export const useCalculatorResults = () => {
-  const { calculatorState, calculatorDispatch } = useCalculator();
-  const [bmr, setBmr] = useState(0);
-  const [tee, setTee] = useState(0);
-  const [macros, setMacros] = useState({
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-    proteinPerKg: 0, // Add proteinPerKg property
-  });
+const useCalculatorResults = () => {
+  // Calculate BMR
+  const calculateBasalMetabolicRate = useCallback((
+    gender: string,
+    weight: string,
+    height: string,
+    age: string
+  ) => {
+    return calculateBMR(gender, weight, height, age);
+  }, []);
 
-  useEffect(() => {
-    if (calculatorState.weight && calculatorState.height && calculatorState.age && calculatorState.gender && calculatorState.activityLevel) {
-      handleCalculateBMR();
-    }
-  }, [calculatorState.weight, calculatorState.height, calculatorState.age, calculatorState.gender, calculatorState.activityLevel]);
+  // Calculate Total Energy Expenditure
+  const calculateTotalEnergyExpenditure = useCallback((
+    bmr: number,
+    activityLevel: string,
+    objective: string
+  ) => {
+    return calculateTEE(bmr, activityLevel, objective);
+  }, []);
 
-  useEffect(() => {
-    if (bmr && calculatorState.objective && calculatorState.consultationType) {
-      handleCalculateTEE();
-    }
-  }, [bmr, calculatorState.objective, calculatorState.consultationType]);
-
-  useEffect(() => {
-    if (tee && calculatorState.carbPercentage && calculatorState.proteinPercentage && calculatorState.fatPercentage && calculatorState.weight) {
-      handleCalculateMacros();
-    }
-  }, [tee, calculatorState.carbPercentage, calculatorState.proteinPercentage, calculatorState.fatPercentage, calculatorState.weight]);
-
-  const handleCalculateBMR = () => {
-    let bmrValue;
-    if (calculatorState.gender === 'male') {
-      bmrValue = 88.362 + (13.397 * calculatorState.weight) + (4.799 * calculatorState.height) - (5.677 * parseInt(calculatorState.age));
-    } else {
-      bmrValue = 447.593 + (9.247 * calculatorState.weight) + (3.098 * calculatorState.height) - (4.330 * parseInt(calculatorState.age));
-    }
-
-    setBmr(bmrValue);
-  };
-
-  const handleCalculateTEE = () => {
-    let activityFactor;
-    switch (calculatorState.activityLevel) {
-      case 'sedentary':
-        activityFactor = 1.2;
-        break;
-      case 'lightlyActive':
-        activityFactor = 1.375;
-        break;
-      case 'moderatelyActive':
-        activityFactor = 1.55;
-        break;
-      case 'veryActive':
-        activityFactor = 1.725;
-        break;
-      case 'extraActive':
-        activityFactor = 1.9;
-        break;
-      default:
-        activityFactor = 1.2;
-    }
-
-    let teeValue = bmr * activityFactor;
-
-    if (calculatorState.objective === 'gainWeight') {
-      teeValue += 500;
-    } else if (calculatorState.objective === 'loseWeight') {
-      teeValue -= 500;
-    }
-
-    setTee(teeValue);
-  };
-
-  const handleCalculateMacros = () => {
-    const protein = (tee * (parseInt(calculatorState.proteinPercentage) / 100)) / 4;
-    const carbs = (tee * (parseInt(calculatorState.carbPercentage) / 100)) / 4;
-    const fat = (tee * (parseInt(calculatorState.fatPercentage) / 100)) / 9;
-    
-    // Calculate protein per kg
-    const proteinPerKg = calculatorState.weight > 0 ? protein / calculatorState.weight : 0;
-
-    setMacros({
-      protein,
-      carbs,
-      fat,
-      proteinPerKg
-    });
-  };
-
-  // Convert number to string when calling functions that expect string
-  const setCarbs = (value: number) => {
-    calculatorDispatch({
-      type: 'SET_CARB_PERCENTAGE',
-      payload: value.toString()
-    });
-  };
-
-  // Fix function call with correct number of arguments
-  const calculateMacros = (
-    totalCalories: number,
-    proteinPercentage: number,
-    carbsPercentage: number,
-    fatPercentage: number,
+  // Calculate macronutrients
+  const calculateMacronutrients = useCallback((
+    tee: number,
+    proteinPercentage: string,
+    carbsPercentage: string,
+    fatPercentage: string,
     weight: number
   ) => {
-    const protein = (totalCalories * (proteinPercentage / 100)) / 4;
-    const carbs = (totalCalories * (carbsPercentage / 100)) / 4;
-    const fat = (totalCalories * (fatPercentage / 100)) / 9;
-    
-    // Calculate protein per kg
-    const proteinPerKg = weight > 0 ? protein / weight : 0;
+    return calculateMacros(
+      tee,
+      carbsPercentage,
+      proteinPercentage,
+      fatPercentage,
+      weight
+    );
+  }, []);
 
-    return {
-      protein,
-      carbs,
-      fat,
-      proteinPerKg
-    };
-  };
+  // Calculate everything at once
+  const calculateResults = useCallback((state: any) => {
+    try {
+      // Step 1: Calculate BMR
+      const bmr = calculateBasalMetabolicRate(
+        state.gender,
+        state.weight,
+        state.height,
+        state.age
+      );
+
+      // Step 2: Calculate TEE
+      const tee = calculateTotalEnergyExpenditure(
+        bmr,
+        state.activityLevel,
+        state.objective
+      );
+
+      // Step 3: Calculate macros
+      const macros = calculateMacronutrients(
+        tee.vet,
+        state.proteinPercentage,
+        state.carbsPercentage,
+        state.fatPercentage,
+        parseFloat(state.weight)
+      );
+
+      return {
+        bmr,
+        tee,
+        macros
+      };
+    } catch (error) {
+      console.error('Error in calculation:', error);
+      return null;
+    }
+  }, [calculateBasalMetabolicRate, calculateTotalEnergyExpenditure, calculateMacronutrients]);
+
+  // Helper function to update carbs percentage in the form
+  const setCarbs = useCallback((value: string, dispatch: any) => {
+    dispatch({ type: 'SET_CARBS_PERCENTAGE', payload: value });
+  }, []);
 
   return {
-    bmr,
-    tee,
-    macros,
-    setCarbs,
-    calculateMacros
+    calculateBMR: calculateBasalMetabolicRate,
+    calculateTEE: calculateTotalEnergyExpenditure,
+    calculateMacros: calculateMacronutrients,
+    calculateResults,
+    setCarbs
   };
 };
+
+export default useCalculatorResults;

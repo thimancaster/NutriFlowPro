@@ -11,7 +11,7 @@ import { RefreshCw, User } from 'lucide-react';
 import { useCalculator } from '@/contexts/CalculatorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 
 const CalculatorTool = () => {
   const { user } = useAuth();
@@ -19,7 +19,7 @@ const CalculatorTool = () => {
   const { toast } = useToast();
   const { calculatorState, calculatorDispatch, calculateNutritionalNeeds } = useCalculator();
   
-  // Função para limpar os dados da calculadora
+  // Function to clear calculator data
   const clearCalculatorData = () => {
     calculatorDispatch({ type: 'RESET' });
     toast({
@@ -28,13 +28,13 @@ const CalculatorTool = () => {
     });
   };
   
-  // Verificar se temos todos os dados necessários
+  // Check if we have all required data
   const hasRequiredFields = !!calculatorState.patientName && 
                            !!calculatorState.age && 
                            !!calculatorState.weight && 
                            !!calculatorState.height;
   
-  // Verificar se a distribuição de macronutrientes é válida
+  // Check if macronutrient distribution is valid
   const totalPercentage = 
     (parseInt(calculatorState.carbsPercentage) || 0) + 
     (parseInt(calculatorState.proteinPercentage) || 0) + 
@@ -42,7 +42,7 @@ const CalculatorTool = () => {
   
   const hasValidPercentages = totalPercentage === 100;
   
-  // Função para calcular os resultados
+  // Function to calculate results
   const handleCalculate = () => {
     if (!hasRequiredFields) {
       toast({
@@ -65,10 +65,10 @@ const CalculatorTool = () => {
     calculateNutritionalNeeds();
   };
   
-  // Funções para manejar as ações do usuário após o cálculo
+  // Functions to handle user actions after calculation
   const handleSavePatient = async () => {
     try {
-      // Implementação futura para salvar o paciente
+      // Future implementation for saving patient
       toast({
         title: "Implementação futura",
         description: "A funcionalidade de salvar paciente será implementada em breve."
@@ -85,7 +85,7 @@ const CalculatorTool = () => {
   
   const handleGenerateMealPlan = () => {
     try {
-      // Implementação futura para gerar plano alimentar
+      // Future implementation for generating meal plan
       toast({
         title: "Implementação futura",
         description: "A geração de plano alimentar será implementada em breve."
