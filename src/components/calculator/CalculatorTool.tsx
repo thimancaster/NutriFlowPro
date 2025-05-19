@@ -14,6 +14,7 @@ import {
   calculateCalorieSummary
 } from '@/utils/nutritionCalculations';
 import { calculateMacrosByProfile } from '@/utils/macronutrientCalculations';
+import { Profile } from '@/types/consultation';
 import { 
   Calculator, 
   ArrowRight, 
@@ -42,7 +43,7 @@ const CalculatorTool = () => {
   const [sex, setSex] = useState<'M' | 'F'>('F');
   const [activityLevel, setActivityLevel] = useState('moderado');
   const [objective, setObjective] = useState('manutenção');
-  const [profile, setProfile] = useState('magro');
+  const [profile, setProfile] = useState<Profile>('eutrofico');
   
   // Result states
   const [tmbValue, setTmbValue] = useState<number | null>(null);
@@ -57,6 +58,14 @@ const CalculatorTool = () => {
   // UI states
   const [showResults, setShowResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  
+  // Function to validate inputs
+  const validateInputs = (weight: number, height: number, age: number): boolean => {
+    if (weight <= 0 || weight > 300) return false;
+    if (height <= 0 || height > 250) return false;
+    if (age <= 0 || age > 120) return false;
+    return true;
+  };
   
   // Handle calculation
   const handleCalculate = () => {
@@ -104,7 +113,11 @@ const CalculatorTool = () => {
         setMacros(macrosResult);
         
         // Calculate calorie summary
-        const summary = calculateCalorieSummary(vet, macrosResult);
+        const summary = calculateCalorieSummary({
+          protein: { kcal: macrosResult.protein.kcal },
+          carbs: { kcal: macrosResult.carbs.kcal },
+          fats: { kcal: macrosResult.fat.kcal }
+        });
         setCalorieSummary(summary);
         
         setShowResults(true);
@@ -130,7 +143,7 @@ const CalculatorTool = () => {
     setSex('F');
     setActivityLevel('moderado');
     setObjective('manutenção');
-    setProfile('magro');
+    setProfile('eutrofico');
     setTmbValue(null);
     setTeeObject(null);
     setMacros(null);
