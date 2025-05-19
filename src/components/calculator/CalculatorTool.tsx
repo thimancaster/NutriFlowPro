@@ -32,6 +32,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { validateInputs } from '@/utils/nutritionCalculations';
+import { stringToProfile } from '@/components/calculator/utils/profileUtils';
 
 const CalculatorTool = () => {
   const { toast } = useToast();
@@ -66,6 +67,11 @@ const CalculatorTool = () => {
     if (height <= 0 || height > 250) return false;
     if (age <= 0 || age > 120) return false;
     return true;
+  };
+  
+  // Create a type-safe wrapper for setProfile that accepts strings
+  const handleProfileChange = (value: string) => {
+    setProfile(stringToProfile(value));
   };
   
   // Handle calculation
@@ -242,7 +248,7 @@ const CalculatorTool = () => {
                 
                 <div>
                   <Label htmlFor="profile">Perfil Corporal</Label>
-                  <Select value={profile} onValueChange={setProfile}>
+                  <Select value={profile} onValueChange={handleProfileChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o perfil" />
                     </SelectTrigger>
