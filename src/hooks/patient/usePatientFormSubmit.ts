@@ -76,6 +76,8 @@ export const usePatientFormSubmit = ({
         },
       };
 
+      console.log('Submitting patient data:', patientData);
+
       let result;
       
       if (editPatient) {

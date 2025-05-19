@@ -3,6 +3,9 @@
  * Utility functions for DOM manipulation and management
  */
 
+// Declare jQuery to ensure TypeScript recognizes it
+declare const $: any;
+
 /**
  * Safe initialization for jQuery plugins like FancyBox
  * @param selector CSS selector for elements to apply fancybox to

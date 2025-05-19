@@ -11,6 +11,8 @@ export const savePatient = async (patientData: Partial<Patient>, userId: string)
       user_id: userId,
       updated_at: new Date().toISOString()
     });
+    
+    console.log('Saving patient data:', cleanedData);
 
     // If there's an ID, update existing patient, otherwise insert new
     if (patientData.id) {
@@ -21,7 +23,10 @@ export const savePatient = async (patientData: Partial<Patient>, userId: string)
         .eq('user_id', userId)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error while updating patient:', error);
+        throw error;
+      }
       
       return {
         success: true,
@@ -41,7 +46,10 @@ export const savePatient = async (patientData: Partial<Patient>, userId: string)
         .insert(newPatientData)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error while inserting patient:', error);
+        throw error;
+      }
 
       return {
         success: true,

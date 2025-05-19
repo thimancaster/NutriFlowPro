@@ -41,11 +41,6 @@ export const usePremiumCheck = () => {
       return await retryOperation(async () => {
         const { data, error } = await supabase.rpc('check_user_premium_status', {
           user_id: userId
-        }, {
-          // Add timeout parameters
-          headers: {
-            'prefer': 'count=exact'
-          }
         });
         
         if (error) {
