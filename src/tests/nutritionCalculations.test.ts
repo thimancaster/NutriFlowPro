@@ -59,34 +59,34 @@ describe('TMB Calculations for Obese Men', () => {
 
 describe('GET Calculations', () => {
   it('calculates correctly with various activity factors', () => {
-    expect(calcGET(1500, 1.2)).toBeCloseTo(1800);
-    expect(calcGET(1500, 1.55)).toBeCloseTo(2325);
-    expect(calcGET(1500, 1.9)).toBeCloseTo(2850);
+    expect(calcGET(1500, 'leve')).toBeCloseTo(2062.5);
+    expect(calcGET(1500, 'moderado')).toBeCloseTo(2325);
+    expect(calcGET(1500, 'intenso')).toBeCloseTo(2587.5);
   });
 
   it('handles edge cases', () => {
-    expect(calcGET(0, 1.2)).toBeCloseTo(0);
-    expect(calcGET(1500, 0)).toBeCloseTo(0);
+    expect(calcGET(0, 'leve')).toBeCloseTo(0);
+    expect(calcGET(1500, 'unknown' as any)).toBeCloseTo(2325); // Default to moderate
   });
 });
 
 describe('Macros Calculations', () => {
   it('calculates maintenance macros correctly', () => {
-    const macros = calculateMacros(2000, 0.20, 0.55, 0.25); // Fixed: use numbers instead of strings
+    const macros = calculateMacros(2000, 0.20, 0.55, 0.25);
     expect(macros.protein).toBe(100); // 2000 * 0.2 / 4 = 100
     expect(macros.carbs).toBe(275); // 2000 * 0.55 / 4 = 275
     expect(macros.fat).toBe(56); // 2000 * 0.25 / 9 = 55.55, rounded to 56
   });
 
   it('calculates weight loss macros correctly', () => {
-    const macros = calculateMacros(2000, 0.30, 0.40, 0.30); // Fixed: use numbers instead of strings
+    const macros = calculateMacros(2000, 0.30, 0.40, 0.30);
     expect(macros.protein).toBe(150); // 2000 * 0.3 / 4 = 150
     expect(macros.carbs).toBe(200); // 2000 * 0.4 / 4 = 200
     expect(macros.fat).toBe(67); // 2000 * 0.3 / 9 = 66.67, rounded to 67
   });
 
   it('calculates muscle gain macros correctly', () => {
-    const macros = calculateMacros(2000, 0.30, 0.50, 0.20); // Fixed: use numbers instead of strings
+    const macros = calculateMacros(2000, 0.30, 0.50, 0.20);
     expect(macros.protein).toBe(150); // 2000 * 0.3 / 4 = 150
     expect(macros.carbs).toBe(250); // 2000 * 0.5 / 4 = 250
     expect(macros.fat).toBe(44); // 2000 * 0.2 / 9 = 44.44, rounded to 44

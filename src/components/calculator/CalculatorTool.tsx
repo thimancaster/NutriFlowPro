@@ -100,6 +100,9 @@ const CalculatorTool = () => {
     }
   };
   
+  // Create a proper tee object for cases where it might be null
+  const teeObject = calculatorState.tee || { get: 0, adjustment: 0, vet: 0 };
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
@@ -153,7 +156,7 @@ const CalculatorTool = () => {
           fatPercentage={calculatorState.fatPercentage}
           setFatPercentage={(value) => calculatorDispatch({ type: 'SET_FAT_PERCENTAGE', payload: value })}
           bmr={calculatorState.bmr || 0}
-          tee={calculatorState.tee?.vet || 0}
+          tee={teeObject.vet || 0}
           objective={calculatorState.objective}
         />
         
@@ -176,7 +179,7 @@ const CalculatorTool = () => {
       <div className="lg:col-span-1">
         <CalculatorResults
           bmr={calculatorState.bmr || 0}
-          tee={calculatorState.tee?.vet || 0}
+          tee={teeObject.vet || 0}
           macros={calculatorState.macros}
           carbsPercentage={calculatorState.carbsPercentage}
           proteinPercentage={calculatorState.proteinPercentage}
