@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { validateInputs } from '@/utils/nutritionCalculations';
 
 const CalculatorTool = () => {
   const { toast } = useToast();
@@ -60,7 +61,7 @@ const CalculatorTool = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   
   // Function to validate inputs
-  const validateInputs = (weight: number, height: number, age: number): boolean => {
+  const validateCalculatorInputs = (weight: number, height: number, age: number): boolean => {
     if (weight <= 0 || weight > 300) return false;
     if (height <= 0 || height > 250) return false;
     if (age <= 0 || age > 120) return false;
@@ -78,7 +79,7 @@ const CalculatorTool = () => {
       return;
     }
     
-    if (!validateInputs(Number(weight), Number(height), Number(age))) {
+    if (!validateCalculatorInputs(Number(weight), Number(height), Number(age))) {
       toast({
         title: "Valores inválidos",
         description: "Por favor, verifique se os valores estão dentro de limites razoáveis.",
@@ -112,13 +113,13 @@ const CalculatorTool = () => {
         const macrosResult = calculateMacrosByProfile(profile, Number(weight), vet);
         setMacros(macrosResult);
         
-        // Calculate calorie summary
-        // Pass both parameters - the macronutrient object and the VET value
-        const summary = calculateCalorieSummary({
+        // Calculate calorie summary - Fix: Pass the correct parameters
+        // The function expects two parameters: macros object and VET value
+        const summary = calculateCalorieSummary(vet, {
           protein: { kcal: macrosResult.protein.kcal },
-          carbs: { kcal: macrosResult.carbs.kcal },
-          fats: { kcal: macrosResult.fat.kcal }
-        }, vet);
+          fats: { kcal: macrosResult.fat.kcal }, // Changed 'fat' to 'fats' to match the expected type
+          carbs: { kcal: macrosResult.carbs.kcal }
+        });
         setCalorieSummary(summary);
         
         setShowResults(true);

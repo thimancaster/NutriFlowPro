@@ -1,3 +1,4 @@
+
 /**
  * Nutrition calculation utilities
  * Implements TMB (Basal Metabolic Rate) and GET (Total Energy Expenditure) calculations
@@ -83,6 +84,7 @@ export function calculateMacros(calories: number, proteinPct: number, carbsPct: 
 }
 
 // Calculate total caloric summary
+// Corrected parameter order to match the call in CalculatorTool.tsx
 export function calculateCalorieSummary(
   vet: number,
   macros: {

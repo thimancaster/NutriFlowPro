@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
 import { usePatientActions } from './hooks/usePatientActions';
 import { CalculatorState, ToastApi } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { stringToProfile } from './utils/profileUtils';
 
 /**
  * Higher-order hook that combines form, results, and patient actions
@@ -69,8 +71,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   
   // Modified setProfile to accept string and convert it to Profile type
   const setProfileSafely = (value: string) => {
-    // Import the type from the file we just created
-    const { stringToProfile } = require('./utils/profileUtils');
+    // Convert the string to a Profile type using our utility function
     setProfile(stringToProfile(value));
   };
   
