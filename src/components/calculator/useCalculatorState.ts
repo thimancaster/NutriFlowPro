@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
@@ -67,6 +66,13 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       setGender(activePatient.gender === 'male' ? 'male' : 'female');
     }
   }, [activePatient, selectedPatient, setPatientName, setAge, setWeight, setHeight, setGender]);
+  
+  // Modified setProfile to accept string and convert it to Profile type
+  const setProfileSafely = (value: string) => {
+    // Import the type from the file we just created
+    const { stringToProfile } = require('./utils/profileUtils');
+    setProfile(stringToProfile(value));
+  };
   
   // Function to clear form data
   const clearCalculatorData = () => {
@@ -239,7 +245,8 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     setCarbsPercentage,
     setProteinPercentage,
     setFatPercentage,
-    setProfile,
+    // Return the type-safe setter instead of the original
+    setProfile: setProfileSafely,
     setConsultationType,
     isCalculating,
     calculateResults,

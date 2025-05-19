@@ -113,11 +113,12 @@ const CalculatorTool = () => {
         setMacros(macrosResult);
         
         // Calculate calorie summary
+        // Pass both parameters - the macronutrient object and the VET value
         const summary = calculateCalorieSummary({
           protein: { kcal: macrosResult.protein.kcal },
           carbs: { kcal: macrosResult.carbs.kcal },
           fats: { kcal: macrosResult.fat.kcal }
-        });
+        }, vet);
         setCalorieSummary(summary);
         
         setShowResults(true);

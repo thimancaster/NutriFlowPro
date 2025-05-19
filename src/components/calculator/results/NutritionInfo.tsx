@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Profile } from '@/types/consultation';
 
 interface NutritionInfoProps {
   objective: string;
   activityLevel: string;
-  profile: string;
+  profile: string | Profile;
 }
 
 const NutritionInfo: React.FC<NutritionInfoProps> = ({
@@ -34,12 +35,14 @@ const NutritionInfo: React.FC<NutritionInfoProps> = ({
     }
   };
   
-  const getProfileLabel = (prf: string): string => {
+  const getProfileLabel = (prf: string | Profile): string => {
     switch (prf) {
-      case 'magro': return 'Eutrófico';
-      case 'obeso': return 'Sobrepeso/Obesidade';
+      case 'eutrofico': return 'Eutrófico';
+      case 'sobrepeso_obesidade': return 'Sobrepeso/Obesidade';
       case 'atleta': return 'Atleta';
-      default: return prf;
+      case 'magro': return 'Eutrófico'; // For backward compatibility
+      case 'obeso': return 'Sobrepeso/Obesidade'; // For backward compatibility
+      default: return String(prf);
     }
   };
   
