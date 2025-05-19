@@ -129,3 +129,33 @@ export function calculateTEE(bmr: number, activityLevel: string, objective: stri
     vet
   };
 }
+
+/**
+ * Check if all required input fields have values
+ */
+export function validateRequiredFields(data: {
+  patientName?: string;
+  age?: string;
+  weight?: number;
+  height?: number;
+}): boolean {
+  return !!(data.patientName && data.age && data.weight && data.height);
+}
+
+/**
+ * Check if macro distribution percentages add up to 100%
+ */
+export function validateMacroPercentages(
+  carbs: string,
+  protein: string,
+  fat: string
+): boolean {
+  const carbsNum = parseInt(carbs) || 0;
+  const proteinNum = parseInt(protein) || 0;
+  const fatNum = parseInt(fat) || 0;
+  
+  const total = carbsNum + proteinNum + fatNum;
+  
+  // Allow for small rounding errors (within 1%)
+  return Math.abs(total - 100) < 1;
+}

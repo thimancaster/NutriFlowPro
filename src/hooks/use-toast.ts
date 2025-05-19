@@ -6,13 +6,14 @@ import type { ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 5000; // Definido para 5 segundos, tempo padrão para toasts
+const NETWORK_ERROR_TOAST_ID = 'network-error-toast';
 
 export type ToastProps = {
   id?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-  variant?: "default" | "destructive";
+  variant?: "default" | "destructive" | "warning" | "success";
   open?: boolean;
   duration?: number; // Adicionando opção de customizar duração
 };
@@ -142,6 +143,10 @@ export type ToastApi = {
     update: (props: ToastProps) => void;
   };
   dismiss: (toastId?: string) => void;
+  error: (title: string, message: string) => void;
+  success: (title: string, message: string) => void;
+  warning: (title: string, message: string) => void;
+  networkError: () => void;
 };
 
 function toast(props: ToastProps) {
@@ -178,6 +183,49 @@ function toast(props: ToastProps) {
   };
 }
 
+function error(title: string, message: string) {
+  return toast({
+    title,
+    description: message,
+    variant: "destructive",
+    duration: 5000
+  });
+}
+
+function success(title: string, message: string) {
+  return toast({
+    title,
+    description: message,
+    variant: "success",
+    duration: 3000
+  });
+}
+
+function warning(title: string, message: string) {
+  return toast({
+    title,
+    description: message,
+    variant: "warning",
+    duration: 4000
+  });
+}
+
+// Função específica para erros de rede, com verificação para não mostrar duplicados
+function networkError() {
+  // Verificar se já temos um toast de erro de rede ativo
+  const hasNetworkErrorToast = memoryState.toasts.some(t => t.id === NETWORK_ERROR_TOAST_ID);
+  
+  if (!hasNetworkErrorToast) {
+    toast({
+      id: NETWORK_ERROR_TOAST_ID,
+      title: "Erro de conexão",
+      description: "Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente mais tarde.",
+      variant: "destructive",
+      duration: 10000 // Toast de erro de rede fica mais tempo na tela
+    });
+  }
+}
+
 function useToast() {
   const [state, setState] = useState<State>(memoryState);
 
@@ -197,6 +245,10 @@ function useToast() {
     dismiss: (toastId?: string) => {
       dispatch({ type: "DISMISS_TOAST", toastId });
     },
+    error,
+    success,
+    warning,
+    networkError
   };
 }
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import CalculatorInputs from './CalculatorInputs';
 import MacroDistributionInputs from './MacroDistributionInputs';
 import CalculatorResults from './CalculatorResults';
@@ -8,69 +8,41 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, User } from 'lucide-react';
-import useCalculatorState from './useCalculatorState';
+import { useCalculator } from '@/contexts/CalculatorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { usePatient } from '@/contexts/PatientContext';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { ToastApi } from './types';
-import { calculateBMR, calculateTEE, calculateMacros } from './utils/calculations';
+import { useToast } from '@/hooks/use-toast';
 
 const CalculatorTool = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const { activePatient } = usePatient();
-  const { setConsultationData } = useConsultationData();
-  const [isCalculating, setIsCalculating] = useState(false);
+  const { toast } = useToast();
+  const { calculatorState, calculatorDispatch, calculateNutritionalNeeds } = useCalculator();
   
-  // Create a wrapper for toast that matches the expected type
-  const toastWrapper: ToastApi = {
-    toast: (props) => toast(props),
-    dismiss: (id?: string) => {}
+  // Função para limpar os dados da calculadora
+  const clearCalculatorData = () => {
+    calculatorDispatch({ type: 'RESET' });
+    toast({
+      title: "Dados limpos",
+      description: "Os campos da calculadora foram redefinidos.",
+    });
   };
   
-  // Combine useCalculatorState with local state management
-  const {
-    calculatorState,
-    setPatientName,
-    setGender,
-    setAge,
-    setWeight,
-    setHeight,
-    setObjective,
-    setActivityLevel,
-    setCarbsPercentage,
-    setProteinPercentage,
-    setFatPercentage,
-    setProfile,
-    setConsultationType,
-    clearCalculatorData,
-    bmr,
-    tee,
-    macros,
-    handleSavePatient,
-    handleGenerateMealPlan,
-    isSavingPatient
-  } = useCalculatorState({ 
-    toast: toastWrapper, 
-    user, 
-    setConsultationData, 
-    activePatient 
-  });
+  // Verificar se temos todos os dados necessários
+  const hasRequiredFields = !!calculatorState.patientName && 
+                           !!calculatorState.age && 
+                           !!calculatorState.weight && 
+                           !!calculatorState.height;
   
-  // Calculate combined percentage for validation
+  // Verificar se a distribuição de macronutrientes é válida
   const totalPercentage = 
     (parseInt(calculatorState.carbsPercentage) || 0) + 
     (parseInt(calculatorState.proteinPercentage) || 0) + 
     (parseInt(calculatorState.fatPercentage) || 0);
   
   const hasValidPercentages = totalPercentage === 100;
-  const hasRequiredFields = !!calculatorState.patientName && 
-                           !!calculatorState.age && 
-                           !!calculatorState.weight && 
-                           !!calculatorState.height;
   
-  // Function to handle calculation
+  // Função para calcular os resultados
   const handleCalculate = () => {
     if (!hasRequiredFields) {
       toast({
@@ -90,49 +62,41 @@ const CalculatorTool = () => {
       return;
     }
     
-    setIsCalculating(true);
-    
+    calculateNutritionalNeeds();
+  };
+  
+  // Funções para manejar as ações do usuário após o cálculo
+  const handleSavePatient = async () => {
     try {
-      // Calculate BMR
-      const calculatedBMR = calculateBMR(
-        calculatorState.gender,
-        calculatorState.weight.toString(),
-        calculatorState.height.toString(),
-        calculatorState.age.toString()
-      );
-      
-      // Calculate TEE
-      const calculatedTEE = calculateTEE(
-        calculatedBMR,
-        calculatorState.activityLevel,
-        calculatorState.objective
-      );
-      
-      // Calculate macros
-      const calculatedMacros = calculateMacros(
-        calculatedTEE.vet,
-        calculatorState.carbsPercentage,
-        calculatorState.proteinPercentage,
-        calculatorState.fatPercentage,
-        Number(calculatorState.weight)
-      );
-      
-      // Update the calculator state with the calculated values through existing context/hooks
-      console.log('Calculated values:', { 
-        bmr: calculatedBMR, 
-        tee: calculatedTEE.vet, 
-        macros: calculatedMacros 
-      });
-      
-    } catch (error) {
-      console.error('Calculation error:', error);
+      // Implementação futura para salvar o paciente
       toast({
-        title: "Erro no cálculo",
-        description: "Ocorreu um erro ao calcular. Verifique os dados informados.",
+        title: "Implementação futura",
+        description: "A funcionalidade de salvar paciente será implementada em breve."
+      });
+    } catch (error) {
+      console.error('Error saving patient:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar o paciente.",
         variant: "destructive"
       });
-    } finally {
-      setIsCalculating(false);
+    }
+  };
+  
+  const handleGenerateMealPlan = () => {
+    try {
+      // Implementação futura para gerar plano alimentar
+      toast({
+        title: "Implementação futura",
+        description: "A geração de plano alimentar será implementada em breve."
+      });
+    } catch (error) {
+      console.error('Error generating meal plan:', error);
+      toast({
+        title: "Erro ao gerar plano",
+        description: "Não foi possível gerar o plano alimentar.",
+        variant: "destructive"
+      });
     }
   };
   
@@ -160,36 +124,36 @@ const CalculatorTool = () => {
         
         <CalculatorInputs
           patientName={calculatorState.patientName}
-          setPatientName={setPatientName}
+          setPatientName={(value) => calculatorDispatch({ type: 'SET_PATIENT_NAME', payload: value })}
           gender={calculatorState.gender}
-          setGender={setGender}
+          setGender={(value) => calculatorDispatch({ type: 'SET_GENDER', payload: value })}
           age={calculatorState.age}
-          setAge={setAge}
+          setAge={(value) => calculatorDispatch({ type: 'SET_AGE', payload: value })}
           weight={calculatorState.weight}
-          setWeight={setWeight}
+          setWeight={(value) => calculatorDispatch({ type: 'SET_WEIGHT', payload: value })}
           height={calculatorState.height}
-          setHeight={setHeight}
+          setHeight={(value) => calculatorDispatch({ type: 'SET_HEIGHT', payload: value })}
           objective={calculatorState.objective}
-          setObjective={setObjective}
+          setObjective={(value) => calculatorDispatch({ type: 'SET_OBJECTIVE', payload: value })}
           activityLevel={calculatorState.activityLevel}
-          setActivityLevel={setActivityLevel}
+          setActivityLevel={(value) => calculatorDispatch({ type: 'SET_ACTIVITY_LEVEL', payload: value })}
           consultationType={calculatorState.consultationType}
-          setConsultationType={setConsultationType}
+          setConsultationType={(value) => calculatorDispatch({ type: 'SET_CONSULTATION_TYPE', payload: value })}
           profile={calculatorState.profile}
-          setProfile={setProfile}
+          setProfile={(value) => calculatorDispatch({ type: 'SET_PROFILE', payload: value })}
           user={user}
           activePatient={activePatient}
         />
         
         <MacroDistributionInputs
           carbsPercentage={calculatorState.carbsPercentage}
-          setCarbsPercentage={setCarbsPercentage}
+          setCarbsPercentage={(value) => calculatorDispatch({ type: 'SET_CARBS_PERCENTAGE', payload: value })}
           proteinPercentage={calculatorState.proteinPercentage}
-          setProteinPercentage={setProteinPercentage}
+          setProteinPercentage={(value) => calculatorDispatch({ type: 'SET_PROTEIN_PERCENTAGE', payload: value })}
           fatPercentage={calculatorState.fatPercentage}
-          setFatPercentage={setFatPercentage}
-          bmr={bmr}
-          tee={tee}
+          setFatPercentage={(value) => calculatorDispatch({ type: 'SET_FAT_PERCENTAGE', payload: value })}
+          bmr={calculatorState.bmr || 0}
+          tee={calculatorState.tee?.vet || 0}
           objective={calculatorState.objective}
         />
         
@@ -202,7 +166,7 @@ const CalculatorTool = () => {
         <Card>
           <CardContent className="pt-6">
             <CalculatorActions
-              isCalculating={isCalculating}
+              isCalculating={calculatorState.isCalculating}
               calculateResults={handleCalculate}
             />
           </CardContent>
@@ -211,15 +175,15 @@ const CalculatorTool = () => {
       
       <div className="lg:col-span-1">
         <CalculatorResults
-          bmr={bmr}
-          tee={tee}
-          macros={macros}
+          bmr={calculatorState.bmr || 0}
+          tee={calculatorState.tee?.vet || 0}
+          macros={calculatorState.macros}
           carbsPercentage={calculatorState.carbsPercentage}
           proteinPercentage={calculatorState.proteinPercentage}
           fatPercentage={calculatorState.fatPercentage}
           handleSavePatient={handleSavePatient}
           handleGenerateMealPlan={handleGenerateMealPlan}
-          isSavingPatient={isSavingPatient}
+          isSavingPatient={false}
           hasPatientName={!!calculatorState.patientName}
           user={user}
         />
