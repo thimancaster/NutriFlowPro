@@ -426,6 +426,7 @@ export type Database = {
         Row: {
           address: string | null
           birth_date: string | null
+          cpf: string | null
           created_at: string | null
           email: string | null
           gender: string | null
@@ -442,6 +443,7 @@ export type Database = {
         Insert: {
           address?: string | null
           birth_date?: string | null
+          cpf?: string | null
           created_at?: string | null
           email?: string | null
           gender?: string | null
@@ -458,6 +460,7 @@ export type Database = {
         Update: {
           address?: string | null
           birth_date?: string | null
+          cpf?: string | null
           created_at?: string | null
           email?: string | null
           gender?: string | null
