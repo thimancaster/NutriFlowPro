@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { PatientOption } from '@/types/patient';
+import { Json } from '@/integrations/supabase/types';
 
 export const usePatientOptions = () => {
   const [patients, setPatients] = useState<PatientOption[]>([]);
@@ -41,9 +42,19 @@ export const usePatientOptions = () => {
             }
           }
           
+          // Process measurements to ensure it matches the required type
+          const measurementsObj = typeof patient.measurements === 'string' 
+            ? JSON.parse(patient.measurements) 
+            : patient.measurements;
+          
           return {
-            ...patient,
-            age
+            id: patient.id,
+            name: patient.name,
+            email: patient.email,
+            birth_date: patient.birth_date,
+            gender: patient.gender,
+            age,
+            measurements: measurementsObj as PatientOption['measurements']
           };
         }) || [];
         
