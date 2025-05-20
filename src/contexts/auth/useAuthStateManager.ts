@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
 import { useUsageQuota } from '@/hooks/useUsageQuota';
-import { usePremiumCheck } from '@/hooks/usePremiumCheck';
+// Update the import path to use the correct location
+import { usePremiumCheck } from '@/hooks/premium';
 import { AUTH_STORAGE_KEYS, AUTH_CONSTANTS } from '@/constants/authConstants';
 import { storageUtils } from '@/utils/storageUtils';
 

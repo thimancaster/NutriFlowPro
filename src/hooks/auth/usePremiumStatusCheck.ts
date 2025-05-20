@@ -1,6 +1,6 @@
-
 import { useRef, useCallback } from 'react';
 import { useAuthStorage } from './useAuthStorage';
+// Update the import path to use the correct location
 import { usePremiumCheck } from '@/hooks/premium';
 import { User } from '@supabase/supabase-js';
 import { AuthState } from '@/types/auth';
