@@ -26,3 +26,5 @@ export const useConsultationPatient = (patientId?: string) => {
     isPatientsLoading
   };
 };
+
+export default useConsultationPatient;

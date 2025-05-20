@@ -3,16 +3,13 @@ import React, { useState } from 'react';
 import { usePatientAppointments } from '@/hooks/appointments/useAppointmentQuery';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Calendar, Clock, Plus } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Plus } from 'lucide-react';
 import AppointmentFormDialog from '@/components/appointment/AppointmentFormDialog';
 import { useAppointmentMutations } from '@/hooks/appointments/useAppointmentMutations';
 import { useToast } from '@/hooks/use-toast';
 import { Appointment } from '@/types';
+import AppointmentCard from './appointment/AppointmentCard';
+import { LoadingState, EmptyState } from './appointment/AppointmentStates';
 
 interface PatientAppointmentsProps {
   patientId: string;
@@ -105,102 +102,6 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
     }
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'scheduled':
-        return <Badge className="bg-blue-500">Agendado</Badge>;
-      case 'completed':
-        return <Badge className="bg-green-500">Concluído</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-500">Cancelado</Badge>;
-      case 'rescheduled':
-        return <Badge className="bg-amber-500">Reagendado</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-  
-  const renderAppointmentCard = (appointment: Appointment) => {
-    const startTime = appointment.start_time ? 
-      (typeof appointment.start_time === 'string' ? parseISO(appointment.start_time) : appointment.start_time) : 
-      parseISO(appointment.date);
-      
-    const endTime = appointment.end_time ? 
-      (typeof appointment.end_time === 'string' ? parseISO(appointment.end_time) : appointment.end_time) : 
-      parseISO(appointment.date);
-    
-    return (
-      <Card key={appointment.id} className="mb-3">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-base">{appointment.title || 'Consulta'}</CardTitle>
-              <CardDescription className="flex items-center mt-1">
-                <Calendar className="h-3.5 w-3.5 mr-1" />
-                {format(startTime, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                <Clock className="h-3.5 w-3.5 ml-3 mr-1" />
-                {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
-              </CardDescription>
-            </div>
-            {getStatusBadge(appointment.status)}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {appointment.notes && (
-            <p className="text-sm text-gray-600 mt-1">
-              <span className="font-medium">Observações:</span> {appointment.notes}
-            </p>
-          )}
-          
-          <div className="flex justify-end mt-3">
-            {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mr-2"
-                  onClick={() => handleCancelAppointment(appointment.id)}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  size="sm"
-                  onClick={() => handleEditAppointment(appointment)}
-                >
-                  Editar
-                </Button>
-              </>
-            )}
-            
-            {(appointment.status === 'cancelled' || appointment.status === 'completed') && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleEditAppointment(appointment)}
-              >
-                Visualizar
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-  
-  const renderLoadingState = () => (
-    <div className="space-y-3">
-      <Skeleton className="h-[120px] w-full" />
-      <Skeleton className="h-[120px] w-full" />
-      <Skeleton className="h-[120px] w-full" />
-    </div>
-  );
-  
-  const renderEmptyState = (message: string) => (
-    <div className="text-center py-8 border rounded-lg bg-gray-50">
-      <p className="text-gray-500">{message}</p>
-    </div>
-  );
-  
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -220,31 +121,52 @@ const PatientAppointments: React.FC<PatientAppointmentsProps> = ({ patientId }) 
         
         <TabsContent value="upcoming">
           {isLoading ? (
-            renderLoadingState()
+            <LoadingState />
           ) : upcomingAppointments.length === 0 ? (
-            renderEmptyState('Não há consultas agendadas para este paciente.')
+            <EmptyState message="Não há consultas agendadas para este paciente." />
           ) : (
-            upcomingAppointments.map(renderAppointmentCard)
+            upcomingAppointments.map(appointment => (
+              <AppointmentCard 
+                key={appointment.id}
+                appointment={appointment}
+                onEdit={handleEditAppointment}
+                onCancel={handleCancelAppointment}
+              />
+            ))
           )}
         </TabsContent>
         
         <TabsContent value="past">
           {isLoading ? (
-            renderLoadingState()
+            <LoadingState />
           ) : pastAppointments.length === 0 ? (
-            renderEmptyState('Não há consultas realizadas para este paciente.')
+            <EmptyState message="Não há consultas realizadas para este paciente." />
           ) : (
-            pastAppointments.map(renderAppointmentCard)
+            pastAppointments.map(appointment => (
+              <AppointmentCard 
+                key={appointment.id}
+                appointment={appointment}
+                onEdit={handleEditAppointment}
+                onCancel={handleCancelAppointment}
+              />
+            ))
           )}
         </TabsContent>
         
         <TabsContent value="canceled">
           {isLoading ? (
-            renderLoadingState()
+            <LoadingState />
           ) : canceledAppointments.length === 0 ? (
-            renderEmptyState('Não há consultas canceladas para este paciente.')
+            <EmptyState message="Não há consultas canceladas para este paciente." />
           ) : (
-            canceledAppointments.map(renderAppointmentCard)
+            canceledAppointments.map(appointment => (
+              <AppointmentCard 
+                key={appointment.id}
+                appointment={appointment}
+                onEdit={handleEditAppointment}
+                onCancel={handleCancelAppointment}
+              />
+            ))
           )}
         </TabsContent>
       </Tabs>

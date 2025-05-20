@@ -11,3 +11,4 @@ export * from './usePatientPagination';
 export * from './usePatientFetching';
 export * from './usePatientStatusToggle';
 export * from './usePatientDelete';
+export * from './useConsultationPatient';
