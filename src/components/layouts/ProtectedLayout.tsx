@@ -1,27 +1,24 @@
 
-import React, { ReactNode } from 'react';
-import { PatientProvider } from '@/contexts/PatientContext';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { PatientProvider } from '@/contexts/patient/PatientContext';
 import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import { MealPlanProvider } from '@/contexts/MealPlanContext';
 import { ConsultationProvider } from '@/contexts/ConsultationContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-interface ProtectedLayoutProps {
-  children: ReactNode;
-}
-
 /**
  * Layout component for protected routes
  * Wraps all the context providers needed for authenticated pages
  */
-const ProtectedLayout: React.FC<ProtectedLayoutProps> = ({ children }) => {
+const ProtectedLayout: React.FC = () => {
   return (
     <ProtectedRoute>
       <PatientProvider>
         <ConsultationDataProvider>
           <MealPlanProvider>
             <ConsultationProvider>
-              {children}
+              <Outlet />
             </ConsultationProvider>
           </MealPlanProvider>
         </ConsultationDataProvider>

@@ -62,6 +62,8 @@ export const usePatientState = () => {
           } catch (e) {
             goalsData = {}; // Default empty object if parsing fails
           }
+        } else if (!goalsData) {
+          goalsData = {};
         }
 
         let addressData = data.address;
@@ -71,6 +73,17 @@ export const usePatientState = () => {
           } catch (e) {
             addressData = addressData; // Keep as string if parsing fails
           }
+        }
+
+        let measurementsData = data.measurements;
+        if (typeof measurementsData === 'string') {
+          try {
+            measurementsData = JSON.parse(measurementsData);
+          } catch (e) {
+            measurementsData = {}; // Default empty object if parsing fails
+          }
+        } else if (!measurementsData) {
+          measurementsData = {};
         }
 
         // Create a properly structured Patient object
@@ -84,6 +97,12 @@ export const usePatientState = () => {
             initialWeight: goalsData?.initialWeight || undefined,
           },
           address: addressData || undefined,
+          measurements: {
+            weight: measurementsData?.weight || undefined,
+            height: measurementsData?.height || undefined,
+            body_fat: measurementsData?.body_fat || undefined,
+            muscle_mass: measurementsData?.muscle_mass || undefined,
+          }
         };
 
         setActivePatient(patient);

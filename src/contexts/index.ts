@@ -3,7 +3,6 @@
 export { AuthProvider } from './auth/AuthContext';
 export { CalculatorProvider } from './calculator/CalculatorContext';
 export { PatientProvider } from './patient/PatientContext';
-export { PatientProvider as PatientContext } from './patient/PatientContext';
 
 // Export all hooks for accessing contexts
 export { useAuth } from './auth/AuthContext';
