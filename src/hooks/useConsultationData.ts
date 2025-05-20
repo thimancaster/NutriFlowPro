@@ -1,59 +1,83 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConsultationData } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
-export const useConsultationData = () => {
-  const [consultation, setConsultation] = useState<ConsultationData>({
-    id: uuidv4(),
-    patient_id: '',
-    patient: { name: '' },
-    weight: 0,
-    height: 0,
-    age: 0,
-    gender: 'female',
-    activity_level: 'moderado',
-    goal: 'manutenção',
-    bmr: 0,
-    protein: 0,
-    carbs: 0,
-    fats: 0,
-    results: {
-      bmr: 0,
-      get: 0,
-      vet: 0,
-      adjustment: 0,
-      macros: {
-        protein: 0,
-        carbs: 0,
-        fat: 0
-      }
+export const useConsultationData = (consultationId?: string) => {
+  const [consultation, setConsultation] = useState<ConsultationData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!consultationId) {
+      setIsLoading(false);
+      return;
     }
-  });
+
+    const fetchConsultation = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase
+          .from('consultations')
+          .select('*')
+          .eq('id', consultationId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setConsultation(data as ConsultationData);
+        } else {
+          setConsultation(null);
+        }
+      } catch (err) {
+        console.error('Error fetching consultation:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch consultation'));
+        
+        toast({
+          title: 'Error',
+          description: 'Failed to load consultation data',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConsultation();
+  }, [consultationId, toast]);
 
   const setNutritionalConsultation = (data: Partial<ConsultationData>) => {
-    setConsultation(prev => ({ ...prev, ...data }));
+    if (!consultation) return;
+    
+    const updatedConsultation = {
+      ...consultation,
+      ...data
+    };
+    
+    setConsultation(updatedConsultation);
   };
 
-  // Method to create a new consultation
-  const createNewConsultation = (patientId: string, patientName: string) => {
+  const createNewConsultation = (patientId: string, patientName: string): ConsultationData => {
     const newConsultation: ConsultationData = {
       id: uuidv4(),
       patient_id: patientId,
-      patient: { name: patientName },
       weight: 0,
       height: 0,
-      age: 0,
-      gender: 'female',
-      activity_level: 'moderado',
-      goal: 'manutenção',
       bmr: 0,
-      tdee: 0,
       protein: 0,
       carbs: 0,
       fats: 0,
-      notes: '',
-      objective: 'manutenção',
+      gender: 'M',
+      activity_level: 'moderado',
+      patient: {
+        name: patientName,
+        id: patientId
+      },
       results: {
         bmr: 0,
         get: 0,
@@ -71,5 +95,12 @@ export const useConsultationData = () => {
     return newConsultation;
   };
 
-  return { consultation, setNutritionalConsultation, createNewConsultation };
+  return { 
+    consultation, 
+    setConsultation,
+    isLoading, 
+    error,
+    setNutritionalConsultation,
+    createNewConsultation
+  };
 };

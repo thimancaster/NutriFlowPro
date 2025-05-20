@@ -10,15 +10,19 @@ export const stringToProfile = (value: string): Profile => {
   
   switch (normalizedValue) {
     case 'magro':
-      return 'eutrofico'; // Map old 'magro' to 'eutrofico'
+      return 'magro';
     case 'obeso':
-      return 'sobrepeso_obesidade'; // Map old 'obeso' to 'sobrepeso_obesidade'
+      return 'obeso';
     case 'atleta':
       return 'atleta';
     case 'eutrofico':
       return 'eutrofico';
     case 'sobrepeso_obesidade':
       return 'sobrepeso_obesidade';
+    case 'normal':
+      return 'normal';
+    case 'sobrepeso':
+      return 'sobrepeso';
     default:
       // If the value doesn't match exactly, try to determine closest match
       if (normalizedValue.includes('peso') || normalizedValue.includes('obre')) {
@@ -45,6 +49,14 @@ export const getProfileLabel = (profile: Profile | string): string => {
       return 'Sobrepeso/Obesidade';
     case 'atleta':
       return 'Atleta';
+    case 'magro':
+      return 'Magro';
+    case 'normal':
+      return 'Normal';
+    case 'sobrepeso':
+      return 'Sobrepeso';
+    case 'obeso':
+      return 'Obeso';
     default:
       return String(profile);
   }

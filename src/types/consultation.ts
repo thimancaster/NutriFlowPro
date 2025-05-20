@@ -72,7 +72,7 @@ export interface ConsultationData {
 // Additional types for the consultation form
 export type Sex = 'M' | 'F';
 export type Objective = 'manutenção' | 'emagrecimento' | 'hipertrofia' | 'personalizado';
-export type Profile = 'magro' | 'normal' | 'sobrepeso' | 'obeso';
+export type Profile = 'magro' | 'normal' | 'sobrepeso' | 'obeso' | 'eutrofico' | 'sobrepeso_obesidade' | 'atleta';
 export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'muito_intenso';
 export type ConsultationType = 'primeira_consulta' | 'retorno';
 export type ConsultationStatus = 'em_andamento' | 'completo';
@@ -105,14 +105,20 @@ export const PROTEIN_RATIOS = {
   magro: 2.0,
   normal: 1.8,
   sobrepeso: 1.6,
-  obeso: 1.4
+  obeso: 1.4,
+  eutrofico: 1.8,
+  sobrepeso_obesidade: 1.6,
+  atleta: 2.2
 };
 
 export const LIPID_RATIOS = {
   magro: 1.0,
   normal: 0.8,
   sobrepeso: 0.7,
-  obeso: 0.6
+  obeso: 0.6,
+  eutrofico: 0.8,
+  sobrepeso_obesidade: 0.7,
+  atleta: 1.0
 };
 
 export const CALORIE_VALUES = {

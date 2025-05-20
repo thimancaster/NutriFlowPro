@@ -22,7 +22,7 @@ export const useCalculatorState = () => {
   const [sex, setSex] = useState<'M' | 'F'>('F');
   const [activityLevel, setActivityLevel] = useState('moderado');
   const [objective, setObjective] = useState('manutenção');
-  const [profile, setProfile] = useState<Profile>('eutrofico');
+  const [profile, setProfile] = useState<Profile>('normal');
   
   // Result states
   const [tmbValue, setTmbValue] = useState<number | null>(null);
@@ -154,7 +154,7 @@ export const useCalculatorState = () => {
     setSex('F');
     setActivityLevel('moderado');
     setObjective('manutenção');
-    setProfile('eutrofico');
+    setProfile('normal');
     setTmbValue(null);
     setTeeObject(null);
     setMacros(null);

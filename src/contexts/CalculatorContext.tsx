@@ -1,224 +1,283 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { toast } from '@/hooks/use-toast';
-import { 
-  calculateTMB, 
-  calculateGET, 
-  calculateVET
-} from '@/utils/nutritionCalculations';
-import { calculateMacrosByProfile } from '@/utils/macronutrientCalculations';
-import { Profile } from '@/types/consultation';
 
-// Define types for the calculator state
-export type CalculatorState = {
-  patientName: string;
-  gender: 'male' | 'female';
-  age: string;
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Profile } from '@/types/consultation';
+import { useToast } from '@/hooks/use-toast';
+
+interface CalculatorState {
+  // Basic data
   weight: number;
   height: number;
-  objective: string;
+  age: number;
+  sex: 'M' | 'F';
+  
+  // Advanced settings
   activityLevel: string;
-  consultationType: string;
+  objective: string;
   profile: Profile;
-  carbsPercentage: string;
-  proteinPercentage: string;
-  fatPercentage: string;
+  
+  // Results
   bmr: number | null;
-  tee: { get: number; adjustment: number; vet: number } | null;
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number; perKg: number };
-    carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number; perKg: number };
-  } | null;
-  isCalculating: boolean;
-  errorMessage: string | null;
-};
-
-// Define the actions for the reducer
-export type CalculatorAction = 
-  | { type: 'SET_PATIENT_NAME'; payload: string }
-  | { type: 'SET_GENDER'; payload: 'male' | 'female' }
-  | { type: 'SET_AGE'; payload: string }
-  | { type: 'SET_WEIGHT'; payload: string }
-  | { type: 'SET_HEIGHT'; payload: string }
-  | { type: 'SET_OBJECTIVE'; payload: string }
-  | { type: 'SET_ACTIVITY_LEVEL'; payload: string }
-  | { type: 'SET_CONSULTATION_TYPE'; payload: string }
-  | { type: 'SET_PROFILE'; payload: Profile }
-  | { type: 'SET_CARBS_PERCENTAGE'; payload: string }
-  | { type: 'SET_PROTEIN_PERCENTAGE'; payload: string }
-  | { type: 'SET_FAT_PERCENTAGE'; payload: string }
-  | { type: 'SET_BMR'; payload: number }
-  | { type: 'SET_TEE'; payload: { get: number; adjustment: number; vet: number } }
-  | { type: 'SET_MACROS'; payload: { 
-      protein: { grams: number; kcal: number; percentage: number; perKg: number };
-      carbs: { grams: number; kcal: number; percentage: number };
-      fat: { grams: number; kcal: number; percentage: number; perKg: number };
-    } }
-  | { type: 'SET_CALCULATING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'RESET' };
-
-// Initial state
-const initialState: CalculatorState = {
-  patientName: '',
-  gender: 'female',
-  age: '',
-  weight: 0,
-  height: 0,
-  objective: 'manutenção',
-  activityLevel: 'moderado',
-  consultationType: 'primeira_consulta',
-  profile: 'eutrofico',
-  carbsPercentage: '',
-  proteinPercentage: '',
-  fatPercentage: '',
-  bmr: null,
-  tee: null,
-  macros: null,
-  isCalculating: false,
-  errorMessage: null
-};
-
-// Reducer function
-function calculatorReducer(state: CalculatorState, action: CalculatorAction): CalculatorState {
-  switch (action.type) {
-    case 'SET_PATIENT_NAME':
-      return { ...state, patientName: action.payload };
-    case 'SET_GENDER':
-      return { ...state, gender: action.payload };
-    case 'SET_AGE':
-      return { ...state, age: action.payload };
-    case 'SET_WEIGHT':
-      return { ...state, weight: parseFloat(action.payload) || 0 };
-    case 'SET_HEIGHT':
-      return { ...state, height: parseInt(action.payload) || 0 };
-    case 'SET_OBJECTIVE':
-      return { ...state, objective: action.payload };
-    case 'SET_ACTIVITY_LEVEL':
-      return { ...state, activityLevel: action.payload };
-    case 'SET_CONSULTATION_TYPE':
-      return { ...state, consultationType: action.payload };
-    case 'SET_PROFILE':
-      return { ...state, profile: action.payload };
-    case 'SET_CARBS_PERCENTAGE':
-      return { ...state, carbsPercentage: action.payload };
-    case 'SET_PROTEIN_PERCENTAGE':
-      return { ...state, proteinPercentage: action.payload };
-    case 'SET_FAT_PERCENTAGE':
-      return { ...state, fatPercentage: action.payload };
-    case 'SET_BMR':
-      return { ...state, bmr: action.payload };
-    case 'SET_TEE':
-      return { ...state, tee: action.payload };
-    case 'SET_MACROS':
-      return { ...state, macros: action.payload };
-    case 'SET_CALCULATING':
-      return { ...state, isCalculating: action.payload };
-    case 'SET_ERROR':
-      return { ...state, errorMessage: action.payload };
-    case 'RESET':
-      return initialState;
-    default:
-      return state;
-  }
+  tdee: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fats: number | null;
+  
+  // UI States
+  loading: boolean;
+  calculated: boolean;
+  activeTab: 'basic' | 'advanced' | 'results';
 }
 
-// Create the context
-type CalculatorContextType = {
-  calculatorState: CalculatorState;
-  calculatorDispatch: React.Dispatch<CalculatorAction>;
-  calculateNutritionalNeeds: () => void;
+interface CalculatorContextType {
+  state: CalculatorState;
+  setWeight: (weight: number) => void;
+  setHeight: (height: number) => void;
+  setAge: (age: number) => void;
+  setSex: (sex: 'M' | 'F') => void;
+  setActivityLevel: (level: string) => void;
+  setObjective: (objective: string) => void;
+  setProfile: (profile: Profile) => void;
+  calculateNutrition: () => void;
+  resetCalculator: () => void;
+  setActiveTab: (tab: 'basic' | 'advanced' | 'results') => void;
+}
+
+const initialState: CalculatorState = {
+  weight: 70,
+  height: 170,
+  age: 30,
+  sex: 'M',
+  activityLevel: 'moderado',
+  objective: 'manutenção',
+  profile: 'normal',
+  bmr: null,
+  tdee: null,
+  protein: null,
+  carbs: null,
+  fats: null,
+  loading: false,
+  calculated: false,
+  activeTab: 'basic'
 };
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
-// Provider component
-export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [calculatorState, calculatorDispatch] = useReducer(calculatorReducer, initialState);
-
-  // Function to calculate nutritional needs
-  const calculateNutritionalNeeds = () => {
+export const CalculatorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, setState] = useState<CalculatorState>(initialState);
+  const { toast } = useToast();
+  
+  // Load saved calculator state from localStorage
+  useEffect(() => {
     try {
-      calculatorDispatch({ type: 'SET_CALCULATING', payload: true });
-      calculatorDispatch({ type: 'SET_ERROR', payload: null });
-
-      const { weight, height, age, gender, activityLevel, objective, profile } = calculatorState;
-
-      if (!weight || !height || !age) {
-        throw new Error('Preencha os dados de peso, altura e idade para calcular.');
+      const savedState = localStorage.getItem('calculatorState');
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        setState(prevState => ({ ...prevState, ...parsedState }));
       }
-
-      // Step 1: Calculate BMR (Taxa Metabólica Basal)
-      const bmr = calculateTMB(
-        weight, 
-        height, 
-        parseInt(age), 
-        gender === 'male' ? 'M' : 'F'
-      );
-      calculatorDispatch({ type: 'SET_BMR', payload: bmr });
-
-      // Step 2: Calculate GET (Gasto Energético Total)
-      const get = calculateGET(bmr, activityLevel);
-
-      // Step 3: Calculate VET (Valor Energético Total - with objective adjustment)
-      const vet = calculateVET(get, objective);
-      
-      // Calculate the adjustment value (difference between GET and VET)
-      const adjustment = vet - get;
-
-      // Save TEE (Total Energy Expenditure) data
-      calculatorDispatch({ 
-        type: 'SET_TEE', 
-        payload: { get, adjustment, vet } 
-      });
-
-      // Step 4: Calculate macronutrients using the weight-based approach
-      const macroResults = calculateMacrosByProfile(profile, weight, vet);
-      
-      // Save macronutrient distribution
-      calculatorDispatch({
-        type: 'SET_MACROS',
-        payload: macroResults
-      });
-
-      // Update the percentage fields for display only (these are now derived values, not inputs)
-      calculatorDispatch({ type: 'SET_PROTEIN_PERCENTAGE', payload: macroResults.protein.percentage.toString() });
-      calculatorDispatch({ type: 'SET_CARBS_PERCENTAGE', payload: macroResults.carbs.percentage.toString() });
-      calculatorDispatch({ type: 'SET_FAT_PERCENTAGE', payload: macroResults.fat.percentage.toString() });
-
-      // Show toast with success message
-      toast({
-        title: 'Cálculo realizado com sucesso',
-        description: `VET: ${vet} kcal | PTN: ${macroResults.protein.grams}g (${macroResults.protein.perKg}g/kg) | CHO: ${macroResults.carbs.grams}g | LIP: ${macroResults.fat.grams}g (${macroResults.fat.perKg}g/kg)`,
-        duration: 3000,
-      });
-
     } catch (error) {
-      calculatorDispatch({ 
-        type: 'SET_ERROR', 
-        payload: error instanceof Error ? error.message : 'Erro ao calcular necessidades nutricionais'
-      });
-      
-      toast({
-        title: 'Erro no cálculo',
-        description: error instanceof Error ? error.message : 'Ocorreu um erro ao calcular',
-        variant: "destructive",
-        duration: 5000,
-      });
-    } finally {
-      calculatorDispatch({ type: 'SET_CALCULATING', payload: false });
+      console.error('Failed to load calculator state:', error);
     }
+  }, []);
+  
+  // Save state to localStorage when it changes
+  useEffect(() => {
+    try {
+      const stateToSave = {
+        weight: state.weight,
+        height: state.height,
+        age: state.age,
+        sex: state.sex,
+        activityLevel: state.activityLevel,
+        objective: state.objective,
+        profile: state.profile
+      };
+      localStorage.setItem('calculatorState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Failed to save calculator state:', error);
+    }
+  }, [state.weight, state.height, state.age, state.sex, state.activityLevel, state.objective, state.profile]);
+  
+  const setWeight = (weight: number) => {
+    setState(prev => ({ ...prev, weight }));
   };
-
+  
+  const setHeight = (height: number) => {
+    setState(prev => ({ ...prev, height }));
+  };
+  
+  const setAge = (age: number) => {
+    setState(prev => ({ ...prev, age }));
+  };
+  
+  const setSex = (sex: 'M' | 'F') => {
+    setState(prev => ({ ...prev, sex }));
+  };
+  
+  const setActivityLevel = (activityLevel: string) => {
+    setState(prev => ({ ...prev, activityLevel }));
+  };
+  
+  const setObjective = (objective: string) => {
+    setState(prev => ({ ...prev, objective }));
+  };
+  
+  const setProfile = (profile: Profile) => {
+    setState(prev => ({ ...prev, profile }));
+  };
+  
+  const setActiveTab = (activeTab: 'basic' | 'advanced' | 'results') => {
+    setState(prev => ({ ...prev, activeTab }));
+  };
+  
+  const calculateNutrition = () => {
+    setState(prev => ({ ...prev, loading: true }));
+    
+    // Simulating calculation delay for UI purposes
+    setTimeout(() => {
+      try {
+        // Basic validation
+        if (state.weight <= 0 || state.height <= 0 || state.age <= 0) {
+          toast({
+            title: "Invalid Input",
+            description: "All values must be greater than zero",
+            variant: "destructive"
+          });
+          setState(prev => ({ ...prev, loading: false }));
+          return;
+        }
+        
+        // Calculate BMR using Mifflin-St Jeor Equation
+        let bmr: number;
+        if (state.sex === 'M') {
+          bmr = (10 * state.weight) + (6.25 * state.height) - (5 * state.age) + 5;
+        } else {
+          bmr = (10 * state.weight) + (6.25 * state.height) - (5 * state.age) - 161;
+        }
+        
+        // Calculate TDEE based on activity level
+        let activityFactor = 1.2; // Sedentary default
+        switch (state.activityLevel) {
+          case 'sedentario':
+            activityFactor = 1.2;
+            break;
+          case 'leve':
+            activityFactor = 1.375;
+            break;
+          case 'moderado':
+            activityFactor = 1.55;
+            break;
+          case 'intenso':
+            activityFactor = 1.725;
+            break;
+          case 'muito_intenso':
+            activityFactor = 1.9;
+            break;
+        }
+        const tdee = bmr * activityFactor;
+        
+        // Adjust for objective
+        let adjustedTdee = tdee;
+        switch (state.objective) {
+          case 'emagrecimento':
+            adjustedTdee = tdee * 0.8; // 20% deficit
+            break;
+          case 'hipertrofia':
+            adjustedTdee = tdee * 1.15; // 15% surplus
+            break;
+        }
+        
+        // Calculate macros
+        let protein = 0;
+        let fats = 0;
+        switch (state.profile) {
+          case 'magro':
+            protein = state.weight * 2.0;
+            fats = state.weight * 1.0;
+            break;
+          case 'normal':
+            protein = state.weight * 1.8;
+            fats = state.weight * 0.8;
+            break;
+          case 'sobrepeso':
+            protein = state.weight * 1.6;
+            fats = state.weight * 0.7;
+            break;
+          case 'obeso':
+            protein = state.weight * 1.4;
+            fats = state.weight * 0.6;
+            break;
+          case 'eutrofico':
+            protein = state.weight * 1.8;
+            fats = state.weight * 0.8;
+            break;
+          case 'sobrepeso_obesidade':
+            protein = state.weight * 1.6;
+            fats = state.weight * 0.7;
+            break;
+          case 'atleta':
+            protein = state.weight * 2.2;
+            fats = state.weight * 1.0;
+            break;
+        }
+        
+        // Calculate protein and fat calories
+        const proteinCals = protein * 4;
+        const fatCals = fats * 9;
+        
+        // Calculate remaining calories for carbs
+        const remainingCals = adjustedTdee - proteinCals - fatCals;
+        const carbs = Math.max(0, remainingCals / 4); // Carbs are 4 cals per gram
+        
+        setState(prev => ({
+          ...prev,
+          bmr: Math.round(bmr),
+          tdee: Math.round(adjustedTdee),
+          protein: Math.round(protein),
+          carbs: Math.round(carbs),
+          fats: Math.round(fats),
+          loading: false,
+          calculated: true,
+          activeTab: 'results'
+        }));
+        
+      } catch (error) {
+        console.error('Calculation error:', error);
+        toast({
+          title: "Calculation Error",
+          description: "An error occurred while calculating nutrition values",
+          variant: "destructive"
+        });
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    }, 800);
+  };
+  
+  const resetCalculator = () => {
+    setState(initialState);
+  };
+  
   return (
-    <CalculatorContext.Provider value={{ calculatorState, calculatorDispatch, calculateNutritionalNeeds }}>
+    <CalculatorContext.Provider
+      value={{
+        state,
+        setWeight,
+        setHeight,
+        setAge,
+        setSex,
+        setActivityLevel,
+        setObjective,
+        setProfile,
+        calculateNutrition,
+        resetCalculator,
+        setActiveTab
+      }}
+    >
       {children}
     </CalculatorContext.Provider>
   );
 };
 
-// Hook to use the context
-export const useCalculator = (): CalculatorContextType => {
+export const useCalculator = () => {
   const context = useContext(CalculatorContext);
   if (context === undefined) {
     throw new Error('useCalculator must be used within a CalculatorProvider');
