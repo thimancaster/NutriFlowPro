@@ -3,7 +3,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
 import { useCallback } from 'react';
-import { usePremiumCheck } from '@/hooks/usePremiumCheck';
+// Update the import from the correct location
+import { usePremiumCheck } from '@/hooks/premium';
 import { login, signInWithGoogle } from './methods/loginMethods';
 import { signup } from './methods/signupMethods';
 import { logout } from './methods/logoutMethod';

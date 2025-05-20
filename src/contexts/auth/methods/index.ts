@@ -1,3 +1,4 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
@@ -8,6 +9,12 @@ import { login, signInWithGoogle } from './loginMethods';
 import { signup } from './signupMethods';
 import { logout } from './logoutMethod';
 import { resetPassword } from './passwordMethods';
+
+// Export the authentication methods for direct import
+export { login, signInWithGoogle } from './loginMethods';
+export { signup } from './signupMethods';
+export { logout } from './logoutMethod';
+export { resetPassword } from './passwordMethods';
 
 export const useAuthMethods = (
   updateAuthState: (session: any, remember?: boolean) => Promise<void>,
