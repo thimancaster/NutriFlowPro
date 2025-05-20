@@ -21,3 +21,10 @@ export const typeLabels = {
   reevaluation: 'Reavaliação',
   other: 'Outro'
 };
+
+export const appointmentTypeColors = {
+  initial: '#4B83F0',
+  followup: '#4CAF50',
+  reevaluation: '#FF9800',
+  other: '#9C27B0'
+};

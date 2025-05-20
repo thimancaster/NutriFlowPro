@@ -2,32 +2,59 @@
 import { useState, useEffect } from 'react';
 import { AppointmentType } from '@/types';
 
-// This hook provides a list of appointment types
+/**
+ * Hook to fetch and manage appointment types
+ * @returns Object containing appointment types and loading state
+ */
 export const useAppointmentTypes = () => {
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   
   useEffect(() => {
-    // In a real application, you might fetch this from an API
-    // but for now we'll use hardcoded values
     const fetchTypes = async () => {
       setIsLoading(true);
       try {
-        // Simulating API call
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Simulating API call - in a real application, this would fetch from your backend
+        await new Promise(resolve => setTimeout(resolve, 200));
         
-        // Default types
+        // Default types with improved descriptions and durations
         const defaultTypes: AppointmentType[] = [
-          { id: 'initial', name: 'Avaliação Inicial', duration_minutes: 60, description: 'Primeira consulta com o paciente', color: '#4B83F0' },
-          { id: 'followup', name: 'Acompanhamento', duration_minutes: 45, description: 'Consulta de rotina para acompanhamento', color: '#4CAF50' },
-          { id: 'reevaluation', name: 'Reavaliação', duration_minutes: 50, description: 'Consulta para reavaliar progresso', color: '#FF9800' },
-          { id: 'other', name: 'Outro', duration_minutes: 30, description: 'Outro tipo de consulta', color: '#9C27B0' },
+          { 
+            id: 'initial',
+            name: 'Avaliação Inicial',
+            duration_minutes: 60, 
+            description: 'Primeira consulta para avaliação completa do paciente',
+            color: '#4B83F0'
+          },
+          { 
+            id: 'followup',
+            name: 'Acompanhamento',
+            duration_minutes: 45,
+            description: 'Consulta de rotina para acompanhamento do progresso',
+            color: '#4CAF50'
+          },
+          { 
+            id: 'reevaluation',
+            name: 'Reavaliação',
+            duration_minutes: 50,
+            description: 'Consulta para reavaliar objetivos e ajustar o plano',
+            color: '#FF9800'
+          },
+          { 
+            id: 'other',
+            name: 'Outro',
+            duration_minutes: 30,
+            description: 'Outro tipo de consulta ou atendimento',
+            color: '#9C27B0'
+          },
         ];
         
         setAppointmentTypes(defaultTypes);
-      } catch (error) {
-        console.error('Error fetching appointment types:', error);
-        setAppointmentTypes([]);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching appointment types:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch appointment types'));
       } finally {
         setIsLoading(false);
       }
@@ -36,6 +63,30 @@ export const useAppointmentTypes = () => {
     fetchTypes();
   }, []);
   
-  // Return the appointmentTypes directly in the object
-  return { types: appointmentTypes, isLoading };
+  /**
+   * Get a specific appointment type by ID
+   */
+  const getAppointmentTypeById = (id: string | undefined): AppointmentType | undefined => {
+    if (!id) return undefined;
+    return appointmentTypes.find(type => type.id === id);
+  };
+  
+  /**
+   * Get type information by ID
+   */
+  const getTypeInfo = (typeId: string | undefined): {name: string, color: string} => {
+    const type = getAppointmentTypeById(typeId);
+    return {
+      name: type?.name || 'Outro',
+      color: type?.color || '#9C27B0'
+    };
+  };
+  
+  return { 
+    types: appointmentTypes,
+    isLoading,
+    error,
+    getAppointmentTypeById,
+    getTypeInfo
+  };
 };

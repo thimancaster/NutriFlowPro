@@ -3,6 +3,7 @@ import React from 'react';
 import { useAppointmentTypes } from '@/hooks/useAppointmentTypes';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AppointmentTypeSelectProps {
   value: string;
@@ -16,7 +17,7 @@ const AppointmentTypeSelect: React.FC<AppointmentTypeSelectProps> = ({ value, on
     return (
       <div className="grid grid-cols-4 items-center gap-4">
         <Label className="text-right">Tipo</Label>
-        <div className="col-span-3 h-10 rounded-md bg-gray-100 animate-pulse"></div>
+        <Skeleton className="col-span-3 h-10" />
       </div>
     );
   }
@@ -37,8 +38,18 @@ const AppointmentTypeSelect: React.FC<AppointmentTypeSelectProps> = ({ value, on
           <SelectGroup>
             <SelectLabel>Tipos de Consulta</SelectLabel>
             {types.map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name} ({type.duration_minutes || 30}min)
+              <SelectItem 
+                key={type.id} 
+                value={type.id}
+                className="flex items-center"
+              >
+                <div className="flex items-center">
+                  <span 
+                    className="inline-block w-3 h-3 mr-2 rounded-full" 
+                    style={{ backgroundColor: type.color }}
+                  ></span>
+                  {type.name} ({type.duration_minutes || 30}min)
+                </div>
               </SelectItem>
             ))}
           </SelectGroup>
