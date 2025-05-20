@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Helmet } from 'react-helmet';
 import Navbar from '@/components/Navbar';
 import DashboardComponent from '@/components/Dashboard';
@@ -12,8 +12,8 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Dashboard = () => {
-  const { isConsultationActive } = useConsultation();
   const { user } = useAuth();
+  const { isConsultationActive } = useConsultation();
   const { dashboardData } = useDashboardData(user?.id);
   
   return (
@@ -21,7 +21,6 @@ const Dashboard = () => {
       <Helmet>
         <title>Dashboard - NutriFlow Pro</title>
       </Helmet>
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Dashboard</h1>
         
