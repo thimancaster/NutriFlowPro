@@ -55,18 +55,20 @@ export const usePatientState = () => {
       if (data) {
         // Process the database data into our Patient type
         // Parse JSON fields as needed
-        let goalsData = data.goals;
-        if (typeof goalsData === 'string') {
-          try {
-            goalsData = JSON.parse(goalsData);
-          } catch (e) {
-            goalsData = {}; // Default empty object if parsing fails
+        let goalsData: Record<string, any> = {};
+        if (data.goals) {
+          if (typeof data.goals === 'string') {
+            try {
+              goalsData = JSON.parse(data.goals);
+            } catch (e) {
+              goalsData = {}; // Default empty object if parsing fails
+            }
+          } else if (typeof data.goals === 'object') {
+            goalsData = data.goals as Record<string, any>;
           }
-        } else if (!goalsData) {
-          goalsData = {};
         }
 
-        let addressData = data.address;
+        let addressData: any = data.address;
         if (typeof addressData === 'string') {
           try {
             addressData = JSON.parse(addressData);
@@ -75,15 +77,17 @@ export const usePatientState = () => {
           }
         }
 
-        let measurementsData = data.measurements;
-        if (typeof measurementsData === 'string') {
-          try {
-            measurementsData = JSON.parse(measurementsData);
-          } catch (e) {
-            measurementsData = {}; // Default empty object if parsing fails
+        let measurementsData: Record<string, any> = {};
+        if (data.measurements) {
+          if (typeof data.measurements === 'string') {
+            try {
+              measurementsData = JSON.parse(data.measurements);
+            } catch (e) {
+              measurementsData = {}; // Default empty object if parsing fails
+            }
+          } else if (typeof data.measurements === 'object') {
+            measurementsData = data.measurements as Record<string, any>;
           }
-        } else if (!measurementsData) {
-          measurementsData = {};
         }
 
         // Create a properly structured Patient object

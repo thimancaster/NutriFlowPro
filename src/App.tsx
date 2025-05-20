@@ -13,6 +13,10 @@ import { ToastProvider } from '@/components/ui/toast-provider';
 import Clinical from './pages/Clinical';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProtectedLayout from './components/layouts/ProtectedLayout';
+import { PatientProvider } from './contexts/patient/PatientContext';
+import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
+import { MealPlanProvider } from '@/contexts/MealPlanContext';
+import { ConsultationProvider } from '@/contexts/ConsultationContext';
 
 // Create a client
 const queryClient = new QueryClient({
