@@ -18,7 +18,7 @@ export const useAuthMethods = (
 
   // We wrap the imported methods to provide them with the necessary context
   const handleLogin = useCallback(async (email: string, password: string, remember: boolean = false) => {
-    const result = await login(email, password, toast);
+    const result = await login(email, password, remember, toast);
     
     // If login was successful, update auth state with the remember me preference
     if (result.success && result.session) {
