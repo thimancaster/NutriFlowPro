@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +26,11 @@ const formSchema = z.object({
   }),
 })
 
-const LoginForm = () => {
+interface LoginFormProps {
+  onGoogleLogin?: () => Promise<{ success: boolean; error?: Error }>;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();

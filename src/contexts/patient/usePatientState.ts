@@ -53,10 +53,10 @@ export const usePatientState = () => {
       if (supabaseError) throw supabaseError;
 
       if (data) {
-        // Process the patient data
+        // Process the patient data with status typed correctly
         const patient: Patient = {
           ...data,
-          status: data.status || 'active',
+          status: data.status as 'active' | 'archived' || 'active',
         };
 
         setActivePatient(patient);
