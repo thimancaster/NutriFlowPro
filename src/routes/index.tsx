@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Route, Navigate } from 'react-router-dom';
-import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 
 // Auth pages
 import Login from '@/pages/Login';
@@ -38,20 +37,20 @@ export const publicRoutes = [
 
 // Protected routes that require authentication
 export const protectedRoutes = [
-  <Route key="dashboard" path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />,
-  <Route key="patients" path="/patients" element={<ProtectedLayout><Patients /></ProtectedLayout>} />,
-  <Route key="patients-new" path="/patients/new" element={<ProtectedLayout><PatientNew /></ProtectedLayout>} />,
-  <Route key="patients-edit" path="/patients/edit/:id" element={<ProtectedLayout><PatientNew /></ProtectedLayout>} />,
-  <Route key="appointments" path="/appointments" element={<ProtectedLayout><Appointments /></ProtectedLayout>} />,
-  <Route key="patient-history" path="/patient-history/:patientId" element={<ProtectedLayout><PatientHistory /></ProtectedLayout>} />,
-  <Route key="patient-anthropometry" path="/patient-anthropometry/:patientId" element={<ProtectedLayout><PatientAnthropometry /></ProtectedLayout>} />,
-  <Route key="consultation" path="/consultation" element={<ProtectedLayout><Consultation /></ProtectedLayout>} />,
-  <Route key="meal-plan-generator" path="/meal-plan-generator" element={<ProtectedLayout><MealPlanGenerator /></ProtectedLayout>} />,
-  <Route key="meal-plans" path="/meal-plans" element={<ProtectedLayout><MealPlans /></ProtectedLayout>} />,
-  <Route key="subscription" path="/subscription" element={<ProtectedLayout><Subscription /></ProtectedLayout>} />,
-  <Route key="pricing" path="/pricing" element={<ProtectedLayout><Pricing /></ProtectedLayout>} />,
-  <Route key="calculator" path="/calculator" element={<ProtectedLayout><Calculator /></ProtectedLayout>} />,
-  <Route key="settings" path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />,
+  <Route key="dashboard" path="/dashboard" element={<Dashboard />} />,
+  <Route key="patients" path="/patients" element={<Patients />} />,
+  <Route key="patients-new" path="/patients/new" element={<PatientNew />} />,
+  <Route key="patients-edit" path="/patients/edit/:id" element={<PatientNew />} />,
+  <Route key="appointments" path="/appointments" element={<Appointments />} />,
+  <Route key="patient-history" path="/patient-history/:patientId" element={<PatientHistory />} />,
+  <Route key="patient-anthropometry" path="/patient-anthropometry/:patientId" element={<PatientAnthropometry />} />,
+  <Route key="consultation" path="/consultation" element={<Consultation />} />,
+  <Route key="meal-plan-generator" path="/meal-plan-generator" element={<MealPlanGenerator />} />,
+  <Route key="meal-plans" path="/meal-plans" element={<MealPlans />} />,
+  <Route key="subscription" path="/subscription" element={<Subscription />} />,
+  <Route key="pricing" path="/pricing" element={<Pricing />} />,
+  <Route key="calculator" path="/calculator" element={<Calculator />} />,
+  <Route key="settings" path="/settings" element={<Settings />} />,
   <Route key="not-found" path="*" element={<Navigate to="/" />} />
 ];
 
