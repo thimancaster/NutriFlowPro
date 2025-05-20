@@ -1,7 +1,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useAuthStorage } from './useAuthStorage';
-import { usePremiumCheck } from '@/hooks/usePremiumCheck';
+import { usePremiumCheck } from '@/hooks/premium';
 import { User } from '@supabase/supabase-js';
 import { AuthState } from '@/types/auth';
 
