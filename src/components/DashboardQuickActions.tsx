@@ -1,144 +1,81 @@
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-import { Calculator, Utensils, Star, FileText, Users } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { buttonVariants } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Calculator, CalendarCheck, UserPlus, FileText, User, ChevronRight } from 'lucide-react';
 
-const DashboardQuickActions: React.FC = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const { isPremiumUser, isLoading: subscriptionLoading } = useUserSubscription();
-  
-  // Get patient count to show accurate usage information
-  const { data: patientCount, isLoading: countLoading } = useQuery({
-    queryKey: ['patientCount', user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      
-      const { count, error } = await supabase
-        .from('patients')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      return count || 0;
+const DashboardQuickActions = () => {
+  const actions = [
+    {
+      title: 'Nova Consulta',
+      description: 'Iniciar atendimento completo',
+      icon: <FileText className="h-5 w-5 mr-2" />,
+      link: '/clinical',
+      color: 'bg-green-100 text-green-800'
     },
-    enabled: !!user,
-    staleTime: 60000 // Cache for 1 minute
-  });
-  
-  const handleUpgrade = () => {
-    navigate('/subscription');
-  };
+    {
+      title: 'Agendar',
+      description: 'Gerenciar compromissos',
+      icon: <CalendarCheck className="h-5 w-5 mr-2" />,
+      link: '/appointments',
+      color: 'bg-blue-100 text-blue-800'
+    },
+    {
+      title: 'Novo Paciente',
+      description: 'Cadastrar novo paciente',
+      icon: <UserPlus className="h-5 w-5 mr-2" />,
+      link: '/patients/new',
+      color: 'bg-purple-100 text-purple-800'
+    },
+    {
+      title: 'Calculadora',
+      description: 'Avaliação nutricional',
+      icon: <Calculator className="h-5 w-5 mr-2" />,
+      link: '/calculator',
+      color: 'bg-amber-100 text-amber-800'
+    },
+    {
+      title: 'Pacientes',
+      description: 'Gerenciar pacientes',
+      icon: <User className="h-5 w-5 mr-2" />,
+      link: '/patients',
+      color: 'bg-rose-100 text-rose-800'
+    }
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="nutri-card shadow-lg border-none hover-lift overflow-hidden">
-        <CardHeader>
-          <CardTitle>Ferramentas Rápidas</CardTitle>
-          <CardDescription>Acesso rápido às ferramentas mais utilizadas</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <Button 
-            onClick={() => navigate('/calculator')} 
-            className="bg-gradient-to-r from-nutri-blue-light to-nutri-blue h-auto py-4 w-full flex flex-col items-center"
-            animation="shimmer"
-          >
-            <Calculator className="h-5 w-5 mb-1" />
-            <span className="text-sm mb-1">Calcular</span>
-            <span className="text-xs">TMB & GET</span>
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/calculator')}
-            className="bg-gradient-to-r from-teal-500 to-teal-600 h-auto py-4 w-full flex flex-col items-center"
-            animation="shimmer"
-          >
-            <Utensils className="h-5 w-5 mb-1" />
-            <span className="text-sm mb-1">Distribuir</span>
-            <span className="text-xs">Macronutrientes</span>
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/meal-plans')}
-            className="bg-gradient-to-r from-nutri-green to-nutri-green-dark h-auto py-4 w-full flex flex-col items-center"
-            animation="shimmer"
-          >
-            <FileText className="h-5 w-5 mb-1" />
-            <span className="text-sm mb-1">Plano</span>
-            <span className="text-xs">Alimentar</span>
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/patients')}
-            className="bg-gradient-to-r from-gray-600 to-gray-700 h-auto py-4 w-full flex flex-col items-center"
-            animation="shimmer"
-          >
-            <Users className="h-5 w-5 mb-1" />
-            <span className="text-sm mb-1">Relatório</span>
-            <span className="text-xs">Nutricional</span>
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="nutri-card shadow-lg border-none relative overflow-hidden hover-lift">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-green-500/10 z-0"></div>
-        <CardHeader className="relative z-10">
-          <CardTitle>Status da Versão</CardTitle>
-          <CardDescription>Versão atual e recursos disponíveis</CardDescription>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span>Versão:</span>
-              <span className="font-medium">NutriFlow Pro 1.0</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Plano:</span>
-              {subscriptionLoading ? (
-                <Skeleton className="h-6 w-24" />
-              ) : (
-                <span className={`px-2 py-0.5 rounded-full text-sm text-white ${
-                  isPremiumUser ? 'bg-gradient-to-r from-blue-400 to-blue-500 animate-pulse-soft' : 'bg-gray-400'
-                }`}>
-                  {isPremiumUser ? 'Premium' : 'Freemium'}
-                </span>
-              )}
-            </div>
-            <div className="flex justify-between">
-              <span>Pacientes Permitidos:</span>
-              {countLoading ? (
-                <Skeleton className="h-6 w-16" />
-              ) : (
-                <span className="font-medium">
-                  {isPremiumUser ? `${patientCount}/∞` : `${patientCount}/10`}
-                </span>
-              )}
-            </div>
-            <Button 
-              className="w-full mt-3"
-              onClick={handleUpgrade}
-              variant={isPremiumUser ? "subscription-green" : "subscription"}
-              animation="shimmer"
+    <Card>
+      <CardHeader>
+        <CardTitle>Ações Rápidas</CardTitle>
+        <CardDescription>Acesse rapidamente as funcionalidades principais do sistema</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {actions.map((action) => (
+            <Link
+              key={action.title}
+              to={action.link}
+              className={buttonVariants({
+                variant: 'outline',
+                className: 'h-full flex justify-between hover:bg-gray-50 border-gray-200 transition-all'
+              })}
             >
-              <Star className="h-4 w-4" />
-              {isPremiumUser ? 'Gerenciar Assinatura' : 'Atualizar para Pro'}
-            </Button>
-          </div>
-        </CardContent>
-        <div className="absolute bottom-0 right-0 -mb-4 -mr-4 text-blue-100 opacity-20 animate-pulse-soft">
-          <Star className="h-32 w-32" />
+              <div className="flex items-center">
+                <div className={`rounded-full p-2 mr-3 ${action.color}`}>
+                  {action.icon}
+                </div>
+                <div className="text-left">
+                  <h3 className="font-medium text-sm">{action.title}</h3>
+                  <p className="text-xs text-gray-500">{action.description}</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400" />
+            </Link>
+          ))}
         </div>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
