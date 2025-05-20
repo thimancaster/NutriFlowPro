@@ -1,7 +1,8 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthState } from './types';
+import { AuthState } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
