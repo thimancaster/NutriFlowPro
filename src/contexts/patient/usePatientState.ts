@@ -53,10 +53,37 @@ export const usePatientState = () => {
       if (supabaseError) throw supabaseError;
 
       if (data) {
-        // Process the patient data with status typed correctly
+        // Process the database data into our Patient type
+        // Parse JSON fields as needed
+        let goalsData = data.goals;
+        if (typeof goalsData === 'string') {
+          try {
+            goalsData = JSON.parse(goalsData);
+          } catch (e) {
+            goalsData = {}; // Default empty object if parsing fails
+          }
+        }
+
+        let addressData = data.address;
+        if (typeof addressData === 'string') {
+          try {
+            addressData = JSON.parse(addressData);
+          } catch (e) {
+            addressData = addressData; // Keep as string if parsing fails
+          }
+        }
+
+        // Create a properly structured Patient object
         const patient: Patient = {
           ...data,
-          status: data.status as 'active' | 'archived' || 'active',
+          status: (data.status as 'active' | 'archived') || 'active',
+          goals: {
+            objective: goalsData?.objective || undefined,
+            profile: goalsData?.profile || undefined,
+            targetWeight: goalsData?.targetWeight || undefined,
+            initialWeight: goalsData?.initialWeight || undefined,
+          },
+          address: addressData || undefined,
         };
 
         setActivePatient(patient);
