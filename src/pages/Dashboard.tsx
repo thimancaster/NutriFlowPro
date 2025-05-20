@@ -11,10 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
-  const { totalPatients, appointmentsToday, activePlans, isLoading } = useDashboardData();
+  const { user } = useAuth();
   const { isPremiumUser, userTier } = useFeatureAccess();
   
   return (

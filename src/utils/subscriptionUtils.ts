@@ -86,11 +86,6 @@ export const validatePremiumStatus = async (
       // Usar a função SQL segura para verificar status premium
       const { data, error } = await supabase.rpc('check_user_premium_status', {
         user_id: userId
-      }, {
-        // Add timeout control
-        headers: {
-          'prefer': 'count=exact'
-        }
       });
 
       if (error) {

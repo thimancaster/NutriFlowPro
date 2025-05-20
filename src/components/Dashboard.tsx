@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Define the SummaryData interface if it's not imported
 interface SummaryData {
@@ -29,9 +30,15 @@ const LoadingFallback = () => (
 
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
+  const { user } = useAuth();
   
-  // Use the dashboard data hook to get real data
-  const dashboardData = useDashboardData();
+  // Use the dashboard data hook with user ID
+  const { 
+    isLoading, 
+    totalPatients, 
+    appointmentsToday, 
+    activePlans 
+  } = useDashboardData(user?.id);
   
   return (
     <div className="space-y-6">
@@ -54,10 +61,10 @@ const Dashboard = () => {
       >
         <Suspense fallback={<LoadingFallback />}>
           <DashboardSummaryCards 
-            totalPatients={dashboardData.totalPatients}
-            appointmentsToday={dashboardData.appointmentsToday}
-            activePlans={dashboardData.activePlans}
-            isLoading={dashboardData.isLoading}
+            totalPatients={totalPatients}
+            appointmentsToday={appointmentsToday}
+            activePlans={activePlans}
+            isLoading={isLoading}
           />
         </Suspense>
       </motion.div>

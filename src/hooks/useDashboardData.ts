@@ -9,7 +9,8 @@ export const useDashboardData = (userId: string | undefined) => {
     patientCount: 0,
     appointmentCount: 0,
     todayAppointments: [],
-    recentPatients: []
+    recentPatients: [],
+    activePlans: 0 // Added active plans count
   });
 
   useEffect(() => {
@@ -28,19 +29,22 @@ export const useDashboardData = (userId: string | undefined) => {
           patientCountResult,
           appointmentCountResult,
           todayAppointmentsResult,
-          recentPatientsResult
+          recentPatientsResult,
+          activePlansResult // Added active meal plans count
         ] = await Promise.all([
           fetchPatientCount(userId),
           fetchAppointmentCount(userId),
           fetchTodayAppointments(userId),
-          fetchRecentPatients(userId)
+          fetchRecentPatients(userId),
+          fetchActivePlans(userId) // Added function call
         ]);
 
         setDashboardData({
           patientCount: patientCountResult.count || 0,
           appointmentCount: appointmentCountResult.count || 0,
           todayAppointments: todayAppointmentsResult.data || [],
-          recentPatients: recentPatientsResult.data || []
+          recentPatients: recentPatientsResult.data || [],
+          activePlans: activePlansResult.count || 0 // Added to state
         });
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
@@ -53,7 +57,20 @@ export const useDashboardData = (userId: string | undefined) => {
     fetchDashboardData();
   }, [userId]);
 
-  return { isLoading, error, dashboardData };
+  // Create computed properties for simpler component access
+  const totalPatients = dashboardData.patientCount;
+  const appointmentsToday = dashboardData.appointmentCount;
+  const activePlans = dashboardData.activePlans;
+
+  return { 
+    isLoading, 
+    error, 
+    dashboardData,
+    // Expose computed properties for backwards compatibility
+    totalPatients,
+    appointmentsToday,
+    activePlans
+  };
 };
 
 // Helper functions to fetch specific data
@@ -89,6 +106,21 @@ async function fetchAppointmentCount(userId: string) {
     return { count: response.count || 0, error: response.error };
   } catch (err) {
     console.error('Error fetching appointment count:', err);
+    return { count: 0, error: err };
+  }
+}
+
+// New function to fetch active meal plans count
+async function fetchActivePlans(userId: string) {
+  try {
+    const response = await supabase
+      .from('meal_plans')
+      .select('id', { count: 'exact' })
+      .eq('user_id', userId);
+    
+    return { count: response.count || 0, error: response.error };
+  } catch (err) {
+    console.error('Error fetching active meal plans:', err);
     return { count: 0, error: err };
   }
 }
