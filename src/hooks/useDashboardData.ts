@@ -10,7 +10,7 @@ export const useDashboardData = (userId: string | undefined) => {
     appointmentCount: 0,
     todayAppointments: [],
     recentPatients: [],
-    activePlans: 0 // Added active plans count
+    activePlans: 0
   });
 
   useEffect(() => {
@@ -30,13 +30,13 @@ export const useDashboardData = (userId: string | undefined) => {
           appointmentCountResult,
           todayAppointmentsResult,
           recentPatientsResult,
-          activePlansResult // Added active meal plans count
+          activePlansResult
         ] = await Promise.all([
           fetchPatientCount(userId),
           fetchAppointmentCount(userId),
           fetchTodayAppointments(userId),
           fetchRecentPatients(userId),
-          fetchActivePlans(userId) // Added function call
+          fetchActivePlans(userId)
         ]);
 
         setDashboardData({
@@ -44,7 +44,7 @@ export const useDashboardData = (userId: string | undefined) => {
           appointmentCount: appointmentCountResult.count || 0,
           todayAppointments: todayAppointmentsResult.data || [],
           recentPatients: recentPatientsResult.data || [],
-          activePlans: activePlansResult.count || 0 // Added to state
+          activePlans: activePlansResult.count || 0
         });
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
@@ -78,7 +78,7 @@ async function fetchPatientCount(userId: string) {
   try {
     const response = await supabase
       .from('patients')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'active');
     
@@ -97,7 +97,7 @@ async function fetchAppointmentCount(userId: string) {
     
     const response = await supabase
       .from('appointments')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'scheduled')
       .gte('date', startOfDay)
@@ -110,12 +110,12 @@ async function fetchAppointmentCount(userId: string) {
   }
 }
 
-// New function to fetch active meal plans count
+// Function to fetch active meal plans count
 async function fetchActivePlans(userId: string) {
   try {
     const response = await supabase
       .from('meal_plans')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', userId);
     
     return { count: response.count || 0, error: response.error };

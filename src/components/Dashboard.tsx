@@ -12,14 +12,6 @@ import { useConsultation } from '@/contexts/ConsultationContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
-// Define the SummaryData interface if it's not imported
-interface SummaryData {
-  totalPatients: number;
-  appointmentsToday: number;
-  activePlans: number;
-  isLoading: boolean;
-}
-
 // Loading fallback component
 const LoadingFallback = () => (
   <div className="w-full p-6 bg-white rounded-lg shadow-sm">

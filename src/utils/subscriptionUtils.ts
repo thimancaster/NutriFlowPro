@@ -12,7 +12,7 @@ interface SubscriptionData {
 
 // In-memory cache to prevent redundant checks
 const premiumStatusCache = new Map<string, {status: boolean, timestamp: number}>();
-const CACHE_TTL = 300000; // 5 minute cache lifetime (increased from 1 minute)
+const CACHE_TTL = 300000; // 5 minute cache lifetime
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
@@ -32,10 +32,10 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, delay =
 }
 
 /**
- * Valida se um usuário tem status premium com base no e-mail ou dados de assinatura
- * usando função segura do banco de dados com cache local para reduzir chamadas à API
- * @param userId ID do usuário
- * @returns Boolean indicando status premium
+ * Validates if a user has premium status based on email or subscription data
+ * using a secure database function with local cache to reduce API calls
+ * @param userId User ID
+ * @returns Boolean indicating premium status
  */
 export const validatePremiumStatus = async (
   userId: string | undefined,
@@ -43,8 +43,8 @@ export const validatePremiumStatus = async (
 ): Promise<boolean> => {
   // Early return for no user ID
   if (!userId) {
-    console.log("Verificação premium: sem userId, verificando apenas email");
-    // Fallback para verificação por email para compatibilidade
+    console.log("Premium check: no userId, checking email only");
+    // Fallback to email check for compatibility
     return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
   }
 
@@ -52,12 +52,12 @@ export const validatePremiumStatus = async (
   const cacheKey = userId;
   const cachedResult = premiumStatusCache.get(cacheKey);
   if (cachedResult && (Date.now() - cachedResult.timestamp < CACHE_TTL)) {
-    console.log("Usando valor em cache para status premium:", cachedResult.status);
+    console.log("Using cached premium status:", cachedResult.status);
     return cachedResult.status;
   }
 
   try {
-    console.log("Verificando status premium para usuário:", userId);
+    console.log("Checking premium status for user:", userId);
     
     // Check email first for quick response (avoid DB call if possible)
     if (fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail)) {
@@ -69,13 +69,13 @@ export const validatePremiumStatus = async (
     try {
       const healthCheck = await supabase.from('subscribers').select('count(*)', { count: 'exact', head: true });
       if (healthCheck.error) {
-        console.error("Serviço Supabase com problemas, usando verificação de email:", healthCheck.error);
+        console.error("Supabase service issues, using email check:", healthCheck.error);
         const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
         premiumStatusCache.set(cacheKey, { status: emailResult, timestamp: Date.now() });
         return emailResult;
       }
     } catch (error) {
-      console.error("Erro no health check do Supabase:", error);
+      console.error("Error in Supabase health check:", error);
       const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
       premiumStatusCache.set(cacheKey, { status: emailResult, timestamp: Date.now() });
       return emailResult;
@@ -83,7 +83,7 @@ export const validatePremiumStatus = async (
 
     // Use a retry wrapper for the RPC call
     const result = await withRetry(async () => {
-      // Usar a função SQL segura para verificar status premium
+      // Use the secure SQL function to check premium status
       const { data, error } = await supabase.rpc('check_user_premium_status', {
         user_id: userId
       });
@@ -99,19 +99,19 @@ export const validatePremiumStatus = async (
     premiumStatusCache.set(cacheKey, { status: result, timestamp: Date.now() });
     return result;
   } catch (err) {
-    console.error("Erro ao validar status premium:", err);
+    console.error("Error validating premium status:", err);
     // Cache the error state temporarily with shorter expiry
     premiumStatusCache.set(cacheKey, { status: false, timestamp: Date.now() - CACHE_TTL/2 });
     
-    // Fallback para verificação por email
+    // Fallback to email check
     return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
   }
 };
 
 /**
- * Verifica se uma assinatura expirou
- * @param subscriptionEnd Data de término da assinatura como string ISO
- * @returns Boolean indicando se a assinatura expirou
+ * Checks if a subscription has expired
+ * @param subscriptionEnd Subscription end date as ISO string
+ * @returns Boolean indicating if subscription has expired
  */
 export const isSubscriptionExpired = (subscriptionEnd: string | null | undefined): boolean => {
   if (!subscriptionEnd) return false;
@@ -119,9 +119,9 @@ export const isSubscriptionExpired = (subscriptionEnd: string | null | undefined
 };
 
 /**
- * Formata a data de assinatura para exibição
- * @param dateString String ISO da data
- * @returns Data formatada ou texto padrão
+ * Formats subscription date for display
+ * @param dateString ISO date string
+ * @returns Formatted date or default text
  */
 export const formatSubscriptionDate = (dateString: string | null | undefined): string => {
   if (!dateString) return 'Não disponível';

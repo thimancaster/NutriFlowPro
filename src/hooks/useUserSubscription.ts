@@ -9,20 +9,20 @@ export { SUBSCRIPTION_QUERY_KEY } from "@/constants/subscriptionConstants";
 export type { SubscriptionData } from "./useSubscriptionQuery";
 
 /**
- * Hook para gerenciar o status da assinatura do usuário com funcionalidade estendida e otimizada
+ * Hook to manage user subscription status with extended functionality and optimization
  */
 export const useUserSubscription = () => {
   const { user, isAuthenticated } = useAuthState();
   const queryClient = useQueryClient();
   const refetchInProgressRef = useRef(false);
   
-  // Usar o hook de consulta de assinatura principal com configurações otimizadas
+  // Use the main subscription query hook with optimized settings
   const query = useSubscriptionQuery(user, isAuthenticated);
   
-  // Determinar status premium de maneira segura com fallback
+  // Determine premium status safely with fallback
   const isPremiumUser = query.data?.isPremium || false;
   
-  // Determinar dados extras de assinatura
+  // Determine extra subscription data
   const subscriptionData = {
     role: query.data?.role || 'user',
     subscriptionStart: query.data?.subscriptionStart,
@@ -31,8 +31,8 @@ export const useUserSubscription = () => {
   };
 
   /**
-   * Invalidida o cache de assinatura para forçar uma atualização
-   * Com debounce interno para evitar múltiplas chamadas
+   * Invalidate subscription cache to force an update
+   * With internal debounce to prevent multiple calls
    */
   const invalidateSubscriptionCache = useCallback(() => {
     if (user?.id) {
@@ -43,17 +43,17 @@ export const useUserSubscription = () => {
   }, [queryClient, user?.id]);
 
   /**
-   * Força uma atualização dos dados de assinatura com controle para evitar múltiplas chamadas
-   * e com retry em caso de falha
+   * Force a subscription data update with control to prevent multiple calls
+   * and with retry in case of failure
    */
   const refetchSubscription = useCallback(async () => {
     if (refetchInProgressRef.current) {
-      console.log("Já existe um refetch em andamento, pulando...");
+      console.log("A refetch is already in progress, skipping...");
       return;
     }
     
     refetchInProgressRef.current = true;
-    console.log("Atualizando dados de assinatura...");
+    console.log("Updating subscription data...");
     
     let attempts = 0;
     const maxAttempts = 3;
@@ -65,19 +65,19 @@ export const useUserSubscription = () => {
         return result;
       } catch (error) {
         attempts++;
-        console.error(`Erro ao atualizar dados (tentativa ${attempts}/${maxAttempts}):`, error);
+        console.error(`Error updating data (attempt ${attempts}/${maxAttempts}):`, error);
         
         if (attempts >= maxAttempts) {
           refetchInProgressRef.current = false;
           throw error;
         }
         
-        // Esperar antes de tentar novamente (com backoff exponencial)
+        // Wait before retrying (with exponential backoff)
         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1)));
       }
     }
     
-    // Garantir que o sinalizador seja redefinido mesmo em caso de erro
+    // Ensure the flag is reset even in case of error
     refetchInProgressRef.current = false;
   }, [query]);
 

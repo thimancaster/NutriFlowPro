@@ -7,16 +7,12 @@ import UserInfoHeader from '@/components/UserInfoHeader';
 import ConsultationHeader from '@/components/ConsultationHeader';
 import UsageLimits from '@/components/UsageLimits';
 import { motion } from 'framer-motion';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useConsultation } from '@/contexts/ConsultationContext';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
   const { user } = useAuth();
-  const { isPremiumUser, userTier } = useFeatureAccess();
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">

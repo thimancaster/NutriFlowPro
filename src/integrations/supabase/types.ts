@@ -91,6 +91,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          appointment_type_id: string | null
           created_at: string | null
           date: string
           id: string
@@ -104,6 +105,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          appointment_type_id?: string | null
           created_at?: string | null
           date: string
           id?: string
@@ -117,6 +119,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          appointment_type_id?: string | null
           created_at?: string | null
           date?: string
           id?: string
@@ -436,6 +439,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          secondaryPhone: string | null
           status: string
           updated_at: string | null
           user_id: string | null
@@ -453,6 +457,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          secondaryPhone?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string | null
@@ -470,6 +475,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          secondaryPhone?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string | null

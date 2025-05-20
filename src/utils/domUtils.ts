@@ -3,15 +3,20 @@
  * Utility functions for DOM manipulation and management
  */
 
-// Declare jQuery to ensure TypeScript recognizes it
-declare const $: any;
-
 /**
  * Safe initialization for jQuery plugins like FancyBox
  * @param selector CSS selector for elements to apply fancybox to
  * @param options FancyBox options
  */
 export const initFancyBox = (selector: string, options = {}) => {
+  // Ensure jQuery is loaded
+  if (typeof window.jQuery === 'undefined') {
+    console.warn('jQuery not found - script may not be loaded');
+    return;
+  }
+  
+  const $ = window.jQuery;
+  
   // Skip if the fancybox object doesn't exist (script not loaded)
   if (typeof $.fancybox === 'undefined') {
     console.warn('FancyBox not found - script may not be loaded');
@@ -43,12 +48,15 @@ export const initFancyBox = (selector: string, options = {}) => {
  * Safely destroy a FancyBox instance
  */
 export const destroyFancyBox = () => {
-  if (typeof $.fancybox !== 'undefined' && window.fancyBoxInitialized) {
-    try {
-      $.fancybox.close();
-      window.fancyBoxInitialized = false;
-    } catch (error) {
-      console.error('Error closing FancyBox:', error);
+  if (typeof window.jQuery !== 'undefined') {
+    const $ = window.jQuery;
+    if (typeof $.fancybox !== 'undefined' && window.fancyBoxInitialized) {
+      try {
+        $.fancybox.close();
+        window.fancyBoxInitialized = false;
+      } catch (error) {
+        console.error('Error closing FancyBox:', error);
+      }
     }
   }
 };
@@ -59,5 +67,6 @@ export const destroyFancyBox = () => {
 declare global {
   interface Window {
     fancyBoxInitialized: boolean;
+    jQuery: any;
   }
 }

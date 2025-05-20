@@ -24,12 +24,12 @@ const OPTIMIZED_REFETCH_SETTINGS = {
   refetchOnWindowFocus: false, // Disabled to avoid calls on focus
   refetchOnMount: false, // Changed to false to reduce initial notifications
   refetchOnReconnect: false, // Disabled to avoid calls on reconnection
-  retry: 0, // Reduced to 0 to minimize excessive calls on failure
-  retryDelay: 10000 // 10 seconds between retries
+  retry: 2, // Maximum 2 retries to minimize excessive calls
+  retryDelay: 5000 // 5 seconds between retries
 };
 
 /**
- * Hook para buscar dados de assinatura do banco de dados de forma otimizada e segura
+ * Hook to fetch subscription data from the database in an optimized and secure way
  */
 export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean | null) => {
   const { toast } = useToast();
@@ -112,13 +112,13 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
             .maybeSingle();
 
           if (error) {
-            console.warn("Erro ao buscar dados da assinatura:", error);
+            console.warn("Error fetching subscription data:", error);
             
             // Only show toast once and only during initial load, not on retries/refetches
             if (!errorToastShown.current && !initialToastShown.current) {
               toast({
-                title: "Erro ao buscar dados da assinatura",
-                description: "Usando configurações padrão.",
+                title: "Error fetching subscription data",
+                description: "Using default settings.",
                 variant: "destructive",
               });
               errorToastShown.current = true;
@@ -173,7 +173,7 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           }, 3000);
         }
       } catch (error: any) {
-        console.error("Erro na consulta de assinatura:", error);
+        console.error("Error in subscription query:", error);
         isQueryRunningRef.current = false;
         
         // Default to checking email on error

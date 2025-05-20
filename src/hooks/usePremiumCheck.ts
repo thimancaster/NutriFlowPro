@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 // Constants
 const MAX_RETRIES = 3;
@@ -33,7 +33,7 @@ export const usePremiumCheck = () => {
       // First, try a quick email check (no database query needed)
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user?.email && PREMIUM_EMAILS.includes(userData.user.email)) {
-        console.log("User premium por email:", userData.user.email);
+        console.log("User premium via email:", userData.user.email);
         return true;
       }
       
