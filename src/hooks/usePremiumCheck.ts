@@ -47,17 +47,18 @@ export const usePremiumCheck = () => {
       }
       
       // Try RPC function with enhanced retry logic
-      const { data, error } = await executeWithRetry(() => 
-        supabase.rpc('check_user_premium_status', { user_id: userId })
-      );
-      
-      if (error) {
-        console.error("Error checking premium status via RPC:", error);
-        throw error;
-      }
+      const result = await executeWithRetry<boolean>(async () => {
+        const { data, error } = await supabase.rpc('check_user_premium_status', { user_id: userId });
+        
+        if (error) {
+          console.error("Error checking premium status via RPC:", error);
+          throw error;
+        }
+        
+        return !!data;
+      });
       
       // Cache the result
-      const result = !!data;
       dbCache.set(CACHE_NAME, userId, result);
       return result;
     } catch (error) {

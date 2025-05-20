@@ -37,6 +37,7 @@ export async function executeWithRetry<T>(fn: () => Promise<T>, retries = MAX_RE
  */
 export async function checkSupabaseHealth(): Promise<boolean> {
   try {
+    // Use a simple and fast query to check if Supabase is responsive
     const healthCheck = await supabase.from('subscribers').select('count(*)', { 
       count: 'exact', 
       head: true 
