@@ -334,6 +334,7 @@ export type Database = {
       }
       meal_plans: {
         Row: {
+          calculation_id: string | null
           created_at: string | null
           date: string
           id: string
@@ -347,6 +348,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          calculation_id?: string | null
           created_at?: string | null
           date: string
           id?: string
@@ -360,6 +362,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          calculation_id?: string | null
           created_at?: string | null
           date?: string
           id?: string

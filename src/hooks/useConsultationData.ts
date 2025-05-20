@@ -4,6 +4,7 @@ import { ConsultationData } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { mapSupabaseConsultation } from '@/types/consultations';
 
 export const useConsultationData = (consultationId?: string) => {
   const [consultation, setConsultation] = useState<ConsultationData | null>(null);
@@ -21,8 +22,9 @@ export const useConsultationData = (consultationId?: string) => {
       try {
         setIsLoading(true);
         
+        // Use calculations table instead of consultations
         const { data, error } = await supabase
-          .from('consultations')
+          .from('calculations')
           .select('*')
           .eq('id', consultationId)
           .single();
@@ -30,7 +32,14 @@ export const useConsultationData = (consultationId?: string) => {
         if (error) throw error;
         
         if (data) {
-          setConsultation(data as ConsultationData);
+          // Safely transform the data to match our expected ConsultationData type
+          try {
+            const consultationData = mapSupabaseConsultation(data);
+            setConsultation(consultationData);
+          } catch (conversionError) {
+            console.error('Data conversion error:', conversionError);
+            setError(new Error('Invalid consultation data format'));
+          }
         } else {
           setConsultation(null);
         }
