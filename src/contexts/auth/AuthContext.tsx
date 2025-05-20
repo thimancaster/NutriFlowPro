@@ -1,42 +1,47 @@
 
 import React, { createContext, useContext } from 'react';
 import { AuthContextType } from './types';
-import useAuthStateManager from '@/hooks/auth/useAuthStateManager';
+import useAuthStateManager from './useAuthStateManager';
+import { login, signup, logout, resetPassword, signInWithGoogle } from './methods';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { authState } = useAuthStateManager();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { authState, updateAuthState } = useAuthStateManager();
 
-  // Create auth methods (placeholders, real implementation would be in separate hooks)
-  const login = async (email: string, password: string) => {
-    // Implementation would be provided in a separate hook
-    console.log('Login method called', email);
-    return { success: false, error: new Error('Not implemented') };
+  // Implement auth methods with real logic
+  const handleLogin = async (email: string, password: string, remember: boolean = false) => {
+    try {
+      const result = await login(email, password, toast);
+      
+      if (result.success && result.session) {
+        await updateAuthState(result.session, remember);
+      }
+      
+      return result;
+    } catch (error: any) {
+      return { success: false, error };
+    }
   };
 
-  const signup = async (email: string, password: string, name?: string) => {
-    // Implementation would be provided in a separate hook
-    console.log('Signup method called', email, name);
-    return { success: false, error: new Error('Not implemented') };
+  const handleSignup = async (email: string, password: string, name: string) => {
+    return await signup(email, password, name, toast);
   };
 
-  const logout = async () => {
-    // Implementation would be provided in a separate hook
-    console.log('Logout method called');
-    return { success: false, error: new Error('Not implemented') };
+  const handleLogout = async () => {
+    return await logout(toast, queryClient, updateAuthState);
   };
 
-  const resetPassword = async (email: string) => {
-    // Implementation would be provided in a separate hook
-    console.log('Reset password method called', email);
-    return { success: false, error: new Error('Not implemented') };
+  const handleResetPassword = async (email: string) => {
+    return await resetPassword(email, toast);
   };
 
-  const signInWithGoogle = async () => {
-    // Implementation would be provided in a separate hook
-    console.log('Sign in with Google method called');
-    return { success: false, error: new Error('Not implemented') };
+  const handleSignInWithGoogle = async () => {
+    return await signInWithGoogle(toast);
   };
 
   const value: AuthContextType = {
@@ -48,11 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isPremium: authState.isPremium,
     userTier: authState.userTier,
     usageQuota: authState.usageQuota,
-    login,
-    signup,
-    logout,
-    resetPassword,
-    signInWithGoogle
+    login: handleLogin,
+    signup: handleSignup,
+    logout: handleLogout,
+    resetPassword: handleResetPassword,
+    signInWithGoogle: handleSignInWithGoogle
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

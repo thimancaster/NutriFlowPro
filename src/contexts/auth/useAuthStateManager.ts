@@ -10,14 +10,12 @@ import { usePremiumCheck } from '@/hooks/usePremiumCheck';
 import { AUTH_STORAGE_KEYS, AUTH_CONSTANTS } from '@/constants/authConstants';
 import { storageUtils } from '@/utils/storageUtils';
 
-export const useAuthStateManager = () => {
+const useAuthStateManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { checkPremiumStatus } = usePremiumCheck();
   
-  // Track if premium check is in progress to prevent multiple simultaneous calls
-  const isPremiumCheckingRef = useRef(false);
-  // Track if the component is mounted
+  // Track if component is mounted
   const isMountedRef = useRef(true);
   // Track verification attempts
   const verificationAttemptsRef = useRef(0);
@@ -47,43 +45,6 @@ export const useAuthStateManager = () => {
 
   // Get usage quota based on user and premium status
   const usageQuota = useUsageQuota(authState.user, authState.isPremium);
-
-  // Function to load session from storage (used for remember me feature)
-  const loadStoredSession = useCallback(() => {
-    try {
-      const storedSession = storageUtils.getLocalItem<{
-        session: Session | null;
-        remember: boolean;
-      }>(AUTH_STORAGE_KEYS.SESSION);
-      
-      if (storedSession && storedSession.session) {
-        console.log('Loaded stored session:', storedSession.remember ? 'with remember me' : 'without remember me');
-        return { session: storedSession.session, remember: storedSession.remember };
-      }
-    } catch (error) {
-      console.error('Failed to load stored session:', error);
-    }
-    return { session: null, remember: false };
-  }, []);
-
-  // Function to save session to storage (used for remember me feature)
-  const saveSession = useCallback((session: Session | null, remember: boolean = false) => {
-    try {
-      if (session) {
-        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.SESSION, { 
-          session, 
-          remember 
-        });
-        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, remember);
-        console.log('Session saved to storage with remember me:', remember);
-      } else {
-        storageUtils.removeLocalItem(AUTH_STORAGE_KEYS.SESSION);
-        console.log('Session removed from storage');
-      }
-    } catch (error) {
-      console.error('Failed to save session:', error);
-    }
-  }, []);
 
   // Clear verification timeout to prevent memory leaks
   const clearVerificationTimeout = useCallback(() => {
@@ -122,6 +83,43 @@ export const useAuthStateManager = () => {
     return () => clearVerificationTimeout();
   }, [clearVerificationTimeout, toast]);
 
+  // Function to load session from storage (used for remember me feature)
+  const loadStoredSession = useCallback(() => {
+    try {
+      const storedSession = storageUtils.getLocalItem<{
+        session: Session | null;
+        remember: boolean;
+      }>(AUTH_STORAGE_KEYS.SESSION);
+      
+      if (storedSession && storedSession.session) {
+        console.log('Loaded stored session:', storedSession.remember ? 'with remember me' : 'without remember me');
+        return { session: storedSession.session, remember: storedSession.remember };
+      }
+    } catch (error) {
+      console.error('Failed to load stored session:', error);
+    }
+    return { session: null, remember: false };
+  }, []);
+
+  // Function to save session to storage (used for remember me feature)
+  const saveSession = useCallback((session: Session | null, remember: boolean = false) => {
+    try {
+      if (session) {
+        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.SESSION, { 
+          session, 
+          remember 
+        });
+        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, remember);
+        console.log('Session saved to storage with remember me:', remember);
+      } else {
+        storageUtils.removeLocalItem(AUTH_STORAGE_KEYS.SESSION);
+        console.log('Session removed from storage');
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error);
+    }
+  }, []);
+
   // Update auth state with consistent format and debounce premium checks
   const updateAuthState = useCallback(async (session: Session | null, remember: boolean = false) => {
     const user = session?.user || null;
@@ -151,114 +149,40 @@ export const useAuthStateManager = () => {
     // Record the last authentication check timestamp
     storageUtils.setLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK, Date.now());
     
-    // Proceed with premium status check only if user is logged in
-    let isPremium = false;
-    let userTier = 'free' as 'free' | 'premium';
-    
+    // Check premium status if user is logged in
     if (user?.id) {
-      // Skip premium check if one is already in progress
-      if (!isPremiumCheckingRef.current) {
-        try {
-          isPremiumCheckingRef.current = true;
-          
-          // Try to get premium status from local storage first for instant response
-          const cachedStatusKey = `${AUTH_STORAGE_KEYS.PREMIUM_STATUS_PREFIX}${user.id}`;
-          const cachedStatus = storageUtils.getLocalItem<{
-            isPremium: boolean;
-            timestamp: number;
-          }>(cachedStatusKey);
-          
-          const now = Date.now();
-          if (cachedStatus && now - cachedStatus.timestamp < 300000) {
-            // Use cache only if it's less than 5 minutes old
-            isPremium = cachedStatus.isPremium;
-            userTier = isPremium ? 'premium' : 'free';
-            console.log("Using cached premium status:", isPremium);
-            
-            // Update state with cached premium status
-            if (isMountedRef.current) {
-              setAuthState(prevState => ({
-                ...prevState,
-                isPremium,
-                userTier,
-                usageQuota: {
-                  ...usageQuota,
-                  patients: {
-                    ...usageQuota.patients,
-                    limit: isPremium ? Infinity : usageQuota.patients.limit
-                  },
-                  mealPlans: {
-                    ...usageQuota.mealPlans,
-                    limit: isPremium ? Infinity : usageQuota.mealPlans.limit
-                  }
-                }
-              }));
-            }
-          }
-          
-          // Make API call to verify premium status in background
-          const checkPremiumAsync = async () => {
-            try {
-              const freshIsPremium = await checkPremiumStatus(user.id);
-              const freshUserTier = freshIsPremium ? 'premium' : 'free';
-              
-              // Cache the result
-              storageUtils.setLocalItem(cachedStatusKey, {
-                isPremium: freshIsPremium,
-                timestamp: Date.now()
-              });
-              
-              // Update state only if value changed or we were using cached value
-              if (freshIsPremium !== isPremium || cachedStatus) {
-                if (isMountedRef.current) {
-                  setAuthState(prevState => ({
-                    ...prevState,
-                    isPremium: freshIsPremium,
-                    userTier: freshUserTier,
-                    usageQuota: {
-                      ...usageQuota,
-                      patients: {
-                        ...usageQuota.patients,
-                        limit: freshIsPremium ? Infinity : usageQuota.patients.limit
-                      },
-                      mealPlans: {
-                        ...usageQuota.mealPlans,
-                        limit: freshIsPremium ? Infinity : usageQuota.mealPlans.limit
-                      }
-                    }
-                  }));
-                }
+      try {
+        const isPremium = await checkPremiumStatus(user.id);
+        const userTier = isPremium ? 'premium' : 'free';
+        
+        if (isMountedRef.current) {
+          setAuthState(prevState => ({
+            ...prevState,
+            isPremium,
+            userTier,
+            usageQuota: {
+              ...usageQuota,
+              patients: {
+                ...usageQuota.patients,
+                limit: isPremium ? Infinity : usageQuota.patients.limit
+              },
+              mealPlans: {
+                ...usageQuota.mealPlans,
+                limit: isPremium ? Infinity : usageQuota.mealPlans.limit
               }
-            } catch (error) {
-              console.error("Error checking premium status:", error);
-            } finally {
-              isPremiumCheckingRef.current = false;
             }
-          };
-          
-          // Start async check but don't await it
-          checkPremiumAsync();
-        } catch (error) {
-          console.error("Error in premium status check:", error);
-          isPremiumCheckingRef.current = false;
-          
-          // Set default values in case of error
-          if (isMountedRef.current) {
-            setAuthState(prevState => ({
-              ...prevState,
-              isPremium: false,
-              userTier: 'free'
-            }));
-          }
+          }));
         }
+        
+        // Store premium status in local storage with timestamp
+        const premiumStatusKey = `${AUTH_STORAGE_KEYS.PREMIUM_STATUS_PREFIX}${user.id}`;
+        storageUtils.setLocalItem(premiumStatusKey, {
+          isPremium,
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        console.error("Error checking premium status:", error);
       }
-    } else if (isMountedRef.current) {
-      // Not logged in
-      setAuthState(prevState => ({
-        ...prevState,
-        isPremium: false,
-        userTier: 'free'
-      }));
     }
 
     // Invalidate subscription data when auth state changes
@@ -401,8 +325,8 @@ export const useAuthStateManager = () => {
 
   return {
     authState,
-    updateAuthState,
-    toast,
-    queryClient
+    updateAuthState
   };
 };
+
+export default useAuthStateManager;

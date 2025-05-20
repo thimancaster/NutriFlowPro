@@ -1,6 +1,6 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { AUTH_CONSTANTS } from '@/constants/authConstants';
@@ -11,77 +11,49 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user, isPremium } = useAuth();
-  const navigate = useNavigate();
+  const { isAuthenticated, isLoading, isPremium } = useAuth();
+  const location = useLocation();
   const [isVerifying, setIsVerifying] = useState(true);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   
   // Use effect for session verification with timeout protection
   useEffect(() => {
-    let isMounted = true;
     let timeoutId: number | undefined;
 
     // Set a timeout to prevent infinite loading
     timeoutId = window.setTimeout(() => {
-      if (isMounted && isVerifying && verificationAttempts >= AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS) {
+      if (isVerifying && verificationAttempts >= AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS) {
         console.error("Session verification timed out");
         setIsVerifying(false);
-        // Force navigate to login if verification is taking too long
-        navigate('/', { replace: true });
       }
-    }, AUTH_CONSTANTS.VERIFICATION_TIMEOUT); // 5 seconds timeout
+    }, AUTH_CONSTANTS.VERIFICATION_TIMEOUT);
 
     const verifySession = async () => {
       // Skip verification if we already know the status
       if (isLoading === false) {
-        if (!isAuthenticated) {
-          setIsVerifying(false);
-          return;
-        }
-        
-        // If route requires premium and user is not premium, redirect
-        if (requiresPremium && !isPremium) {
-          console.log("Premium route access denied, redirecting to subscription page");
-          navigate('/subscription', { 
-            state: { 
-              referrer: window.location.pathname,
-              reason: 'premium-required' 
-            } 
-          });
-          return;
-        }
-        
         setIsVerifying(false);
         return;
       }
       
       try {
         setVerificationAttempts(prev => prev + 1);
-        console.log("Verificando sessão do usuário:", user?.email, "Tentativa:", verificationAttempts + 1);
+        console.log("Verificando sessão do usuário. Tentativa:", verificationAttempts + 1);
         
-        // If we've reached max attempts but auth is still loading, force navigate to login
+        // If we've reached max attempts but auth is still loading, stop verification
         if (verificationAttempts >= AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS) {
           console.error("Maximum verification attempts reached");
-          if (isMounted) {
-            setIsVerifying(false);
-            navigate('/', { replace: true });
-          }
+          setIsVerifying(false);
           return;
         }
         
         // Set verification complete once auth is no longer loading
         if (!isLoading) {
-          if (isMounted) {
-            console.log("Sessão verificada com sucesso");
-            setIsVerifying(false);
-          }
+          console.log("Sessão verificada com sucesso");
+          setIsVerifying(false);
         }
       } catch (err) {
         console.error("Erro ao verificar autenticação:", err);
-        if (isMounted) {
-          setIsVerifying(false);
-          navigate('/', { replace: true });
-        }
+        setIsVerifying(false);
       }
     };
     
@@ -91,11 +63,10 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
     }
     
     return () => {
-      isMounted = false;
       // Clear timeout on cleanup
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [isAuthenticated, isLoading, navigate, user?.email, isPremium, requiresPremium, isVerifying, verificationAttempts]);
+  }, [isAuthenticated, isLoading, verificationAttempts, isVerifying]);
 
   // Show loading state until verification completes
   if (isLoading || isVerifying) {
@@ -114,18 +85,23 @@ const ProtectedRoute = ({ children, requiresPremium = false }: ProtectedRoutePro
     );
   }
 
-  // If not authenticated, redirect to home
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    console.log("Usuário não autenticado, redirecionando para página inicial");
-    return <Navigate to="/" replace />;
+    console.log("Usuário não autenticado, redirecionando para login");
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If route requires premium but user is not premium, redirect to subscription
+  if (requiresPremium && !isPremium) {
+    console.log("Premium route access denied, redirecting to subscription page");
+    return <Navigate to="/subscription" state={{ 
+      referrer: location.pathname,
+      reason: 'premium-required' 
+    }} replace />;
   }
 
   // If authenticated and meets premium requirements (if any), render children
-  return (
-    <main className="container mx-auto px-4 py-8">
-      {children}
-    </main>
-  );
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

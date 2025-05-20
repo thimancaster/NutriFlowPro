@@ -13,17 +13,18 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/Icons';
-import { cn } from '@/lib/utils';
+import { Checkbox } from "@/components/ui/checkbox"
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
-  password: z.string().min(8, {
-    message: "A senha deve ter pelo menos 8 caracteres.",
+  password: z.string().min(6, {
+    message: "A senha deve ter pelo menos 6 caracteres.",
   }),
+  rememberMe: z.boolean().default(false)
 })
 
 interface LoginFormProps {
@@ -35,26 +36,31 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   const { login } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from location state or default to dashboard
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await login(values.email, values.password);
+      const result = await login(values.email, values.password, values.rememberMe);
 
       if (result.success) {
         toast({
           title: "Login realizado com sucesso!",
-          description: "Redirecionando...",
+          description: "Redirecionando para o painel...",
         });
-        navigate('/dashboard');
+        navigate(from);
       } else {
         toast({
           title: "Erro ao realizar login",
@@ -62,103 +68,130 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
           variant: "destructive",
         });
       }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao realizar login",
+        description: error?.message || "Ocorreu um erro durante o login. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  async function handleGoogleLogin() {
+    if (onGoogleLogin) {
+      try {
+        const result = await onGoogleLogin();
+        if (!result.success && result.error) {
+          toast({
+            title: "Erro de autenticação Google",
+            description: result.error.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        toast({
+          title: "Erro ao fazer login com Google",
+          description: error.message || "Não foi possível conectar com o Google",
+          variant: "destructive",
+        });
+      }
+    }
+  }
+
   return (
-    <div className="container relative hidden h-[calc(100vh-3.5rem)] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col p-6 text-lg font-semibold lg:flex bg-muted">
-        <div className="absolute inset-0 bg-zinc-900/20" />
-        <Link to="/" className="flex items-center py-4">
-          <Icons.logo className="mr-2 h-6 w-6" />
-          <span>NutriAI</span>
-        </Link>
-        <div className="relative mt-32">
-          <h3 className="text-2xl font-semibold">
-            Bem-vindo de volta ao NutriAI
-          </h3>
-          <p className="mt-3">
-            Faça login para acessar sua conta e continuar planejando refeições
-            incríveis!
-          </p>
-        </div>
-      </div>
-      <div className="lg:p-8">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold">Faça login na sua conta</h1>
-            <p className="text-sm text-muted-foreground">
-              Insira seu email e senha para acessar o painel.
-            </p>
-          </div>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="seuemail@exemplo.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button disabled={isSubmitting} className="w-full" type="submit">
-                {isSubmitting ? (
-                  <>
-                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                    Aguarde...
-                  </>
-                ) : (
-                  "Entrar"
-                )}
-              </Button>
-            </form>
-          </Form>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Ou continue com
-              </span>
-            </div>
-          </div>
-          <Button variant="outline" disabled={true} className="w-full">
-            <Icons.google className="mr-2 h-4 w-4" />
-            Google
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="seuemail@exemplo.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>Senha</FormLabel>
+                <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800">
+                  Esqueceu a senha?
+                </Link>
+              </div>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="rememberMe"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox 
+                  checked={field.value} 
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Lembrar de mim
+                </FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+        
+        <div className="space-y-4">
+          <Button 
+            disabled={isSubmitting} 
+            className="w-full bg-blue-600 hover:bg-blue-700" 
+            type="submit"
+          >
+            {isSubmitting ? (
+              <>
+                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                Aguarde...
+              </>
+            ) : (
+              "Entrar"
+            )}
           </Button>
-          <p className="px-8 text-center text-sm text-muted-foreground">
-            Não tem uma conta?{" "}
-            <Link
-              to="/sign-up"
-              className="hover:text-brand underline underline-offset-2"
+          
+          {onGoogleLogin && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoogleLogin}
+              className="w-full"
             >
-              Criar uma conta
-            </Link>
-          </p>
+              <Icons.google className="mr-2 h-4 w-4" />
+              Continuar com Google
+            </Button>
+          )}
         </div>
+      </form>
+      
+      <div className="mt-6 text-center text-sm">
+        Não tem uma conta?{" "}
+        <Link to="/register" className="text-blue-600 hover:underline">
+          Registre-se agora
+        </Link>
       </div>
-    </div>
+    </Form>
   );
 };
 
