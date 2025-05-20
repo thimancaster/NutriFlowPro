@@ -14,6 +14,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Define developer and premium emails
+const DEVELOPER_EMAILS = ['thimancaster@hotmail.com'];
+const PREMIUM_EMAILS = ['thiago@nutriflowpro.com'];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,14 +58,14 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id });
 
-    // Verificar se o usuário já tem dados de assinatura recentes (menos de 5 minutos)
+    // Check for existing subscriber data
     const { data: existingSubscriber } = await supabaseClient
       .from("subscribers")
       .select("*")
       .eq("user_id", user.id)
       .single();
 
-    // Se temos dados recentes (nos últimos 5 minutos), retorne-os sem consultar o Stripe
+    // If we have cached data from the last 5 minutes, use it
     if (existingSubscriber) {
       const updatedAtTime = new Date(existingSubscriber.updated_at).getTime();
       const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -84,9 +88,37 @@ serve(async (req) => {
       }
     }
 
-    // Check for premium emails first
-    const isPremiumEmail = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(user.email);
-    if (isPremiumEmail) {
+    // Check for developer emails first - highest priority
+    if (DEVELOPER_EMAILS.includes(user.email)) {
+      logStep("Developer email detected", { email: user.email });
+      
+      // Update subscribers table with developer status
+      await supabaseClient.from("subscribers").upsert({
+        user_id: user.id,
+        email: user.email,
+        is_premium: true,
+        role: 'developer', // Special role for developers
+        subscription_start: new Date().toISOString(),
+        subscription_end: null, // No end date for developers
+        updated_at: new Date().toISOString(),
+        payment_status: 'active'
+      }, { onConflict: 'user_id' });
+      
+      logStep("Updated database for developer user");
+      
+      return new Response(JSON.stringify({ 
+        subscribed: true,
+        subscription_tier: "developer",
+        subscription_end: null,
+        is_developer: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Then check for premium emails
+    if (PREMIUM_EMAILS.includes(user.email)) {
       logStep("Premium email detected", { email: user.email });
       
       // Update subscribers table with premium status for email-based premium users
@@ -113,6 +145,7 @@ serve(async (req) => {
       });
     }
 
+    // For other users, check Stripe subscription
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     

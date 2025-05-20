@@ -9,23 +9,36 @@ import { useMemo } from "react";
  */
 export const useFeatureAccess = () => {
   const { isPremiumUser, data: subscriptionData } = useUserSubscription();
-  const { isPremium: authPremium } = useAuthState();
+  const { isPremium: authPremium, user } = useAuthState();
   
-  // Combinar as duas verificações para status premium
+  // Check if user is a developer (special privilege)
+  const isDeveloper = useMemo(() => {
+    // Check if user has developer role from subscription data
+    const hasDeveloperRole = subscriptionData?.role === 'developer';
+    
+    // Check if user's email is in the developer list (from subscriptionData or user object)
+    const email = subscriptionData?.email || user?.email;
+    const isDeveloperEmail = email === 'thimancaster@hotmail.com';
+    
+    return hasDeveloperRole || isDeveloperEmail;
+  }, [subscriptionData?.role, subscriptionData?.email, user?.email]);
+  
+  // Combine the different checks for premium status
   const isPremium = useMemo(() => {
-    return isPremiumUser || authPremium;
-  }, [isPremiumUser, authPremium]);
+    return isPremiumUser || authPremium || isDeveloper;
+  }, [isPremiumUser, authPremium, isDeveloper]);
 
-  // Determinar o tier do usuário baseado no status premium
+  // Determine the tier based on role and premium status
   const userTier = useMemo(() => {
+    if (isDeveloper) return 'developer';
     return isPremium ? 'premium' : 'free'; 
-  }, [isPremium]);
+  }, [isPremium, isDeveloper]);
 
   /**
    * Retorna a quota de pacientes com base no plano
    */
   const getPatientsQuota = () => {
-    if (isPremium) {
+    if (isPremium || isDeveloper) {
       return { limit: Infinity, used: 0 };
     }
     return { limit: FREE_TIER_LIMITS.patients, used: 0 };
@@ -35,7 +48,7 @@ export const useFeatureAccess = () => {
    * Retorna a quota de planos alimentares com base no plano
    */
   const getMealPlansQuota = () => {
-    if (isPremium) {
+    if (isPremium || isDeveloper) {
       return { limit: Infinity, used: 0 };
     }
     return { limit: FREE_TIER_LIMITS.mealPlans, used: 0 };
@@ -45,7 +58,7 @@ export const useFeatureAccess = () => {
    * Retorna a quota de consultas com base no plano
    */
   const getConsultationsQuota = () => {
-    if (isPremium) {
+    if (isPremium || isDeveloper) {
       return { limit: Infinity, used: 0 };
     }
     return { limit: FREE_TIER_LIMITS.historyDays, used: 0 };
@@ -55,6 +68,12 @@ export const useFeatureAccess = () => {
    * Verifica se o usuário tem acesso a uma funcionalidade premium
    */
   const canAccessPremiumFeature = (feature: string) => {
+    // Developers have access to everything
+    if (isDeveloper) {
+      return true;
+    }
+    
+    // Premium users have access to premium features
     if (isPremium) {
       return true;
     }
@@ -67,6 +86,7 @@ export const useFeatureAccess = () => {
 
   return {
     isPremiumUser: isPremium,
+    isDeveloper,
     userTier,
     getPatientsQuota,
     getMealPlansQuota,

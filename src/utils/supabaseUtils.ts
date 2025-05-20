@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { dbCache } from "@/services/dbCacheService";
-import { PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
+import { PREMIUM_EMAILS, DEVELOPER_EMAILS } from "@/constants/subscriptionConstants";
 
 interface SubscriptionData {
   isPremium: boolean;
@@ -63,7 +63,14 @@ export const validatePremiumStatus = async (
   // Early return for no user ID
   if (!userId) {
     console.log("Premium check: no userId, checking email only");
-    // Fallback to email check for compatibility
+    
+    // Check for developer emails first
+    if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
+      console.log("Developer email detected in fallback:", fallbackEmail);
+      return true;
+    }
+    
+    // Fallback to premium email check
     return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
   }
 
@@ -78,7 +85,14 @@ export const validatePremiumStatus = async (
   try {
     console.log("Checking premium status for user:", userId);
     
-    // Check email first for quick response (avoid DB call if possible)
+    // Check developer emails first for highest priority
+    if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
+      console.log("Developer email detected:", fallbackEmail);
+      dbCache.set(CACHE_NAME, cacheKey, true);
+      return true;
+    }
+    
+    // Then check premium emails
     if (fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail)) {
       dbCache.set(CACHE_NAME, cacheKey, true);
       return true;
@@ -88,6 +102,14 @@ export const validatePremiumStatus = async (
     const isSupabaseHealthy = await checkSupabaseHealth();
     if (!isSupabaseHealthy) {
       console.error("Supabase service issues, using email check");
+      
+      // Check for developer emails first
+      if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
+        dbCache.set(CACHE_NAME, cacheKey, true);
+        return true;
+      }
+      
+      // Then fallback to premium email check
       const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
       dbCache.set(CACHE_NAME, cacheKey, emailResult);
       return emailResult;
@@ -112,6 +134,14 @@ export const validatePremiumStatus = async (
     return result;
   } catch (err) {
     console.error("Error validating premium status:", err);
+    
+    // Check for developer emails first on error
+    if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
+      console.log("Developer email access granted after error:", fallbackEmail);
+      dbCache.set(CACHE_NAME, cacheKey, true);
+      return true;
+    }
+    
     // Cache the error state temporarily with shorter expiry
     dbCache.set(CACHE_NAME, cacheKey, false);
     

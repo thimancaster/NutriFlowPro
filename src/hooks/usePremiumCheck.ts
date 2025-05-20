@@ -1,9 +1,8 @@
-
 import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { dbCache } from '@/services/dbCacheService';
 import { executeWithRetry, checkSupabaseHealth } from '@/utils/supabaseUtils';
-import { PREMIUM_EMAILS } from '@/constants/subscriptionConstants';
+import { PREMIUM_EMAILS, DEVELOPER_EMAILS } from '@/constants/subscriptionConstants';
 
 // Constants
 const MAX_RETRIES = 3;
@@ -31,6 +30,15 @@ export const usePremiumCheck = () => {
       
       // First, try email check which doesn't require database query
       const { data: userData } = await supabase.auth.getUser();
+      
+      // Check for developer emails first - these always have full access
+      if (userData?.user?.email && DEVELOPER_EMAILS.includes(userData.user.email)) {
+        console.log("User is a developer with full access:", userData.user.email);
+        dbCache.set(CACHE_NAME, userId, true);
+        return true;
+      }
+      
+      // Then check for premium emails
       if (userData?.user?.email && PREMIUM_EMAILS.includes(userData.user.email)) {
         console.log("User premium via email:", userData.user.email);
         dbCache.set(CACHE_NAME, userId, true);
@@ -41,6 +49,15 @@ export const usePremiumCheck = () => {
       const isSupabaseHealthy = await checkSupabaseHealth();
       if (!isSupabaseHealthy) {
         console.warn("Supabase service appears to be unavailable, using email check fallback");
+        
+        // Check again for developer emails
+        const isDeveloper = userData?.user?.email ? DEVELOPER_EMAILS.includes(userData.user.email) : false;
+        if (isDeveloper) {
+          dbCache.set(CACHE_NAME, userId, true);
+          return true;
+        }
+        
+        // Then fallback to premium email check
         const emailResult = userData?.user?.email ? PREMIUM_EMAILS.includes(userData.user.email) : false;
         dbCache.set(CACHE_NAME, userId, emailResult);
         return emailResult;
@@ -64,9 +81,18 @@ export const usePremiumCheck = () => {
     } catch (error) {
       console.error("Failed to check premium status:", error);
       
-      // Final fallback to email
+      // Final fallback - check for developer email first
       try {
         const { data: userData } = await supabase.auth.getUser();
+        
+        // Always grant access to developer emails even if other checks fail
+        if (userData?.user?.email && DEVELOPER_EMAILS.includes(userData.user.email)) {
+          console.log("Developer access granted in fallback:", userData.user.email);
+          dbCache.set(CACHE_NAME, userId, true);
+          return true;
+        }
+        
+        // Otherwise check premium emails
         const emailResult = userData?.user?.email ? PREMIUM_EMAILS.includes(userData.user.email) : false;
         dbCache.set(CACHE_NAME, userId, emailResult);
         return emailResult;

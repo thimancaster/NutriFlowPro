@@ -1,6 +1,9 @@
 
+// List of email addresses that have developer access (full system access)
+export const DEVELOPER_EMAILS = ['thimancaster@hotmail.com'];
+
 // List of email addresses that have premium access
-export const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+export const PREMIUM_EMAILS = ['thiago@nutriflowpro.com'];
 
 // Subscription pricing constants
 export const SUBSCRIPTION_PRICES = {

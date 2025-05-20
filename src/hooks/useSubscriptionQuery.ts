@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { SUBSCRIPTION_QUERY_KEY, PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
+import { SUBSCRIPTION_QUERY_KEY, PREMIUM_EMAILS, DEVELOPER_EMAILS } from "@/constants/subscriptionConstants";
 import { User } from "@supabase/supabase-js";
 import { useRef } from "react";
 import { useSubscriptionFetch } from "./subscription/useSubscriptionFetch";
@@ -43,6 +43,24 @@ export const useSubscriptionQuery = (user: User | null, isAuthenticated: boolean
           isPremium: false,
           role: 'user',
           email: null
+        };
+      }
+      
+      // Quick check for developer email before proceeding
+      if (user.email && DEVELOPER_EMAILS.includes(user.email)) {
+        return {
+          isPremium: true,
+          role: 'developer',
+          email: user.email
+        };
+      }
+      
+      // Quick check for premium email before proceeding
+      if (user.email && PREMIUM_EMAILS.includes(user.email)) {
+        return {
+          isPremium: true,
+          role: 'premium',
+          email: user.email
         };
       }
       
