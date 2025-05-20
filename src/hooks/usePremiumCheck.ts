@@ -3,11 +3,11 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { dbCache } from '@/services/dbCacheService';
 import { executeWithRetry, checkSupabaseHealth } from '@/utils/supabaseUtils';
+import { PREMIUM_EMAILS } from '@/constants/subscriptionConstants';
 
 // Constants
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second initial delay
-const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache lifetime
 const CACHE_NAME = 'premium-status';
 

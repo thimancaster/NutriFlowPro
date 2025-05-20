@@ -1,5 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { dbCache } from "@/services/dbCacheService";
+import { PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
 
 interface SubscriptionData {
   isPremium: boolean;
@@ -18,7 +20,7 @@ const RETRY_DELAY = 1000; // 1 second
 /**
  * Retry mechanism for Supabase queries
  */
-async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, delay = RETRY_DELAY): Promise<T> {
+export async function executeWithRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, delay = RETRY_DELAY): Promise<T> {
   try {
     return await fn();
   } catch (error) {
@@ -26,7 +28,24 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, delay =
     
     console.log(`Operation failed, retrying... (${MAX_RETRIES - retries + 1}/${MAX_RETRIES})`);
     await new Promise(resolve => setTimeout(resolve, delay));
-    return withRetry(fn, retries - 1, delay * 2); // Exponential backoff
+    return executeWithRetry(fn, retries - 1, delay * 2); // Exponential backoff
+  }
+}
+
+/**
+ * Check if Supabase is healthy and available
+ */
+export async function checkSupabaseHealth(): Promise<boolean> {
+  try {
+    const healthCheck = await supabase.from('subscribers').select('count(*)', { 
+      count: 'exact', 
+      head: true 
+    });
+    
+    return !healthCheck.error;
+  } catch (error) {
+    console.error("Error in Supabase health check:", error);
+    return false;
   }
 }
 
@@ -65,27 +84,16 @@ export const validatePremiumStatus = async (
     }
 
     // Circuit breaker - check if Supabase is available before making RPC call
-    try {
-      const healthCheck = await supabase.from('subscribers').select('count(*)', { 
-        count: 'exact', 
-        head: true 
-      });
-      
-      if (healthCheck.error) {
-        console.error("Supabase service issues, using email check:", healthCheck.error);
-        const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
-        dbCache.set(CACHE_NAME, cacheKey, emailResult);
-        return emailResult;
-      }
-    } catch (error) {
-      console.error("Error in Supabase health check:", error);
+    const isSupabaseHealthy = await checkSupabaseHealth();
+    if (!isSupabaseHealthy) {
+      console.error("Supabase service issues, using email check");
       const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
       dbCache.set(CACHE_NAME, cacheKey, emailResult);
       return emailResult;
     }
 
     // Use a retry wrapper for the RPC call
-    const result = await withRetry(async () => {
+    const result = await executeWithRetry(async () => {
       // Use the secure SQL function to check premium status
       const { data, error } = await supabase.rpc('check_user_premium_status', {
         user_id: userId

@@ -34,7 +34,7 @@ const Dashboard = () => {
   // Compute derived values to match the expected props for DashboardSummaryCards
   const totalPatients = dashboardData?.patientCount || 0;
   const appointmentsToday = dashboardData?.todayAppointments?.length || 0;
-  const activePlans = dashboardData?.activePlanCount || 0;
+  const activePlans = dashboardData?.activePlans || 0;
   
   return (
     <div className="space-y-6">
