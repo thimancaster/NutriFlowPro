@@ -4,11 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Appointment } from '@/types';
 
-// Function to fetch appointments
+// Função para buscar as consultas
 const fetchAppointments = async (userId?: string, patientId?: string) => {
   if (!userId) return [];
   
-  // Start building the query
+  // Inicia a construção da consulta
   let query = supabase
     .from('appointments')
     .select(`
@@ -17,44 +17,46 @@ const fetchAppointments = async (userId?: string, patientId?: string) => {
     `)
     .eq('user_id', userId);
   
-  // Filter by patient_id if provided
+  // Filtra por patient_id se fornecido
   if (patientId) {
     query = query.eq('patient_id', patientId);
   }
   
-  // Order by date, most recent first
+  // Ordena por data, mais recente primeiro
   query = query.order('date', { ascending: false });
   
   const { data, error } = await query;
   
   if (error) {
-    throw new Error(error.message);
+    throw error;
   }
   
-  // Transform the data to include patientName
+  // Transforma os dados para incluir patientName
   return data.map((appt: any) => ({
     ...appt,
     patientName: appt.patients?.name
   })) as Appointment[];
 };
 
-// Hook to use appointment query
+// Hook para usar a consulta de agendamentos
 export const useAppointmentQuery = (patientId?: string) => {
   const { user } = useAuth();
   
   return useQuery({
     queryKey: ['appointments', user?.id, patientId],
     queryFn: () => fetchAppointments(user?.id, patientId),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false // Evita refetching automático ao focar na janela
   });
 };
 
-// Export a dedicated hook for patient appointments
+// Exportar um hook dedicado para consultas de pacientes
 export const usePatientAppointments = (patientId: string) => {
   return useAppointmentQuery(patientId);
 };
 
-// Export a general appointments hook - without patient filtering
+// Exportar um hook geral de consultas - sem filtragem por paciente
 export const useAppointments = () => {
   return useAppointmentQuery();
 };

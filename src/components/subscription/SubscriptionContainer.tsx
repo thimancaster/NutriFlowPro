@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 
 interface SubscriptionContainerProps {
   children: React.ReactNode;
@@ -18,4 +18,4 @@ const SubscriptionContainer: React.FC<SubscriptionContainerProps> = ({ children 
   );
 };
 
-export default SubscriptionContainer;
+export default memo(SubscriptionContainer);

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import PatientAppointments from '../PatientAppointments';
 
 interface PatientAppointmentsTabProps {
@@ -10,4 +10,4 @@ const PatientAppointmentsTab: React.FC<PatientAppointmentsTabProps> = ({ patient
   return <PatientAppointments patientId={patientId} />;
 };
 
-export default PatientAppointmentsTab;
+export default memo(PatientAppointmentsTab);

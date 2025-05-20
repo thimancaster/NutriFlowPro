@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 
@@ -22,4 +22,4 @@ const BackToDashboardButton: React.FC = () => {
   );
 };
 
-export default BackToDashboardButton;
+export default memo(BackToDashboardButton);

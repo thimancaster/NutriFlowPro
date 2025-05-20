@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Appointment } from '@/types';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useAppointmentQuery } from '@/hooks/appointments/useAppointmentQuery';
 import { useToast } from '@/hooks/use-toast';
 import { appointmentService } from '@/services';
 import AppointmentList from '@/components/appointment/AppointmentList';
 import AppointmentFormDialog from '@/components/appointment/AppointmentFormDialog';
+import { useAppointmentActions } from '@/hooks/appointments/useAppointmentActions';
 
 const Appointments = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -14,8 +15,8 @@ const Appointments = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Fetch appointments
-  const { appointments, isLoading, error, refetch } = useAppointments();
+  // Fetch appointments with the improved query hook
+  const { data: appointments, isLoading, error, refetch } = useAppointmentQuery();
   
   const handleCreateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
     try {
@@ -132,9 +133,9 @@ const Appointments = () => {
   return (
     <div className="container mx-auto p-6">
       <AppointmentList 
-        appointments={appointments}
+        appointments={appointments || []}
         isLoading={isLoading}
-        error={error ? new Error(error) : undefined}
+        error={error ? error : null}
         onAddNew={() => setIsFormOpen(true)}
         onEdit={handleEditAppointment}
         onDelete={handleDeleteAppointment}
