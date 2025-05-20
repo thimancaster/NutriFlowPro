@@ -9,10 +9,12 @@ import UsageLimits from '@/components/UsageLimits';
 import { motion } from 'framer-motion';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Dashboard = () => {
   const { isConsultationActive } = useConsultation();
   const { user } = useAuth();
+  const { dashboardData } = useDashboardData(user?.id);
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">

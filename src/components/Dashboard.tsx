@@ -27,10 +27,14 @@ const Dashboard = () => {
   // Use the dashboard data hook with user ID
   const { 
     isLoading, 
-    totalPatients, 
-    appointmentsToday, 
-    activePlans 
+    error,
+    dashboardData
   } = useDashboardData(user?.id);
+  
+  // Compute derived values to match the expected props for DashboardSummaryCards
+  const totalPatients = dashboardData?.patientCount || 0;
+  const appointmentsToday = dashboardData?.todayAppointments?.length || 0;
+  const activePlans = dashboardData?.activePlanCount || 0;
   
   return (
     <div className="space-y-6">
