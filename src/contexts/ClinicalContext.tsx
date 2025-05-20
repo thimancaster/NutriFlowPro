@@ -150,7 +150,12 @@ export const ClinicalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           gender: patient.gender || 'female',
           activity_level: 'moderado',
           goal: patient.goals?.objective || 'manutenção',
-          status: 'em_andamento'
+          status: 'em_andamento',
+          bmr: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          tdee: 0
         });
         
       if (error) {
@@ -252,7 +257,7 @@ export const ClinicalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await supabase
         .from('patients')
         .update({
-          last_appointment: new Date().toISOString()
+          updated_at: new Date().toISOString()
         })
         .eq('id', activeConsultation.patient_id);
       

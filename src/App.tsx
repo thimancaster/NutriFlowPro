@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Patients from './pages/Patients';
@@ -8,7 +9,7 @@ import PatientAnthropometry from './pages/PatientAnthropometry';
 import PatientHistory from './pages/PatientHistory';
 import MealPlans from './pages/MealPlans';
 import { AuthProvider } from './contexts/auth/AuthContext';
-import { ToastProvider } from '@/hooks/use-toast';
+import { ToastProvider } from '@/components/ui/toast-provider';
 import Clinical from './pages/Clinical';
 
 const App = () => {

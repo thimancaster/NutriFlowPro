@@ -40,6 +40,15 @@ export interface PatientOption {
   id: string;
   name: string;
   email?: string;
+  birth_date?: string;
+  gender?: string;
+  age?: number;
+  measurements?: {
+    weight?: number;
+    height?: number;
+    body_fat?: number;
+    muscle_mass?: number;
+  };
 }
 
 export interface PatientFilters {

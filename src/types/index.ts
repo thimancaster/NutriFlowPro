@@ -2,12 +2,14 @@
 export * from './appointment';
 export * from './meal';
 export * from './patient';
+export * from './consultation';
 
 export interface ConsultationData {
-  id?: string;
+  id: string;
   user_id?: string;
-  patient_id?: string;
+  patient_id: string;
   date?: string;
+  appointment_id?: string;
   
   // Anthropometry data
   anthropometry?: {
@@ -82,7 +84,7 @@ export interface PatientFilters {
   search?: string;
   status?: 'active' | 'archived' | 'all';
   sortBy?: string;
-  sortDirection?: 'asc' | 'desc'; // Changed from sortOrder
+  sortDirection?: 'asc' | 'desc'; 
   dateFrom?: string;
   dateTo?: string;
   page?: number;
