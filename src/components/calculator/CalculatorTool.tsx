@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calculator, Flame, Dumbbell, Utensils } from 'lucide-react';
@@ -36,6 +36,27 @@ const CalculatorTool = () => {
     handleCalculate,
     handleReset
   } = useCalculatorState();
+
+  // Add useEffect to help with debugging
+  useEffect(() => {
+    console.log("CalculatorTool mounted");
+    console.log("Initial state:", {
+      activeTab,
+      weight,
+      height,
+      age,
+      sex,
+      activityLevel,
+      objective,
+      profile,
+      tmbValue,
+      showResults
+    });
+    
+    return () => {
+      console.log("CalculatorTool unmounted");
+    };
+  }, []);
   
   return (
     <Card className="w-full max-w-4xl mx-auto">

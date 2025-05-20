@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProfileSettings from '@/components/Settings/ProfileSettings';
 import SubscriptionSettings from '@/components/Settings/SubscriptionSettings';
@@ -12,6 +12,16 @@ import Navbar from '@/components/Navbar';
 
 const Settings = () => {
   const { isPremium } = useAuthState();
+  
+  // Add console logs to help with debugging
+  console.log("Settings page rendering, isPremium:", isPremium);
+
+  useEffect(() => {
+    console.log("Settings page mounted");
+    return () => {
+      console.log("Settings page unmounted");
+    };
+  }, []);
   
   return (
     <>

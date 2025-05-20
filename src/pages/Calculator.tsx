@@ -12,6 +12,9 @@ import { CalculatorProvider } from '@/contexts/CalculatorContext';
 const CalculatorPage = () => {
   const { activePatient } = usePatient();
 
+  // Add console log to help with debugging
+  console.log("CalculatorPage rendering, activePatient:", activePatient);
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">

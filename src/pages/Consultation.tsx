@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import ConsultationResults from '@/components/Consultation/ConsultationResults';
@@ -24,12 +24,20 @@ const Consultation = () => {
   const { id } = useParams<{ id: string }>();
   const [step, setStep] = useState(1);
   
+  // Add console logs to help with debugging
+  console.log("Consultation page rendering, id:", id);
+  
   // Custom hooks
   const { consultation, setConsultation, isLoading } = useConsultationData(id);
   const { patient, patients } = useConsultationPatient(consultation?.patient_id);
   const { saveConsultation, autoSaveStatus } = useAutoSave(id);
   const { updatePatientData } = usePatientData();
   const { handleSaveConsultation, isSubmitting } = useSaveConsultation();
+  
+  useEffect(() => {
+    console.log("Consultation data:", consultation);
+    console.log("Patient:", patient);
+  }, [consultation, patient]);
   
   const handleFormChange = (data: Partial<ConsultationData>) => {
     if (!consultation) return;

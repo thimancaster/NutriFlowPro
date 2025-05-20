@@ -1,19 +1,28 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Session } from '@supabase/supabase-js';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthState } from '@/types/auth';
+import { AuthState } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
 import { useUsageQuota } from '@/hooks/useUsageQuota';
-import useAuthStorage from './useAuthStorage';
-import useVerification from './useVerification';
-import usePremiumStatusCheck from './usePremiumStatusCheck';
+// Update the import path to use the correct location
+import { usePremiumCheck } from '@/hooks/premium';
+import { AUTH_STORAGE_KEYS, AUTH_CONSTANTS } from '@/constants/authConstants';
+import { storageUtils } from '@/utils/storageUtils';
 
-export const useAuthStateManager = () => {
+const useAuthStateManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { checkPremiumStatus } = usePremiumCheck();
   
+  // Track if component is mounted
+  const isMountedRef = useRef(true);
+  // Track verification attempts
+  const verificationAttemptsRef = useRef(0);
+  // Track verification timeout ID
+  const verificationTimeoutRef = useRef<number | null>(null);
+
   // Initialize state
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -37,26 +46,80 @@ export const useAuthStateManager = () => {
 
   // Get usage quota based on user and premium status
   const usageQuota = useUsageQuota(authState.user, authState.isPremium);
-  
-  // Auth storage utilities
-  const { 
-    loadStoredSession, 
-    saveSession, 
-    updateLastAuthCheck,
-    getLastAuthCheck
-  } = useAuthStorage();
-  
-  // Verification utilities
-  const {
-    isMountedRef,
-    clearVerificationTimeout,
-    setVerificationTimeout,
-    incrementVerificationAttempt,
-    resetVerificationAttempts
-  } = useVerification();
-  
-  // Premium status check
-  const { checkUserPremiumStatus } = usePremiumStatusCheck();
+
+  // Clear verification timeout to prevent memory leaks
+  const clearVerificationTimeout = useCallback(() => {
+    if (verificationTimeoutRef.current) {
+      window.clearTimeout(verificationTimeoutRef.current);
+      verificationTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Set verification timeout to break infinite loops
+  const setVerificationTimeout = useCallback(() => {
+    clearVerificationTimeout();
+    
+    verificationTimeoutRef.current = window.setTimeout(() => {
+      if (!isMountedRef.current) return;
+      
+      if (verificationAttemptsRef.current >= AUTH_CONSTANTS.MAX_VERIFICATION_ATTEMPTS) {
+        console.error('Authentication verification timed out after multiple attempts');
+        setAuthState(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          loading: false, 
+          isAuthenticated: false,
+          user: null,
+          session: null 
+        }));
+        
+        toast({
+          title: "Erro de autenticação",
+          description: "Não foi possível verificar sua sessão. Por favor, faça login novamente.",
+          variant: "destructive"
+        });
+      }
+    }, AUTH_CONSTANTS.VERIFICATION_TIMEOUT);
+    
+    return () => clearVerificationTimeout();
+  }, [clearVerificationTimeout, toast]);
+
+  // Function to load session from storage (used for remember me feature)
+  const loadStoredSession = useCallback(() => {
+    try {
+      const storedSession = storageUtils.getLocalItem<{
+        session: Session | null;
+        remember: boolean;
+      }>(AUTH_STORAGE_KEYS.SESSION);
+      
+      if (storedSession && storedSession.session) {
+        console.log('Loaded stored session:', storedSession.remember ? 'with remember me' : 'without remember me');
+        return { session: storedSession.session, remember: storedSession.remember };
+      }
+    } catch (error) {
+      console.error('Failed to load stored session:', error);
+    }
+    return { session: null, remember: false };
+  }, []);
+
+  // Function to save session to storage (used for remember me feature)
+  const saveSession = useCallback((session: Session | null, remember: boolean = false) => {
+    try {
+      if (session) {
+        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.SESSION, { 
+          session, 
+          remember 
+        });
+        storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, remember);
+        console.log('Session saved to storage with remember me:', remember);
+      } else {
+        storageUtils.removeLocalItem(AUTH_STORAGE_KEYS.SESSION);
+        console.log('Session removed from storage');
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error);
+    }
+  }, []);
 
   // Update auth state with consistent format and debounce premium checks
   const updateAuthState = useCallback(async (session: Session | null, remember: boolean = false) => {
@@ -80,21 +143,48 @@ export const useAuthStateManager = () => {
     
     // Reset verification attempts when successfully authenticated
     if (session) {
-      resetVerificationAttempts();
+      verificationAttemptsRef.current = 0;
       clearVerificationTimeout();
     }
     
     // Record the last authentication check timestamp
-    updateLastAuthCheck();
+    storageUtils.setLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK, Date.now());
     
-    // Proceed with premium status check
-    await checkUserPremiumStatus(
-      user, 
-      authState, 
-      usageQuota, 
-      setAuthState,
-      isMountedRef
-    );
+    // Check premium status if user is logged in
+    if (user?.id) {
+      try {
+        const isPremium = await checkPremiumStatus(user.id);
+        const userTier = isPremium ? 'premium' : 'free';
+        
+        if (isMountedRef.current) {
+          setAuthState(prevState => ({
+            ...prevState,
+            isPremium,
+            userTier,
+            usageQuota: {
+              ...usageQuota,
+              patients: {
+                ...usageQuota.patients,
+                limit: isPremium ? Infinity : usageQuota.patients.limit
+              },
+              mealPlans: {
+                ...usageQuota.mealPlans,
+                limit: isPremium ? Infinity : usageQuota.mealPlans.limit
+              }
+            }
+          }));
+        }
+        
+        // Store premium status in local storage with timestamp
+        const premiumStatusKey = `${AUTH_STORAGE_KEYS.PREMIUM_STATUS_PREFIX}${user.id}`;
+        storageUtils.setLocalItem(premiumStatusKey, {
+          isPremium,
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        console.error("Error checking premium status:", error);
+      }
+    }
 
     // Invalidate subscription data when auth state changes
     if (user?.id) {
@@ -105,17 +195,7 @@ export const useAuthStateManager = () => {
         }
       }, 0);
     }
-  }, [
-    authState, 
-    clearVerificationTimeout, 
-    checkUserPremiumStatus, 
-    isMountedRef, 
-    queryClient, 
-    resetVerificationAttempts, 
-    saveSession, 
-    updateLastAuthCheck, 
-    usageQuota
-  ]);
+  }, [checkPremiumStatus, queryClient, usageQuota, saveSession, clearVerificationTimeout]);
 
   // Initialize authentication state
   useEffect(() => {
@@ -170,10 +250,11 @@ export const useAuthStateManager = () => {
         await setupAuthListener();
         
         // Increment verification attempt counter
-        incrementVerificationAttempt();
+        verificationAttemptsRef.current += 1;
+        console.log(`Session verification attempt ${verificationAttemptsRef.current}`);
         
         // Set timeout to break potential infinite loops
-        setVerificationTimeout(setAuthState);
+        setVerificationTimeout();
         
         // Try to load session from storage first (for remember me)
         const { session: storedSession, remember } = loadStoredSession();
@@ -241,27 +322,12 @@ export const useAuthStateManager = () => {
         subscription.unsubscribe();
       }
     };
-  }, [
-    clearVerificationTimeout, 
-    incrementVerificationAttempt, 
-    loadStoredSession, 
-    queryClient, 
-    saveSession, 
-    setVerificationTimeout, 
-    toast, 
-    updateAuthState
-  ]);
+  }, [updateAuthState, toast, queryClient, loadStoredSession, setVerificationTimeout, clearVerificationTimeout]);
 
   return {
     authState,
-    updateAuthState,
-    toast,
-    queryClient
+    updateAuthState
   };
 };
-
-// Add missing imports
-import { storageUtils } from '@/utils/storageUtils';
-import { AUTH_STORAGE_KEYS } from '@/constants/authConstants';
 
 export default useAuthStateManager;
