@@ -15,6 +15,7 @@ interface LoginResult {
 export const login = async (
   email: string, 
   password: string, 
+  remember: boolean = false,
   toast: typeof Toast
 ): Promise<LoginResult> => {
   try {

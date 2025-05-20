@@ -16,7 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Implement auth methods with real logic
   const handleLogin = async (email: string, password: string, remember: boolean = false) => {
     try {
-      const result = await login(email, password, toast);
+      const result = await login(email, password, remember, toast);
       
       if (result.success && result.session) {
         await updateAuthState(result.session, remember);

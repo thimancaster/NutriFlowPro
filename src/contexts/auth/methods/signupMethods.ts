@@ -12,6 +12,8 @@ export const signup = async (
   toast: typeof Toast
 ) => {
   try {
+    console.log("Attempting signup for:", email);
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -32,12 +34,21 @@ export const signup = async (
           email
         }]);
 
-      if (profileError) throw profileError;
-      
-      toast({
-        title: "Conta criada com sucesso",
-        description: "Bem-vindo ao NutriFlow Pro!",
-      });
+      if (profileError) {
+        console.error("Error creating user profile:", profileError);
+        // We don't throw here because the auth user was created successfully
+        // and we'll rely on the database trigger as a fallback
+        toast({
+          title: "Conta criada com avisos",
+          description: "Sua conta foi criada, mas houve um problema ao configurar seu perfil. Entre em contato com o suporte se necessário.",
+          variant: "warning"
+        });
+      } else {
+        toast({
+          title: "Conta criada com sucesso",
+          description: "Bem-vindo ao NutriFlow Pro!",
+        });
+      }
       
       return { success: true };
     }
