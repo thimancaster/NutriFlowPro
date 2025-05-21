@@ -119,7 +119,7 @@ const Consultation = () => {
     console.log("Consultation data:", consultation ? {
       id: consultation.id,
       patient_id: consultation.patient_id,
-      patient_name: consultation.patient_name
+      patientName: consultation.patient?.name // Changed from patient_name to patient?.name
     } : null);
     
     console.log("Patient data:", patient ? {

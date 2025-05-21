@@ -18,7 +18,8 @@ interface BirthDatePickerProps {
   className?: string;
   placeholder?: string;
   error?: string;
-  onBlur?: () => void; // Added missing onBlur property
+  onBlur?: () => void;
+  label?: string; // Added the label prop
 }
 
 export function BirthDatePicker({ 
@@ -27,7 +28,8 @@ export function BirthDatePicker({
   className,
   placeholder = "Selecione a data de nascimento", 
   error,
-  onBlur
+  onBlur,
+  label
 }: BirthDatePickerProps) {
   const [inputValue, setInputValue] = React.useState<string>(
     value ? format(value, "dd/MM/yyyy") : ""
