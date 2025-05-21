@@ -5,16 +5,24 @@ import { supabase } from './client';
 export const getFoodCategories = async () => {
   const { data, error } = await supabase
     .from('foods')
-    .select('category_id')
-    .eq('category_id', 'is not null')
-    .order('name');
+    .select('category_id, food_group')
+    .not('category_id', 'is', null)
+    .not('food_group', 'is', null);
   
   if (error) {
     console.error('Error fetching food categories:', error);
     return [];
   }
   
-  return data || [];
+  // Transform the data into the expected format and deduplicate
+  const uniqueCategories = Array.from(
+    new Map(data.map((item: any) => [
+      item.category_id, 
+      { id: item.category_id, name: item.food_group }
+    ])).values()
+  );
+  
+  return uniqueCategories || [];
 };
 
 // Function to get food details by ID
@@ -24,9 +32,7 @@ export const getFoodDetails = async (foodId: string) => {
     .select(`
       id,
       name,
-      description,
-      category_id,
-      subcategory_id
+      food_group
     `)
     .eq('id', foodId)
     .single();
@@ -36,36 +42,14 @@ export const getFoodDetails = async (foodId: string) => {
     return null;
   }
   
-  return data;
+  return {
+    id: data.id,
+    name: data.name,
+    category: data.food_group
+  };
 };
 
-// Function to get food measures by food ID
-export const getFoodMeasures = async (foodId: string) => {
-  const { data, error } = await supabase
-    .from('foods')
-    .select(`
-      portion_size,
-      portion_unit
-    `)
-    .eq('id', foodId);
-  
-  if (error) {
-    console.error('Error fetching food measures:', error);
-    return [];
-  }
-  
-  // Transform to expected format
-  return data.map((item: any) => ({
-    id: item.id || foodId,
-    name: "Porção padrão",
-    quantity: item.portion_size,
-    unit: item.portion_unit,
-    type: "default",
-    is_default: true
-  }));
-};
-
-// Function to get nutritional values by food ID and measure ID
+// Function to get nutritional values by food ID
 export const getNutritionalValues = async (foodId: string) => {
   const { data, error } = await supabase
     .from('foods')
@@ -89,8 +73,8 @@ export const getNutritionalValues = async (foodId: string) => {
     measure_id: foodId,
     calories: data.calories,
     protein: data.protein,
-    fat: data.fats,
-    carbs: data.carbs
+    carbs: data.carbs,
+    fat: data.fats
   };
 };
 

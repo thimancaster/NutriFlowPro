@@ -4,33 +4,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, DownloadIcon, InfoIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-
-interface FoodDetailsProps {
-  foodId: string;
-}
+import { Clock, Utensils, Info, AlertTriangle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface FoodDetail {
   id: string;
   name: string;
   brand?: string;
   description?: string;
-  category_name: string;
-  subcategory_name: string;
+  category?: string;
+  subcategory?: string;
   caloric_density?: string;
   glycemic_index?: string;
   source?: string;
 }
 
-interface NutritionalValue {
+interface FoodMeasure {
   id: string;
-  measure_id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  type?: string;
+  is_default: boolean;
+}
+
+interface NutritionalValue {
+  id?: string;
+  measure_id?: string;
   calories: number;
   protein: number;
   fat: number;
@@ -47,18 +50,13 @@ interface NutritionalValue {
   vitamin_e?: number;
 }
 
-interface FoodMeasure {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  type: string;
-  is_default: boolean;
-}
-
 interface FoodRestriction {
   id: string;
   restriction_name: string;
+}
+
+interface FoodDetailsProps {
+  foodId: string;
 }
 
 const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
@@ -66,68 +64,71 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
   const [measures, setMeasures] = useState<FoodMeasure[]>([]);
   const [selectedMeasure, setSelectedMeasure] = useState<string | null>(null);
   const [nutritionalValues, setNutritionalValues] = useState<NutritionalValue | null>(null);
-  const [restrictions, setRestrictions] = useState<FoodRestriction[]>([]);
+  const [restrictions, setRestrictions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('nutrition');
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchFoodDetails = async () => {
+    const fetchFoodData = async () => {
       setLoading(true);
       try {
-        // Use a stored procedure to get food details
+        // Fetch food details
         const { data: foodData, error: foodError } = await supabase
-          .rpc('get_food_details', { food_id: foodId })
+          .from('foods')
+          .select(`
+            id,
+            name,
+            food_group as category
+          `)
+          .eq('id', foodId)
           .single();
 
         if (foodError) throw foodError;
 
-        setFood(foodData);
+        setFood({
+          id: foodData.id,
+          name: foodData.name,
+          category: foodData.category
+        });
 
-        // Use a stored procedure to get food measures
-        const { data: measuresData, error: measuresError } = await supabase
-          .rpc('get_food_measures', { food_id: foodId });
+        // For the MVP version, we'll just create a default measure based on the portion info in the foods table
+        const defaultMeasure: FoodMeasure = {
+          id: foodData.id, // Using the same ID as the food for simplicity
+          name: 'Porção',
+          quantity: 100,
+          unit: 'g',
+          is_default: true
+        };
 
-        if (measuresError) throw measuresError;
+        setMeasures([defaultMeasure]);
+        setSelectedMeasure(defaultMeasure.id);
 
-        setMeasures(measuresData || []);
+        // Fetch nutritional values directly from the foods table
+        const { data: foodNutrition, error: nutritionError } = await supabase
+          .from('foods')
+          .select(`
+            calories,
+            protein,
+            carbs,
+            fats
+          `)
+          .eq('id', foodId)
+          .single();
 
-        // Set default measure
-        if (measuresData && measuresData.length > 0) {
-          const defaultMeasure = measuresData.find(m => m.is_default) || measuresData[0];
-          setSelectedMeasure(defaultMeasure.id);
-          
-          // Use a stored procedure to get nutritional values
-          const { data: nutritionData, error: nutritionError } = await supabase
-            .rpc('get_nutritional_values', { 
-              food_id: foodId,
-              measure_id: defaultMeasure.id 
-            })
-            .single();
+        if (nutritionError) throw nutritionError;
 
-          if (nutritionError && nutritionError.code !== 'PGRST116') {
-            throw nutritionError;
-          }
-
-          setNutritionalValues(nutritionData || null);
-        }
-
-        // Use a stored procedure to get food restrictions
-        const { data: restrictionsData, error: restrictionsError } = await supabase
-          .rpc('get_food_restrictions', { food_id: foodId });
-
-        if (restrictionsError) throw restrictionsError;
-
-        setRestrictions(
-          (restrictionsData || []).map((item: any) => ({
-            id: item.id,
-            restriction_name: item.restriction_name
-          }))
-        );
+        setNutritionalValues({
+          calories: foodNutrition.calories,
+          protein: foodNutrition.protein,
+          carbs: foodNutrition.carbs,
+          fat: foodNutrition.fats
+        });
 
       } catch (error) {
         console.error('Error fetching food details:', error);
         toast({
-          title: 'Erro ao carregar detalhes',
+          title: 'Erro',
           description: 'Não foi possível carregar os detalhes do alimento.',
           variant: 'destructive'
         });
@@ -136,33 +137,14 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
       }
     };
 
-    fetchFoodDetails();
+    if (foodId) {
+      fetchFoodData();
+    }
   }, [foodId, toast]);
 
-  const handleMeasureChange = async (measureId: string) => {
+  const handleSelectMeasure = (measureId: string) => {
     setSelectedMeasure(measureId);
-    try {
-      // Use a stored procedure to get nutritional values
-      const { data, error } = await supabase
-        .rpc('get_nutritional_values', {
-          food_id: foodId,
-          measure_id: measureId
-        })
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      setNutritionalValues(data || null);
-    } catch (error) {
-      console.error('Error fetching nutritional values:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os valores nutricionais para esta medida.',
-        variant: 'destructive'
-      });
-    }
+    // In the future, fetch nutritional values for this specific measure
   };
 
   if (loading) {
@@ -172,10 +154,18 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
           <Skeleton className="h-8 w-3/4 mb-2" />
           <Skeleton className="h-4 w-1/2" />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-40 w-full" />
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-6 w-1/2" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-6 w-full" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
           </div>
         </CardContent>
       </Card>
@@ -185,191 +175,157 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
   if (!food) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <InfoIcon className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-          <h3 className="text-lg font-medium">Alimento não encontrado</h3>
+        <CardContent className="flex flex-col items-center justify-center p-10">
+          <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
+          <h3 className="text-lg font-semibold">Alimento não encontrado</h3>
           <p className="text-muted-foreground">
-            O alimento selecionado não foi encontrado ou foi removido.
+            Não foi possível encontrar informações para este alimento.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  // Get the selected measure details
-  const currentMeasure = measures.find(m => m.id === selectedMeasure);
-
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-2xl">{food.name}</CardTitle>
-            <div className="text-muted-foreground mt-1 flex items-center space-x-2">
-              <Badge variant="outline">{food.category_name}</Badge>
-              {food.subcategory_name && <Badge variant="outline">{food.subcategory_name}</Badge>}
-              {food.brand && <span>• {food.brand}</span>}
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+        <CardTitle className="text-xl">{food.name}</CardTitle>
+        {food.brand && <p className="text-muted-foreground">{food.brand}</p>}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {food.category && (
+            <Badge variant="secondary">{food.category}</Badge>
+          )}
+          {food.subcategory && (
+            <Badge variant="outline">{food.subcategory}</Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="nutrition">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="nutrition">Informações Nutricionais</TabsTrigger>
-            <TabsTrigger value="details">Detalhes</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="nutrition">
+              <Utensils className="mr-2 h-4 w-4" />
+              Valores Nutricionais
+            </TabsTrigger>
+            <TabsTrigger value="info">
+              <Info className="mr-2 h-4 w-4" />
+              Informações
+            </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="nutrition">
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <Label>Medida caseira</Label>
-                <Select 
-                  value={selectedMeasure || ''}
-                  onValueChange={handleMeasureChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione uma medida" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {measures.map((measure) => (
-                      <SelectItem key={measure.id} value={measure.id}>
-                        {measure.name} ({measure.quantity} {measure.unit})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label className="text-sm font-medium">Medida:</label>
+                {measures.length > 0 && (
+                  <Select
+                    value={selectedMeasure || ''}
+                    onValueChange={handleSelectMeasure}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma medida" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {measures.map((measure) => (
+                        <SelectItem key={measure.id} value={measure.id}>
+                          {measure.name} ({measure.quantity} {measure.unit})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
-              {currentMeasure && nutritionalValues ? (
-                <div className="bg-background rounded-lg p-4 border">
-                  <h3 className="font-semibold mb-4">
-                    Valores nutricionais para {currentMeasure.name} ({currentMeasure.quantity} {currentMeasure.unit})
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-lg mb-2">Macronutrientes</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="bg-primary/5 p-3 rounded-md">
-                          <div className="text-sm text-muted-foreground">Calorias</div>
-                          <div className="font-semibold text-lg">{nutritionalValues.calories} kcal</div>
-                        </div>
-                        <div className="bg-green-50 p-3 rounded-md">
-                          <div className="text-sm text-muted-foreground">Proteínas</div>
-                          <div className="font-semibold text-lg text-green-700">{nutritionalValues.protein}g</div>
-                        </div>
-                        <div className="bg-amber-50 p-3 rounded-md">
-                          <div className="text-sm text-muted-foreground">Gorduras</div>
-                          <div className="font-semibold text-lg text-amber-700">{nutritionalValues.fat}g</div>
-                        </div>
-                        <div className="bg-blue-50 p-3 rounded-md">
-                          <div className="text-sm text-muted-foreground">Carboidratos</div>
-                          <div className="font-semibold text-lg text-blue-700">{nutritionalValues.carbs}g</div>
-                        </div>
+              {nutritionalValues && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold">Macronutrientes</h3>
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Calorias</p>
+                        <p className="font-bold">{nutritionalValues.calories} kcal</p>
                       </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Informações adicionais</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        {nutritionalValues.fiber !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Fibras</span>
-                            <span className="font-medium">{nutritionalValues.fiber}g</span>
-                          </div>
-                        )}
-                        {nutritionalValues.sugar !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Açúcares</span>
-                            <span className="font-medium">{nutritionalValues.sugar}g</span>
-                          </div>
-                        )}
-                        {nutritionalValues.sodium !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Sódio</span>
-                            <span className="font-medium">{nutritionalValues.sodium}mg</span>
-                          </div>
-                        )}
-                        {nutritionalValues.potassium !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Potássio</span>
-                            <span className="font-medium">{nutritionalValues.potassium}mg</span>
-                          </div>
-                        )}
-                        {nutritionalValues.calcium !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Cálcio</span>
-                            <span className="font-medium">{nutritionalValues.calcium}mg</span>
-                          </div>
-                        )}
-                        {nutritionalValues.iron !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Ferro</span>
-                            <span className="font-medium">{nutritionalValues.iron}mg</span>
-                          </div>
-                        )}
+                      <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Proteína</p>
+                        <p className="font-bold">{nutritionalValues.protein} g</p>
+                      </div>
+                      <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Carboidratos</p>
+                        <p className="font-bold">{nutritionalValues.carbs} g</p>
+                      </div>
+                      <div className="border rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Gorduras</p>
+                        <p className="font-bold">{nutritionalValues.fat} g</p>
                       </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-muted/30 rounded-lg p-6 text-center">
-                  <p className="text-muted-foreground">
-                    Não há informações nutricionais disponíveis para este alimento e medida.
-                  </p>
+
+                  {/* Additional nutrients will be displayed in the future */}
+                  {(nutritionalValues.fiber || nutritionalValues.sugar) && (
+                    <div>
+                      <h3 className="font-semibold">Detalhamento de Carboidratos</h3>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {nutritionalValues.fiber !== undefined && (
+                          <div className="border rounded-lg p-3 text-center">
+                            <p className="text-xs text-muted-foreground">Fibras</p>
+                            <p className="font-bold">{nutritionalValues.fiber} g</p>
+                          </div>
+                        )}
+                        {nutritionalValues.sugar !== undefined && (
+                          <div className="border rounded-lg p-3 text-center">
+                            <p className="text-xs text-muted-foreground">Açúcares</p>
+                            <p className="font-bold">{nutritionalValues.sugar} g</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </TabsContent>
-          
-          <TabsContent value="details">
-            <div className="space-y-6">
+
+          <TabsContent value="info">
+            <div className="space-y-4">
               {food.description && (
                 <div>
-                  <h3 className="font-semibold mb-2">Descrição</h3>
-                  <p className="text-muted-foreground">{food.description}</p>
+                  <h3 className="font-semibold mb-1">Descrição</h3>
+                  <p>{food.description}</p>
                 </div>
               )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-2 gap-4">
                 {food.caloric_density && (
-                  <div className="bg-muted/30 p-3 rounded-md">
-                    <h4 className="text-sm font-medium">Densidade calórica</h4>
+                  <div>
+                    <h3 className="text-sm font-semibold">Densidade Calórica</h3>
                     <p>{food.caloric_density}</p>
                   </div>
                 )}
-                
                 {food.glycemic_index && (
-                  <div className="bg-muted/30 p-3 rounded-md">
-                    <h4 className="text-sm font-medium">Índice glicêmico</h4>
+                  <div>
+                    <h3 className="text-sm font-semibold">Índice Glicêmico</h3>
                     <p>{food.glycemic_index}</p>
                   </div>
                 )}
               </div>
-              
+
+              {food.source && (
+                <div>
+                  <h3 className="text-sm font-semibold">Fonte</h3>
+                  <p>{food.source}</p>
+                </div>
+              )}
+
               {restrictions.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Restrições alimentares</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {restrictions.map(restriction => (
-                      <Badge key={restriction.id} variant="destructive">
-                        {restriction.restriction_name}
+                  <h3 className="text-sm font-semibold mb-1">Restrições Alimentares</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {restrictions.map((restriction) => (
+                      <Badge key={restriction} variant="destructive">
+                        {restriction}
                       </Badge>
                     ))}
                   </div>
-                </div>
-              )}
-              
-              {food.source && (
-                <div>
-                  <h3 className="font-semibold mb-2">Fonte</h3>
-                  <p className="text-muted-foreground">{food.source}</p>
                 </div>
               )}
             </div>

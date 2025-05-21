@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Bread } from 'lucide-react'; // Changed from BreadIcon to Bread
 
 interface FoodListProps {
   searchTerm: string;

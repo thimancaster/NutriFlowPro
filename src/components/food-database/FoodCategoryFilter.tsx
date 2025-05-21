@@ -27,16 +27,27 @@ const FoodCategoryFilter: React.FC<FoodCategoryFilterProps> = ({
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        // Use a direct SQL query instead of the table name that's not in the TypeScript definitions
+        // Use a direct query to the foods table to get distinct categories
         const { data, error } = await supabase
-          .rpc('get_food_categories')
-          .order('name');
+          .from('foods')
+          .select('category_id, food_group')
+          .not('category_id', 'is', null)
+          .not('food_group', 'is', null)
+          .order('food_group');
 
         if (error) {
           throw error;
         }
 
-        setCategories(data || []);
+        // Transform the data into the expected format
+        const uniqueCategories = Array.from(
+          new Map(data.map(item => [item.category_id, {
+            id: item.category_id,
+            name: item.food_group
+          }])).values()
+        );
+
+        setCategories(uniqueCategories || []);
       } catch (error) {
         console.error('Error fetching food categories:', error);
       } finally {

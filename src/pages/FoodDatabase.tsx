@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,7 @@ const FoodDatabase = () => {
   const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('browse');
   const { toast } = useToast();
-  const { isPremiumFeature } = usePremiumGuard();
+  const { hasAccess } = usePremiumGuard();
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -43,7 +42,7 @@ const FoodDatabase = () => {
   };
 
   const handleAddFood = () => {
-    if (isPremiumFeature) {
+    if (!hasAccess) {
       toast({
         title: 'Recurso Premium',
         description: 'Para adicionar alimentos personalizados, você precisa ter uma conta premium.',
