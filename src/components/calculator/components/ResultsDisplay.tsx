@@ -15,6 +15,7 @@ export interface ResultsDisplayProps {
   objective: string;
   onSavePatient: () => void;
   onGenerateMealPlan: () => void;
+  isSaving?: boolean;
 }
 
 export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
@@ -23,7 +24,8 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   calorieSummary,
   objective,
   onSavePatient,
-  onGenerateMealPlan
+  onGenerateMealPlan,
+  isSaving = false
 }) => {
   if (!teeObject || !macros) return null;
 
@@ -89,15 +91,26 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
         <Button 
           variant="outline" 
           onClick={onSavePatient}
+          disabled={isSaving}
           className="flex items-center gap-2"
         >
-          <Save className="h-4 w-4" />
-          Salvar Resultados
+          {isSaving ? (
+            <>
+              <span className="animate-spin h-4 w-4 mr-2 border-2 border-dashed rounded-full border-current"></span>
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Salvar Resultados
+            </>
+          )}
         </Button>
         
         <Button 
           variant="nutri" 
           onClick={onGenerateMealPlan}
+          disabled={isSaving}
           className="flex items-center gap-2"
         >
           <UtensilsCrossed className="h-4 w-4" />

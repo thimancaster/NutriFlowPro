@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calculator, Flame, Dumbbell, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { CalculatorForm, ActivityForm, ResultsDisplay } from './components';
 import useCalculatorState from './hooks/useCalculatorState';
 import { Patient } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { saveCalculationResults } from '@/services/calculationService';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface CalculatorToolProps {
   patientData?: Patient | null;
@@ -18,6 +19,8 @@ interface CalculatorToolProps {
 const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const {
     activeTab,
     weight,
@@ -50,6 +53,9 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
   const [stateWeight, setStateWeight] = React.useState<string>('');
   const [stateHeight, setStateHeight] = React.useState<string>('');
   const [stateAge, setStateAge] = React.useState<string>('');
+  
+  // Add state for saving status
+  const [isSaving, setIsSaving] = React.useState<boolean>(false);
 
   // Fill form with patient data when available
   useEffect(() => {
@@ -102,9 +108,21 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
       return;
     }
     
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para salvar os resultados.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
+      setIsSaving(true);
+      
       const calculationData = {
         patient_id: patientData.id,
+        user_id: user.id,
         weight: typeof weight === 'number' ? weight : parseFloat(weight.toString()),
         height: typeof height === 'number' ? height : parseFloat(height.toString()),
         age: typeof age === 'number' ? age : parseInt(age.toString()),
@@ -134,9 +152,11 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
       console.error("Error saving calculation:", error);
       toast({
         title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar os resultados.",
+        description: "Ocorreu um erro ao salvar os resultados. Por favor, tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -146,6 +166,15 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
       toast({
         title: "Informações incompletas",
         description: "Certifique-se de que um paciente está selecionado e o cálculo foi realizado.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para gerar um plano.",
         variant: "destructive"
       });
       return;
@@ -241,6 +270,7 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
                 objective={objective}
                 onSavePatient={handleSaveCalculation}
                 onGenerateMealPlan={handleGenerateMealPlan}
+                isSaving={isSaving}
               />
             )}
           </TabsContent>
@@ -257,13 +287,15 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
             <Button 
               variant="outline"
               onClick={handleSaveCalculation}
+              disabled={isSaving}
             >
-              Salvar Resultados
+              {isSaving ? 'Salvando...' : 'Salvar Resultados'}
             </Button>
             
             <Button 
               variant="nutri"
               onClick={handleGenerateMealPlan}
+              disabled={isSaving}
             >
               Gerar Plano Alimentar
             </Button>

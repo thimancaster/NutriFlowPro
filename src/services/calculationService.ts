@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { dbCache } from './dbCache';
 
 interface CalculationData {
   patient_id: string;
@@ -16,10 +17,19 @@ interface CalculationData {
   fats: number;
   tipo: string;
   status: string;
+  user_id: string;
 }
 
 export async function saveCalculationResults(data: CalculationData) {
   try {
+    console.log('Saving calculation data:', data);
+    
+    // Validate required fields
+    if (!data.user_id || !data.patient_id) {
+      console.error('Missing required fields:', { user_id: data.user_id, patient_id: data.patient_id });
+      return { success: false, error: 'Campos obrigatórios faltando' };
+    }
+    
     // Insert calculation record
     const { data: calculation, error } = await supabase
       .from('calculations')
@@ -30,7 +40,13 @@ export async function saveCalculationResults(data: CalculationData) {
       .select('*')
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Database error saving calculation:', error);
+      throw error;
+    }
+    
+    // Invalidate any cached calculations for this patient
+    dbCache.invalidate(`${dbCache.KEYS.CONSULTATIONS}${data.patient_id}`);
     
     return { success: true, data: calculation };
   } catch (error: any) {
@@ -41,6 +57,14 @@ export async function saveCalculationResults(data: CalculationData) {
 
 export async function getPatientCalculations(patientId: string) {
   try {
+    const cacheKey = `${dbCache.KEYS.CONSULTATIONS}${patientId}`;
+    const cachedData = dbCache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log('Using cached calculations');
+      return { success: true, data: cachedData };
+    }
+    
     const { data, error } = await supabase
       .from('calculations')
       .select('*')
@@ -48,6 +72,9 @@ export async function getPatientCalculations(patientId: string) {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
+    
+    // Cache the results
+    dbCache.set(cacheKey, data);
     
     return { success: true, data };
   } catch (error: any) {
@@ -58,6 +85,14 @@ export async function getPatientCalculations(patientId: string) {
 
 export async function getCalculationById(calculationId: string) {
   try {
+    const cacheKey = `${dbCache.KEYS.CONSULTATIONS}single_${calculationId}`;
+    const cachedData = dbCache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log('Using cached calculation');
+      return { success: true, data: cachedData };
+    }
+    
     const { data, error } = await supabase
       .from('calculations')
       .select('*')
@@ -65,6 +100,9 @@ export async function getCalculationById(calculationId: string) {
       .single();
     
     if (error) throw error;
+    
+    // Cache the result
+    dbCache.set(cacheKey, data);
     
     return { success: true, data };
   } catch (error: any) {

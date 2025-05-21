@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Patient } from '@/types';
 import { storageUtils } from '@/utils/storageUtils';
@@ -36,6 +35,24 @@ export const usePatientState = () => {
     }
   }, [activePatient]);
 
+  // Helper function to safely parse JSON data
+  const safeParseJson = (data: any): any => {
+    if (!data) return null;
+    
+    if (typeof data === 'object') return data;
+    
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        console.error('Failed to parse JSON data:', e);
+        return null;
+      }
+    }
+    
+    return null;
+  };
+
   // Load patient by ID from the database
   const loadPatientById = async (patientId: string) => {
     if (!patientId) return;
@@ -44,49 +61,34 @@ export const usePatientState = () => {
     setError(null);
 
     try {
+      console.log('Loading patient by ID:', patientId);
+      
       const { data, error: supabaseError } = await supabase
         .from('patients')
         .select('*')
         .eq('id', patientId)
         .single();
 
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        console.error('Supabase error:', supabaseError);
+        throw supabaseError;
+      }
 
       if (data) {
-        // Process the database data into our Patient type
-        // Parse JSON fields as needed
-        let goalsData: Record<string, any> = {};
-        if (data.goals) {
-          if (typeof data.goals === 'string') {
-            try {
-              goalsData = JSON.parse(data.goals);
-            } catch (e) {
-              goalsData = {}; // Default empty object if parsing fails
-            }
-          } else if (typeof data.goals === 'object') {
-            goalsData = data.goals as Record<string, any>;
-          }
-        }
-
+        console.log('Patient data loaded:', data);
+        
+        // Parse the JSON fields
+        const goalsData = safeParseJson(data.goals) || {};
+        const measurementsData = safeParseJson(data.measurements) || {};
+        
+        // Handle address field which could be string or object
         let addressData: any = data.address;
         if (typeof addressData === 'string') {
           try {
             addressData = JSON.parse(addressData);
           } catch (e) {
-            addressData = addressData; // Keep as string if parsing fails
-          }
-        }
-
-        let measurementsData: Record<string, any> = {};
-        if (data.measurements) {
-          if (typeof data.measurements === 'string') {
-            try {
-              measurementsData = JSON.parse(data.measurements);
-            } catch (e) {
-              measurementsData = {}; // Default empty object if parsing fails
-            }
-          } else if (typeof data.measurements === 'object') {
-            measurementsData = data.measurements as Record<string, any>;
+            // If we can't parse it as JSON, keep it as a string
+            console.log('Address is a string and could not be parsed as JSON');
           }
         }
 
@@ -111,6 +113,7 @@ export const usePatientState = () => {
 
         setActivePatient(patient);
         addRecentPatient(patient);
+        setSelectedPatientId(patientId);
       } else {
         setActivePatient(null);
         throw new Error('Patient not found');
@@ -140,6 +143,7 @@ export const usePatientState = () => {
   const startPatientSession = (patient: Patient) => {
     setActivePatient(patient);
     addRecentPatient(patient);
+    setSelectedPatientId(patient.id);
   };
 
   // End a patient session

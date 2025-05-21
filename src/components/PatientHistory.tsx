@@ -7,6 +7,7 @@ import { ArrowRight, Calendar, CheckCircle, User, Ruler, Loader2 } from 'lucide-
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInYears } from 'date-fns';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface Patient {
   id: string;
@@ -30,12 +31,18 @@ const PatientHistory = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchPatient = async () => {
-      if (!patientId) return;
+      if (!patientId) {
+        setLoading(false);
+        return;
+      }
 
       try {
+        console.log('Fetching patient data for ID:', patientId);
+        
         const { data, error } = await supabase
           .from('patients')
           .select('*')
@@ -43,15 +50,42 @@ const PatientHistory = () => {
           .single();
 
         if (error) {
+          console.error('Supabase error:', error);
           throw new Error(error.message);
         }
 
-        setPatient(data as Patient);
+        if (!data) {
+          console.error('No patient data returned');
+          throw new Error('Paciente não encontrado');
+        }
+        
+        console.log('Patient data received:', data);
+        
+        // Ensure goals is an object
+        let goalsData = {};
+        
+        if (data.goals) {
+          if (typeof data.goals === 'string') {
+            try {
+              goalsData = JSON.parse(data.goals);
+            } catch (e) {
+              console.error('Error parsing goals:', e);
+            }
+          } else if (typeof data.goals === 'object') {
+            goalsData = data.goals;
+          }
+        }
+        
+        // Set the processed patient data
+        setPatient({
+          ...data,
+          goals: goalsData as any
+        });
       } catch (error: any) {
         console.error("Error fetching patient:", error);
         toast({
           title: "Erro ao carregar paciente",
-          description: error.message,
+          description: error.message || 'Ocorreu um erro ao carregar os dados do paciente',
           variant: "destructive",
         });
       } finally {
