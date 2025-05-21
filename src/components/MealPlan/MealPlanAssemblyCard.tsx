@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MealItem } from '@/types/meal';
+import { Plus, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface MealPlanAssemblyCardProps {
   meal: {
@@ -30,6 +32,12 @@ const MealPlanAssemblyCard: React.FC<MealPlanAssemblyCardProps> = ({
   onRemoveFood,
   suggestedFoods
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const filteredFoods = suggestedFoods.filter(
+    food => food.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-nutri-gray-light pb-3">
@@ -84,18 +92,38 @@ const MealPlanAssemblyCard: React.FC<MealPlanAssemblyCardProps> = ({
         
         <div className="mt-4 pt-4 border-t">
           <h4 className="font-medium mb-2">Adicionar Alimentos</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {suggestedFoods.slice(0, 6).map((food, idx) => (
-              <Button 
-                key={idx}
-                variant="outline"
-                size="sm"
-                onClick={() => onAddFood(mealIndex, food)}
-                className="justify-start overflow-hidden text-ellipsis whitespace-nowrap"
-              >
-                {food.name}
-              </Button>
-            ))}
+          
+          <div className="mb-4 relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Buscar alimentos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+            {filteredFoods.length > 0 ? (
+              filteredFoods.map((food, idx) => (
+                <Button 
+                  key={idx}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAddFood(mealIndex, food)}
+                  className="justify-start overflow-hidden text-ellipsis whitespace-nowrap"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  {food.name}
+                </Button>
+              ))
+            ) : searchTerm ? (
+              <p className="text-gray-500 col-span-full text-center py-2">Nenhum alimento encontrado</p>
+            ) : (
+              <p className="text-gray-500 col-span-full text-center py-2">
+                Digite para buscar alimentos na base de dados
+              </p>
+            )}
           </div>
         </div>
       </CardContent>

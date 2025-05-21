@@ -23,12 +23,23 @@ export const stringToProfile = (value: string): Profile => {
       return 'normal';
     case 'sobrepeso':
       return 'sobrepeso';
+    // Add support for body types
+    case 'ectomorph':
+      return 'magro';  // Map to existing profile 'magro'
+    case 'mesomorph':
+      return 'normal';  // Map to existing profile 'normal'
+    case 'endomorph':
+      return 'sobrepeso';  // Map to existing profile 'sobrepeso'
     default:
       // If the value doesn't match exactly, try to determine closest match
-      if (normalizedValue.includes('peso') || normalizedValue.includes('obre')) {
+      if (normalizedValue.includes('peso') || normalizedValue.includes('obre') || normalizedValue.includes('endo')) {
         return 'sobrepeso_obesidade';
       } else if (normalizedValue.includes('atleta')) {
         return 'atleta';
+      } else if (normalizedValue.includes('ecto') || normalizedValue.includes('magr')) {
+        return 'magro';
+      } else if (normalizedValue.includes('meso') || normalizedValue.includes('medi')) {
+        return 'normal';
       } else {
         return 'eutrofico'; // Default fallback
       }

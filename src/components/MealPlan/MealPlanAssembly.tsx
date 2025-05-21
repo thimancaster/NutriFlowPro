@@ -5,7 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, FileDown } from 'lucide-react';
 import { 
   MEAL_DISTRIBUTIONS,
-  filterFoodsByMeal 
+  filterFoodsByMeal,
+  SAMPLE_FOODS 
 } from '@/utils/mealAssemblyUtils';
 import { generateMealAssemblyPDF } from '@/utils/pdf/mealAssemblyPdfUtils';
 import { MealItem, Meal } from '@/types/meal';
@@ -65,7 +66,14 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
   const handleAddFood = (mealIndex: number, food: MealItem) => {
     setMeals(prev => {
       const updatedMeals = [...prev];
-      updatedMeals[mealIndex].foods = [...updatedMeals[mealIndex].foods, { ...food, selected: true }];
+      // Clone the food item so we don't modify the original
+      const newFood = { 
+        ...food,
+        selected: true,
+        // Generate a unique ID if one doesn't exist
+        id: food.id || `food-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+      updatedMeals[mealIndex].foods = [...updatedMeals[mealIndex].foods, newFood];
       return updatedMeals;
     });
     
@@ -138,7 +146,7 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
             mealIndex={mealIndex}
             onAddFood={handleAddFood}
             onRemoveFood={handleRemoveFood}
-            suggestedFoods={filterFoodsByMeal(meal.name)}
+            suggestedFoods={filterFoodsByMeal(meal.name) || SAMPLE_FOODS}
           />
         ))}
       </div>

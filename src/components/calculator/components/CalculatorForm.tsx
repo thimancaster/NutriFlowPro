@@ -13,7 +13,7 @@ export interface CalculatorFormProps {
   height: number | '';
   age: number | '';
   sex: 'M' | 'F';
-  profile: Profile;
+  profile: string;  // Changed type to string to match any profile value
   isCalculating: boolean;
   onInputChange: (name: string, value: number | '') => void;
   onSexChange: (value: 'M' | 'F') => void;
@@ -116,7 +116,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
             <Label>Perfil Corporal</Label>
             <RadioGroup
               value={profile}
-              onValueChange={onProfileChange}
+              onValueChange={(value) => onProfileChange(value)}
               className="grid grid-cols-1 gap-2 mt-1"
             >
               <div className="flex items-center space-x-2">

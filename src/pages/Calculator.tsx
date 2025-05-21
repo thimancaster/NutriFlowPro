@@ -10,7 +10,7 @@ import { User, Plus, Database } from 'lucide-react';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
-import { usePatientDetail } from '@/hooks/usePatientDetail';
+import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
 
 const CalculatorPage = () => {
   const { activePatient, loadPatientById } = usePatient();

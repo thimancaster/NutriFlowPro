@@ -18,7 +18,7 @@ export const RadioGroupField = ({
     <div className="space-y-2">
       <Label>{label}{required && '*'}</Label>
       <RadioGroup 
-        value={value} 
+        value={value || ''} 
         onValueChange={onChange}
         required={required}
         className={className}
