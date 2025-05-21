@@ -96,6 +96,13 @@ const PatientHistory = () => {
     fetchPatient();
   }, [patientId, toast]);
   
+  // Handle navigation to consultation page
+  const navigateToConsultation = () => {
+    if (!patientId) return;
+    // Use URL parameter instead of query parameter
+    navigate(`/consultation/${patientId}`);
+  };
+  
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center">
@@ -235,7 +242,7 @@ const PatientHistory = () => {
 
         <Card 
           className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate(`/consultation?patientId=${patientId}`)}
+          onClick={navigateToConsultation}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Plano Alimentar</CardTitle>

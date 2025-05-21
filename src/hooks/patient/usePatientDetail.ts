@@ -28,10 +28,11 @@ export const usePatientDetail = () => {
         }
         
         patientData = result.data;
-        console.log("Patient data loaded:", patientData);
+        console.log("Patient data loaded by ID:", patientData);
       } else {
         // If patientOrId is already a Patient object, use it directly
         patientData = patientOrId;
+        console.log("Using provided patient object:", patientData);
       }
       
       // Set patient data and open modal

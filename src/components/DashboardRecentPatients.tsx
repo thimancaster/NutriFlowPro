@@ -9,8 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import { usePatientDetail } from '@/hooks/usePatientDetail';
+import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
 
 // Define a more specific type for the Patient to optimize data fetching
 interface Patient {
@@ -91,6 +90,7 @@ const DashboardRecentPatients: React.FC = () => {
   // Handle clicking on "Ver detalhes" - correctly open patient details by ID
   const handleViewPatientDetails = async (patientId: string) => {
     try {
+      console.log("Opening patient details for ID:", patientId);
       await openPatientDetail(patientId);
     } catch (error) {
       console.error("Error opening patient details:", error);
