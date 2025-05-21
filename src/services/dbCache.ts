@@ -54,8 +54,7 @@ export const dbCache: DBCacheInterface = {
       storageUtils.removeLocalItem(keyOrPrefix);
       
       // Also check if it's a prefix and remove all matching keys
-      // This requires us to add a helper to storageUtils
-      const keys = getAllLocalStorageKeys();
+      const keys = storageUtils.getAllLocalStorageKeys();
       keys.forEach(key => {
         if (key.startsWith(keyOrPrefix)) {
           storageUtils.removeLocalItem(key);
@@ -79,13 +78,3 @@ export const dbCache: DBCacheInterface = {
     }
   }
 };
-
-// Helper function to get all localStorage keys
-function getAllLocalStorageKeys(): string[] {
-  const keys: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key) keys.push(key);
-  }
-  return keys;
-}

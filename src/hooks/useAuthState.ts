@@ -18,7 +18,7 @@ export const useAuthState = () => {
         setIsCheckingAuth(true);
         
         // Check if we've checked recently (throttle checks)
-        const lastCheck = storageUtils.getLocalItem<number>(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK);
+        const lastCheck = storageUtils.getLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK);
         const now = Date.now();
         
         if (lastCheck && (now - lastCheck < 10000)) {

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,10 +87,7 @@ const useAuthStateManager = () => {
   // Function to load session from storage (used for remember me feature)
   const loadStoredSession = useCallback(() => {
     try {
-      const storedSession = storageUtils.getLocalItem<{
-        session: Session | null;
-        remember: boolean;
-      }>(AUTH_STORAGE_KEYS.SESSION);
+      const storedSession = storageUtils.getLocalItem(AUTH_STORAGE_KEYS.SESSION);
       
       if (storedSession && storedSession.session) {
         console.log('Loaded stored session:', storedSession.remember ? 'with remember me' : 'without remember me');
@@ -211,7 +207,7 @@ const useAuthStateManager = () => {
         console.log("Auth state changed:", event, "Session:", session ? "exists" : "null");
         
         // Get remember me preference
-        const rememberMe = storageUtils.getLocalItem<boolean>(AUTH_STORAGE_KEYS.REMEMBER_ME) || false;
+        const rememberMe = storageUtils.getLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME) || false;
         
         if (event === 'SIGNED_IN') {
           toast({

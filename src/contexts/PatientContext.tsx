@@ -69,13 +69,13 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (supabaseError) throw supabaseError;
 
       if (data) {
-        // Process database data into our Patient type
+        // Process database data into our Patient type with proper type casting
         const patient: Patient = {
           ...data,
           status: (data.status as 'active' | 'archived') || 'active',
-          goals: data.goals as Record<string, any> || {},
-          measurements: data.measurements as Record<string, any> || {},
-          address: data.address as Record<string, any> || {}
+          goals: (data.goals as Record<string, any>) || {},
+          measurements: (data.measurements as Record<string, any>) || {},
+          address: (data.address as Record<string, any>) || {}
         };
 
         setActivePatient(patient);

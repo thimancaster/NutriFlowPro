@@ -80,5 +80,21 @@ export const storageUtils = {
     } catch (err) {
       console.error(`Error removing sessionStorage item "${key}":`, err);
     }
+  },
+
+  /**
+   * Get all localStorage keys
+   */
+  getAllLocalStorageKeys: (): string[] => {
+    const keys: string[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) keys.push(key);
+      }
+    } catch (err) {
+      console.error(`Error getting all localStorage keys:`, err);
+    }
+    return keys;
   }
 };
