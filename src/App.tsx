@@ -22,6 +22,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import FoodDatabase from './pages/FoodDatabase';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -63,6 +64,7 @@ const App = () => {
                     <Route path="/patient-anthropometry/:patientId" element={<PatientAnthropometry />} />
                     <Route path="/patient-history/:patientId" element={<PatientHistory />} />
                     <Route path="/meal-plans" element={<MealPlans />} />
+                    <Route path="/food-database" element={<FoodDatabase />} />
                     <Route path="/clinical" element={<Clinical />} />
                     <Route path="/settings" element={<Settings />} />
                   </Route>

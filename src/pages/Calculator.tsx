@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { User, Plus } from 'lucide-react';
+import { User, Plus, Database } from 'lucide-react';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
 
 const CalculatorPage = () => {
@@ -23,14 +23,23 @@ const CalculatorPage = () => {
           <p className="text-gray-500">Calcule as necessidades energéticas e macronutrientes</p>
         </div>
         
-        {!activePatient && (
-          <Link to="/patients">
+        <div className="flex space-x-2">
+          {!activePatient && (
+            <Link to="/patients">
+              <Button variant="outline" className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                <span>Selecionar Paciente</span>
+              </Button>
+            </Link>
+          )}
+          
+          <Link to="/food-database">
             <Button variant="outline" className="flex items-center gap-1">
-              <User className="h-4 w-4" />
-              <span>Selecionar Paciente</span>
+              <Database className="h-4 w-4" />
+              <span>Base de Alimentos</span>
             </Button>
           </Link>
-        )}
+        </div>
       </div>
       
       {!activePatient && (
