@@ -7,8 +7,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { usePatientDetail } from '@/hooks/usePatientDetail';
 
 // Define a more specific type for the Patient to optimize data fetching
 interface Patient {
@@ -23,6 +25,7 @@ interface Patient {
 const DashboardRecentPatients: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { openPatientDetail } = usePatientDetail();
   
   // Use React Query with optimized data fetching and better caching
   const { data: recentPatients, isLoading } = useQuery({
@@ -84,6 +87,20 @@ const DashboardRecentPatients: React.FC = () => {
       return 'Concluído';
     }
   };
+
+  // Handle clicking on "Ver detalhes" - correctly open patient details by ID
+  const handleViewPatientDetails = async (patientId: string) => {
+    try {
+      await openPatientDetail(patientId);
+    } catch (error) {
+      console.error("Error opening patient details:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir os detalhes do paciente",
+        variant: "destructive"
+      });
+    }
+  };
   
   return (
     <Card className="nutri-card border-none shadow-lg">
@@ -135,7 +152,7 @@ const DashboardRecentPatients: React.FC = () => {
                       <Button 
                         variant="ghost" 
                         className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-nutri-gray-light"
-                        onClick={() => navigate(`/patient-history/${patient.id}`)}
+                        onClick={() => handleViewPatientDetails(patient.id)}
                       >
                         Ver detalhes
                       </Button>

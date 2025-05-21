@@ -1,98 +1,63 @@
 
 import { Patient } from '@/types';
-import { Json } from '@/integrations/supabase/types';
 
 /**
- * Helper to convert database record to a Patient object
- * Handles parsing string data from the database into objects
+ * Convert database patient data to the Patient type
  */
-export const convertDbToPatient = (dbRecord: any): Patient => {
-  if (!dbRecord) return null as any;
+export const convertDbToPatient = (data: any): Patient => {
+  // Process address data
+  let addressData: Record<string, any> | undefined;
   
-  // Handle address - could be a string (from DB) or already an object
-  let address = dbRecord.address;
-  if (typeof address === 'string') {
-    try {
-      address = JSON.parse(address);
-    } catch (e) {
-      // If parsing fails, initialize with empty object
-      address = {};
+  if (data.address) {
+    if (typeof data.address === 'string') {
+      try {
+        addressData = JSON.parse(data.address);
+      } catch (e) {
+        // If parsing fails, use the string value as is
+        console.error('Failed to parse address as JSON:', e);
+        addressData = { raw: data.address };
+      }
+    } else if (typeof data.address === 'object') {
+      addressData = data.address;
     }
-  } else if (!address) {
-    // If address is null/undefined
-    address = {};
   }
   
-  // Handle goals - could be a string (from DB) or already an object
-  let goals = dbRecord.goals;
-  if (typeof goals === 'string') {
-    try {
-      goals = JSON.parse(goals);
-    } catch (e) {
-      // If parsing fails, initialize with empty object
-      goals = { objective: undefined, profile: undefined };
+  // Process goals data
+  let goalsData: Record<string, any> = {};
+  if (data.goals) {
+    if (typeof data.goals === 'string') {
+      try {
+        goalsData = JSON.parse(data.goals);
+      } catch (e) {
+        console.error('Failed to parse goals as JSON:', e);
+      }
+    } else if (typeof data.goals === 'object') {
+      goalsData = data.goals;
     }
-  } else if (!goals) {
-    // If goals is null/undefined
-    goals = { objective: undefined, profile: undefined };
   }
   
-  // Ensure we have the correct structure for a Patient object
+  // Process measurements data
+  let measurementsData: Record<string, any> = {};
+  if (data.measurements) {
+    if (typeof data.measurements === 'string') {
+      try {
+        measurementsData = JSON.parse(data.measurements);
+      } catch (e) {
+        console.error('Failed to parse measurements as JSON:', e);
+      }
+    } else if (typeof data.measurements === 'object') {
+      measurementsData = data.measurements;
+    }
+  }
+  
+  // Create a correctly structured Patient object
   const patient: Patient = {
-    ...dbRecord,
-    address: address as any,
-    goals: goals as any
+    ...data,
+    status: (data.status === 'archived' ? 'archived' : 'active'),
+    goals: goalsData,
+    measurements: measurementsData,
+    address: addressData
   };
-
+  
   return patient;
-};
-
-/**
- * Format data for database storage
- * Converts objects to strings for database storage
- */
-export const preparePatientForDb = (patientData: Partial<Patient>): any => {
-  if (!patientData) return {};
-  
-  // Create a copy to avoid modifying the original
-  const dbPatientData: any = { ...patientData };
-  
-  // Convert address object to string for database storage
-  if (dbPatientData.address && typeof dbPatientData.address === 'object') {
-    dbPatientData.address = JSON.stringify(dbPatientData.address);
-  }
-  
-  // Convert goals object to string for database storage
-  if (dbPatientData.goals && typeof dbPatientData.goals === 'object') {
-    dbPatientData.goals = JSON.stringify(dbPatientData.goals);
-  }
-  
-  // Remove any non-database fields to avoid Supabase errors
-  const fieldsToRemove = ['secondaryPhone', 'cpf'];
-  fieldsToRemove.forEach(field => {
-    if (field in dbPatientData) {
-      delete dbPatientData[field];
-    }
-  });
-  
-  return dbPatientData;
-};
-
-/**
- * Helper function to remove undefined values from an object
- * This prevents overwriting existing values with null in the database
- */
-export const cleanUndefinedValues = (obj: Record<string, any>): Record<string, any> => {
-  if (!obj) return {};
-  
-  const cleanedObj: Record<string, any> = {};
-  
-  Object.entries(obj).forEach(([key, value]) => {
-    // Only include values that are not undefined
-    if (value !== undefined) {
-      cleanedObj[key] = value;
-    }
-  });
-  
-  return cleanedObj;
 };

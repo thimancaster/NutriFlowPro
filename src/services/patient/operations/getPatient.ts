@@ -7,15 +7,26 @@ import { convertDbToPatient } from '../utils/patientDataUtils';
  */
 export const getPatient = async (patientId: string) => {
   try {
+    console.log('Getting patient with ID:', patientId);
+    
     const { data, error } = await supabase
       .from('patients')
       .select('*')
       .eq('id', patientId)
       .single();
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error getting patient:', error);
+      throw error;
+    }
+    
+    if (!data) {
+      console.error('No patient found with ID:', patientId);
+      throw new Error('Patient not found');
+    }
     
     const patient = convertDbToPatient(data);
+    console.log('Patient data converted successfully:', patient);
     
     return {
       success: true,

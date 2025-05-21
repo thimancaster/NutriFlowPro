@@ -19,13 +19,16 @@ export const usePatientDetail = () => {
       
       if (typeof patientOrId === 'string') {
         // If patientOrId is a string (ID), fetch the patient data
+        console.log("Fetching patient by ID:", patientOrId);
         const result = await PatientService.getPatient(patientOrId);
         
         if (!result.success) {
+          console.error("Failed to fetch patient:", result.error);
           throw new Error(result.error || 'Failed to fetch patient details');
         }
         
         patientData = result.data;
+        console.log("Patient data loaded:", patientData);
       } else {
         // If patientOrId is already a Patient object, use it directly
         patientData = patientOrId;
@@ -35,6 +38,7 @@ export const usePatientDetail = () => {
       setPatient(patientData);
       setIsModalOpen(true);
     } catch (error: any) {
+      console.error("Error in openPatientDetail:", error);
       toast({
         title: "Erro",
         description: error.message || "Não foi possível carregar os detalhes do paciente",
