@@ -5,16 +5,19 @@ import { usePatient } from '@/contexts/PatientContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { User, Plus, Database } from 'lucide-react';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
+import { usePatientDetail } from '@/hooks/usePatientDetail';
 
 const CalculatorPage = () => {
   const { activePatient, loadPatientById } = usePatient();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patientId');
+  const navigate = useNavigate();
+  const { openPatientDetail } = usePatientDetail();
 
   // Load patient if patientId is provided in URL but not active yet
   useEffect(() => {
@@ -22,6 +25,16 @@ const CalculatorPage = () => {
       loadPatientById(patientId);
     }
   }, [patientId, activePatient, loadPatientById]);
+
+  const handleViewPatientProfile = () => {
+    if (activePatient) {
+      // First try to open the patient detail modal
+      openPatientDetail(activePatient);
+      
+      // Alternatively, navigate to the patient profile page
+      // navigate(`/patients/${activePatient.id}`);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -41,6 +54,17 @@ const CalculatorPage = () => {
                 <span>Selecionar Paciente</span>
               </Button>
             </Link>
+          )}
+          
+          {activePatient && (
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1"
+              onClick={handleViewPatientProfile}
+            >
+              <User className="h-4 w-4" />
+              <span>Ver Perfil</span>
+            </Button>
           )}
           
           <Link to="/food-database">
@@ -90,7 +114,7 @@ const CalculatorPage = () => {
       </Card>
       
       <CalculatorProvider>
-        <CalculatorTool patientData={activePatient} />
+        <CalculatorTool patientData={activePatient} onViewProfile={handleViewPatientProfile} />
       </CalculatorProvider>
     </div>
   );

@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, Flame, Dumbbell, Utensils } from 'lucide-react';
+import { Calculator, Flame, Dumbbell, Utensils, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { CalculatorForm, ActivityForm, ResultsDisplay } from './components';
@@ -14,9 +14,10 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface CalculatorToolProps {
   patientData?: Patient | null;
+  onViewProfile?: () => void;
 }
 
-const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
+const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProfile }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -284,6 +285,16 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
         
         {showResults && patientData && (
           <div className="flex gap-2">
+            {onViewProfile && (
+              <Button
+                variant="secondary"
+                onClick={onViewProfile}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Ver Perfil
+              </Button>
+            )}
+            
             <Button 
               variant="outline"
               onClick={handleSaveCalculation}

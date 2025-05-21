@@ -13,9 +13,9 @@ export const usePatientDetail = () => {
 
   // Handle opening patient details - accepts either a patient object or patient ID
   const openPatientDetail = async (patientOrId: Patient | string) => {
-    setIsLoading(true);
-    
     try {
+      setIsLoading(true);
+      
       let patientId: string;
       let patientData: Patient | null = null;
       
@@ -68,8 +68,6 @@ export const usePatientDetail = () => {
   // Handle closing patient details modal
   const closePatientDetail = () => {
     setIsModalOpen(false);
-    // Don't clear the patient data immediately to prevent UI flicker
-    // when reopening the same patient
   };
 
   return {

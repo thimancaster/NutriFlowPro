@@ -2,11 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Save, FileText, Info } from 'lucide-react';
+import { Save, FileText, Info, User } from 'lucide-react';
 
 interface ActionButtonsProps {
   onSavePatient: () => void;
   onGenerateMealPlan: () => void;
+  onViewProfile?: () => void;
   isSaving: boolean;
   hasResults: boolean;
   hasPatientName: boolean;
@@ -16,6 +17,7 @@ interface ActionButtonsProps {
 const ActionButtons: React.FC<ActionButtonsProps> = ({
   onSavePatient,
   onGenerateMealPlan,
+  onViewProfile,
   isSaving,
   hasResults,
   hasPatientName,
@@ -27,6 +29,17 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   
   return (
     <div className="mt-6 space-y-3">
+      {onViewProfile && (
+        <Button
+          className="w-full"
+          onClick={onViewProfile}
+          variant="secondary"
+        >
+          <User className="mr-2 h-4 w-4" />
+          Ver Perfil do Paciente
+        </Button>
+      )}
+      
       <Button
         className="w-full"
         onClick={onSavePatient}

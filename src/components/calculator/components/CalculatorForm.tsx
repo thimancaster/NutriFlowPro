@@ -98,7 +98,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
             <Label>Sexo</Label>
             <RadioGroup
               value={sex}
-              onValueChange={onSexChange as (value: string) => void}
+              onValueChange={(value) => onSexChange(value as 'M' | 'F')}
               className="flex space-x-4 mt-1"
             >
               <div className="flex items-center space-x-2">
