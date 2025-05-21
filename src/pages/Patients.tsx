@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import Navbar from '@/components/Navbar';
 import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
 import { usePatientList } from '@/hooks/patient/usePatientList';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -55,53 +54,50 @@ const Patients = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <PatientPageHeader />
-        
-        <PatientFiltersComponent 
-          filters={filters}
-          onFiltersChange={handleFilterChange}
-          onStatusChange={handleStatusChange}
-          onSearch={() => refetch()}
+    <div className="container mx-auto px-4 py-8">
+      <PatientPageHeader />
+      
+      <PatientFiltersComponent 
+        filters={filters}
+        onFiltersChange={handleFilterChange}
+        onStatusChange={handleStatusChange}
+        onSearch={() => refetch()}
+      />
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <PatientTableHeader totalItems={pagination.total} />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <PatientLoadingState />
+          ) : isError ? (
+            <PatientErrorState 
+              errorMessage={error?.message || "Failed to load patients"} 
+              onRetry={() => refetch()} 
+            />
+          ) : (
+            <PatientTable
+              patients={patients}
+              totalItems={pagination.total}
+              filters={filters}
+              onViewDetail={openPatientDetail}
+              onStatusChange={refetch}
+              onPageChange={handlePageChange}
+              userId={user?.id}
+            />
+          )}
+        </CardContent>
+      </Card>
+      
+      {patient && (
+        <PatientDetailModal
+          isOpen={isModalOpen}
+          onClose={closePatientDetail}
+          patient={patient}
+          onStatusChange={handlePatientStatusChange}
         />
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <PatientTableHeader totalItems={pagination.total} />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <PatientLoadingState />
-            ) : isError ? (
-              <PatientErrorState 
-                errorMessage={error?.message || "Failed to load patients"} 
-                onRetry={() => refetch()} 
-              />
-            ) : (
-              <PatientTable
-                patients={patients}
-                totalItems={pagination.total}
-                filters={filters}
-                onViewDetail={openPatientDetail}
-                onStatusChange={refetch}
-                onPageChange={handlePageChange}
-                userId={user?.id}
-              />
-            )}
-          </CardContent>
-        </Card>
-        
-        {patient && (
-          <PatientDetailModal
-            isOpen={isModalOpen}
-            onClose={closePatientDetail}
-            patient={patient}
-            onStatusChange={handlePatientStatusChange}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 };
