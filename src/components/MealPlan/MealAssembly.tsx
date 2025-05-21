@@ -1,174 +1,194 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, FileDown } from 'lucide-react';
-import { 
-  MEAL_DISTRIBUTIONS, 
-  FOOD_DATABASE, 
-  filterFoodsByMeal 
-} from '@/utils/mealAssemblyUtils';
-import { generateMealAssemblyPDF } from '@/utils/pdf/mealAssemblyPdfUtils';
-import { MealItem, Meal } from '@/types/meal';
-import MealPlanAssemblyCard from './MealPlanAssemblyCard';
+import { MealItem, MealList } from './MealList';
+import MacroDistribution from './MacroDistribution';
+import { saveMealPlan } from '@/services/mealPlanService';
 
-interface MealPlanAssemblyProps {
+interface MealAssemblyProps {
   totalCalories: number;
   macros: {
     protein: number;
     carbs: number;
     fat: number;
   };
-  patientName?: string;
-  patientData?: any;
+  patientName: string;
+  patientData: {
+    age?: number;
+    weight?: number;
+    height?: number;
+  };
+  patientId?: string;
 }
 
-const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({ 
-  totalCalories,
-  macros,
-  patientName = "Paciente",
-  patientData
+const MealAssembly: React.FC<MealAssemblyProps> = ({ 
+  totalCalories, 
+  macros, 
+  patientName, 
+  patientData,
+  patientId 
 }) => {
   const { toast } = useToast();
-  const [meals, setMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [generating, setGenerating] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
   
-  useEffect(() => {
-    // Initialize meals with distribution
-    const initialMeals = MEAL_DISTRIBUTIONS.map(dist => {
-      const protein = Math.round(macros.protein * dist.proteinPercent);
-      const carbs = Math.round(macros.carbs * dist.carbsPercent);
-      const fat = Math.round(macros.fat * dist.fatPercent);
-      const calories = Math.round(protein * 4 + carbs * 4 + fat * 9);
-      
-      return {
-        name: dist.name,
-        time: dist.time || '', // Ensure time always has a value
-        proteinPercent: dist.proteinPercent,
-        carbsPercent: dist.carbsPercent,
-        fatPercent: dist.fatPercent,
-        protein,
-        carbs,
-        fat,
-        calories,
-        foods: [] as MealItem[]
-      };
-    });
-    
-    setMeals(initialMeals);
-    setLoading(false);
-  }, [totalCalories, macros]);
-  
-  const handleAddFood = (mealIndex: number, food: MealItem) => {
-    setMeals(prev => {
-      const updatedMeals = [...prev];
-      updatedMeals[mealIndex].foods = [...updatedMeals[mealIndex].foods, { ...food, selected: true }];
-      return updatedMeals;
-    });
-    
-    toast({
-      title: "Alimento adicionado",
-      description: `${food.name} adicionado à ${meals[mealIndex].name}`
-    });
+  const [meals, setMeals] = useState<MealItem[]>([
+    { name: 'Café da Manhã', percentage: 25, foods: [] },
+    { name: 'Lanche da Manhã', percentage: 10, foods: [] },
+    { name: 'Almoço', percentage: 30, foods: [] },
+    { name: 'Lanche da Tarde', percentage: 10, foods: [] },
+    { name: 'Jantar', percentage: 20, foods: [] },
+    { name: 'Ceia', percentage: 5, foods: [] },
+  ]);
+
+  const handleMealPercentageChange = (index: number, newValue: number) => {
+    const updatedMeals = [...meals];
+    updatedMeals[index].percentage = newValue;
+    setMeals(updatedMeals);
   };
-  
-  const handleRemoveFood = (mealIndex: number, foodIndex: number) => {
-    setMeals(prev => {
-      const updatedMeals = [...prev];
-      updatedMeals[mealIndex].foods = updatedMeals[mealIndex].foods.filter((_, idx) => idx !== foodIndex);
-      return updatedMeals;
-    });
+
+  const getTotalPercentage = () => {
+    return meals.reduce((sum, meal) => sum + meal.percentage, 0);
   };
-  
-  const generatePDF = async () => {
-    setGenerating(true);
+
+  const handleSaveMealPlan = async () => {
+    if (!patientId) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Selecione um paciente para salvar o plano alimentar.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (getTotalPercentage() !== 100) {
+      toast({
+        title: "Distribuição inválida",
+        description: "A distribuição total das refeições deve ser igual a 100%.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSaving(true);
     
     try {
-      const doc = generateMealAssemblyPDF({
-        meals,
-        patientName,
-        patientData,
-        totalCalories,
-        macros
-      });
+      // Process meals for storing
+      const processedMeals = meals.map(meal => ({
+        name: meal.name,
+        percentage: meal.percentage,
+        calories: Math.round(totalCalories * (meal.percentage / 100)),
+        protein: Math.round(macros.protein * (meal.percentage / 100)),
+        carbs: Math.round(macros.carbs * (meal.percentage / 100)),
+        fat: Math.round(macros.fat * (meal.percentage / 100)),
+        foods: meal.foods
+      }));
       
-      // Save the PDF
-      doc.save(`plano_alimentar_${patientName.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+      // Create meal plan object
+      const mealPlanData = {
+        patient_id: patientId,
+        date: new Date().toISOString().split('T')[0],
+        meals: processedMeals,
+        total_calories: totalCalories,
+        total_protein: macros.protein,
+        total_carbs: macros.carbs,
+        total_fats: macros.fat
+      };
       
+      const result = await saveMealPlan(mealPlanData);
+      
+      if (result.success) {
+        toast({
+          title: "Plano alimentar salvo",
+          description: "O plano alimentar foi salvo com sucesso.",
+        });
+      } else {
+        throw new Error(result.error || "Erro ao salvar plano alimentar");
+      }
+    } catch (error: any) {
+      console.error('Error saving meal plan:', error);
       toast({
-        title: "PDF gerado com sucesso",
-        description: "O plano alimentar foi exportado em PDF"
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: "Ocorreu um erro ao tentar gerar o PDF",
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar o plano alimentar.",
         variant: "destructive"
       });
     } finally {
-      setGenerating(false);
+      setIsSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-nutri-blue" />
-        <span className="ml-2">Carregando plano alimentar...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Montagem do Plano Alimentar</h2>
-        <Button 
-          onClick={generatePDF} 
-          disabled={generating}
-          className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 border border-blue-500 transition-all duration-200"
-        >
-          {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-          Exportar PDF
-        </Button>
-      </div>
-      
-      <div className="bg-nutri-gray-light p-4 rounded-lg">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-sm text-gray-600">Proteínas</p>
-            <p className="text-xl font-bold text-nutri-blue">{macros.protein}g</p>
-            <p className="text-sm">{Math.round(macros.protein * 4 / totalCalories * 100)}% / {macros.protein * 4} kcal</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Carboidratos</p>
-            <p className="text-xl font-bold text-nutri-green">{macros.carbs}g</p>
-            <p className="text-sm">{Math.round(macros.carbs * 4 / totalCalories * 100)}% / {macros.carbs * 4} kcal</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Gorduras</p>
-            <p className="text-xl font-bold text-nutri-teal">{macros.fat}g</p>
-            <p className="text-sm">{Math.round(macros.fat * 9 / totalCalories * 100)}% / {macros.fat * 9} kcal</p>
-          </div>
+      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Plano para: {patientName}</h2>
+          <p className="text-gray-600 text-sm">
+            {patientData.age && `${patientData.age} anos `}
+            {patientData.weight && `• ${patientData.weight} kg `}
+            {patientData.height && `• ${patientData.height} cm `}
+          </p>
         </div>
+        
+        <Card className="w-full md:w-auto">
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-sm">Requisitos Nutricionais</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2 px-4">
+            <div className="flex gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">Calorias</p>
+                <p className="font-semibold">{totalCalories} kcal</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Proteínas</p>
+                <p className="font-semibold">{macros.protein}g</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Carboidratos</p>
+                <p className="font-semibold">{macros.carbs}g</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Gorduras</p>
+                <p className="font-semibold">{macros.fat}g</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      <div className="grid grid-cols-1 gap-6">
-        {meals.map((meal, mealIndex) => (
-          <MealPlanAssemblyCard
-            key={mealIndex}
-            meal={meal}
-            mealIndex={mealIndex}
-            onAddFood={handleAddFood}
-            onRemoveFood={handleRemoveFood}
-            suggestedFoods={filterFoodsByMeal(meal.name)}
-          />
-        ))}
+
+      <div className="bg-gray-50 border p-4 rounded-lg">
+        <h3 className="font-medium mb-3">Distribuição das Refeições</h3>
+        
+        <MacroDistribution 
+          meals={meals} 
+          onChange={handleMealPercentageChange}
+        />
+        
+        {getTotalPercentage() !== 100 && (
+          <div className="mt-2 text-amber-600 text-sm font-medium">
+            Total: {getTotalPercentage()}% (deve ser 100%)
+          </div>
+        )}
+      </div>
+
+      <MealList 
+        meals={meals} 
+        totalCalories={totalCalories}
+        macros={macros}
+      />
+
+      <div className="flex justify-end">
+        <Button
+          className="bg-nutri-green hover:bg-nutri-green-dark" 
+          onClick={handleSaveMealPlan}
+          disabled={isSaving || !patientId}
+        >
+          {isSaving ? "Salvando..." : "Salvar Plano Alimentar"}
+        </Button>
       </div>
     </div>
   );
 };
 
-export default MealPlanAssembly;
+export default MealAssembly;

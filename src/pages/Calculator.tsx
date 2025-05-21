@@ -1,22 +1,32 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CalculatorTool } from '@/components/calculator';
 import { usePatient } from '@/contexts/PatientContext';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { User, Plus, Database } from 'lucide-react';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
+import PatientBanner from '@/components/patient/PatientBanner';
+import ContextualNavigation from '@/components/patient/ContextualNavigation';
 
 const CalculatorPage = () => {
-  const { activePatient } = usePatient();
+  const { activePatient, loadPatientById } = usePatient();
+  const [searchParams] = useSearchParams();
+  const patientId = searchParams.get('patientId');
 
-  // Add console log to help with debugging
-  console.log("CalculatorPage rendering, activePatient:", activePatient);
+  // Load patient if patientId is provided in URL but not active yet
+  useEffect(() => {
+    if (patientId && (!activePatient || activePatient.id !== patientId)) {
+      loadPatientById(patientId);
+    }
+  }, [patientId, activePatient, loadPatientById]);
 
   return (
     <div className="container mx-auto py-8">
+      <ContextualNavigation currentModule="calculator" />
+      
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Calculadora Nutricional</h1>
@@ -41,6 +51,9 @@ const CalculatorPage = () => {
           </Link>
         </div>
       </div>
+      
+      {/* Display patient banner if patient is selected */}
+      {activePatient && <PatientBanner />}
       
       {!activePatient && (
         <Alert className="mb-6 bg-blue-50 border-blue-200">
@@ -77,7 +90,7 @@ const CalculatorPage = () => {
       </Card>
       
       <CalculatorProvider>
-        <CalculatorTool />
+        <CalculatorTool patientData={activePatient} />
       </CalculatorProvider>
     </div>
   );

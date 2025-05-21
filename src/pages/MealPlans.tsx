@@ -1,11 +1,34 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { usePatient } from '@/contexts/PatientContext';
 import MealAssembly from '@/components/MealPlan/MealAssembly';
+import PatientBanner from '@/components/patient/PatientBanner';
+import ContextualNavigation from '@/components/patient/ContextualNavigation';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 const MealPlans = () => {
+  const { activePatient, loadPatientById } = usePatient();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const patientId = searchParams.get('patientId');
+  const createPlan = searchParams.get('createPlan') === 'true';
+  
+  // Get calculation data from location state if available
+  const calculationData = location.state?.calculationData;
+
+  // Load patient if patientId is provided in URL but not active yet
+  useEffect(() => {
+    if (patientId && (!activePatient || activePatient.id !== patientId)) {
+      loadPatientById(patientId);
+    }
+  }, [patientId, activePatient, loadPatientById]);
+
   return (
     <div className="container mx-auto px-4 py-8">
+      <ContextualNavigation currentModule="meal-plans" />
+      
       <motion.div 
         className="flex flex-col md:flex-row items-center justify-between mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -23,6 +46,20 @@ const MealPlans = () => {
         />
       </motion.div>
       
+      {/* Display patient banner if patient is selected */}
+      {activePatient && <PatientBanner />}
+      
+      {!activePatient && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <AlertDescription className="flex justify-between items-center">
+            <span>Selecione um paciente para criar um plano alimentar personalizado.</span>
+            <Button variant="nutri" size="sm">
+              Selecionar Paciente
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <motion.div 
         className="bg-white rounded-xl shadow-lg p-6"
         initial={{ opacity: 0, y: 20 }}
@@ -30,18 +67,19 @@ const MealPlans = () => {
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <MealAssembly 
-          totalCalories={2000}
+          totalCalories={calculationData?.tdee || 2000}
           macros={{
-            protein: 150,
-            carbs: 200,
-            fat: 67
+            protein: calculationData?.protein || 150,
+            carbs: calculationData?.carbs || 200,
+            fat: calculationData?.fat || 67
           }}
-          patientName="Exemplo de Paciente"
+          patientName={activePatient?.name || "Exemplo de Paciente"}
           patientData={{
-            age: 35,
-            weight: 70,
-            height: 170
+            age: activePatient?.age || 35,
+            weight: activePatient?.measurements?.weight || 70,
+            height: activePatient?.measurements?.height || 170
           }}
+          patientId={activePatient?.id}
         />
       </motion.div>
       

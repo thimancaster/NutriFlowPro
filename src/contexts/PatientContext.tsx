@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/types';
 import { storageUtils } from '@/utils/storageUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PatientContextType {
   activePatient: Patient | null;
@@ -10,25 +11,39 @@ interface PatientContextType {
   isPatientActive: boolean;
   startPatientSession: (patient: Patient) => void;
   endPatientSession: () => void;
+  loadPatientById: (patientId: string) => Promise<void>;
+  recentPatients: Patient[];
+  selectedPatientId: string | null;
+  isLoading: boolean;
+  error: Error | null;
+  addRecentPatient: (patient: Patient) => void;
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
 export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  // Check for active patient in sessionStorage on mount
+  // Load active patient from session storage on mount
   useEffect(() => {
     const storedPatient = storageUtils.getSessionItem('activePatient');
-
     if (storedPatient) {
-      // Fix: Type cast the stored patient to Patient type
       setActivePatient(storedPatient as Patient);
+    }
+
+    // Load recent patients from local storage
+    const storedRecentPatients = storageUtils.getLocalItem('recentPatients');
+    if (storedRecentPatients) {
+      setRecentPatients(storedRecentPatients as Patient[]);
     }
   }, []);
 
-  // Update sessionStorage when active patient changes
+  // Update session storage when active patient changes
   useEffect(() => {
     if (activePatient) {
       storageUtils.setSessionItem('activePatient', activePatient);
@@ -37,28 +52,93 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [activePatient]);
 
-  const startPatientSession = (patient: Patient) => {
-    setActivePatient(patient);
+  // Load patient by ID from the database
+  const loadPatientById = async (patientId: string) => {
+    if (!patientId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', patientId)
+        .single();
+
+      if (supabaseError) throw supabaseError;
+
+      if (data) {
+        // Process database data into our Patient type
+        const patient: Patient = {
+          ...data,
+          status: (data.status as 'active' | 'archived') || 'active',
+          goals: data.goals || {},
+          measurements: data.measurements || {},
+          address: data.address || {}
+        };
+
+        setActivePatient(patient);
+        addRecentPatient(patient);
+        setSelectedPatientId(patientId);
+      } else {
+        setActivePatient(null);
+        throw new Error('Patient not found');
+      }
+    } catch (err) {
+      console.error('Error loading patient:', err);
+      setError(err instanceof Error ? err : new Error('Failed to load patient'));
+      toast({
+        title: 'Error',
+        description: 'Failed to load patient data',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // Start a patient session
+  const startPatientSession = (patient: Patient) => {
+    setActivePatient(patient);
+    addRecentPatient(patient);
+    setSelectedPatientId(patient.id);
+  };
+
+  // End a patient session
   const endPatientSession = () => {
     setActivePatient(null);
+    setSelectedPatientId(null);
     storageUtils.removeSessionItem('activePatient');
   };
 
-  return (
-    <PatientContext.Provider
-      value={{
-        activePatient,
-        setActivePatient,
-        isPatientActive: !!activePatient,
-        startPatientSession,
-        endPatientSession
-      }}
-    >
-      {children}
-    </PatientContext.Provider>
-  );
+  // Add a patient to the recent patients list
+  const addRecentPatient = (patient: Patient) => {
+    if (!patient) return;
+
+    // Remove the patient if it's already in the list to avoid duplicates
+    const filteredRecentPatients = recentPatients.filter(p => p.id !== patient.id);
+    
+    // Add the patient to the beginning of the array
+    const updatedRecentPatients = [patient, ...filteredRecentPatients].slice(0, 5);
+    
+    setRecentPatients(updatedRecentPatients);
+    storageUtils.setLocalItem('recentPatients', updatedRecentPatients);
+  };
+
+  return {
+    activePatient,
+    setActivePatient,
+    selectedPatientId,
+    recentPatients,
+    isPatientActive: !!activePatient,
+    startPatientSession,
+    endPatientSession,
+    loadPatientById,
+    addRecentPatient,
+    isLoading,
+    error
+  };
 };
 
 export const usePatient = () => {
