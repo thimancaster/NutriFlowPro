@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { usePatient } from '@/contexts/PatientContext';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb';
-import { Home, ChevronRight } from 'lucide-react';
+import { Home, ChevronRight, User, Calculator, Utensils } from 'lucide-react';
 
 interface ContextualNavigationProps {
   currentModule: 'patients' | 'calculator' | 'meal-plans';
@@ -18,31 +18,46 @@ const ContextualNavigation: React.FC<ContextualNavigationProps> = ({ currentModu
     const crumbs = [{ label: 'Início', path: '/', icon: <Home className="h-4 w-4" /> }];
     
     if (currentModule === 'patients' || activePatient) {
-      crumbs.push({ label: 'Pacientes', path: '/patients' });
+      crumbs.push({ 
+        label: 'Pacientes', 
+        path: '/patients',
+        icon: <User className="h-4 w-4" />
+      });
     }
     
     if (activePatient) {
       crumbs.push({ 
         label: activePatient.name, 
-        path: `/patients/${activePatient.id}` 
+        path: `/patients/${activePatient.id}`,
+        icon: <User className="h-4 w-4" />
       });
       
       if (currentModule === 'calculator') {
         crumbs.push({ 
           label: 'Calculadora', 
-          path: `/calculator?patientId=${activePatient.id}` 
+          path: `/calculator?patientId=${activePatient.id}`,
+          icon: <Calculator className="h-4 w-4" />
         });
       } else if (currentModule === 'meal-plans') {
         crumbs.push({ 
           label: 'Plano Alimentar', 
-          path: `/meal-plans?patientId=${activePatient.id}` 
+          path: `/meal-plans?patientId=${activePatient.id}`,
+          icon: <Utensils className="h-4 w-4" />
         });
       }
     } else {
       if (currentModule === 'calculator') {
-        crumbs.push({ label: 'Calculadora', path: '/calculator' });
+        crumbs.push({ 
+          label: 'Calculadora', 
+          path: '/calculator',
+          icon: <Calculator className="h-4 w-4" />
+        });
       } else if (currentModule === 'meal-plans') {
-        crumbs.push({ label: 'Planos Alimentares', path: '/meal-plans' });
+        crumbs.push({ 
+          label: 'Planos Alimentares', 
+          path: '/meal-plans',
+          icon: <Utensils className="h-4 w-4" />
+        });
       }
     }
     

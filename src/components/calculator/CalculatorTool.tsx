@@ -33,22 +33,23 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
     calorieSummary,
     showResults,
     isCalculating,
-    patientName,
-    
-    setActiveTab,
-    setSex,
-    setActivityLevel,
-    setObjective,
-    setPatientName,
-    setWeight,
-    setHeight,
-    setAge,
-    
     handleProfileChange,
     handleInputChange,
     handleCalculate,
-    handleReset
+    handleReset,
+    setActiveTab,
+    setSex,
+    setActivityLevel,
+    setObjective
   } = useCalculatorState();
+
+  // Manually store patient name from patient data
+  const [patientName, setPatientName] = React.useState<string>('');
+  
+  // Add explicit state setters for weight, height, and age
+  const [stateWeight, setStateWeight] = React.useState<string>('');
+  const [stateHeight, setStateHeight] = React.useState<string>('');
+  const [stateAge, setStateAge] = React.useState<string>('');
 
   // Fill form with patient data when available
   useEffect(() => {
@@ -59,10 +60,12 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
       // Set measurements if available
       if (patientData.measurements) {
         if (patientData.measurements.weight) {
-          setWeight(patientData.measurements.weight.toString());
+          setStateWeight(patientData.measurements.weight.toString());
+          handleInputChange('weight', Number(patientData.measurements.weight));
         }
         if (patientData.measurements.height) {
-          setHeight(patientData.measurements.height.toString());
+          setStateHeight(patientData.measurements.height.toString());
+          handleInputChange('height', Number(patientData.measurements.height));
         }
       }
       
@@ -77,7 +80,8 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
           calculatedAge--;
         }
         
-        setAge(calculatedAge.toString());
+        setStateAge(calculatedAge.toString());
+        handleInputChange('age', calculatedAge);
       }
       
       // Set gender/sex if available
@@ -85,7 +89,7 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
         setSex(patientData.gender === 'male' ? 'M' : 'F');
       }
     }
-  }, [patientData, setPatientName, setWeight, setHeight, setAge, setSex]);
+  }, [patientData]);
 
   // Handle saving calculation to patient record
   const handleSaveCalculation = async () => {
@@ -101,9 +105,9 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
     try {
       const calculationData = {
         patient_id: patientData.id,
-        weight: parseFloat(weight),
-        height: parseFloat(height),
-        age: parseInt(age),
+        weight: typeof weight === 'number' ? weight : parseFloat(weight.toString()),
+        height: typeof height === 'number' ? height : parseFloat(height.toString()),
+        age: typeof age === 'number' ? age : parseInt(age.toString()),
         gender: sex === 'M' ? 'male' : 'female',
         activity_level: activityLevel,
         goal: objective,
@@ -207,7 +211,6 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
               age={age}
               sex={sex}
               profile={profile}
-              patientName={patientName}
               isCalculating={isCalculating}
               onInputChange={handleInputChange}
               onSexChange={setSex}
@@ -236,8 +239,6 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData }) => {
                 macros={macros}
                 calorieSummary={calorieSummary}
                 objective={objective}
-                weight={weight}
-                patientSelected={!!patientData}
                 onSavePatient={handleSaveCalculation}
                 onGenerateMealPlan={handleGenerateMealPlan}
               />

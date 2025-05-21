@@ -73,9 +73,9 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const patient: Patient = {
           ...data,
           status: (data.status as 'active' | 'archived') || 'active',
-          goals: data.goals || {},
-          measurements: data.measurements || {},
-          address: data.address || {}
+          goals: data.goals as Record<string, any> || {},
+          measurements: data.measurements as Record<string, any> || {},
+          address: data.address as Record<string, any> || {}
         };
 
         setActivePatient(patient);
@@ -126,7 +126,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     storageUtils.setLocalItem('recentPatients', updatedRecentPatients);
   };
 
-  return {
+  const contextValue: PatientContextType = {
     activePatient,
     setActivePatient,
     selectedPatientId,
@@ -139,6 +139,12 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isLoading,
     error
   };
+
+  return (
+    <PatientContext.Provider value={contextValue}>
+      {children}
+    </PatientContext.Provider>
+  );
 };
 
 export const usePatient = () => {

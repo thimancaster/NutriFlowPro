@@ -1,32 +1,28 @@
 
 import React from 'react';
-import { 
-  Label, 
-  Input, 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue,
-  Button
-} from '../../../components/ui';
-import { ArrowRight } from 'lucide-react';
-import { Profile } from '@/types/consultation';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, Calculator, Flame } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Profile } from '../types';
 
-interface CalculatorFormProps {
+export interface CalculatorFormProps {
   weight: number | '';
   height: number | '';
   age: number | '';
   sex: 'M' | 'F';
-  profile: Profile | string;
+  profile: Profile;
   isCalculating: boolean;
   onInputChange: (name: string, value: number | '') => void;
   onSexChange: (value: 'M' | 'F') => void;
   onProfileChange: (value: string) => void;
   onCalculate: () => void;
+  patientSelected: boolean;
 }
 
-const CalculatorForm: React.FC<CalculatorFormProps> = ({
+export const CalculatorForm: React.FC<CalculatorFormProps> = ({
   weight,
   height,
   age,
@@ -36,93 +32,120 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   onInputChange,
   onSexChange,
   onProfileChange,
-  onCalculate
+  onCalculate,
+  patientSelected
 }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    onInputChange(name, value === '' ? '' : Number(value));
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="weight">Peso (kg) *</Label>
-          <Input
-            id="weight"
-            type="number"
-            placeholder="Ex: 70"
-            value={weight}
-            onChange={(e) => onInputChange('weight', e.target.value ? Number(e.target.value) : '')}
-          />
+    <div className="space-y-6">
+      {!patientSelected && (
+        <Alert variant="info" className="bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-500" />
+          <AlertDescription>
+            Selecione um paciente para preencher automaticamente os dados ou cadastre um novo.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="weight">Peso (kg)</Label>
+            <Input
+              id="weight"
+              name="weight"
+              type="number"
+              value={weight}
+              onChange={handleChange}
+              placeholder="Ex: 70"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="height">Altura (cm)</Label>
+            <Input
+              id="height"
+              name="height"
+              type="number"
+              value={height}
+              onChange={handleChange}
+              placeholder="Ex: 170"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="age">Idade</Label>
+            <Input
+              id="age"
+              name="age"
+              type="number"
+              value={age}
+              onChange={handleChange}
+              placeholder="Ex: 35"
+              className="mt-1"
+            />
+          </div>
         </div>
         
-        <div>
-          <Label htmlFor="height">Altura (cm) *</Label>
-          <Input
-            id="height"
-            type="number"
-            placeholder="Ex: 170"
-            value={height}
-            onChange={(e) => onInputChange('height', e.target.value ? Number(e.target.value) : '')}
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="age">Idade (anos) *</Label>
-          <Input
-            id="age"
-            type="number"
-            placeholder="Ex: 30"
-            value={age}
-            onChange={(e) => onInputChange('age', e.target.value ? Number(e.target.value) : '')}
-          />
+        <div className="space-y-6">
+          <div>
+            <Label>Sexo</Label>
+            <RadioGroup
+              value={sex}
+              onValueChange={onSexChange as (value: string) => void}
+              className="flex space-x-4 mt-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="M" id="male" />
+                <Label htmlFor="male" className="cursor-pointer">Masculino</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="F" id="female" />
+                <Label htmlFor="female" className="cursor-pointer">Feminino</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div>
+            <Label>Perfil Corporal</Label>
+            <RadioGroup
+              value={profile}
+              onValueChange={onProfileChange}
+              className="grid grid-cols-1 gap-2 mt-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="ectomorph" id="ectomorph" />
+                <Label htmlFor="ectomorph" className="cursor-pointer">Ectomorfo (Magro)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mesomorph" id="mesomorph" />
+                <Label htmlFor="mesomorph" className="cursor-pointer">Mesomorfo (Médio)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="endomorph" id="endomorph" />
+                <Label htmlFor="endomorph" className="cursor-pointer">Endomorfo (Maior)</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </div>
       </div>
       
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="sex">Sexo *</Label>
-          <Select value={sex} onValueChange={onSexChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o sexo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="F">Feminino</SelectItem>
-              <SelectItem value="M">Masculino</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <Label htmlFor="profile">Perfil Corporal</Label>
-          <Select value={profile} onValueChange={onProfileChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o perfil" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="eutrofico">Peso normal</SelectItem>
-              <SelectItem value="atleta">Atleta</SelectItem>
-              <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="pt-4">
-          <Button 
-            onClick={onCalculate} 
-            className="w-full"
-            disabled={isCalculating || !weight || !height || !age}
-          >
-            {isCalculating ? (
-              <span className="flex items-center gap-2">
-                <span className="animate-spin">⏳</span> Calculando...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                Calcular <ArrowRight className="h-4 w-4" />
-              </span>
-            )}
-          </Button>
-        </div>
+      <div className="flex justify-end mt-6">
+        <Button
+          onClick={onCalculate}
+          disabled={isCalculating || !weight || !height || !age}
+          className="flex items-center gap-2"
+        >
+          <Flame className="h-4 w-4" />
+          Calcular TMB
+        </Button>
       </div>
     </div>
   );
 };
-
-export default CalculatorForm;
