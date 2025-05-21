@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getFoodCategories } from '@/integrations/supabase/functions';
 
 interface FoodCategory {
   id: string;
@@ -27,27 +28,9 @@ const FoodCategoryFilter: React.FC<FoodCategoryFilterProps> = ({
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        // Use a direct query to the foods table to get distinct categories
-        const { data, error } = await supabase
-          .from('foods')
-          .select('category_id, food_group')
-          .not('category_id', 'is', null)
-          .not('food_group', 'is', null)
-          .order('food_group');
-
-        if (error) {
-          throw error;
-        }
-
-        // Transform the data into the expected format
-        const uniqueCategories = Array.from(
-          new Map(data.map(item => [item.category_id, {
-            id: item.category_id,
-            name: item.food_group
-          }])).values()
-        );
-
-        setCategories(uniqueCategories || []);
+        // Get categories from the function that handles the specific query
+        const categoriesData = await getFoodCategories();
+        setCategories(categoriesData || []);
       } catch (error) {
         console.error('Error fetching food categories:', error);
       } finally {

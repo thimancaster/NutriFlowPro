@@ -3,10 +3,10 @@ import { supabase } from './client';
 
 // Function to get all food categories
 export const getFoodCategories = async () => {
+  // Get distinct food groups from the foods table
   const { data, error } = await supabase
     .from('foods')
-    .select('category_id, food_group')
-    .not('category_id', 'is', null)
+    .select('category, food_group')
     .not('food_group', 'is', null);
   
   if (error) {
@@ -17,8 +17,8 @@ export const getFoodCategories = async () => {
   // Transform the data into the expected format and deduplicate
   const uniqueCategories = Array.from(
     new Map(data.map((item: any) => [
-      item.category_id, 
-      { id: item.category_id, name: item.food_group }
+      item.category, 
+      { id: item.category, name: item.food_group }
     ])).values()
   );
   

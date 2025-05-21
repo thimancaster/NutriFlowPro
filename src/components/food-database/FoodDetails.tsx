@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Clock, Utensils, Info, AlertTriangle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { getFoodDetails, getNutritionalValues, getFoodRestrictions } from '@/integrations/supabase/functions';
 
 interface FoodDetail {
   id: string;
@@ -73,58 +73,36 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
     const fetchFoodData = async () => {
       setLoading(true);
       try {
-        // Fetch food details
-        const { data: foodData, error: foodError } = await supabase
-          .from('foods')
-          .select(`
-            id,
-            name,
-            food_group as category
-          `)
-          .eq('id', foodId)
-          .single();
-
-        if (foodError) throw foodError;
-
-        setFood({
-          id: foodData.id,
-          name: foodData.name,
-          category: foodData.category
-        });
-
-        // For the MVP version, we'll just create a default measure based on the portion info in the foods table
-        const defaultMeasure: FoodMeasure = {
-          id: foodData.id, // Using the same ID as the food for simplicity
-          name: 'Porção',
-          quantity: 100,
-          unit: 'g',
-          is_default: true
-        };
-
-        setMeasures([defaultMeasure]);
-        setSelectedMeasure(defaultMeasure.id);
-
-        // Fetch nutritional values directly from the foods table
-        const { data: foodNutrition, error: nutritionError } = await supabase
-          .from('foods')
-          .select(`
-            calories,
-            protein,
-            carbs,
-            fats
-          `)
-          .eq('id', foodId)
-          .single();
-
-        if (nutritionError) throw nutritionError;
-
-        setNutritionalValues({
-          calories: foodNutrition.calories,
-          protein: foodNutrition.protein,
-          carbs: foodNutrition.carbs,
-          fat: foodNutrition.fats
-        });
-
+        // Get food details
+        const foodData = await getFoodDetails(foodId);
+        
+        if (foodData) {
+          setFood(foodData);
+          
+          // Create a default measure based on portion info
+          const defaultMeasure: FoodMeasure = {
+            id: foodId,
+            name: 'Porção',
+            quantity: 100,
+            unit: 'g',
+            is_default: true
+          };
+          
+          setMeasures([defaultMeasure]);
+          setSelectedMeasure(defaultMeasure.id);
+          
+          // Get nutritional values
+          const nutritionData = await getNutritionalValues(foodId);
+          if (nutritionData) {
+            setNutritionalValues(nutritionData);
+          }
+          
+          // Get food restrictions (if implemented)
+          const restrictionsData = await getFoodRestrictions(foodId);
+          if (restrictionsData && Array.isArray(restrictionsData)) {
+            setRestrictions(restrictionsData.map(r => r.restriction_name));
+          }
+        }
       } catch (error) {
         console.error('Error fetching food details:', error);
         toast({
@@ -144,7 +122,6 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
 
   const handleSelectMeasure = (measureId: string) => {
     setSelectedMeasure(measureId);
-    // In the future, fetch nutritional values for this specific measure
   };
 
   if (loading) {
@@ -260,7 +237,6 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
                     </div>
                   </div>
 
-                  {/* Additional nutrients will be displayed in the future */}
                   {(nutritionalValues.fiber || nutritionalValues.sugar) && (
                     <div>
                       <h3 className="font-semibold">Detalhamento de Carboidratos</h3>

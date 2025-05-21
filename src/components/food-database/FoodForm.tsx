@@ -6,10 +6,10 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
+import { getFoodCategories } from '@/integrations/supabase/functions';
 import {
   Form,
   FormControl,
@@ -70,24 +70,8 @@ const FoodForm: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // Get distinct categories from foods table
-        const { data, error } = await supabase
-          .from('foods')
-          .select('category_id, food_group')
-          .not('category_id', 'is', null)
-          .not('food_group', 'is', null);
-        
-        if (error) throw error;
-        
-        // Transform and deduplicate categories
-        const uniqueCategories = Array.from(
-          new Map(data.map(item => [item.category_id, {
-            id: item.category_id,
-            name: item.food_group
-          }])).values()
-        );
-        
-        setCategories(uniqueCategories);
+        const categoriesData = await getFoodCategories();
+        setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -99,13 +83,16 @@ const FoodForm: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
     try {
+      const categoryObj = categories.find(c => c.id === data.category);
+      const foodGroupName = categoryObj?.name || null;
+      
       // Insert new food entry
       const { data: foodData, error: foodError } = await supabase
         .from('foods')
         .insert({
           name: data.name,
-          food_group: data.category ? categories.find(c => c.id === data.category)?.name : null,
-          category_id: data.category || null,
+          food_group: foodGroupName,
+          category: data.category || null, // Using "category" field which exists in the table
           calories: data.calories,
           protein: data.protein,
           carbs: data.carbs,
