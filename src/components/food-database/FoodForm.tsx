@@ -1,62 +1,44 @@
 
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Plus, Trash2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Save } from 'lucide-react';
 
-// Schema for food form validation
-const foodFormSchema = z.object({
-  name: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
+// Define form schema
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres' }),
   brand: z.string().optional(),
-  category_id: z.string().min(1, { message: 'Selecione uma categoria' }),
-  subcategory_id: z.string().min(1, { message: 'Selecione uma subcategoria' }),
+  category_id: z.string({ required_error: 'Selecione uma categoria' }),
+  subcategory_id: z.string().optional(),
   description: z.string().optional(),
   caloric_density: z.string().optional(),
   glycemic_index: z.string().optional(),
   source: z.string().optional(),
-  measures: z.array(z.object({
-    name: z.string().min(1, { message: 'Nome da medida é obrigatório' }),
-    quantity: z.number().min(0, { message: 'A quantidade deve ser maior que 0' }),
-    unit: z.string().min(1, { message: 'Unidade é obrigatória' }),
-    type: z.string().min(1, { message: 'Tipo é obrigatório' }),
-    is_default: z.boolean().default(false),
-  })).min(1, { message: 'Adicione pelo menos uma medida' }),
-  nutritional_values: z.object({
-    calories: z.number().min(0, { message: 'Calorias não pode ser negativo' }),
-    protein: z.number().min(0, { message: 'Proteína não pode ser negativo' }),
-    fat: z.number().min(0, { message: 'Gordura não pode ser negativo' }),
-    carbs: z.number().min(0, { message: 'Carboidrato não pode ser negativo' }),
-    fiber: z.number().optional(),
-    sugar: z.number().optional(),
-    sodium: z.number().optional(),
-    potassium: z.number().optional(),
-    calcium: z.number().optional(),
-    iron: z.number().optional(),
-  }),
-  restrictions: z.array(z.string()).default([]),
+  portion_size: z.coerce.number().positive({ message: 'Insira um valor positivo' }),
+  portion_unit: z.string({ required_error: 'Selecione uma unidade' }),
+  calories: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }),
+  protein: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }),
+  carbs: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }),
+  fats: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }),
+  fiber: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }).optional(),
+  sugar: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }).optional(),
+  sodium: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }).optional(),
+  potassium: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }).optional(),
+  calcium: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }).optional(),
+  iron: z.coerce.number().min(0, { message: 'Insira um valor não negativo' }).optional()
 });
 
-type FoodFormValues = z.infer<typeof foodFormSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
 interface Category {
   id: string;
@@ -66,289 +48,173 @@ interface Category {
 interface Subcategory {
   id: string;
   name: string;
-  category_id: string;
-}
-
-interface RestrictionType {
-  id: string;
-  name: string;
 }
 
 const FoodForm: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [restrictionTypes, setRestrictionTypes] = useState<RestrictionType[]>([]);
-  const [filteredSubcategories, setFilteredSubcategories] = useState<Subcategory[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<FoodFormValues>({
-    resolver: zodResolver(foodFormSchema),
+  // Initialize form
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       brand: '',
-      category_id: '',
-      subcategory_id: '',
       description: '',
       caloric_density: '',
       glycemic_index: '',
       source: '',
-      measures: [
-        {
-          name: '1 unidade',
-          quantity: 100,
-          unit: 'g',
-          type: 'household',
-          is_default: true,
-        }
-      ],
-      nutritional_values: {
-        calories: 0,
-        protein: 0,
-        fat: 0,
-        carbs: 0,
-      },
-      restrictions: [],
-    },
+      portion_size: 100,
+      portion_unit: 'g',
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      potassium: 0,
+      calcium: 0,
+      iron: 0
+    }
   });
 
-  // Watch for category changes to filter subcategories
-  const selectedCategoryId = form.watch('category_id');
-
+  // Fetch categories on mount
   useEffect(() => {
-    const fetchData = async () => {
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('food_categories')
-        .select('id, name')
-        .order('name');
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_food_categories');
 
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
         toast({
           title: 'Erro',
-          description: 'Não foi possível carregar as categorias de alimentos',
-          variant: 'destructive',
+          description: 'Não foi possível carregar as categorias de alimentos.',
+          variant: 'destructive'
         });
-        return;
       }
-
-      setCategories(categoriesData || []);
-
-      // Fetch subcategories
-      const { data: subcategoriesData, error: subcategoriesError } = await supabase
-        .from('food_subcategories')
-        .select('id, name, category_id')
-        .order('name');
-
-      if (subcategoriesError) {
-        console.error('Error fetching subcategories:', subcategoriesError);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar as subcategorias de alimentos',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setSubcategories(subcategoriesData || []);
-
-      // Fetch restriction types
-      const { data: restrictionTypesData, error: restrictionTypesError } = await supabase
-        .from('restriction_types')
-        .select('id, name')
-        .order('name');
-
-      if (restrictionTypesError) {
-        console.error('Error fetching restriction types:', restrictionTypesError);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar os tipos de restrições alimentares',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setRestrictionTypes(restrictionTypesData || []);
     };
 
-    fetchData();
-  }, []);
+    fetchCategories();
+  }, [toast]);
 
-  // Filter subcategories when category changes
+  // Fetch subcategories when category changes
   useEffect(() => {
-    if (selectedCategoryId) {
-      const filtered = subcategories.filter(sub => sub.category_id === selectedCategoryId);
-      setFilteredSubcategories(filtered);
-    } else {
-      setFilteredSubcategories([]);
-    }
-  }, [selectedCategoryId, subcategories]);
-
-  // Handle adding new measure
-  const addMeasure = () => {
-    const currentMeasures = form.getValues('measures');
-    form.setValue('measures', [
-      ...currentMeasures,
-      {
-        name: '',
-        quantity: 0,
-        unit: 'g',
-        type: 'household',
-        is_default: false,
-      }
-    ]);
-  };
-
-  // Handle removing a measure
-  const removeMeasure = (index: number) => {
-    const currentMeasures = form.getValues('measures');
-    const newMeasures = [...currentMeasures];
-    newMeasures.splice(index, 1);
-    form.setValue('measures', newMeasures);
-  };
-
-  // Handle default measure selection
-  const handleDefaultMeasure = (index: number, isDefault: boolean) => {
-    const currentMeasures = form.getValues('measures');
-    
-    // If setting as default, unset all others
-    if (isDefault) {
-      const updatedMeasures = currentMeasures.map((measure, i) => ({
-        ...measure,
-        is_default: i === index
-      }));
-      form.setValue('measures', updatedMeasures);
-    } else {
-      // If unsetting, check if it's the only measure, and don't allow unsetting if it is
-      if (currentMeasures.filter(m => m.is_default).length === 1) {
-        toast({
-          title: 'Atenção',
-          description: 'Pelo menos uma medida deve ser definida como padrão.',
-        });
+    const fetchSubcategories = async () => {
+      if (!selectedCategory) {
+        setSubcategories([]);
         return;
       }
-      
-      const updatedMeasures = [...currentMeasures];
-      updatedMeasures[index].is_default = false;
-      form.setValue('measures', updatedMeasures);
-    }
+
+      try {
+        const { data, error } = await supabase.rpc('get_food_subcategories', {
+          category_id: selectedCategory
+        });
+
+        if (error) throw error;
+        setSubcategories(data || []);
+      } catch (error) {
+        console.error('Error fetching subcategories:', error);
+      }
+    };
+
+    fetchSubcategories();
+  }, [selectedCategory]);
+
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    form.setValue('category_id', value);
+    form.setValue('subcategory_id', ''); // Reset subcategory
   };
 
-  const onSubmit = async (data: FoodFormValues) => {
-    setIsSubmitting(true);
-    
+  // Form submission handler
+  const onSubmit = async (values: FormValues) => {
+    setIsLoading(true);
     try {
-      // 1. Insert food
+      // Insert food
       const { data: foodData, error: foodError } = await supabase
         .from('foods')
         .insert({
-          name: data.name,
-          brand: data.brand || null,
-          category_id: data.category_id,
-          subcategory_id: data.subcategory_id,
-          description: data.description || null,
-          caloric_density: data.caloric_density || null,
-          glycemic_index: data.glycemic_index || null,
-          source: data.source || null
+          name: values.name,
+          brand: values.brand,
+          category_id: values.category_id,
+          subcategory_id: values.subcategory_id || null,
+          description: values.description,
+          caloric_density: values.caloric_density,
+          glycemic_index: values.glycemic_index,
+          source: values.source,
+          calories: values.calories,
+          protein: values.protein,
+          carbs: values.carbs,
+          fats: values.fats,
+          portion_size: values.portion_size,
+          portion_unit: values.portion_unit
         })
-        .select('id')
-        .single();
+        .select();
 
       if (foodError) throw foodError;
 
-      const foodId = foodData.id;
-      
-      // 2. Insert measures
-      for (const measure of data.measures) {
-        const { error: measureError } = await supabase
-          .from('food_measures')
-          .insert({
-            food_id: foodId,
-            name: measure.name,
-            quantity: measure.quantity,
-            unit: measure.unit,
-            type: measure.type,
-            is_default: measure.is_default
-          });
-
-        if (measureError) throw measureError;
-      }
-      
-      // 3. Get the default measure to link nutritional values
-      const { data: defaultMeasure, error: defaultMeasureError } = await supabase
-        .from('food_measures')
-        .select('id')
-        .eq('food_id', foodId)
-        .eq('is_default', true)
-        .single();
-
-      if (defaultMeasureError) throw defaultMeasureError;
-      
-      // 4. Insert nutritional values
-      const { error: nutritionError } = await supabase
-        .from('nutritional_values')
-        .insert({
-          food_id: foodId,
-          measure_id: defaultMeasure.id,
-          calories: data.nutritional_values.calories,
-          protein: data.nutritional_values.protein,
-          fat: data.nutritional_values.fat,
-          carbs: data.nutritional_values.carbs,
-          fiber: data.nutritional_values.fiber || null,
-          sugar: data.nutritional_values.sugar || null,
-          sodium: data.nutritional_values.sodium || null,
-          potassium: data.nutritional_values.potassium || null,
-          calcium: data.nutritional_values.calcium || null,
-          iron: data.nutritional_values.iron || null
-        });
-
-      if (nutritionError) throw nutritionError;
-      
-      // 5. Insert restrictions
-      if (data.restrictions.length > 0) {
-        const restrictions = data.restrictions.map(restrictionId => ({
-          food_id: foodId,
-          restriction_id: restrictionId
-        }));
-        
-        const { error: restrictionsError } = await supabase
-          .from('food_restrictions')
-          .insert(restrictions);
-
-        if (restrictionsError) throw restrictionsError;
-      }
-
       toast({
-        title: 'Sucesso',
-        description: 'Alimento adicionado com sucesso à base de dados.',
+        title: 'Alimento adicionado',
+        description: `${values.name} foi adicionado com sucesso à base de dados.`,
       });
-      
+
       // Reset form
       form.reset();
-      
+
     } catch (error) {
       console.error('Error saving food:', error);
       toast({
         title: 'Erro',
-        description: 'Ocorreu um erro ao salvar o alimento. Por favor, tente novamente.',
-        variant: 'destructive',
+        description: 'Não foi possível salvar o alimento. Tente novamente.',
+        variant: 'destructive'
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
+
+  // Units for portion size
+  const units = [
+    { value: 'g', label: 'gramas (g)' },
+    { value: 'ml', label: 'mililitros (ml)' },
+    { value: 'kg', label: 'quilogramas (kg)' },
+    { value: 'l', label: 'litros (l)' },
+    { value: 'unidade', label: 'unidade' },
+    { value: 'colher_sopa', label: 'colher de sopa' },
+    { value: 'colher_cha', label: 'colher de chá' },
+    { value: 'fatia', label: 'fatia' },
+    { value: 'copo', label: 'copo' },
+    { value: 'porcao', label: 'porção' }
+  ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Adicionar Novo Alimento</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Adicionar Novo Alimento</CardTitle>
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+                <TabsTrigger value="nutrition">Nutrição</TabsTrigger>
+                <TabsTrigger value="details">Detalhes Extras</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="space-y-4">
                 <FormField
                   control={form.control}
                   name="name"
@@ -356,7 +222,7 @@ const FoodForm: React.FC = () => {
                     <FormItem>
                       <FormLabel>Nome do Alimento*</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Arroz branco cozido" {...field} />
+                        <Input placeholder="Ex: Arroz Branco Cozido" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -368,99 +234,305 @@ const FoodForm: React.FC = () => {
                   name="brand"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Marca (opcional)</FormLabel>
+                      <FormLabel>Marca</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Marca do produto" {...field} />
+                        <Input placeholder="Ex: Tio João" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Categoria*</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma categoria" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categoria*</FormLabel>
+                        <Select 
+                          onValueChange={handleCategoryChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="subcategory_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subcategoria</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={!selectedCategory || subcategories.length === 0}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma subcategoria" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {subcategories.map((subcategory) => (
+                              <SelectItem key={subcategory.id} value={subcategory.id}>
+                                {subcategory.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="portion_size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tamanho da Porção*</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Quantidade por porção padrão
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="portion_unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unidade*</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma unidade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {units.map((unit) => (
+                              <SelectItem key={unit.value} value={unit.value}>
+                                {unit.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
                 <FormField
                   control={form.control}
-                  name="subcategory_id"
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subcategoria*</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={!selectedCategoryId}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={selectedCategoryId ? "Selecione uma subcategoria" : "Selecione uma categoria primeiro"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {filteredSubcategories.map((subcategory) => (
-                            <SelectItem key={subcategory.id} value={subcategory.id}>
-                              {subcategory.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Descrição</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Descreva o alimento brevemente..." 
+                          className="resize-none" 
+                          {...field} 
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              </TabsContent>
               
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição (opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Descrição do alimento" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <TabsContent value="nutrition" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="calories"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Calorias (kcal)*</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="protein"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Proteínas (g)*</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="carbs"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Carboidratos (g)*</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="fats"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gorduras (g)*</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fiber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fibras (g)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="sugar"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Açúcares (g)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="sodium"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sódio (mg)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="potassium"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Potássio (mg)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="calcium"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cálcio (mg)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="iron"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ferro (mg)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <TabsContent value="details" className="space-y-4">
                 <FormField
                   control={form.control}
                   name="caloric_density"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Densidade Calórica (opcional)</FormLabel>
+                      <FormLabel>Densidade Calórica</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Baixa" {...field} />
+                        <Input placeholder="Ex: Baixa, Média, Alta" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Classificação da densidade calórica
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -471,10 +543,13 @@ const FoodForm: React.FC = () => {
                   name="glycemic_index"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Índice Glicêmico (opcional)</FormLabel>
+                      <FormLabel>Índice Glicêmico</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Alto" {...field} />
+                        <Input placeholder="Ex: Baixo, Médio, Alto" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Classificação do índice glicêmico
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -485,432 +560,30 @@ const FoodForm: React.FC = () => {
                   name="source"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fonte (opcional)</FormLabel>
+                      <FormLabel>Fonte</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: TACO" {...field} />
+                        <Input placeholder="Ex: TACO, USDA" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Fonte da informação nutricional
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Medidas*</h3>
-                
-                {form.watch('measures').map((measure, index) => (
-                  <div key={index} className="bg-muted/30 p-4 rounded-lg mb-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-medium">Medida {index + 1}</h4>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            checked={measure.is_default}
-                            onCheckedChange={(checked) => handleDefaultMeasure(index, checked)}
-                          />
-                          <Label>Padrão</Label>
-                        </div>
-                        {form.watch('measures').length > 1 && (
-                          <Button 
-                            variant="outline" 
-                            size="icon"
-                            type="button"
-                            onClick={() => removeMeasure(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <FormField
-                        control={form.control}
-                        name={`measures.${index}.name`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome*</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Ex: 1 colher de sopa" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name={`measures.${index}.quantity`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quantidade*</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                placeholder="Ex: 15" 
-                                {...field} 
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name={`measures.${index}.unit`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Unidade*</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="g">Gramas (g)</SelectItem>
-                                <SelectItem value="ml">Mililitros (ml)</SelectItem>
-                                <SelectItem value="unid">Unidade (unid)</SelectItem>
-                                <SelectItem value="oz">Onça (oz)</SelectItem>
-                                <SelectItem value="xic">Xícara (xic)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name={`measures.${index}.type`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo*</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="household">Caseira</SelectItem>
-                                <SelectItem value="metric">Métrica</SelectItem>
-                                <SelectItem value="imperial">Imperial</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                ))}
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={addMeasure} 
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar medida
-                </Button>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Valores Nutricionais*</h3>
-                <FormDescription className="mb-4">
-                  Informe os valores nutricionais para a medida padrão selecionada
-                </FormDescription>
-                
-                <div className="bg-muted/30 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.calories"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Calorias (kcal)*</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.protein"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Proteínas (g)*</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.carbs"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Carboidratos (g)*</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.fat"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gorduras (g)*</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <h4 className="font-medium mb-3">Dados Adicionais (Opcional)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.fiber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Fibras (g)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }} 
-                              value={field.value === undefined ? '' : field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.sugar"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Açúcares (g)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }} 
-                              value={field.value === undefined ? '' : field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.sodium"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sódio (mg)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }} 
-                              value={field.value === undefined ? '' : field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.potassium"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Potássio (mg)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }} 
-                              value={field.value === undefined ? '' : field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.calcium"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cálcio (mg)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }} 
-                              value={field.value === undefined ? '' : field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="nutritional_values.iron"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ferro (mg)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              placeholder="0" 
-                              {...field} 
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }} 
-                              value={field.value === undefined ? '' : field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Restrições Alimentares (Opcional)</h3>
-                <FormField
-                  control={form.control}
-                  name="restrictions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {restrictionTypes.map((restriction) => (
-                          <div key={restriction.id} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`restriction-${restriction.id}`}
-                              value={restriction.id}
-                              checked={field.value?.includes(restriction.id)}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                const currentValues = field.value || [];
-                                const newValues = e.target.checked
-                                  ? [...currentValues, value]
-                                  : currentValues.filter((val) => val !== value);
-                                field.onChange(newValues);
-                              }}
-                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                            />
-                            <Label htmlFor={`restriction-${restriction.id}`}>
-                              {restriction.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
             
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? 'Salvando...' : 'Salvar Alimento'}
-            </Button>
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                className="bg-nutri-green hover:bg-nutri-green-dark"
+                disabled={isLoading}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Salvar Alimento
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

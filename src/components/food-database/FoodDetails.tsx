@@ -74,43 +74,18 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
     const fetchFoodDetails = async () => {
       setLoading(true);
       try {
-        // Fetch food details
+        // Use a stored procedure to get food details
         const { data: foodData, error: foodError } = await supabase
-          .from('foods')
-          .select(`
-            id,
-            name,
-            brand,
-            description,
-            caloric_density,
-            glycemic_index,
-            source,
-            food_categories(name),
-            food_subcategories(name)
-          `)
-          .eq('id', foodId)
+          .rpc('get_food_details', { food_id: foodId })
           .single();
 
         if (foodError) throw foodError;
 
-        setFood({
-          id: foodData.id,
-          name: foodData.name,
-          brand: foodData.brand,
-          description: foodData.description,
-          category_name: foodData.food_categories?.name || '',
-          subcategory_name: foodData.food_subcategories?.name || '',
-          caloric_density: foodData.caloric_density,
-          glycemic_index: foodData.glycemic_index,
-          source: foodData.source
-        });
+        setFood(foodData);
 
-        // Fetch measures
+        // Use a stored procedure to get food measures
         const { data: measuresData, error: measuresError } = await supabase
-          .from('food_measures')
-          .select('id, name, quantity, unit, type, is_default')
-          .eq('food_id', foodId)
-          .order('is_default', { ascending: false });
+          .rpc('get_food_measures', { food_id: foodId });
 
         if (measuresError) throw measuresError;
 
@@ -121,12 +96,12 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
           const defaultMeasure = measuresData.find(m => m.is_default) || measuresData[0];
           setSelectedMeasure(defaultMeasure.id);
           
-          // Fetch nutritional values for the default measure
+          // Use a stored procedure to get nutritional values
           const { data: nutritionData, error: nutritionError } = await supabase
-            .from('nutritional_values')
-            .select('*')
-            .eq('food_id', foodId)
-            .eq('measure_id', defaultMeasure.id)
+            .rpc('get_nutritional_values', { 
+              food_id: foodId,
+              measure_id: defaultMeasure.id 
+            })
             .single();
 
           if (nutritionError && nutritionError.code !== 'PGRST116') {
@@ -136,21 +111,16 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
           setNutritionalValues(nutritionData || null);
         }
 
-        // Fetch restrictions
+        // Use a stored procedure to get food restrictions
         const { data: restrictionsData, error: restrictionsError } = await supabase
-          .from('food_restrictions')
-          .select(`
-            id,
-            restriction_types(name)
-          `)
-          .eq('food_id', foodId);
+          .rpc('get_food_restrictions', { food_id: foodId });
 
         if (restrictionsError) throw restrictionsError;
 
         setRestrictions(
-          (restrictionsData || []).map(item => ({
+          (restrictionsData || []).map((item: any) => ({
             id: item.id,
-            restriction_name: item.restriction_types.name
+            restriction_name: item.restriction_name
           }))
         );
 
@@ -167,16 +137,17 @@ const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
     };
 
     fetchFoodDetails();
-  }, [foodId]);
+  }, [foodId, toast]);
 
   const handleMeasureChange = async (measureId: string) => {
     setSelectedMeasure(measureId);
     try {
+      // Use a stored procedure to get nutritional values
       const { data, error } = await supabase
-        .from('nutritional_values')
-        .select('*')
-        .eq('food_id', foodId)
-        .eq('measure_id', measureId)
+        .rpc('get_nutritional_values', {
+          food_id: foodId,
+          measure_id: measureId
+        })
         .single();
 
       if (error && error.code !== 'PGRST116') {

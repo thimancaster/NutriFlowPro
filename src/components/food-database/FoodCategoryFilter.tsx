@@ -27,9 +27,9 @@ const FoodCategoryFilter: React.FC<FoodCategoryFilterProps> = ({
     const fetchCategories = async () => {
       setLoading(true);
       try {
+        // Use a direct SQL query instead of the table name that's not in the TypeScript definitions
         const { data, error } = await supabase
-          .from('food_categories')
-          .select('id, name, color')
+          .rpc('get_food_categories')
           .order('name');
 
         if (error) {
