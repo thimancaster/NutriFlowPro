@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import { Json } from '@/integrations/supabase/types';
 
@@ -61,7 +62,7 @@ const addressSchema = z.object({
   state: z.string().optional(),
 });
 
-// Patient schema for validation
+// Patient schema for validation with improved CPF handling
 export const patientSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "E-mail inválido" }).or(z.string().length(0)),
@@ -69,10 +70,18 @@ export const patientSchema = z.object({
   secondaryPhone: z.string().regex(phoneRegex, { message: "Telefone secundário inválido: Use o formato (XX) XXXXX-XXXX" }).or(z.string().length(0)).optional(),
   sex: z.enum(["M", "F", "O"], { message: "Selecione o gênero" }),
   birthDate: z.date({ required_error: "Data de nascimento é obrigatória" }).optional(),
-  cpf: z.string().regex(cpfRegex, { message: "CPF inválido: Use o formato XXX.XXX.XXX-XX" })
-       .or(z.string().length(0))
+  cpf: z.string()
        .refine(
-         (cpf) => cpf.length === 0 || validateCpf(cpf), 
+         (value) => {
+           // Accept empty values
+           if (!value || value.trim() === '') return true;
+           // Accept both formatted and unformatted CPFs
+           return value.match(cpfRegex) !== null || value.match(/^\d{11}$/) !== null;
+         },
+         { message: "CPF inválido: Use o formato XXX.XXX.XXX-XX ou apenas números" }
+       )
+       .refine(
+         (value) => !value || value.trim() === '' || validateCpf(value), 
          { message: "CPF inválido: dígitos verificadores não conferem" }
        ),
   objective: z.string().min(1, { message: "Objetivo é obrigatório" }),
@@ -109,9 +118,9 @@ export const validateField = (field: string, value: any): string | null => {
     
     // Special case for CPF validation
     if (field === 'cpf' && value && value.length > 0) {
-      // First check the format
-      if (!cpfRegex.test(value)) {
-        return "CPF inválido: Use o formato XXX.XXX.XXX-XX";
+      // First check if it's a valid format (with or without dots/dash)
+      if (!cpfRegex.test(value) && !/^\d{11}$/.test(value)) {
+        return "CPF inválido: Use o formato XXX.XXX.XXX-XX ou apenas números";
       }
       
       // Then check the mathematical validation
@@ -143,7 +152,7 @@ export const validateField = (field: string, value: any): string | null => {
   }
 };
 
-// CPF mask function
+// CPF mask function - updated to be more forgiving with input formats
 export const formatCpf = (value: string) => {
   if (!value) return '';
   

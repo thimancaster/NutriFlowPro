@@ -9,6 +9,11 @@ export const getPatient = async (patientId: string) => {
   try {
     console.log('Getting patient with ID:', patientId);
     
+    if (!patientId) {
+      console.error('Invalid patient ID provided:', patientId);
+      throw new Error('Invalid patient ID provided');
+    }
+    
     // First try to get the patient with the specific ID
     const { data, error } = await supabase
       .from('patients')
@@ -27,10 +32,17 @@ export const getPatient = async (patientId: string) => {
     }
     
     // Log the raw data from database for debugging
-    console.log('Raw data from database:', data);
+    console.log('Raw patient data retrieved:', {
+      id: data.id,
+      name: data.name,
+      user_id: data.user_id
+    });
     
     const patient = convertDbToPatient(data);
-    console.log('Patient data converted successfully:', patient);
+    console.log('Patient data converted successfully:', {
+      id: patient.id,
+      name: patient.name
+    });
     
     return {
       success: true,

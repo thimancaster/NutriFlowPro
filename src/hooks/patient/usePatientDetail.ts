@@ -9,18 +9,30 @@ export const usePatientDetail = () => {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
 
   // Handle opening patient details - accepts either a patient object or patient ID
   const openPatientDetail = async (patientOrId: Patient | string) => {
     setIsLoading(true);
     
     try {
+      let patientId: string;
       let patientData: Patient | null = null;
       
       if (typeof patientOrId === 'string') {
         // If patientOrId is a string (ID), fetch the patient data
-        console.log("Fetching patient by ID:", patientOrId);
-        const result = await PatientService.getPatient(patientOrId);
+        patientId = patientOrId;
+        console.log("Fetching patient by ID:", patientId);
+        
+        // First check if we're already viewing the same patient
+        if (currentPatientId === patientId && patient) {
+          console.log("Already viewing this patient, reusing existing data");
+          setIsModalOpen(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        const result = await PatientService.getPatient(patientId);
         
         if (!result.success) {
           console.error("Failed to fetch patient:", result.error);
@@ -28,11 +40,14 @@ export const usePatientDetail = () => {
         }
         
         patientData = result.data;
-        console.log("Patient data loaded by ID:", patientData);
+        console.log("Patient data loaded by ID:", patientData.id, patientData.name);
+        setCurrentPatientId(patientId);
       } else {
         // If patientOrId is already a Patient object, use it directly
         patientData = patientOrId;
-        console.log("Using provided patient object:", patientData);
+        patientId = patientOrId.id;
+        console.log("Using provided patient object:", patientData.id, patientData.name);
+        setCurrentPatientId(patientId);
       }
       
       // Set patient data and open modal
@@ -53,7 +68,8 @@ export const usePatientDetail = () => {
   // Handle closing patient details modal
   const closePatientDetail = () => {
     setIsModalOpen(false);
-    setPatient(null);
+    // Don't clear the patient data immediately to prevent UI flicker
+    // when reopening the same patient
   };
 
   return {

@@ -56,6 +56,8 @@ const DashboardRecentPatients: React.FC = () => {
         created_at: patient.created_at,
         goals: patient.goals as Patient['goals'] 
       })) || [];
+      
+      console.log("Loaded recent patients:", typedPatients.map(p => ({id: p.id, name: p.name})));
         
       return typedPatients;
     },

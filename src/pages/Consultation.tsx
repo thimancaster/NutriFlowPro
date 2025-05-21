@@ -12,6 +12,7 @@ import useAutoSave from './ConsultationHooks/useAutoSave';
 import usePatientData from './ConsultationHooks/usePatientData';
 import { Card, CardContent } from '@/components/ui/card';
 import { PatientService } from '@/services/patient';
+import { useToast } from '@/hooks/use-toast';
 
 // Wrapper for updatePatientData to match expected signature
 const patientDataUpdateWrapper = async (
@@ -27,24 +28,49 @@ const Consultation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const { toast } = useToast();
   
   // Extract ID from either URL parameter or query parameter
   const consultationId = params.id;
   const searchParams = new URLSearchParams(location.search);
   const patientIdFromQuery = searchParams.get('patientId');
   
-  // Add console logs to help with debugging
-  console.log("Consultation page rendering", { 
-    "consultationId from params": consultationId,
-    "patientId from query": patientIdFromQuery
+  // Add detailed console logs to help with debugging
+  console.log("Consultation page rendering with:", { 
+    "consultationId": consultationId,
+    "patientId from query": patientIdFromQuery,
+    "params": params,
+    "search params": Object.fromEntries(searchParams.entries())
   });
   
   // Custom hooks
-  const { consultation, setConsultation, isLoading, error, createNewConsultation } = useConsultationData(consultationId);
-  const { patient, patients, isPatientsLoading } = useConsultationPatient(consultation?.patient_id || patientIdFromQuery || undefined);
+  const { 
+    consultation, 
+    setConsultation, 
+    isLoading, 
+    error, 
+    createNewConsultation 
+  } = useConsultationData(consultationId);
+  
+  const { 
+    patient, 
+    patients, 
+    isPatientsLoading,
+    loadPatient 
+  } = useConsultationPatient(consultation?.patient_id || patientIdFromQuery || undefined);
+  
   const { saveConsultation, autoSaveStatus } = useAutoSave(consultationId);
   const { updatePatientData } = usePatientData();
   const { handleSaveConsultation, isSubmitting } = useSaveConsultation();
+  
+  // Load patient data when patientId changes
+  useEffect(() => {
+    const patientId = consultation?.patient_id || patientIdFromQuery;
+    if (patientId && !patient) {
+      console.log("Loading patient data for ID:", patientId);
+      loadPatient(patientId);
+    }
+  }, [consultation?.patient_id, patientIdFromQuery, patient, loadPatient]);
   
   // If we have a patientId from query but no consultation, create a new one
   useEffect(() => {
@@ -58,30 +84,59 @@ const Consultation = () => {
           const patientResult = await PatientService.getPatient(patientIdFromQuery);
           
           if (!patientResult.success) {
+            console.error("Failed to fetch patient data:", patientResult.error);
             throw new Error("Failed to fetch patient data");
           }
           
           const patientName = patientResult.data.name;
+          console.log("Patient name retrieved:", patientName);
           
           // Create a new consultation with this patient
           const newConsultation = createNewConsultation(patientIdFromQuery, patientName);
           console.log("New consultation created:", newConsultation);
+          
+          // If there's a redirect parameter, handle it
+          const redirectTo = searchParams.get('redirectTo');
+          if (redirectTo) {
+            console.log("Will redirect to:", redirectTo);
+          }
         } catch (error) {
           console.error("Error setting up consultation:", error);
+          toast({
+            title: "Erro ao criar consulta",
+            description: "Não foi possível criar uma nova consulta para o paciente selecionado",
+            variant: "destructive"
+          });
         }
       }
     };
     
     setupConsultationData();
-  }, [patientIdFromQuery, consultationId, consultation, isLoading, createNewConsultation]);
+  }, [patientIdFromQuery, consultationId, consultation, isLoading, createNewConsultation, searchParams, toast]);
   
+  // Add debug logs for monitoring state changes
   useEffect(() => {
-    console.log("Consultation data:", consultation);
-    console.log("Patient:", patient);
+    console.log("Consultation data:", consultation ? {
+      id: consultation.id,
+      patient_id: consultation.patient_id,
+      patient_name: consultation.patient_name
+    } : null);
+    
+    console.log("Patient data:", patient ? {
+      id: patient.id,
+      name: patient.name
+    } : null);
   }, [consultation, patient]);
   
   const handleFormChange = (data: Partial<ConsultationData>) => {
     if (!consultation) return;
+    
+    console.log("Form changed with data:", {
+      weight: data.weight,
+      height: data.height,
+      age: data.age,
+      activity_level: data.activity_level
+    });
     
     const updatedConsultation = {
       ...consultation,
@@ -95,11 +150,14 @@ const Consultation = () => {
   };
   
   const handleStepChange = (newStep: number) => {
+    console.log("Changing step from", step, "to", newStep);
     setStep(newStep);
   };
   
   const handleSaveConsultationClick = async () => {
     if (!consultation) return;
+    console.log("Saving consultation:", consultation.id);
+    
     await handleSaveConsultation(
       consultationId || '', 
       consultation, 
