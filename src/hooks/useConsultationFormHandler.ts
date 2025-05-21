@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { ConsultationData } from '@/types';
-import { useAutoSave } from '@/pages/ConsultationHooks/useAutoSave';
+import useAutoSave from '@/pages/ConsultationHooks/useAutoSave';
 import { useSaveConsultation } from '@/hooks/useSaveConsultation';
 import usePatientData from '@/pages/ConsultationHooks/usePatientData';
 
