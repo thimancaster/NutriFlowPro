@@ -69,13 +69,31 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (supabaseError) throw supabaseError;
 
       if (data) {
+        // Process address data properly with type casting
+        let addressData: Record<string, any> | undefined;
+        
+        if (data.address) {
+          if (typeof data.address === 'string') {
+            try {
+              // Try to parse the address as JSON if it's a string
+              addressData = JSON.parse(data.address as string);
+            } catch (e) {
+              // If parsing fails, use the string value as is
+              addressData = { raw: data.address };
+            }
+          } else if (typeof data.address === 'object') {
+            // If it's already an object, use it directly
+            addressData = data.address as Record<string, any>;
+          }
+        }
+
         // Process database data into our Patient type with proper type casting
         const patient: Patient = {
           ...data,
           status: (data.status as 'active' | 'archived') || 'active',
           goals: (data.goals as Record<string, any>) || {},
           measurements: (data.measurements as Record<string, any>) || {},
-          address: (data.address as Record<string, any>) || {}
+          address: addressData
         };
 
         setActivePatient(patient);
