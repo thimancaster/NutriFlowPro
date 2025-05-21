@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +21,7 @@ const FoodDatabase = () => {
   const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('browse');
   const { toast } = useToast();
-  const { hasAccess } = usePremiumGuard();
+  const { hasAccess } = usePremiumGuard('food_database');
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);

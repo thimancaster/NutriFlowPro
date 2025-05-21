@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Bread } from 'lucide-react';
+import { UtensilsCrossed } from 'lucide-react';
 
 interface FoodListProps {
   searchTerm: string;
