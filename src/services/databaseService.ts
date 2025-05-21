@@ -2,7 +2,7 @@
 import { dbCache } from "./dbCache";
 import { PatientService } from "./patient";
 import { consultationService } from "./consultationService";
-import { MealPlanService } from "./mealPlanService";
+import * as MealPlanService from "./mealPlanService";
 
 /**
  * Service to handle all database interactions
@@ -19,8 +19,8 @@ export const DatabaseService = {
   getPatientConsultations: consultationService.getPatientConsultations,
   
   // Meal plan-related operations
-  saveMealPlan: MealPlanService.createMealPlan, // Use correct method name
-  getPatientMealPlans: MealPlanService.getMealPlans,
+  saveMealPlan: MealPlanService.saveMealPlan,
+  getPatientMealPlans: MealPlanService.getPatientMealPlans,
   
   /**
    * Clear all database service caches

@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Calculator, Flame } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Profile } from '../types';
+import { Profile } from '@/types/consultation';
 
 export interface CalculatorFormProps {
   weight: number | '';
@@ -43,7 +43,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
   return (
     <div className="space-y-6">
       {!patientSelected && (
-        <Alert variant="info" className="bg-blue-50 border-blue-200">
+        <Alert variant="default" className="bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-500" />
           <AlertDescription>
             Selecione um paciente para preencher automaticamente os dados ou cadastre um novo.
@@ -149,3 +149,5 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
     </div>
   );
 };
+
+export default CalculatorForm;

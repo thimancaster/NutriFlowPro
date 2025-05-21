@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { CalculatorTool } from '@/components/calculator';
 import { usePatient } from '@/contexts/PatientContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Link, useSearchParams } from 'react-router-dom';

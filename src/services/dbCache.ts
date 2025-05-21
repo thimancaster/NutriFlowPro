@@ -1,102 +1,91 @@
 
-import { storageUtils } from "@/utils/storageUtils";
+import { storageUtils } from '@/utils/storageUtils';
 
-// Constants for optimized caching
-const CACHE_KEYS = {
-  PATIENT: 'db_patient_',
-  CONSULTATIONS: 'db_consultations_',
-  MEAL_PLANS: 'db_meal_plans_'
-};
+export interface DBCacheInterface {
+  KEYS: Record<string, string>;
+  get: (key: string, defaultValue?: any) => any;
+  set: (key: string, data: any) => void;
+  invalidate: (keyOrPrefix: string) => void;
+  invalidateAll: () => void;
+}
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const CACHE_MAX_ITEMS = 50; // Maximum number of items to keep in cache
-
-/**
- * Utility functions for managing database operation cache with improved performance
- */
-export const dbCache = {
-  // Internal cache tracking for better cache management
-  _cacheEntries: new Map<string, number>(), // Track cache entry timestamps
-  
-  get: <T>(key: string): { data: T, timestamp: number } | null => {
-    const cachedData = storageUtils.getSessionItem<{ data: T, timestamp: number }>(key);
-    if (!cachedData) return null;
-    
-    // Check if cache is still valid
-    if (Date.now() - cachedData.timestamp > CACHE_TTL) {
-      dbCache.invalidate(key);
-      return null;
-    }
-    
-    // Update cache entry tracking
-    dbCache._cacheEntries.set(key, Date.now());
-    
-    return cachedData;
+export const dbCache: DBCacheInterface = {
+  // Cache key prefixes
+  KEYS: {
+    PATIENT: 'db_cache_patient_',
+    PATIENTS: 'db_cache_patients',
+    CONSULTATIONS: 'db_cache_consultations_',
+    MEAL_PLANS: 'db_cache_meal_plans_',
+    FOOD_DATABASE: 'db_cache_food_database',
   },
   
-  set: <T>(key: string, data: T): void => {
-    // Check if we need to evict items from cache
-    if (dbCache._cacheEntries.size >= CACHE_MAX_ITEMS) {
-      dbCache._evictOldestEntries();
+  /**
+   * Get data from cache
+   */
+  get: (key: string, defaultValue?: any) => {
+    try {
+      const cachedData = storageUtils.getLocalItem(key);
+      if (cachedData !== null && cachedData !== undefined) {
+        return cachedData;
+      }
+    } catch (error) {
+      console.error('Cache error:', error);
     }
-    
-    // Save to storage
-    storageUtils.setSessionItem(key, {
-      data,
-      timestamp: Date.now()
-    });
-    
-    // Update cache tracking
-    dbCache._cacheEntries.set(key, Date.now());
+    return defaultValue;
   },
   
-  invalidate: (keyPrefix: string, id?: string): void => {
-    if (id) {
-      // Invalidate specific cache entry
-      const fullKey = `${keyPrefix}${id}`;
-      storageUtils.removeSessionItem(fullKey);
-      dbCache._cacheEntries.delete(fullKey);
-    } else {
-      // Find and remove all cache entries with this prefix
-      const keysToRemove: string[] = [];
+  /**
+   * Set data in cache
+   */
+  set: (key: string, data: any) => {
+    try {
+      storageUtils.setLocalItem(key, data);
+    } catch (error) {
+      console.error('Cache set error:', error);
+    }
+  },
+  
+  /**
+   * Invalidate cache by key or prefix
+   */
+  invalidate: (keyOrPrefix: string) => {
+    try {
+      // If it's an exact key match, simply remove it
+      storageUtils.removeLocalItem(keyOrPrefix);
       
-      // Use the storageUtils to get all keys
-      const allKeys = storageUtils.getAllKeys().session;
-      
-      // Filter keys that match the prefix
-      allKeys.forEach(key => {
-        if (key.startsWith(keyPrefix)) {
-          keysToRemove.push(key);
-          storageUtils.removeSessionItem(key);
-          dbCache._cacheEntries.delete(key);
+      // Also check if it's a prefix and remove all matching keys
+      // This requires us to add a helper to storageUtils
+      const keys = getAllLocalStorageKeys();
+      keys.forEach(key => {
+        if (key.startsWith(keyOrPrefix)) {
+          storageUtils.removeLocalItem(key);
         }
       });
-      
-      // Also remove any keys by prefix in our cache tracking
-      dbCache._cacheEntries.forEach((_, trackingKey) => {
-        if (trackingKey.startsWith(keyPrefix)) {
-          dbCache._cacheEntries.delete(trackingKey);
-        }
-      });
+    } catch (error) {
+      console.error('Cache invalidation error:', error);
     }
   },
   
-  // Helper to evict oldest entries when cache gets too large
-  _evictOldestEntries: (): void => {
-    // Sort entries by timestamp (oldest first)
-    const entries = Array.from(dbCache._cacheEntries.entries())
-      .sort((a, b) => a[1] - b[1]);
-    
-    // Remove oldest 10% of entries
-    const removeCount = Math.max(1, Math.floor(entries.length * 0.1));
-    
-    for (let i = 0; i < removeCount && i < entries.length; i++) {
-      const key = entries[i][0];
-      storageUtils.removeSessionItem(key);
-      dbCache._cacheEntries.delete(key);
+  /**
+   * Invalidate all cache entries
+   */
+  invalidateAll: () => {
+    try {
+      Object.values(dbCache.KEYS).forEach(key => {
+        dbCache.invalidate(key);
+      });
+    } catch (error) {
+      console.error('Cache invalidation error:', error);
     }
-  },
-
-  // Export cache keys for use in other services
-  KEYS: CACHE_KEYS
+  }
 };
+
+// Helper function to get all localStorage keys
+function getAllLocalStorageKeys(): string[] {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) keys.push(key);
+  }
+  return keys;
+}

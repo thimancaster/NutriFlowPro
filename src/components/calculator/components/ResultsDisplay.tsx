@@ -1,11 +1,8 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CircleCheck, Dumbbell, FileText, InfoIcon, Utensils } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Printer, Save, UtensilsCrossed } from 'lucide-react';
 
 export interface ResultsDisplayProps {
   teeObject: {
@@ -13,10 +10,10 @@ export interface ResultsDisplayProps {
     adjustment: number;
     vet: number;
   };
-  macros: any; // Using any temporarily for simplicity
+  macros: any;
   calorieSummary: any;
   objective: string;
-  onSavePatient: () => Promise<void>;
+  onSavePatient: () => void;
   onGenerateMealPlan: () => void;
 }
 
@@ -28,164 +25,87 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   onSavePatient,
   onGenerateMealPlan
 }) => {
-  const getObjectiveLabel = (obj: string) => {
-    switch (obj) {
-      case 'cutting':
-        return 'Emagrecimento';
-      case 'maintenance':
-        return 'Manutenção';
-      case 'bulking':
-        return 'Hipertrofia';
-      default:
-        return 'Personalizado';
-    }
-  };
-
-  const getObjectiveBadgeVariant = (obj: string) => {
-    switch (obj) {
-      case 'cutting':
-        return 'destructive';
-      case 'maintenance':
-        return 'outline';
-      case 'bulking':
-        return 'secondary';
-      default:
-        return 'default';
-    }
-  };
+  if (!teeObject || !macros) return null;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4">
-        <Card className="flex-1">
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-medium">Taxa Metabólica Basal</h3>
-              <Dumbbell className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="text-3xl font-bold text-nutri-blue">{teeObject.get} kcal</div>
-            <div className="text-sm text-gray-500 mt-1">
-              Energia necessária para funções vitais
-            </div>
-          </CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500">TMB</h3>
+            <p className="text-2xl font-bold">{teeObject.get} kcal</p>
+          </div>
         </Card>
         
-        <Card className="flex-1">
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-medium">
-                Ajuste para {getObjectiveLabel(objective)}
-              </h3>
-              <Badge variant={getObjectiveBadgeVariant(objective)}>
-                {teeObject.adjustment > 0 ? '+' : ''}{teeObject.adjustment}%
-              </Badge>
-            </div>
-            <div className="text-3xl font-bold text-nutri-teal">{teeObject.vet} kcal</div>
-            <div className="text-sm text-gray-500 mt-1">
-              VET (Valor Energético Total)
-            </div>
-          </CardContent>
+        <Card className="p-4">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500">
+              Ajuste ({objective === 'emagrecimento' ? '-20%' : 
+                       objective === 'hipertrofia' ? '+15%' : '0%'})
+            </h3>
+            <p className="text-2xl font-bold">{teeObject.adjustment} kcal</p>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500">VET (Total)</h3>
+            <p className="text-2xl font-bold">{teeObject.vet} kcal</p>
+          </div>
         </Card>
       </div>
       
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-lg font-medium mb-4">Distribuição de Macronutrientes</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">Proteínas</h4>
-                <Badge variant="outline">{macros.protein.percentage}%</Badge>
-              </div>
-              <div className="mt-2 text-2xl font-bold text-amber-600">{macros.protein.grams}g</div>
-              <div className="text-sm text-gray-500 mt-1">{macros.protein.kcal} kcal</div>
-              {macros.proteinPerKg && (
-                <div className="text-xs text-gray-500 mt-2 italic">
-                  {macros.proteinPerKg}g/kg de peso corporal
-                </div>
-              )}
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">Carboidratos</h4>
-                <Badge variant="outline">{macros.carbs.percentage}%</Badge>
-              </div>
-              <div className="mt-2 text-2xl font-bold text-blue-600">{macros.carbs.grams}g</div>
-              <div className="text-sm text-gray-500 mt-1">{macros.carbs.kcal} kcal</div>
-            </div>
-            
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">Gorduras</h4>
-                <Badge variant="outline">{macros.fat.percentage}%</Badge>
-              </div>
-              <div className="mt-2 text-2xl font-bold text-purple-600">{macros.fat.grams}g</div>
-              <div className="text-sm text-gray-500 mt-1">{macros.fat.kcal} kcal</div>
-            </div>
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-lg font-medium mb-3">Distribuição de Macronutrientes</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h4 className="text-sm font-medium text-gray-500">Proteínas</h4>
+            <p className="text-xl font-bold">{macros.protein.grams}g</p>
+            <p className="text-sm text-gray-500">
+              {macros.protein.kcal} kcal ({macros.protein.percentage}%)
+            </p>
           </div>
-          
-          <Separator className="my-6" />
           
           <div>
-            <div className="flex items-center mb-2">
-              <h3 className="text-lg font-medium">Balanço Calórico</h3>
-              <InfoIcon className="h-4 w-4 text-gray-400 ml-1" />
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-sm text-gray-500">Objetivo</div>
-                <div className="font-semibold">{calorieSummary.targetCalories} kcal</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Alocado</div>
-                <div className="font-semibold">{calorieSummary.actualCalories} kcal</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Diferença</div>
-                <div className={`font-semibold ${Math.abs(calorieSummary.difference) > 10 ? 'text-amber-600' : 'text-green-600'}`}>
-                  {calorieSummary.difference > 0 ? '+' : ''}{calorieSummary.difference} kcal
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Desvio</div>
-                <div className={`font-semibold ${Math.abs(calorieSummary.percentageDifference) > 2 ? 'text-amber-600' : 'text-green-600'}`}>
-                  {calorieSummary.percentageDifference > 0 ? '+' : ''}{calorieSummary.percentageDifference.toFixed(1)}%
-                </div>
-              </div>
-            </div>
+            <h4 className="text-sm font-medium text-gray-500">Carboidratos</h4>
+            <p className="text-xl font-bold">{macros.carbs.grams}g</p>
+            <p className="text-sm text-gray-500">
+              {macros.carbs.kcal} kcal ({macros.carbs.percentage}%)
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div>
+            <h4 className="text-sm font-medium text-gray-500">Gorduras</h4>
+            <p className="text-xl font-bold">{macros.fat.grams}g</p>
+            <p className="text-sm text-gray-500">
+              {macros.fat.kcal} kcal ({macros.fat.percentage}%)
+            </p>
+          </div>
+        </div>
+      </div>
       
-      <Alert variant="default" className="bg-green-50 border-green-200">
-        <CircleCheck className="h-4 w-4 text-green-500" />
-        <AlertDescription className="flex justify-between items-center">
-          <span>Cálculo concluído com sucesso! O que deseja fazer a seguir?</span>
-        </AlertDescription>
-      </Alert>
-      
-      <div className="flex flex-col sm:flex-row gap-3 justify-end">
+      <div className="flex flex-col md:flex-row gap-4 justify-end">
         <Button 
           variant="outline" 
-          className="flex items-center gap-2"
           onClick={onSavePatient}
+          className="flex items-center gap-2"
         >
-          <FileText className="h-4 w-4" />
+          <Save className="h-4 w-4" />
           Salvar Resultados
         </Button>
         
         <Button 
-          variant="nutri"
-          className="flex items-center gap-2"
+          variant="nutri" 
           onClick={onGenerateMealPlan}
+          className="flex items-center gap-2"
         >
-          <Utensils className="h-4 w-4" />
+          <UtensilsCrossed className="h-4 w-4" />
           Gerar Plano Alimentar
         </Button>
       </div>
     </div>
   );
 };
+
+export default ResultsDisplay;

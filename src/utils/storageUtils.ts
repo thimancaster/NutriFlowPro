@@ -1,85 +1,84 @@
 
 /**
- * Utility functions for browser storage operations
+ * Utils for handling local and session storage
+ * with proper error handling and type safety
  */
 export const storageUtils = {
   /**
-   * Set an item in local storage with JSON stringification
+   * Set item to localStorage with error handling
    */
-  setLocalItem: (key: string, value: any): void => {
-    if (typeof window === 'undefined') return;
+  setLocalItem: (key: string, value: any) => {
     try {
-      const serialized = JSON.stringify(value);
-      localStorage.setItem(key, serialized);
-    } catch (error) {
-      console.error('Error setting localStorage item:', error);
+      const serializedValue = JSON.stringify(value);
+      localStorage.setItem(key, serializedValue);
+    } catch (err) {
+      console.error(`Error setting localStorage item "${key}":`, err);
     }
   },
-
+  
   /**
-   * Get an item from local storage with JSON parsing
+   * Get item from localStorage with error handling
    */
-  getLocalItem: (key: string): any => {
-    if (typeof window === 'undefined') return null;
+  getLocalItem: (key: string) => {
     try {
-      const serialized = localStorage.getItem(key);
-      if (serialized === null) return null;
-      return JSON.parse(serialized);
-    } catch (error) {
-      console.error('Error getting localStorage item:', error);
+      const serializedValue = localStorage.getItem(key);
+      if (serializedValue === null) {
+        return null;
+      }
+      return JSON.parse(serializedValue);
+    } catch (err) {
+      console.error(`Error getting localStorage item "${key}":`, err);
       return null;
     }
   },
-
+  
   /**
-   * Set an item in session storage with JSON stringification
+   * Set item to sessionStorage with error handling
    */
-  setSessionItem: (key: string, value: any): void => {
-    if (typeof window === 'undefined') return;
+  setSessionItem: (key: string, value: any) => {
     try {
-      const serialized = JSON.stringify(value);
-      sessionStorage.setItem(key, serialized);
-    } catch (error) {
-      console.error('Error setting sessionStorage item:', error);
+      const serializedValue = JSON.stringify(value);
+      sessionStorage.setItem(key, serializedValue);
+    } catch (err) {
+      console.error(`Error setting sessionStorage item "${key}":`, err);
     }
   },
-
+  
   /**
-   * Get an item from session storage with JSON parsing
+   * Get item from sessionStorage with error handling
    */
-  getSessionItem: (key: string): any => {
-    if (typeof window === 'undefined') return null;
+  getSessionItem: (key: string) => {
     try {
-      const serialized = sessionStorage.getItem(key);
-      if (serialized === null) return null;
-      return JSON.parse(serialized);
-    } catch (error) {
-      console.error('Error getting sessionStorage item:', error);
+      const serializedValue = sessionStorage.getItem(key);
+      if (serializedValue === null) {
+        return null;
+      }
+      return JSON.parse(serializedValue);
+    } catch (err) {
+      console.error(`Error getting sessionStorage item "${key}":`, err);
       return null;
     }
   },
-
+  
   /**
-   * Remove an item from local storage
+   * Remove item from localStorage
    */
-  removeLocalItem: (key: string): void => {
-    if (typeof window === 'undefined') return;
+  removeLocalItem: (key: string) => {
     try {
       localStorage.removeItem(key);
-    } catch (error) {
-      console.error('Error removing localStorage item:', error);
+    } catch (err) {
+      console.error(`Error removing localStorage item "${key}":`, err);
     }
   },
-
+  
   /**
-   * Remove an item from session storage
+   * Remove item from sessionStorage
    */
-  removeSessionItem: (key: string): void => {
-    if (typeof window === 'undefined') return;
+  removeSessionItem: (key: string) => {
     try {
       sessionStorage.removeItem(key);
-    } catch (error) {
-      console.error('Error removing sessionStorage item:', error);
+    } catch (err) {
+      console.error(`Error removing sessionStorage item "${key}":`, err);
     }
   }
 };
