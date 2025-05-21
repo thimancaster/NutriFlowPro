@@ -21,7 +21,8 @@ const FoodDatabase = () => {
   const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('browse');
   const { toast } = useToast();
-  const { hasAccess } = usePremiumGuard('food_database');
+  // Fix: The first parameter should be a boolean (isPremiumFeature)
+  const { hasAccess } = usePremiumGuard(true);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
