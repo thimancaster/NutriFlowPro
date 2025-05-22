@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import { PREMIUM_CHECK_CONSTANTS } from './constants';
 

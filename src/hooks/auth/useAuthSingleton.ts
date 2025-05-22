@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import { AuthState, StoredSession } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,7 +62,7 @@ export const useAuthSingleton = (
           });
           
           // Clear session data
-          saveSession(null);
+          saveSession(null, false);
           storageUtils.setLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK, Date.now());
           
           // Update auth state
@@ -147,7 +148,7 @@ export const useAuthSingleton = (
               isLoading: false,
               loading: false
             }));
-            saveSession(null);
+            saveSession(null, false);
           }
         } catch (error) {
           logger.error("Error checking session:", error);

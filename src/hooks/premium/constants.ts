@@ -21,3 +21,9 @@ export const PREMIUM_CHECK_CONSTANTS = {
   // Delay between retries in milliseconds (exponential backoff)
   RETRY_DELAY: 2000,
 };
+
+// List of email addresses that have developer access (full system access)
+export const DEVELOPER_EMAILS = ['thimancaster@hotmail.com'];
+
+// List of email addresses that have premium access
+export const PREMIUM_EMAILS = ['thiago@nutriflowpro.com'];
