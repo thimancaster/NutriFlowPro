@@ -31,7 +31,7 @@ const Navbar = () => {
     { name: 'Início', path: '/dashboard', icon: <Home className="h-5 w-5" /> },
     { name: 'Pacientes', path: '/patients', icon: <Users className="h-5 w-5" /> },
     { name: 'Agendamentos', path: '/appointments', icon: <CalendarDays className="h-5 w-5" /> },
-    { name: 'Consultas', path: '/consultation', icon: <FileText className="h-5 w-5" /> },
+    { name: 'Consultas', path: '/clinical', icon: <FileText className="h-5 w-5" /> },
     { name: 'Calculadora', path: '/calculator', icon: <Calculator className="h-5 w-5" /> },
     { name: 'Planos Alimentares', path: '/meal-plans', icon: <Coffee className="h-5 w-5" /> },
     { name: 'Configurações', path: '/settings', icon: <Settings className="h-5 w-5" /> }

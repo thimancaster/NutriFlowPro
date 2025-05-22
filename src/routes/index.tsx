@@ -24,6 +24,7 @@ import Calculator from '@/pages/Calculator';
 import Settings from '@/pages/Settings';
 import AddTestimonial from '@/pages/AddTestimonial';
 import Appointments from '@/pages/Appointments';
+import Clinical from '@/pages/Clinical';
 
 // Public routes that don't require authentication
 export const publicRoutes = [
@@ -43,6 +44,7 @@ export const protectedRoutes = [
   <Route key="patients-edit" path="/patients/edit/:id" element={<PatientNew />} />,
   <Route key="appointments" path="/appointments" element={<Appointments />} />,
   <Route key="consultation" path="/consultation/:id?" element={<Consultation />} />,
+  <Route key="clinical" path="/clinical" element={<Clinical />} />,
   <Route key="patient-history" path="/patient-history/:patientId" element={<PatientHistory />} />,
   <Route key="patient-anthropometry" path="/patient-anthropometry/:patientId" element={<PatientAnthropometry />} />,
   <Route key="meal-plan-generator" path="/meal-plan-generator" element={<MealPlanGenerator />} />,

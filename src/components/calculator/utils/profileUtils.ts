@@ -23,13 +23,16 @@ export const stringToProfile = (value: string): Profile => {
       return 'normal';
     case 'sobrepeso':
       return 'sobrepeso';
-    // Add support for body types
+    // Body types - use exact string values for clarity
+    case 'ectomorfo':
     case 'ectomorph':
-      return 'magro';  // Map to existing profile 'magro'
+      return 'magro';  // Map consistently to 'magro'
+    case 'mesomorfo':
     case 'mesomorph':
-      return 'normal';  // Map to existing profile 'normal'
+      return 'normal';  // Map consistently to 'normal'
+    case 'endomorfo':
     case 'endomorph':
-      return 'sobrepeso';  // Map to existing profile 'sobrepeso'
+      return 'sobrepeso';  // Map consistently to 'sobrepeso'
     default:
       // If the value doesn't match exactly, try to determine closest match
       if (normalizedValue.includes('peso') || normalizedValue.includes('obre') || normalizedValue.includes('endo')) {
@@ -61,11 +64,11 @@ export const getProfileLabel = (profile: Profile | string): string => {
     case 'atleta':
       return 'Atleta';
     case 'magro':
-      return 'Magro';
+      return 'Magro/Ectomorfo';
     case 'normal':
-      return 'Normal';
+      return 'Normal/Mesomorfo';
     case 'sobrepeso':
-      return 'Sobrepeso';
+      return 'Sobrepeso/Endomorfo';
     case 'obeso':
       return 'Obeso';
     default:

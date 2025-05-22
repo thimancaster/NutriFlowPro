@@ -14,12 +14,19 @@ export const RadioGroupField = ({
   error,
   onBlur
 }: RadioGroupFieldProps) => {
+  const handleChange = (newValue: string) => {
+    // Ensure we're passing the correct string value to the onChange handler
+    if (onChange) {
+      onChange(newValue);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label>{label}{required && '*'}</Label>
       <RadioGroup 
         value={value || ''} 
-        onValueChange={onChange}
+        onValueChange={handleChange}
         required={required}
         className={className}
         onFocus={() => {}}
