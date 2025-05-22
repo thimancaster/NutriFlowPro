@@ -3,6 +3,7 @@ import { AUTH_STORAGE_KEYS } from '@/constants/authConstants';
 import { storageUtils } from '@/utils/storageUtils';
 import { Session } from '@supabase/supabase-js';
 import { StoredSession, PremiumStatus } from '@/types/auth';
+import { logger } from '@/utils/logger';
 
 export const useAuthStorage = () => {
   // Function to load session from storage (used for remember me feature)
@@ -11,11 +12,11 @@ export const useAuthStorage = () => {
       const storedSession = storageUtils.getLocalItem(AUTH_STORAGE_KEYS.SESSION);
       
       if (storedSession && storedSession.session) {
-        console.log('Loaded stored session:', storedSession.remember ? 'with remember me' : 'without remember me');
+        logger.debug('Loaded stored session:', storedSession.remember ? 'with remember me' : 'without remember me');
         return storedSession;
       }
     } catch (error) {
-      console.error('Failed to load stored session:', error);
+      logger.error('Failed to load stored session:', error);
     }
     return { session: null, remember: false };
   };
@@ -29,13 +30,13 @@ export const useAuthStorage = () => {
           remember 
         });
         storageUtils.setLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME, remember);
-        console.log('Session saved to storage with remember me:', remember);
+        logger.debug('Session saved to storage with remember me:', remember);
       } else {
         storageUtils.removeLocalItem(AUTH_STORAGE_KEYS.SESSION);
-        console.log('Session removed from storage');
+        logger.debug('Session removed from storage');
       }
     } catch (error) {
-      console.error('Failed to save session:', error);
+      logger.error('Failed to save session:', error);
     }
   };
 
@@ -57,10 +58,11 @@ export const useAuthStorage = () => {
       const now = Date.now();
       if (cachedStatus && now - cachedStatus.timestamp < 300000) {
         // Use cache only if it's less than 5 minutes old
+        logger.debug("Using cached premium status:", cachedStatus.isPremium);
         return cachedStatus;
       }
     } catch (error) {
-      console.error('Failed to load premium status:', error);
+      logger.error('Failed to load premium status:', error);
     }
     return null;
   };

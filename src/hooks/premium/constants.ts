@@ -1,13 +1,23 @@
 
-import { PREMIUM_EMAILS, DEVELOPER_EMAILS } from '@/constants/subscriptionConstants';
-
-// Constants for premium check
+/**
+ * Constants for premium status checking
+ */
 export const PREMIUM_CHECK_CONSTANTS = {
+  // Cache prefix for premium status in localStorage
+  CACHE_PREFIX: 'premium_status_',
+  
+  // Cache name for in-memory storage
+  CACHE_NAME: 'premium_status_cache',
+  
+  // Cache TTL in milliseconds (5 minutes)
+  CACHE_TTL: 5 * 60 * 1000,
+  
+  // Time between premium status checks in milliseconds (10 minutes)
+  CHECK_INTERVAL: 10 * 60 * 1000,
+  
+  // Maximum number of retries for premium status checks
   MAX_RETRIES: 3,
-  RETRY_DELAY: 1000, // 1 second initial delay
-  CACHE_TTL: 5 * 60 * 1000, // 5 minutes cache lifetime
-  CACHE_NAME: 'premium-status',
+  
+  // Delay between retries in milliseconds (exponential backoff)
+  RETRY_DELAY: 2000,
 };
-
-// Export email lists for easy access
-export { PREMIUM_EMAILS, DEVELOPER_EMAILS };
