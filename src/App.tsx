@@ -23,6 +23,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import FoodDatabase from './pages/FoodDatabase';
+import AuthHandler from './components/auth/AuthHandler';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ const App = () => {
                   <Route path="/register" element={<Register />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/auth/callback" element={<AuthHandler />} />
                   
                   {/* Protected routes */}
                   <Route element={<ProtectedLayout />}>

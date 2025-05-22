@@ -57,7 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup: handleSignup,
     logout: handleLogout,
     resetPassword: handleResetPassword,
-    signInWithGoogle: handleSignInWithGoogle
+    signInWithGoogle: handleSignInWithGoogle,
+    updateAuthState // Expose this function for AuthHandler
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

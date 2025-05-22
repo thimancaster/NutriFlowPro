@@ -7,6 +7,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import AuthHandler from '@/components/auth/AuthHandler';
 
 // Main pages
 import Index from '@/pages/Index';
@@ -33,6 +34,7 @@ export const publicRoutes = [
   <Route key="register" path="/register" element={<Register />} />,
   <Route key="forgot-password" path="/forgot-password" element={<ForgotPassword />} />,
   <Route key="reset-password" path="/reset-password" element={<ResetPassword />} />,
+  <Route key="auth-callback" path="/auth/callback" element={<AuthHandler />} />,
   <Route key="add-testimonial" path="/add-testimonial" element={<AddTestimonial />} />
 ];
 
