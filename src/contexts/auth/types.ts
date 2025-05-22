@@ -1,3 +1,4 @@
+
 import { User, Session } from '@supabase/supabase-js';
 
 export interface AuthState {
@@ -37,5 +38,5 @@ export interface AuthContextType {
   updateAuthState: (session: Session | null, remember?: boolean) => Promise<void>;
 }
 
-// Export other types from auth.ts
-export type { AuthState } from '@/types/auth';
+// Import types from auth.ts instead of re-exporting
+// Removed line: export type { AuthState } from '@/types/auth';
