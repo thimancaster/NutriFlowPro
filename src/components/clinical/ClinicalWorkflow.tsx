@@ -7,7 +7,7 @@ import { ClinicalWorkflowStep } from '@/types/clinical';
 import PatientSelectionStep from './PatientSelectionStep';
 import PatientInfoStep from './PatientInfoStep';
 import WorkflowHeader from './WorkflowHeader';
-import { WorkflowSteps } from './WorkflowSteps';
+import WorkflowSteps from './WorkflowSteps'; // Fixed import to use default export
 
 const ClinicalWorkflow: React.FC = () => {
   const { patientId } = useParams();

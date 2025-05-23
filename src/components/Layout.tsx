@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -22,7 +23,7 @@ import { TourGuide } from "@/components/tour-guide/TourGuide";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth(); // Changed from signOut to logout
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -43,7 +44,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout(); // Changed from signOut to logout
   };
 
   return (
@@ -89,7 +90,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar_url || ''} alt={user.email || ''} />
+                          <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.email || ''} />
                           <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                       </Button>

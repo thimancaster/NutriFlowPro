@@ -1,193 +1,145 @@
-
-import { useRef, useEffect } from 'react';
-import { AuthState, StoredSession } from '@/types/auth';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AUTH_STORAGE_KEYS } from '@/constants/authConstants';
-import { storageUtils } from '@/utils/storageUtils';
-import { useToast } from '@/hooks/use-toast';
+import { User, Session } from '@supabase/supabase-js';
+import { useAuthStorage } from './useAuthStorage';
+import { setUser as setSentryUser, clearUser } from '@/utils/sentry';
 import { logger } from '@/utils/logger';
 
-// Singleton pattern to ensure only one auth listener exists
-let authListenerInitialized = false;
-let globalAuthSubscription: { unsubscribe: () => void } | null = null;
-
 /**
- * Hook that ensures a single authentication listener is established
- * across the entire application
+ * This is a singleton hook to maintain auth state across components
  */
-export const useAuthSingleton = (
-  setAuthState: React.Dispatch<React.SetStateAction<AuthState>>,
-  loadStoredSession: () => StoredSession,
-  saveSession: (session: any, remember: boolean) => void
-) => {
-  const { toast } = useToast();
-  const authListenerRef = useRef<{ unsubscribe: () => void } | null>(null);
-  
-  // Setup auth listener once for the entire app
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+// Initial auth state
+const initialState: AuthState = {
+  user: null,
+  session: null,
+  isAuthenticated: false,
+  isLoading: true
+};
+
+// Keep track of initialization
+let isInitialized = false;
+let currentAuthState = { ...initialState };
+
+export const useAuthSingleton = () => {
+  const [authState, setAuthState] = useState<AuthState>(currentAuthState);
+  const { storeSession, getStoredSession, clearStoredSession } = useAuthStorage();
+
+  // Initialize auth state
   useEffect(() => {
-    // Only initialize if not already done
-    if (!authListenerInitialized) {
-      logger.info('Initializing global auth listener (singleton)');
+    const initializeAuth = async () => {
+      if (isInitialized) return;
       
-      // Setup auth state change listener
-      const { data } = supabase.auth.onAuthStateChange((event, session) => {
-        logger.debug(`Auth state changed: ${event} Session: ${session ? 'exists' : 'null'}`);
-        
-        // Get remember me preference
-        const rememberMe = storageUtils.getLocalItem(AUTH_STORAGE_KEYS.REMEMBER_ME) || false;
+      try {
+        // First try to get session from Supabase (automatically refreshes token)
+        const { data: { session } } = await supabase.auth.getSession();
+
+        // If no session from Supabase, check local storage
+        if (!session) {
+          const storedSession = getStoredSession();
+          if (storedSession) {
+            // If we have a stored session, try to set it
+            const { data: { session: refreshedSession } } = await supabase.auth.setSession({
+              access_token: storedSession.access_token,
+              refresh_token: storedSession.refresh_token,
+            });
+            
+            if (refreshedSession) {
+              updateState(refreshedSession);
+            } else {
+              // If refresh failed, clear stored session
+              clearStoredSession();
+              updateState(null);
+            }
+          } else {
+            // No stored session
+            updateState(null);
+          }
+        } else {
+          // We have a valid session from Supabase
+          updateState(session);
+        }
+
+        isInitialized = true;
+
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        updateState(null);
+        isInitialized = true;
+      }
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event);
         
         if (event === 'SIGNED_IN') {
-          toast({
-            title: "Login realizado",
-            description: "Você foi autenticado com sucesso."
-          });
-          
-          // Update auth state with session and remember me preference
-          setAuthState(prev => ({
-            ...prev,
-            user: session?.user || null,
-            session: session,
-            isAuthenticated: true,
-            isLoading: false,
-            loading: false
-          }));
-          
-          saveSession(session, rememberMe);
-          storageUtils.setLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK, Date.now());
-          
+          updateState(session);
         } else if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Sessão encerrada",
-            description: "Você foi desconectado com sucesso."
-          });
-          
-          // Clear session data
-          saveSession(null, false);
-          storageUtils.setLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK, Date.now());
-          
-          // Update auth state
-          setAuthState(prev => ({
-            ...prev,
-            user: null, 
-            session: null,
-            isAuthenticated: false,
-            isLoading: false,
-            loading: false
-          }));
-          
+          clearStoredSession();
+          updateState(null);
         } else if (event === 'TOKEN_REFRESHED') {
-          logger.debug('Token refreshed successfully');
-          
-          // Update auth state with refreshed session
-          setAuthState(prev => ({
-            ...prev,
-            user: session?.user || null,
-            session: session,
-            isAuthenticated: true,
-            isLoading: false,
-            loading: false
-          }));
-          
-          saveSession(session, rememberMe);
-          storageUtils.setLocalItem(AUTH_STORAGE_KEYS.LAST_AUTH_CHECK, Date.now());
+          updateState(session);
         }
+      }
+    );
+
+    // Initialize auth
+    initializeAuth();
+
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Update auth state
+  const updateState = (session: Session | null, remember: boolean = false) => {
+    const user = session?.user ?? null;
+    const isAuthenticated = !!user;
+    
+    if (session && user) {
+      // Store session if provided
+      storeSession(session, remember);
+      
+      // Update Sentry user context
+      setSentryUser({
+        id: user.id,
+        email: user.email || undefined,
+        name: user.user_metadata?.name
       });
       
-      // Store the subscription reference
-      authListenerRef.current = data.subscription;
-      globalAuthSubscription = data.subscription;
-      authListenerInitialized = true;
-      
-      // Initial session check
-      const initialCheck = async () => {
-        try {
-          // Try to load session from storage first (for remember me)
-          const { session: storedSession, remember } = loadStoredSession();
-          
-          // If we have a stored session and remember me is enabled, use that
-          if (storedSession && remember) {
-            logger.debug("Using stored session from localStorage");
-            setAuthState(prev => ({
-              ...prev,
-              user: storedSession.user,
-              session: storedSession,
-              isAuthenticated: true,
-              isLoading: false,
-              loading: false
-            }));
-            return;
-          }
-          
-          // Otherwise check with Supabase
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            throw error;
-          }
-          
-          logger.debug("Session check:", data.session ? "Session found" : "No session");
-          
-          // If there's an active session from Supabase
-          if (data.session) {
-            setAuthState(prev => ({
-              ...prev,
-              user: data.session.user,
-              session: data.session,
-              isAuthenticated: true,
-              isLoading: false,
-              loading: false
-            }));
-            saveSession(data.session, remember);
-          } else {
-            // No session found
-            setAuthState(prev => ({
-              ...prev,
-              user: null,
-              session: null,
-              isAuthenticated: false,
-              isLoading: false,
-              loading: false
-            }));
-            saveSession(null, false);
-          }
-        } catch (error) {
-          logger.error("Error checking session:", error);
-          
-          setAuthState(prev => ({ 
-            ...prev, 
-            isLoading: false, 
-            loading: false, 
-            isAuthenticated: false,
-            user: null,
-            session: null
-          }));
-          
-          toast({
-            title: "Erro de autenticação",
-            description: "Houve um problema ao verificar sua sessão. Por favor, tente novamente.",
-            variant: "destructive"
-          });
-        }
-      };
-      
-      initialCheck();
+      logger.info("User authenticated", {
+        context: "Auth",
+        user: user.email,
+        details: { id: user.id }
+      });
+    } else {
+      clearUser();
+      logger.info("No authenticated user", { context: "Auth" });
     }
     
-    return () => {
-      // Do not unsubscribe the global listener when individual components unmount
+    // Update the internal state
+    const newState = {
+      user,
+      session,
+      isAuthenticated,
+      isLoading: false
     };
-  }, [setAuthState, loadStoredSession, saveSession, toast]);
-  
-  // Return the listener ref for external access
+    
+    currentAuthState = newState;
+    setAuthState(newState);
+  };
+
   return {
-    authListener: authListenerRef.current,
-    isInitialized: authListenerInitialized,
-    resetListener: () => {
-      if (globalAuthSubscription) {
-        globalAuthSubscription.unsubscribe();
-        globalAuthSubscription = null;
-      }
-      authListenerInitialized = false;
-    }
+    ...authState,
+    updateState
   };
 };

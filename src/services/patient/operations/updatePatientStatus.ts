@@ -1,40 +1,44 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Patient } from '@/types';
 
-/**
- * Update a patient's status (active/archived)
- */
-export const updatePatientStatus = async (patientId: string, userId: string, status: 'active' | 'archived') => {
+interface UpdatePatientStatusResult {
+  success: boolean;
+  data?: Patient;
+  error?: string;
+}
+
+export const updatePatientStatus = async (
+  patientId: string, 
+  userId: string,
+  status: 'active' | 'archived'
+): Promise<UpdatePatientStatusResult> => {
   try {
-    console.log(`Updating patient ${patientId} to status ${status} for user ${userId}`);
+    // Input validation
+    if (!patientId) return { success: false, error: 'Patient ID is required' };
+    if (!userId) return { success: false, error: 'User ID is required' };
     
+    // Update patient status
     const { data, error } = await supabase
       .from('patients')
-      .update({ 
-        status, 
-        updated_at: new Date().toISOString() 
-      })
+      .update({ status, updated_at: new Date() })
       .eq('id', patientId)
       .eq('user_id', userId)
-      .select();
-    
-    if (error) {
-      console.error("Supabase error:", error);
-      throw error;
-    }
-
-    console.log("Status update successful:", data);
+      .select('*')
+      .single();
+      
+    if (error) throw error;
     
     return {
       success: true,
-      data: data?.[0],
-      message: `Patient ${status === 'archived' ? 'archived' : 'activated'} successfully`
+      data: data as Patient
     };
+    
   } catch (error: any) {
-    console.error(`Error ${status === 'archived' ? 'archiving' : 'activating'} patient:`, error.message);
+    console.error('Error updating patient status:', error.message);
     return {
       success: false,
-      error: error.message
+      error: error.message || 'Failed to update patient status'
     };
   }
 };

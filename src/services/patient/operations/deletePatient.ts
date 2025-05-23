@@ -1,32 +1,38 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { dbCache } from '@/services/dbCache';
 
-/**
- * Delete a patient from the database
- */
-export const deletePatient = async (patientId: string): Promise<void> => {
-  if (!patientId) {
-    throw new Error('Patient ID is required');
-  }
+interface DeletePatientResult {
+  success: boolean;
+  error?: string;
+}
 
+export const deletePatient = async (
+  patientId: string,
+  userId: string
+): Promise<DeletePatientResult> => {
   try {
+    // Input validation
+    if (!patientId) return { success: false, error: 'Patient ID is required' };
+    if (!userId) return { success: false, error: 'User ID is required' };
+    
+    // Delete patient - or consider setting a 'deleted' flag instead of actual deletion
     const { error } = await supabase
       .from('patients')
       .delete()
-      .eq('id', patientId);
-
-    if (error) {
-      throw error;
-    }
-
-    // Invalidate relevant cache entries
-    dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patientId}`);
-    dbCache.invalidate(dbCache.KEYS.PATIENTS);
-    dbCache.invalidate(`${dbCache.KEYS.CONSULTATIONS}${patientId}`);
-    dbCache.invalidate(`${dbCache.KEYS.MEAL_PLANS}${patientId}`);
-  } catch (error) {
-    console.error('Error deleting patient:', error);
-    throw error;
+      .eq('id', patientId)
+      .eq('user_id', userId);
+      
+    if (error) throw error;
+    
+    return {
+      success: true
+    };
+    
+  } catch (error: any) {
+    console.error('Error deleting patient:', error.message);
+    return {
+      success: false,
+      error: error.message || 'Failed to delete patient'
+    };
   }
-}
+};

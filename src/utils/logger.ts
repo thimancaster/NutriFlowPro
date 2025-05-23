@@ -25,14 +25,19 @@ class Logger {
     return `${timestamp} ${level.toUpperCase()}: ${context} ${message} ${tags}`.trim();
   }
   
-  private log(level: LogLevel, message: string, options?: LogOptions): void {
+  private log(level: LogLevel, message: string, options?: LogOptions | string): void {
+    // If options is a string, convert it to LogOptions
+    if (typeof options === 'string') {
+      options = { context: options };
+    }
+    
     // Skip debug logs in production unless explicitly enabled
     if (level === 'debug' && !DEBUG_ENABLED) {
       return;
     }
     
-    const formattedMessage = this.formatMessage(level, message, options);
-    const details = options?.details;
+    const formattedMessage = this.formatMessage(level, message, options as LogOptions);
+    const details = (options as LogOptions)?.details;
     
     // Log to console using appropriate method
     switch (level) {
@@ -51,7 +56,7 @@ class Logger {
     }
     
     // In a real application, we could send logs to a service here
-    this.sendToExternalService(level, message, options);
+    this.sendToExternalService(level, message, options as LogOptions);
   }
   
   private sendToExternalService(level: LogLevel, message: string, options?: LogOptions): void {
@@ -70,19 +75,19 @@ class Logger {
     }
   }
   
-  debug(message: string, options?: LogOptions): void {
+  debug(message: string, options?: LogOptions | string): void {
     this.log('debug', message, options);
   }
   
-  info(message: string, options?: LogOptions): void {
+  info(message: string, options?: LogOptions | string): void {
     this.log('info', message, options);
   }
   
-  warn(message: string, options?: LogOptions): void {
+  warn(message: string, options?: LogOptions | string): void {
     this.log('warn', message, options);
   }
   
-  error(message: string, options?: LogOptions): void {
+  error(message: string, options?: LogOptions | string): void {
     this.log('error', message, options);
   }
 }

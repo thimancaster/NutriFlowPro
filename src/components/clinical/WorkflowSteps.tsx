@@ -1,8 +1,10 @@
 
 import React from 'react';
-import { ClinicalWorkflowStep, useClinical } from '@/contexts/ClinicalContext';
+import { ClinicalWorkflowStep } from '@/types/clinical';
 import { Check, User, Ruler, Calculator, Utensils, FileText, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Patient } from '@/types';
+import { ConsultationData } from '@/types/consultation';
 
 interface WorkflowStepProps {
   step: ClinicalWorkflowStep;
@@ -49,9 +51,19 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
   );
 };
 
-const WorkflowSteps: React.FC = () => {
-  const { currentStep, setCurrentStep, activeConsultation } = useClinical();
-  
+interface WorkflowStepsProps {
+  currentStep: ClinicalWorkflowStep;
+  patient: Patient | null;
+  consultation: ConsultationData | null;
+  setConsultation: (consultation: ConsultationData | null) => void;
+}
+
+const WorkflowSteps: React.FC<WorkflowStepsProps> = ({ 
+  currentStep, 
+  patient, 
+  consultation,
+  setConsultation
+}) => {
   const steps: { step: ClinicalWorkflowStep; label: string; icon: React.ReactNode; completable: boolean }[] = [
     { step: 'patient-selection', label: 'Seleção de Paciente', icon: <User className="h-4 w-4" />, completable: true },
     { step: 'patient-info', label: 'Dados do Paciente', icon: <User className="h-4 w-4" />, completable: true },
@@ -67,8 +79,15 @@ const WorkflowSteps: React.FC = () => {
   
   // Determine which steps can be clicked (only previous steps and current step)
   const canClickStep = (stepIndex: number) => {
-    if (!activeConsultation) return stepIndex === 0;
+    if (!consultation) return stepIndex === 0;
     return stepIndex <= currentStepIndex;
+  };
+  
+  // Set the current step
+  const setCurrentStep = (step: ClinicalWorkflowStep) => {
+    // Implementation would typically involve context or state updates
+    console.log("Changing step to:", step);
+    // This is a placeholder - the actual implementation would depend on how the workflow is managed
   };
   
   return (

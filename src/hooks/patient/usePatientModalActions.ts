@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Patient } from '@/types';
-import { updatePatientStatus, updatePatient } from '@/services/patient';
+import { updatePatientStatus } from '@/services/patient/operations/updatePatientStatus';
+import { updatePatient } from '@/services/patient/operations/updatePatient';
 import { useToast } from '@/hooks/use-toast';
 
 interface UsePatientModalActionsProps {

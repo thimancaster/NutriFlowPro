@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Archive, ArchiveRestore } from 'lucide-react';
 import { Patient } from '@/types';
-import { PatientService } from '@/services/patient';
+import { updatePatientStatus } from '@/services/patient/operations/updatePatientStatus';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -36,10 +36,10 @@ const PatientStatusActions: React.FC<PatientStatusActionsProps> = ({ patient, on
     
     try {
       const newStatus = isArchived ? 'active' : 'archived';
-      const result = await PatientService.updatePatientStatus(
+      const result = await updatePatientStatus(
         patient.id, 
-        user?.id || '', 
-        newStatus
+        user?.id || '',
+        newStatus as 'active' | 'archived'
       );
       
       if (!result.success) {

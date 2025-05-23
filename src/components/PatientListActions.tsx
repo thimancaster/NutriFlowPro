@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Archive, RotateCcw } from 'lucide-react';
 import { Patient } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { PatientService } from '@/services/patient';
+import { updatePatientStatus } from '@/services/patient/operations/updatePatientStatus';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -35,10 +35,10 @@ const PatientListActions = ({ patient, onViewDetail, onStatusChange }: PatientLi
     
     try {
       const newStatus = patient.status === 'active' ? 'archived' : 'active';
-      const result = await PatientService.updatePatientStatus(
+      const result = await updatePatientStatus(
         patient.id, 
         user.id,
-        newStatus
+        newStatus as 'active' | 'archived'
       );
 
       if (result.success) {

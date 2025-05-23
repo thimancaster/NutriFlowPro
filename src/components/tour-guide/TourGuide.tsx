@@ -62,9 +62,9 @@ export const TourGuide: React.FC<TourGuideProps> = ({ showForFirstLogin = true }
 
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data;
-    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
     
-    if (finishedStatuses.includes(status)) {
+    // Fixed: Check if status is included in finishedStatuses array
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRun(false);
       setTourCompleted(true);
     }

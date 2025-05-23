@@ -85,10 +85,10 @@ export const usePatientFormSubmit = ({
         result = await PatientService.savePatient({
           ...patientData,
           id: editPatient.id
-        }, userId);
+        });
       } else {
         // Use the PatientService to insert new patient
-        result = await PatientService.savePatient(patientData, userId);
+        result = await PatientService.savePatient(patientData);
       }
       
       if (!result.success) {
