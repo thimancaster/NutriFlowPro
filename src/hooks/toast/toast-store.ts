@@ -81,7 +81,9 @@ export const toast = (props: ToastProps) => {
   const update = (updatedProps: ToastProps) =>
     dispatch({
       type: ActionType.UPDATE_TOAST,
-      toast: { ...updatedProps, id },
+      toast: { ...updatedProps, id, open: true, onOpenChange: (open) => {
+        if (!open) dispatch({ type: ActionType.DISMISS_TOAST, id });
+      }},
     });
 
   const dismiss = () => dispatch({ type: ActionType.DISMISS_TOAST, id });
