@@ -34,6 +34,7 @@ export const usePatientDetail = (patientId?: string) => {
       }
       
       try {
+        // Explicitly cast the result to PatientResponse
         const result = await PatientService.getPatient(patientId) as PatientResponse;
         return result;
       } catch (error: any) {
@@ -51,6 +52,7 @@ export const usePatientDetail = (patientId?: string) => {
   // Extract the actual patient data from the response
   const patient = patientResponse?.success ? patientResponse.data : null;
   const isPatientArchived = patient?.status === 'archived';
+  const isError = !!error; // Add isError property derived from error
   
   // Add functions to show/hide dialogs
   const openArchiveDialog = () => setShowArchiveDialog(true);
@@ -79,6 +81,7 @@ export const usePatientDetail = (patientId?: string) => {
     patient,
     isLoading,
     error,
+    isError, // Include isError in the returned object
     refetch,
     isSaving,
     setIsSaving,

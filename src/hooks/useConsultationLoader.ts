@@ -29,6 +29,7 @@ export const useConsultationLoader = () => {
   const fetchPatient = async (id: string) => {
     try {
       setIsLoading(true);
+      // Explicitly cast the result to PatientResponse
       const response = await PatientService.getPatient(id) as PatientResponse;
       
       if (response.success) {

@@ -13,6 +13,7 @@ interface PatientResponse {
 
 const fetchPatientById = async (patientId: string, setPatient: (patient: Patient | null) => void, toast: any) => {
   try {
+    // Explicitly cast the result to PatientResponse
     const result = await PatientService.getPatient(patientId) as PatientResponse;
     
     if (result.success && result.data) {

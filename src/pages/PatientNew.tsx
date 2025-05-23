@@ -31,6 +31,7 @@ const PatientNew = () => {
     queryFn: async () => {
       if (!id) return null;
       
+      // Explicitly cast the result to PatientResponse
       const result = await PatientService.getPatient(id) as PatientResponse;
       
       if (!result.success) {
