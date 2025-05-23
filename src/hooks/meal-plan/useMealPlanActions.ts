@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 import { Patient, ConsultationData } from '@/types';
 import { MealPlan, MealDistributionItem } from '@/types/meal';
 
@@ -11,7 +11,7 @@ interface UseMealPlanActionsProps {
   mealPlan: MealPlan | null;
   setMealPlan: (mealPlan: MealPlan) => void;
   mealDistribution: MealDistributionItem[];
-  saveMealPlan: (consultationId: string, mealPlan: any) => Promise<any>;
+  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
 }
 
 export const useMealPlanActions = ({
@@ -22,71 +22,69 @@ export const useMealPlanActions = ({
   mealDistribution,
   saveMealPlan
 }: UseMealPlanActionsProps) => {
-  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Function to handle saving the meal plan
   const handleSaveMealPlan = async () => {
-    if (!consultationData || !consultationData.id || !activePatient) {
+    if (!activePatient || !consultationData) {
       toast({
         title: "Erro",
-        description: "Dados da consulta ou paciente não encontrados",
-        variant: "destructive"
+        description: "Paciente ou dados de consulta não disponíveis",
+        variant: "destructive",
       });
       return;
     }
 
-    setIsSaving(true);
-
     try {
-      // Convert array to object with IDs as keys
-      const mealDistributionObject: Record<string, MealDistributionItem> = {};
-      mealDistribution.forEach(meal => {
-        mealDistributionObject[meal.id] = meal;
-      });
+      setIsSaving(true);
       
-      // Prepare the meal plan data
-      const mealPlanData: MealPlan = {
-        id: mealPlan?.id || uuidv4(),
-        user_id: consultationData.user_id || '',
+      // Create a valid meal plan to save
+      const newMealPlan: MealPlan = {
+        id: mealPlan?.id || '',
+        user_id: activePatient.user_id || '',
         patient_id: activePatient.id,
-        date: new Date(),
+        date: format(new Date(), 'yyyy-MM-dd'),
         meals: mealDistribution.map(meal => ({
+          id: '',
           name: meal.name,
-          time: "", // This could be set based on meal name or user input
-          calories: meal.calories,
-          protein: meal.protein,
-          carbs: meal.carbs,
-          fat: meal.fat,
-          proteinPercent: 0, // This would need to be calculated
-          carbsPercent: 0,   // This would need to be calculated
-          fatPercent: 0,     // This would need to be calculated
-          foods: [] // Initially empty, to be filled later
+          time: '',
+          foods: [],
+          totalCalories: meal.calories,
+          totalProtein: meal.protein,
+          totalCarbs: meal.carbs,
+          totalFats: meal.fat
         })),
-        mealDistribution: mealDistributionObject,
-        total_calories: consultationData.results.vet || 0,
-        total_protein: consultationData.results.macros.protein || 0,
-        total_carbs: consultationData.results.macros.carbs || 0,
-        total_fats: consultationData.results.macros.fat || 0
+        total_calories: mealDistribution.reduce((sum, meal) => sum + meal.calories, 0),
+        total_protein: mealDistribution.reduce((sum, meal) => sum + meal.protein, 0),
+        total_carbs: mealDistribution.reduce((sum, meal) => sum + meal.carbs, 0),
+        total_fats: mealDistribution.reduce((sum, meal) => sum + meal.fat, 0),
+        created_at: mealPlan?.created_at || format(new Date(), 'yyyy-MM-dd'),
+        updated_at: format(new Date(), 'yyyy-MM-dd'),
+        mealDistribution: mealDistribution.reduce((obj, meal, idx) => {
+          obj[`meal_${idx}`] = meal;
+          return obj;
+        }, {} as Record<string, MealDistributionItem>)
       };
-
-      // Save the meal plan
-      const result = await saveMealPlan(consultationData.id, mealPlanData);
-
+      
+      const result = await saveMealPlan(consultationData.id, newMealPlan);
+      
       if (result.success) {
-        setMealPlan(mealPlanData);
+        setMealPlan(newMealPlan);
+        
         toast({
-          title: "Plano salvo",
-          description: "Plano alimentar salvo com sucesso"
+          title: "Plano alimentar salvo",
+          description: "O plano alimentar foi salvo com sucesso",
         });
       } else {
-        throw new Error(result.error || "Erro ao salvar o plano alimentar");
+        throw new Error(result.error || "Erro ao salvar plano alimentar");
       }
     } catch (error: any) {
+      console.error('Error saving meal plan:', error);
+      
       toast({
-        title: "Erro",
-        description: error.message || "Não foi possível salvar o plano alimentar",
-        variant: "destructive"
+        title: "Erro ao salvar",
+        description: error.message || "Ocorreu um erro ao salvar o plano alimentar",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);

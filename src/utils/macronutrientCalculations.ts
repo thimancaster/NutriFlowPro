@@ -74,16 +74,18 @@ export const mapLegacyProfile = (profile: string): Profile => {
   switch (profile.toLowerCase()) {
     case 'magro':
       return 'magro';
-    case 'sobrepeso_obesidade':
-      return 'sobrepeso_obesidade';
-    case 'atleta':
-      return 'atleta';
-    case 'obeso':
-      return 'obeso';
-    case 'sobrepeso':
-      return 'sobrepeso';
     case 'normal':
       return 'normal';
+    case 'sobrepeso':
+      return 'sobrepeso';
+    case 'obeso':
+      return 'obeso';
+    case 'atleta':
+      return 'atleta';
+    case 'eutrofico':
+      return 'normal';
+    case 'sobrepeso_obesidade':
+      return 'sobrepeso';
     default:
       return 'normal';
   }

@@ -1,4 +1,5 @@
 
+import { format } from 'date-fns';
 import { MealPlan, MealItem, MealDistributionItem } from '@/types/meal';
 
 export interface MealPlanSettings {
@@ -152,16 +153,29 @@ export function generateMealPlanData(
   const totalFats = meals.reduce((sum, meal) => sum + meal.fat, 0);
   
   return {
-    title: `Plano Alimentar - ${new Date().toLocaleDateString()}`, // Using title instead of name
+    id: '',  // Will be assigned by backend
+    title: `Plano Alimentar - ${new Date().toLocaleDateString()}`,
+    name: `Plano Alimentar - ${new Date().toLocaleDateString()}`,
     patient_id: '',  // This should be filled in by the parent component
     user_id: '', // Add required user_id property
-    date: new Date(),
-    total_calories: totalCals,
+    date: format(new Date(), 'yyyy-MM-dd'),
+    total_calories: parseInt(totalCalories),
     total_protein: totalProtein,
     total_carbs: totalCarbs,
     total_fats: totalFats,
-    meals: meals,
-    mealDistribution: {} // Initialize as empty object instead of array
+    meals: meals.map(meal => ({
+      id: '',
+      name: meal.name,
+      time: meal.time,
+      foods: [],
+      totalCalories: meal.calories,
+      totalProtein: meal.protein,
+      totalCarbs: meal.carbs,
+      totalFats: meal.fat
+    })),
+    created_at: format(new Date(), 'yyyy-MM-dd'),
+    updated_at: format(new Date(), 'yyyy-MM-dd'),
+    mealDistribution: {} // Initialize as empty object
   };
 }
 

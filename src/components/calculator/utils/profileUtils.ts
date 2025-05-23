@@ -15,10 +15,6 @@ export const stringToProfile = (value: string): Profile => {
       return 'obeso';
     case 'atleta':
       return 'atleta';
-    case 'eutrofico':
-      return 'eutrofico';
-    case 'sobrepeso_obesidade':
-      return 'sobrepeso_obesidade';
     case 'normal':
       return 'normal';
     case 'sobrepeso':
@@ -33,10 +29,15 @@ export const stringToProfile = (value: string): Profile => {
     case 'endomorfo':
     case 'endomorph':
       return 'sobrepeso';  // Map consistently to 'sobrepeso'
+    // Handle legacy profiles
+    case 'eutrofico':
+      return 'normal';  // Map to 'normal'
+    case 'sobrepeso_obesidade':
+      return 'sobrepeso';  // Map to 'sobrepeso'
     default:
       // If the value doesn't match exactly, try to determine closest match
       if (normalizedValue.includes('peso') || normalizedValue.includes('obre') || normalizedValue.includes('endo')) {
-        return 'sobrepeso_obesidade';
+        return 'sobrepeso';
       } else if (normalizedValue.includes('atleta')) {
         return 'atleta';
       } else if (normalizedValue.includes('ecto') || normalizedValue.includes('magr')) {
@@ -44,7 +45,7 @@ export const stringToProfile = (value: string): Profile => {
       } else if (normalizedValue.includes('meso') || normalizedValue.includes('medi')) {
         return 'normal';
       } else {
-        return 'eutrofico'; // Default fallback
+        return 'normal'; // Default fallback
       }
   }
 };
@@ -57,10 +58,6 @@ export const getProfileLabel = (profile: Profile | string): string => {
   const normalizedProfile = stringToProfile(String(profile));
   
   switch (normalizedProfile) {
-    case 'eutrofico':
-      return 'Eutrófico';
-    case 'sobrepeso_obesidade':
-      return 'Sobrepeso/Obesidade';
     case 'atleta':
       return 'Atleta';
     case 'magro':

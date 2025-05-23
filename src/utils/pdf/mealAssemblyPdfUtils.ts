@@ -1,10 +1,10 @@
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { MealItem, Meal } from '@/types/meal';
+import { Meal, MealFood, MealItem } from '@/types/meal';
 
 interface GeneratePDFOptions {
-  meals: Meal[];
+  meals: Array<Meal | MealItem>;
   patientName: string;
   patientData?: any;
   totalCalories: number;
@@ -66,29 +66,48 @@ export const generateMealAssemblyPDF = ({
     
     // Add meal name
     doc.setFontSize(14);
-    doc.text(`${meal.name} (${meal.time})`, 14, yPosition);
+    // Use correct properties based on meal type
+    const mealName = 'name' in meal ? meal.name : '';
+    const mealTime = 'time' in meal ? meal.time : '';
+    doc.text(`${mealName} (${mealTime})`, 14, yPosition);
     
     yPosition += 7;
     
-    // Add meal summary
+    // Add meal summary - handle different property names
     doc.setFontSize(11);
-    doc.text(`Calorias: ${meal.calories} kcal | P: ${meal.protein}g | C: ${meal.carbs}g | G: ${meal.fat}g`, 14, yPosition);
+    const calories = 'calories' in meal ? meal.calories : ('totalCalories' in meal ? meal.totalCalories : 0);
+    const protein = 'protein' in meal ? meal.protein : ('totalProtein' in meal ? meal.totalProtein : 0);
+    const carbs = 'carbs' in meal ? meal.carbs : ('totalCarbs' in meal ? meal.totalCarbs : 0);
+    const fat = 'fat' in meal ? meal.fat : ('totalFats' in meal ? meal.totalFats : 0);
+    
+    doc.text(`Calorias: ${calories} kcal | P: ${protein}g | C: ${carbs}g | G: ${fat}g`, 14, yPosition);
     
     yPosition += 10;
     
     // Add food table
-    if (meal.foods.length > 0) {
+    const foods = 'foods' in meal ? meal.foods : [];
+    if (foods.length > 0) {
       autoTable(doc, {
         startY: yPosition,
         head: [['Alimento', 'Porção', 'Calorias', 'Proteínas', 'Carboidratos', 'Gorduras']],
-        body: meal.foods.map(food => [
-          food.name,
-          food.portion || '-',
-          `${food.calories} kcal`,
-          `${food.protein}g`,
-          `${food.carbs}g`,
-          `${food.fat}g`
-        ]),
+        body: foods.map(food => {
+          // Handle different food structures
+          const foodName = 'name' in food ? food.name : (food.food ? food.food.name : 'N/A');
+          const portion = 'portion' in food ? food.portion : (food.quantity ? `${food.quantity} ${food.unit}` : 'N/A');
+          const foodCalories = 'calories' in food ? food.calories : (food.food ? food.food.calories : 0);
+          const foodProtein = 'protein' in food ? food.protein : (food.food ? food.food.protein : 0);
+          const foodCarbs = 'carbs' in food ? food.carbs : (food.food ? food.food.carbs : 0);
+          const foodFats = 'fats' in food ? food.fats : ('fat' in food ? food.fat : (food.food ? food.food.fats : 0));
+          
+          return [
+            foodName,
+            portion,
+            `${foodCalories} kcal`,
+            `${foodProtein}g`,
+            `${foodCarbs}g`,
+            `${foodFats}g`
+          ];
+        }),
         margin: { left: 14 },
         headStyles: {
           fillColor: [76, 175, 80]

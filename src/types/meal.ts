@@ -34,6 +34,15 @@ export interface Meal {
   totalCarbs: number;
   totalFats: number;
   notes?: string;
+  // Additional properties for compatibility with MealItem
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  proteinPercent?: number;
+  carbsPercent?: number;
+  fatPercent?: number;
+  portion?: string;
 }
 
 export interface MealPlan {
@@ -49,6 +58,9 @@ export interface MealPlan {
   total_fats: number;
   created_at: string;
   updated_at: string;
+  mealDistribution?: Record<string, MealDistributionItem>;
+  title?: string;
+  name?: string;
 }
 
 export interface MealDistribution {
@@ -71,4 +83,37 @@ export interface MealPlanSettings {
     dislikes?: string[];
     preferences?: string[];
   };
+}
+
+// Add the missing types needed by components
+export interface MealDistributionItem {
+  id: string;
+  name: string;
+  percent: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  calories: number;
+  foods: any[];
+  suggestions?: string[];
+}
+
+// Add MealItem type that was missing
+export interface MealItem {
+  id?: string;
+  mealNumber?: number;
+  name: string;
+  time: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  percentage: number;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
+  portion?: string;
+  selected?: boolean;
+  foods: any[];
+  foodSuggestions?: string[];
 }
