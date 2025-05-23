@@ -1,5 +1,40 @@
 
-import { Json } from '@/integrations/supabase/types';
+export interface AddressDetails {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+}
+
+export interface PatientMeasurements {
+  weight?: number;
+  height?: number;
+  body_fat?: number;
+  muscle_mass?: number;
+  imc?: number;
+  triceps?: number;
+  subscapular?: number;
+  suprailiac?: number;
+  abdominal?: number;
+  thigh?: number;
+  chest?: number;
+  waist?: number;
+  hip?: number;
+  arm?: number;
+  calf?: number;
+  lean_mass_kg?: number;
+  rcq?: number;
+}
+
+export interface PatientGoals {
+  objective?: string;
+  profile?: string;
+  targetWeight?: number;
+  initialWeight?: number;
+}
 
 export interface Patient {
   id: string;
@@ -11,18 +46,8 @@ export interface Patient {
   gender?: string;
   address?: AddressDetails | string;
   cpf?: string;
-  goals?: {
-    objective?: string;
-    profile?: string;
-    targetWeight?: number;
-    initialWeight?: number;
-  };
-  measurements?: {
-    weight?: number;
-    height?: number;
-    body_fat?: number;
-    muscle_mass?: number;
-  };
+  goals?: PatientGoals;
+  measurements?: PatientMeasurements;
   notes?: string;
   created_at?: string;
   updated_at?: string;
@@ -43,12 +68,7 @@ export interface PatientOption {
   birth_date?: string;
   gender?: string;
   age?: number;
-  measurements?: {
-    weight?: number;
-    height?: number;
-    body_fat?: number;
-    muscle_mass?: number;
-  };
+  measurements?: PatientMeasurements;
 }
 
 export interface PatientFilters {
@@ -62,14 +82,4 @@ export interface PatientFilters {
   sortDirection?: 'asc' | 'desc';
   page?: number;
   pageSize?: number;
-}
-
-export interface AddressDetails {
-  cep?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
 }

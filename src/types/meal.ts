@@ -1,64 +1,74 @@
 
-export interface MealItem {
-  id?: string;
+export interface FoodItem {
+  id: string;
   name: string;
-  portion?: string;
+  portion_size: number;
+  portion_unit: string;
   calories: number;
   protein: number;
   carbs: number;
-  fat: number;
-  time: string;
-  proteinPercent: number;
-  carbsPercent: number;
-  fatPercent: number;
-  foods: any[];
-  selected?: boolean;
+  fats: number;
+  food_group: string;
+  category: string;
+  serving_suggestion?: string;
+  meal_time?: string[];
+}
+
+export interface MealFood {
+  food: FoodItem;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
 }
 
 export interface Meal {
-  id?: string;
-  name: string;
-  time: string; // Changed from optional to required
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  proteinPercent: number;
-  carbsPercent: number;
-  fatPercent: number;
-  foods: any[];
-  selected?: boolean;
-}
-
-export interface MealDistributionItem {
   id: string;
   name: string;
-  description?: string;
-  time?: string;
-  percent: number;
-  percentage?: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  calories: number;
-  foods: any[];
-  suggestions?: string[];
+  time: string;
+  foods: MealFood[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFats: number;
+  notes?: string;
 }
 
 export interface MealPlan {
-  id?: string;
-  title?: string; // Add title field
-  name?: string; // Keep name field for backward compatibility
-  user_id?: string;
-  patient_id?: string;
-  date: Date | string;
-  meals: MealItem[];
-  mealDistribution?: Record<string, MealDistributionItem>;
+  id: string;
+  user_id: string;
+  patient_id: string;
+  calculation_id?: string;
+  date: string;
+  meals: Meal[];
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
-  created_at?: string | Date;
-  updated_at?: string | Date;
-  consultation_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MealDistribution {
+  mealName: string;
+  time: string;
+  caloriePercentage: number;
+  proteinPercentage: number;
+  carbsPercentage: number;
+  fatsPercentage: number;
+}
+
+export interface MealPlanSettings {
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFats: number;
+  mealDistribution: MealDistribution[];
+  patientPreferences?: {
+    allergies?: string[];
+    dislikes?: string[];
+    preferences?: string[];
+  };
 }

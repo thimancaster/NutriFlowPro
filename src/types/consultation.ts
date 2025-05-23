@@ -1,5 +1,53 @@
 
-// Define types for consultation data
+import { Patient } from './patient';
+
+// Define standardized types for consultation data
+export type Sex = 'M' | 'F';
+export type Objective = 'manutenção' | 'emagrecimento' | 'hipertrofia' | 'personalizado';
+export type Profile = 'magro' | 'normal' | 'sobrepeso' | 'obeso' | 'atleta';
+export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'muito_intenso';
+export type ConsultationType = 'primeira_consulta' | 'retorno';
+export type ConsultationStatus = 'em_andamento' | 'completo';
+
+// Constants for calculation based on profile
+export const PROTEIN_RATIOS: Record<Profile, number> = {
+  magro: 2.0,
+  normal: 1.8,
+  sobrepeso: 1.6,
+  obeso: 1.4,
+  atleta: 2.2
+};
+
+export const LIPID_RATIOS: Record<Profile, number> = {
+  magro: 1.0,
+  normal: 0.8,
+  sobrepeso: 0.7,
+  obeso: 0.6,
+  atleta: 1.0
+};
+
+export const CALORIE_VALUES = {
+  protein: 4,
+  carbs: 4,
+  fat: 9
+};
+
+// Activity factors for different activity levels
+export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
+  sedentario: 1.2,
+  leve: 1.375,
+  moderado: 1.55,
+  intenso: 1.725,
+  muito_intenso: 1.9
+};
+
+// Objective factors for caloric adjustments
+export const OBJECTIVE_FACTORS: Record<Exclude<Objective, 'personalizado'>, number> = {
+  emagrecimento: 0.8,   // Weight loss (20% deficit)
+  manutenção: 1.0,      // Maintenance
+  hipertrofia: 1.15     // Muscle gain (15% surplus)
+};
+
 export interface ConsultationResult {
   bmr: number;
   get: number;
@@ -11,6 +59,29 @@ export interface ConsultationResult {
     carbs: number;
     fat: number;
     proteinPerKg?: number;
+  };
+}
+
+export interface ConsultationFormState {
+  weight: string;
+  height: string;
+  age: string;
+  sex: Sex;
+  objective: Objective;
+  profile: Profile;
+  activityLevel: ActivityLevel;
+  consultationType: ConsultationType;
+  consultationStatus: ConsultationStatus;
+}
+
+export interface ConsultationResults {
+  tmb: number;
+  get: number;
+  fa: number;
+  macros: {
+    protein: number;
+    carbs: number;
+    fat: number;
   };
 }
 
@@ -68,61 +139,3 @@ export interface ConsultationData {
   
   results: ConsultationResult;
 }
-
-// Additional types for the consultation form
-export type Sex = 'M' | 'F';
-export type Objective = 'manutenção' | 'emagrecimento' | 'hipertrofia' | 'personalizado';
-export type Profile = 'magro' | 'normal' | 'sobrepeso' | 'obeso' | 'eutrofico' | 'sobrepeso_obesidade' | 'atleta';
-export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'muito_intenso';
-export type ConsultationType = 'primeira_consulta' | 'retorno';
-export type ConsultationStatus = 'em_andamento' | 'completo';
-
-export interface ConsultationFormState {
-  weight: string;
-  height: string;
-  age: string;
-  sex: Sex;
-  objective: Objective;
-  profile: Profile;
-  activityLevel: ActivityLevel;
-  consultationType: ConsultationType;
-  consultationStatus: ConsultationStatus;
-}
-
-export interface ConsultationResults {
-  tmb: number;
-  get: number;
-  fa: number;
-  macros: {
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-}
-
-// Constants for calculation
-export const PROTEIN_RATIOS = {
-  magro: 2.0,
-  normal: 1.8,
-  sobrepeso: 1.6,
-  obeso: 1.4,
-  eutrofico: 1.8,
-  sobrepeso_obesidade: 1.6,
-  atleta: 2.2
-};
-
-export const LIPID_RATIOS = {
-  magro: 1.0,
-  normal: 0.8,
-  sobrepeso: 0.7,
-  obeso: 0.6,
-  eutrofico: 0.8,
-  sobrepeso_obesidade: 0.7,
-  atleta: 1.0
-};
-
-export const CALORIE_VALUES = {
-  protein: 4,
-  carbs: 4,
-  fat: 9
-};
