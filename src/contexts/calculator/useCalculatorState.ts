@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
@@ -154,6 +155,7 @@ export const useCalculatorState = () => {
         
         switch (safeProfile) {
           case 'magro':
+          case 'eutrofico':
             protein = state.weight * 2.0;
             fats = state.weight * 1.0;
             break;
@@ -162,6 +164,7 @@ export const useCalculatorState = () => {
             fats = state.weight * 0.8;
             break;
           case 'sobrepeso':
+          case 'sobrepeso_obesidade':
             protein = state.weight * 1.6;
             fats = state.weight * 0.7;
             break;

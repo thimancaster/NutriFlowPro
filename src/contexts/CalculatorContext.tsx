@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { useToast } from '@/hooks/use-toast';
@@ -194,6 +195,7 @@ export const CalculatorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         
         switch (safeProfile) {
           case 'magro':
+          case 'eutrofico':
             protein = state.weight * 2.0;
             fats = state.weight * 1.0;
             break;
@@ -202,6 +204,7 @@ export const CalculatorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             fats = state.weight * 0.8;
             break;
           case 'sobrepeso':
+          case 'sobrepeso_obesidade':
             protein = state.weight * 1.6;
             fats = state.weight * 0.7;
             break;
