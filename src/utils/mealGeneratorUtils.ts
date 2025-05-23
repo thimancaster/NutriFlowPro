@@ -105,7 +105,7 @@ export function generateMealPlanData(
   }
   
   // Generate meals
-  const meals: MealItem[] = Array.from({ length: mealCount }, (_, i) => {
+  const mealItems: MealItem[] = Array.from({ length: mealCount }, (_, i) => {
     // Calculate macros for this meal
     const mealProtein = Math.round((caloriesPerMeal * proteinPercentage) / 4); // 4 calories per gram
     const mealCarbs = Math.round((caloriesPerMeal * carbsPercentage) / 4); // 4 calories per gram
@@ -148,9 +148,21 @@ export function generateMealPlanData(
   });
   
   // Calculate totals
-  const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0);
-  const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0);
-  const totalFats = meals.reduce((sum, meal) => sum + meal.fat, 0);
+  const totalProtein = mealItems.reduce((sum, meal) => sum + meal.protein, 0);
+  const totalCarbs = mealItems.reduce((sum, meal) => sum + meal.carbs, 0);
+  const totalFats = mealItems.reduce((sum, meal) => sum + meal.fat, 0);
+
+  // Convert MealItem[] to Meal[] for the MealPlan
+  const meals = mealItems.map(meal => ({
+    id: '',
+    name: meal.name,
+    time: meal.time,
+    foods: [],
+    totalCalories: meal.calories,
+    totalProtein: meal.protein,
+    totalCarbs: meal.carbs,
+    totalFats: meal.fat
+  }));
   
   return {
     id: '',  // Will be assigned by backend
@@ -163,16 +175,7 @@ export function generateMealPlanData(
     total_protein: totalProtein,
     total_carbs: totalCarbs,
     total_fats: totalFats,
-    meals: meals.map(meal => ({
-      id: '',
-      name: meal.name,
-      time: meal.time,
-      foods: [],
-      totalCalories: meal.calories,
-      totalProtein: meal.protein,
-      totalCarbs: meal.carbs,
-      totalFats: meal.fat
-    })),
+    meals: meals,
     created_at: format(new Date(), 'yyyy-MM-dd'),
     updated_at: format(new Date(), 'yyyy-MM-dd'),
     mealDistribution: {} // Initialize as empty object

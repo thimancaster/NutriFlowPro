@@ -32,7 +32,7 @@ export const useMealPlanState = ({
   } = useMealDistribution(
     // Make sure we properly convert the mealDistribution to an array format
     mealPlan?.mealDistribution 
-      ? Object.values(mealPlan.mealDistribution) 
+      ? Object.values(mealPlan.mealDistribution as Record<string, MealDistributionItem>) 
       : [], 
     consultationData
   );

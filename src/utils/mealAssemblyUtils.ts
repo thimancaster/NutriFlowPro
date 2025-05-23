@@ -1,5 +1,5 @@
 
-import { MealItem } from '@/types/meal';
+import { MealAssemblyFood } from '@/types/meal';
 
 export const MEAL_DISTRIBUTIONS = [
   {
@@ -40,7 +40,7 @@ export const MEAL_DISTRIBUTIONS = [
 ];
 
 // Sample foods - in a real app these would come from a database
-export const SAMPLE_FOODS: MealItem[] = [
+export const SAMPLE_FOODS: MealAssemblyFood[] = [
   {
     id: '1',
     name: 'Frango grelhado',
@@ -53,7 +53,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.75,
     carbsPercent: 0,
     fatPercent: 0.25,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '2',
@@ -67,7 +68,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.08,
     carbsPercent: 0.86,
     fatPercent: 0.06,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '3',
@@ -81,7 +83,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.26,
     carbsPercent: 0.72,
     fatPercent: 0.02,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '4',
@@ -95,7 +98,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.09,
     carbsPercent: 0.9,
     fatPercent: 0.01,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '5',
@@ -109,7 +113,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.32,
     carbsPercent: 0.03,
     fatPercent: 0.65,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '6',
@@ -123,7 +128,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.19,
     carbsPercent: 0.68,
     fatPercent: 0.13,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '7',
@@ -137,7 +143,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.05,
     carbsPercent: 0.93,
     fatPercent: 0.02,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '8',
@@ -151,7 +158,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.14,
     carbsPercent: 0.68,
     fatPercent: 0.18,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '9',
@@ -165,7 +173,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.4,
     carbsPercent: 0.59,
     fatPercent: 0.01,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '10',
@@ -179,7 +188,8 @@ export const SAMPLE_FOODS: MealItem[] = [
     proteinPercent: 0.02,
     carbsPercent: 0.95,
     fatPercent: 0.03,
-    foods: []
+    foods: [],
+    percentage: 0
   }
 ];
 
@@ -198,7 +208,8 @@ const BREAKFAST_FOODS = [
     proteinPercent: 0.28,
     carbsPercent: 0.37,
     fatPercent: 0.35,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '12',
@@ -212,7 +223,8 @@ const BREAKFAST_FOODS = [
     proteinPercent: 0.28,
     carbsPercent: 0.04,
     fatPercent: 0.68,
-    foods: []
+    foods: [],
+    percentage: 0
   },
 ];
 
@@ -231,7 +243,8 @@ const MAIN_MEAL_FOODS = [
     proteinPercent: 0.52,
     carbsPercent: 0,
     fatPercent: 0.48,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '14',
@@ -245,7 +258,8 @@ const MAIN_MEAL_FOODS = [
     proteinPercent: 0.75,
     carbsPercent: 0,
     fatPercent: 0.25,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '15',
@@ -259,7 +273,8 @@ const MAIN_MEAL_FOODS = [
     proteinPercent: 0.27,
     carbsPercent: 0.68,
     fatPercent: 0.05,
-    foods: []
+    foods: [],
+    percentage: 0
   },
 ];
 
@@ -278,7 +293,8 @@ const SNACK_FOODS = [
     proteinPercent: 0.11,
     carbsPercent: 0.13,
     fatPercent: 0.76,
-    foods: []
+    foods: [],
+    percentage: 0
   },
   {
     id: '17',
@@ -292,14 +308,15 @@ const SNACK_FOODS = [
     proteinPercent: 0.8,
     carbsPercent: 0.1,
     fatPercent: 0.1,
-    foods: []
+    foods: [],
+    percentage: 0
   },
 ];
 
 /**
  * Returns appropriate foods based on the meal name
  */
-export const filterFoodsByMeal = (mealName: string): MealItem[] => {
+export const filterFoodsByMeal = (mealName: string): MealAssemblyFood[] => {
   const normalizedName = mealName.toLowerCase();
   
   if (normalizedName.includes('café') || normalizedName.includes('cafe') || normalizedName.includes('manhã')) {

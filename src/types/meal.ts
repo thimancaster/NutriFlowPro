@@ -24,6 +24,24 @@ export interface MealFood {
   fats: number;
 }
 
+export interface MealAssemblyFood {
+  id: string;
+  name: string;
+  portion?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  time: string;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
+  percentage: number;
+  selected?: boolean;
+  foods: any[];
+  foodSuggestions?: string[];
+}
+
 export interface Meal {
   id: string;
   name: string;
@@ -96,6 +114,10 @@ export interface MealDistributionItem {
   calories: number;
   foods: any[];
   suggestions?: string[];
+  time?: string;
+  proteinPercent?: number;
+  carbsPercent?: number;
+  fatPercent?: number;
 }
 
 // Add MealItem type that was missing

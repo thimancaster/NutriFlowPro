@@ -2,27 +2,29 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MealItem } from '@/types/meal';
+import { MealAssemblyFood } from '@/types/meal';
 import { Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
+interface AssemblyMeal {
+  name: string;
+  time: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
+  foods: MealAssemblyFood[];
+}
+
 interface MealPlanAssemblyCardProps {
-  meal: {
-    name: string;
-    time: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    proteinPercent: number;
-    carbsPercent: number;
-    fatPercent: number;
-    foods: MealItem[];
-  };
+  meal: AssemblyMeal;
   mealIndex: number;
-  onAddFood: (mealIndex: number, food: MealItem) => void;
+  onAddFood: (mealIndex: number, food: MealAssemblyFood) => void;
   onRemoveFood: (mealIndex: number, foodIndex: number) => void;
-  suggestedFoods: MealItem[];
+  suggestedFoods: MealAssemblyFood[];
 }
 
 const MealPlanAssemblyCard: React.FC<MealPlanAssemblyCardProps> = ({

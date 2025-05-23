@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useMealGeneratorState } from '@/hooks/useMealGeneratorState';
 import { logger } from '@/utils/logger';
-import { MealDistributionItem } from '@/types';
+import { MealDistributionItem } from '@/types/meal';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

@@ -9,7 +9,7 @@ import {
   SAMPLE_FOODS 
 } from '@/utils/mealAssemblyUtils';
 import { generateMealAssemblyPDF } from '@/utils/pdf/mealAssemblyPdfUtils';
-import { MealItem, Meal } from '@/types/meal';
+import { MealItem, Meal, MealAssemblyFood } from '@/types/meal';
 import MealPlanAssemblyCard from './MealPlanAssemblyCard';
 import MealPlanMacroSummary from './MealPlanMacroSummary';
 import MealPlanLoader from './MealPlanLoader';
@@ -26,6 +26,20 @@ interface MealPlanAssemblyProps {
   patientData?: any;
 }
 
+// Define a local interface for the component's internal meal structure
+interface AssemblyMeal {
+  name: string;
+  time: string;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  calories: number;
+  foods: MealAssemblyFood[];
+}
+
 const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({ 
   totalCalories,
   macros,
@@ -33,7 +47,7 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
   patientData
 }) => {
   const { toast } = useToast();
-  const [meals, setMeals] = useState<Meal[]>([]);
+  const [meals, setMeals] = useState<AssemblyMeal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [generating, setGenerating] = useState<boolean>(false);
   
@@ -47,7 +61,7 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
       
       return {
         name: dist.name,
-        time: dist.time || '', // Ensure time always has a value
+        time: dist.time || '',
         proteinPercent: dist.proteinPercent,
         carbsPercent: dist.carbsPercent,
         fatPercent: dist.fatPercent,
@@ -55,7 +69,7 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
         carbs,
         fat,
         calories,
-        foods: [] as MealItem[]
+        foods: [] as MealAssemblyFood[]
       };
     });
     
@@ -63,13 +77,14 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
     setLoading(false);
   }, [totalCalories, macros]);
   
-  const handleAddFood = (mealIndex: number, food: MealItem) => {
+  const handleAddFood = (mealIndex: number, food: MealAssemblyFood) => {
     setMeals(prev => {
       const updatedMeals = [...prev];
       // Clone the food item so we don't modify the original
-      const newFood = { 
+      const newFood: MealAssemblyFood = { 
         ...food,
         selected: true,
+        percentage: food.percentage || 0,
         // Generate a unique ID if one doesn't exist
         id: food.id || `food-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
@@ -95,8 +110,28 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
     setGenerating(true);
     
     try {
+      // Convert AssemblyMeal to Meal for PDF generation
+      const mealsToPrint: Meal[] = meals.map(meal => ({
+        id: `meal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: meal.name,
+        time: meal.time,
+        foods: [],
+        totalCalories: meal.calories,
+        totalProtein: meal.protein,
+        totalCarbs: meal.carbs,
+        totalFats: meal.fat,
+        // Add properties for compatibility
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fat: meal.fat,
+        proteinPercent: meal.proteinPercent,
+        carbsPercent: meal.carbsPercent,
+        fatPercent: meal.fatPercent
+      }));
+      
       const doc = generateMealAssemblyPDF({
-        meals,
+        meals: mealsToPrint,
         patientName,
         patientData,
         totalCalories,

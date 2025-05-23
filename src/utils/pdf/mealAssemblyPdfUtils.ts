@@ -1,10 +1,10 @@
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Meal, MealFood, MealItem } from '@/types/meal';
+import { Meal, MealFood } from '@/types/meal';
 
 interface GeneratePDFOptions {
-  meals: Array<Meal | MealItem>;
+  meals: Array<Meal>;
   patientName: string;
   patientData?: any;
   totalCalories: number;
@@ -66,38 +66,53 @@ export const generateMealAssemblyPDF = ({
     
     // Add meal name
     doc.setFontSize(14);
-    // Use correct properties based on meal type
-    const mealName = 'name' in meal ? meal.name : '';
-    const mealTime = 'time' in meal ? meal.time : '';
-    doc.text(`${mealName} (${mealTime})`, 14, yPosition);
+    doc.text(`${meal.name} (${meal.time || 'Horário não definido'})`, 14, yPosition);
     
     yPosition += 7;
     
-    // Add meal summary - handle different property names
+    // Add meal summary
     doc.setFontSize(11);
-    const calories = 'calories' in meal ? meal.calories : ('totalCalories' in meal ? meal.totalCalories : 0);
-    const protein = 'protein' in meal ? meal.protein : ('totalProtein' in meal ? meal.totalProtein : 0);
-    const carbs = 'carbs' in meal ? meal.carbs : ('totalCarbs' in meal ? meal.totalCarbs : 0);
-    const fat = 'fat' in meal ? meal.fat : ('totalFats' in meal ? meal.totalFats : 0);
+    const calories = meal.totalCalories || meal.calories || 0;
+    const protein = meal.totalProtein || meal.protein || 0;
+    const carbs = meal.totalCarbs || meal.carbs || 0;
+    const fat = meal.totalFats || meal.fat || 0;
     
     doc.text(`Calorias: ${calories} kcal | P: ${protein}g | C: ${carbs}g | G: ${fat}g`, 14, yPosition);
     
     yPosition += 10;
     
     // Add food table
-    const foods = 'foods' in meal ? meal.foods : [];
+    const foods = meal.foods || [];
     if (foods.length > 0) {
       autoTable(doc, {
         startY: yPosition,
         head: [['Alimento', 'Porção', 'Calorias', 'Proteínas', 'Carboidratos', 'Gorduras']],
         body: foods.map(food => {
-          // Handle different food structures
-          const foodName = 'name' in food ? food.name : (food.food ? food.food.name : 'N/A');
-          const portion = 'portion' in food ? food.portion : (food.quantity ? `${food.quantity} ${food.unit}` : 'N/A');
-          const foodCalories = 'calories' in food ? food.calories : (food.food ? food.food.calories : 0);
-          const foodProtein = 'protein' in food ? food.protein : (food.food ? food.food.protein : 0);
-          const foodCarbs = 'carbs' in food ? food.carbs : (food.food ? food.food.carbs : 0);
-          const foodFats = 'fats' in food ? food.fats : ('fat' in food ? food.fat : (food.food ? food.food.fats : 0));
+          // Create a unified interface for accessing food properties
+          let foodName = '';
+          let portion = '';
+          let foodCalories = 0;
+          let foodProtein = 0;
+          let foodCarbs = 0;
+          let foodFats = 0;
+          
+          if ('food' in food && food.food) { 
+            // It's a MealFood
+            foodName = food.food.name;
+            portion = `${food.quantity} ${food.unit}`;
+            foodCalories = food.calories;
+            foodProtein = food.protein;
+            foodCarbs = food.carbs;
+            foodFats = food.fats;
+          } else if ('name' in food) {
+            // It's an object with direct properties
+            foodName = food.name;
+            portion = food.portion || 'N/A';
+            foodCalories = food.calories || 0;
+            foodProtein = food.protein || 0;
+            foodCarbs = food.carbs || 0;
+            foodFats = food.fat || 0;
+          }
           
           return [
             foodName,

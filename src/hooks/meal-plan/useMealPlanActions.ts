@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Patient, ConsultationData } from '@/types';
-import { MealPlan, MealDistributionItem } from '@/types/meal';
+import { MealPlan, MealDistributionItem, Meal } from '@/types/meal';
 
 interface UseMealPlanActionsProps {
   activePatient: Patient | null;
@@ -39,21 +39,23 @@ export const useMealPlanActions = ({
       setIsSaving(true);
       
       // Create a valid meal plan to save
+      const meals: Meal[] = mealDistribution.map(meal => ({
+        id: '',
+        name: meal.name,
+        time: '',
+        foods: [],
+        totalCalories: meal.calories,
+        totalProtein: meal.protein,
+        totalCarbs: meal.carbs,
+        totalFats: meal.fat
+      }));
+      
       const newMealPlan: MealPlan = {
         id: mealPlan?.id || '',
         user_id: activePatient.user_id || '',
         patient_id: activePatient.id,
         date: format(new Date(), 'yyyy-MM-dd'),
-        meals: mealDistribution.map(meal => ({
-          id: '',
-          name: meal.name,
-          time: '',
-          foods: [],
-          totalCalories: meal.calories,
-          totalProtein: meal.protein,
-          totalCarbs: meal.carbs,
-          totalFats: meal.fat
-        })),
+        meals: meals,
         total_calories: mealDistribution.reduce((sum, meal) => sum + meal.calories, 0),
         total_protein: mealDistribution.reduce((sum, meal) => sum + meal.protein, 0),
         total_carbs: mealDistribution.reduce((sum, meal) => sum + meal.carbs, 0),
