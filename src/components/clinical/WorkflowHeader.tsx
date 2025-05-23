@@ -1,78 +1,87 @@
-
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, User, CalendarClock, CheckCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Patient } from '@/types/patient';
+import { ConsultationData } from '@/types/consultation';
+import { formatDate } from '@/utils/dateUtils';
+import { ArrowLeft, Calendar, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { formatAppointmentDate } from '@/components/appointment/utils/dateUtils';
-import { useClinical } from '@/contexts/ClinicalContext';
 
-const WorkflowHeader = () => {
+interface WorkflowHeaderProps {
+  patient: Patient | null;
+  consultation: ConsultationData | null;
+  currentStep: string;
+  onStepChange: (step: string) => void;
+  onSave?: () => void;
+  isSaving?: boolean;
+  showBackButton?: boolean;
+  showSaveButton?: boolean;
+}
+
+const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
+  patient,
+  consultation,
+  currentStep,
+  onStepChange,
+  onSave,
+  isSaving = false,
+  showBackButton = true,
+  showSaveButton = true,
+}) => {
   const navigate = useNavigate();
-  const { 
-    activePatient, 
-    activeConsultation,
-    currentStep,
-    resetWorkflow,
-    lastSaved,
-    isSaving
-  } = useClinical();
-  
-  if (!activePatient) return null;
-  
+
+  const handleBack = () => {
+    if (patient) {
+      navigate(`/patients/${patient.id}`);
+    } else {
+      navigate('/patients');
+    }
+  };
+
   return (
-    <Card className="mb-4 bg-white border-nutri-blue/20">
+    <Card className="mb-4">
       <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                if (confirm('Deseja realmente sair da consulta? Dados não salvos serão perdidos.')) {
-                  resetWorkflow();
-                  navigate('/');
-                }
-              }}
-              className="h-8 w-8 p-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center">
-              <div className="bg-blue-100 text-blue-800 p-2 rounded-full">
-                <User className="h-5 w-5" />
-              </div>
-              <div className="ml-3">
-                <p className="font-semibold text-sm text-gray-800">{activePatient.name}</p>
-                <p className="text-xs text-gray-500">
-                  {activePatient.gender === 'male' ? 'Masculino' : 'Feminino'} • 
-                  {activePatient.age ? ` ${activePatient.age} anos` : ' Idade não informada'}
-                </p>
-              </div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              {showBackButton && (
+                <Button variant="ghost" size="icon" onClick={handleBack}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+              <h2 className="text-2xl font-bold">
+                {patient ? patient.name : 'Nova Consulta'}
+              </h2>
             </div>
+            {consultation && consultation.date && (
+              <div className="flex items-center text-sm text-muted-foreground mt-1">
+                <Calendar className="h-4 w-4 mr-1" />
+                {formatDate(consultation.date instanceof Date ? consultation.date.toISOString() : consultation.date)}
+              </div>
+            )}
           </div>
-          
-          <div className="flex flex-wrap gap-2 items-center">
-            {activeConsultation && (
-              <div className="flex items-center text-xs text-gray-500">
-                <CalendarClock className="h-3 w-3 mr-1" />
-                {formatAppointmentDate(activeConsultation.date)}
-              </div>
-            )}
-            
-            {lastSaved && (
-              <div className="flex items-center text-xs text-green-600">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Salvo às {lastSaved.toLocaleTimeString()}
-              </div>
-            )}
-            
-            {isSaving && (
-              <div className="flex items-center text-xs text-blue-600">
-                <Save className="h-3 w-3 mr-1 animate-pulse" />
-                Salvando...
-              </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Tabs
+              value={currentStep}
+              onValueChange={onStepChange}
+              className="w-full md:w-auto"
+            >
+              <TabsList className="grid grid-cols-2 md:grid-cols-3 w-full">
+                <TabsTrigger value="evaluation">Avaliação</TabsTrigger>
+                <TabsTrigger value="meal-plan">Plano Alimentar</TabsTrigger>
+                <TabsTrigger value="review" className="hidden md:block">
+                  Revisão
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {showSaveButton && onSave && (
+              <Button onClick={onSave} disabled={isSaving}>
+                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? 'Salvando...' : 'Salvar'}
+              </Button>
             )}
           </div>
         </div>
