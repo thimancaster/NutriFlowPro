@@ -14,10 +14,13 @@ export const usePatientActions = ({ toast }: UsePatientActionsProps) => {
   // Save patient function
   const savePatient = async (patientData: any) => {
     try {
+      setIsSavingPatient(true);
       const result = await PatientService.savePatient(patientData);
       return result;
     } catch (error: any) {
       return { success: false, error: error.message };
+    } finally {
+      setIsSavingPatient(false);
     }
   };
 

@@ -12,7 +12,7 @@ import { AUTH_STORAGE_KEYS } from '@/constants/authConstants';
 import { storageUtils } from '@/utils/storageUtils';
 import { useAuthSingleton } from '@/hooks/auth/useAuthSingleton';
 import { logger } from '@/utils/logger';
-import useAuthStorage from '@/hooks/auth/useAuthStorage';
+import { useAuthStorage } from '@/hooks/auth/useAuthStorage';
 
 const useAuthStateManager = () => {
   const { toast } = useToast();
@@ -47,7 +47,7 @@ const useAuthStateManager = () => {
   const usageQuota = useUsageQuota(authState.user, authState.isPremium);
   
   // Use centralized auth storage functions
-  const { loadStoredSession, saveSession } = useAuthStorage();
+  const { storeSession: saveSession, getStoredSession: loadStoredSession } = useAuthStorage();
 
   // Update auth state with consistent format and debounce premium checks
   const updateAuthState = useCallback(async (session: Session | null, remember: boolean = false) => {
@@ -120,7 +120,7 @@ const useAuthStateManager = () => {
   }, [checkPremiumStatus, queryClient, usageQuota, saveSession]);
   
   // Use the singleton auth listener
-  useAuthSingleton(setAuthState, loadStoredSession, saveSession);
+  useAuthSingleton(setAuthState, loadStoredSession);
 
   // Initialize authentication state cleanup
   useCallback(() => {

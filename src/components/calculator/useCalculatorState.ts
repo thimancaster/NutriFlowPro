@@ -176,8 +176,8 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       
       const result = await savePatient(patientData);
       
-      // Now save consultation data
-      if (result && result.success) {
+      // Now check result and handle accordingly
+      if (result && 'success' in result && result.success) {
         // Convert macros percentages to numbers for calculation
         const carbsPercentage = parseInt(calculatorState.carbPercentage || '0');
         const proteinPercentage = parseInt(calculatorState.proteinPercentage || '0');
@@ -220,8 +220,10 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         });
         
         return { patientId, ...result };
+      } else if (result && 'error' in result) {
+        throw new Error(result.error || 'Erro ao salvar paciente');
       } else {
-        throw new Error(result?.message || 'Erro ao salvar paciente');
+        throw new Error('Erro ao salvar paciente');
       }
     } catch (error: any) {
       toast.toast({

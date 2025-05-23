@@ -1,100 +1,87 @@
 
-/**
- * Simple structured logger for the application
- * This can be extended to send logs to a service like LogRocket or Sentry
- */
-
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
-interface LogOptions {
+export interface LogOptions {
   context?: string;
   details?: any;
-  user?: string;
-  tags?: string[];
+  level?: 'debug' | 'info' | 'warn' | 'error';
 }
 
-// Enable or disable debug logs based on environment
-const DEBUG_ENABLED = process.env.NODE_ENV === 'development';
-
-// Centralized logger implementation
 class Logger {
-  private formatMessage(level: LogLevel, message: string, options?: LogOptions): string {
-    const timestamp = new Date().toISOString();
-    const context = options?.context ? `[${options.context}]` : '';
-    const tags = options?.tags?.length ? `(${options.tags.join(', ')})` : '';
-    return `${timestamp} ${level.toUpperCase()}: ${context} ${message} ${tags}`.trim();
+  private isDevelopment: boolean;
+
+  constructor() {
+    this.isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
   }
-  
-  private log(level: LogLevel, message: string, options?: LogOptions | string): void {
-    // If options is a string, convert it to LogOptions
+
+  /**
+   * Format log messages with optional context and details
+   */
+  private format(message: string, options?: LogOptions | string): string {
+    // Handle old method signature where options was just a string context
     if (typeof options === 'string') {
-      options = { context: options };
+      return `[${options}] ${message}`;
     }
-    
-    // Skip debug logs in production unless explicitly enabled
-    if (level === 'debug' && !DEBUG_ENABLED) {
-      return;
+
+    // Handle new method signature with options object
+    if (options?.context) {
+      return `[${options.context}] ${message}`;
     }
-    
-    const formattedMessage = this.formatMessage(level, message, options as LogOptions);
-    const details = (options as LogOptions)?.details;
-    
-    // Log to console using appropriate method
-    switch (level) {
-      case 'debug':
-        console.debug(formattedMessage, details || '');
-        break;
-      case 'info':
-        console.info(formattedMessage, details || '');
-        break;
-      case 'warn':
-        console.warn(formattedMessage, details || '');
-        break;
-      case 'error':
-        console.error(formattedMessage, details || '');
-        break;
-    }
-    
-    // In a real application, we could send logs to a service here
-    this.sendToExternalService(level, message, options as LogOptions);
+
+    return message;
   }
-  
-  private sendToExternalService(level: LogLevel, message: string, options?: LogOptions): void {
-    // This would be implemented to send logs to LogRocket, Sentry, etc.
-    // For now it's just a placeholder
-    if (level === 'error' && typeof window !== 'undefined') {
-      // Example: if Sentry were integrated
-      // Sentry.captureMessage(message, {
-      //   level: Sentry.Severity.Error,
-      //   tags: {
-      //     context: options?.context,
-      //     ...(options?.tags?.reduce((acc, tag) => ({ ...acc, [tag]: true }), {}))
-      //   },
-      //   extra: options?.details
-      // });
-    }
-  }
-  
+
+  /**
+   * Debug level logging - only in development
+   */
   debug(message: string, options?: LogOptions | string): void {
-    this.log('debug', message, options);
+    if (!this.isDevelopment) return;
+    
+    const formattedMessage = this.format(message, options);
+    
+    if (typeof options === 'object' && options?.details) {
+      console.debug(formattedMessage, options.details);
+    } else {
+      console.debug(formattedMessage);
+    }
   }
-  
+
+  /**
+   * Info level logging
+   */
   info(message: string, options?: LogOptions | string): void {
-    this.log('info', message, options);
+    const formattedMessage = this.format(message, options);
+    
+    if (typeof options === 'object' && options?.details) {
+      console.info(formattedMessage, options.details);
+    } else {
+      console.info(formattedMessage);
+    }
   }
-  
+
+  /**
+   * Warning level logging
+   */
   warn(message: string, options?: LogOptions | string): void {
-    this.log('warn', message, options);
+    const formattedMessage = this.format(message, options);
+    
+    if (typeof options === 'object' && options?.details) {
+      console.warn(formattedMessage, options.details);
+    } else {
+      console.warn(formattedMessage);
+    }
   }
-  
+
+  /**
+   * Error level logging
+   */
   error(message: string, options?: LogOptions | string): void {
-    this.log('error', message, options);
+    const formattedMessage = this.format(message, options);
+    
+    if (typeof options === 'object' && options?.details) {
+      console.error(formattedMessage, options.details);
+    } else {
+      console.error(formattedMessage);
+    }
   }
 }
 
-// Export singleton instance
 export const logger = new Logger();
-
-// Usage examples:
-// logger.info('User logged in', { user: 'user@example.com', context: 'Auth' });
-// logger.error('API call failed', { details: error, context: 'API', tags: ['payment', 'critical'] });

@@ -15,7 +15,7 @@ export const useAuthStorage = () => {
     try {
       if (session && remember) {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-        logger.debug("Session stored in localStorage", { context: "Auth", details: "with remember me" });
+        logger.debug("Session stored in localStorage", { context: "Auth" });
       } else {
         // If not remember, use sessionStorage (cleared on browser close)
         sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
@@ -35,7 +35,7 @@ export const useAuthStorage = () => {
       const localSession = localStorage.getItem(AUTH_STORAGE_KEY);
       if (localSession) {
         const parsedSession = JSON.parse(localSession) as Session;
-        logger.debug("Session retrieved from localStorage", { context: "Auth", details: { remember: true } });
+        logger.debug("Session retrieved from localStorage", { context: "Auth" });
         return parsedSession;
       }
 
@@ -43,7 +43,7 @@ export const useAuthStorage = () => {
       const sessionData = sessionStorage.getItem(AUTH_STORAGE_KEY);
       if (sessionData) {
         const parsedSession = JSON.parse(sessionData) as Session;
-        logger.debug("Session retrieved from sessionStorage", { context: "Auth", details: { remember: false } });
+        logger.debug("Session retrieved from sessionStorage", { context: "Auth" });
         return parsedSession;
       }
     } catch (error) {
@@ -72,3 +72,6 @@ export const useAuthStorage = () => {
     clearStoredSession,
   };
 };
+
+// Also export as default for compatibility
+export default useAuthStorage;
