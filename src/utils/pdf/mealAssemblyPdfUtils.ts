@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Meal, MealFood } from '@/types/meal';
@@ -103,14 +104,15 @@ export const generateMealAssemblyPDF = ({
             foodProtein = food.protein;
             foodCarbs = food.carbs;
             foodFats = food.fats;
-          } else if ('name' in food) {
+          } else {
             // It's an object with direct properties
-            foodName = String(food.name || '');
-            portion = String(food.portion || 'N/A');
-            foodCalories = Number(food.calories || 0);
-            foodProtein = Number(food.protein || 0);
-            foodCarbs = Number(food.carbs || 0);
-            foodFats = Number(food.fats || 0);
+            const typedFood = food as any; // Use any to bypass type checking temporarily
+            foodName = String(typedFood.name || '');
+            portion = String(typedFood.portion || 'N/A');
+            foodCalories = Number(typedFood.calories || 0);
+            foodProtein = Number(typedFood.protein || 0);
+            foodCarbs = Number(typedFood.carbs || 0);
+            foodFats = Number(typedFood.fats || typedFood.fat || 0); // Handle both fats and fat properties
           }
           
           return [
