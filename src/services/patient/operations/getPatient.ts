@@ -36,10 +36,12 @@ export const getPatient = async (patientId: string): Promise<PatientResponse> =>
       .single();
 
     if (error) {
+      console.error('Supabase error fetching patient:', error);
       return { success: false, error: error.message };
     }
 
     if (!data) {
+      console.log('No patient found with ID:', patientId);
       return { success: false, error: 'Patient not found' };
     }
 

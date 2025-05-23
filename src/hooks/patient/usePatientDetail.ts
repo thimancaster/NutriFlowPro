@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Patient } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useToast } from '@/hooks/toast';
+import { useToast } from '@/hooks/use-toast';
 import { PatientService } from '@/services/patient';
 import { useQuery } from '@tanstack/react-query';
 import { PatientResponse } from '@/services/patient/operations/getPatient';
@@ -19,7 +19,8 @@ export const usePatientDetail = (patientId?: string) => {
     data: patientResponse,
     isLoading,
     error,
-    refetch
+    refetch,
+    isRefetching
   } = useQuery({
     queryKey: ['patient', patientId],
     queryFn: async (): Promise<PatientResponse> => {
@@ -28,9 +29,12 @@ export const usePatientDetail = (patientId?: string) => {
       }
       
       try {
+        console.log('Fetching patient with ID:', patientId);
         const result = await PatientService.getPatient(patientId);
+        console.log('Patient fetch result:', result);
         return result;
       } catch (error: any) {
+        console.error('Error in patient detail query:', error);
         toast({
           title: 'Error loading patient',
           description: error.message || 'Failed to load patient data',
@@ -39,7 +43,8 @@ export const usePatientDetail = (patientId?: string) => {
         throw error;
       }
     },
-    enabled: !!patientId && !!user
+    enabled: !!patientId && !!user,
+    retry: 1
   });
 
   // Extract the actual patient data from the response
@@ -72,7 +77,7 @@ export const usePatientDetail = (patientId?: string) => {
   
   return {
     patient,
-    isLoading,
+    isLoading: isLoading || isRefetching,
     error,
     isError,
     refetch,

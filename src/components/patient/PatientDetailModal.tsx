@@ -19,6 +19,7 @@ import { usePatientTabs } from '@/hooks/patient/usePatientTabs';
 import { usePatientDelete } from '@/hooks/patient/usePatientDelete';
 import { logger } from '@/utils/logger';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface PatientDetailModalProps {
   patient: Patient;
@@ -37,6 +38,18 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { activeTab, handleTabChange } = usePatientTabs();
   const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Check if patient is available
+  if (!patient || !patient.id) {
+    console.error('Patient data is missing or invalid:', patient);
+    toast({
+      title: "Erro",
+      description: "Dados do paciente não encontrados ou inválidos.",
+      variant: "destructive"
+    });
+    return null;
+  }
   
   const { 
     handleArchivePatient, 
@@ -60,6 +73,11 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
       await handleUpdatePatient(updatedData);
     } catch (error) {
       logger.error('Error updating patient:', error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar os dados do paciente.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -69,6 +87,11 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
       await handleUpdatePatientNotes(notes);
     } catch (error) {
       logger.error('Error updating patient notes:', error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar as anotações do paciente.",
+        variant: "destructive"
+      });
     }
   };
 
