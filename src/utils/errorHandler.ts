@@ -1,5 +1,7 @@
 
 import { toast } from "@/hooks/toast";
+import { logger } from "@/utils/logger";
+import { captureException } from "@/utils/sentry";
 
 interface ErrorOptions {
   showToast?: boolean;
@@ -7,6 +9,8 @@ interface ErrorOptions {
   customTitle?: string;
   customMessage?: string;
   retry?: () => Promise<any>;
+  context?: string;
+  tags?: string[];
 }
 
 /**
@@ -18,13 +22,25 @@ export const handleError = (error: any, options: ErrorOptions = {}) => {
     consoleLog = true,
     customTitle,
     customMessage,
-    retry
+    retry,
+    context = "Application",
+    tags = []
   } = options;
 
-  // Log error to console
+  // Log error using structured logger
   if (consoleLog) {
-    console.error("Error caught:", error);
+    logger.error("Error caught", {
+      context,
+      details: error,
+      tags
+    });
   }
+
+  // Send to error tracking service
+  captureException(error, {
+    name: context,
+    tags
+  });
 
   // Extract error message with fallbacks
   const errorMessage = customMessage || 

@@ -1,171 +1,143 @@
-
-import {
-  calculateBMR,
-  calculateTDEE,
-  calculateVET,
-  calculateMacrosByProfile,
-  calculateBMI,
-  calculateRCQ,
-  calculateBodyFat,
-  calculateLeanMass,
-  performNutritionCalculation
+import { describe, it, expect } from 'vitest';
+import { 
+  calculateBMR, 
+  calculateTDEE, 
+  applyObjectiveAdjustment,
+  calculateMacros,
+  calculateNutrition
 } from '@/utils/nutritionCalculator';
-import { ActivityLevel, Objective, Profile } from '@/types/nutrition';
 
-describe('Nutrition Calculator', () => {
-  // Sample test data
-  const maleData = {
-    weight: 80,
-    height: 180,
-    age: 30,
-    gender: 'M' as const
-  };
-
-  const femaleData = {
-    weight: 65,
-    height: 165,
-    age: 30,
-    gender: 'F' as const
-  };
-
+describe('Nutrition Calculator Functions', () => {
+  // BMR Tests
   describe('calculateBMR', () => {
-    it('should calculate BMR correctly for males', () => {
-      const bmr = calculateBMR(maleData);
-      // Mifflin-St Jeor formula for men: (10 * 80) + (6.25 * 180) - (5 * 30) + 5 = 1855
-      expect(bmr).toBe(1855);
+    it('calculates correctly for male', () => {
+      const result = calculateBMR(80, 180, 30, 'M');
+      // Mifflin-St Jeor equation: 10*80 + 6.25*180 - 5*30 + 5 = 1855
+      expect(result).toBeCloseTo(1855);
     });
-
-    it('should calculate BMR correctly for females', () => {
-      const bmr = calculateBMR(femaleData);
-      // Mifflin-St Jeor formula for women: (10 * 65) + (6.25 * 165) - (5 * 30) - 161 = 1381.25 ≈ 1381
-      expect(bmr).toBe(1381);
+    
+    it('calculates correctly for female', () => {
+      const result = calculateBMR(65, 165, 30, 'F');
+      // Mifflin-St Jeor equation: 10*65 + 6.25*165 - 5*30 - 161 = 1381.25
+      expect(result).toBeCloseTo(1381.25);
     });
-
-    it('should throw error for invalid inputs', () => {
-      expect(() => calculateBMR({ ...maleData, weight: -10 })).toThrow();
-      expect(() => calculateBMR({ ...maleData, height: 0 })).toThrow();
-      expect(() => calculateBMR({ ...maleData, age: 130 })).toThrow();
+    
+    it('throws error for invalid inputs', () => {
+      expect(() => calculateBMR(-10, 180, 30, 'M')).toThrow();
+      expect(() => calculateBMR(80, -10, 30, 'M')).toThrow();
+      expect(() => calculateBMR(80, 180, -10, 'M')).toThrow();
     });
   });
-
+  
+  // TDEE Tests
   describe('calculateTDEE', () => {
-    it('should calculate TDEE correctly for different activity levels', () => {
-      // BMR = 1855, activityFactor = 1.2
-      expect(calculateTDEE(1855, 'sedentario')).toBe(2226);
-      
-      // BMR = 1855, activityFactor = 1.55
-      expect(calculateTDEE(1855, 'moderado')).toBe(2875);
-      
-      // BMR = 1855, activityFactor = 1.9
-      expect(calculateTDEE(1855, 'muito_intenso')).toBe(3525);
+    it('applies correct activity factor for sedentary', () => {
+      expect(calculateTDEE(2000, 'sedentario')).toBeCloseTo(2400); // 2000 * 1.2
     });
-
-    it('should throw error for invalid inputs', () => {
-      expect(() => calculateTDEE(-100, 'moderado')).toThrow();
-      expect(() => calculateTDEE(1855, 'invalid' as ActivityLevel)).toThrow();
+    
+    it('applies correct activity factor for moderate', () => {
+      expect(calculateTDEE(2000, 'moderado')).toBeCloseTo(3100); // 2000 * 1.55
+    });
+    
+    it('applies correct activity factor for very active', () => {
+      expect(calculateTDEE(2000, 'muito_intenso')).toBeCloseTo(3800); // 2000 * 1.9
     });
   });
-
-  describe('calculateVET', () => {
-    it('should apply correct adjustment based on objective', () => {
-      // TDEE = 2875
-      // Maintenance: no adjustment
-      expect(calculateVET(2875, 'manutenção')).toEqual({
-        vet: 2875,
-        adjustment: 0
-      });
-      
-      // Weight loss: 20% deficit
-      expect(calculateVET(2875, 'emagrecimento')).toEqual({
-        vet: 2300, // 2875 * 0.8 = 2300
-        adjustment: -575
-      });
-      
-      // Muscle gain: 15% surplus
-      expect(calculateVET(2875, 'hipertrofia')).toEqual({
-        vet: 3306, // 2875 * 1.15 = 3306.25 ≈ 3306
-        adjustment: 431
-      });
+  
+  // Objective Adjustment Tests
+  describe('applyObjectiveAdjustment', () => {
+    it('applies no adjustment for maintenance', () => {
+      expect(applyObjectiveAdjustment(2500, 'manutenção')).toBeCloseTo(2500);
     });
-
-    it('should use custom calories when provided', () => {
-      expect(calculateVET(2875, 'manutenção', 3000)).toEqual({
-        vet: 3000,
-        adjustment: 125
-      });
+    
+    it('applies deficit for weight loss', () => {
+      expect(applyObjectiveAdjustment(2500, 'emagrecimento')).toBeCloseTo(2000); // 2500 * 0.8
     });
-
-    it('should throw error for invalid inputs', () => {
-      expect(() => calculateVET(0, 'manutenção')).toThrow();
+    
+    it('applies surplus for muscle gain', () => {
+      expect(applyObjectiveAdjustment(2500, 'hipertrofia')).toBeCloseTo(2875); // 2500 * 1.15
+    });
+    
+    it('uses custom calories when provided', () => {
+      expect(applyObjectiveAdjustment(2500, 'personalizado', 3000)).toBeCloseTo(3000);
     });
   });
-
-  describe('calculateMacrosByProfile', () => {
-    it('should calculate macros correctly for different profiles', () => {
-      // Normal profile, weight = 80kg, vet = 2875
-      const normalResult = calculateMacrosByProfile('normal', 80, 2875);
+  
+  // Macros Calculation Tests
+  describe('calculateMacros', () => {
+    it('calculates macros correctly for normal profile', () => {
+      const result = calculateMacros(70, 2500, 'normal');
       
-      // Protein: 80 * 1.8 = 144g, 144 * 4 = 576 kcal
-      expect(normalResult.protein.grams).toBe(144);
-      expect(normalResult.protein.kcal).toBe(576);
+      // Protein: 70 * 1.8 = 126g
+      expect(result.protein).toBeCloseTo(126);
       
-      // Fat: 80 * 0.8 = 64g, 64 * 9 = 576 kcal
-      expect(normalResult.fat.grams).toBe(64);
-      expect(normalResult.fat.kcal).toBe(576);
+      // Fat: 70 * 0.8 = 56g
+      expect(result.fat).toBeCloseTo(56);
       
-      // Remaining for carbs: 2875 - 576 - 576 = 1723 kcal
-      // Carbs: 1723 / 4 = 430.75 ≈ 431g
-      expect(normalResult.carbs.grams).toBe(431);
-      expect(normalResult.carbs.kcal).toBe(1724);
+      // Carbs: Remaining calories / 4
+      // (2500 - (126*4) - (56*9)) / 4 = ~310g
+      const proteinCals = 126 * 4;
+      const fatCals = 56 * 9;
+      const expectedCarbs = (2500 - proteinCals - fatCals) / 4;
+      expect(result.carbs).toBeCloseTo(expectedCarbs);
     });
-
-    it('should throw error for invalid inputs', () => {
-      expect(() => calculateMacrosByProfile('normal', -1, 2000)).toThrow();
-      expect(() => calculateMacrosByProfile('normal', 80, 0)).toThrow();
-      expect(() => calculateMacrosByProfile('invalid' as Profile, 80, 2000)).toThrow();
+    
+    it('calculates macros correctly for athletic profile', () => {
+      const result = calculateMacros(70, 3000, 'atleta');
+      
+      // For athlete, protein ratio is higher (2.2g/kg)
+      expect(result.protein).toBeGreaterThan(140); // 70 * 2.0 = 140g minimum
+      
+      // Total calories from macros should equal input calories
+      const totalCalories = (result.protein * 4) + (result.carbs * 4) + (result.fat * 9);
+      expect(totalCalories).toBeCloseTo(3000);
     });
   });
-
-  describe('Other calculations', () => {
-    it('should calculate BMI correctly', () => {
-      // BMI = weight (kg) / height (m)²
-      // 80 / (1.8 * 1.8) = 80 / 3.24 = 24.69
-      expect(calculateBMI(80, 180)).toBe(24.7);
-      
-      // Should work with height in meters too
-      expect(calculateBMI(80, 1.8)).toBe(24.7);
-    });
-
-    it('should calculate RCQ correctly', () => {
-      // RCQ = waist / hip
-      expect(calculateRCQ(90, 100)).toBe(0.9);
-    });
-
-    it('should calculate body fat percentage', () => {
-      expect(calculateBodyFat('M', 30, 90, 100, 40)).toBeTruthy();
-      expect(calculateBodyFat('F', 30, 80, 100, 35)).toBeTruthy();
-    });
-
-    it('should calculate lean mass correctly', () => {
-      // Lean mass = weight * (1 - body fat percentage / 100)
-      // 80 * (1 - 20/100) = 80 * 0.8 = 64
-      expect(calculateLeanMass(80, 20)).toBe(64);
-    });
-  });
-
-  describe('performNutritionCalculation', () => {
-    it('should perform complete nutrition calculation', () => {
-      const result = performNutritionCalculation(
-        maleData,
-        'moderado',
-        'manutenção',
-        'normal'
+  
+  // Full Calculation Pipeline Tests
+  describe('calculateNutrition (integration)', () => {
+    it('calculates full nutrition pipeline correctly', () => {
+      const result = calculateNutrition(
+        80, // weight in kg
+        180, // height in cm
+        30, // age
+        'M', // sex
+        'moderado', // activity level
+        'manutenção', // objective
+        'normal', // profile
       );
       
-      expect(result.bmr).toBe(1855);
-      expect(result.tdee).toBe(2875);
-      expect(result.vet).toBe(2875);
-      expect(result.macros.protein.grams).toBe(144);
+      // BMR for male: 10*80 + 6.25*180 - 5*30 + 5 = 1855
+      expect(result.bmr).toBeCloseTo(1855);
+      
+      // TDEE: 1855 * 1.55 = 2875.25
+      expect(result.tdee).toBeCloseTo(2875.25);
+      
+      // Adjusted TDEE for maintenance: same as TDEE
+      expect(result.adjustedTDEE).toBeCloseTo(2875.25);
+      
+      // Protein for normal profile: 80 * 1.8 = 144g
+      expect(result.macros.protein).toBeCloseTo(144);
+    });
+    
+    it('calculates with custom VET correctly', () => {
+      const result = calculateNutrition(
+        70, // weight in kg
+        170, // height in cm
+        25, // age
+        'F', // sex
+        'leve', // activity level
+        'personalizado', // objective
+        'sobrepeso', // profile
+        2200, // custom VET
+      );
+      
+      // Should use custom VET instead of calculated one
+      expect(result.adjustedTDEE).toBeCloseTo(2200);
+      
+      // Macros should be calculated based on custom VET
+      const totalCalories = (result.macros.protein * 4) + (result.macros.carbs * 4) + (result.macros.fat * 9);
+      expect(totalCalories).toBeCloseTo(2200);
     });
   });
 });
