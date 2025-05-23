@@ -72,14 +72,10 @@ export const handleError = (error: any, options: ErrorOptions = {}) => {
       toast.error({
         title: customTitle || "Erro",
         description: errorMessage,
-        action: retry ? (
-          <button 
-            onClick={retry}
-            className="bg-destructive-foreground text-destructive px-2 py-1 rounded text-xs"
-          >
-            Tentar novamente
-          </button>
-        ) : undefined,
+        action: retry ? {
+          label: "Tentar novamente",
+          onClick: retry,
+        } : undefined,
       });
     }
   }
