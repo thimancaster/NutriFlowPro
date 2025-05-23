@@ -26,7 +26,7 @@ const PatientNew = () => {
   const newPatientData = location.state?.newPatient;
 
   // Fetch patient data if in edit mode
-  const { data: patientData, isLoading } = useQuery({
+  const { data: patientResponse, isLoading } = useQuery({
     queryKey: ['patient', id],
     queryFn: async () => {
       if (!id) return null;
@@ -37,10 +37,13 @@ const PatientNew = () => {
         throw new Error(result.error || 'Failed to fetch patient');
       }
       
-      return result.data;
+      return result;
     },
     enabled: !!id && !!user,
   });
+  
+  // Extract patient data from response
+  const patientData = patientResponse?.success ? patientResponse.data : null;
   
   // Effect to show a message if we have patient data
   useEffect(() => {

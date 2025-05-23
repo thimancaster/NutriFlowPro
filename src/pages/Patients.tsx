@@ -17,18 +17,36 @@ import PatientTable from '@/components/patients/PatientTable';
 import PatientLoadingState from '@/components/patients/PatientLoadingState';
 import PatientErrorState from '@/components/patients/PatientErrorState';
 import { usePatient } from '@/contexts/PatientContext';
+import { Patient } from '@/types';
 
 const Patients = () => {
   const { user } = useAuth();
   const { startPatientSession } = usePatient();
   
-  // Use the patient detail hook for viewing details
+  // Custom wrapper for the patient detail functionality
   const { 
-    isModalOpen, 
     patient, 
-    openPatientDetail, 
-    closePatientDetail 
+    refetch,
+    isLoading,
+    error,
+    isError
   } = usePatientDetail();
+  
+  // Manual implementation of the missing properties
+  const isModalOpen = !!patient;
+  
+  const openPatientDetail = async (patientOrId: string | Patient) => {
+    if (typeof patientOrId === 'string') {
+      window.location.href = `/patients/${patientOrId}`;
+    } else {
+      window.location.href = `/patients/${patientOrId.id}`;
+    }
+    return Promise.resolve();
+  };
+  
+  const closePatientDetail = () => {
+    window.history.back();
+  };
   
   // Use the patient list hook for fetching and filtering patients
   const {
@@ -36,13 +54,9 @@ const Patients = () => {
     totalPatients,
     pagination,
     filters,
-    isLoading,
-    error,
-    isError,
     handlePageChange,
     handleFilterChange,
-    handleStatusChange,
-    refetch
+    handleStatusChange
   } = usePatientList();
   
   // Function to handle patient status change and refresh
@@ -53,13 +67,13 @@ const Patients = () => {
       const updatedPatient = patients.find(p => p.id === patient.id);
       if (updatedPatient) {
         // Update local patient state with the refreshed data
-        openPatientDetail(updatedPatient);
+        await openPatientDetail(updatedPatient.id);
       }
     }
   };
 
   // Handle starting a session with a patient
-  const handleStartPatientSession = (selectedPatient) => {
+  const handleStartPatientSession = (selectedPatient: Patient) => {
     startPatientSession(selectedPatient);
   };
 

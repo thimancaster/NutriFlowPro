@@ -42,9 +42,11 @@ export const useConsultationPatient = (initialPatientId?: string) => {
   };
   
   // Adding the openPatientDetail method that's expected by component consumers
-  const openPatientDetail = async (patientId: string) => {
-    if (patientId) {
-      await loadPatient(patientId);
+  const openPatientDetail = async (patientOrId: string | Patient) => {
+    if (typeof patientOrId === 'string') {
+      await loadPatient(patientOrId);
+    } else {
+      setPatient(patientOrId);
     }
   };
   

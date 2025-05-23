@@ -59,9 +59,13 @@ export const usePatientDetail = (patientId?: string) => {
   const closeDeleteDialog = () => setShowDeleteDialog(false);
   
   // Add functions expected by component consumers
-  const openPatientDetail = (id: string) => {
+  const openPatientDetail = (patientOrId: string | Patient) => {
     // This would typically navigate to the patient detail page
-    console.log(`Opening patient detail for ID: ${id}`);
+    if (typeof patientOrId === 'string') {
+      console.log(`Opening patient detail for ID: ${patientOrId}`);
+    } else {
+      console.log(`Opening patient detail for: ${patientOrId.name}`);
+    }
   };
   
   const closePatientDetail = () => {

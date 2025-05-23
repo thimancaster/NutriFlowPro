@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { CalculatorTool } from '@/components/calculator';
 import { usePatient } from '@/contexts/PatientContext';
@@ -17,7 +16,7 @@ const CalculatorPage = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patientId');
   const navigate = useNavigate();
-  const { openPatientDetail } = usePatientDetail();
+  const patientDetail = usePatientDetail();
 
   // Load patient if patientId is provided in URL but not active yet
   useEffect(() => {
@@ -28,11 +27,13 @@ const CalculatorPage = () => {
 
   const handleViewPatientProfile = () => {
     if (activePatient) {
-      // First try to open the patient detail modal
-      openPatientDetail(activePatient);
-      
-      // Alternatively, navigate to the patient profile page
-      // navigate(`/patients/${activePatient.id}`);
+      // First try to open the patient detail modal if it's available
+      if (patientDetail.openPatientDetail) {
+        patientDetail.openPatientDetail(activePatient.id);
+      } else {
+        // Alternatively, navigate to the patient profile page
+        navigate(`/patients/${activePatient.id}`);
+      }
     }
   };
 
