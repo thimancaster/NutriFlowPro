@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext } from 'react';
+import { Profile } from '@/types/consultation';
 import { CalculatorContextType } from './types';
 import { useCalculatorState } from './useCalculatorState';
 

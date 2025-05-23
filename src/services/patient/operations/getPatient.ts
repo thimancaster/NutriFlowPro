@@ -1,58 +1,54 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { convertDbToPatient } from '../utils/patientDataUtils';
+import { Patient } from '@/types/patient';
+import { dbCache } from '@/services/dbCache';
 
 /**
- * Get a patient by ID
+ * Fetch a single patient by ID
  */
-export const getPatient = async (patientId: string) => {
+export const getPatient = async (patientId: string): Promise<Patient | null> => {
+  if (!patientId) {
+    throw new Error('Patient ID is required');
+  }
+
+  // Check cache first
+  const cacheKey = `${dbCache.KEYS.PATIENT}${patientId}`;
+  const cachedPatient = dbCache.get(cacheKey);
+  
+  if (cachedPatient) {
+    return cachedPatient;
+  }
+
   try {
-    console.log('Getting patient with ID:', patientId);
-    
-    if (!patientId) {
-      console.error('Invalid patient ID provided:', patientId);
-      throw new Error('Invalid patient ID provided');
-    }
-    
-    // First try to get the patient with the specific ID
     const { data, error } = await supabase
       .from('patients')
       .select('*')
       .eq('id', patientId)
       .single();
-      
+
     if (error) {
-      console.error('Supabase error getting patient:', error);
       throw error;
     }
-    
+
     if (!data) {
-      console.error('No patient found with ID:', patientId);
-      throw new Error('Patient not found');
+      return null;
     }
-    
-    // Log the raw data from database for debugging
-    console.log('Raw patient data retrieved:', {
-      id: data.id,
-      name: data.name,
-      user_id: data.user_id
-    });
-    
-    const patient = convertDbToPatient(data);
-    console.log('Patient data converted successfully:', {
-      id: patient.id,
-      name: patient.name
-    });
-    
-    return {
-      success: true,
-      data: patient
+
+    // Process data and convert types as needed
+    const patient: Patient = {
+      ...data,
+      status: (data.status as 'active' | 'archived') || 'active',
+      address: typeof data.address === 'string' ? JSON.parse(data.address) : data.address || {},
+      goals: typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals || {},
+      measurements: typeof data.measurements === 'string' ? JSON.parse(data.measurements) : data.measurements || {}
     };
-  } catch (error: any) {
-    console.error('Error getting patient:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to get patient'
-    };
+
+    // Cache the result
+    dbCache.set(cacheKey, patient);
+    
+    return patient;
+  } catch (error) {
+    console.error('Error fetching patient:', error);
+    throw error;
   }
-};
+}

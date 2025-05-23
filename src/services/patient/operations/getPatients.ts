@@ -1,99 +1,93 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestError } from '@supabase/supabase-js';
+import { Patient } from '@/types/patient';
+import { dbCache } from '@/services/dbCache';
 
-// Define simple types to avoid excessive type instantiation
-type BasicPatientData = {
-  id: string;
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-  gender?: string | null;
-  status?: string;
-  created_at?: string;
-};
-
-type PatientResponse = {
-  success: boolean;
-  data?: BasicPatientData[];
-  error?: string;
-  count?: number;
-};
+interface GetPatientsOptions {
+  userId?: string;
+  status?: 'active' | 'archived' | 'all';
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
 
 /**
- * Get list of patients with optional filtering
+ * Fetch patients with filtering, pagination and sorting
  */
-export const getPatients = async (
-  userId: string,
-  options?: {
-    status?: 'active' | 'archived' | 'all';
-    limit?: number;
-    from?: number;
-    orderBy?: string;
-    orderDirection?: 'asc' | 'desc';
-    search?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }
-): Promise<PatientResponse> => {
+export const getPatients = async ({
+  userId,
+  status = 'active',
+  search = '',
+  page = 1,
+  limit = 10,
+  sortBy = 'created_at',
+  sortDirection = 'desc'
+}: GetPatientsOptions = {}): Promise<{ data: Patient[], count: number }> => {
   try {
-    // Start with a simple base query
-    let { data, error, count } = await supabase
-      .from('patients')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .match(options?.status && options.status !== 'all' 
-        ? { status: options.status } 
-        : {})
-      .order(
-        options?.orderBy || 'created_at', 
-        { ascending: options?.orderDirection === 'asc' || false }
-      )
-      .limit(options?.limit || 50)
-      .range(
-        options?.from || 0,
-        options?.from !== undefined ? options.from + (options.limit || 10) - 1 : 49
-      );
+    // Create cache key based on query parameters
+    const cacheKey = `${dbCache.KEYS.PATIENTS}_${userId || 'all'}_${status}_${search}_${page}_${limit}_${sortBy}_${sortDirection}`;
     
-    // Apply text search if provided - do it separately to avoid deep type issues
-    if (options?.search && data) {
-      data = data.filter(patient => 
-        patient.name?.toLowerCase().includes(options.search?.toLowerCase() || '')
-      );
+    // Check cache first
+    const cachedResult = dbCache.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
     }
-
-    // Apply date filters if needed - do client-side to avoid deep chaining
-    if ((options?.dateFrom || options?.dateTo) && data) {
-      data = data.filter(patient => {
-        const createdAt = patient.created_at ? new Date(patient.created_at) : null;
-        if (!createdAt) return true;
-        
-        let match = true;
-        if (options?.dateFrom && createdAt < new Date(options.dateFrom)) {
-          match = false;
-        }
-        if (options?.dateTo && createdAt > new Date(options.dateTo)) {
-          match = false;
-        }
-        return match;
-      });
+    
+    // Start building query
+    let query = supabase.from('patients').select('*', { count: 'exact' });
+    
+    // Filter by user if provided
+    if (userId) {
+      query = query.eq('user_id', userId);
     }
-
+    
+    // Filter by status unless 'all' is specified
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+    
+    // Filter by search term if provided
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+    
+    // Sort the results
+    query = query.order(sortBy, { ascending: sortDirection === 'asc' });
+    
+    // Apply pagination
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+    
+    // Execute the query
+    const { data, error, count } = await query;
+    
     if (error) {
       throw error;
     }
-
-    // Return with simple types to avoid complex type inference
-    return {
-      success: true,
-      data: data as BasicPatientData[],
-      count
+    
+    // Process results
+    const patients = data?.map(patient => ({
+      ...patient,
+      status: (patient.status as 'active' | 'archived') || 'active',
+      address: typeof patient.address === 'string' ? JSON.parse(patient.address) : patient.address || {},
+      goals: typeof patient.goals === 'string' ? JSON.parse(patient.goals) : patient.goals || {},
+      measurements: typeof patient.measurements === 'string' ? JSON.parse(patient.measurements) : patient.measurements || {}
+    })) || [];
+    
+    const result = { 
+      data: patients, 
+      count: count || 0 
     };
+    
+    // Cache the result
+    dbCache.set(cacheKey, result);
+    
+    return result;
   } catch (error) {
-    console.error('Error fetching patients:', (error as PostgrestError).message);
-    return {
-      success: false,
-      error: (error as PostgrestError).message
-    };
+    console.error('Error fetching patients:', error);
+    throw error;
   }
-};
+}

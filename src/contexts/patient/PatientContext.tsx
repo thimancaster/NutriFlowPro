@@ -8,23 +8,8 @@ const PatientContext = createContext<PatientContextType | undefined>(undefined);
 export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const patientState = usePatientState();
   
-  // Create the complete context value object
-  const value: PatientContextType = {
-    activePatient: patientState.activePatient,
-    isPatientActive: patientState.isPatientActive,
-    selectedPatientId: patientState.selectedPatientId,
-    recentPatients: patientState.recentPatients,
-    isLoading: patientState.isLoading,
-    error: patientState.error,
-    setActivePatient: patientState.setActivePatient,
-    startPatientSession: patientState.startPatientSession,
-    endPatientSession: patientState.endPatientSession,
-    loadPatientById: patientState.loadPatientById,
-    addRecentPatient: patientState.addRecentPatient
-  };
-  
   return (
-    <PatientContext.Provider value={value}>
+    <PatientContext.Provider value={patientState}>
       {children}
     </PatientContext.Provider>
   );

@@ -4,7 +4,7 @@ export type Profile = 'magro' | 'normal' | 'sobrepeso' | 'obeso' | 'atleta' | 'e
 
 // Define consultation related types
 export type Sex = 'M' | 'F';
-export type Objective = 'emagrecimento' | 'manutenção' | 'hipertrofia';
+export type Objective = 'emagrecimento' | 'manutenção' | 'hipertrofia' | 'personalizado';
 export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'muito_intenso';
 export type ConsultationType = 'primeira_consulta' | 'retorno';
 export type ConsultationStatus = 'em_andamento' | 'completo';
@@ -47,7 +47,8 @@ export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
 export const OBJECTIVE_FACTORS: Record<Objective, number> = {
   emagrecimento: 0.8,
   manutenção: 1.0,
-  hipertrofia: 1.15
+  hipertrofia: 1.15,
+  personalizado: 1.0
 };
 
 // Type for consultation form state
@@ -106,6 +107,7 @@ export interface ConsultationData {
   goal?: string;
   notes?: string;
   appointment_id?: string;
+  recommendations?: string;
 }
 
 // Type for consultation result

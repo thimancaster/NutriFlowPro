@@ -12,15 +12,21 @@ export const DatabaseService = {
   // Patient-related operations
   savePatient: PatientService.savePatient,
   getPatient: PatientService.getPatient,
+  getPatients: PatientService.getPatients,
+  updatePatient: PatientService.updatePatient,
+  updatePatientStatus: PatientService.updatePatientStatus,
+  deletePatient: PatientService.deletePatient,
   
   // Consultation-related operations
   saveConsultation: consultationService.saveConsultation,
-  updateConsultation: consultationService.updateConsultation, // Fixed method name
+  updateConsultation: consultationService.updateConsultation,
   getPatientConsultations: consultationService.getPatientConsultations,
+  getConsultation: consultationService.getConsultation,
   
   // Meal plan-related operations
   saveMealPlan: MealPlanService.saveMealPlan,
   getPatientMealPlans: MealPlanService.getPatientMealPlans,
+  getMealPlan: MealPlanService.getMealPlan,
   
   /**
    * Clear all database service caches

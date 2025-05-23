@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,7 +58,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
             {consultation && consultation.date && (
               <div className="flex items-center text-sm text-muted-foreground mt-1">
                 <Calendar className="h-4 w-4 mr-1" />
-                {formatDate(consultation.date instanceof Date ? consultation.date.toISOString() : consultation.date)}
+                {formatDate(typeof consultation.date === 'string' ? consultation.date : consultation.date.toISOString())}
               </div>
             )}
           </div>
