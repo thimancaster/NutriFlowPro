@@ -7,13 +7,7 @@ import PatientForm from '@/components/PatientForm';
 import { useQuery } from '@tanstack/react-query';
 import { PatientService } from '@/services/patient';
 import { useAuth } from '@/contexts/auth/AuthContext';
-
-// Define the patient response interface
-interface PatientResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
+import { PatientResponse } from '@/services/patient/operations/getPatient';
 
 const PatientNew = () => {
   const location = useLocation();
@@ -31,8 +25,7 @@ const PatientNew = () => {
     queryFn: async () => {
       if (!id) return null;
       
-      // Explicitly cast the result to PatientResponse
-      const result = await PatientService.getPatient(id) as PatientResponse;
+      const result = await PatientService.getPatient(id);
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch patient');

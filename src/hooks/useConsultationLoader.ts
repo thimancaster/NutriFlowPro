@@ -6,13 +6,7 @@ import { useConsultationPatient } from './patient/useConsultationPatient';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/toast';
 import { Patient } from '@/types';
-
-// Define a response type for the patient service
-interface PatientResponse {
-  success: boolean;
-  data?: Patient;
-  error?: string;
-}
+import { PatientResponse } from '@/services/patient/operations/getPatient';
 
 export const useConsultationLoader = () => {
   const navigate = useNavigate();
@@ -29,8 +23,7 @@ export const useConsultationLoader = () => {
   const fetchPatient = async (id: string) => {
     try {
       setIsLoading(true);
-      // Explicitly cast the result to PatientResponse
-      const response = await PatientService.getPatient(id) as PatientResponse;
+      const response = await PatientService.getPatient(id);
       
       if (response.success) {
         return response.data;

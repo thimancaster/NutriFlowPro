@@ -78,7 +78,7 @@ const Patients = () => {
   };
 
   // Extend the PatientTable component to include patient action buttons
-  const renderPatientActions = (patientData) => (
+  const renderPatientActions = (patientData: Patient) => (
     <div className="flex space-x-2">
       <Link to={`/calculator?patientId=${patientData.id}`}>
         <Button 

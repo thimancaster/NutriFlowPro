@@ -3,18 +3,11 @@ import { useState } from 'react';
 import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/toast';
-
-// Define an interface for the patient response
-interface PatientResponse {
-  success: boolean;
-  data?: Patient;
-  error?: string;
-}
+import { PatientResponse } from '@/services/patient/operations/getPatient';
 
 const fetchPatientById = async (patientId: string, setPatient: (patient: Patient | null) => void, toast: any) => {
   try {
-    // Explicitly cast the result to PatientResponse
-    const result = await PatientService.getPatient(patientId) as PatientResponse;
+    const result = await PatientService.getPatient(patientId);
     
     if (result.success && result.data) {
       setPatient(result.data);

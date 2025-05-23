@@ -5,13 +5,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/toast';
 import { PatientService } from '@/services/patient';
 import { useQuery } from '@tanstack/react-query';
-
-// Define an interface for the patient response
-interface PatientResponse {
-  success: boolean;
-  data?: Patient;
-  error?: string;
-}
+import { PatientResponse } from '@/services/patient/operations/getPatient';
 
 export const usePatientDetail = (patientId?: string) => {
   const { user } = useAuth();
@@ -34,8 +28,7 @@ export const usePatientDetail = (patientId?: string) => {
       }
       
       try {
-        // Explicitly cast the result to PatientResponse
-        const result = await PatientService.getPatient(patientId) as PatientResponse;
+        const result = await PatientService.getPatient(patientId);
         return result;
       } catch (error: any) {
         toast({
@@ -81,7 +74,7 @@ export const usePatientDetail = (patientId?: string) => {
     patient,
     isLoading,
     error,
-    isError, // Include isError in the returned object
+    isError,
     refetch,
     isSaving,
     setIsSaving,

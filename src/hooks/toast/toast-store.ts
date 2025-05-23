@@ -86,6 +86,7 @@ export const toast = (props: ToastProps) => {
 
   const dismiss = () => dispatch({ type: ActionType.DISMISS_TOAST, id });
 
+  // Create a complete Toast object with required 'open' and 'onOpenChange' properties
   const newToast: Toast = {
     ...props,
     id,
