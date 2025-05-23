@@ -123,7 +123,7 @@ export const useAuthSingleton = () => {
       });
     } else {
       clearUser();
-      logger.info("No authenticated user", { context: "Auth" });
+      logger.debug("No session", { context: "Auth" });
     }
     
     // Update the internal state

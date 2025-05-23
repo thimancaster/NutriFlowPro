@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast as Toast } from '@/hooks/use-toast';
+import { ToastProps } from '@/hooks/toast/toast-types';
 import { Session } from '@supabase/supabase-js';
 
 interface LoginResult {
@@ -16,7 +16,7 @@ export const login = async (
   email: string, 
   password: string, 
   remember: boolean = false,
-  toast: typeof Toast
+  toast: (props: ToastProps) => any
 ): Promise<LoginResult> => {
   try {
     console.log("Attempting login for:", email);
@@ -68,7 +68,7 @@ export const login = async (
 /**
  * Handles Google OAuth sign-in
  */
-export const signInWithGoogle = async (toast: typeof Toast): Promise<LoginResult> => {
+export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promise<LoginResult> => {
   try {
     console.log("Iniciando login com Google...");
     

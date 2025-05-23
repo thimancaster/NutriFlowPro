@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast as Toast } from '@/hooks/use-toast';
+import { ToastProps } from '@/hooks/toast/toast-types';
 
 /**
  * Handles user registration with email, password and name
@@ -9,7 +9,7 @@ export const signup = async (
   email: string, 
   password: string, 
   name: string, 
-  toast: typeof Toast
+  toast: (props: ToastProps) => any
 ) => {
   try {
     console.log("Attempting signup for:", email);

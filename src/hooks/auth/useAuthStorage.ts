@@ -6,6 +6,7 @@ import { Session } from "@supabase/supabase-js";
  * Utility for storing and retrieving auth session from local storage
  */
 const AUTH_STORAGE_KEY = "nutriflow-auth";
+const PREMIUM_STATUS_KEY_PREFIX = "premium-status-";
 
 export const useAuthStorage = () => {
   /**
@@ -65,11 +66,46 @@ export const useAuthStorage = () => {
       console.error("Failed to clear auth session", error);
     }
   };
+  
+  /**
+   * Store premium status for a user
+   */
+  const savePremiumStatus = (userId: string, isPremium: boolean): void => {
+    try {
+      const statusData = {
+        isPremium,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem(`${PREMIUM_STATUS_KEY_PREFIX}${userId}`, JSON.stringify(statusData));
+      logger.debug("Premium status saved", { context: "Auth" });
+    } catch (error) {
+      console.error("Failed to store premium status", error);
+    }
+  };
+  
+  /**
+   * Load premium status for a user
+   */
+  const loadPremiumStatus = (userId: string): { isPremium: boolean; timestamp: number } | null => {
+    try {
+      const statusData = localStorage.getItem(`${PREMIUM_STATUS_KEY_PREFIX}${userId}`);
+      if (statusData) {
+        return JSON.parse(statusData);
+      }
+    } catch (error) {
+      console.error("Failed to load premium status", error);
+    }
+    
+    return null;
+  };
 
   return {
     storeSession,
     getStoredSession,
     clearStoredSession,
+    savePremiumStatus,
+    loadPremiumStatus
   };
 };
 

@@ -3,7 +3,7 @@ import React, { createContext, useContext } from 'react';
 import { AuthContextType } from './types';
 import useAuthStateManager from './useAuthStateManager';
 import { login, signup, logout, resetPassword, signInWithGoogle } from './methods';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,7 +16,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Implement auth methods with real logic
   const handleLogin = async (email: string, password: string, remember: boolean = false) => {
     try {
-      const result = await login(email, password, remember, toast);
+      const result = await login(email, password, remember, 
+        (props) => toast(props));
       
       if (result.success && result.session) {
         await updateAuthState(result.session, remember);
@@ -29,19 +30,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleSignup = async (email: string, password: string, name: string) => {
-    return await signup(email, password, name, toast);
+    return await signup(email, password, name, 
+      (props) => toast(props));
   };
 
   const handleLogout = async () => {
-    return await logout(toast, queryClient, updateAuthState);
+    return await logout(
+      (props) => toast(props), 
+      queryClient, 
+      updateAuthState);
   };
 
   const handleResetPassword = async (email: string) => {
-    return await resetPassword(email, toast);
+    return await resetPassword(email, 
+      (props) => toast(props));
   };
 
   const handleSignInWithGoogle = async () => {
-    return await signInWithGoogle(toast);
+    return await signInWithGoogle(
+      (props) => toast(props));
   };
 
   const value: AuthContextType = {

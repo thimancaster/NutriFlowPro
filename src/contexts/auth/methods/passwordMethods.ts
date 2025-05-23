@@ -1,12 +1,13 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { toast as Toast } from '@/hooks/use-toast';
+import { ToastProps } from '@/hooks/toast/toast-types';
 
 /**
  * Handles password reset request
  */
 export const resetPassword = async (
   email: string, 
-  toast: typeof Toast
+  toast: (props: ToastProps) => any
 ) => {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -37,7 +38,7 @@ export const resetPassword = async (
  */
 export const updatePassword = async (
   password: string,
-  toast: typeof Toast
+  toast: (props: ToastProps) => any
 ) => {
   try {
     const { error } = await supabase.auth.updateUser({ password });

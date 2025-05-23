@@ -3,6 +3,7 @@ export interface LogOptions {
   context?: string;
   details?: any;
   level?: 'debug' | 'info' | 'warn' | 'error';
+  user?: any;
 }
 
 class Logger {
@@ -30,15 +31,40 @@ class Logger {
   }
 
   /**
+   * Convert various input types to LogOptions
+   */
+  private normalizeOptions(options?: any): LogOptions | undefined {
+    if (!options) return undefined;
+    
+    // If already a LogOptions object
+    if (typeof options === 'object' && (options.context || options.details || options.level)) {
+      return options as LogOptions;
+    }
+    
+    // If it's a string, assume it's a context
+    if (typeof options === 'string') {
+      return { context: options };
+    }
+    
+    // For other object types, use as details
+    if (typeof options === 'object') {
+      return { details: options };
+    }
+    
+    return undefined;
+  }
+
+  /**
    * Debug level logging - only in development
    */
-  debug(message: string, options?: LogOptions | string): void {
+  debug(message: string, options?: LogOptions | string | any): void {
     if (!this.isDevelopment) return;
     
-    const formattedMessage = this.format(message, options);
+    const normalizedOptions = this.normalizeOptions(options);
+    const formattedMessage = this.format(message, normalizedOptions);
     
-    if (typeof options === 'object' && options?.details) {
-      console.debug(formattedMessage, options.details);
+    if (normalizedOptions?.details) {
+      console.debug(formattedMessage, normalizedOptions.details);
     } else {
       console.debug(formattedMessage);
     }
@@ -47,11 +73,12 @@ class Logger {
   /**
    * Info level logging
    */
-  info(message: string, options?: LogOptions | string): void {
-    const formattedMessage = this.format(message, options);
+  info(message: string, options?: LogOptions | string | any): void {
+    const normalizedOptions = this.normalizeOptions(options);
+    const formattedMessage = this.format(message, normalizedOptions);
     
-    if (typeof options === 'object' && options?.details) {
-      console.info(formattedMessage, options.details);
+    if (normalizedOptions?.details) {
+      console.info(formattedMessage, normalizedOptions.details);
     } else {
       console.info(formattedMessage);
     }
@@ -60,11 +87,12 @@ class Logger {
   /**
    * Warning level logging
    */
-  warn(message: string, options?: LogOptions | string): void {
-    const formattedMessage = this.format(message, options);
+  warn(message: string, options?: LogOptions | string | any): void {
+    const normalizedOptions = this.normalizeOptions(options);
+    const formattedMessage = this.format(message, normalizedOptions);
     
-    if (typeof options === 'object' && options?.details) {
-      console.warn(formattedMessage, options.details);
+    if (normalizedOptions?.details) {
+      console.warn(formattedMessage, normalizedOptions.details);
     } else {
       console.warn(formattedMessage);
     }
@@ -73,11 +101,12 @@ class Logger {
   /**
    * Error level logging
    */
-  error(message: string, options?: LogOptions | string): void {
-    const formattedMessage = this.format(message, options);
+  error(message: string, options?: LogOptions | string | any): void {
+    const normalizedOptions = this.normalizeOptions(options);
+    const formattedMessage = this.format(message, normalizedOptions);
     
-    if (typeof options === 'object' && options?.details) {
-      console.error(formattedMessage, options.details);
+    if (normalizedOptions?.details) {
+      console.error(formattedMessage, normalizedOptions.details);
     } else {
       console.error(formattedMessage);
     }

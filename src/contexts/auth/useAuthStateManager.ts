@@ -3,7 +3,7 @@ import { useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthState } from './types';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
 import { useUsageQuota } from '@/hooks/useUsageQuota';
@@ -47,7 +47,7 @@ const useAuthStateManager = () => {
   const usageQuota = useUsageQuota(authState.user, authState.isPremium);
   
   // Use centralized auth storage functions
-  const { storeSession: saveSession, getStoredSession: loadStoredSession } = useAuthStorage();
+  const { storeSession: saveSession, getStoredSession: loadStoredSession, savePremiumStatus } = useAuthStorage();
 
   // Update auth state with consistent format and debounce premium checks
   const updateAuthState = useCallback(async (session: Session | null, remember: boolean = false) => {
@@ -98,13 +98,9 @@ const useAuthStateManager = () => {
         }
         
         // Store premium status in local storage with timestamp
-        const premiumStatusKey = `${AUTH_STORAGE_KEYS.PREMIUM_STATUS_PREFIX}${user.id}`;
-        storageUtils.setLocalItem(premiumStatusKey, {
-          isPremium,
-          timestamp: Date.now()
-        });
+        savePremiumStatus(user.id, isPremium);
       } catch (error) {
-        logger.error("Error checking premium status:", error);
+        logger.error("Error checking premium status:", { details: error });
       }
     }
 
@@ -117,7 +113,7 @@ const useAuthStateManager = () => {
         }
       }, 0);
     }
-  }, [checkPremiumStatus, queryClient, usageQuota, saveSession]);
+  }, [checkPremiumStatus, queryClient, usageQuota, saveSession, savePremiumStatus]);
   
   // Use the singleton auth listener
   useAuthSingleton(setAuthState, loadStoredSession);
