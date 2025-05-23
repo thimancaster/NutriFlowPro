@@ -1,6 +1,7 @@
 
 import { Action, ActionType, State, Toast, ToastProps } from "./toast-types";
 import { addToRemoveQueue } from "./toast-utils";
+import { ReactNode } from "react";
 
 export const TOAST_LIMIT = 20;
 export const TOAST_REMOVE_DELAY = 1000000;

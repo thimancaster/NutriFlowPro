@@ -1,12 +1,19 @@
 
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import Navbar from '@/components/Navbar';
 import PatientForm from '@/components/PatientForm';
 import { useQuery } from '@tanstack/react-query';
 import { PatientService } from '@/services/patient';
 import { useAuth } from '@/contexts/auth/AuthContext';
+
+// Define the patient response interface
+interface PatientResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
 
 const PatientNew = () => {
   const location = useLocation();
@@ -24,7 +31,7 @@ const PatientNew = () => {
     queryFn: async () => {
       if (!id) return null;
       
-      const result = await PatientService.getPatient(id);
+      const result = await PatientService.getPatient(id) as PatientResponse;
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch patient');

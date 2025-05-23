@@ -11,13 +11,12 @@ interface PatientResponse {
   error?: string;
 }
 
-// Update to handle the correct patient response type
 const fetchPatientById = async (patientId: string, setPatient: (patient: Patient | null) => void, toast: any) => {
   try {
-    const result = await PatientService.getPatient(patientId);
+    const result = await PatientService.getPatient(patientId) as PatientResponse;
     
-    if (result.success) {
-      setPatient(result.data || null);
+    if (result.success && result.data) {
+      setPatient(result.data);
     } else if (result.error) {
       console.error("Failed to load patient:", result.error);
       toast({
@@ -49,12 +48,20 @@ export const useConsultationPatient = (initialPatientId?: string) => {
     }
   };
   
+  const closePatientDetail = () => {
+    setPatient(null);
+  };
+  
+  const isModalOpen = !!patient;
+  
   return {
     patient,
     setPatient,
     patients,
     isPatientsLoading,
     loadPatient,
-    openPatientDetail // Add this method to satisfy component consumers
+    openPatientDetail,
+    closePatientDetail,
+    isModalOpen
   };
 };

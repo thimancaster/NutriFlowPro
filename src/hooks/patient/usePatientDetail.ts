@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Patient } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { PatientService } from '@/services/patient';
 import { useQuery } from '@tanstack/react-query';
 
@@ -34,8 +34,8 @@ export const usePatientDetail = (patientId?: string) => {
       }
       
       try {
-        const result = await PatientService.getPatient(patientId);
-        return result as PatientResponse;
+        const result = await PatientService.getPatient(patientId) as PatientResponse;
+        return result;
       } catch (error: any) {
         toast({
           title: 'Error loading patient',
@@ -58,6 +58,19 @@ export const usePatientDetail = (patientId?: string) => {
   const openDeleteDialog = () => setShowDeleteDialog(true);
   const closeDeleteDialog = () => setShowDeleteDialog(false);
   
+  // Add functions expected by component consumers
+  const openPatientDetail = (id: string) => {
+    // This would typically navigate to the patient detail page
+    console.log(`Opening patient detail for ID: ${id}`);
+  };
+  
+  const closePatientDetail = () => {
+    // This would typically close the patient detail modal
+    console.log('Closing patient detail');
+  };
+  
+  const isModalOpen = !!patientId;
+  
   return {
     patient,
     isLoading,
@@ -73,6 +86,9 @@ export const usePatientDetail = (patientId?: string) => {
     openArchiveDialog,
     closeArchiveDialog,
     openDeleteDialog,
-    closeDeleteDialog
+    closeDeleteDialog,
+    openPatientDetail,
+    closePatientDetail,
+    isModalOpen
   };
 };

@@ -1,8 +1,7 @@
 
 import React, { createContext, useContext } from 'react';
 import { AuthContextType } from './types';
-import useAuthStateManager from './useAuthStateManager';
-import { login, signup, logout, resetPassword, signInWithGoogle } from './methods';
+import { useAuthStateManager } from './useAuthStateManager';
 import { useToast } from '@/hooks/toast';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -16,8 +15,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Implement auth methods with real logic
   const handleLogin = async (email: string, password: string, remember: boolean = false) => {
     try {
-      const result = await login(email, password, remember, 
-        (props) => toast(props));
+      const result = await login(email, password, remember, toast);
       
       if (result.success && result.session) {
         await updateAuthState(result.session, remember);
@@ -30,25 +28,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleSignup = async (email: string, password: string, name: string) => {
-    return await signup(email, password, name, 
-      (props) => toast(props));
+    return await signup(email, password, name, toast);
   };
 
   const handleLogout = async () => {
-    return await logout(
-      (props) => toast(props), 
-      queryClient, 
-      updateAuthState);
+    return await logout(toast, queryClient, updateAuthState);
   };
 
   const handleResetPassword = async (email: string) => {
-    return await resetPassword(email, 
-      (props) => toast(props));
+    return await resetPassword(email, toast);
   };
 
   const handleSignInWithGoogle = async () => {
-    return await signInWithGoogle(
-      (props) => toast(props));
+    return await signInWithGoogle(toast);
   };
 
   const value: AuthContextType = {
@@ -78,3 +70,6 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Import auth methods
+import { login, signup, logout, resetPassword, signInWithGoogle } from './methods';

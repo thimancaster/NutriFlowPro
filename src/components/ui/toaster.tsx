@@ -20,7 +20,7 @@ export function Toaster() {
         const toastVariant = variant === "network-error" ? "destructive" : variant;
         
         return (
-          <Toast key={id} variant={toastVariant} {...standardProps}>
+          <Toast key={id} {...standardProps}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

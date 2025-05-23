@@ -28,7 +28,8 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       // Convert complex objects to strings for storage if needed
       address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address,
       goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals,
-      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements
+      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements,
+      name: patient.name // Ensure name is definitely present
     };
 
     const { data, error } = await supabase
@@ -72,7 +73,7 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
 };
 
 /**
- * Update an existing patient
+ * Update an existing patient's status
  */
 export const updatePatientStatus = async (
   patientId: string, 

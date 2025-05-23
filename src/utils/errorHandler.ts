@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/toast/use-toast';
+import { toast } from '@/hooks/toast';
 import { NETWORK_ERROR_TOAST_ID } from '@/hooks/toast/toast-types';
 
 /**
@@ -72,7 +72,7 @@ export const globalErrorHandler = (error: any) => {
       id: NETWORK_ERROR_TOAST_ID,
       title: 'Network Error',
       description: 'Unable to connect to server. Please check your internet connection.',
-      variant: 'network-error',
+      variant: 'destructive',
     });
     return;
   }
