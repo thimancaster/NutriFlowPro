@@ -1,49 +1,53 @@
 
-export interface Toast {
-  id: string;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  action?: React.ReactNode;
-  variant?: 'default' | 'destructive' | 'success' | 'warning';
-  duration?: number;
+import { Dispatch } from "react";
+
+export enum ActionType {
+  ADD_TOAST = "ADD_TOAST",
+  UPDATE_TOAST = "UPDATE_TOAST",
+  DISMISS_TOAST = "DISMISS_TOAST",
+  REMOVE_TOAST = "REMOVE_TOAST",
 }
 
-export type ToastProps = Omit<Toast, "id">;
+export const TOAST_LIMIT = 20;
+export const TOAST_REMOVE_DELAY = 5000;
+export const NETWORK_ERROR_TOAST_ID = "network-error";
+
+export interface Toast {
+  id: string;
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  variant?: "default" | "destructive" | "success" | "warning" | "network-error";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export interface ToastProps {
+  id?: string;
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  variant?: "default" | "destructive" | "success" | "warning" | "network-error";
+}
 
 export interface State {
   toasts: Toast[];
 }
 
-export interface ToastApi {
-  toast: (props: ToastProps) => void;
-  dismiss: (toastId?: string) => void;
-  error: (props: Omit<ToastProps, "variant">) => void;
-  success: (props: Omit<ToastProps, "variant">) => void;
-  warning: (props: Omit<ToastProps, "variant">) => void;
-  networkError: (props?: Omit<ToastProps, "variant" | "title" | "description">) => void;
+export interface Action {
+  type: ActionType;
+  toast?: Toast;
+  id?: string;
 }
 
-export type Action =
-  | {
-      type: "ADD_TOAST";
-      toast: Toast;
-    }
-  | {
-      type: "UPDATE_TOAST";
-      toast: Partial<Toast>;
-      id: string;
-    }
-  | {
-      type: "DISMISS_TOAST";
-      toastId?: string;
-    }
-  | {
-      type: "REMOVE_TOAST";
-      toastId?: string;
-    };
+export type ToastApi = {
+  toast: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: ToastProps) => void };
+  dismiss: (id?: string) => void;
+  error: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: ToastProps) => void };
+  success: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: ToastProps) => void };
+  warning: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: ToastProps) => void };
+  networkError: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: ToastProps) => void };
+};
 
-export const TOAST_LIMIT = 5;
-
-export const TOAST_REMOVE_DELAY = 1000000;
-
-export const NETWORK_ERROR_TOAST_ID = 'network-error';
+// Export dispatch function type
+export const dispatch: Dispatch<Action> = (action: Action) => {};

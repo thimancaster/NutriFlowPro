@@ -18,16 +18,22 @@ export const updatePatient = async (
     if (!patientId) return { success: false, error: 'Patient ID is required' };
     if (!userId) return { success: false, error: 'User ID is required' };
     
-    // Add updated_at timestamp
-    const updatedData = {
+    // Process complex objects for DB storage
+    const processedData = {
       ...patientData,
-      updated_at: new Date()
+      address: typeof patientData.address === 'object' ? 
+        JSON.stringify(patientData.address) : patientData.address,
+      goals: typeof patientData.goals === 'object' ? 
+        JSON.stringify(patientData.goals) : patientData.goals,
+      measurements: typeof patientData.measurements === 'object' ? 
+        JSON.stringify(patientData.measurements) : patientData.measurements,
+      updated_at: new Date().toISOString()
     };
     
     // Update patient
     const { data, error } = await supabase
       .from('patients')
-      .update(updatedData)
+      .update(processedData)
       .eq('id', patientId)
       .eq('user_id', userId)
       .select('*')

@@ -21,7 +21,7 @@ export const updatePatientStatus = async (
     // Update patient status
     const { data, error } = await supabase
       .from('patients')
-      .update({ status, updated_at: new Date() })
+      .update({ status, updated_at: new Date().toISOString() })
       .eq('id', patientId)
       .eq('user_id', userId)
       .select('*')

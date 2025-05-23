@@ -1,109 +1,112 @@
 
-import { toast } from "@/hooks/toast";
-import { logger } from "@/utils/logger";
-import { captureException } from "@/utils/sentry";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/toast/use-toast';
+import { NETWORK_ERROR_TOAST_ID } from '@/hooks/toast/toast-types';
 
-interface ErrorOptions {
-  showToast?: boolean;
-  consoleLog?: boolean;
-  customTitle?: string;
-  customMessage?: string;
-  retry?: () => Promise<any>;
-  context?: string;
-  tags?: string[];
+/**
+ * Custom error types for better error handling
+ */
+export class ApiError extends Error {
+  constructor(message: string, public status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
+export class NetworkError extends Error {
+  constructor(message: string = 'Network connection unavailable') {
+    super(message);
+    this.name = 'NetworkError';
+    Object.setPrototypeOf(this, NetworkError.prototype);
+  }
+}
+
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthError';
+    Object.setPrototypeOf(this, AuthError.prototype);
+  }
 }
 
 /**
- * Central error handler for consistent error processing throughout the app
+ * Handles API errors and returns a standardized error object
  */
-export const handleError = (error: any, options: ErrorOptions = {}) => {
-  const {
-    showToast = true,
-    consoleLog = true,
-    customTitle,
-    customMessage,
-    retry,
-    context = "Application",
-    tags = []
-  } = options;
-
-  // Log error using structured logger
-  if (consoleLog) {
-    logger.error("Error caught", {
-      context,
-      details: error,
-      tags
-    });
+export const handleApiError = (error: any, defaultMessage: string = 'An unexpected error occurred') => {
+  if (error instanceof ApiError) {
+    return {
+      message: error.message,
+      status: error.status
+    };
   }
 
-  // Send to error tracking service
-  captureException(error, {
-    name: context,
-    tags
-  });
-
-  // Extract error message with fallbacks
-  const errorMessage = customMessage || 
-    error?.message || 
-    error?.error_description || 
-    error?.details || 
-    "Ocorreu um erro inesperado";
-
-  // Handle Supabase specific errors
-  const isAuthError = error?.status === 401 || 
-                     error?.code === "PGRST301" || 
-                     error?.message?.includes("JWT");
-  
-  const isNetworkError = error?.message?.includes("network") || 
-                        error?.message?.includes("Failed to fetch") ||
-                        !navigator.onLine;
-
-  // Show toast notification if requested
-  if (showToast) {
-    if (isNetworkError) {
-      // Use special network error toast that stays visible
-      toast.networkError();
-    } else if (isAuthError) {
-      toast.error({
-        title: customTitle || "Erro de Autenticação",
-        description: "Sua sessão expirou. Por favor, faça login novamente.",
-      });
-    } else {
-      toast.error({
-        title: customTitle || "Erro",
-        description: errorMessage,
-        action: retry ? {
-          label: "Tentar novamente",
-          onClick: retry,
-        } : undefined,
-      });
-    }
+  if (error instanceof NetworkError) {
+    return {
+      message: error.message,
+      type: 'network'
+    };
   }
 
-  // Return standardized error object
+  if (error instanceof AuthError) {
+    return {
+      message: error.message,
+      type: 'auth'
+    };
+  }
+
   return {
-    error: true,
-    message: errorMessage,
-    isAuthError,
-    isNetworkError,
-    originalError: error
+    message: error?.message || defaultMessage
   };
 };
 
 /**
- * Create a wrapper for API calls with automatic error handling
+ * Global error handler for API and network errors
  */
-export const withErrorHandling = <T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  errorOptions: ErrorOptions = {}
-) => {
-  return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
-    try {
-      return await fn(...args);
-    } catch (error) {
-      const handler = () => fn(...args);
-      handleError(error, { ...errorOptions, retry: handler });
-      throw error; // Re-throw to allow caller to handle if needed
+export const globalErrorHandler = (error: any) => {
+  console.error('Global error handler caught:', error);
+  
+  // Handle network errors
+  if (error instanceof NetworkError || !navigator.onLine) {
+    toast({
+      id: NETWORK_ERROR_TOAST_ID,
+      title: 'Network Error',
+      description: 'Unable to connect to server. Please check your internet connection.',
+      variant: 'network-error',
+    });
+    return;
+  }
+  
+  // Handle auth errors
+  if (error instanceof AuthError || 
+     (error && error.message && error.message.includes('not authorized'))) {
+    toast({
+      title: 'Authentication Error',
+      description: error.message || 'You are not authorized to perform this action.',
+      variant: 'destructive',
+    });
+    
+    // If it's a session expired error, sign out
+    if (error.message && error.message.includes('session expired')) {
+      supabase.auth.signOut();
     }
-  };
+    return;
+  }
+  
+  // Handle other errors
+  toast({
+    title: 'Error',
+    description: error.message || 'An unexpected error occurred.',
+    variant: 'destructive',
+  });
+};
+
+/**
+ * Check if the error is a network connectivity issue
+ */
+export const isNetworkError = (error: any): boolean => {
+  return error instanceof NetworkError || 
+         !navigator.onLine || 
+         error.message?.includes('network') || 
+         error.message?.includes('connection');
 };

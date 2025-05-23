@@ -1,16 +1,16 @@
 
-// Export all context providers for easier imports
+// Export all context providers
 export { AuthProvider } from './auth/AuthContext';
-export { CalculatorProvider } from './calculator/CalculatorContext';
 export { PatientProvider } from './patient/PatientContext';
 export { ConsultationDataProvider } from './ConsultationDataContext';
 export { MealPlanProvider } from './MealPlanContext';
 export { ConsultationProvider } from './ConsultationContext';
+export { ClinicalProvider } from './ClinicalContext';
 
-// Export all hooks for accessing contexts
+// Export hooks for accessing contexts
 export { useAuth } from './auth/AuthContext';
-export { useCalculator } from './calculator/CalculatorContext';
 export { usePatient } from './patient/PatientContext';
 export { useConsultationData } from './ConsultationDataContext';
 export { useMealPlan } from './MealPlanContext';
 export { useConsultation } from './ConsultationContext';
+export { useClinical } from './ClinicalContext';

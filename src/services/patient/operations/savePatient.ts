@@ -3,11 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types/patient';
 import { dbCache } from '@/services/dbCache';
 
+interface SavePatientResult {
+  success: boolean;
+  data?: Patient;
+  error?: string;
+}
+
 /**
  * Save a new patient to the database
  */
-export const savePatient = async (patient: Partial<Patient>): Promise<Patient> => {
+export const savePatient = async (patient: Partial<Patient>): Promise<SavePatientResult> => {
   try {
+    // Ensure name is required
+    if (!patient.name) {
+      return { 
+        success: false,
+        error: 'Patient name is required'
+      };
+    }
+    
     // Prepare the data for insertion
     const patientData = {
       ...patient,
@@ -19,7 +33,7 @@ export const savePatient = async (patient: Partial<Patient>): Promise<Patient> =
 
     const { data, error } = await supabase
       .from('patients')
-      .insert([patientData])
+      .insert(patientData)
       .select()
       .single();
 
@@ -43,69 +57,22 @@ export const savePatient = async (patient: Partial<Patient>): Promise<Patient> =
     // Invalidate relevant cache entries
     dbCache.invalidate(dbCache.KEYS.PATIENTS);
     
-    return savedPatient;
-  } catch (error) {
+    return {
+      success: true,
+      data: savedPatient
+    };
+    
+  } catch (error: any) {
     console.error('Error saving patient:', error);
-    throw error;
+    return {
+      success: false,
+      error: error.message || 'Failed to save patient'
+    };
   }
-}
+};
 
 /**
  * Update an existing patient
- */
-export const updatePatient = async (patient: Partial<Patient>): Promise<Patient> => {
-  if (!patient.id) {
-    throw new Error('Patient ID is required for updates');
-  }
-
-  try {
-    // Prepare the data for update
-    const patientData = {
-      ...patient,
-      // Convert complex objects to strings for storage if needed
-      address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address,
-      goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals,
-      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements,
-      updated_at: new Date()
-    };
-
-    const { data, error } = await supabase
-      .from('patients')
-      .update(patientData)
-      .eq('id', patient.id)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (!data) {
-      throw new Error('Failed to update patient');
-    }
-
-    // Convert the updated patient back to our application's format
-    const updatedPatient: Patient = {
-      ...data,
-      status: (data.status as 'active' | 'archived') || 'active',
-      address: typeof data.address === 'string' ? JSON.parse(data.address) : data.address || {},
-      goals: typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals || {},
-      measurements: typeof data.measurements === 'string' ? JSON.parse(data.measurements) : data.measurements || {}
-    };
-
-    // Invalidate relevant cache entries
-    dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patient.id}`);
-    dbCache.invalidate(dbCache.KEYS.PATIENTS);
-    
-    return updatedPatient;
-  } catch (error) {
-    console.error('Error updating patient:', error);
-    throw error;
-  }
-}
-
-/**
- * Update patient status (archive/unarchive)
  */
 export const updatePatientStatus = async (
   patientId: string, 
@@ -120,7 +87,7 @@ export const updatePatientStatus = async (
       .from('patients')
       .update({ 
         status,
-        updated_at: new Date()
+        updated_at: new Date().toISOString()
       })
       .eq('id', patientId);
 
@@ -135,4 +102,4 @@ export const updatePatientStatus = async (
     console.error('Error updating patient status:', error);
     throw error;
   }
-}
+};

@@ -2,10 +2,65 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ConsultationData } from '@/types';
-import { useConsultationData } from '@/hooks/useConsultationData';
-import { useConsultationPatient } from '@/hooks/patient/useConsultationPatient';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
+
+// Define internal hooks for consultation data
+const useConsultationData = (consultationId?: string) => {
+  const [consultation, setConsultation] = useState<ConsultationData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const createNewConsultation = (patientId: string, patientName: string) => {
+    // Create new consultation logic
+    const newConsultation = {
+      id: `new-${Date.now()}`,
+      patient_id: patientId,
+      patient: { name: patientName },
+    } as ConsultationData;
+    
+    setConsultation(newConsultation);
+    return newConsultation;
+  };
+  
+  return {
+    consultation,
+    setConsultation,
+    isLoading,
+    error,
+    createNewConsultation
+  };
+};
+
+// Define internal hook for patient data
+const useConsultationPatient = (patientId?: string) => {
+  const [patient, setPatient] = useState<any>(null);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [isPatientsLoading, setIsPatientsLoading] = useState(false);
+  const { toast } = useToast();
+  
+  const loadPatient = async (id: string) => {
+    if (!id) return;
+    
+    try {
+      const result = await PatientService.getPatient(id);
+      
+      if (result && result.success) {
+        setPatient(result.data);
+      } else if (result && result.error) {
+        console.error("Failed to load patient:", result.error);
+        toast({
+          title: "Erro ao carregar paciente",
+          description: "Não foi possível carregar os dados do paciente."
+        });
+      }
+    } catch (error: any) {
+      console.error("Error loading patient:", error);
+    }
+  };
+  
+  return { patient, patients, isPatientsLoading, loadPatient };
+};
 
 export function useConsultationLoader() {
   const params = useParams<{ id: string }>();

@@ -1,103 +1,121 @@
-import { Toast, Action, State, TOAST_LIMIT, ToastProps } from "./toast-types";
+import { Action, ActionType, State, Toast, ToastProps } from "./toast-types";
 import { addToRemoveQueue } from "./toast-utils";
-import { v4 as uuidv4 } from "uuid";
 
-export const listeners: Array<(state: State) => void> = [];
-export const memoryState: State = { toasts: [] };
+export const TOAST_LIMIT = 20;
+export const TOAST_REMOVE_DELAY = 1000000;
+
+export let memoryState: State = { toasts: [] };
+
+export let listeners: Array<(state: State) => void> = [];
 
 export const dispatch = (action: Action) => {
-  memoryState.toasts = reducer(memoryState.toasts, action);
+  memoryState = reducer(memoryState, action);
   listeners.forEach((listener) => {
     listener(memoryState);
   });
 };
 
+export const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case ActionType.ADD_TOAST:
+      return {
+        ...state,
+        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+      };
+
+    case ActionType.UPDATE_TOAST:
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
+        ),
+      };
+
+    case ActionType.DISMISS_TOAST: {
+      const { id } = action;
+
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
+      if (id) {
+        addToRemoveQueue(id);
+      }
+
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === id || id === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
+      };
+    }
+
+    case ActionType.REMOVE_TOAST:
+      if (action.id === undefined) {
+        return {
+          ...state,
+          toasts: [],
+        };
+      }
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.id),
+      };
+
+    default:
+      return state;
+  }
+};
+
+const generateId = () => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
 export const toast = (props: ToastProps) => {
-  const id = props.id || uuidv4();
+  const id = props.id || generateId();
+  
+  const update = (updatedProps: ToastProps) =>
+    dispatch({
+      type: ActionType.UPDATE_TOAST,
+      toast: { ...updatedProps, id },
+    });
+
+  const dismiss = () => dispatch({ type: ActionType.DISMISS_TOAST, id });
 
   dispatch({
-    type: "ADD_TOAST",
+    type: ActionType.ADD_TOAST,
     toast: {
       ...props,
       id,
-      duration: props.duration || 5000,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss();
+      },
     },
   });
 
   return {
     id,
-    dismiss: () => dismiss(id),
-    update: (props: ToastProps) => update(id, props),
+    dismiss,
+    update,
   };
 };
 
-export const error = (props: Omit<ToastProps, "variant">) => {
-  return toast({ ...props, variant: "destructive" });
-};
-
-export const success = (props: Omit<ToastProps, "variant">) => {
+export const success = (props: ToastProps) => {
   return toast({ ...props, variant: "success" });
 };
 
-export const warning = (props: Omit<ToastProps, "variant">) => {
+export const error = (props: ToastProps) => {
+  return toast({ ...props, variant: "destructive" });
+};
+
+export const warning = (props: ToastProps) => {
   return toast({ ...props, variant: "warning" });
 };
 
-export const networkError = (props?: Omit<ToastProps, "variant" | "title" | "description">) => {
-  return toast({
-    title: "Network Error",
-    description: "Please check your internet connection and try again.",
-    variant: "destructive",
-    ...props,
-  });
-};
-
-export const dismiss = (toastId?: string) => {
-  dispatch({ type: "DISMISS_TOAST", toastId });
-};
-
-export const update = (id: string, props: ToastProps) => {
-  dispatch({
-    type: "UPDATE_TOAST",
-    toast: { ...props },
-    id,
-  });
-};
-
-const reducer = (toasts: Toast[], action: Action): Toast[] => {
-  switch (action.type) {
-    case "ADD_TOAST":
-      return [action.toast, ...toasts].slice(0, TOAST_LIMIT);
-
-    case "UPDATE_TOAST":
-      return toasts.map((t) =>
-        t.id === action.id ? { ...t, ...action.toast } : t
-      );
-
-    case "DISMISS_TOAST": {
-      const { toastId } = action;
-
-      // If no ID was provided, dismiss all toasts
-      if (toastId === undefined) {
-        return toasts.map((t) => ({
-          ...t,
-          duration: 0,
-        }));
-      }
-
-      // Otherwise, dismiss the toast with the matching ID
-      return toasts.map((t) =>
-        t.id === toastId ? { ...t, duration: 0 } : t
-      );
-    }
-
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
-        return [];
-      }
-      return toasts.filter((t) => t.id !== action.toastId);
-
-    default:
-      return toasts;
-  }
+export const networkError = (props: ToastProps) => {
+  return toast({ ...props, variant: "network-error" });
 };

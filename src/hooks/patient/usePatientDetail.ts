@@ -1,80 +1,74 @@
 
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
 import { Patient } from '@/types';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { PatientService } from '@/services/patient';
+import { useQuery } from '@tanstack/react-query';
 
-export const usePatientDetail = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+export const usePatientDetail = (patientId?: string) => {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
-
-  // Handle opening patient details - accepts either a patient object or patient ID
-  const openPatientDetail = async (patientOrId: Patient | string) => {
-    try {
-      setIsLoading(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const {
+    data: patient,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['patient', patientId],
+    queryFn: async () => {
+      if (!patientId) {
+        return null;
+      }
       
-      let patientId: string;
-      let patientData: Patient | null = null;
-      
-      if (typeof patientOrId === 'string') {
-        // If patientOrId is a string (ID), fetch the patient data
-        patientId = patientOrId;
-        console.log("Fetching patient by ID:", patientId);
-        
-        // First check if we're already viewing the same patient
-        if (currentPatientId === patientId && patient) {
-          console.log("Already viewing this patient, reusing existing data");
-          setIsModalOpen(true);
-          setIsLoading(false);
-          return;
-        }
-        
+      try {
         const result = await PatientService.getPatient(patientId);
         
         if (!result.success) {
-          console.error("Failed to fetch patient:", result.error);
-          throw new Error(result.error || 'Failed to fetch patient details');
+          throw new Error(result.error || 'Failed to load patient data');
         }
         
-        patientData = result.data;
-        console.log("Patient data loaded by ID:", patientData.id, patientData.name);
-        setCurrentPatientId(patientId);
-      } else {
-        // If patientOrId is already a Patient object, use it directly
-        patientData = patientOrId;
-        patientId = patientOrId.id;
-        console.log("Using provided patient object:", patientData.id, patientData.name);
-        setCurrentPatientId(patientId);
+        return result.data;
+      } catch (error: any) {
+        toast({
+          title: 'Error loading patient',
+          description: error.message || 'Failed to load patient data',
+          variant: 'destructive'
+        });
+        throw error;
       }
-      
-      // Set patient data and open modal
-      setPatient(patientData);
-      setIsModalOpen(true);
-    } catch (error: any) {
-      console.error("Error in openPatientDetail:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível carregar os detalhes do paciente",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    enabled: !!patientId && !!user
+  });
 
-  // Handle closing patient details modal
-  const closePatientDetail = () => {
-    setIsModalOpen(false);
-  };
-
+  const isPatientArchived = patient?.status === 'archived';
+  
+  // Add functions to show/hide dialogs
+  const openArchiveDialog = () => setShowArchiveDialog(true);
+  const closeArchiveDialog = () => setShowArchiveDialog(false);
+  const openDeleteDialog = () => setShowDeleteDialog(true);
+  const closeDeleteDialog = () => setShowDeleteDialog(false);
+  
   return {
-    isModalOpen,
     patient,
     isLoading,
-    openPatientDetail,
-    closePatientDetail
+    error,
+    refetch,
+    isSaving,
+    setIsSaving,
+    isDeleting,
+    setIsDeleting,
+    isPatientArchived,
+    showArchiveDialog,
+    showDeleteDialog,
+    openArchiveDialog,
+    closeArchiveDialog,
+    openDeleteDialog,
+    closeDeleteDialog
   };
 };

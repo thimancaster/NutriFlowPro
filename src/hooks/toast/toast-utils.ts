@@ -1,19 +1,11 @@
 
 import { TOAST_REMOVE_DELAY } from "./toast-types";
-import { dispatch } from "./toast-store";
+import { dispatch as storeDispatch, ActionType } from "./toast-types";
 
-const REMOVE_DELAY = TOAST_REMOVE_DELAY;
+const TOAST_REMOVE_DELAY_MS = 1000;
 
-export const removalQueue = new Map<string, ReturnType<typeof setTimeout>>();
-
-export function addToRemoveQueue(toastId: string): void {
-  // If toast with ID already marked for removal, do nothing
-  if (removalQueue.has(toastId)) return;
-
-  const timeout = setTimeout(() => {
-    removalQueue.delete(toastId);
-    dispatch({ type: "REMOVE_TOAST", toastId });
-  }, REMOVE_DELAY);
-
-  removalQueue.set(toastId, timeout);
-}
+export const addToRemoveQueue = (toastId: string) => {
+  setTimeout(() => {
+    storeDispatch({ type: ActionType.REMOVE_TOAST, id: toastId });
+  }, TOAST_REMOVE_DELAY_MS);
+};

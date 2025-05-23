@@ -2,7 +2,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { PatientProvider } from '@/contexts/patient/PatientContext';
-import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import { MealPlanProvider } from '@/contexts/MealPlanContext';
 import { ConsultationProvider } from '@/contexts/ConsultationContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -16,16 +15,14 @@ const ProtectedLayout: React.FC = () => {
   return (
     <ProtectedRoute>
       <PatientProvider>
-        <ConsultationDataProvider>
-          <MealPlanProvider>
-            <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-              <Navbar />
-              <div className="container mx-auto px-4 py-8">
-                <Outlet />
-              </div>
+        <MealPlanProvider>
+          <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+            <Navbar />
+            <div className="container mx-auto px-4 py-8">
+              <Outlet />
             </div>
-          </MealPlanProvider>
-        </ConsultationDataProvider>
+          </div>
+        </MealPlanProvider>
       </PatientProvider>
     </ProtectedRoute>
   );
