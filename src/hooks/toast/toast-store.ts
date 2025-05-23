@@ -1,3 +1,4 @@
+
 import { Action, ActionType, State, Toast, ToastProps } from "./toast-types";
 import { addToRemoveQueue } from "./toast-utils";
 
@@ -34,8 +35,7 @@ export const reducer = (state: State, action: Action): State => {
     case ActionType.DISMISS_TOAST: {
       const { id } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // Side effects
       if (id) {
         addToRemoveQueue(id);
       }
@@ -85,16 +85,18 @@ export const toast = (props: ToastProps) => {
 
   const dismiss = () => dispatch({ type: ActionType.DISMISS_TOAST, id });
 
+  const newToast: Toast = {
+    ...props,
+    id,
+    open: true,
+    onOpenChange: (open) => {
+      if (!open) dismiss();
+    },
+  };
+
   dispatch({
     type: ActionType.ADD_TOAST,
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss();
-      },
-    },
+    toast: newToast,
   });
 
   return {

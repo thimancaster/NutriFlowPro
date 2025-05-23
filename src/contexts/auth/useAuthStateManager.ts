@@ -1,124 +1,110 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { AuthState } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthStorage } from '@/hooks/auth/useAuthStorage';
-import { usePremiumCheck } from '@/hooks/premium';
-import { useUsageQuota } from '@/hooks/useUsageQuota';
+import { AuthStateType } from './types';
+import useAuthStorage from '@/hooks/auth/useAuthStorage';
+import { useAuthorizationStatus } from '@/hooks/auth/useAuthorizationStatus';
 
-// Initial auth state
-const initialState: AuthState = {
-  user: null,
-  session: null,
-  isAuthenticated: false,
-  isLoading: true,
-  isPremium: false,
-  loading: true,
-  userTier: 'free',
-  usageQuota: {
-    patients: {
-      used: 0,
-      limit: 5,
-    },
-    mealPlans: {
-      used: 0,
-      limit: 3,
-    },
-  },
-};
-
-const useAuthStateManager = () => {
-  const [authState, setAuthState] = useState<AuthState>(initialState);
-  const { isPremiumUser } = usePremiumCheck();
-  const authStorage = useAuthStorage();
-  const usageQuota = useUsageQuota(authState.user, isPremiumUser);
+export const useAuthStateManager = () => {
+  const [state, setState] = useState<AuthStateType>({
+    isLoading: true,
+    isAuthenticated: false,
+    user: null,
+    session: null,
+    isPremium: false,
+  });
   
-  // Update auth state with session and premium status
-  const updateAuthState = useCallback(
-    async (session: Session | null, remember: boolean = false) => {
-      if (session) {
-        // Store session if remember me is checked
-        if (remember) {
-          authStorage.storeSession(session, true);
+  const { storeSession, getStoredSession, clearStoredSession } = useAuthStorage();
+  const { checkPremiumStatus } = useAuthorizationStatus();
+  
+  // Methods to update authentication state
+  const setAuthenticated = (user: User | null, session: Session | null, isPremium: boolean = false) => {
+    setState({
+      isLoading: false,
+      isAuthenticated: !!user,
+      user,
+      session,
+      isPremium,
+    });
+  };
+  
+  const setLoading = (isLoading: boolean) => {
+    setState(prev => ({ ...prev, isLoading }));
+  };
+  
+  // Check if user has premium status
+  const checkUserPremiumStatus = async (userId: string) => {
+    try {
+      const isPremium = await checkPremiumStatus(userId);
+      setState(prev => ({ ...prev, isPremium }));
+      return isPremium;
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      return false;
+    }
+  };
+  
+  // Update session
+  const updateSession = async (newSession: Session | null) => {
+    if (!newSession) {
+      setAuthenticated(null, null);
+      clearStoredSession();
+      return;
+    }
+    
+    storeSession(newSession);
+    const isPremium = newSession.user ? await checkUserPremiumStatus(newSession.user.id) : false;
+    setAuthenticated(newSession.user, newSession, isPremium);
+  };
+  
+  // Load session from local storage
+  const loadSessionFromStorage = async () => {
+    const storedSession = getStoredSession();
+    
+    if (storedSession) {
+      try {
+        // Verify the session is still valid
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error || !data.session) {
+          clearStoredSession();
+          setAuthenticated(null, null);
+          return;
         }
         
-        const user = session.user;
-        
-        setAuthState((prev) => ({
-          ...prev,
-          user,
-          session,
-          isAuthenticated: true,
-          isLoading: false,
-          loading: false,
-          isPremium: isPremiumUser,
-          userTier: isPremiumUser ? 'premium' : 'free',
-        }));
-      } else {
-        // If session is null, user is logged out
-        setAuthState((prev) => ({
-          ...prev,
-          user: null,
-          session: null,
-          isAuthenticated: false,
-          isLoading: false,
-          loading: false,
-          isPremium: false,
-          userTier: 'free',
-        }));
+        // Valid session, update state
+        const isPremium = data.session.user ? await checkUserPremiumStatus(data.session.user.id) : false;
+        setAuthenticated(data.session.user, data.session, isPremium);
+      } catch (err) {
+        console.error('Error validating stored session:', err);
+        clearStoredSession();
+        setAuthenticated(null, null);
       }
-    },
-    [isPremiumUser, authStorage]
-  );
-  
-  // Effect to set up auth listener
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
-        await updateAuthState(session);
-      }
-    );
-    
-    // Check for stored session on mount
-    const checkSession = async () => {
-      try {
-        // Get the current session
-        const { data: { session } } = await supabase.auth.getSession();
-        await updateAuthState(session);
-      } catch (error) {
-        console.error('Error checking session:', error);
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          loading: false
-        }));
-      }
-    };
-    
-    checkSession();
-    
-    // Cleanup subscription when unmounting
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [updateAuthState]);
-  
-  // Update usage quota when user changes
-  useEffect(() => {
-    if (authState.user) {
-      setAuthState(prev => ({
-        ...prev,
-        usageQuota
-      }));
+    } else {
+      setAuthenticated(null, null);
     }
-  }, [usageQuota, authState.user]);
+  };
+  
+  // Initialize auth state
+  const initialize = async () => {
+    try {
+      setLoading(true);
+      await loadSessionFromStorage();
+    } catch (error) {
+      console.error('Error initializing authentication:', error);
+      setAuthenticated(null, null);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return {
-    authState,
-    updateAuthState,
+    state,
+    setAuthenticated,
+    setLoading,
+    updateSession,
+    initialize,
+    checkUserPremiumStatus
   };
 };
-
-export default useAuthStateManager;

@@ -3,9 +3,6 @@ import React, { createContext, useContext, useState } from 'react';
 import { ConsultationData } from '@/types';
 import { logger } from '@/utils/logger';
 
-// Update the logger call to use proper object format
-logger.info('Setting consultation data:', { details: data });
-
 // Create a basic ConsultationDataContext
 const ConsultationDataContext = createContext<{
   consultationData: ConsultationData | null;
@@ -18,8 +15,19 @@ const ConsultationDataContext = createContext<{
 export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
   
+  const handleSetConsultationData = (newData: ConsultationData | null) => {
+    if (newData) {
+      // Update the logger call to use proper object format
+      logger.info('Setting consultation data:', { details: newData });
+    }
+    setConsultationData(newData);
+  };
+  
   return (
-    <ConsultationDataContext.Provider value={{ consultationData, setConsultationData }}>
+    <ConsultationDataContext.Provider value={{ 
+      consultationData, 
+      setConsultationData: handleSetConsultationData 
+    }}>
       {children}
     </ConsultationDataContext.Provider>
   );

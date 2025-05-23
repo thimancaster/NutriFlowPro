@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
 
 // Define a more specific type for the Patient to optimize data fetching
 interface Patient {
@@ -24,7 +22,6 @@ interface Patient {
 const DashboardRecentPatients: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { openPatientDetail } = usePatientDetail();
   
   // Use React Query with optimized data fetching and better caching
   const { data: recentPatients, isLoading } = useQuery({
@@ -89,19 +86,9 @@ const DashboardRecentPatients: React.FC = () => {
     }
   };
 
-  // Handle clicking on "Ver detalhes" - correctly open patient details by ID
-  const handleViewPatientDetails = async (patientId: string) => {
-    try {
-      console.log("Opening patient details for ID:", patientId);
-      await openPatientDetail(patientId);
-    } catch (error) {
-      console.error("Error opening patient details:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível abrir os detalhes do paciente",
-        variant: "destructive"
-      });
-    }
+  // Handle clicking on "Ver detalhes" - correctly handle patient details by ID
+  const handleViewPatientDetails = (patientId: string) => {
+    navigate(`/patients/${patientId}`);
   };
   
   return (
@@ -128,18 +115,18 @@ const DashboardRecentPatients: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left border-b">
-                  <th className="pb-2 font-medium">Nome</th>
-                  <th className="pb-2 font-medium">Data</th>
-                  <th className="pb-2 font-medium">Status</th>
-                  <th className="pb-2 font-medium">Ações</th>
+                  <th className="pb-2 pt-4 px-4">Nome</th>
+                  <th className="pb-2 pt-4 px-4">Data</th>
+                  <th className="pb-2 pt-4 px-4">Status</th>
+                  <th className="pb-2 pt-4 px-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {recentPatients.map((patient) => (
                   <tr key={patient.id} className="border-b last:border-b-0">
-                    <td className="py-3">{patient.name}</td>
-                    <td className="py-3">{formatDate(patient.created_at)}</td>
-                    <td className="py-3">
+                    <td className="py-3 px-4">{patient.name}</td>
+                    <td className="py-3 px-4">{formatDate(patient.created_at)}</td>
+                    <td className="py-3 px-4">
                       <span 
                         className={`px-2 py-1 text-xs rounded-full ${
                           getPatientStatus(patient) === 'Novo' ? 'bg-nutri-blue-light text-white' : 
@@ -150,7 +137,7 @@ const DashboardRecentPatients: React.FC = () => {
                         {getPatientStatus(patient)}
                       </span>
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 px-4">
                       <Button 
                         variant="ghost" 
                         className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-nutri-gray-light"

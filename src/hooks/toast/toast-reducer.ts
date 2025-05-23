@@ -1,15 +1,15 @@
-import { Action, State, Toast, TOAST_LIMIT } from "./toast-types";
+import { Action, State, ActionType, TOAST_LIMIT } from "./toast-types";
 import { addToRemoveQueue } from "./toast-utils";
 
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "ADD_TOAST":
+    case ActionType.ADD_TOAST:
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       }
 
-    case "UPDATE_TOAST":
+    case ActionType.UPDATE_TOAST:
       return {
         ...state,
         toasts: state.toasts.map((t) =>
@@ -17,13 +17,13 @@ export function reducer(state: State, action: Action): State {
         ),
       }
 
-    case "DISMISS_TOAST": {
-      const { toastId } = action
+    case ActionType.DISMISS_TOAST: {
+      const { id } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId)
+      // Side effects - This could be extracted into a dismissToast() action,
+      // but keeping it here for simplicity
+      if (id) {
+        addToRemoveQueue(id)
       } else {
         state.toasts.forEach((toast) => {
           addToRemoveQueue(toast.id)
@@ -33,7 +33,7 @@ export function reducer(state: State, action: Action): State {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
+          t.id === id || id === undefined
             ? {
                 ...t,
                 open: false,
@@ -42,8 +42,8 @@ export function reducer(state: State, action: Action): State {
         ),
       }
     }
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
+    case ActionType.REMOVE_TOAST:
+      if (action.id === undefined) {
         return {
           ...state,
           toasts: [],
@@ -51,7 +51,7 @@ export function reducer(state: State, action: Action): State {
       }
       return {
         ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+        toasts: state.toasts.filter((t) => t.id !== action.id),
       }
     default:
       return state;

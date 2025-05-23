@@ -6,6 +6,13 @@ import { useToast } from '@/hooks/use-toast';
 import { PatientService } from '@/services/patient';
 import { useQuery } from '@tanstack/react-query';
 
+// Define an interface for the patient response
+interface PatientResponse {
+  success: boolean;
+  data?: Patient;
+  error?: string;
+}
+
 export const usePatientDetail = (patientId?: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -15,25 +22,20 @@ export const usePatientDetail = (patientId?: string) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const {
-    data: patient,
+    data: patientResponse,
     isLoading,
     error,
     refetch
   } = useQuery({
     queryKey: ['patient', patientId],
-    queryFn: async () => {
+    queryFn: async (): Promise<PatientResponse> => {
       if (!patientId) {
-        return null;
+        return { success: false, error: 'No patient ID provided' };
       }
       
       try {
         const result = await PatientService.getPatient(patientId);
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to load patient data');
-        }
-        
-        return result.data;
+        return result as PatientResponse;
       } catch (error: any) {
         toast({
           title: 'Error loading patient',
@@ -46,6 +48,8 @@ export const usePatientDetail = (patientId?: string) => {
     enabled: !!patientId && !!user
   });
 
+  // Extract the actual patient data from the response
+  const patient = patientResponse?.success ? patientResponse.data : null;
   const isPatientArchived = patient?.status === 'archived';
   
   // Add functions to show/hide dialogs

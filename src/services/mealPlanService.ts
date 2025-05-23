@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -71,22 +70,27 @@ export async function getPatientMealPlans(patientId: string) {
   }
 }
 
-export async function getMealPlanById(mealPlanId: string) {
+/**
+ * Gets a meal plan by ID
+ */
+export const getMealPlanById = async (planId: string) => {
   try {
     const { data, error } = await supabase
       .from('meal_plans')
       .select('*')
-      .eq('id', mealPlanId)
+      .eq('id', planId)
       .single();
-    
-    if (error) throw error;
-    
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
     return { success: true, data };
   } catch (error: any) {
     console.error('Error fetching meal plan:', error);
     return { success: false, error: error.message };
   }
-}
+};
 
 export async function deleteMealPlan(mealPlanId: string) {
   try {

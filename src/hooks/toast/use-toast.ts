@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { State, ToastProps, ToastApi } from "./toast-types";
+import { ActionType, State, ToastProps, ToastApi } from "./toast-types";
 import { listeners, memoryState, toast, error, success, warning, networkError, dispatch } from "./toast-store";
 
 export function useToast(): ToastApi & State {
@@ -20,8 +20,8 @@ export function useToast(): ToastApi & State {
   return {
     ...state,
     toast,
-    dismiss: (toastId?: string) => {
-      dispatch({ type: "DISMISS_TOAST", toastId });
+    dismiss: (id?: string) => {
+      dispatch({ type: ActionType.DISMISS_TOAST, id });
     },
     error,
     success,

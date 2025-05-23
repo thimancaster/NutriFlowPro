@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { PatientProvider } from '@/contexts/patient/PatientContext';
 import { MealPlanProvider } from '@/contexts/MealPlanContext';
 import { ConsultationProvider } from '@/contexts/ConsultationContext';
+import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Navbar from '@/components/Navbar';
 
@@ -16,12 +17,16 @@ const ProtectedLayout: React.FC = () => {
     <ProtectedRoute>
       <PatientProvider>
         <MealPlanProvider>
-          <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-            <Navbar />
-            <div className="container mx-auto px-4 py-8">
-              <Outlet />
-            </div>
-          </div>
+          <ConsultationDataProvider>
+            <ConsultationProvider>
+              <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+                <Navbar />
+                <div className="container mx-auto px-4 py-8">
+                  <Outlet />
+                </div>
+              </div>
+            </ConsultationProvider>
+          </ConsultationDataProvider>
         </MealPlanProvider>
       </PatientProvider>
     </ProtectedRoute>

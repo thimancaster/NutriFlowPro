@@ -1,8 +1,7 @@
-
 import { dbCache } from "./dbCache";
 import { PatientService } from "./patient";
 import { consultationService } from "./consultationService";
-import * as MealPlanService from "./mealPlanService";
+import * as mealPlanService from '@/services/mealPlanService';
 
 /**
  * Service to handle all database interactions
@@ -24,9 +23,11 @@ export const DatabaseService = {
   getConsultation: consultationService.getConsultation,
   
   // Meal plan-related operations
-  saveMealPlan: MealPlanService.saveMealPlan,
-  getPatientMealPlans: MealPlanService.getPatientMealPlans,
-  getMealPlan: MealPlanService.getMealPlan,
+  saveMealPlan: mealPlanService.saveMealPlan,
+  getPatientMealPlans: mealPlanService.getPatientMealPlans,
+  getMealPlan: async (planId: string) => {
+    return mealPlanService.getMealPlanById(planId);
+  },
   
   /**
    * Clear all database service caches

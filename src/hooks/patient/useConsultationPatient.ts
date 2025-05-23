@@ -4,14 +4,21 @@ import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/toast';
 
+// Define an interface for the patient response
+interface PatientResponse {
+  success: boolean;
+  data?: Patient;
+  error?: string;
+}
+
 // Update to handle the correct patient response type
 const fetchPatientById = async (patientId: string, setPatient: (patient: Patient | null) => void, toast: any) => {
   try {
     const result = await PatientService.getPatient(patientId);
     
-    if ('success' in result && result.success) {
-      setPatient(result.data);
-    } else if ('error' in result) {
+    if (result.success) {
+      setPatient(result.data || null);
+    } else if (result.error) {
       console.error("Failed to load patient:", result.error);
       toast({
         title: "Erro ao carregar paciente",
@@ -35,13 +42,19 @@ export const useConsultationPatient = (initialPatientId?: string) => {
     }
   };
   
-  // You can implement additional functionality here if needed
+  // Adding the openPatientDetail method that's expected by component consumers
+  const openPatientDetail = async (patientId: string) => {
+    if (patientId) {
+      await loadPatient(patientId);
+    }
+  };
   
   return {
     patient,
     setPatient,
     patients,
     isPatientsLoading,
-    loadPatient
+    loadPatient,
+    openPatientDetail // Add this method to satisfy component consumers
   };
 };

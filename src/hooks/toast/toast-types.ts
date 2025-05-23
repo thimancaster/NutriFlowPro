@@ -50,4 +50,4 @@ export type ToastApi = {
 };
 
 // Export dispatch function type
-export const dispatch: Dispatch<Action> = (action: Action) => {};
+export const dispatch: Dispatch<Action> = (() => {}) as any;
