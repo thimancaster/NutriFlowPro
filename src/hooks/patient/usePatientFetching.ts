@@ -31,9 +31,10 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingResult =>
 
       // Apply status filter - handle empty string and 'all' as no filter
       if (filters.status && filters.status !== 'all' && filters.status !== '') {
-        // Type assertion since we know these are the only valid values after filtering
-        const statusValue = filters.status as 'active' | 'archived';
-        query = query.eq('status', statusValue);
+        // Only apply filter if status is 'active' or 'archived'
+        if (filters.status === 'active' || filters.status === 'archived') {
+          query = query.eq('status', filters.status);
+        }
       }
 
       // Apply search filter
