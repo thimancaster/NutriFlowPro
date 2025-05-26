@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Patient } from '@/types/patient';
+import { Patient, AddressDetails } from '@/types/patient';
 import { dbCache } from '@/services/dbCache';
 
 interface SavePatientResult {

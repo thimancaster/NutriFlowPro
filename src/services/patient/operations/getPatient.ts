@@ -1,8 +1,9 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, AddressDetails } from '@/types';
+import { Patient, AddressDetails, PatientResponse } from '@/types';
 import { logger } from '@/utils/logger';
 
-export const getPatient = async (patientId: string): Promise<{ success: boolean; data?: Patient; error?: string }> => {
+export const getPatient = async (patientId: string): Promise<PatientResponse> => {
   try {
     const { data, error } = await supabase
       .from('patients')
@@ -86,3 +87,5 @@ const processPatientData = (data: any): Patient => {
 
   return patient;
 };
+
+export type { PatientResponse };

@@ -1,16 +1,14 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
 import { Patient, ConsultationData } from '@/types';
-import { MealPlan, MealDistributionItem, Meal } from '@/types/meal';
+import { MealPlan, MealDistributionItem } from '@/types/meal';
 
 interface UseMealPlanActionsProps {
   activePatient: Patient | null;
   consultationData: ConsultationData | null;
   mealPlan: MealPlan | null;
   setMealPlan: (mealPlan: MealPlan) => void;
-  mealDistribution: MealDistributionItem[];
+  mealDistribution: Record<string, MealDistributionItem>;
   saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
 }
 
@@ -22,72 +20,52 @@ export const useMealPlanActions = ({
   mealDistribution,
   saveMealPlan
 }: UseMealPlanActionsProps) => {
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveMealPlan = async () => {
     if (!activePatient || !consultationData) {
-      toast({
-        title: "Erro",
-        description: "Paciente ou dados de consulta não disponíveis",
-        variant: "destructive",
-      });
+      console.error('Missing patient or consultation data');
       return;
     }
 
+    setIsSaving(true);
+    
     try {
-      setIsSaving(true);
-      
-      // Create a valid meal plan to save
-      const meals: Meal[] = mealDistribution.map(meal => ({
-        id: '',
+      // Convert meal distribution to meals array
+      const meals = Object.values(mealDistribution).map(meal => ({
+        id: meal.id,
         name: meal.name,
-        time: '',
+        time: '', // Will be filled later
+        percentage: meal.percent,
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fat: meal.fat,
         foods: [],
         totalCalories: meal.calories,
         totalProtein: meal.protein,
         totalCarbs: meal.carbs,
         totalFats: meal.fat
       }));
-      
+
       const newMealPlan: MealPlan = {
-        id: mealPlan?.id || '',
-        user_id: activePatient.user_id || '',
         patient_id: activePatient.id,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        meals: meals,
-        total_calories: mealDistribution.reduce((sum, meal) => sum + meal.calories, 0),
-        total_protein: mealDistribution.reduce((sum, meal) => sum + meal.protein, 0),
-        total_carbs: mealDistribution.reduce((sum, meal) => sum + meal.carbs, 0),
-        total_fats: mealDistribution.reduce((sum, meal) => sum + meal.fat, 0),
-        created_at: mealPlan?.created_at || format(new Date(), 'yyyy-MM-dd'),
-        updated_at: format(new Date(), 'yyyy-MM-dd'),
-        mealDistribution: mealDistribution.reduce((obj, meal, idx) => {
-          obj[`meal_${idx}`] = meal;
-          return obj;
-        }, {} as Record<string, MealDistributionItem>)
+        date: new Date().toISOString().split('T')[0],
+        meals,
+        total_calories: consultationData.totalCalories,
+        total_protein: consultationData.protein,
+        total_carbs: consultationData.carbs,
+        total_fats: consultationData.fats
       };
+
+      setMealPlan(newMealPlan);
       
-      const result = await saveMealPlan(consultationData.id, newMealPlan);
-      
-      if (result.success) {
-        setMealPlan(newMealPlan);
-        
-        toast({
-          title: "Plano alimentar salvo",
-          description: "O plano alimentar foi salvo com sucesso",
-        });
-      } else {
-        throw new Error(result.error || "Erro ao salvar plano alimentar");
+      // Save to backend if there's a consultation ID
+      if (consultationData.id) {
+        await saveMealPlan(consultationData.id, newMealPlan);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving meal plan:', error);
-      
-      toast({
-        title: "Erro ao salvar",
-        description: error.message || "Ocorreu um erro ao salvar o plano alimentar",
-        variant: "destructive",
-      });
     } finally {
       setIsSaving(false);
     }

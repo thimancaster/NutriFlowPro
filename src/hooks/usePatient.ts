@@ -29,6 +29,14 @@ const safeParseJson = (jsonField: Json | null, defaultValue: any = {}) => {
   }
 };
 
+// Helper function to safely cast gender
+const safeGender = (gender: any): 'male' | 'female' | 'other' | undefined => {
+  if (gender === 'male' || gender === 'female' || gender === 'other') {
+    return gender;
+  }
+  return undefined;
+};
+
 export const usePatient = (patientId?: string) => {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,6 +66,7 @@ export const usePatient = (patientId?: string) => {
         const enhancedPatient: Patient = {
           ...data,
           age: calculateAge(data.birth_date),
+          gender: safeGender(data.gender),
           measurements: {
             weight: measurementsData.weight || 0,
             height: measurementsData.height || 0,

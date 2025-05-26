@@ -53,16 +53,15 @@ const Patients = () => {
               onViewDetail={async (patientOrId) => {
                 // Handle view detail logic
               }}
-              onStatusChange={handleStatusChange}
+              onStatusChange={() => refetch()}
               onPageChange={handlePageChange}
             />
             
             <PatientPagination
               currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
+              totalItems={totalPatients}
+              pageSize={pagination.pageSize}
               onPageChange={handlePageChange}
-              hasNextPage={pagination.currentPage < pagination.totalPages}
-              hasPreviousPage={pagination.currentPage > 1}
             />
           </>
         )}

@@ -74,4 +74,14 @@ export interface PatientOption {
   id: string;
   name: string;
   email?: string;
+  age?: number;
+  birth_date?: string;
+  gender?: string;
+  measurements?: PatientMeasurements;
+}
+
+export interface PatientResponse {
+  success: boolean;
+  data?: Patient;
+  error?: string;
 }
