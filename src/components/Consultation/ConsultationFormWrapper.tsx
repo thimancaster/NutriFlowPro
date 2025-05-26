@@ -33,7 +33,7 @@ const ConsultationFormWrapper: React.FC<ConsultationFormWrapperProps> = ({
     height: consultation.height?.toString() || '',
     age: consultation.age?.toString() || '',
     sex: (consultation.gender === 'male' ? 'M' : 'F') as Sex,
-    objective: (consultation.objective || consultation.goal || 'manutenção') as Objective,
+    objective: (consultation.objective || 'manutenção') as Objective,
     profile: 'eutrofico' as Profile, // Default profile
     activityLevel: (consultation.activity_level || 'moderado') as ActivityLevel,
     consultationType: 'primeira_consulta' as ConsultationType,
@@ -60,6 +60,7 @@ const ConsultationFormWrapper: React.FC<ConsultationFormWrapperProps> = ({
       gender: formData.sex === 'M' ? 'male' : 'female',
       activity_level: formData.activityLevel,
       objective: formData.objective,
+      totalCalories: results.get,
       results: {
         bmr: results.tmb,
         get: results.get,

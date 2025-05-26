@@ -45,6 +45,7 @@ export const useClinicalActions = () => {
       protein: 0,
       carbs: 0,
       fats: 0,
+      totalCalories: 0, // ADDED
       gender: patient.gender || 'female',
       activity_level: 'moderado',
       objective: patient.goals?.objective || 'manutenção',

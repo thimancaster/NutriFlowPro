@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +49,7 @@ const initialState: CalculatorState = {
   sex: 'M',
   activityLevel: 'moderado',
   objective: 'manutenção',
-  profile: 'normal',
+  profile: 'eutrofico',
   bmr: null,
   tdee: null,
   protein: null,
@@ -190,31 +189,19 @@ export const CalculatorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Calculate macros based on profile
         let protein = 0;
         let fats = 0;
-        // Use stringToProfile to safely handle legacy profile values
-        const safeProfile = stringToProfile(state.profile);
         
-        switch (safeProfile) {
-          case 'magro':
+        switch (state.profile) {
           case 'eutrofico':
-            protein = state.weight * 2.0;
+            protein = state.weight * 1.4;
             fats = state.weight * 1.0;
             break;
-          case 'normal':
+          case 'sobrepeso_obesidade':
             protein = state.weight * 1.8;
             fats = state.weight * 0.8;
             break;
-          case 'sobrepeso':
-          case 'sobrepeso_obesidade':
-            protein = state.weight * 1.6;
-            fats = state.weight * 0.7;
-            break;
-          case 'obeso':
-            protein = state.weight * 1.4;
-            fats = state.weight * 0.6;
-            break;
           case 'atleta':
-            protein = state.weight * 2.2;
-            fats = state.weight * 1.0;
+            protein = state.weight * 2.0;
+            fats = state.weight * 1.2;
             break;
         }
         

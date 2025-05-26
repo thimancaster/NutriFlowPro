@@ -25,14 +25,14 @@ export const calculateMacrosByProfile = (
   }
 
   // Get appropriate protein ratio based on profile
-  const proteinPerKg = PROTEIN_RATIOS[profile] || PROTEIN_RATIOS.normal;
+  const proteinPerKg = PROTEIN_RATIOS[profile];
 
   // Calculate protein grams
   const proteinGrams = Math.round(weight * proteinPerKg);
   const proteinKcal = proteinGrams * CALORIE_VALUES.protein;
 
   // Get appropriate lipid ratio based on profile
-  const fatPerKg = LIPID_RATIOS[profile] || LIPID_RATIOS.normal;
+  const fatPerKg = LIPID_RATIOS[profile];
 
   // Calculate fat grams
   const fatGrams = Math.round(weight * fatPerKg);
@@ -73,20 +73,18 @@ export const calculateMacrosByProfile = (
 export const mapLegacyProfile = (profile: string): Profile => {
   switch (profile.toLowerCase()) {
     case 'magro':
-      return 'magro';
     case 'normal':
-      return 'normal';
+      return 'eutrofico';
     case 'sobrepeso':
-      return 'sobrepeso';
     case 'obeso':
-      return 'obeso';
+      return 'sobrepeso_obesidade';
     case 'atleta':
       return 'atleta';
     case 'eutrofico':
-      return 'normal';
+      return 'eutrofico';
     case 'sobrepeso_obesidade':
-      return 'sobrepeso';
+      return 'sobrepeso_obesidade';
     default:
-      return 'normal';
+      return 'eutrofico';
   }
 };

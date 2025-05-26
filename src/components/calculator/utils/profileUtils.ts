@@ -7,17 +7,19 @@ import { Profile } from '@/types/consultation';
  */
 export const stringToProfile = (value: string | Profile): Profile => {
   // Handle the case where value is already a valid Profile
-  if (['magro', 'normal', 'sobrepeso', 'obeso', 'atleta', 'eutrofico', 'sobrepeso_obesidade'].includes(value as string)) {
+  if (['eutrofico', 'sobrepeso_obesidade', 'atleta'].includes(value as string)) {
     return value as Profile;
   }
   
   // Map legacy or alternate names to valid Profile values
   switch (value) {
-    case 'eutrofico':
-      return 'magro';
-    case 'sobrepeso_obesidade':
-      return 'sobrepeso';
+    case 'magro':
+    case 'normal':
+      return 'eutrofico';
+    case 'sobrepeso':
+    case 'obeso':
+      return 'sobrepeso_obesidade';
     default:
-      return 'normal'; // Default fallback
+      return 'eutrofico'; // Default fallback
   }
 };
