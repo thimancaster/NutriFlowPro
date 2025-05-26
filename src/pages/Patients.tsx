@@ -79,7 +79,7 @@ const Patients = () => {
 
   // Extend the PatientTable component to include patient action buttons
   const renderPatientActions = (patientData: Patient) => (
-    <div className="flex space-x-2">
+    <div className="flex space-x-1">
       <Link to={`/calculator?patientId=${patientData.id}`}>
         <Button 
           variant="outline" 
@@ -88,7 +88,7 @@ const Patients = () => {
           onClick={() => handleStartPatientSession(patientData)}
         >
           <Calculator className="h-4 w-4" />
-          <span className="hidden md:inline">Calculadora</span>
+          <span className="hidden lg:inline">Calculadora</span>
         </Button>
       </Link>
       
@@ -100,7 +100,7 @@ const Patients = () => {
           onClick={() => handleStartPatientSession(patientData)}
         >
           <Utensils className="h-4 w-4" />
-          <span className="hidden md:inline">Plano Alimentar</span>
+          <span className="hidden lg:inline">Plano</span>
         </Button>
       </Link>
     </div>

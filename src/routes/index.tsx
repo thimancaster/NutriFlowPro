@@ -14,6 +14,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import Dashboard from '@/pages/Dashboard';
 import Patients from '@/pages/Patients';
 import PatientNew from '@/pages/PatientNew';
+import PatientEdit from '@/pages/PatientEdit';
 import PatientProfile from '@/pages/PatientProfile';
 import Calculator from '@/pages/Calculator';
 import MealPlans from '@/pages/MealPlans';
@@ -54,7 +55,7 @@ const AppRoutes = () => {
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/patients" element={<Patients />} />
               <Route path="/patients/new" element={<PatientNew />} />
-              <Route path="/patients/edit/:id" element={<PatientNew />} />
+              <Route path="/patients/edit/:id" element={<PatientEdit />} />
               <Route path="/patients/:id" element={<PatientProfile />} />
               <Route path="/calculator" element={<Calculator />} />
               <Route path="/meal-plans" element={<MealPlans />} />
