@@ -106,6 +106,12 @@ const Patients = () => {
     </div>
   );
 
+  // Create a wrapper function to handle the status change signature mismatch
+  const handleStatusChangeWrapper = (status: 'active' | 'archived' | 'all') => {
+    const mappedStatus = status === 'all' ? '' : status;
+    handleStatusChange(mappedStatus as 'active' | 'archived' | '');
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PatientPageHeader />
@@ -113,7 +119,7 @@ const Patients = () => {
       <PatientFiltersComponent 
         filters={filters}
         onFiltersChange={handleFilterChange}
-        onStatusChange={handleStatusChange}
+        onStatusChange={handleStatusChangeWrapper}
         onSearch={() => refetch()}
       />
       

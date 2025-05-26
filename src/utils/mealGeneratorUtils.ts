@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ConsultationData } from '@/types';
 import { MealItem, MealDistributionItem } from '@/types/meal';
@@ -11,6 +10,10 @@ export interface MealPlanSettings {
   patientData?: any;
   patientAge?: number;
   patientGender?: string;
+  numMeals?: string;
+  totalCalories?: string;
+  dietType?: string;
+  restrictions?: string[];
 }
 
 export const mealOptions = [
@@ -107,7 +110,6 @@ export const validateConsultationData = (
     'protein',
     'carbs',
     'fats',
-    'objective',
   ];
 
   for (const field of requiredFields) {

@@ -25,6 +25,14 @@ const MealPlanGenerator: React.FC = () => {
     { id: '6', name: 'Ceia', percent: 5, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] }
   ];
 
+  // Create a wrapper function that matches the expected signature
+  const wrappedSaveConsultation = async (data: any) => {
+    if (consultationData?.id) {
+      return await handleSaveConsultation(consultationData.id, data);
+    }
+    throw new Error('No consultation ID available');
+  };
+
   const {
     mealDistribution,
     totalMealPercent,
@@ -38,7 +46,7 @@ const MealPlanGenerator: React.FC = () => {
     consultationData,
     mealPlan,
     setMealPlan,
-    saveConsultation: handleSaveConsultation,
+    saveConsultation: wrappedSaveConsultation,
     saveMealPlan
   });
 

@@ -28,7 +28,7 @@ interface UsePatientListReturn {
 export const usePatientList = (): UsePatientListReturn => {
   const { user } = useAuth();
   const { filters, updateFilters, handleStatusChange } = usePatientFilters();
-  const { patients, isLoading, error, pagination, fetchPatients, refetch } = usePatientFetching(user?.id);
+  const { patients, isLoading, error, fetchPatients } = usePatientFetching(user?.id);
   const [response, setResponse] = useState<PatientListResponse>({
     patients: [],
     total: 0,
@@ -52,10 +52,17 @@ export const usePatientList = (): UsePatientListReturn => {
     updateFilters({ page });
   }, [updateFilters]);
 
+  const refetch = useCallback(async () => {
+    if (user?.id) {
+      const newResponse = await fetchPatients(filters);
+      setResponse(newResponse);
+    }
+  }, [user?.id, filters, fetchPatients]);
+
   return {
     patients: response.patients,
     isLoading,
-    error: error?.message || null,
+    error: error || null,
     filters,
     pagination: {
       currentPage: response.page,
