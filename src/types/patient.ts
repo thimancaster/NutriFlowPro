@@ -1,4 +1,29 @@
+
 import { User } from "./auth";
+
+export interface AddressDetails {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+}
+
+export interface PatientMeasurements {
+  weight?: number;
+  height?: number;
+  body_fat?: number;
+  muscle_mass?: number;
+}
+
+export interface PatientGoals {
+  objective?: string;
+  profile?: string;
+  targetWeight?: number;
+  initialWeight?: number;
+}
 
 export interface Patient {
   id: string;
@@ -8,21 +33,27 @@ export interface Patient {
   name: string;
   email?: string;
   phone?: string;
+  secondaryPhone?: string;
+  cpf?: string;
   birth_date?: string;
   gender?: 'male' | 'female' | 'other';
-  address?: string;
+  address?: string | AddressDetails;
   city?: string;
   state?: string;
   zip?: string;
   country?: string;
   notes?: string;
-  status?: 'active' | 'inactive' | 'archived';
+  status?: 'active' | 'archived';
   photo_url?: string;
   user?: User;
+  measurements?: PatientMeasurements;
+  goals?: PatientGoals;
+  last_appointment?: string;
+  age?: number;
 }
 
 export interface PatientFilters {
-  status?: 'active' | 'inactive' | 'archived' | '';
+  status?: 'active' | 'archived' | '';
   search?: string;
   sortBy?: 'name' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';

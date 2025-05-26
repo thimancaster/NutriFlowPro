@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MealItem, MealList } from './MealList';
 import MacroDistribution from './MacroDistribution';
 import { saveMealPlan } from '@/services/mealPlanService';
+import { Meal } from '@/types/meal';
 
 interface MealAssemblyProps {
   totalCalories: number;
@@ -74,15 +75,21 @@ const MealAssembly: React.FC<MealAssemblyProps> = ({
     setIsSaving(true);
     
     try {
-      // Process meals for storing
-      const processedMeals = meals.map(meal => ({
+      // Process meals for storing - convert to proper Meal type
+      const processedMeals: Meal[] = meals.map(meal => ({
+        id: undefined,
         name: meal.name,
+        time: undefined,
         percentage: meal.percentage,
         calories: Math.round(totalCalories * (meal.percentage / 100)),
         protein: Math.round(macros.protein * (meal.percentage / 100)),
         carbs: Math.round(macros.carbs * (meal.percentage / 100)),
         fat: Math.round(macros.fat * (meal.percentage / 100)),
-        foods: meal.foods
+        foods: meal.foods,
+        totalCalories: Math.round(totalCalories * (meal.percentage / 100)),
+        totalProtein: Math.round(macros.protein * (meal.percentage / 100)),
+        totalCarbs: Math.round(macros.carbs * (meal.percentage / 100)),
+        totalFats: Math.round(macros.fat * (meal.percentage / 100))
       }));
       
       // Create meal plan object

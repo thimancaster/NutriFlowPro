@@ -2,33 +2,45 @@
 import { useState, useCallback } from 'react';
 import { PatientFilters } from '@/types';
 
-/**
- * Hook for managing patient filter state
- */
-export const usePatientFilters = (initialFilters?: Partial<PatientFilters>) => {
-  // Filters state
-  const [filters, setFilters] = useState<PatientFilters>({
-    search: '',
-    status: 'active',
-    dateFrom: initialFilters?.dateFrom || '',
-    dateTo: initialFilters?.dateTo || '',
-    sortBy: initialFilters?.sortBy || 'name',
-    sortDirection: initialFilters?.sortDirection || 'asc'
-  });
+interface UsePatientFiltersReturn {
+  filters: PatientFilters;
+  updateFilters: (newFilters: Partial<PatientFilters>) => void;
+  resetFilters: () => void;
+  handleStatusChange: (status: 'active' | 'archived' | '') => void;
+}
 
-  // Handle filter changes
-  const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+const defaultFilters: PatientFilters = {
+  status: '',
+  search: '',
+  sortBy: 'name',
+  sortOrder: 'asc',
+  page: 1,
+  limit: 10
+};
+
+export const usePatientFilters = (): UsePatientFiltersReturn => {
+  const [filters, setFilters] = useState<PatientFilters>(defaultFilters);
+
+  const updateFilters = useCallback((newFilters: Partial<PatientFilters>) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters,
+      page: newFilters.page || 1 // Reset to page 1 when filters change
+    }));
   }, []);
 
-  // Handle status filter change specifically
-  const handleStatusChange = useCallback((status: 'active' | 'archived' | 'all') => {
-    handleFilterChange({ status });
-  }, [handleFilterChange]);
+  const resetFilters = useCallback(() => {
+    setFilters(defaultFilters);
+  }, []);
+
+  const handleStatusChange = useCallback((status: 'active' | 'archived' | '') => {
+    updateFilters({ status, page: 1 });
+  }, [updateFilters]);
 
   return {
     filters,
-    handleFilterChange,
-    handleStatusChange,
+    updateFilters,
+    resetFilters,
+    handleStatusChange
   };
 };

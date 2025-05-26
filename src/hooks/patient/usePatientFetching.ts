@@ -3,197 +3,149 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Patient, PatientFilters } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Json } from '@/integrations/supabase/types';
 
-// Helper function to safely parse JSON fields
-const safeParseJson = (jsonField: Json | null, defaultValue: any = {}) => {
-  if (!jsonField) return defaultValue;
-  if (typeof jsonField === 'object') return jsonField;
-  try {
-    return JSON.parse(jsonField as string) || defaultValue;
-  } catch (e) {
-    console.error("Error parsing JSON:", e);
-    return defaultValue;
-  }
-};
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  pageSize: number;
+}
 
-/**
- * Hook for fetching patient data
- */
-export const usePatientFetching = (
-  userId: string | undefined,
-  filters: PatientFilters,
-  pagination: { limit: number, offset: number }
-) => {
-  const { toast } = useToast();
+interface UsePatientFetchingReturn {
+  patients: Patient[];
+  isLoading: boolean;
+  error: Error | null;
+  pagination: PaginationInfo;
+  refetch: () => Promise<void>;
+  fetchPatients: (filters: PatientFilters) => Promise<void>;
+}
+
+export const usePatientFetching = (userId?: string): UsePatientFetchingReturn => {
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [totalPatients, setTotalPatients] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [isError, setIsError] = useState(false);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    pageSize: 10
+  });
   
-  // Use a ref for tracking fetch operations
-  const isFetchingRef = useRef(false);
-  const fetchTimeoutRef = useRef<number | null>(null);
-  
-  // Clear fetch timeout to prevent memory leaks
-  const clearFetchTimeout = useCallback(() => {
-    if (fetchTimeoutRef.current !== null) {
-      window.clearTimeout(fetchTimeoutRef.current);
-      fetchTimeoutRef.current = null;
+  const { toast } = useToast();
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const fetchPatients = useCallback(async (filters: PatientFilters) => {
+    if (!userId) return;
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, []);
-  
-  // Debounced fetch function
-  const debouncedFetch = useCallback((delay = 300) => {
-    clearFetchTimeout();
+
+    abortControllerRef.current = new AbortController();
     
-    fetchTimeoutRef.current = window.setTimeout(() => {
-      fetchPatients();
-    }, delay);
-    
-    return () => clearFetchTimeout();
-  }, [clearFetchTimeout]);
-  
-  const fetchPatients = useCallback(async () => {
-    // Prevent multiple simultaneous fetches
-    if (!userId || isFetchingRef.current) return;
-    
-    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
-    setIsError(false);
-    
+
     try {
-      console.log("Fetching patients with filters:", filters);
       let query = supabase
         .from('patients')
-        .select('*', { count: 'exact' });
-      
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId);
+
       // Apply filters
       if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
+        query = query.ilike('name', `%${filters.search}%`);
       }
-      
-      // Apply status filtering
-      if (filters.status && filters.status !== 'all') {
+
+      if (filters.status && filters.status !== '') {
         query = query.eq('status', filters.status);
       }
-      
-      // Date filters if provided
-      if (filters.dateFrom) {
-        query = query.gte('created_at', filters.dateFrom);
-      }
-      
-      if (filters.dateTo) {
-        query = query.lte('created_at', filters.dateTo);
-      }
-      
-      // Apply user_id filter to only show the user's patients
-      query = query.eq('user_id', userId);
-      
+
       // Apply sorting
       if (filters.sortBy) {
         query = query.order(filters.sortBy, { 
-          ascending: filters.sortDirection === 'asc' 
+          ascending: filters.sortOrder === 'asc' 
         });
-      } else {
-        // Default sort by name if no sort specified
-        query = query.order('name', { ascending: true });
       }
-      
+
       // Apply pagination
-      const { limit, offset } = pagination;
-      if (limit && offset !== undefined) {
-        query = query.range(offset, offset + limit - 1);
-      }
+      const page = filters.page || 1;
+      const limit = filters.limit || 10;
+      const offset = (page - 1) * limit;
       
-      console.log("Executing query:", JSON.stringify(query));
-      const { data, error, count } = await query;
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error: supabaseError, count } = await query.abortSignal(
+        abortControllerRef.current.signal
+      );
+
+      if (supabaseError) throw supabaseError;
+
+      // Process the data to match Patient type
+      const processedPatients: Patient[] = (data || []).map(patient => ({
+        ...patient,
+        status: (patient.status as 'active' | 'archived') || 'active',
+        gender: (patient.gender as 'male' | 'female' | 'other') || undefined,
+        goals: typeof patient.goals === 'string' 
+          ? JSON.parse(patient.goals) 
+          : (patient.goals || {}),
+        measurements: typeof patient.measurements === 'string' 
+          ? JSON.parse(patient.measurements) 
+          : (patient.measurements || {}),
+        address: patient.address || undefined
+      }));
+
+      setPatients(processedPatients);
       
-      if (error) throw error;
-      console.log("Query returned data:", data?.length, "items");
-      
-      // Transform data to match Patient type
-      const transformedData: Patient[] = data?.map(patient => {
-        try {
-          const measurementsData = safeParseJson(patient.measurements, {});
-          const goalsData = safeParseJson(patient.goals, {});
-          const addressData = typeof patient.address === 'string' ? 
-            safeParseJson(patient.address, {}) : patient.address || {};
-          
-          // Ensure status is correctly typed as 'active' | 'archived'
-          const status: 'active' | 'archived' = 
-            patient.status === 'archived' ? 'archived' : 'active';
-          
-          return {
-            ...patient,
-            status, // Use the properly typed status
-            goals: {
-              objective: goalsData.objective || '',
-              profile: goalsData.profile || '',
-            },
-            measurements: {
-              weight: measurementsData.weight || 0,
-              height: measurementsData.height || 0,
-            },
-            address: addressData
-          };
-        } catch (err) {
-          console.error("Error transforming patient data:", err);
-          // Return a basic patient object to prevent the entire list from failing
-          return {
-            ...patient,
-            id: patient.id,
-            name: patient.name || 'Unknown Patient',
-            status: (patient.status === 'archived' ? 'archived' : 'active') as 'active' | 'archived',
-            goals: { objective: '', profile: '' },
-            measurements: { weight: 0, height: 0 }
-          };
-        }
-      }) || [];
-      
-      setPatients(transformedData);
-      setTotalPatients(count || 0);
-      
-      return { patients: transformedData, totalItems: count || 0 };
-    } catch (err) {
-      console.error('Error fetching patients:', err);
-      setError(err as Error);
-      setIsError(true);
-      
-      toast({
-        title: 'Erro',
-        description: `Falha ao carregar pacientes: ${(err as Error).message}`,
-        variant: 'destructive',
+      setPagination({
+        currentPage: page,
+        totalPages: Math.ceil((count || 0) / limit),
+        totalCount: count || 0,
+        pageSize: limit
       });
-      
-      return { patients: [], totalItems: 0 };
+
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Error fetching patients:', err);
+        setError(err);
+        toast({
+          title: "Erro ao carregar pacientes",
+          description: "Não foi possível carregar a lista de pacientes.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
-      isFetchingRef.current = false;
     }
-  }, [userId, filters, pagination, toast]);
+  }, [userId, toast]);
 
-  // Effect for initial fetch and cleanup
+  const refetch = useCallback(async () => {
+    await fetchPatients({
+      status: '',
+      search: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+      page: 1,
+      limit: 10
+    });
+  }, [fetchPatients]);
+
+  // Cleanup on unmount
   useEffect(() => {
-    if (userId) {
-      debouncedFetch(500);
-    }
-    
     return () => {
-      clearFetchTimeout();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, [userId, filters, pagination, debouncedFetch, clearFetchTimeout]);
+  }, []);
 
   return {
     patients,
-    totalPatients,
     isLoading,
     error,
-    isError,
-    fetchPatients,
-    debouncedFetch,
-    clearFetchTimeout
+    pagination,
+    refetch,
+    fetchPatients
   };
 };

@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { Patient } from '@/types';
+import { Patient, PatientGoals, PatientMeasurements } from '@/types';
 import { storageUtils } from '@/utils/storageUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -81,13 +82,12 @@ export const usePatientState = () => {
         const goalsData = safeParseJson(data.goals) || {};
         const measurementsData = safeParseJson(data.measurements) || {};
         
-        // Handle address field which could be string or object
+        // Handle address field
         let addressData: any = data.address;
         if (typeof addressData === 'string') {
           try {
             addressData = JSON.parse(addressData);
           } catch (e) {
-            // If we can't parse it as JSON, keep it as a string
             console.log('Address is a string and could not be parsed as JSON');
           }
         }
@@ -96,19 +96,20 @@ export const usePatientState = () => {
         const patient: Patient = {
           ...data,
           status: (data.status as 'active' | 'archived') || 'active',
+          gender: (data.gender as 'male' | 'female' | 'other') || undefined,
           goals: {
             objective: goalsData?.objective || undefined,
             profile: goalsData?.profile || undefined,
             targetWeight: goalsData?.targetWeight || undefined,
             initialWeight: goalsData?.initialWeight || undefined,
-          },
+          } as PatientGoals,
           address: addressData || undefined,
           measurements: {
             weight: measurementsData?.weight || undefined,
             height: measurementsData?.height || undefined,
             body_fat: measurementsData?.body_fat || undefined,
             muscle_mass: measurementsData?.muscle_mass || undefined,
-          }
+          } as PatientMeasurements
         };
 
         setActivePatient(patient);

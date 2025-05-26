@@ -28,7 +28,7 @@ const Patients = () => {
   }
 
   if (error) {
-    return <PatientErrorState error={error} onRetry={refetch} />;
+    return <PatientErrorState errorMessage={error} onRetry={refetch} />;
   }
 
   return (
@@ -37,7 +37,7 @@ const Patients = () => {
       
       <div className="bg-white rounded-xl shadow-lg p-6">
         <PatientListHeader 
-          totalPatients={totalPatients}
+          totalItems={totalPatients}
           filters={filters}
           onFilterChange={handleFilterChange}
         />
@@ -48,13 +48,21 @@ const Patients = () => {
           <>
             <PatientTable 
               patients={patients}
+              totalItems={totalPatients}
+              filters={filters}
+              onViewDetail={async (patientOrId) => {
+                // Handle view detail logic
+              }}
               onStatusChange={handleStatusChange}
+              onPageChange={handlePageChange}
             />
             
             <PatientPagination
               currentPage={pagination.currentPage}
               totalPages={pagination.totalPages}
               onPageChange={handlePageChange}
+              hasNextPage={pagination.currentPage < pagination.totalPages}
+              hasPreviousPage={pagination.currentPage > 1}
             />
           </>
         )}
