@@ -1,6 +1,8 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -8,52 +10,73 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false,
-    error: null,
+    hasError: false
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI.
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    console.error('Uncaught error:', error, errorInfo);
+    this.setState({
+      error,
+      errorInfo
+    });
   }
+
+  private handleReset = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  };
+
+  private handleReload = () => {
+    window.location.reload();
+  };
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-            <div className="flex items-center justify-center mb-6">
-              <div className="bg-red-100 p-3 rounded-full">
-                <AlertCircle className="h-8 w-8 text-red-600" />
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <CardTitle>Algo deu errado</CardTitle>
               </div>
-            </div>
-            <h1 className="text-2xl font-semibold text-center mb-4">Algo deu errado</h1>
-            <div className="bg-gray-100 p-3 rounded mb-4 overflow-auto max-h-40">
-              <p className="text-sm font-mono text-red-600">
-                {this.state.error?.message || 'Erro desconhecido'}
-              </p>
-            </div>
-            <p className="text-gray-600 mb-6 text-center">
-              Pedimos desculpas pelo inconveniente. Por favor, tente atualizar a página ou contate o suporte se o problema persistir.
-            </p>
-            <div className="flex justify-center">
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-nutri-blue text-white px-4 py-2 rounded hover:bg-nutri-blue-dark transition-colors"
-              >
-                Atualizar Página
-              </button>
-            </div>
-          </div>
+              <CardDescription>
+                Ocorreu um erro inesperado. Por favor, tente novamente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {process.env.NODE_ENV === 'development' && this.state.error && (
+                <div className="text-xs bg-gray-100 p-2 rounded">
+                  <strong>Error:</strong> {this.state.error.message}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button 
+                  onClick={this.handleReset}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Tentar novamente
+                </Button>
+                <Button 
+                  onClick={this.handleReload}
+                  className="flex-1"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Recarregar página
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       );
     }

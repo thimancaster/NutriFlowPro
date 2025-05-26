@@ -17,6 +17,7 @@ const ClinicalWorkflow: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<ClinicalWorkflowStep>('patient-selection');
   const [consultation, setConsultation] = useState<ConsultationData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   // Load patient from URL params if needed
   React.useEffect(() => {
@@ -26,29 +27,31 @@ const ClinicalWorkflow: React.FC = () => {
     }
   }, [patientId, activePatient, loadPatientById]);
   
-  // Handle step change from workflow header tabs
-  const handleStepChange = (step: string) => {
-    setCurrentStep(step as ClinicalWorkflowStep);
-  };
-  
   // Handle save action
   const handleSave = () => {
     setIsSaving(true);
     // Implement save logic here
     setTimeout(() => {
       setIsSaving(false);
+      setLastSaved(new Date());
     }, 1000);
+  };
+
+  // Handle complete consultation
+  const handleComplete = () => {
+    // Implement complete logic here
+    console.log('Completing consultation');
   };
 
   return (
     <div className="container mx-auto py-6">
       <WorkflowHeader
-        patient={activePatient}
-        consultation={consultation}
-        currentStep={currentStep}
-        onStepChange={handleStepChange}
-        onSave={handleSave}
+        activePatient={activePatient}
+        activeConsultation={consultation}
         isSaving={isSaving}
+        lastSaved={lastSaved}
+        onSave={handleSave}
+        onComplete={handleComplete}
       />
       
       <WorkflowSteps 
