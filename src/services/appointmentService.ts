@@ -89,3 +89,73 @@ export const getUpcomingAppointments = async (
     limit 
   });
 };
+
+export const createAppointment = async (appointmentData: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('appointments')
+      .insert([appointmentData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating appointment:', error);
+      return { success: false, message: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error in createAppointment:', error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const updateAppointment = async (id: string, appointmentData: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update(appointmentData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating appointment:', error);
+      return { success: false, message: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error in updateAppointment:', error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const deleteAppointment = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('appointments')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting appointment:', error);
+      return { success: false, message: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in deleteAppointment:', error);
+    return { success: false, message: error.message };
+  }
+};
+
+// Export as a service object
+export const appointmentService = {
+  getAppointments,
+  getAppointmentsByPatient,
+  getUpcomingAppointments,
+  createAppointment,
+  updateAppointment,
+  deleteAppointment
+};

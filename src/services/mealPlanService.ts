@@ -112,3 +112,31 @@ export const getMealPlanById = async (
     return { success: false, error: error.message };
   }
 };
+
+export const saveMealPlan = async (mealPlanData: Partial<MealPlan>): Promise<{ success: boolean; data?: MealPlan; error?: string }> => {
+  try {
+    const { data, error } = await supabase
+      .from('meal_plans')
+      .insert([mealPlanData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving meal plan:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error in saveMealPlan:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getPatientMealPlans = async (
+  userId: string,
+  patientId: string,
+  limit: number = 10
+) => {
+  return getMealPlans(userId, { patientId, limit });
+};

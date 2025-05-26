@@ -26,8 +26,8 @@ export const DatabaseService = {
   // Meal plan-related operations
   saveMealPlan: mealPlanService.saveMealPlan,
   getPatientMealPlans: mealPlanService.getPatientMealPlans,
-  getMealPlan: async (planId: string) => {
-    return mealPlanService.getMealPlanById(planId);
+  getMealPlan: async (planId: string, userId: string) => {
+    return mealPlanService.getMealPlanById(planId, userId);
   },
   
   /**

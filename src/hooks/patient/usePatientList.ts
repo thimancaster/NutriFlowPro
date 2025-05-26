@@ -1,108 +1,103 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Patient, PatientFilters } from '@/types';
-import { getPatients, PatientsFilters } from '@/services/patient/operations/getPatients';
-import { useToast } from '@/hooks/use-toast';
+import { PatientService } from '@/services/patient';
+import { Patient, PatientFilters } from '@/types/patient';
 
 interface PaginationInfo {
-  page: number;
-  pageSize: number;
-  total: number;
+  currentPage: number;
   totalPages: number;
+  totalCount: number;
+  pageSize: number;
 }
 
-export const usePatientList = () => {
+interface UsePatientListReturn {
+  patients: Patient[];
+  isLoading: boolean;
+  error: string;
+  filters: PatientFilters;
+  pagination: PaginationInfo;
+  totalPatients: number;
+  handleFilterChange: (newFilters: Partial<PatientFilters>) => void;
+  handlePageChange: (newPage: number) => void;
+  handleStatusChange: () => void;
+  refetch: () => Promise<void>;
+}
+
+export const usePatientList = (): UsePatientListReturn => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [totalPatients, setTotalPatients] = useState(0);
   
-  // Filtros e paginação
   const [filters, setFilters] = useState<PatientFilters>({
+    status: '',
     search: '',
-    status: 'all',
-    sortBy: 'created_at',
-    sortOrder: 'desc'
+    sortBy: 'name',
+    sortOrder: 'asc',
+    page: 1,
+    limit: 10
   });
   
   const [pagination, setPagination] = useState<PaginationInfo>({
-    page: 1,
-    pageSize: 10,
-    total: 0,
-    totalPages: 0
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    pageSize: 10
   });
 
   const fetchPatients = async () => {
-    if (!user?.id) return;
-
+    if (!user) return;
+    
     setIsLoading(true);
-    setError(null);
-
+    setError('');
+    
     try {
-      // Otimização: Usar filtros para reduzir dados transferidos
-      const patientsFilters: PatientsFilters = {
+      const result = await PatientService.getPatients(user.id, {
+        status: filters.status || undefined,
         search: filters.search || undefined,
-        status: filters.status !== 'all' ? filters.status : undefined,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder
-      };
-
-      const result = await getPatients(
-        user.id,
-        patientsFilters,
-        pagination.page,
-        pagination.pageSize
-      );
-
+        sortBy: filters.sortBy as 'name' | 'created_at' | 'updated_at',
+        sortOrder: filters.sortOrder || 'asc',
+        page: filters.page || 1,
+        limit: filters.limit || 10
+      });
+      
       if (result.success && result.data) {
-        setPatients(result.data);
-        setPagination(prev => ({
-          ...prev,
-          total: result.total || 0,
-          totalPages: Math.ceil((result.total || 0) / prev.pageSize)
-        }));
+        setPatients(result.data.patients || []);
+        setTotalPatients(result.data.total || 0);
+        setPagination({
+          currentPage: result.data.page || 1,
+          totalPages: result.data.totalPages || 1,
+          totalCount: result.data.total || 0,
+          pageSize: result.data.limit || 10
+        });
       } else {
         setError(result.error || 'Erro ao carregar pacientes');
-        toast({
-          title: 'Erro',
-          description: result.error || 'Erro ao carregar pacientes',
-          variant: 'destructive'
-        });
       }
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: 'Erro',
-        description: 'Erro inesperado ao carregar pacientes',
-        variant: 'destructive'
-      });
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+      setError('Erro inesperado ao carregar pacientes');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Carregar pacientes quando filtros ou paginação mudam
-  useEffect(() => {
-    fetchPatients();
-  }, [user?.id, filters, pagination.page]);
-
   const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    // Reset para primeira página quando filtros mudam
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   };
 
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    setFilters(prev => ({ ...prev, page: newPage }));
   };
 
   const handleStatusChange = () => {
-    // Recarregar lista após mudança de status
     fetchPatients();
   };
+
+  useEffect(() => {
+    fetchPatients();
+  }, [user, filters]);
 
   return {
     patients,
@@ -110,7 +105,7 @@ export const usePatientList = () => {
     error,
     filters,
     pagination,
-    totalPatients: pagination.total,
+    totalPatients,
     handleFilterChange,
     handlePageChange,
     handleStatusChange,
