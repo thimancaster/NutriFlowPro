@@ -47,7 +47,7 @@ export const useConsultationForm = (
     age: initialData.age || '',
     sex: initialData.sex || 'M',
     objective: initialData.objective || 'manutenção',
-    profile: initialData.profile || 'normal',
+    profile: initialData.profile || 'eutrofico',
     activityLevel: initialData.activityLevel || 'moderado',
     consultationType: initialData.consultationType || 'primeira_consulta',
     consultationStatus: initialData.consultationStatus || 'em_andamento'

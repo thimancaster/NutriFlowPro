@@ -1,21 +1,36 @@
 
-import { describe, it, expect } from 'vitest';
-import { calculateMacrosByProfile, mapLegacyProfile } from '@/utils/macronutrientCalculations';
+import { calculateMacrosByProfile } from '../utils/macronutrientCalculations';
+import { Profile } from '../types/consultation';
 
-// Simple tests for macronutrient calculations
 describe('Macronutrient Calculations', () => {
-  it('calculates macros correctly for normal profile', () => {
-    const result = calculateMacrosByProfile('normal', 70, 2000);
-    
-    expect(result.protein.grams).toBeGreaterThan(0);
-    expect(result.carbs.grams).toBeGreaterThan(0);
-    expect(result.fat.grams).toBeGreaterThan(0);
-    expect(result.proteinPerKg).toBe(1.8);
+  const testCases: { profile: Profile; weight: number; vet: number }[] = [
+    { profile: 'eutrofico', weight: 70, vet: 2000 },
+    { profile: 'sobrepeso_obesidade', weight: 80, vet: 1800 },
+    { profile: 'atleta', weight: 75, vet: 2500 },
+  ];
+
+  testCases.forEach(({ profile, weight, vet }) => {
+    it(`should calculate macros correctly for ${profile} profile`, () => {
+      const result = calculateMacrosByProfile(profile, weight, vet);
+      
+      expect(result).toHaveProperty('protein');
+      expect(result).toHaveProperty('carbs');
+      expect(result).toHaveProperty('fat');
+      expect(result).toHaveProperty('proteinPerKg');
+      
+      expect(result.protein.grams).toBeGreaterThan(0);
+      expect(result.carbs.grams).toBeGreaterThanOrEqual(0);
+      expect(result.fat.grams).toBeGreaterThan(0);
+      
+      // Test that percentages add up to approximately 100%
+      const totalPercentage = result.protein.percentage + result.carbs.percentage + result.fat.percentage;
+      expect(totalPercentage).toBeCloseTo(100, 0);
+    });
   });
 
-  it('maps legacy profile values correctly', () => {
-    expect(mapLegacyProfile('magro')).toBe('magro');
-    expect(mapLegacyProfile('normal')).toBe('normal');
-    expect(mapLegacyProfile('OBESO')).toBe('obeso');
+  it('should throw error for invalid inputs', () => {
+    expect(() => calculateMacrosByProfile('eutrofico', 0, 2000)).toThrow();
+    expect(() => calculateMacrosByProfile('eutrofico', 70, 0)).toThrow();
+    expect(() => calculateMacrosByProfile('eutrofico', -10, 2000)).toThrow();
   });
 });

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -22,7 +22,7 @@ export const useCalculatorState = () => {
   const [sex, setSex] = useState<'M' | 'F'>('F');
   const [activityLevel, setActivityLevel] = useState('moderado');
   const [objective, setObjective] = useState('manutenção');
-  const [profile, setProfile] = useState<Profile>('normal');
+  const [profile, setProfile] = useState<Profile>('eutrofico');
   
   // Result states
   const [tmbValue, setTmbValue] = useState<number | null>(null);
@@ -154,7 +154,7 @@ export const useCalculatorState = () => {
     setSex('F');
     setActivityLevel('moderado');
     setObjective('manutenção');
-    setProfile('normal');
+    setProfile('eutrofico');
     setTmbValue(null);
     setTeeObject(null);
     setMacros(null);
