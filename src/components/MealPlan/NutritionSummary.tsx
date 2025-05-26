@@ -7,11 +7,11 @@ interface NutritionSummaryProps {
 }
 
 const NutritionSummary = ({ consultationData }: NutritionSummaryProps) => {
-  // Safely access nested properties with fallbacks
-  const calories = consultationData?.results?.get || 0;
-  const protein = consultationData?.results?.macros?.protein || 0;
-  const carbs = consultationData?.results?.macros?.carbs || 0;
-  const fat = consultationData?.results?.macros?.fat || 0;
+  // Access values with proper fallbacks
+  const calories = consultationData?.totalCalories || consultationData?.results?.get || 0;
+  const protein = consultationData?.protein || consultationData?.results?.macros?.protein || 0;
+  const carbs = consultationData?.carbs || consultationData?.results?.macros?.carbs || 0;
+  const fat = consultationData?.fats || consultationData?.results?.macros?.fat || 0;
 
   return (
     <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-100">

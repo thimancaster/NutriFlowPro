@@ -43,6 +43,7 @@ export const mapSupabaseConsultation = (data: any): ConsultationData => {
     age: data.age || 0,
     bmr: data.bmr || 0,
     tdee: data.tdee || 0,
+    totalCalories: data.total_calories || data.tdee || 0,
     protein: data.protein || 0,
     carbs: data.carbs || 0,
     fats: data.fats || 0,

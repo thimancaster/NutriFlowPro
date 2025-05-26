@@ -31,7 +31,10 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingResult =>
 
       // Apply status filter - handle empty string and 'all' as no filter
       if (filters.status && filters.status !== '' && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
+        // Only apply filter if status is 'active' or 'archived'
+        if (filters.status === 'active' || filters.status === 'archived') {
+          query = query.eq('status', filters.status);
+        }
       }
 
       // Apply search filter
@@ -61,6 +64,23 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingResult =>
         ...patient,
         status: (patient.status as 'active' | 'archived') || 'active',
         gender: (patient.gender as 'male' | 'female' | 'other') || undefined,
+        // Handle measurements conversion
+        measurements: typeof patient.measurements === 'object' && patient.measurements !== null 
+          ? patient.measurements as any
+          : {} as any,
+        // Ensure all required fields have proper types
+        age: patient.age || undefined,
+        birth_date: patient.birth_date || undefined,
+        email: patient.email || undefined,
+        phone: patient.phone || undefined,
+        cpf: patient.cpf || undefined,
+        address: patient.address || undefined,
+        notes: patient.notes || undefined,
+        secondaryPhone: patient.secondaryPhone || undefined,
+        goals: patient.goals || undefined,
+        created_at: patient.created_at || undefined,
+        updated_at: patient.updated_at || undefined,
+        user_id: patient.user_id || undefined
       })) : [];
 
       const response: PatientListResponse = {
