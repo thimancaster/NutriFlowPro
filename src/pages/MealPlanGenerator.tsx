@@ -12,7 +12,7 @@ const MealPlanGenerator: React.FC = () => {
   const { activePatient } = usePatient();
   const { consultationData } = useConsultationData();
   const { mealPlan, setMealPlan } = useMealPlan();
-  const { saveConsultation } = useSaveConsultation();
+  const { handleSaveConsultation } = useSaveConsultation();
   const { saveMealPlan } = useMealPlan();
 
   // Default meal distribution setup
@@ -38,7 +38,7 @@ const MealPlanGenerator: React.FC = () => {
     consultationData,
     mealPlan,
     setMealPlan,
-    saveConsultation,
+    saveConsultation: handleSaveConsultation,
     saveMealPlan
   });
 
@@ -55,9 +55,16 @@ const MealPlanGenerator: React.FC = () => {
     );
   }
 
+  // Ensure patient has required properties for UI
+  const patientForUI = {
+    name: activePatient.name,
+    gender: activePatient.gender || 'other',
+    age: activePatient.age
+  };
+
   return (
     <MealPlanGeneratorUI
-      activePatient={activePatient}
+      activePatient={patientForUI}
       consultationData={consultationData}
       mealDistribution={mealDistribution}
       totalMealPercent={totalMealPercent}

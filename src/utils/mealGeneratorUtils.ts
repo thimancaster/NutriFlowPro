@@ -1,9 +1,26 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ConsultationData } from '@/types';
 import { MealItem, MealDistributionItem } from '@/types/meal';
 import { logger } from '@/utils/logger';
 
 // Utility functions to help with meal plan generation
+
+export interface MealPlanSettings {
+  patientName?: string;
+  patientData?: any;
+  patientAge?: number;
+  patientGender?: string;
+}
+
+export const mealOptions = [
+  { id: '1', name: 'Café da manhã' },
+  { id: '2', name: 'Lanche da manhã' },
+  { id: '3', name: 'Almoço' },
+  { id: '4', name: 'Lanche da tarde' },
+  { id: '5', name: 'Jantar' },
+  { id: '6', name: 'Ceia' }
+];
 
 export const calculateTotalCalories = (
   proteinGrams: number,
@@ -85,7 +102,7 @@ export const validateConsultationData = (
   }
 
   const requiredFields = [
-    'patientId',
+    'patient_id',
     'totalCalories',
     'protein',
     'carbs',
@@ -94,7 +111,7 @@ export const validateConsultationData = (
   ];
 
   for (const field of requiredFields) {
-    if (!consultationData[field]) {
+    if (!consultationData[field as keyof ConsultationData]) {
       logger.error(`Field ${field} is missing in consultation data`);
       return false;
     }
@@ -130,7 +147,7 @@ export const generateMealPlanData = (
 
   return {
     id: '',
-    patient_id: consultationData.patientId || '',
+    patient_id: consultationData.patient_id || '',
     date: new Date().toISOString().split('T')[0],
     meals,
     total_calories: consultationData.totalCalories,

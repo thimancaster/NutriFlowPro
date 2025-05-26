@@ -53,7 +53,7 @@ const Patients = () => {
               onViewDetail={async (patientOrId) => {
                 // Handle view detail logic
               }}
-              onStatusChange={() => refetch()}
+              onStatusChange={refetch}
               onPageChange={handlePageChange}
             />
             
