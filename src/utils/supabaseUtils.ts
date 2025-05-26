@@ -51,8 +51,7 @@ export async function checkSupabaseHealth(): Promise<boolean> {
 }
 
 /**
- * Validates if a user has premium status based on email or subscription data
- * using a secure database function with local cache to reduce API calls
+ * Validates if a user has premium status using optimized functions
  * @param userId User ID
  * @returns Boolean indicating premium status
  */
@@ -115,9 +114,9 @@ export const validatePremiumStatus = async (
       return emailResult;
     }
 
-    // Use a retry wrapper for the RPC call
+    // Use the optimized function with retry wrapper
     const result = await executeWithRetry(async () => {
-      // Use the secure SQL function to check premium status
+      // Use the optimized SQL function to check premium status
       const { data, error } = await supabase.rpc('check_user_premium_status', {
         user_id: userId
       });

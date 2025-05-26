@@ -1,109 +1,114 @@
-import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 
-interface MealPlanData {
-  patient_id: string;
-  date: string;
-  meals: Array<{
-    name: string;
-    percentage: number;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    foods: Array<any>;
-  }>;
-  total_calories: number;
-  total_protein: number;
-  total_carbs: number;
-  total_fats: number;
-  calculation_id?: string;
+import { supabase } from "@/integrations/supabase/client";
+import { MealPlan } from "@/types/meal";
+
+export interface MealPlanFilters {
+  patientId?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
 }
 
-export async function saveMealPlan(data: MealPlanData) {
+export const getMealPlans = async (
+  userId: string, 
+  filters: MealPlanFilters = {}
+): Promise<{ success: boolean; data?: MealPlan[]; error?: string }> => {
   try {
-    // Generate ID if not provided
-    const mealPlanId = uuidv4();
-    
-    // Create meal plan record
-    const { data: mealPlan, error } = await supabase
-      .from('meal_plans')
-      .insert({
-        id: mealPlanId,
-        patient_id: data.patient_id,
-        date: data.date,
-        meals: data.meals,
-        total_calories: data.total_calories,
-        total_protein: data.total_protein,
-        total_carbs: data.total_carbs,
-        total_fats: data.total_fats,
-        calculation_id: data.calculation_id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select('*')
-      .single();
-    
-    if (error) throw error;
-    
-    return { success: true, data: mealPlan };
-  } catch (error: any) {
-    console.error('Error saving meal plan:', error);
-    return { success: false, error: error.message };
-  }
-}
+    console.log('Fetching meal plans with filters:', filters);
 
-export async function getPatientMealPlans(patientId: string) {
-  try {
-    const { data, error } = await supabase
+    // Otimização: Selecionar apenas as colunas necessárias
+    let query = supabase
       .from('meal_plans')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error fetching patient meal plans:', error);
-    return { success: false, error: error.message };
-  }
-}
+      .select(`
+        id,
+        user_id,
+        patient_id,
+        date,
+        total_calories,
+        total_protein,
+        total_carbs,
+        total_fats,
+        created_at,
+        updated_at
+      `)
+      .eq('user_id', userId) // Usar o índice idx_meal_plans_user_id
+      .order('date', { ascending: false }); // Usar o índice idx_meal_plans_user_id_date
 
-/**
- * Gets a meal plan by ID
- */
-export const getMealPlanById = async (planId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('meal_plans')
-      .select('*')
-      .eq('id', planId)
-      .single();
+    // Aplicar filtro por paciente
+    if (filters.patientId) {
+      query = query.eq('patient_id', filters.patientId);
+    }
+
+    // Aplicar filtros de data (usar índice composto)
+    if (filters.startDate) {
+      query = query.gte('date', filters.startDate);
+    }
+    if (filters.endDate) {
+      query = query.lte('date', filters.endDate);
+    }
+
+    // Aplicar limite
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
+      console.error('Error fetching meal plans:', error);
       return { success: false, error: error.message };
     }
 
-    return { success: true, data };
+    const mealPlans: MealPlan[] = (data || []).map(plan => ({
+      ...plan,
+      meals: [], // Será carregado separadamente se necessário
+      total_calories: Number(plan.total_calories),
+      total_protein: Number(plan.total_protein),
+      total_carbs: Number(plan.total_carbs),
+      total_fats: Number(plan.total_fats)
+    }));
+
+    return { success: true, data: mealPlans };
   } catch (error: any) {
-    console.error('Error fetching meal plan:', error);
+    console.error('Error in getMealPlans:', error);
     return { success: false, error: error.message };
   }
 };
 
-export async function deleteMealPlan(mealPlanId: string) {
+export const getMealPlanById = async (
+  id: string,
+  userId: string
+): Promise<{ success: boolean; data?: MealPlan; error?: string }> => {
   try {
-    const { error } = await supabase
+    // Otimização: Buscar por ID com verificação de user_id usando índices
+    const { data, error } = await supabase
       .from('meal_plans')
-      .delete()
-      .eq('id', mealPlanId);
-    
-    if (error) throw error;
-    
-    return { success: true };
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId) // Usar o índice para verificação de segurança
+      .single();
+
+    if (error) {
+      console.error('Error fetching meal plan:', error);
+      return { success: false, error: error.message };
+    }
+
+    if (!data) {
+      return { success: false, error: 'Meal plan not found' };
+    }
+
+    const mealPlan: MealPlan = {
+      ...data,
+      meals: typeof data.meals === 'string' ? JSON.parse(data.meals) : data.meals || [],
+      total_calories: Number(data.total_calories),
+      total_protein: Number(data.total_protein),
+      total_carbs: Number(data.total_carbs),
+      total_fats: Number(data.total_fats)
+    };
+
+    return { success: true, data: mealPlan };
   } catch (error: any) {
-    console.error('Error deleting meal plan:', error);
+    console.error('Error in getMealPlanById:', error);
     return { success: false, error: error.message };
   }
-}
+};

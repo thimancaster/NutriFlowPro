@@ -1,93 +1,89 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Patient } from '@/types/patient';
-import { dbCache } from '@/services/dbCache';
+import { Patient } from '@/types';
 
-interface GetPatientsOptions {
-  userId?: string;
-  status?: 'active' | 'archived' | 'all';
+export interface PatientsFilters {
   search?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
+  status?: 'active' | 'archived' | 'all';
+  sortBy?: 'name' | 'created_at' | 'updated_at';
+  sortOrder?: 'asc' | 'desc';
 }
 
-/**
- * Fetch patients with filtering, pagination and sorting
- */
-export const getPatients = async ({
-  userId,
-  status = 'active',
-  search = '',
-  page = 1,
-  limit = 10,
-  sortBy = 'created_at',
-  sortDirection = 'desc'
-}: GetPatientsOptions = {}): Promise<{ data: Patient[], count: number }> => {
+export interface PatientsResponse {
+  success: boolean;
+  data?: Patient[];
+  total?: number;
+  error?: string;
+}
+
+export const getPatients = async (
+  userId: string,
+  filters: PatientsFilters = {},
+  page: number = 1,
+  pageSize: number = 10
+): Promise<PatientsResponse> => {
   try {
-    // Create cache key based on query parameters
-    const cacheKey = `${dbCache.KEYS.PATIENTS}_${userId || 'all'}_${status}_${search}_${page}_${limit}_${sortBy}_${sortDirection}`;
-    
-    // Check cache first
-    const cachedResult = dbCache.get(cacheKey);
-    if (cachedResult) {
-      return cachedResult;
+    console.log('Fetching patients with filters:', filters, 'page:', page);
+
+    // Otimização: Selecionar apenas as colunas necessárias para melhor performance
+    let query = supabase
+      .from('patients')
+      .select(`
+        id,
+        name,
+        email,
+        phone,
+        birth_date,
+        status,
+        created_at,
+        updated_at,
+        user_id
+      `, { count: 'exact' })
+      .eq('user_id', userId); // Usar o índice idx_patients_user_id
+
+    // Aplicar filtros de status (usar índice composto idx_patients_user_id_status)
+    if (filters.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status);
     }
-    
-    // Start building query
-    let query = supabase.from('patients').select('*', { count: 'exact' });
-    
-    // Filter by user if provided
-    if (userId) {
-      query = query.eq('user_id', userId);
+
+    // Aplicar filtro de busca
+    if (filters.search) {
+      query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
     }
-    
-    // Filter by status unless 'all' is specified
-    if (status !== 'all') {
-      query = query.eq('status', status);
-    }
-    
-    // Filter by search term if provided
-    if (search) {
-      query = query.ilike('name', `%${search}%`);
-    }
-    
-    // Sort the results
-    query = query.order(sortBy, { ascending: sortDirection === 'asc' });
-    
-    // Apply pagination
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
+
+    // Aplicar ordenação
+    const sortBy = filters.sortBy || 'created_at';
+    const sortOrder = filters.sortOrder || 'desc';
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+    // Aplicar paginação
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
     query = query.range(from, to);
-    
-    // Execute the query
+
     const { data, error, count } = await query;
-    
+
     if (error) {
-      throw error;
+      console.error('Error fetching patients:', error);
+      return { success: false, error: error.message };
     }
-    
-    // Process results
-    const patients = data?.map(patient => ({
+
+    // Processar dados dos pacientes
+    const patients: Patient[] = (data || []).map(patient => ({
       ...patient,
       status: (patient.status as 'active' | 'archived') || 'active',
-      address: typeof patient.address === 'string' ? JSON.parse(patient.address) : patient.address || {},
-      goals: typeof patient.goals === 'string' ? JSON.parse(patient.goals) : patient.goals || {},
-      measurements: typeof patient.measurements === 'string' ? JSON.parse(patient.measurements) : patient.measurements || {}
-    })) || [];
-    
-    const result = { 
+      goals: {},
+      measurements: {},
+      address: undefined
+    }));
+
+    return { 
+      success: true, 
       data: patients, 
-      count: count || 0 
+      total: count || 0 
     };
-    
-    // Cache the result
-    dbCache.set(cacheKey, result);
-    
-    return result;
-  } catch (error) {
-    console.error('Error fetching patients:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('Error in getPatients:', error);
+    return { success: false, error: error.message };
   }
-}
+};
