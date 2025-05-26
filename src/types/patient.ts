@@ -16,6 +16,7 @@ export interface PatientMeasurements {
   height?: number;
   body_fat?: number;
   muscle_mass?: number;
+  imc?: number;
 }
 
 export interface PatientGoals {
@@ -67,4 +68,10 @@ export interface PatientListResponse {
   page: number;
   totalPages: number;
   limit: number;
+}
+
+export interface PatientOption {
+  id: string;
+  name: string;
+  email?: string;
 }

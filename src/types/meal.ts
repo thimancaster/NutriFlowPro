@@ -40,3 +40,58 @@ export interface MealPlan {
   created_at?: string;
   updated_at?: string;
 }
+
+// Additional interfaces needed by components
+export interface MealDistributionItem {
+  id?: string;
+  name: string;
+  percent: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  suggestions?: string[];
+}
+
+export interface MealItem {
+  mealNumber?: number;
+  name: string;
+  time: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  percentage: number;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
+  foodSuggestions?: string[];
+  foods: any[];
+}
+
+export interface MealAssemblyFood {
+  id: string;
+  name: string;
+  portion?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  time: string;
+  proteinPercent: number;
+  carbsPercent: number;
+  fatPercent: number;
+  foods: any[];
+  percentage: number;
+  selected?: boolean;
+}
+
+export interface MealFood {
+  id: string;
+  name: string;
+  portion: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}

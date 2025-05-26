@@ -1,33 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Patient } from '@/types/patient';
-import { dbCache } from '@/services/dbCache';
+import { Patient, AddressDetails } from '@/types';
+import { logger } from '@/utils/logger';
 
-/**
- * Response interface for patient operations
- */
-export interface PatientResponse {
-  success: boolean;
-  data?: Patient;
-  error?: string;
-}
-
-/**
- * Fetch a single patient by ID
- */
-export const getPatient = async (patientId: string): Promise<PatientResponse> => {
-  if (!patientId) {
-    return { success: false, error: 'Patient ID is required' };
-  }
-
-  // Check cache first
-  const cacheKey = `${dbCache.KEYS.PATIENT}${patientId}`;
-  const cachedPatient = dbCache.get(cacheKey);
-  
-  if (cachedPatient) {
-    return { success: true, data: cachedPatient };
-  }
-
+export const getPatient = async (patientId: string): Promise<{ success: boolean; data?: Patient; error?: string }> => {
   try {
     const { data, error } = await supabase
       .from('patients')
@@ -36,33 +11,78 @@ export const getPatient = async (patientId: string): Promise<PatientResponse> =>
       .single();
 
     if (error) {
-      console.error('Supabase error fetching patient:', error);
+      logger.error('Error fetching patient:', error);
       return { success: false, error: error.message };
     }
 
     if (!data) {
-      console.log('No patient found with ID:', patientId);
       return { success: false, error: 'Patient not found' };
     }
 
-    // Process data and convert types as needed
-    const patient: Patient = {
-      ...data,
-      status: (data.status as 'active' | 'archived') || 'active',
-      address: typeof data.address === 'string' ? JSON.parse(data.address) : data.address || {},
-      goals: typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals || {},
-      measurements: typeof data.measurements === 'string' ? JSON.parse(data.measurements) : data.measurements || {}
-    };
-
-    // Cache the result
-    dbCache.set(cacheKey, patient);
-    
+    const patient = processPatientData(data);
     return { success: true, data: patient };
-  } catch (error) {
-    console.error('Error fetching patient:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error fetching patient' 
-    };
+  } catch (error: any) {
+    logger.error('Error in getPatient:', error);
+    return { success: false, error: error.message };
   }
-}
+};
+
+export const getPatientsByUserId = async (userId: string): Promise<{ success: boolean; data?: Patient[]; error?: string }> => {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      logger.error('Error fetching patients:', error);
+      return { success: false, error: error.message };
+    }
+
+    const patients = data.map(processPatientData);
+    return { success: true, data: patients };
+  } catch (error: any) {
+    logger.error('Error in getPatientsByUserId:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+const processPatientData = (data: any): Patient => {
+  // Process address data properly
+  let addressData: string | AddressDetails | undefined;
+  
+  if (data.address) {
+    if (typeof data.address === 'string') {
+      try {
+        // Try to parse the address as JSON if it's a string
+        addressData = JSON.parse(data.address as string) as AddressDetails;
+      } catch (e) {
+        // If parsing fails, keep it as a string
+        addressData = data.address as string;
+      }
+    } else if (typeof data.address === 'object') {
+      // If it's already an object, use it directly
+      addressData = data.address as AddressDetails;
+    }
+  }
+
+  // Safely cast gender with fallback
+  const safeGender = (gender: any): 'male' | 'female' | 'other' | undefined => {
+    if (gender === 'male' || gender === 'female' || gender === 'other') {
+      return gender;
+    }
+    return undefined;
+  };
+
+  // Process database data into our Patient type
+  const patient: Patient = {
+    ...data,
+    status: (data.status as 'active' | 'archived') || 'active',
+    gender: safeGender(data.gender),
+    goals: (data.goals as Record<string, any>) || {},
+    measurements: (data.measurements as Record<string, any>) || {},
+    address: addressData
+  };
+
+  return patient;
+};

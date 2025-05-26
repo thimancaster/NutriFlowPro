@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types/patient';
 import { dbCache } from '@/services/dbCache';
@@ -47,13 +46,7 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
     }
 
     // Convert the saved patient back to our application's format
-    const savedPatient: Patient = {
-      ...data,
-      status: (data.status as 'active' | 'archived') || 'active',
-      address: typeof data.address === 'string' ? JSON.parse(data.address) : data.address || {},
-      goals: typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals || {},
-      measurements: typeof data.measurements === 'string' ? JSON.parse(data.measurements) : data.measurements || {}
-    };
+    const savedPatient: Patient = processPatientData(data);
 
     // Invalidate relevant cache entries
     dbCache.invalidate(dbCache.KEYS.PATIENTS);
@@ -103,4 +96,44 @@ export const updatePatientStatus = async (
     console.error('Error updating patient status:', error);
     throw error;
   }
+};
+
+const processPatientData = (data: any): Patient => {
+  // Process address data properly
+  let addressData: string | AddressDetails | undefined;
+  
+  if (data.address) {
+    if (typeof data.address === 'string') {
+      try {
+        // Try to parse the address as JSON if it's a string
+        addressData = JSON.parse(data.address as string) as AddressDetails;
+      } catch (e) {
+        // If parsing fails, keep it as a string
+        addressData = data.address as string;
+      }
+    } else if (typeof data.address === 'object') {
+      // If it's already an object, use it directly
+      addressData = data.address as AddressDetails;
+    }
+  }
+
+  // Safely cast gender with fallback
+  const safeGender = (gender: any): 'male' | 'female' | 'other' | undefined => {
+    if (gender === 'male' || gender === 'female' || gender === 'other') {
+      return gender;
+    }
+    return undefined;
+  };
+
+  // Process database data into our Patient type
+  const patient: Patient = {
+    ...data,
+    status: (data.status as 'active' | 'archived') || 'active',
+    gender: safeGender(data.gender),
+    goals: (data.goals as Record<string, any>) || {},
+    measurements: (data.measurements as Record<string, any>) || {},
+    address: addressData
+  };
+
+  return patient;
 };

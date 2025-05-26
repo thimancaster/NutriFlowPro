@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Patient, PatientFilters } from '@/types';
+import { Patient, PatientFilters, PatientListResponse } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,7 +17,7 @@ interface UsePatientFetchingReturn {
   error: Error | null;
   pagination: PaginationInfo;
   refetch: () => Promise<void>;
-  fetchPatients: (filters: PatientFilters) => Promise<void>;
+  fetchPatients: (filters: PatientFilters) => Promise<PatientListResponse>;
 }
 
 export const usePatientFetching = (userId?: string): UsePatientFetchingReturn => {
@@ -34,8 +34,10 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingReturn =>
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchPatients = useCallback(async (filters: PatientFilters) => {
-    if (!userId) return;
+  const fetchPatients = useCallback(async (filters: PatientFilters): Promise<PatientListResponse> => {
+    if (!userId) {
+      return { patients: [], total: 0, page: 1, totalPages: 1, limit: 10 };
+    }
 
     // Cancel previous request
     if (abortControllerRef.current) {
@@ -98,12 +100,21 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingReturn =>
 
       setPatients(processedPatients);
       
+      const totalPages = Math.ceil((count || 0) / limit);
       setPagination({
         currentPage: page,
-        totalPages: Math.ceil((count || 0) / limit),
+        totalPages,
         totalCount: count || 0,
         pageSize: limit
       });
+
+      return {
+        patients: processedPatients,
+        total: count || 0,
+        page,
+        totalPages,
+        limit
+      };
 
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -115,6 +126,7 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingReturn =>
           variant: "destructive"
         });
       }
+      return { patients: [], total: 0, page: 1, totalPages: 1, limit: 10 };
     } finally {
       setIsLoading(false);
     }

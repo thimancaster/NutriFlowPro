@@ -113,11 +113,23 @@ export const getMealPlanById = async (
   }
 };
 
-export const saveMealPlan = async (mealPlanData: Partial<MealPlan>): Promise<{ success: boolean; data?: MealPlan; error?: string }> => {
+export const saveMealPlan = async (mealPlanData: Omit<MealPlan, 'id'>): Promise<{ success: boolean; data?: MealPlan; error?: string }> => {
   try {
+    const dataToInsert = {
+      patient_id: mealPlanData.patient_id,
+      user_id: mealPlanData.user_id,
+      calculation_id: mealPlanData.calculation_id,
+      date: mealPlanData.date,
+      meals: JSON.stringify(mealPlanData.meals),
+      total_calories: mealPlanData.total_calories,
+      total_protein: mealPlanData.total_protein,
+      total_carbs: mealPlanData.total_carbs,
+      total_fats: mealPlanData.total_fats
+    };
+
     const { data, error } = await supabase
       .from('meal_plans')
-      .insert([mealPlanData])
+      .insert([dataToInsert])
       .select()
       .single();
 
@@ -126,7 +138,12 @@ export const saveMealPlan = async (mealPlanData: Partial<MealPlan>): Promise<{ s
       return { success: false, error: error.message };
     }
 
-    return { success: true, data };
+    const processedData: MealPlan = {
+      ...data,
+      meals: typeof data.meals === 'string' ? JSON.parse(data.meals) : data.meals || []
+    };
+
+    return { success: true, data: processedData };
   } catch (error: any) {
     console.error('Error in saveMealPlan:', error);
     return { success: false, error: error.message };
