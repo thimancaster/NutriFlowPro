@@ -39,6 +39,19 @@ const PatientTable: React.FC<PatientTableProps> = ({
     navigate(`/patients/${patientId}`);
   };
 
+  // Função melhorada para calcular idade com tratamento de erros
+  const getPatientAge = (birthDate?: string): string => {
+    if (!birthDate) return 'N/A';
+    
+    try {
+      const age = calculateAge(birthDate);
+      return age !== null ? `${age} anos` : 'N/A';
+    } catch (error) {
+      console.error('Erro ao calcular idade:', error);
+      return 'N/A';
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -53,8 +66,6 @@ const PatientTable: React.FC<PatientTableProps> = ({
         </TableHeader>
         <TableBody>
           {patients.map((patient) => {
-            const age = calculateAge(patient.birth_date);
-            
             return (
               <TableRow key={patient.id} className="hover:bg-gray-50">
                 <TableCell className="font-medium">{patient.name}</TableCell>
@@ -62,7 +73,7 @@ const PatientTable: React.FC<PatientTableProps> = ({
                   {patient.email || 'Não informado'}
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  {age ? `${age} anos` : 'Não informado'}
+                  {getPatientAge(patient.birth_date)}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <Badge variant={patient.status === 'active' ? 'default' : 'secondary'}>

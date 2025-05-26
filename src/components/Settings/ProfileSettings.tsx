@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Upload, User } from 'lucide-react';
+import { Loader2, Upload, User, Save } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -32,7 +32,7 @@ const ProfileSettings = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileFormValues | null>(null);
+  const [saving, setSaving] = useState(false);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -80,12 +80,6 @@ const ProfileSettings = () => {
         
         if (profile) {
           console.log("Dados do perfil carregados:", profile);
-          setProfileData({
-            name: profile.name || '',
-            crn: profile.crn || '',
-            specialty: profile.specialty || '',
-            clinic_name: profile.clinic_name || '',
-          });
           
           form.reset({
             name: profile.name || '',
@@ -117,27 +111,41 @@ const ProfileSettings = () => {
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
+      setSaving(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      console.log("Salvando dados do perfil:", data);
+
       const { error } = await supabase
         .from('users')
-        .update(data)
+        .update({
+          name: data.name,
+          crn: data.crn,
+          specialty: data.specialty || null,
+          clinic_name: data.clinic_name || null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar perfil:", error);
+        throw error;
+      }
 
       toast({
         title: "Perfil atualizado",
         description: "Suas informações foram atualizadas com sucesso.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar perfil:", error);
       toast({
         title: "Erro ao atualizar perfil",
-        description: "Ocorreu um erro ao atualizar suas informações.",
+        description: error.message || "Ocorreu um erro ao atualizar suas informações.",
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -262,7 +270,11 @@ const ProfileSettings = () => {
               <FormItem>
                 <FormLabel>Nome completo</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seu nome completo" {...field} />
+                  <Input 
+                    placeholder="Seu nome completo" 
+                    {...field} 
+                    disabled={saving}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -276,7 +288,11 @@ const ProfileSettings = () => {
               <FormItem>
                 <FormLabel>CRN</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seu número do CRN" {...field} />
+                  <Input 
+                    placeholder="Seu número do CRN" 
+                    {...field} 
+                    disabled={saving}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -290,7 +306,11 @@ const ProfileSettings = () => {
               <FormItem>
                 <FormLabel>Especialidade</FormLabel>
                 <FormControl>
-                  <Input placeholder="Sua especialidade" {...field} />
+                  <Input 
+                    placeholder="Sua especialidade" 
+                    {...field} 
+                    disabled={saving}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -304,15 +324,33 @@ const ProfileSettings = () => {
               <FormItem>
                 <FormLabel>Nome da Clínica</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nome da sua clínica" {...field} />
+                  <Input 
+                    placeholder="Nome da sua clínica" 
+                    {...field} 
+                    disabled={saving}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button type="submit" className="w-full">
-            Salvar alterações
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={saving}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Perfil
+              </>
+            )}
           </Button>
         </form>
       </Form>
