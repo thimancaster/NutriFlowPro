@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { CalculatorTool } from '@/components/calculator';
 import { usePatient } from '@/contexts/PatientContext';
@@ -5,18 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { User, Plus, Database } from 'lucide-react';
+import { User, Plus, Database, Eye } from 'lucide-react';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
-import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
 
 const CalculatorPage = () => {
   const { activePatient, loadPatientById } = usePatient();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patientId');
   const navigate = useNavigate();
-  const patientDetail = usePatientDetail();
 
   // Load patient if patientId is provided in URL but not active yet
   useEffect(() => {
@@ -27,13 +26,7 @@ const CalculatorPage = () => {
 
   const handleViewPatientProfile = () => {
     if (activePatient) {
-      // First try to open the patient detail modal if it's available
-      if (patientDetail.openPatientDetail) {
-        patientDetail.openPatientDetail(activePatient.id);
-      } else {
-        // Alternatively, navigate to the patient profile page
-        navigate(`/patients/${activePatient.id}`);
-      }
+      navigate(`/patients/${activePatient.id}`);
     }
   };
 
@@ -63,7 +56,7 @@ const CalculatorPage = () => {
               className="flex items-center gap-1"
               onClick={handleViewPatientProfile}
             >
-              <User className="h-4 w-4" />
+              <Eye className="h-4 w-4" />
               <span>Ver Perfil</span>
             </Button>
           )}

@@ -20,6 +20,8 @@ import { usePatientDelete } from '@/hooks/patient/usePatientDelete';
 import { logger } from '@/utils/logger';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Edit } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PatientDetailModalProps {
   patient: Patient;
@@ -39,16 +41,27 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
   const { activeTab, handleTabChange } = usePatientTabs();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Debug logging
+  console.log('PatientDetailModal rendering:', { patient, isOpen });
   
   // Check if patient is available
   if (!patient || !patient.id) {
     console.error('Patient data is missing or invalid:', patient);
-    toast({
-      title: "Erro",
-      description: "Dados do paciente não encontrados ou inválidos.",
-      variant: "destructive"
-    });
-    return null;
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <h2>Erro</h2>
+          </DialogHeader>
+          <div className="p-4">
+            <p>Dados do paciente não encontrados ou inválidos.</p>
+            <Button onClick={onClose} className="mt-4">Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   }
   
   const { 
@@ -64,8 +77,14 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
 
   const { handleDeletePatient, isDeleting } = usePatientDelete(user?.id, () => {
     onClose();
-    onStatusChange(); // Refresh the list after deletion
+    onStatusChange();
   });
+
+  // Handle edit patient
+  const handleEditPatient = () => {
+    navigate(`/patients/edit/${patient.id}`);
+    onClose();
+  };
 
   // Fix the Promise<void> return type issue
   const handlePatientUpdate = async (updatedData: Partial<Patient>): Promise<void> => {
@@ -104,11 +123,22 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl p-0 h-[85vh] flex flex-col">
           <DialogHeader className="px-6 py-4 border-b">
-            <PatientModalHeader 
-              patient={patient}
-              onArchive={() => setShowArchiveDialog(true)}
-              onDelete={() => setShowDeleteDialog(true)}
-            />
+            <div className="flex justify-between items-start">
+              <PatientModalHeader 
+                patient={patient}
+                onArchive={() => setShowArchiveDialog(true)}
+                onDelete={() => setShowDeleteDialog(true)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEditPatient}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Editar Paciente
+              </Button>
+            </div>
           </DialogHeader>
           
           <Tabs 

@@ -1,109 +1,88 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Calculator, Utensils, X } from 'lucide-react';
-import { usePatient } from '@/contexts/PatientContext';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { usePatient } from '@/contexts/PatientContext';
+import { User, Calculator, Utensils, Eye, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const PatientBanner: React.FC = () => {
+const PatientBanner = () => {
   const { activePatient, endPatientSession } = usePatient();
+  const navigate = useNavigate();
 
   if (!activePatient) return null;
 
-  // Get first initials for avatar fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+  const handleViewProfile = () => {
+    navigate(`/patients/${activePatient.id}`);
   };
 
-  // Calculate age if birth_date is available
-  const getAge = () => {
-    if (!activePatient.birth_date) return '';
-    
-    const birthDate = new Date(activePatient.birth_date);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+  const calculateAge = (birthDate?: string) => {
+    if (!birthDate) return null;
+    try {
+      const today = new Date();
+      const birth = new Date(birthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age;
+    } catch {
+      return null;
     }
-    
-    return `${age} anos`;
   };
 
-  // Format measurements for display
-  const getFormattedMeasurements = () => {
-    const measurements = activePatient.measurements || {};
-    const weight = measurements.weight ? `${measurements.weight}kg` : '';
-    const height = measurements.height ? `${measurements.height}cm` : '';
-    
-    return [weight, height].filter(Boolean).join(' • ');
-  };
+  const age = calculateAge(activePatient.birth_date);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-4 mb-6 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-12 w-12">
-          <AvatarFallback className="bg-nutri-green text-white">
-            {getInitials(activePatient.name)}
-          </AvatarFallback>
-        </Avatar>
-        
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-lg">{activePatient.name}</h3>
-            <Badge variant="outline" className="text-xs">
-              {activePatient.status === 'active' ? 'Ativo' : 'Arquivado'}
-            </Badge>
+    <Card className="p-4 mb-6 bg-gradient-to-r from-nutri-blue/5 to-nutri-green/5 border-nutri-blue/20">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-nutri-blue/10 rounded-full">
+            <User className="h-6 w-6 text-nutri-blue" />
           </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">{activePatient.name}</h3>
+              <Badge variant={activePatient.status === 'active' ? 'success' : 'secondary'}>
+                {activePatient.status === 'active' ? 'Ativo' : 'Arquivado'}
+              </Badge>
+            </div>
+            <div className="text-sm text-gray-600 flex items-center gap-4">
+              {age && <span>{age} anos</span>}
+              {activePatient.email && <span>{activePatient.email}</span>}
+              {activePatient.phone && <span>{activePatient.phone}</span>}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleViewProfile}>
+            <Eye className="h-4 w-4 mr-1" />
+            Ver Perfil
+          </Button>
           
-          <p className="text-gray-600 text-sm">
-            {getAge()}
-            {activePatient.gender && ` • ${activePatient.gender === 'male' ? 'Masculino' : 'Feminino'}`}
-            {getFormattedMeasurements() && ` • ${getFormattedMeasurements()}`}
-          </p>
+          <Link to={`/calculator?patientId=${activePatient.id}`}>
+            <Button variant="outline" size="sm">
+              <Calculator className="h-4 w-4 mr-1" />
+              Calculadora
+            </Button>
+          </Link>
+          
+          <Link to={`/meal-plans?patientId=${activePatient.id}`}>
+            <Button variant="outline" size="sm">
+              <Utensils className="h-4 w-4 mr-1" />
+              Plano Alimentar
+            </Button>
+          </Link>
+          
+          <Button variant="ghost" size="sm" onClick={endPatientSession}>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      
-      <div className="flex items-center gap-2">
-        <Link to={`/patients/${activePatient.id}`}>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Perfil</span>
-          </Button>
-        </Link>
-        
-        <Link to={`/calculator?patientId=${activePatient.id}`}>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <Calculator className="h-4 w-4" />
-            <span className="hidden sm:inline">Calculadora</span>
-          </Button>
-        </Link>
-        
-        <Link to={`/meal-plans?patientId=${activePatient.id}`}>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <Utensils className="h-4 w-4" />
-            <span className="hidden sm:inline">Plano Alimentar</span>
-          </Button>
-        </Link>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={endPatientSession} 
-          title="Encerrar sessão do paciente"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+    </Card>
   );
 };
 

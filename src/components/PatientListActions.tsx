@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Pencil, Archive, RotateCcw } from 'lucide-react';
+import { Eye, Pencil, Archive, RotateCcw, User } from 'lucide-react';
 import { Patient } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { updatePatientStatus } from '@/services/patient/operations/updatePatientStatus';
@@ -21,6 +21,10 @@ const PatientListActions = ({ patient, onViewDetail, onStatusChange }: PatientLi
 
   const handleEditClick = () => {
     navigate(`/patients/edit/${patient.id}`);
+  };
+
+  const handleViewProfile = () => {
+    navigate(`/patients/${patient.id}`);
   };
 
   const handleArchiveClick = async () => {
@@ -61,13 +65,16 @@ const PatientListActions = ({ patient, onViewDetail, onStatusChange }: PatientLi
 
   return (
     <div className="flex gap-2">
-      <Button variant="outline" size="icon" onClick={() => onViewDetail(patient)}>
+      <Button variant="outline" size="icon" onClick={handleViewProfile} title="Ver Perfil">
+        <User className="h-4 w-4" />
+      </Button>
+      <Button variant="outline" size="icon" onClick={() => onViewDetail(patient)} title="Ver Detalhes">
         <Eye className="h-4 w-4" />
       </Button>
-      <Button variant="outline" size="icon" onClick={handleEditClick}>
+      <Button variant="outline" size="icon" onClick={handleEditClick} title="Editar">
         <Pencil className="h-4 w-4" />
       </Button>
-      <Button variant="outline" size="icon" onClick={handleArchiveClick}>
+      <Button variant="outline" size="icon" onClick={handleArchiveClick} title={patient.status === 'active' ? 'Arquivar' : 'Reativar'}>
         {patient.status === 'active' ? (
           <Archive className="h-4 w-4" />
         ) : (

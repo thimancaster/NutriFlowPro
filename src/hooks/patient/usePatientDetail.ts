@@ -36,8 +36,8 @@ export const usePatientDetail = (patientId?: string) => {
       } catch (error: any) {
         console.error('Error in patient detail query:', error);
         toast({
-          title: 'Error loading patient',
-          description: error.message || 'Failed to load patient data',
+          title: 'Erro ao carregar paciente',
+          description: error.message || 'Falha ao carregar dados do paciente',
           variant: 'destructive'
         });
         throw error;
@@ -50,7 +50,7 @@ export const usePatientDetail = (patientId?: string) => {
   // Extract the actual patient data from the response
   const patient = patientResponse?.success ? patientResponse.data : null;
   const isPatientArchived = patient?.status === 'archived';
-  const isError = !!error; // Add isError property derived from error
+  const isError = !!error;
   
   // Add functions to show/hide dialogs
   const openArchiveDialog = () => setShowArchiveDialog(true);
@@ -58,22 +58,17 @@ export const usePatientDetail = (patientId?: string) => {
   const openDeleteDialog = () => setShowDeleteDialog(true);
   const closeDeleteDialog = () => setShowDeleteDialog(false);
   
-  // Add functions expected by component consumers
+  // Navigation functions
   const openPatientDetail = (patientOrId: string | Patient) => {
-    // This would typically navigate to the patient detail page
-    if (typeof patientOrId === 'string') {
-      console.log(`Opening patient detail for ID: ${patientOrId}`);
-    } else {
-      console.log(`Opening patient detail for: ${patientOrId.name}`);
-    }
+    const id = typeof patientOrId === 'string' ? patientOrId : patientOrId.id;
+    window.open(`/patients/${id}`, '_blank');
   };
   
   const closePatientDetail = () => {
-    // This would typically close the patient detail modal
-    console.log('Closing patient detail');
+    window.history.back();
   };
   
-  const isModalOpen = !!patientId;
+  const isModalOpen = !!patientId && !!patient;
   
   return {
     patient,
