@@ -1,9 +1,8 @@
-
 import { Routes, Route } from 'react-router-dom';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Layout
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 
 // Pages
 import Index from '@/pages/Index';
