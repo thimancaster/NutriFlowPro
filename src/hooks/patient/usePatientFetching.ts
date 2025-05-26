@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFilters, PatientListResponse } from '@/types';
@@ -28,9 +29,8 @@ export const usePatientFetching = (userId?: string): UsePatientFetchingResult =>
         query = query.eq('user_id', userId);
       }
 
-      // Apply status filter - handle empty string and 'all' as no filter
-      if (filters.status && filters.status !== 'all' && filters.status !== '') {
-        // At this point, filters.status can only be 'active' or 'archived'
+      // Apply status filter - only filter if status is specifically 'active' or 'archived'
+      if (filters.status === 'active' || filters.status === 'archived') {
         query = query.eq('status', filters.status);
       }
 
