@@ -8,7 +8,7 @@ export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'mu
 // Objectives
 export type Objective = 'emagrecimento' | 'manutenção' | 'hipertrofia' | 'personalizado';
 
-// Profile types - PADRONIZADO
+// Profile types - CORRIGIDO PARA COMPATIBILIDADE
 export type Profile = 'eutrofico' | 'sobrepeso_obesidade' | 'atleta';
 
 // Consultation types
@@ -34,7 +34,7 @@ export const OBJECTIVE_FACTORS: Record<Objective, number> = {
   personalizado: 1.0
 };
 
-// Nutrition constants
+// Nutrition constants - CORRIGIDOS
 export const PROTEIN_RATIOS: Record<Profile, number> = {
   eutrofico: 1.4,
   sobrepeso_obesidade: 1.8,

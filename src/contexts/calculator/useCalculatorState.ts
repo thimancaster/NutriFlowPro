@@ -33,6 +33,10 @@ export const useCalculatorState = () => {
       const savedState = localStorage.getItem('calculatorState');
       if (savedState) {
         const parsedState = JSON.parse(savedState);
+        // Ensure profile is valid
+        if (parsedState.profile) {
+          parsedState.profile = stringToProfile(parsedState.profile);
+        }
         setState(prevState => ({ ...prevState, ...parsedState }));
       }
     } catch (error) {
@@ -59,31 +63,32 @@ export const useCalculatorState = () => {
   }, [state.weight, state.height, state.age, state.sex, state.activityLevel, state.objective, state.profile]);
   
   const setWeight = (weight: number) => {
-    setState(prev => ({ ...prev, weight }));
+    setState(prev => ({ ...prev, weight, calculated: false }));
   };
   
   const setHeight = (height: number) => {
-    setState(prev => ({ ...prev, height }));
+    setState(prev => ({ ...prev, height, calculated: false }));
   };
   
   const setAge = (age: number) => {
-    setState(prev => ({ ...prev, age }));
+    setState(prev => ({ ...prev, age, calculated: false }));
   };
   
   const setSex = (sex: 'M' | 'F') => {
-    setState(prev => ({ ...prev, sex }));
+    setState(prev => ({ ...prev, sex, calculated: false }));
   };
   
   const setActivityLevel = (activityLevel: string) => {
-    setState(prev => ({ ...prev, activityLevel }));
+    setState(prev => ({ ...prev, activityLevel, calculated: false }));
   };
   
   const setObjective = (objective: string) => {
-    setState(prev => ({ ...prev, objective }));
+    setState(prev => ({ ...prev, objective, calculated: false }));
   };
   
   const setProfile = (profile: Profile) => {
-    setState(prev => ({ ...prev, profile }));
+    console.log('Setting profile to:', profile);
+    setState(prev => ({ ...prev, profile, calculated: false }));
   };
   
   const setActiveTab = (activeTab: 'basic' | 'advanced' | 'results') => {
@@ -93,14 +98,16 @@ export const useCalculatorState = () => {
   const calculateNutrition = () => {
     setState(prev => ({ ...prev, loading: true }));
     
+    console.log('Calculating nutrition with profile:', state.profile);
+    
     // Simulating calculation delay for UI purposes
     setTimeout(() => {
       try {
         // Basic validation
         if (state.weight <= 0 || state.height <= 0 || state.age <= 0) {
           toast({
-            title: "Invalid Input",
-            description: "All values must be greater than zero",
+            title: "Dados Inválidos",
+            description: "Todos os valores devem ser maiores que zero",
             variant: "destructive"
           });
           setState(prev => ({ ...prev, loading: false }));
@@ -147,9 +154,11 @@ export const useCalculatorState = () => {
             break;
         }
         
-        // Calculate macros based on profile
+        // Calculate macros based on profile - CORRIGIDO
         let protein = 0;
         let fats = 0;
+        
+        console.log('Using profile for macro calculation:', state.profile);
         
         switch (state.profile) {
           case 'eutrofico':
@@ -164,6 +173,11 @@ export const useCalculatorState = () => {
             protein = state.weight * 2.0;
             fats = state.weight * 1.2;
             break;
+          default:
+            // Fallback to eutrofico
+            protein = state.weight * 1.4;
+            fats = state.weight * 1.0;
+            console.warn('Unknown profile, using eutrofico defaults');
         }
         
         // Calculate protein and fat calories
@@ -173,6 +187,15 @@ export const useCalculatorState = () => {
         // Calculate remaining calories for carbs
         const remainingCals = adjustedTdee - proteinCals - fatCals;
         const carbs = Math.max(0, remainingCals / 4); // Carbs are 4 cals per gram
+        
+        console.log('Calculation results:', {
+          bmr: Math.round(bmr),
+          tdee: Math.round(adjustedTdee),
+          protein: Math.round(protein),
+          carbs: Math.round(carbs),
+          fats: Math.round(fats),
+          profile: state.profile
+        });
         
         setState(prev => ({
           ...prev,
@@ -186,11 +209,16 @@ export const useCalculatorState = () => {
           activeTab: 'results'
         }));
         
+        toast({
+          title: "Cálculo Realizado",
+          description: "Necessidades nutricionais calculadas com sucesso!",
+        });
+        
       } catch (error) {
         console.error('Calculation error:', error);
         toast({
-          title: "Calculation Error",
-          description: "An error occurred while calculating nutrition values",
+          title: "Erro no Cálculo",
+          description: "Ocorreu um erro ao calcular os valores nutricionais",
           variant: "destructive"
         });
         setState(prev => ({ ...prev, loading: false }));
@@ -200,6 +228,7 @@ export const useCalculatorState = () => {
   
   const resetCalculator = () => {
     setState(initialState);
+    localStorage.removeItem('calculatorState');
   };
   
   return {

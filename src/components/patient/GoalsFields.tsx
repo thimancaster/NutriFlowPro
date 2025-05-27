@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SelectField, RadioGroupField } from './fields';
 
@@ -34,8 +35,9 @@ const GoalsFields = ({ formData, handleSelectChange, errors, validateField }: Go
         onBlur={() => validateField('objective', formData.objective)}
       />
       
-      <RadioGroupField 
-        label="Perfil" 
+      <SelectField 
+        id="profile" 
+        label="Perfil Corporal" 
         value={formData.profile || ''} 
         onChange={(value) => {
           handleSelectChange('profile', value);
@@ -43,12 +45,10 @@ const GoalsFields = ({ formData, handleSelectChange, errors, validateField }: Go
         }} 
         required
         options={[
-          { value: "sedentário", label: "Sedentário" },
-          { value: "moderado", label: "Moderado" },
-          { value: "ativo", label: "Ativo" },
-          { value: "muito ativo", label: "Muito Ativo" }
+          { value: "eutrofico", label: "Eutrófico (Normal)" },
+          { value: "sobrepeso_obesidade", label: "Sobrepeso/Obesidade" },
+          { value: "atleta", label: "Atleta" }
         ]}
-        className="flex flex-col space-y-1"
         error={errors.profile}
         onBlur={() => validateField('profile', formData.profile)}
       />

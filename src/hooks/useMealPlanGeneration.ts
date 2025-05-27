@@ -10,16 +10,18 @@ export const useMealPlanGeneration = () => {
   const { toast } = useToast();
 
   const generateMealPlan = async (params: MealPlanGenerationParams) => {
+    console.log('Generating meal plan with params:', params);
     setIsGenerating(true);
     
     try {
       const result = await EnhancedMealPlanService.generateAutoMealPlan(params);
       
       if (result.success && result.data) {
+        console.log('Meal plan generated successfully:', result.data);
         setGeneratedPlan(result.data);
         toast({
           title: "Plano alimentar gerado!",
-          description: "O cardápio foi criado automaticamente com base nos macros calculados."
+          description: "O cardápio foi criado automaticamente com base nos macros calculados.",
         });
         return result.data;
       } else {
@@ -39,12 +41,14 @@ export const useMealPlanGeneration = () => {
   };
 
   const loadMealPlan = async (planId: string) => {
+    console.log('Loading meal plan:', planId);
     setIsGenerating(true);
     
     try {
       const result = await EnhancedMealPlanService.getMealPlanWithItems(planId);
       
       if (result.success && result.data) {
+        console.log('Meal plan loaded successfully:', result.data);
         setGeneratedPlan(result.data);
         return result.data;
       } else {
@@ -64,6 +68,7 @@ export const useMealPlanGeneration = () => {
   };
 
   const clearPlan = () => {
+    console.log('Clearing meal plan');
     setGeneratedPlan(null);
   };
 
