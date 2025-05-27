@@ -10,7 +10,7 @@ interface SavePatientResult {
 }
 
 /**
- * Save a new patient to the database
+ * Save a patient to the database (insert new or update existing)
  */
 export const savePatient = async (patient: Partial<Patient>): Promise<SavePatientResult> => {
   try {
@@ -22,7 +22,7 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       };
     }
     
-    // Prepare the data for insertion
+    // Prepare the data for insertion/update
     const patientData = {
       ...patient,
       // Convert complex objects to strings for storage if needed
@@ -32,11 +32,32 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       name: patient.name // Ensure name is definitely present
     };
 
-    const { data, error } = await supabase
-      .from('patients')
-      .insert(patientData)
-      .select()
-      .single();
+    let data, error;
+
+    if (patient.id) {
+      // Update existing patient
+      console.log('Updating existing patient with ID:', patient.id);
+      const updateResult = await supabase
+        .from('patients')
+        .update(patientData)
+        .eq('id', patient.id)
+        .select()
+        .single();
+      
+      data = updateResult.data;
+      error = updateResult.error;
+    } else {
+      // Insert new patient
+      console.log('Inserting new patient');
+      const insertResult = await supabase
+        .from('patients')
+        .insert(patientData)
+        .select()
+        .single();
+      
+      data = insertResult.data;
+      error = insertResult.error;
+    }
 
     if (error) {
       throw error;
@@ -51,6 +72,9 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
 
     // Invalidate relevant cache entries
     dbCache.invalidate(dbCache.KEYS.PATIENTS);
+    if (patient.id) {
+      dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patient.id}`);
+    }
     
     return {
       success: true,

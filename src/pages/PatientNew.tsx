@@ -1,7 +1,7 @@
+
 import React, {useEffect} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import {useToast} from "@/hooks/toast";
-import Navbar from "@/components/Navbar";
 import PatientForm from "@/components/PatientForm";
 import {useQuery} from "@tanstack/react-query";
 import {PatientService} from "@/services/patient";
@@ -87,7 +87,6 @@ const PatientNew = () => {
 	try {
 		return (
 			<div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-				<Navbar />
 				<div className="container mx-auto px-4 py-8">
 					<h1 className="text-3xl font-bold text-nutri-blue mb-2">
 						{id ? "Editar Paciente" : "Novo Paciente"}
@@ -131,7 +130,6 @@ const PatientNew = () => {
 		console.error("PatientNew render error:", renderError);
 		return (
 			<div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-				<Navbar />
 				<div className="container mx-auto px-4 py-8">
 					<div className="text-center">
 						<h1 className="text-2xl font-bold text-red-600 mb-4">
