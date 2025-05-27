@@ -1,19 +1,17 @@
+
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePatient } from '@/contexts/PatientContext';
-import MealAssembly from '@/components/MealPlan/MealAssembly';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
+import MealPlanGenerator from '@/components/meal-plan/MealPlanGenerator';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 
 const MealPlans = () => {
   const { activePatient, loadPatientById } = usePatient();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const patientId = searchParams.get('patientId');
-  const createPlan = searchParams.get('createPlan') === 'true';
   
   // Get calculation data from location state if available
   const calculationData = location.state?.calculationData;
@@ -37,7 +35,9 @@ const MealPlans = () => {
       >
         <div>
           <h1 className="text-3xl font-bold mb-3 text-nutri-blue">Planos Alimentares</h1>
-          <p className="text-gray-600 mb-4">Crie planos alimentares personalizados com quantidades precisas para seus pacientes.</p>
+          <p className="text-gray-600 mb-4">
+            Geração automática de cardápios personalizados com base nos macros calculados.
+          </p>
         </div>
         <img 
           src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" 
@@ -49,38 +49,13 @@ const MealPlans = () => {
       {/* Display patient banner if patient is selected */}
       {activePatient && <PatientBanner />}
       
-      {!activePatient && (
-        <Alert className="mb-6 bg-blue-50 border-blue-200">
-          <AlertDescription className="flex justify-between items-center">
-            <span>Selecione um paciente para criar um plano alimentar personalizado.</span>
-            <Button variant="nutri" size="sm">
-              Selecionar Paciente
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-      
       <motion.div 
         className="bg-white rounded-xl shadow-lg p-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <MealAssembly 
-          totalCalories={calculationData?.tdee || 2000}
-          macros={{
-            protein: calculationData?.protein || 150,
-            carbs: calculationData?.carbs || 200,
-            fat: calculationData?.fat || 67
-          }}
-          patientName={activePatient?.name || "Exemplo de Paciente"}
-          patientData={{
-            age: activePatient?.age || 35,
-            weight: activePatient?.measurements?.weight || 70,
-            height: activePatient?.measurements?.height || 170
-          }}
-          patientId={activePatient?.id}
-        />
+        <MealPlanGenerator calculationData={calculationData} />
       </motion.div>
       
       <motion.div 
@@ -90,16 +65,22 @@ const MealPlans = () => {
         transition={{ duration: 0.5, delay: 0.4 }}
       >
         <div className="bg-white p-5 rounded-xl shadow-md">
-          <h3 className="font-semibold text-lg mb-2 text-nutri-green">Personalizado</h3>
-          <p className="text-gray-600">Planos alimentares adaptados às necessidades e preferências individuais de cada paciente.</p>
+          <h3 className="font-semibold text-lg mb-2 text-nutri-green">Geração Automática</h3>
+          <p className="text-gray-600">
+            O sistema gera automaticamente um cardápio balanceado baseado nos macros calculados.
+          </p>
         </div>
         <div className="bg-white p-5 rounded-xl shadow-md">
-          <h3 className="font-semibold text-lg mb-2 text-nutri-blue">Preciso</h3>
-          <p className="text-gray-600">Quantidades e porções exatas para facilitar o seguimento do plano pelo paciente.</p>
+          <h3 className="font-semibold text-lg mb-2 text-nutri-blue">Edição Completa</h3>
+          <p className="text-gray-600">
+            Edite, adicione ou remova alimentos com recálculo automático dos valores nutricionais.
+          </p>
         </div>
         <div className="bg-white p-5 rounded-xl shadow-md">
-          <h3 className="font-semibold text-lg mb-2 text-nutri-teal">Profissional</h3>
-          <p className="text-gray-600">Apresentação profissional com informações nutricionais completas e detalhadas.</p>
+          <h3 className="font-semibold text-lg mb-2 text-nutri-teal">Base de Alimentos</h3>
+          <p className="text-gray-600">
+            Acesso a uma base completa de alimentos com informações nutricionais detalhadas.
+          </p>
         </div>
       </motion.div>
     </div>

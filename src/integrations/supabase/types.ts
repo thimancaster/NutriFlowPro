@@ -332,13 +332,82 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_plan_items: {
+        Row: {
+          calories: number
+          carbs: number
+          created_at: string | null
+          fats: number
+          food_id: string | null
+          food_name: string
+          id: string
+          meal_plan_id: string | null
+          meal_type: string
+          order_index: number
+          protein: number
+          quantity: number
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          calories?: number
+          carbs?: number
+          created_at?: string | null
+          fats?: number
+          food_id?: string | null
+          food_name: string
+          id?: string
+          meal_plan_id?: string | null
+          meal_type: string
+          order_index?: number
+          protein?: number
+          quantity?: number
+          unit?: string
+          updated_at?: string | null
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          created_at?: string | null
+          fats?: number
+          food_id?: string | null
+          food_name?: string
+          id?: string
+          meal_plan_id?: string | null
+          meal_type?: string
+          order_index?: number
+          protein?: number
+          quantity?: number
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_items_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_plan_items_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_plans: {
         Row: {
           calculation_id: string | null
           created_at: string | null
           date: string
+          day_of_week: number | null
           id: string
+          is_template: boolean | null
           meals: Json
+          notes: string | null
           patient_id: string | null
           total_calories: number
           total_carbs: number
@@ -351,8 +420,11 @@ export type Database = {
           calculation_id?: string | null
           created_at?: string | null
           date: string
+          day_of_week?: number | null
           id?: string
+          is_template?: boolean | null
           meals: Json
+          notes?: string | null
           patient_id?: string | null
           total_calories: number
           total_carbs: number
@@ -365,8 +437,11 @@ export type Database = {
           calculation_id?: string | null
           created_at?: string | null
           date?: string
+          day_of_week?: number | null
           id?: string
+          is_template?: boolean | null
           meals?: Json
+          notes?: string | null
           patient_id?: string | null
           total_calories?: number
           total_carbs?: number
@@ -688,6 +763,18 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      generate_meal_plan: {
+        Args: {
+          p_user_id: string
+          p_patient_id: string
+          p_target_calories: number
+          p_target_protein: number
+          p_target_carbs: number
+          p_target_fats: number
+          p_date?: string
+        }
+        Returns: string
+      }
       get_food_ids: {
         Args: { food_names: string[] }
         Returns: string[]
@@ -707,6 +794,10 @@ export type Database = {
       is_user_premium: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      recalculate_meal_plan_totals: {
+        Args: { p_meal_plan_id: string }
+        Returns: undefined
       }
     }
     Enums: {
