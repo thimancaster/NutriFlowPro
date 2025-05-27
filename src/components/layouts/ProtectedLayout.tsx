@@ -6,7 +6,7 @@ import { MealPlanProvider } from '@/contexts/MealPlanContext';
 import { ConsultationProvider } from '@/contexts/ConsultationContext';
 import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Navbar from '@/components/Navbar';
+import Layout from '@/components/Layout';
 
 /**
  * Layout component for protected routes
@@ -19,12 +19,9 @@ const ProtectedLayout: React.FC = () => {
         <MealPlanProvider>
           <ConsultationDataProvider>
             <ConsultationProvider>
-              <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-                <Navbar />
-                <div className="container mx-auto px-4 py-8">
-                  <Outlet />
-                </div>
-              </div>
+              <Layout>
+                <Outlet />
+              </Layout>
             </ConsultationProvider>
           </ConsultationDataProvider>
         </MealPlanProvider>

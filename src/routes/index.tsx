@@ -1,6 +1,7 @@
 
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 
 // Layout
 import Layout from '@/components/Layout';
@@ -46,36 +47,30 @@ const AppRoutes = () => {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/recursos" element={<Recursos />} />
 
-      {/* Protected routes */}
-      <Route path="/*" element={
-        <ProtectedRoute>
-          <Layout>
-            <Routes>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/patients/new" element={<PatientNew />} />
-              <Route path="/patients/edit/:id" element={<PatientEdit />} />
-              <Route path="/patients/:id" element={<PatientProfile />} />
-              <Route path="/calculator" element={<Calculator />} />
-              <Route path="/meal-plans" element={<MealPlans />} />
-              <Route path="/meal-plan-generator" element={<MealPlanGenerator />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/clinical" element={<Clinical />} />
-              <Route path="/clinical/:patientId" element={<Clinical />} />
-              <Route path="/patient-history/:id" element={<PatientHistory />} />
-              <Route path="/patient-anthropometry/:id" element={<PatientAnthropometry />} />
-              <Route path="/consultation" element={<Consultation />} />
-              <Route path="/consultation/:patientId" element={<Consultation />} />
-              <Route path="/food-database" element={<FoodDatabase />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/add-testimonial" element={<AddTestimonial />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </ProtectedRoute>
-      } />
+      {/* Protected routes using ProtectedLayout */}
+      <Route path="/*" element={<ProtectedLayout />}>
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="onboarding" element={<Onboarding />} />
+        <Route path="patients" element={<Patients />} />
+        <Route path="patients/new" element={<PatientNew />} />
+        <Route path="patients/edit/:id" element={<PatientEdit />} />
+        <Route path="patients/:id" element={<PatientProfile />} />
+        <Route path="calculator" element={<Calculator />} />
+        <Route path="meal-plans" element={<MealPlans />} />
+        <Route path="meal-plan-generator" element={<MealPlanGenerator />} />
+        <Route path="appointments" element={<Appointments />} />
+        <Route path="clinical" element={<Clinical />} />
+        <Route path="clinical/:patientId" element={<Clinical />} />
+        <Route path="patient-history/:id" element={<PatientHistory />} />
+        <Route path="patient-anthropometry/:id" element={<PatientAnthropometry />} />
+        <Route path="consultation" element={<Consultation />} />
+        <Route path="consultation/:patientId" element={<Consultation />} />
+        <Route path="food-database" element={<FoodDatabase />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="subscription" element={<Subscription />} />
+        <Route path="add-testimonial" element={<AddTestimonial />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
     </Routes>
   );
 };
