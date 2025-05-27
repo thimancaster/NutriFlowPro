@@ -1,158 +1,280 @@
 
+import { 
+  Profile, 
+  ActivityLevel, 
+  Objective, 
+  ACTIVITY_FACTORS, 
+  OBJECTIVE_FACTORS, 
+  PROTEIN_RATIOS, 
+  LIPID_RATIOS,
+  CALORIE_VALUES 
+} from '@/types/consultation';
+
 /**
- * Nutrition calculation utilities
- * Implements TMB (Basal Metabolic Rate) and GET (Total Energy Expenditure) calculations
- * Now using weight-based approach for macronutrients
+ * Calcula TMB usando a fórmula correta baseada no perfil
  */
-
-// TMB calculation using Mifflin-St Jeor formula (standard for all profiles)
-export function calculateTMB(
-  weight: number, 
-  height: number, 
-  age: number, 
-  sex: 'M' | 'F'
-): number {
-  if (!validateInputs(weight, height, age)) {
-    throw new Error('Invalid inputs: weight, height, and age must be within reasonable ranges');
+export const calculateTMB = (weight: number, height: number, age: number, sex: 'M' | 'F', profile: Profile): number => {
+  if (weight <= 0 || height <= 0 || age <= 0) {
+    throw new Error('Weight, height, and age must be positive values');
   }
   
-  // Mifflin-St Jeor formula
-  if (sex === 'M') {
-    // Men: (10 * weight) + (6.25 * height) - (5 * age) + 5
-    return Math.round((10 * weight) + (6.25 * height) - (5 * age) + 5);
-  } else {
-    // Women: (10 * weight) + (6.25 * height) - (5 * age) - 161
-    return Math.round((10 * weight) + (6.25 * height) - (5 * age) - 161);
-  }
-}
-
-// Legacy functions will be kept for backwards compatibility
-export const tmbMagrasMulheres = (weight: number, height: number, age: number): number => {
-  return 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
-};
-
-export const tmbMagrosHomens = (weight: number, height: number, age: number): number => {
-  return 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
-};
-
-export const tmbObesasMulheres = (weight: number, height: number, age: number): number => {
-  return (10 * weight) + (6.25 * height) - (5 * age) - 161;
-};
-
-export const tmbObesosHomens = (weight: number, height: number, age: number): number => {
-  return (10 * weight) + (6.25 * height) - (5 * age) + 5;
-};
-
-// Activity factors as specified in documentation
-export const activityFactors = {
-  sedentario: 1.2,      // Sedentary
-  leve: 1.375,          // Lightly active
-  moderado: 1.55,       // Moderately active
-  intenso: 1.725,       // Very active
-  muito_intenso: 1.9    // Extremely active
-};
-
-// Objective factors for caloric adjustments
-export const objectiveFactors = {
-  emagrecimento: 0.8,   // Weight loss (20% deficit)
-  manutenção: 1.0,      // Maintenance
-  hipertrofia: 1.15     // Muscle gain (15% surplus)
-};
-
-// GET calculation (TMB × Activity Factor)
-export function calculateGET(tmb: number, activityLevel: string): number {
-  const factor = activityFactors[activityLevel as keyof typeof activityFactors] || 1.55; // Default to moderate if not found
-  return Math.round(tmb * factor);
-}
-
-// Legacy alias for tests
-export const calcGET = calculateGET;
-
-// VET calculation (GET × Objective Factor)
-export function calculateVET(get: number, objective: string): number {
-  const factor = objectiveFactors[objective as keyof typeof objectiveFactors] || 1.0; // Default to maintenance
-  return Math.round(get * factor);
-}
-
-// Calculate macronutrients legacy function - included for backward compatibility
-export function calculateMacros(calories: number, proteinPct: number, carbsPct: number, fatPct: number) {
-  const protein = Math.round((calories * proteinPct) / 4);
-  const carbs = Math.round((calories * carbsPct) / 4);
-  const fat = Math.round((calories * fatPct) / 9);
+  let tmb: number;
   
-  return { protein, carbs, fat };
-}
+  switch (profile) {
+    case 'eutrofico':
+      // Harris-Benedict revisada para perfil eutrófico
+      if (sex === 'M') {
+        tmb = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+      } else {
+        tmb = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+      }
+      break;
+      
+    case 'sobrepeso_obesidade':
+      // Mifflin-St Jeor para sobrepeso/obesidade
+      if (sex === 'M') {
+        tmb = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+      } else {
+        tmb = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+      }
+      break;
+      
+    case 'atleta':
+      // Cunningham para atletas (aproximação quando massa magra não disponível)
+      // Assumindo 10-15% de gordura corporal para atletas
+      const estimatedLeanMass = weight * 0.85; // 15% gordura
+      tmb = 500 + (22 * estimatedLeanMass);
+      break;
+      
+    default:
+      // Fallback para Harris-Benedict revisada
+      if (sex === 'M') {
+        tmb = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+      } else {
+        tmb = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+      }
+  }
+  
+  return Math.round(tmb);
+};
 
-// Calculate total caloric summary
-// Corrected parameter order to match the call in CalculatorTool.tsx
-export function calculateCalorieSummary(
+/**
+ * Calcula GET usando fatores de atividade específicos por perfil
+ */
+export const calculateGET = (tmb: number, activityLevel: ActivityLevel, profile: Profile): number => {
+  let activityFactor: number;
+  
+  // Fatores de atividade específicos por perfil conforme planilha
+  switch (profile) {
+    case 'eutrofico':
+      switch (activityLevel) {
+        case 'sedentario': activityFactor = 1.2; break;
+        case 'leve': activityFactor = 1.375; break;
+        case 'moderado': activityFactor = 1.55; break;
+        case 'intenso': activityFactor = 1.725; break;
+        case 'muito_intenso': activityFactor = 1.9; break;
+        default: activityFactor = 1.2;
+      }
+      break;
+      
+    case 'sobrepeso_obesidade':
+      // Fatores reduzidos para perfil com sobrepeso/obesidade
+      switch (activityLevel) {
+        case 'sedentario': activityFactor = 1.1; break;
+        case 'leve': activityFactor = 1.3; break;
+        case 'moderado': activityFactor = 1.5; break;
+        case 'intenso': activityFactor = 1.7; break;
+        case 'muito_intenso': activityFactor = 1.9; break;
+        default: activityFactor = 1.1;
+      }
+      break;
+      
+    case 'atleta':
+      // Fatores aumentados para atletas
+      switch (activityLevel) {
+        case 'sedentario': activityFactor = 1.5; break;
+        case 'leve': activityFactor = 1.6; break;
+        case 'moderado': activityFactor = 1.8; break;
+        case 'intenso': activityFactor = 2.1; break;
+        case 'muito_intenso': activityFactor = 2.4; break;
+        default: activityFactor = 1.5;
+      }
+      break;
+      
+    default:
+      activityFactor = ACTIVITY_FACTORS[activityLevel] || 1.2;
+  }
+  
+  return Math.round(tmb * activityFactor);
+};
+
+/**
+ * Calcula VET aplicando ajuste baseado no objetivo
+ */
+export const calculateVET = (get: number, objective: Objective): number => {
+  let adjustmentFactor: number;
+  
+  switch (objective) {
+    case 'emagrecimento':
+      adjustmentFactor = 0.8; // Déficit de 20%
+      break;
+    case 'hipertrofia':
+      adjustmentFactor = 1.15; // Superávit de 15%
+      break;
+    case 'manutenção':
+    case 'personalizado':
+    default:
+      adjustmentFactor = 1.0; // Sem ajuste
+  }
+  
+  return Math.round(get * adjustmentFactor);
+};
+
+/**
+ * Calcula macronutrientes seguindo a lógica sequencial da planilha
+ */
+export const calculateMacrosByProfile = (
+  profile: Profile,
+  weight: number,
   vet: number,
-  macros: {
-    protein: { kcal: number },
-    fats: { kcal: number } | { kcal: number },
-    carbs: { kcal: number }
-  }
+  objective: Objective
 ): {
-  targetCalories: number,
-  actualCalories: number,
-  difference: number,
-  percentageDifference: number
-} {
-  // Ensure fats property exists for both naming conventions
-  const fatsKcal = 'fats' in macros ? macros.fats.kcal : (macros as any).fat?.kcal || 0;
+  protein: { grams: number; kcal: number; percentage: number };
+  carbs: { grams: number; kcal: number; percentage: number };
+  fat: { grams: number; kcal: number; percentage: number };
+  proteinPerKg: number;
+} => {
+  if (!weight || weight <= 0 || !vet || vet <= 0) {
+    throw new Error('Invalid input for macronutrient calculation');
+  }
+
+  // 1º PASSO: Calcular proteínas (g/kg baseado no perfil e objetivo)
+  let proteinPerKg: number;
   
-  const actualCalories = macros.protein.kcal + fatsKcal + macros.carbs.kcal;
-  const difference = actualCalories - vet;
-  const percentageDifference = Math.round((difference / vet) * 100 * 10) / 10; // Round to 1 decimal place
+  switch (profile) {
+    case 'eutrofico':
+      proteinPerKg = objective === 'emagrecimento' ? 1.4 : 1.2;
+      break;
+    case 'sobrepeso_obesidade':
+      proteinPerKg = objective === 'emagrecimento' ? 2.2 : 2.0;
+      break;
+    case 'atleta':
+      proteinPerKg = objective === 'hipertrofia' ? 2.0 : 1.8;
+      break;
+    default:
+      proteinPerKg = 1.2;
+  }
+  
+  const proteinGrams = Math.round(weight * proteinPerKg);
+  const proteinKcal = proteinGrams * CALORIE_VALUES.protein;
+
+  // 2º PASSO: Calcular gorduras (g/kg baseado no perfil)
+  let fatPerKg: number;
+  
+  switch (profile) {
+    case 'eutrofico':
+      fatPerKg = 1.0;
+      break;
+    case 'sobrepeso_obesidade':
+      fatPerKg = 0.8;
+      break;
+    case 'atleta':
+      fatPerKg = 1.2;
+      break;
+    default:
+      fatPerKg = 1.0;
+  }
+  
+  const fatGrams = Math.round(weight * fatPerKg);
+  const fatKcal = fatGrams * CALORIE_VALUES.fat;
+
+  // 3º PASSO: Calcular carboidratos por diferença
+  const remainingKcal = vet - proteinKcal - fatKcal;
+  const carbsGrams = Math.max(0, Math.round(remainingKcal / CALORIE_VALUES.carbs));
+  const carbsKcal = carbsGrams * CALORIE_VALUES.carbs;
+
+  // 4º PASSO: Calcular percentuais como saída
+  const totalKcal = proteinKcal + carbsKcal + fatKcal;
+  const proteinPercentage = Math.round((proteinKcal / totalKcal) * 100);
+  const carbsPercentage = Math.round((carbsKcal / totalKcal) * 100);
+  const fatPercentage = Math.round((fatKcal / totalKcal) * 100);
+
+  return {
+    protein: {
+      grams: proteinGrams,
+      kcal: proteinKcal,
+      percentage: proteinPercentage
+    },
+    carbs: {
+      grams: carbsGrams,
+      kcal: carbsKcal,
+      percentage: carbsPercentage
+    },
+    fat: {
+      grams: fatGrams,
+      kcal: fatKcal,
+      percentage: fatPercentage
+    },
+    proteinPerKg: proteinPerKg
+  };
+};
+
+/**
+ * Cálculo completo de nutrição seguindo a lógica da planilha
+ */
+export const calculateCompleteNutrition = (
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F',
+  activityLevel: ActivityLevel,
+  objective: Objective,
+  profile: Profile
+): {
+  tmb: number;
+  get: number;
+  vet: number;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg: number;
+  };
+  formulaUsed: string;
+} => {
+  // Calcular TMB usando fórmula específica do perfil
+  const tmb = calculateTMB(weight, height, age, sex, profile);
+  
+  // Calcular GET usando fatores específicos do perfil
+  const get = calculateGET(tmb, activityLevel, profile);
+  
+  // Calcular VET aplicando ajuste do objetivo
+  const vet = calculateVET(get, objective);
+  
+  // Calcular macronutrientes seguindo lógica sequencial
+  const macros = calculateMacrosByProfile(profile, weight, vet, objective);
+  
+  // Determinar qual fórmula foi usada
+  let formulaUsed: string;
+  switch (profile) {
+    case 'eutrofico':
+      formulaUsed = 'Harris-Benedict Revisada';
+      break;
+    case 'sobrepeso_obesidade':
+      formulaUsed = 'Mifflin-St Jeor';
+      break;
+    case 'atleta':
+      formulaUsed = 'Cunningham (estimativa)';
+      break;
+    default:
+      formulaUsed = 'Harris-Benedict Revisada (padrão)';
+  }
   
   return {
-    targetCalories: vet,
-    actualCalories,
-    difference,
-    percentageDifference
+    tmb,
+    get,
+    vet,
+    macros,
+    formulaUsed
   };
-}
-
-// Validate inputs to prevent calculation errors - enforcing plausible limits
-export function validateInputs(weight: number, height: number, age: number): boolean {
-  return weight > 0 && weight <= 500 && 
-         height > 0 && height <= 250 && 
-         age > 0 && age <= 120;
-}
-
-// Calculate BMI (IMC in Portuguese)
-export function calculateBMI(weight: number, height: number): number {
-  // Convert height to meters if in cm
-  const heightInMeters = height >= 100 ? height / 100 : height;
-  return Number((weight / (heightInMeters * heightInMeters)).toFixed(1));
-}
-
-// Alias for Portuguese terminology
-export const calculateIMC = calculateBMI;
-
-// Calculate Waist-Hip Ratio (RCQ in Portuguese)
-export function calculateRCQ(waist: number, hip: number): number {
-  if (waist <= 0 || hip <= 0) return 0;
-  return Number((waist / hip).toFixed(2));
-}
-
-// Calculate body fat percentage using Jackson-Pollock equation
-export function calculateBodyFatJacksonPollock(
-  gender: string, 
-  age: number, 
-  waist: number, 
-  hip?: number, 
-  neck?: number
-): number {
-  // Simple implementation for compatibility
-  if (gender === 'male' || gender === 'M') {
-    return Number((10.1 - 0.2 * age + 0.8 * (waist || 0) - 0.3 * (neck || 0)).toFixed(1));
-  } else {
-    return Number((19.2 - 0.1 * age + 0.8 * (waist || 0) - 0.3 * (hip || 0) - 0.5 * (neck || 0)).toFixed(1));
-  }
-}
-
-// Calculate lean mass
-export function calculateLeanMass(weight: number, bodyFatPct: number): number {
-  return Number((weight * (1 - bodyFatPct / 100)).toFixed(1));
-}
+};

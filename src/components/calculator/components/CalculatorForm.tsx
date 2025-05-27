@@ -5,9 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calculator } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Profile } from '@/types/consultation';
-import { PROFILE_OPTIONS, getProfileLabel } from '../utils/profileUtils';
+import { Calculator, User, Activity } from 'lucide-react';
 
 interface CalculatorFormProps {
   weight: number;
@@ -16,7 +16,7 @@ interface CalculatorFormProps {
   sex: 'M' | 'F';
   profile: Profile;
   isCalculating: boolean;
-  onInputChange: (field: string, value: number) => void;
+  onInputChange: (field: string, value: any) => void;
   onSexChange: (sex: 'M' | 'F') => void;
   onProfileChange: (profile: Profile) => void;
   onCalculate: () => void;
@@ -37,122 +37,131 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   patientSelected
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
-          Dados Básicos e Perfil
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {patientSelected && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-green-800 text-sm">
-              ✓ Paciente selecionado. Os dados foram preenchidos automaticamente.
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Dados Antropométricos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="weight">Peso (kg) *</Label>
+              <Input
+                id="weight"
+                type="number"
+                value={weight || ''}
+                onChange={(e) => onInputChange('weight', parseFloat(e.target.value) || 0)}
+                placeholder="Ex: 70"
+                min="20"
+                max="300"
+                step="0.1"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="height">Altura (cm) *</Label>
+              <Input
+                id="height"
+                type="number"
+                value={height || ''}
+                onChange={(e) => onInputChange('height', parseFloat(e.target.value) || 0)}
+                placeholder="Ex: 170"
+                min="100"
+                max="250"
+                step="0.1"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="age">Idade (anos) *</Label>
+              <Input
+                id="age"
+                type="number"
+                value={age || ''}
+                onChange={(e) => onInputChange('age', parseInt(e.target.value) || 0)}
+                placeholder="Ex: 30"
+                min="1"
+                max="120"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Sexo *</Label>
+            <RadioGroup 
+              value={sex} 
+              onValueChange={(value) => onSexChange(value as 'M' | 'F')}
+              className="flex flex-row space-x-6 mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="M" id="male" />
+                <Label htmlFor="male" className="cursor-pointer">Masculino</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="F" id="female" />
+                <Label htmlFor="female" className="cursor-pointer">Feminino</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div>
+            <Label htmlFor="profile">Perfil Corporal *</Label>
+            <Select value={profile} onValueChange={(value) => onProfileChange(value as Profile)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="eutrofico">Eutrófico (peso normal)</SelectItem>
+                <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade</SelectItem>
+                <SelectItem value="atleta">Atleta/Musculoso</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              O perfil determina a fórmula de cálculo e os fatores aplicados
             </p>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="weight">Peso (kg) *</Label>
-            <Input
-              id="weight"
-              type="number"
-              value={weight}
-              onChange={(e) => onInputChange('weight', Number(e.target.value))}
-              placeholder="Ex: 70"
-              min="1"
-              max="500"
-              step="0.1"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="height">Altura (cm) *</Label>
-            <Input
-              id="height"
-              type="number"
-              value={height}
-              onChange={(e) => onInputChange('height', Number(e.target.value))}
-              placeholder="Ex: 170"
-              min="50"
-              max="250"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="age">Idade *</Label>
-            <Input
-              id="age"
-              type="number"
-              value={age}
-              onChange={(e) => onInputChange('age', Number(e.target.value))}
-              placeholder="Ex: 30"
-              min="1"
-              max="120"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="sex">Sexo *</Label>
-            <Select value={sex} onValueChange={(value) => onSexChange(value as 'M' | 'F')}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o sexo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="M">Masculino</SelectItem>
-                <SelectItem value="F">Feminino</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="profile">Perfil Corporal *</Label>
-            <Select 
-              value={profile} 
-              onValueChange={(value) => {
-                console.log('Profile selected:', value);
-                onProfileChange(value as Profile);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o perfil">
-                  {profile ? getProfileLabel(profile) : "Selecione o perfil"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {PROFILE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Informações sobre Perfis:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li><strong>Eutrófico:</strong> Peso normal, composição corporal adequada</li>
-            <li><strong>Sobrepeso/Obesidade:</strong> Excesso de peso, necessita redução calórica</li>
-            <li><strong>Atleta:</strong> Alta demanda energética e proteica</li>
-          </ul>
-        </div>
-
+      <div className="flex justify-center">
         <Button 
-          onClick={onCalculate} 
+          onClick={onCalculate}
           disabled={isCalculating || !weight || !height || !age}
-          className="w-full"
           size="lg"
+          className="w-full max-w-md"
         >
-          {isCalculating ? 'Calculando...' : 'Calcular TMB e Necessidades'}
+          {isCalculating ? (
+            <>
+              <Calculator className="mr-2 h-4 w-4 animate-spin" />
+              Calculando...
+            </>
+          ) : (
+            <>
+              <Calculator className="mr-2 h-4 w-4" />
+              Calcular TMB
+            </>
+          )}
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+
+      {patientSelected && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-blue-800 text-sm">
+            <Activity className="h-4 w-4" />
+            <span className="font-medium">Paciente selecionado</span>
+          </div>
+          <p className="text-blue-600 text-xs mt-1">
+            Os dados foram preenchidos automaticamente com as informações do paciente
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 
