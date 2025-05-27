@@ -187,9 +187,10 @@ const useCalculatorState = () => {
     setFormData(prev => ({
       ...prev,
       patientName: patient.name,
-      weight: patient.weight || prev.weight,
-      height: patient.height || prev.height,
-      age: patient.age || prev.age,
+      // Check if weight and height properties exist before using them
+      weight: (patient as any).weight || prev.weight,
+      height: (patient as any).height || prev.height,
+      age: (patient as any).age || prev.age,
       sex: (patient.gender === 'male' ? 'M' : 'F') as 'M' | 'F'
     }));
   };

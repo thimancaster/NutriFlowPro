@@ -79,6 +79,13 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
     objective,
     onSaveCalculation: handleSaveCalculation
   });
+
+  // Fix the tab change handler to accept string and convert to proper type
+  const handleTabChange = (value: string) => {
+    if (value === 'tmb' || value === 'activity' || value === 'results') {
+      setActiveTab(value);
+    }
+  };
   
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -103,7 +110,7 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
       </CardHeader>
       
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="tmb" disabled={isCalculating}>
               <span className="flex items-center gap-1">

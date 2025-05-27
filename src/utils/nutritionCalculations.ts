@@ -278,3 +278,71 @@ export const calculateCompleteNutrition = (
     formulaUsed
   };
 };
+
+// Additional utility functions for anthropometry calculations
+export const calculateIMC = (weight: number, height: number): number => {
+  if (weight <= 0 || height <= 0) {
+    throw new Error('Weight and height must be positive values');
+  }
+  const heightInMeters = height / 100;
+  return Math.round((weight / (heightInMeters * heightInMeters)) * 10) / 10;
+};
+
+export const calculateRCQ = (waistCircumference: number, hipCircumference: number): number => {
+  if (waistCircumference <= 0 || hipCircumference <= 0) {
+    throw new Error('Waist and hip circumferences must be positive values');
+  }
+  return Math.round((waistCircumference / hipCircumference) * 100) / 100;
+};
+
+export const calculateBodyFatJacksonPollock = (
+  age: number,
+  sex: 'M' | 'F',
+  skinFolds: { chest?: number; abdomen?: number; thigh?: number; triceps?: number; suprailiac?: number; subscapular?: number }
+): number => {
+  // Jackson-Pollock 3-point formula
+  let bodyDensity: number;
+  
+  if (sex === 'M') {
+    const sum = (skinFolds.chest || 0) + (skinFolds.abdomen || 0) + (skinFolds.thigh || 0);
+    bodyDensity = 1.10938 - (0.0008267 * sum) + (0.0000016 * sum * sum) - (0.0002574 * age);
+  } else {
+    const sum = (skinFolds.triceps || 0) + (skinFolds.suprailiac || 0) + (skinFolds.thigh || 0);
+    bodyDensity = 1.0994921 - (0.0009929 * sum) + (0.0000023 * sum * sum) - (0.0001392 * age);
+  }
+  
+  const bodyFatPercentage = ((4.95 / bodyDensity) - 4.5) * 100;
+  return Math.round(bodyFatPercentage * 10) / 10;
+};
+
+export const calculateLeanMass = (weight: number, bodyFatPercentage: number): number => {
+  if (weight <= 0 || bodyFatPercentage < 0 || bodyFatPercentage > 100) {
+    throw new Error('Invalid weight or body fat percentage');
+  }
+  return Math.round((weight * (1 - bodyFatPercentage / 100)) * 10) / 10;
+};
+
+export const calculateCalorieSummary = (
+  targetCalories: number,
+  macros: {
+    protein: { kcal: number };
+    fats: { kcal: number };
+    carbs: { kcal: number };
+  }
+): {
+  targetCalories: number;
+  actualCalories: number;
+  difference: number;
+  percentageDifference: number;
+} => {
+  const actualCalories = macros.protein.kcal + macros.fats.kcal + macros.carbs.kcal;
+  const difference = actualCalories - targetCalories;
+  const percentageDifference = Math.round((difference / targetCalories) * 100);
+  
+  return {
+    targetCalories,
+    actualCalories,
+    difference,
+    percentageDifference
+  };
+};

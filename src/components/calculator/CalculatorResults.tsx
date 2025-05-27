@@ -7,11 +7,9 @@ import {
   MetricCard,
   CalorieAdjustmentBadge,
   MacroDistributionGrid,
-  CalorieSummary,
   NutritionInfo,
   ActionButtons
 } from './results';
-import { calculateCalorieSummary } from '@/utils/nutritionCalculations';
 
 const CalculatorResults: React.FC<CalculatorResultsProps> = ({
   bmr,
@@ -36,15 +34,13 @@ const CalculatorResults: React.FC<CalculatorResultsProps> = ({
     );
   }
 
-  // Calculate calorie summary
-  const summary = calculateCalorieSummary(
-    tee.vet,
-    {
-      protein: { kcal: macros.protein.kcal },
-      fats: { kcal: macros.fat.kcal },
-      carbs: { kcal: macros.carbs.kcal }
-    }
-  );
+  // Create a simple calorie summary
+  const summary = {
+    targetCalories: tee.vet,
+    actualCalories: (macros.protein.kcal || 0) + (macros.fat.kcal || 0) + (macros.carbs.kcal || 0),
+    difference: 0,
+    percentageDifference: 0
+  };
 
   // Check if user is premium (simplified mock check)
   const isUserPremium = user?.is_premium || false;
@@ -121,14 +117,6 @@ const CalculatorResults: React.FC<CalculatorResultsProps> = ({
             weight={macros.protein.grams / (macros.proteinPerKg || 1)} // Calculate weight for per/kg display
           />
         </div>
-        
-        {/* Calorie Summary */}
-        <CalorieSummary
-          targetCalories={summary.targetCalories}
-          actualCalories={summary.actualCalories}
-          difference={summary.difference}
-          percentageDifference={summary.percentageDifference}
-        />
         
         {/* Nutrition Info Block */}
         <NutritionInfo
