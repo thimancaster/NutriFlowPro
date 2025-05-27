@@ -1,15 +1,15 @@
 
-import React, { useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, Flame, Dumbbell, Utensils, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { Calculator, Flame, Dumbbell, Utensils } from 'lucide-react';
 import { CalculatorForm, ActivityForm, ResultsDisplay } from './components';
+import { PatientDataHandler } from './components/PatientDataHandler';
+import { CalculatorFooter } from './components/CalculatorFooter';
+import { useCalculationSaveHandler } from './components/CalculationSaveHandler';
+import { useMealPlanHandler } from './components/MealPlanHandler';
 import useCalculatorState from './hooks/useCalculatorState';
 import { Patient } from '@/types';
-import { useNavigate } from 'react-router-dom';
-import { saveCalculationResults } from '@/services/calculationService';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface CalculatorToolProps {
@@ -18,8 +18,6 @@ interface CalculatorToolProps {
 }
 
 const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProfile }) => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
   const { user } = useAuth();
   
   const {
@@ -47,165 +45,53 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
     setObjective
   } = useCalculatorState();
 
-  // Manually store patient name from patient data
+  // State management for patient data sync
   const [patientName, setPatientName] = React.useState<string>('');
-  
-  // Add explicit state setters for weight, height, and age
   const [stateWeight, setStateWeight] = React.useState<string>('');
   const [stateHeight, setStateHeight] = React.useState<string>('');
   const [stateAge, setStateAge] = React.useState<string>('');
-  
-  // Add state for saving status
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
 
-  // Fill form with patient data when available
-  useEffect(() => {
-    if (patientData) {
-      // Set patient name
-      setPatientName(patientData.name);
-      
-      // Set measurements if available
-      if (patientData.measurements) {
-        if (patientData.measurements.weight) {
-          setStateWeight(patientData.measurements.weight.toString());
-          handleInputChange('weight', Number(patientData.measurements.weight));
-        }
-        if (patientData.measurements.height) {
-          setStateHeight(patientData.measurements.height.toString());
-          handleInputChange('height', Number(patientData.measurements.height));
-        }
-      }
-      
-      // Calculate age from birth_date if available
-      if (patientData.birth_date) {
-        const birthDate = new Date(patientData.birth_date);
-        const today = new Date();
-        let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          calculatedAge--;
-        }
-        
-        setStateAge(calculatedAge.toString());
-        handleInputChange('age', calculatedAge);
-      }
-      
-      // Set gender/sex if available
-      if (patientData.gender) {
-        setSex(patientData.gender === 'male' ? 'M' : 'F');
-      }
-    }
-  }, [patientData]);
+  // Initialize save handler
+  const { handleSaveCalculation } = useCalculationSaveHandler({
+    patientData,
+    user,
+    weight,
+    height,
+    age,
+    sex,
+    activityLevel,
+    objective,
+    tmbValue,
+    teeObject,
+    macros,
+    isSaving,
+    onSavingChange: setIsSaving
+  });
 
-  // Handle saving calculation to patient record
-  const handleSaveCalculation = async () => {
-    if (!patientData || !teeObject || !macros) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar os resultados. Certifique-se de que um paciente está selecionado e o cálculo foi realizado.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!user) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para salvar os resultados.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      setIsSaving(true);
-      
-      // Convert weight, height, age to numbers with proper fallbacks
-      const weightValue = typeof weight === 'number' ? weight : parseFloat(weight.toString()) || 0;
-      const heightValue = typeof height === 'number' ? height : parseFloat(height.toString()) || 0;
-      const ageValue = typeof age === 'number' ? age : parseInt(age.toString()) || 0;
-      
-      const calculationData = {
-        patient_id: patientData.id,
-        user_id: user.id,
-        weight: weightValue,
-        height: heightValue,
-        age: ageValue,
-        gender: sex === 'M' ? 'male' : 'female',
-        activity_level: activityLevel,
-        goal: objective,
-        bmr: tmbValue || 0,
-        tdee: teeObject.vet || 0,
-        protein: macros.protein.grams || 0,
-        carbs: macros.carbs.grams || 0,
-        fats: macros.fat.grams || 0,
-        tipo: 'primeira_consulta',
-        status: 'em_andamento'
-      };
-      
-      const result = await saveCalculationResults(calculationData);
-      
-      if (result.success) {
-        toast({
-          title: "Cálculo salvo",
-          description: "Os resultados foram salvos com sucesso para o paciente.",
-        });
-      } else {
-        throw new Error(result.error || "Erro ao salvar cálculo");
-      }
-    } catch (error) {
-      console.error("Error saving calculation:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar os resultados. Por favor, tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle generating meal plan from calculation
-  const handleGenerateMealPlan = () => {
-    if (!patientData || !teeObject || !macros) {
-      toast({
-        title: "Informações incompletas",
-        description: "Certifique-se de que um paciente está selecionado e o cálculo foi realizado.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!user) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para gerar um plano.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Save calculation first, then navigate
-    handleSaveCalculation().then(() => {
-      // Navigate to meal plan with calculation data
-      navigate(`/meal-plans?patientId=${patientData.id}&createPlan=true`, {
-        state: {
-          calculationData: {
-            bmr: tmbValue,
-            tdee: teeObject.vet,
-            protein: macros.protein.grams,
-            carbs: macros.carbs.grams,
-            fat: macros.fat.grams,
-            objective: objective
-          }
-        }
-      });
-    });
-  };
+  // Initialize meal plan handler
+  const { handleGenerateMealPlan } = useMealPlanHandler({
+    patientData,
+    user,
+    teeObject,
+    macros,
+    tmbValue,
+    objective,
+    onSaveCalculation: handleSaveCalculation
+  });
   
   return (
     <Card className="w-full max-w-4xl mx-auto">
+      <PatientDataHandler
+        patientData={patientData}
+        onPatientNameChange={setPatientName}
+        onWeightChange={setStateWeight}
+        onHeightChange={setStateHeight}
+        onAgeChange={setStateAge}
+        onSexChange={setSex}
+        onInputChange={handleInputChange}
+      />
+      
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="h-6 w-6" />
@@ -283,55 +169,15 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
         </Tabs>
       </CardContent>
       
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={handleReset}>
-          Limpar Dados
-        </Button>
-        
-        {showResults && patientData && (
-          <div className="flex gap-2">
-            {onViewProfile && (
-              <Button
-                variant="secondary"
-                onClick={onViewProfile}
-              >
-                <User className="mr-2 h-4 w-4" />
-                Ver Perfil
-              </Button>
-            )}
-            
-            <Button 
-              variant="outline"
-              onClick={handleSaveCalculation}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Salvando...' : 'Salvar Resultados'}
-            </Button>
-            
-            <Button 
-              variant="nutri"
-              onClick={handleGenerateMealPlan}
-              disabled={isSaving}
-            >
-              Gerar Plano Alimentar
-            </Button>
-          </div>
-        )}
-        
-        {showResults && !patientData && (
-          <Button 
-            variant="nutri"
-            onClick={() => {
-              toast({
-                title: "Selecione um paciente",
-                description: "Para salvar os resultados, você precisa selecionar um paciente.",
-              });
-            }}
-          >
-            Salvar Resultados
-          </Button>
-        )}
-      </CardFooter>
+      <CalculatorFooter
+        showResults={showResults}
+        patientData={patientData}
+        onViewProfile={onViewProfile}
+        onSaveCalculation={handleSaveCalculation}
+        onGenerateMealPlan={handleGenerateMealPlan}
+        onReset={handleReset}
+        isSaving={isSaving}
+      />
     </Card>
   );
 };
