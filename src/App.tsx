@@ -17,7 +17,7 @@ import Clinical from "./pages/Clinical";
 import Consultation from "./pages/Consultation";
 import MealPlanGenerator from "./pages/MealPlanGenerator";
 import Dashboard from "./pages/Dashboard";
-import PatientDetail from "./pages/PatientDetail";
+import PatientProfile from "./pages/PatientProfile";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 
@@ -40,7 +40,7 @@ const App = () => {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/patients" element={<Patients />} />
                   <Route path="/patients/new" element={<Patients />} />
-                  <Route path="/patients/:id" element={<PatientDetail />} />
+                  <Route path="/patients/:id" element={<PatientProfile />} />
                   <Route path="/calculator" element={<Calculator />} />
                   <Route path="/meal-plans" element={<MealPlans />} />
                   <Route path="/meal-plan-generator" element={<MealPlanGenerator />} />
