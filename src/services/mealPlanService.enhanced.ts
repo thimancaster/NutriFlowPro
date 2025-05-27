@@ -67,9 +67,15 @@ export class EnhancedMealPlanService {
 
       if (itemsError) throw itemsError;
 
+      // Type assertion para garantir que meal_type está correto
+      const typedItems: MealPlanItem[] = (items || []).map(item => ({
+        ...item,
+        meal_type: item.meal_type as MealPlanItem['meal_type']
+      }));
+
       const detailedPlan: DetailedMealPlan = {
         ...plan,
-        items: items || []
+        items: typedItems
       };
 
       return {
@@ -102,9 +108,15 @@ export class EnhancedMealPlanService {
 
       if (error) throw error;
 
+      // Type assertion para garantir que meal_type está correto
+      const typedItem: MealPlanItem = {
+        ...data,
+        meal_type: data.meal_type as MealPlanItem['meal_type']
+      };
+
       return {
         success: true,
-        data
+        data: typedItem
       };
     } catch (error: any) {
       console.error('Error adding meal plan item:', error);
@@ -158,9 +170,15 @@ export class EnhancedMealPlanService {
 
       if (error) throw error;
 
+      // Type assertion para garantir que meal_type está correto
+      const typedItem: MealPlanItem = {
+        ...data,
+        meal_type: data.meal_type as MealPlanItem['meal_type']
+      };
+
       return {
         success: true,
-        data
+        data: typedItem
       };
     } catch (error: any) {
       console.error('Error updating meal plan item:', error);
