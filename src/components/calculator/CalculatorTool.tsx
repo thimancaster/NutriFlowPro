@@ -121,12 +121,17 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
     try {
       setIsSaving(true);
       
+      // Convert weight, height, age to numbers with proper fallbacks
+      const weightValue = typeof weight === 'number' ? weight : parseFloat(weight.toString()) || 0;
+      const heightValue = typeof height === 'number' ? height : parseFloat(height.toString()) || 0;
+      const ageValue = typeof age === 'number' ? age : parseInt(age.toString()) || 0;
+      
       const calculationData = {
         patient_id: patientData.id,
         user_id: user.id,
-        weight: typeof weight === 'number' ? weight : parseFloat(weight.toString()),
-        height: typeof height === 'number' ? height : parseFloat(height.toString()),
-        age: typeof age === 'number' ? age : parseInt(age.toString()),
+        weight: weightValue,
+        height: heightValue,
+        age: ageValue,
         gender: sex === 'M' ? 'male' : 'female',
         activity_level: activityLevel,
         goal: objective,
@@ -236,9 +241,9 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
           
           <TabsContent value="tmb" className="space-y-6">
             <CalculatorForm 
-              weight={weight}
-              height={height}
-              age={age}
+              weight={typeof weight === 'number' ? weight : 0}
+              height={typeof height === 'number' ? height : 0}
+              age={typeof age === 'number' ? age : 0}
               sex={sex}
               profile={profile}
               isCalculating={isCalculating}
