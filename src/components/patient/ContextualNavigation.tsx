@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { usePatient } from '@/contexts/PatientContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from '@/components/ui/breadcrumb';
 import { Home, ChevronRight, User, Calculator, Utensils } from 'lucide-react';
 

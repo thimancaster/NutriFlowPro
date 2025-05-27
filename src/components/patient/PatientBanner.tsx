@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { usePatient } from '@/contexts/PatientContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { User, Calculator, Utensils, Eye, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 

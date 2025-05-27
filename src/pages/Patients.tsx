@@ -16,7 +16,7 @@ import PatientTableHeader from '@/components/patients/PatientTableHeader';
 import PatientTable from '@/components/patients/PatientTable';
 import PatientLoadingState from '@/components/patients/PatientLoadingState';
 import PatientErrorState from '@/components/patients/PatientErrorState';
-import { usePatient } from '@/contexts/PatientContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { Patient } from '@/types';
 
 const Patients = () => {

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { usePatient } from '@/contexts/PatientContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
 import MealPlanGenerator from '@/components/meal-plan/MealPlanGenerator';

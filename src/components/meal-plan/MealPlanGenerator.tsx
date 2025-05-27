@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Utensils, Calendar, RefreshCw } from 'lucide-react';
-import { usePatient } from '@/contexts/PatientContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
 import { NutritionalTargets } from '@/types/mealPlan';
