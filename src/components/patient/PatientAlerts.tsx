@@ -32,7 +32,7 @@ const PatientAlerts: React.FC<PatientAlertsProps> = ({ patient }) => {
   // Fetch calculation history for analysis
   const { data: calculations } = useQuery({
     queryKey: ['patient-calculation-history', patient.id],
-    queryFn: () => calculationHistoryService.getPatientCalculations(patient.id),
+    const calculations = await calculationService.getPatientCalculations(patientId);
     enabled: !!patient.id
   });
 
