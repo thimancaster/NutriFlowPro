@@ -12,7 +12,6 @@ import PatientTabNavigation from './modal/PatientTabNavigation';
 import PatientArchiveDialog from './PatientArchiveDialog';
 import PatientDeleteDialog from './PatientDeleteDialog';
 import PatientActionButtons from './modal/PatientActionButtons';
-import PatientModalContent from './modal/PatientModalContent';
 import { 
   PatientBasicInfoTab,
   PatientAppointmentsTab,
@@ -21,7 +20,10 @@ import {
   PatientMealPlansTab,
   PatientNotesTab,
   PatientCalculationHistoryTab,
-  PatientComparisonTab
+  PatientComparisonTab,
+  PatientGoalsTab,
+  PatientAlertsTab,
+  PatientReportsTab
 } from './tabs';
 import { Patient } from '@/types';
 import { usePatientModalActions } from '@/hooks/patient/usePatientModalActions';
@@ -131,7 +133,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-5xl p-0 h-[85vh] flex flex-col">
+        <DialogContent className="max-w-6xl p-0 h-[85vh] flex flex-col">
           <DialogHeader className="px-6 py-4 border-b">
             <div className="flex justify-between items-start">
               <PatientModalHeader 
@@ -182,6 +184,21 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
               
               <TabsContent value="comparison" className="mt-0 h-full">
                 <PatientComparisonTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="goals" className="mt-0 h-full">
+                <PatientGoalsTab 
+                  patient={patient}
+                  onUpdatePatient={handlePatientUpdate}
+                />
+              </TabsContent>
+              
+              <TabsContent value="alerts" className="mt-0 h-full">
+                <PatientAlertsTab patient={patient} />
+              </TabsContent>
+              
+              <TabsContent value="reports" className="mt-0 h-full">
+                <PatientReportsTab patient={patient} />
               </TabsContent>
               
               <TabsContent value="meal-plans" className="mt-0 h-full">
