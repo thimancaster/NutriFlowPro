@@ -44,9 +44,8 @@ const PatientModalContent: React.FC<PatientModalContentProps> = ({
         
       <TabsContent value="notes" className="m-0 h-full">
         <PatientNotesTab 
-          patientId={patient.id}
-          content={patient.notes || ''}
-          onSave={onUpdateNotes}
+          patient={patient}
+          onUpdatePatient={onUpdatePatient}
         />
       </TabsContent>
     </>
