@@ -34,7 +34,7 @@ export const useCalculationHistory = () => {
     }
   });
 
-  const saveCalculation = async (calculationData: CreateCalculationHistory) => {
+  const saveCalculation = async (calculationData: CreateCalculationHistory): Promise<void> => {
     setIsSaving(true);
     return saveCalculationMutation.mutateAsync(calculationData);
   };

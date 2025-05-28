@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -5,13 +6,22 @@ import {
   DialogContent,
   DialogHeader,
 } from '@/components/ui/dialog';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PatientModalHeader from './modal/PatientModalHeader';
 import PatientTabNavigation from './modal/PatientTabNavigation';
 import PatientArchiveDialog from './PatientArchiveDialog';
 import PatientDeleteDialog from './PatientDeleteDialog';
 import PatientActionButtons from './modal/PatientActionButtons';
 import PatientModalContent from './modal/PatientModalContent';
+import { 
+  PatientBasicInfoTab,
+  PatientAppointmentsTab,
+  PatientEvaluationsTab,
+  PatientEvolutionTab,
+  PatientMealPlansTab,
+  PatientNotesTab,
+  PatientCalculationHistoryTab
+} from './tabs';
 import { Patient } from '@/types';
 import { usePatientModalActions } from '@/hooks/patient/usePatientModalActions';
 import { usePatientTabs } from '@/hooks/patient/usePatientTabs';
@@ -150,46 +160,40 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
             </div>
             
             <div className="flex-1 overflow-auto p-6">
-              <PatientModalContent
-                patient={patient}
-                onUpdatePatient={handlePatientUpdate}
-                onUpdateNotes={handleNotesUpdate}
-              />
+              <TabsContent value="basic-info" className="mt-0 h-full">
+                <PatientBasicInfoTab 
+                  patient={patient} 
+                  onUpdatePatient={handlePatientUpdate}
+                />
+              </TabsContent>
+              
+              <TabsContent value="evaluations" className="mt-0 h-full">
+                <PatientEvaluationsTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="evolution" className="mt-0 h-full">
+                <PatientEvolutionTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="calculation-history" className="mt-0 h-full">
+                <PatientCalculationHistoryTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="meal-plans" className="mt-0 h-full">
+                <PatientMealPlansTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="appointments" className="mt-0 h-full">
+                <PatientAppointmentsTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="notes" className="mt-0 h-full">
+                <PatientNotesTab 
+                  patient={patient}
+                  onUpdatePatient={handlePatientUpdate}
+                />
+              </TabsContent>
             </div>
-            
-            <TabsContent value="basic-info" className="mt-6">
-              <PatientBasicInfoTab 
-                patient={patient} 
-                onPatientUpdate={refetch}
-              />
-            </TabsContent>
-            
-            <TabsContent value="evaluations" className="mt-6">
-              <PatientEvaluationsTab patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="evolution" className="mt-6">
-              <PatientEvolutionTab patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="calculation-history" className="mt-6">
-              <PatientCalculationHistoryTab patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="meal-plans" className="mt-6">
-              <PatientMealPlansTab patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="appointments" className="mt-6">
-              <PatientAppointmentsTab patientId={patient.id} />
-            </TabsContent>
-            
-            <TabsContent value="notes" className="mt-6">
-              <PatientNotesTab 
-                patient={patient}
-                onPatientUpdate={refetch}
-              />
-            </TabsContent>
           </Tabs>
           
           <div className="px-6 py-4 border-t">

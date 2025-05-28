@@ -30,6 +30,7 @@ export interface CalculationHistory {
 
 export interface CreateCalculationHistory {
   patient_id: string;
+  user_id: string;
   weight: number;
   height: number;
   age: number;
@@ -65,7 +66,7 @@ export const calculationHistoryService = {
       throw new Error(`Failed to save calculation: ${error.message}`);
     }
 
-    return result;
+    return result as CalculationHistory;
   },
 
   /**
@@ -112,7 +113,7 @@ export const calculationHistoryService = {
       throw new Error(`Failed to fetch calculation history: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []) as CalculationHistory[];
   },
 
   /**
@@ -131,7 +132,7 @@ export const calculationHistoryService = {
       throw new Error(`Failed to fetch latest calculation: ${error.message}`);
     }
 
-    return data || null;
+    return data as CalculationHistory || null;
   },
 
   /**

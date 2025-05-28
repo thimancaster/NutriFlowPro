@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -78,7 +77,7 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
     macros,
     tmbValue,
     objective,
-    onSaveCalculation: handleSaveCalculation
+    onSaveCalculation: () => Promise.resolve(handleSaveCalculation())
   });
 
   // Fix the tab change handler to accept string and convert to proper type

@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { User, Scale, TrendingUp, Calculator, Utensils, Calendar, FileText } from 'lucide-react';
 
 const PatientTabNavigation = () => {
   return (
