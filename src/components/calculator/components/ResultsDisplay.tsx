@@ -1,29 +1,42 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Calculator, 
-  TrendingUp, 
-  Target, 
-  Activity, 
-  Utensils, 
-  Save, 
-  Info 
-} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { CreateCalculationHistory } from '@/services/calculationHistoryService';
+import SaveCalculationDialog from '../SaveCalculationDialog';
+import { Calculator, TrendingUp, Target, Activity } from 'lucide-react';
 
 interface ResultsDisplayProps {
-  teeObject: any;
-  macros: any;
+  teeObject: {
+    get: number;
+    adjustment: number;
+    vet: number;
+  } | null;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg: number;
+  } | null;
   calorieSummary: any;
   objective: string;
-  formulaUsed?: string;
-  proteinPerKg?: number;
-  onSavePatient: () => void;
-  onGenerateMealPlan: () => void;
+  onSavePatient: () => Promise<void>;
+  onGenerateMealPlan: () => Promise<void>;
   isSaving: boolean;
+  
+  // Additional props for calculation history
+  patientId?: string;
+  weight?: number;
+  height?: number;
+  age?: number;
+  sex?: 'M' | 'F';
+  bodyProfile?: string;
+  activityLevel?: string;
+  tmb?: number;
+  formulaUsed?: string;
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
@@ -31,218 +44,173 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   macros,
   calorieSummary,
   objective,
-  formulaUsed,
-  proteinPerKg,
   onSavePatient,
   onGenerateMealPlan,
-  isSaving
+  isSaving,
+  patientId,
+  weight,
+  height,
+  age,
+  sex,
+  bodyProfile,
+  activityLevel,
+  tmb,
+  formulaUsed
 }) => {
+  const { user } = useAuth();
+
   if (!teeObject || !macros) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">Execute o cálculo para visualizar os resultados</p>
-      </div>
+      <Card>
+        <CardContent className="py-10 text-center">
+          <Calculator className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">Complete os cálculos para ver os resultados</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  const getObjectiveColor = (obj: string) => {
-    switch (obj) {
-      case 'emagrecimento': return 'bg-red-100 text-red-800';
-      case 'hipertrofia': return 'bg-green-100 text-green-800';
-      case 'manutenção': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Prepare calculation data for history saving
+  const calculationData: CreateCalculationHistory | undefined = patientId && weight && height && age && sex && bodyProfile && activityLevel && tmb && formulaUsed ? {
+    patient_id: patientId,
+    weight,
+    height,
+    age,
+    sex,
+    body_profile: bodyProfile,
+    activity_level: activityLevel,
+    objective,
+    tmb,
+    get: teeObject.get,
+    vet: teeObject.vet,
+    protein_g: macros.protein.grams,
+    carbs_g: macros.carbs.grams,
+    fat_g: macros.fat.grams,
+    protein_kcal: macros.protein.kcal,
+    carbs_kcal: macros.carbs.kcal,
+    fat_kcal: macros.fat.kcal,
+    formula_used: formulaUsed
+  } : undefined;
 
-  const getObjectiveLabel = (obj: string) => {
-    switch (obj) {
-      case 'emagrecimento': return 'Emagrecimento';
-      case 'hipertrofia': return 'Hipertrofia';
-      case 'manutenção': return 'Manutenção';
-      default: return obj;
+  const getObjectiveBadgeColor = (obj: string) => {
+    switch (obj.toLowerCase()) {
+      case 'emagrecimento':
+        return 'bg-red-100 text-red-800';
+      case 'hipertrofia':
+        return 'bg-green-100 text-green-800';
+      case 'manutenção':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header com fórmula utilizada */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <CardHeader className="pb-3">
+      {/* Header with objective */}
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-blue-800">
-              <Info className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
               Resultados do Cálculo Nutricional
             </CardTitle>
-            <Badge className={getObjectiveColor(objective)}>
-              {getObjectiveLabel(objective)}
+            <Badge className={getObjectiveBadgeColor(objective)}>
+              {objective}
             </Badge>
           </div>
-          {formulaUsed && (
-            <p className="text-sm text-blue-600 mt-2">
-              <strong>Fórmula utilizada:</strong> {formulaUsed}
-            </p>
-          )}
         </CardHeader>
       </Card>
 
-      {/* Resultados Energéticos */}
+      {/* Main Results */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              TMB
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {teeObject.tmb || teeObject.bmr} kcal
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Taxa Metabólica Basal
-            </p>
+          <CardContent className="p-6 text-center">
+            <TrendingUp className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-medium text-gray-500 mb-1">Taxa Metabólica Basal</h3>
+            <p className="text-3xl font-bold text-blue-600">{tmb}</p>
+            <p className="text-sm text-gray-500">kcal/dia</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              GET
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {teeObject.get} kcal
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Gasto Energético Total
-            </p>
+          <CardContent className="p-6 text-center">
+            <Activity className="h-8 w-8 text-green-600 mx-auto mb-2" />
+            <h3 className="font-medium text-gray-500 mb-1">Gasto Energético Total</h3>
+            <p className="text-3xl font-bold text-green-600">{teeObject.get}</p>
+            <p className="text-sm text-gray-500">kcal/dia</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              VET
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {teeObject.vet} kcal
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Valor Energético Total
-            </p>
+          <CardContent className="p-6 text-center">
+            <Target className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="font-medium text-gray-500 mb-1">Valor Energético Total</h3>
+            <p className="text-3xl font-bold text-purple-600">{teeObject.vet}</p>
+            <p className="text-sm text-gray-500">kcal/dia</p>
+            {teeObject.adjustment !== 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                {teeObject.adjustment > 0 ? '+' : ''}{teeObject.adjustment} kcal
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Distribuição de Macronutrientes */}
+      {/* Macronutrients */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="h-5 w-5" />
-            Distribuição de Macronutrientes
-          </CardTitle>
+          <CardTitle>Distribuição de Macronutrientes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Proteínas */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-red-600 mb-2">
-                {macros.protein?.grams || macros.protein}g
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="font-medium text-blue-800">Proteínas</h4>
+                <p className="text-2xl font-bold text-blue-600">{macros.protein.grams}g</p>
+                <p className="text-sm text-blue-600">{macros.protein.kcal} kcal ({macros.protein.percentage}%)</p>
+                <p className="text-xs text-gray-500 mt-1">{macros.proteinPerKg.toFixed(1)}g/kg</p>
               </div>
-              <div className="text-sm text-gray-600 mb-1">Proteínas</div>
-              <div className="text-xs text-gray-500">
-                {macros.protein?.kcal && `${macros.protein.kcal} kcal`}
-                {macros.protein?.percentage && ` (${macros.protein.percentage}%)`}
-              </div>
-              {proteinPerKg && (
-                <div className="text-xs text-blue-600 mt-1 font-medium">
-                  {proteinPerKg}g/kg de peso
-                </div>
-              )}
             </div>
 
-            {/* Carboidratos */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {macros.carbs?.grams || macros.carbs}g
-              </div>
-              <div className="text-sm text-gray-600 mb-1">Carboidratos</div>
-              <div className="text-xs text-gray-500">
-                {macros.carbs?.kcal && `${macros.carbs.kcal} kcal`}
-                {macros.carbs?.percentage && ` (${macros.carbs.percentage}%)`}
+              <div className="bg-green-50 rounded-lg p-4">
+                <h4 className="font-medium text-green-800">Carboidratos</h4>
+                <p className="text-2xl font-bold text-green-600">{macros.carbs.grams}g</p>
+                <p className="text-sm text-green-600">{macros.carbs.kcal} kcal ({macros.carbs.percentage}%)</p>
               </div>
             </div>
 
-            {/* Gorduras */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-600 mb-2">
-                {macros.fat?.grams || macros.fat}g
-              </div>
-              <div className="text-sm text-gray-600 mb-1">Gorduras</div>
-              <div className="text-xs text-gray-500">
-                {macros.fat?.kcal && `${macros.fat.kcal} kcal`}
-                {macros.fat?.percentage && ` (${macros.fat.percentage}%)`}
-              </div>
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Resumo Visual */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span>Total de Calorias:</span>
-              <span className="font-semibold">{teeObject.vet} kcal/dia</span>
-            </div>
-            
-            {/* Barra de Progresso dos Macros */}
-            <div className="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden">
-              <div 
-                className="bg-red-500 h-full flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${macros.protein?.percentage || 20}%` }}
-              >
-                P
-              </div>
-              <div 
-                className="bg-blue-500 h-full flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${macros.carbs?.percentage || 50}%` }}
-              >
-                C
-              </div>
-              <div 
-                className="bg-yellow-500 h-full flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${macros.fat?.percentage || 30}%` }}
-              >
-                G
+              <div className="bg-amber-50 rounded-lg p-4">
+                <h4 className="font-medium text-amber-800">Gorduras</h4>
+                <p className="text-2xl font-bold text-amber-600">{macros.fat.grams}g</p>
+                <p className="text-sm text-amber-600">{macros.fat.kcal} kcal ({macros.fat.percentage}%)</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Ações */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-3 justify-center">
+        {calculationData && (
+          <SaveCalculationDialog calculationData={calculationData} />
+        )}
+        
         <Button 
           onClick={onSavePatient}
           disabled={isSaving}
-          variant="outline"
-          className="flex-1"
+          className="flex items-center gap-2"
         >
-          <Save className="mr-2 h-4 w-4" />
-          {isSaving ? 'Salvando...' : 'Salvar Cálculo'}
+          {isSaving ? 'Salvando...' : 'Salvar Paciente'}
         </Button>
         
         <Button 
+          variant="outline"
           onClick={onGenerateMealPlan}
-          disabled={isSaving}
-          className="flex-1 bg-green-600 hover:bg-green-700"
+          className="flex items-center gap-2"
         >
-          <Utensils className="mr-2 h-4 w-4" />
           Gerar Plano Alimentar
         </Button>
       </div>

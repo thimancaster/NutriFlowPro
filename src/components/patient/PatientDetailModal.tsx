@@ -156,6 +156,40 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
                 onUpdateNotes={handleNotesUpdate}
               />
             </div>
+            
+            <TabsContent value="basic-info" className="mt-6">
+              <PatientBasicInfoTab 
+                patient={patient} 
+                onPatientUpdate={refetch}
+              />
+            </TabsContent>
+            
+            <TabsContent value="evaluations" className="mt-6">
+              <PatientEvaluationsTab patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="evolution" className="mt-6">
+              <PatientEvolutionTab patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="calculation-history" className="mt-6">
+              <PatientCalculationHistoryTab patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="meal-plans" className="mt-6">
+              <PatientMealPlansTab patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="appointments" className="mt-6">
+              <PatientAppointmentsTab patientId={patient.id} />
+            </TabsContent>
+            
+            <TabsContent value="notes" className="mt-6">
+              <PatientNotesTab 
+                patient={patient}
+                onPatientUpdate={refetch}
+              />
+            </TabsContent>
           </Tabs>
           
           <div className="px-6 py-4 border-t">

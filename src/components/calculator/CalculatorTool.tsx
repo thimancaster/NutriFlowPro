@@ -42,7 +42,8 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
     setActiveTab,
     setSex,
     setActivityLevel,
-    setObjective
+    setObjective,
+    formulaUsed
   } = useCalculatorState();
 
   // State management for patient data sync
@@ -170,6 +171,15 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
                 onSavePatient={handleSaveCalculation}
                 onGenerateMealPlan={handleGenerateMealPlan}
                 isSaving={isSaving}
+                patientId={patientData?.id}
+                weight={typeof weight === 'number' ? weight : undefined}
+                height={typeof height === 'number' ? height : undefined}
+                age={typeof age === 'number' ? age : undefined}
+                sex={sex}
+                bodyProfile={profile}
+                activityLevel={activityLevel}
+                tmb={tmbValue || undefined}
+                formulaUsed={formulaUsed}
               />
             )}
           </TabsContent>

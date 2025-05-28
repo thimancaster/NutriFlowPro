@@ -149,6 +149,95 @@ export type Database = {
           },
         ]
       }
+      calculation_history: {
+        Row: {
+          activity_level: string
+          age: number
+          body_profile: string
+          calculation_date: string
+          carbs_g: number
+          carbs_kcal: number
+          created_at: string
+          fat_g: number
+          fat_kcal: number
+          formula_used: string
+          get: number
+          height: number
+          id: string
+          notes: string | null
+          objective: string
+          patient_id: string
+          protein_g: number
+          protein_kcal: number
+          sex: string
+          tmb: number
+          updated_at: string
+          user_id: string
+          vet: number
+          weight: number
+        }
+        Insert: {
+          activity_level: string
+          age: number
+          body_profile: string
+          calculation_date?: string
+          carbs_g: number
+          carbs_kcal: number
+          created_at?: string
+          fat_g: number
+          fat_kcal: number
+          formula_used: string
+          get: number
+          height: number
+          id?: string
+          notes?: string | null
+          objective: string
+          patient_id: string
+          protein_g: number
+          protein_kcal: number
+          sex: string
+          tmb: number
+          updated_at?: string
+          user_id: string
+          vet: number
+          weight: number
+        }
+        Update: {
+          activity_level?: string
+          age?: number
+          body_profile?: string
+          calculation_date?: string
+          carbs_g?: number
+          carbs_kcal?: number
+          created_at?: string
+          fat_g?: number
+          fat_kcal?: number
+          formula_used?: string
+          get?: number
+          height?: number
+          id?: string
+          notes?: string | null
+          objective?: string
+          patient_id?: string
+          protein_g?: number
+          protein_kcal?: number
+          sex?: string
+          tmb?: number
+          updated_at?: string
+          user_id?: string
+          vet?: number
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_history_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calculations: {
         Row: {
           activity_level: string
@@ -502,6 +591,101 @@ export type Database = {
           protein_percentage?: number
         }
         Relationships: []
+      }
+      measurements: {
+        Row: {
+          abdominal_skinfold: number | null
+          arm_circumference: number | null
+          body_fat_percentage: number | null
+          cholesterol_hdl: number | null
+          cholesterol_ldl: number | null
+          cholesterol_total: number | null
+          created_at: string
+          glucose: number | null
+          height: number | null
+          hip_circumference: number | null
+          id: string
+          imc: number | null
+          measurement_date: string
+          muscle_mass_percentage: number | null
+          notes: string | null
+          patient_id: string
+          subscapular_skinfold: number | null
+          suprailiac_skinfold: number | null
+          thigh_circumference: number | null
+          triceps_skinfold: number | null
+          triglycerides: number | null
+          updated_at: string
+          user_id: string
+          waist_circumference: number | null
+          water_percentage: number | null
+          weight: number | null
+        }
+        Insert: {
+          abdominal_skinfold?: number | null
+          arm_circumference?: number | null
+          body_fat_percentage?: number | null
+          cholesterol_hdl?: number | null
+          cholesterol_ldl?: number | null
+          cholesterol_total?: number | null
+          created_at?: string
+          glucose?: number | null
+          height?: number | null
+          hip_circumference?: number | null
+          id?: string
+          imc?: number | null
+          measurement_date?: string
+          muscle_mass_percentage?: number | null
+          notes?: string | null
+          patient_id: string
+          subscapular_skinfold?: number | null
+          suprailiac_skinfold?: number | null
+          thigh_circumference?: number | null
+          triceps_skinfold?: number | null
+          triglycerides?: number | null
+          updated_at?: string
+          user_id: string
+          waist_circumference?: number | null
+          water_percentage?: number | null
+          weight?: number | null
+        }
+        Update: {
+          abdominal_skinfold?: number | null
+          arm_circumference?: number | null
+          body_fat_percentage?: number | null
+          cholesterol_hdl?: number | null
+          cholesterol_ldl?: number | null
+          cholesterol_total?: number | null
+          created_at?: string
+          glucose?: number | null
+          height?: number | null
+          hip_circumference?: number | null
+          id?: string
+          imc?: number | null
+          measurement_date?: string
+          muscle_mass_percentage?: number | null
+          notes?: string | null
+          patient_id?: string
+          subscapular_skinfold?: number | null
+          suprailiac_skinfold?: number | null
+          thigh_circumference?: number | null
+          triceps_skinfold?: number | null
+          triglycerides?: number | null
+          updated_at?: string
+          user_id?: string
+          waist_circumference?: number | null
+          water_percentage?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurements_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       patients: {
         Row: {
