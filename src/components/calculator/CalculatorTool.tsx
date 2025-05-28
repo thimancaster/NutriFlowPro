@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -86,6 +87,11 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
       setActiveTab(value);
     }
   };
+
+  // Fix the async handler
+  const handleSaveCalculationWrapper = async (): Promise<void> => {
+    await handleSaveCalculation();
+  };
   
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -167,7 +173,7 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
                 macros={macros}
                 calorieSummary={calorieSummary}
                 objective={objective}
-                onSavePatient={handleSaveCalculation}
+                onSavePatient={handleSaveCalculationWrapper}
                 onGenerateMealPlan={handleGenerateMealPlan}
                 isSaving={isSaving}
                 patientId={patientData?.id}
@@ -189,7 +195,7 @@ const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProf
         showResults={showResults}
         patientData={patientData}
         onViewProfile={onViewProfile}
-        onSaveCalculation={handleSaveCalculation}
+        onSaveCalculation={handleSaveCalculationWrapper}
         onGenerateMealPlan={handleGenerateMealPlan}
         onReset={handleReset}
         isSaving={isSaving}

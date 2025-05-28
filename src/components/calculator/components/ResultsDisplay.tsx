@@ -1,42 +1,58 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Save, Utensils, TrendingUp, TrendingDown, Minus, FileText } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useCalculationHistory } from '@/hooks/useCalculationHistory';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { CreateCalculationHistory } from '@/services/calculationHistoryService';
-import SaveCalculationDialog from '../SaveCalculationDialog';
-import { Calculator, TrendingUp, Target, Activity } from 'lucide-react';
+
+interface MacroValues {
+  grams: number;
+  kcal: number;
+  percentage: number;
+}
+
+interface CalculatedMacros {
+  protein: MacroValues;
+  carbs: MacroValues;
+  fat: MacroValues;
+  proteinPerKg: number;
+}
+
+interface TEEObject {
+  get: number;
+  vet: number;
+  adjustment: number;
+}
+
+interface CalorieSummary {
+  targetCalories: number;
+  actualCalories: number;
+  difference: number;
+  percentageDifference: number;
+}
 
 interface ResultsDisplayProps {
-  teeObject: {
-    get: number;
-    adjustment: number;
-    vet: number;
-  } | null;
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number };
-    carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg: number;
-  } | null;
-  calorieSummary: any;
+  teeObject: TEEObject;
+  macros: CalculatedMacros;
+  calorieSummary: CalorieSummary;
   objective: string;
   onSavePatient: () => Promise<void>;
-  onGenerateMealPlan: () => Promise<void>;
+  onGenerateMealPlan: () => void;
   isSaving: boolean;
-  
-  // Additional props for calculation history
   patientId?: string;
   weight?: number;
   height?: number;
   age?: number;
-  sex?: 'M' | 'F';
-  bodyProfile?: string;
-  activityLevel?: string;
+  sex: 'M' | 'F';
+  bodyProfile: string;
+  activityLevel: string;
   tmb?: number;
-  formulaUsed?: string;
+  formulaUsed: string;
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
@@ -57,40 +73,61 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   tmb,
   formulaUsed
 }) => {
+  const { toast } = useToast();
   const { user } = useAuth();
+  const { saveCalculation } = useCalculationHistory();
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [notes, setNotes] = useState('');
 
-  if (!teeObject || !macros) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center">
-          <Calculator className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Complete os cálculos para ver os resultados</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleSaveCalculation = async () => {
+    if (!patientId || !user?.id || !weight || !height || !age || !tmb) {
+      toast({
+        title: 'Dados incompletos',
+        description: 'Verifique se todos os dados necessários estão preenchidos.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-  // Prepare calculation data for history saving
-  const calculationData: CreateCalculationHistory | undefined = patientId && weight && height && age && sex && bodyProfile && activityLevel && tmb && formulaUsed ? {
-    patient_id: patientId,
-    weight,
-    height,
-    age,
-    sex,
-    body_profile: bodyProfile,
-    activity_level: activityLevel,
-    objective,
-    tmb,
-    get: teeObject.get,
-    vet: teeObject.vet,
-    protein_g: macros.protein.grams,
-    carbs_g: macros.carbs.grams,
-    fat_g: macros.fat.grams,
-    protein_kcal: macros.protein.kcal,
-    carbs_kcal: macros.carbs.kcal,
-    fat_kcal: macros.fat.kcal,
-    formula_used: formulaUsed
-  } : undefined;
+    try {
+      await saveCalculation({
+        patient_id: patientId,
+        user_id: user.id,
+        weight,
+        height,
+        age,
+        sex,
+        body_profile: bodyProfile,
+        activity_level: activityLevel,
+        objective,
+        tmb,
+        get: teeObject.get,
+        vet: teeObject.vet,
+        protein_g: macros.protein.grams,
+        carbs_g: macros.carbs.grams,
+        fat_g: macros.fat.grams,
+        protein_kcal: macros.protein.kcal,
+        carbs_kcal: macros.carbs.kcal,
+        fat_kcal: macros.fat.kcal,
+        formula_used: formulaUsed,
+        notes
+      });
+      
+      setShowSaveDialog(false);
+      setNotes('');
+    } catch (error) {
+      console.error('Erro ao salvar cálculo:', error);
+    }
+  };
+
+  const getCalorieDifferenceIcon = () => {
+    if (calorieSummary.difference > 0) {
+      return <TrendingUp className="h-4 w-4 text-red-500" />;
+    } else if (calorieSummary.difference < 0) {
+      return <TrendingDown className="h-4 w-4 text-green-500" />;
+    }
+    return <Minus className="h-4 w-4 text-gray-500" />;
+  };
 
   const getObjectiveBadgeColor = (obj: string) => {
     switch (obj.toLowerCase()) {
@@ -107,111 +144,130 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header with objective */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Resultados do Cálculo Nutricional
-            </CardTitle>
-            <Badge className={getObjectiveBadgeColor(objective)}>
-              {objective}
-            </Badge>
-          </div>
-        </CardHeader>
-      </Card>
+      {/* Header com objetivo */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold">Resultados da Calculadora</h3>
+        <Badge className={getObjectiveBadgeColor(objective)}>
+          {objective}
+        </Badge>
+      </div>
 
-      {/* Main Results */}
+      {/* Cards de resultados principais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardContent className="p-6 text-center">
-            <TrendingUp className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-            <h3 className="font-medium text-gray-500 mb-1">Taxa Metabólica Basal</h3>
-            <p className="text-3xl font-bold text-blue-600">{tmb}</p>
-            <p className="text-sm text-gray-500">kcal/dia</p>
+          <CardContent className="p-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-500">GET (Gasto Energético Total)</p>
+              <p className="text-2xl font-bold text-blue-600">{teeObject.get}</p>
+              <p className="text-xs text-gray-400">kcal/dia</p>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6 text-center">
-            <Activity className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <h3 className="font-medium text-gray-500 mb-1">Gasto Energético Total</h3>
-            <p className="text-3xl font-bold text-green-600">{teeObject.get}</p>
-            <p className="text-sm text-gray-500">kcal/dia</p>
+          <CardContent className="p-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-500">VET (Valor Energético Total)</p>
+              <p className="text-2xl font-bold text-green-600">{teeObject.vet}</p>
+              <p className="text-xs text-gray-400">kcal/dia</p>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6 text-center">
-            <Target className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-            <h3 className="font-medium text-gray-500 mb-1">Valor Energético Total</h3>
-            <p className="text-3xl font-bold text-purple-600">{teeObject.vet}</p>
-            <p className="text-sm text-gray-500">kcal/dia</p>
-            {teeObject.adjustment !== 0 && (
-              <p className="text-xs text-gray-500 mt-1">
-                {teeObject.adjustment > 0 ? '+' : ''}{teeObject.adjustment} kcal
-              </p>
-            )}
+          <CardContent className="p-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-sm text-gray-500">Diferença Calórica</p>
+                {getCalorieDifferenceIcon()}
+              </div>
+              <p className="text-2xl font-bold">{Math.abs(calorieSummary.difference)}</p>
+              <p className="text-xs text-gray-400">kcal</p>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Macronutrients */}
+      {/* Distribuição de macronutrientes */}
       <Card>
         <CardHeader>
           <CardTitle>Distribuição de Macronutrientes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-blue-800">Proteínas</h4>
-                <p className="text-2xl font-bold text-blue-600">{macros.protein.grams}g</p>
-                <p className="text-sm text-blue-600">{macros.protein.kcal} kcal ({macros.protein.percentage}%)</p>
-                <p className="text-xs text-gray-500 mt-1">{macros.proteinPerKg.toFixed(1)}g/kg</p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-amber-50 rounded-lg">
+              <p className="text-sm text-gray-600">Proteínas</p>
+              <p className="text-xl font-bold text-amber-600">{macros.protein.grams}g</p>
+              <p className="text-sm text-gray-500">{macros.protein.kcal} kcal</p>
+              <p className="text-xs text-gray-400">{macros.protein.percentage}%</p>
+              <p className="text-xs text-gray-400">{macros.proteinPerKg}g/kg</p>
             </div>
 
-            <div className="text-center">
-              <div className="bg-green-50 rounded-lg p-4">
-                <h4 className="font-medium text-green-800">Carboidratos</h4>
-                <p className="text-2xl font-bold text-green-600">{macros.carbs.grams}g</p>
-                <p className="text-sm text-green-600">{macros.carbs.kcal} kcal ({macros.carbs.percentage}%)</p>
-              </div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-gray-600">Carboidratos</p>
+              <p className="text-xl font-bold text-blue-600">{macros.carbs.grams}g</p>
+              <p className="text-sm text-gray-500">{macros.carbs.kcal} kcal</p>
+              <p className="text-xs text-gray-400">{macros.carbs.percentage}%</p>
             </div>
 
-            <div className="text-center">
-              <div className="bg-amber-50 rounded-lg p-4">
-                <h4 className="font-medium text-amber-800">Gorduras</h4>
-                <p className="text-2xl font-bold text-amber-600">{macros.fat.grams}g</p>
-                <p className="text-sm text-amber-600">{macros.fat.kcal} kcal ({macros.fat.percentage}%)</p>
-              </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <p className="text-sm text-gray-600">Gorduras</p>
+              <p className="text-xl font-bold text-purple-600">{macros.fat.grams}g</p>
+              <p className="text-sm text-gray-500">{macros.fat.kcal} kcal</p>
+              <p className="text-xs text-gray-400">{macros.fat.percentage}%</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 justify-center">
-        {calculationData && (
-          <SaveCalculationDialog calculationData={calculationData} />
-        )}
-        
-        <Button 
-          onClick={onSavePatient}
-          disabled={isSaving}
-          className="flex items-center gap-2"
-        >
+      {/* Botões de ação */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button onClick={onSavePatient} disabled={isSaving} className="flex-1">
+          <Save className="h-4 w-4 mr-2" />
           {isSaving ? 'Salvando...' : 'Salvar Paciente'}
         </Button>
-        
-        <Button 
-          variant="outline"
-          onClick={onGenerateMealPlan}
-          className="flex items-center gap-2"
-        >
-          Gerar Plano Alimentar
+
+        {patientId && (
+          <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1">
+                <FileText className="h-4 w-4 mr-2" />
+                Salvar no Histórico
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Salvar Cálculo no Histórico</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="notes" className="text-sm font-medium">
+                    Observações (opcional)
+                  </label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Adicione observações sobre este cálculo..."
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSaveCalculation}>
+                    Salvar
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        <Button onClick={onGenerateMealPlan} variant="outline" className="flex-1">
+          <Utensils className="h-4 w-4 mr-2" />
+          Gerar Cardápio
         </Button>
       </div>
     </div>

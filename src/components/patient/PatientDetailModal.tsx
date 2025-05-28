@@ -20,7 +20,8 @@ import {
   PatientEvolutionTab,
   PatientMealPlansTab,
   PatientNotesTab,
-  PatientCalculationHistoryTab
+  PatientCalculationHistoryTab,
+  PatientComparisonTab
 } from './tabs';
 import { Patient } from '@/types';
 import { usePatientModalActions } from '@/hooks/patient/usePatientModalActions';
@@ -130,7 +131,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl p-0 h-[85vh] flex flex-col">
+        <DialogContent className="max-w-5xl p-0 h-[85vh] flex flex-col">
           <DialogHeader className="px-6 py-4 border-b">
             <div className="flex justify-between items-start">
               <PatientModalHeader 
@@ -177,6 +178,10 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
               
               <TabsContent value="calculation-history" className="mt-0 h-full">
                 <PatientCalculationHistoryTab patientId={patient.id} />
+              </TabsContent>
+              
+              <TabsContent value="comparison" className="mt-0 h-full">
+                <PatientComparisonTab patientId={patient.id} />
               </TabsContent>
               
               <TabsContent value="meal-plans" className="mt-0 h-full">
