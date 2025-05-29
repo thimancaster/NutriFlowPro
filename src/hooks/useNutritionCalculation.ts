@@ -46,7 +46,7 @@ export const useNutritionCalculation = () => {
         return null;
       }
 
-      // Realizar cálculos
+      // Realizar cálculos usando a função modular consolidada
       const calculationResults = calculateCompleteNutrition(
         weight,
         height,

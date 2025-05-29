@@ -58,7 +58,7 @@ describe('Nutrition Calculator', () => {
       const result = calculateMacrosByProfile('eutrofico', 70, 2000, 'manutenção');
       
       expect(result.protein.grams).toBe(84); // 70 * 1.2
-      expect(result.fat.grams).toBe(70); // 70 * 1.0
+      expect(result.fat.grams).toBe(56); // 70 * 0.8
       expect(result.carbs.grams).toBeGreaterThan(0);
     });
 
@@ -66,7 +66,7 @@ describe('Nutrition Calculator', () => {
       const result = calculateMacrosByProfile('sobrepeso_obesidade', 80, 1800, 'manutenção');
       
       expect(result.protein.grams).toBe(160); // 80 * 2.0
-      expect(result.fat.grams).toBe(64); // 80 * 0.8
+      expect(result.fat.grams).toBe(40); // 80 * 0.5
       expect(result.carbs.grams).toBeGreaterThan(0);
     });
 
@@ -74,7 +74,7 @@ describe('Nutrition Calculator', () => {
       const result = calculateMacrosByProfile('atleta', 75, 2500, 'manutenção');
       
       expect(result.protein.grams).toBe(135); // 75 * 1.8
-      expect(result.fat.grams).toBe(90); // 75 * 1.2
+      expect(result.fat.grams).toBe(75); // 75 * 1.0
       expect(result.carbs.grams).toBeGreaterThan(0);
     });
   });

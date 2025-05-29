@@ -1,5 +1,5 @@
 
-import { calculateMacrosByProfile } from '../utils/macronutrientCalculations';
+import { calculateMacrosByProfile } from '../utils/nutritionCalculations';
 import { Profile } from '../types/consultation';
 
 describe('Macronutrient Calculations', () => {
@@ -11,7 +11,7 @@ describe('Macronutrient Calculations', () => {
 
   testCases.forEach(({ profile, weight, vet }) => {
     it(`should calculate macros correctly for ${profile} profile`, () => {
-      const result = calculateMacrosByProfile(profile, weight, vet);
+      const result = calculateMacrosByProfile(profile, weight, vet, 'manutenção');
       
       expect(result).toHaveProperty('protein');
       expect(result).toHaveProperty('carbs');
@@ -29,8 +29,8 @@ describe('Macronutrient Calculations', () => {
   });
 
   it('should throw error for invalid inputs', () => {
-    expect(() => calculateMacrosByProfile('eutrofico', 0, 2000)).toThrow();
-    expect(() => calculateMacrosByProfile('eutrofico', 70, 0)).toThrow();
-    expect(() => calculateMacrosByProfile('eutrofico', -10, 2000)).toThrow();
+    expect(() => calculateMacrosByProfile('eutrofico', 0, 2000, 'manutenção')).toThrow();
+    expect(() => calculateMacrosByProfile('eutrofico', 70, 0, 'manutenção')).toThrow();
+    expect(() => calculateMacrosByProfile('eutrofico', -10, 2000, 'manutenção')).toThrow();
   });
 });
