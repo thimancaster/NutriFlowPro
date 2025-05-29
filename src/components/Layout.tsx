@@ -15,7 +15,7 @@ import {
 import { LogOut, Menu, User, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Import our components
+// Import our new components
 import { BreadcrumbNav } from "@/components/ui/breadcrumb-nav";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ThemeProvider } from "@/hooks/theme/use-theme-provider";
@@ -23,7 +23,7 @@ import { TourGuide } from "@/components/tour-guide/TourGuide";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth(); // Changed from signOut to logout
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -44,16 +44,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const handleSignOut = async () => {
-    await logout();
+    await logout(); // Changed from signOut to logout
   };
 
   return (
     <ThemeProvider>
       <ToastProvider>
-        <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <div className="flex flex-col min-h-screen">
+          {/* Add our tour guide component */}
           <TourGuide />
           
-          <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          {/* Keep existing navbar, but add theme toggle */}
+          <header className="border-b">
             <div className="container mx-auto px-4 flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link to="/dashboard" className="flex items-center">
@@ -81,9 +83,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </Link>
                   ))}
                 </nav>
-                
-                {/* Theme Toggle */}
-                <ThemeToggle />
                 
                 {/* User Menu */}
                 {user && (
@@ -132,12 +131,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Menu className="h-6 w-6" />
                   )}
                 </Button>
+                
+                {/* Add theme toggle button */}
+                <ThemeToggle />
               </div>
             </div>
             
             {/* Mobile Navigation */}
             {mobileMenuOpen && (
-              <div className="md:hidden py-2 px-4 border-t border-border bg-background">
+              <div className="md:hidden py-2 px-4 border-t">
                 <nav className="flex flex-col space-y-2">
                   {navigation.map((item) => (
                     <Link
@@ -160,14 +162,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             )}
           </header>
           
-          <main className="flex-1 bg-background">
+          <main className="flex-1">
             <div className="container mx-auto px-4 py-6">
+              {/* Add breadcrumb navigation */}
               <BreadcrumbNav />
+              
+              {/* Render the main content */}
               {children}
             </div>
           </main>
           
-          <footer className="border-t border-border py-4 text-center text-sm text-muted-foreground bg-background">
+          <footer className="border-t py-4 text-center text-sm text-muted-foreground">
             <div className="container mx-auto px-4">
               <p>© {new Date().getFullYear()} NutriFlow Pro. Todos os direitos reservados.</p>
             </div>

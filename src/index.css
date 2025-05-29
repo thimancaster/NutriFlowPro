@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -17,7 +17,7 @@
     --primary: 142 70% 45%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 210 20% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
@@ -44,45 +44,6 @@
     --sidebar-border: 142 60% 40%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 142 70% 45%;
-    --primary-foreground: 222.2 84% 4.9%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142 70% 45%;
-
-    --sidebar-background: 217.2 32.6% 17.5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 142 70% 45%;
-    --sidebar-primary-foreground: 222.2 84% 4.9%;
-    --sidebar-accent: 142 60% 50%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 25%;
-    --sidebar-ring: 142 70% 45%;
-  }
 }
 
 @layer base {
@@ -107,11 +68,11 @@
 
 @layer components {
   .nutri-card {
-    @apply rounded-xl shadow-md bg-card text-card-foreground p-6 transition-all duration-300 hover:shadow-lg;
+    @apply rounded-xl shadow-md bg-white p-6 transition-all duration-300 hover:shadow-lg;
   }
   
   .nutri-input {
-    @apply rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary;
+    @apply rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-nutri-green;
   }
 
   /* Enhanced button styles with animations */
@@ -131,17 +92,17 @@
   }
 
   .nutri-button-primary {
-    @apply nutri-button bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply nutri-button bg-nutri-green text-white hover:bg-nutri-green-dark;
   }
   
   .nutri-button-secondary {
-    @apply nutri-button bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark;
   }
 
   /* Avatar enhancements */
   .avatar-enhanced {
     @apply transition-all duration-300 hover:scale-105 hover:shadow-md
-           hover:ring-2 hover:ring-primary/20;
+           hover:ring-2 hover:ring-white hover:ring-opacity-70;
   }
   
   /* Animation utilities */
@@ -170,11 +131,11 @@
 @layer utilities {
   /* Interactive text link animation */
   .text-link {
-    @apply relative inline-block text-primary;
+    @apply relative inline-block text-nutri-blue;
   }
   
   .text-link::after {
-    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary 
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-nutri-blue 
            transition-all duration-300 ease-out;
   }
   
@@ -192,7 +153,11 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r;
   }
   
-  .text-gradient-primary {
-    @apply text-gradient from-primary to-primary/70;
+  .text-gradient-blue {
+    @apply text-gradient from-nutri-blue to-nutri-blue-light;
+  }
+  
+  .text-gradient-green {
+    @apply text-gradient from-nutri-green to-nutri-green-light;
   }
 }
