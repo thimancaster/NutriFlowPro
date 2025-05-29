@@ -59,7 +59,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="container mx-auto px-4 flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link to="/dashboard" className="flex items-center">
-                  <span className="text-xl font-bold text-primary">NutriFlow</span>
+                  <span className="text-xl font-bold text-nutri-green">Nutri</span>
+                  <span className="text-xl font-bold text-nutri-blue">Flow</span>
                   <span className="text-sm font-semibold ml-1 text-muted-foreground">Pro</span>
                 </Link>
               </div>
