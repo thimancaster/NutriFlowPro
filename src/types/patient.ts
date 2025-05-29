@@ -1,4 +1,3 @@
-
 import { User } from "./auth";
 
 export interface AddressDetails {
@@ -19,11 +18,26 @@ export interface PatientMeasurements {
   imc?: number;
 }
 
+export interface Goal {
+  id: string;
+  name: string;
+  type: 'weight' | 'body_fat' | 'muscle_mass' | 'custom';
+  target_value: number;
+  current_value?: number;
+  unit: string;
+  target_date?: string;
+  status: 'active' | 'achieved' | 'paused';
+  priority: 'low' | 'medium' | 'high';
+  notes?: string;
+  created_at: string;
+}
+
 export interface PatientGoals {
   objective?: string;
   profile?: string;
   targetWeight?: number;
   initialWeight?: number;
+  customGoals?: Goal[];
 }
 
 export interface Patient {
