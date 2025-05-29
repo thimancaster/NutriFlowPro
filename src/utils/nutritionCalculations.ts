@@ -31,11 +31,11 @@ export const calculateTMB = (weight: number, height: number, age: number, sex: '
       break;
       
     case 'sobrepeso_obesidade':
-      // Mifflin-St Jeor para sobrepeso/obesidade
+      // Harris-Benedict clássica para sobrepeso/obesidade conforme planilha original
       if (sex === 'M') {
-        tmb = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+        tmb = 66.5 + (13.75 * weight) + (5.003 * height) - (6.755 * age);
       } else {
-        tmb = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+        tmb = 655.1 + (9.563 * weight) + (1.850 * height) - (4.676 * age);
       }
       break;
       
