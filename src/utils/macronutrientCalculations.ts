@@ -14,7 +14,7 @@ interface CalculatedMacros {
   proteinPerKg: number;
 }
 
-// Calculate macronutrients based on profile and weight
+// Calculate macronutrients based on profile and weight - CORRIGIDO CONFORME PLANILHA
 export const calculateMacrosByProfile = (
   profile: Profile,
   weight: number,
@@ -24,14 +24,14 @@ export const calculateMacrosByProfile = (
     throw new Error('Invalid input for macronutrient calculation');
   }
 
-  // Get appropriate protein ratio based on profile
+  // Get appropriate protein ratio based on profile - VALORES CORRIGIDOS
   const proteinPerKg = PROTEIN_RATIOS[profile];
 
   // Calculate protein grams
   const proteinGrams = Math.round(weight * proteinPerKg);
   const proteinKcal = proteinGrams * CALORIE_VALUES.protein;
 
-  // Get appropriate lipid ratio based on profile
+  // Get appropriate lipid ratio based on profile - VALORES CORRIGIDOS
   const fatPerKg = LIPID_RATIOS[profile];
 
   // Calculate fat grams

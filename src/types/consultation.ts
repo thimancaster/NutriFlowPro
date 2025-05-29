@@ -17,7 +17,7 @@ export type ConsultationType = 'primeira_consulta' | 'retorno';
 // Consultation status
 export type ConsultationStatus = 'em_andamento' | 'completo';
 
-// Activity factors for TDEE calculation
+// Activity factors for TDEE calculation - CORRIGIDOS CONFORME PLANILHA
 export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   sedentario: 1.2,
   leve: 1.375,
@@ -26,31 +26,32 @@ export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   muito_intenso: 1.9
 };
 
-// Objective adjustment factors
+// Objective adjustment factors - CORRIGIDOS CONFORME PLANILHA
 export const OBJECTIVE_FACTORS: Record<Objective, number> = {
-  emagrecimento: 0.8,
-  manutenção: 1.0,
-  hipertrofia: 1.15,
-  personalizado: 1.0
+  emagrecimento: 0.8,    // 20% déficit
+  manutenção: 1.0,       // Sem ajuste
+  hipertrofia: 1.15,     // 15% superávit
+  personalizado: 1.0     // Sem ajuste padrão
 };
 
 // Nutrition constants - CORRIGIDOS CONFORME PLANILHA ORIGINAL
 export const PROTEIN_RATIOS: Record<Profile, number> = {
-  eutrofico: 1.4,
-  sobrepeso_obesidade: 1.8,
-  atleta: 2.0
+  eutrofico: 1.2,              // g/kg conforme planilha
+  sobrepeso_obesidade: 2.0,    // g/kg conforme planilha
+  atleta: 1.8                  // g/kg conforme planilha
 };
 
 export const LIPID_RATIOS: Record<Profile, number> = {
-  eutrofico: 0.8,
-  sobrepeso_obesidade: 0.5,
-  atleta: 1.0
+  eutrofico: 0.8,              // g/kg conforme planilha
+  sobrepeso_obesidade: 0.5,    // g/kg conforme planilha
+  atleta: 1.0                  // g/kg conforme planilha
 };
 
+// Valores calóricos por grama de macronutriente - PADRÃO INTERNACIONAL
 export const CALORIE_VALUES = {
-  protein: 4,
-  carbs: 4,
-  fat: 9
+  protein: 4,  // kcal/g
+  carbs: 4,    // kcal/g
+  fat: 9       // kcal/g
 };
 
 // Form state interface

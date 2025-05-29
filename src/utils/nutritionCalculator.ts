@@ -1,3 +1,4 @@
+
 import { 
   Profile, 
   ActivityLevel, 
@@ -5,7 +6,8 @@ import {
   ACTIVITY_FACTORS, 
   OBJECTIVE_FACTORS, 
   PROTEIN_RATIOS, 
-  LIPID_RATIOS 
+  LIPID_RATIOS,
+  CALORIE_VALUES
 } from '@/types/consultation';
 
 /**
@@ -23,7 +25,7 @@ export const calculateBMR = (weight: number, height: number, age: number, sex: '
 };
 
 /**
- * Calculate Total Daily Energy Expenditure (TDEE)
+ * Calculate Total Daily Energy Expenditure (TDEE) - USANDO CONSTANTES CORRIGIDAS
  */
 export const calculateTDEE = (bmr: number, activityLevel: ActivityLevel): number => {
   const activityFactor = ACTIVITY_FACTORS[activityLevel];
@@ -31,7 +33,7 @@ export const calculateTDEE = (bmr: number, activityLevel: ActivityLevel): number
 };
 
 /**
- * Apply adjustment based on nutritional objective
+ * Apply adjustment based on nutritional objective - USANDO CONSTANTES CORRIGIDAS
  */
 export const applyObjectiveAdjustment = (tdee: number, objective: Objective, customVET?: number): number => {
   // If a custom VET is provided, use that instead
@@ -45,28 +47,28 @@ export const applyObjectiveAdjustment = (tdee: number, objective: Objective, cus
 };
 
 /**
- * Calculate macronutrient distribution based on profile and adjusted TDEE
+ * Calculate macronutrient distribution based on profile and adjusted TDEE - USANDO CONSTANTES CORRIGIDAS
  */
 export const calculateMacros = (
   weight: number, 
   adjustedTDEE: number, 
   profile: Profile
 ): { protein: number; carbs: number; fat: number } => {
-  // Get protein ratio based on profile
+  // Get protein ratio based on profile - VALORES CORRIGIDOS
   const proteinRatio = PROTEIN_RATIOS[profile];
   const protein = weight * proteinRatio;
   
-  // Get fat ratio based on profile
+  // Get fat ratio based on profile - VALORES CORRIGIDOS
   const fatRatio = LIPID_RATIOS[profile];
   const fat = weight * fatRatio;
   
-  // Calculate protein and fat calories
-  const proteinCals = protein * 4; // 4 calories per gram
-  const fatCals = fat * 9; // 9 calories per gram
+  // Calculate protein and fat calories - USANDO CONSTANTES CORRETAS
+  const proteinCals = protein * CALORIE_VALUES.protein;
+  const fatCals = fat * CALORIE_VALUES.fat;
   
   // Calculate remaining calories for carbs
   const remainingCals = adjustedTDEE - proteinCals - fatCals;
-  const carbs = Math.max(0, remainingCals / 4); // 4 calories per gram
+  const carbs = Math.max(0, remainingCals / CALORIE_VALUES.carbs);
   
   return {
     protein: Math.round(protein),
@@ -76,7 +78,7 @@ export const calculateMacros = (
 };
 
 /**
- * Full nutritional calculation workflow
+ * Full nutritional calculation workflow - USANDO TODAS AS CONSTANTES CORRIGIDAS
  */
 export const calculateNutrition = (
   weight: number,
