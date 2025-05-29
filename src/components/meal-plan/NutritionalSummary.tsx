@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { NutritionalTargets } from '@/types/mealPlan';
 
 interface NutritionalSummaryProps {
@@ -20,11 +20,11 @@ const NutritionalSummary: React.FC<NutritionalSummaryProps> = ({ targets, curren
     return Math.min((current / target) * 100, 100);
   };
 
-  const getStatusColor = (current: number, target: number) => {
-    const percentage = (current / target) * 100;
-    if (percentage < 80) return 'text-orange-600';
-    if (percentage > 120) return 'text-red-600';
-    return 'text-green-600';
+  const getProgressColor = (percentage: number) => {
+    if (percentage < 80) return 'bg-red-500';
+    if (percentage < 95) return 'bg-yellow-500';
+    if (percentage <= 110) return 'bg-green-500';
+    return 'bg-orange-500';
   };
 
   return (
@@ -32,118 +32,70 @@ const NutritionalSummary: React.FC<NutritionalSummaryProps> = ({ targets, curren
       <CardHeader>
         <CardTitle>Resumo Nutricional</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Calories */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Calorias</span>
-              {current && (
-                <Badge variant="outline" className={getStatusColor(current.calories, targets.calories)}>
-                  {((current.calories / targets.calories) * 100).toFixed(0)}%
-                </Badge>
-              )}
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">
+              {current ? Math.round(current.calories) : 0}
             </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.calories)} kcal</div>
+            <div className="text-xs text-gray-500 mt-1">Calorias</div>
             {current && (
-              <Progress
-                value={calculatePercentage(current.calories, targets.calories)}
-                className="h-2"
+              <Progress 
+                value={calculatePercentage(current.calories, targets.calories)} 
+                className="mt-2 h-2"
               />
             )}
-            <div className="text-center">
-              <div className="text-lg font-semibold">
-                {current ? current.calories.toFixed(0) : '0'} / {targets.calories.toFixed(0)}
-              </div>
-              <div className="text-xs text-gray-500">kcal</div>
-            </div>
           </div>
-
-          {/* Protein */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Proteínas</span>
-              {current && (
-                <Badge variant="outline" className={getStatusColor(current.protein, targets.protein)}>
-                  {((current.protein / targets.protein) * 100).toFixed(0)}%
-                </Badge>
-              )}
+          
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-red-600">
+              {current ? Math.round(current.protein) : 0}
             </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.protein)}g</div>
+            <div className="text-xs text-gray-500 mt-1">Proteínas</div>
             {current && (
-              <Progress
-                value={calculatePercentage(current.protein, targets.protein)}
-                className="h-2"
+              <Progress 
+                value={calculatePercentage(current.protein, targets.protein)} 
+                className="mt-2 h-2"
               />
             )}
-            <div className="text-center">
-              <div className="text-lg font-semibold">
-                {current ? current.protein.toFixed(0) : '0'} / {targets.protein.toFixed(0)}
-              </div>
-              <div className="text-xs text-gray-500">g</div>
-            </div>
           </div>
-
-          {/* Carbs */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Carboidratos</span>
-              {current && (
-                <Badge variant="outline" className={getStatusColor(current.carbs, targets.carbs)}>
-                  {((current.carbs / targets.carbs) * 100).toFixed(0)}%
-                </Badge>
-              )}
+          
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-yellow-600">
+              {current ? Math.round(current.carbs) : 0}
             </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.carbs)}g</div>
+            <div className="text-xs text-gray-500 mt-1">Carboidratos</div>
             {current && (
-              <Progress
-                value={calculatePercentage(current.carbs, targets.carbs)}
-                className="h-2"
+              <Progress 
+                value={calculatePercentage(current.carbs, targets.carbs)} 
+                className="mt-2 h-2"
               />
             )}
-            <div className="text-center">
-              <div className="text-lg font-semibold">
-                {current ? current.carbs.toFixed(0) : '0'} / {targets.carbs.toFixed(0)}
-              </div>
-              <div className="text-xs text-gray-500">g</div>
-            </div>
           </div>
-
-          {/* Fats */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Gorduras</span>
-              {current && (
-                <Badge variant="outline" className={getStatusColor(current.fats, targets.fats)}>
-                  {((current.fats / targets.fats) * 100).toFixed(0)}%
-                </Badge>
-              )}
+          
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-green-600">
+              {current ? Math.round(current.fats) : 0}
             </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.fats)}g</div>
+            <div className="text-xs text-gray-500 mt-1">Gorduras</div>
             {current && (
-              <Progress
-                value={calculatePercentage(current.fats, targets.fats)}
-                className="h-2"
+              <Progress 
+                value={calculatePercentage(current.fats, targets.fats)} 
+                className="mt-2 h-2"
               />
             )}
-            <div className="text-center">
-              <div className="text-lg font-semibold">
-                {current ? current.fats.toFixed(0) : '0'} / {targets.fats.toFixed(0)}
-              </div>
-              <div className="text-xs text-gray-500">g</div>
-            </div>
           </div>
         </div>
-
+        
         {current && (
-          <div className="mt-4 pt-4 border-t">
-            <div className="text-sm text-gray-600 text-center">
-              {current.calories < targets.calories * 0.8 && (
-                <p className="text-orange-600">⚠️ Calorias abaixo do recomendado</p>
-              )}
-              {current.calories > targets.calories * 1.2 && (
-                <p className="text-red-600">⚠️ Calorias acima do recomendado</p>
-              )}
-              {current.calories >= targets.calories * 0.8 && current.calories <= targets.calories * 1.2 && (
-                <p className="text-green-600">✅ Valores dentro da meta nutricional</p>
-              )}
-            </div>
+          <div className="flex justify-center gap-2 mt-4">
+            <Badge variant="outline">
+              {Math.round(calculatePercentage(current.calories, targets.calories))}% das metas
+            </Badge>
           </div>
         )}
       </CardContent>

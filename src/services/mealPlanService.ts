@@ -6,7 +6,8 @@ import {
   MealPlanFilters, 
   MealPlanResponse, 
   MealPlanListResponse,
-  MacroTargets 
+  MacroTargets,
+  DetailedMealPlan 
 } from '@/types/mealPlan';
 
 export class MealPlanService {
@@ -75,7 +76,7 @@ export class MealPlanService {
 
       return { 
         success: true, 
-        data: transformedData,
+        data: transformedData as MealPlan[],
         total: transformedData.length 
       };
     } catch (error: any) {
@@ -109,11 +110,32 @@ export class MealPlanService {
         meals: this.groupItemsByMealType(data.meal_plan_items || [])
       };
 
-      return { success: true, data: transformedData };
+      return { success: true, data: transformedData as MealPlan };
     } catch (error: any) {
       console.error('Error in getMealPlan:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * Get meal plan by ID (legacy method)
+   */
+  static async getMealPlanById(id: string, userId: string): Promise<MealPlanResponse> {
+    return this.getMealPlan(id);
+  }
+
+  /**
+   * Get patient meal plans (legacy method)
+   */
+  static async getPatientMealPlans(patientId: string, userId: string): Promise<MealPlanListResponse> {
+    return this.getMealPlans(userId, { patient_id: patientId });
+  }
+
+  /**
+   * Save meal plan (legacy method)
+   */
+  static async saveMealPlan(mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<MealPlanResponse> {
+    return this.createMealPlan(mealPlanData);
   }
 
   /**
@@ -164,7 +186,7 @@ export class MealPlanService {
         }
       }
 
-      return { success: true, data: { ...mealPlan, meals: mealPlanData.meals } };
+      return { success: true, data: { ...mealPlan, meals: mealPlanData.meals } as MealPlan };
     } catch (error: any) {
       console.error('Error in createMealPlan:', error);
       return { success: false, error: error.message };
@@ -222,7 +244,7 @@ export class MealPlanService {
         }
       }
 
-      return { success: true, data: { ...mealPlan, meals: updates.meals || [] } };
+      return { success: true, data: { ...mealPlan, meals: updates.meals || [] } as MealPlan };
     } catch (error: any) {
       console.error('Error in updateMealPlan:', error);
       return { success: false, error: error.message };
@@ -316,7 +338,7 @@ export class MealPlanService {
 
     return Object.entries(grouped).map(([type, foods]) => ({
       id: `${type}-meal`,
-      type,
+      type: type as 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack',
       name: this.getMealTypeName(type),
       foods,
       total_calories: foods.reduce((sum, food) => sum + food.calories, 0),
@@ -370,3 +392,8 @@ export class MealPlanService {
 }
 
 export const mealPlanService = MealPlanService;
+
+// Legacy exports for backward compatibility
+export const saveMealPlan = MealPlanService.saveMealPlan;
+export const getPatientMealPlans = MealPlanService.getPatientMealPlans;
+export const getMealPlanById = MealPlanService.getMealPlanById;

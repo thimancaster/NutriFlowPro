@@ -2,7 +2,7 @@
 import { dbCache } from "./dbCache";
 import { PatientService } from "./patient";
 import { consultationService } from "./consultationService";
-import * as mealPlanService from '@/services/mealPlanService';
+import { mealPlanService } from './mealPlanService';
 
 /**
  * Service to handle all database interactions

@@ -88,6 +88,24 @@ export interface MacroTargets {
   fats: number;
 }
 
+export interface NutritionalTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
+export interface DetailedMealPlan extends MealPlan {
+  items?: MealPlanItem[];
+}
+
+export interface MealPlanGenerationParams {
+  userId: string;
+  patientId: string;
+  targets: MacroTargets;
+  date?: string;
+}
+
 export interface MealDistribution {
   breakfast: number;
   morning_snack: number;
