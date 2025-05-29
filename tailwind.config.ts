@@ -28,7 +28,6 @@ export default {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
-          hover: 'hsl(var(--primary-hover))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -63,18 +62,6 @@ export default {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))'
-        },
-        nutri: {
-          'green-light': '#4ade80',
-          'green': '#22c55e',
-          'green-dark': '#16a34a',
-          'blue-light': '#60a5fa',
-          'blue': '#3b82f6',
-          'blue-dark': '#2563eb',
-          'teal': '#0d9488',
-          'gray-light': '#f1f5f9',
-          'gray': '#94a3b8',
-          'gray-dark': '#64748b',
         }
       },
       borderRadius: {
