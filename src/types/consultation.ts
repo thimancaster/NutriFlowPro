@@ -34,7 +34,7 @@ export const OBJECTIVE_FACTORS: Record<Objective, number> = {
   personalizado: 1.0
 };
 
-// Nutrition constants - CORRIGIDOS
+// Nutrition constants - CORRIGIDOS CONFORME PLANILHA ORIGINAL
 export const PROTEIN_RATIOS: Record<Profile, number> = {
   eutrofico: 1.4,
   sobrepeso_obesidade: 1.8,
@@ -42,9 +42,9 @@ export const PROTEIN_RATIOS: Record<Profile, number> = {
 };
 
 export const LIPID_RATIOS: Record<Profile, number> = {
-  eutrofico: 1.0,
-  sobrepeso_obesidade: 0.8,
-  atleta: 1.2
+  eutrofico: 0.8,
+  sobrepeso_obesidade: 0.5,
+  atleta: 1.0
 };
 
 export const CALORIE_VALUES = {

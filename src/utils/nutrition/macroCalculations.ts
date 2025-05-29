@@ -9,6 +9,9 @@ import {
 
 /**
  * Calcula macronutrientes seguindo a lógica sequencial da planilha
+ * 1. Proteínas em g/kg (prioridade 1)
+ * 2. Lipídios em g/kg (prioridade 2) 
+ * 3. Carboidratos por diferença do VET
  */
 export const calculateMacrosByProfile = (
   profile: Profile,
@@ -21,25 +24,26 @@ export const calculateMacrosByProfile = (
   fat: { grams: number; kcal: number; percentage: number };
   proteinPerKg: number;
 } => {
-  // 1. Calcular proteínas baseado no perfil e peso
+  // 1. Calcular proteínas baseado no perfil e peso (g/kg)
   const proteinRatio = PROTEIN_RATIOS[profile];
   const proteinGrams = weight * proteinRatio;
   const proteinKcal = proteinGrams * CALORIE_VALUES.protein;
   
-  // 2. Calcular gorduras baseado no perfil e peso
+  // 2. Calcular lipídios baseado no perfil e peso (g/kg)
   const fatRatio = LIPID_RATIOS[profile];
   const fatGrams = weight * fatRatio;
   const fatKcal = fatGrams * CALORIE_VALUES.fat;
   
-  // 3. Calcular carboidratos com as calorias restantes
+  // 3. Calcular carboidratos com as calorias restantes (por diferença)
   const remainingKcal = vet - proteinKcal - fatKcal;
   const carbsGrams = Math.max(0, remainingKcal / CALORIE_VALUES.carbs);
   const carbsKcal = carbsGrams * CALORIE_VALUES.carbs;
   
-  // 4. Calcular percentuais
-  const proteinPercentage = (proteinKcal / vet) * 100;
-  const carbsPercentage = (carbsKcal / vet) * 100;
-  const fatPercentage = (fatKcal / vet) * 100;
+  // 4. Calcular percentuais (resultado, não entrada)
+  const totalKcal = proteinKcal + fatKcal + carbsKcal;
+  const proteinPercentage = (proteinKcal / totalKcal) * 100;
+  const carbsPercentage = (carbsKcal / totalKcal) * 100;
+  const fatPercentage = (fatKcal / totalKcal) * 100;
   
   return {
     protein: {
