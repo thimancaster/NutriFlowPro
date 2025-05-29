@@ -144,83 +144,48 @@ export const calculateMacrosByProfile = (
   fat: { grams: number; kcal: number; percentage: number };
   proteinPerKg: number;
 } => {
-  if (!weight || weight <= 0 || !vet || vet <= 0) {
-    throw new Error('Invalid input for macronutrient calculation');
-  }
-
-  // 1º PASSO: Calcular proteínas (g/kg baseado no perfil e objetivo)
-  let proteinPerKg: number;
-  
-  switch (profile) {
-    case 'eutrofico':
-      proteinPerKg = objective === 'emagrecimento' ? 1.4 : 1.2;
-      break;
-    case 'sobrepeso_obesidade':
-      proteinPerKg = objective === 'emagrecimento' ? 2.2 : 2.0;
-      break;
-    case 'atleta':
-      proteinPerKg = objective === 'hipertrofia' ? 2.0 : 1.8;
-      break;
-    default:
-      proteinPerKg = 1.2;
-  }
-  
-  const proteinGrams = Math.round(weight * proteinPerKg);
+  // 1. Calcular proteínas baseado no perfil e peso
+  const proteinRatio = PROTEIN_RATIOS[profile];
+  const proteinGrams = weight * proteinRatio;
   const proteinKcal = proteinGrams * CALORIE_VALUES.protein;
-
-  // 2º PASSO: Calcular gorduras (g/kg baseado no perfil)
-  let fatPerKg: number;
   
-  switch (profile) {
-    case 'eutrofico':
-      fatPerKg = 1.0;
-      break;
-    case 'sobrepeso_obesidade':
-      fatPerKg = 0.8;
-      break;
-    case 'atleta':
-      fatPerKg = 1.2;
-      break;
-    default:
-      fatPerKg = 1.0;
-  }
-  
-  const fatGrams = Math.round(weight * fatPerKg);
+  // 2. Calcular gorduras baseado no perfil e peso
+  const fatRatio = LIPID_RATIOS[profile];
+  const fatGrams = weight * fatRatio;
   const fatKcal = fatGrams * CALORIE_VALUES.fat;
-
-  // 3º PASSO: Calcular carboidratos por diferença
+  
+  // 3. Calcular carboidratos com as calorias restantes
   const remainingKcal = vet - proteinKcal - fatKcal;
-  const carbsGrams = Math.max(0, Math.round(remainingKcal / CALORIE_VALUES.carbs));
+  const carbsGrams = Math.max(0, remainingKcal / CALORIE_VALUES.carbs);
   const carbsKcal = carbsGrams * CALORIE_VALUES.carbs;
-
-  // 4º PASSO: Calcular percentuais como saída
-  const totalKcal = proteinKcal + carbsKcal + fatKcal;
-  const proteinPercentage = Math.round((proteinKcal / totalKcal) * 100);
-  const carbsPercentage = Math.round((carbsKcal / totalKcal) * 100);
-  const fatPercentage = Math.round((fatKcal / totalKcal) * 100);
-
+  
+  // 4. Calcular percentuais
+  const proteinPercentage = (proteinKcal / vet) * 100;
+  const carbsPercentage = (carbsKcal / vet) * 100;
+  const fatPercentage = (fatKcal / vet) * 100;
+  
   return {
     protein: {
-      grams: proteinGrams,
-      kcal: proteinKcal,
-      percentage: proteinPercentage
+      grams: Math.round(proteinGrams),
+      kcal: Math.round(proteinKcal),
+      percentage: Math.round(proteinPercentage)
     },
     carbs: {
-      grams: carbsGrams,
-      kcal: carbsKcal,
-      percentage: carbsPercentage
+      grams: Math.round(carbsGrams),
+      kcal: Math.round(carbsKcal),
+      percentage: Math.round(carbsPercentage)
     },
     fat: {
-      grams: fatGrams,
-      kcal: fatKcal,
-      percentage: fatPercentage
+      grams: Math.round(fatGrams),
+      kcal: Math.round(fatKcal),
+      percentage: Math.round(fatPercentage)
     },
-    proteinPerKg: proteinPerKg
+    proteinPerKg: proteinRatio
   };
 };
 
 /**
- * Cálculo completo de nutrição seguindo a lógica da planilha
+ * Função principal de cálculo nutricional completo
  */
 export const calculateCompleteNutrition = (
   weight: number,
@@ -234,6 +199,7 @@ export const calculateCompleteNutrition = (
   tmb: number;
   get: number;
   vet: number;
+  adjustment: number;
   macros: {
     protein: { grams: number; kcal: number; percentage: number };
     carbs: { grams: number; kcal: number; percentage: number };
@@ -242,20 +208,23 @@ export const calculateCompleteNutrition = (
   };
   formulaUsed: string;
 } => {
-  // Calcular TMB usando fórmula específica do perfil
+  // 1. Calcular TMB usando a fórmula apropriada para o perfil
   const tmb = calculateTMB(weight, height, age, sex, profile);
   
-  // Calcular GET usando fatores específicos do perfil
+  // 2. Calcular GET aplicando fator de atividade
   const get = calculateGET(tmb, activityLevel, profile);
   
-  // Calcular VET aplicando ajuste do objetivo
+  // 3. Calcular VET aplicando ajuste do objetivo
   const vet = calculateVET(get, objective);
   
-  // Calcular macronutrientes seguindo lógica sequencial
+  // 4. Calcular ajuste calórico
+  const adjustment = vet - get;
+  
+  // 5. Calcular macronutrientes
   const macros = calculateMacrosByProfile(profile, weight, vet, objective);
   
-  // Determinar qual fórmula foi usada
-  let formulaUsed: string;
+  // 6. Determinar fórmula usada
+  let formulaUsed = '';
   switch (profile) {
     case 'eutrofico':
       formulaUsed = 'Harris-Benedict Revisada';
@@ -267,82 +236,38 @@ export const calculateCompleteNutrition = (
       formulaUsed = 'Cunningham (estimativa)';
       break;
     default:
-      formulaUsed = 'Harris-Benedict Revisada (padrão)';
+      formulaUsed = 'Harris-Benedict Revisada';
   }
   
   return {
     tmb,
     get,
     vet,
+    adjustment,
     macros,
     formulaUsed
   };
 };
 
-// Additional utility functions for anthropometry calculations
-export const calculateIMC = (weight: number, height: number): number => {
-  if (weight <= 0 || height <= 0) {
-    throw new Error('Weight and height must be positive values');
-  }
-  const heightInMeters = height / 100;
-  return Math.round((weight / (heightInMeters * heightInMeters)) * 10) / 10;
-};
-
-export const calculateRCQ = (waistCircumference: number, hipCircumference: number): number => {
-  if (waistCircumference <= 0 || hipCircumference <= 0) {
-    throw new Error('Waist and hip circumferences must be positive values');
-  }
-  return Math.round((waistCircumference / hipCircumference) * 100) / 100;
-};
-
-export const calculateBodyFatJacksonPollock = (
-  age: number,
-  sex: 'M' | 'F',
-  skinFolds: { chest?: number; abdomen?: number; thigh?: number; triceps?: number; suprailiac?: number; subscapular?: number }
-): number => {
-  // Jackson-Pollock 3-point formula
-  let bodyDensity: number;
-  
-  if (sex === 'M') {
-    const sum = (skinFolds.chest || 0) + (skinFolds.abdomen || 0) + (skinFolds.thigh || 0);
-    bodyDensity = 1.10938 - (0.0008267 * sum) + (0.0000016 * sum * sum) - (0.0002574 * age);
-  } else {
-    const sum = (skinFolds.triceps || 0) + (skinFolds.suprailiac || 0) + (skinFolds.thigh || 0);
-    bodyDensity = 1.0994921 - (0.0009929 * sum) + (0.0000023 * sum * sum) - (0.0001392 * age);
+/**
+ * Validação de dados de entrada
+ */
+export const validateNutritionInputs = (
+  weight: number,
+  height: number,
+  age: number
+): string | null => {
+  if (weight <= 0 || weight > 500) {
+    return 'Peso deve estar entre 1 e 500 kg';
   }
   
-  const bodyFatPercentage = ((4.95 / bodyDensity) - 4.5) * 100;
-  return Math.round(bodyFatPercentage * 10) / 10;
-};
-
-export const calculateLeanMass = (weight: number, bodyFatPercentage: number): number => {
-  if (weight <= 0 || bodyFatPercentage < 0 || bodyFatPercentage > 100) {
-    throw new Error('Invalid weight or body fat percentage');
+  if (height <= 0 || height > 250) {
+    return 'Altura deve estar entre 1 e 250 cm';
   }
-  return Math.round((weight * (1 - bodyFatPercentage / 100)) * 10) / 10;
-};
-
-export const calculateCalorieSummary = (
-  targetCalories: number,
-  macros: {
-    protein: { kcal: number };
-    fats: { kcal: number };
-    carbs: { kcal: number };
-  }
-): {
-  targetCalories: number;
-  actualCalories: number;
-  difference: number;
-  percentageDifference: number;
-} => {
-  const actualCalories = macros.protein.kcal + macros.fats.kcal + macros.carbs.kcal;
-  const difference = actualCalories - targetCalories;
-  const percentageDifference = Math.round((difference / targetCalories) * 100);
   
-  return {
-    targetCalories,
-    actualCalories,
-    difference,
-    percentageDifference
-  };
+  if (age <= 0 || age > 120) {
+    return 'Idade deve estar entre 1 e 120 anos';
+  }
+  
+  return null;
 };

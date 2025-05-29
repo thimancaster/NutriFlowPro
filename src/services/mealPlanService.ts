@@ -151,27 +151,6 @@ export class MealPlanService {
   }
 
   /**
-   * Get meal plan by ID (legacy method)
-   */
-  static async getMealPlanById(id: string, userId: string): Promise<MealPlanResponse> {
-    return this.getMealPlan(id);
-  }
-
-  /**
-   * Get patient meal plans (legacy method)
-   */
-  static async getPatientMealPlans(patientId: string, userId: string): Promise<MealPlanListResponse> {
-    return this.getMealPlans(userId, { patient_id: patientId });
-  }
-
-  /**
-   * Save meal plan (legacy method)
-   */
-  static async saveMealPlan(mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<MealPlanResponse> {
-    return this.createMealPlan(mealPlanData);
-  }
-
-  /**
    * Create a new meal plan
    */
   static async createMealPlan(
@@ -421,6 +400,27 @@ export class MealPlanService {
       evening_snack: 'Ceia'
     };
     return names[type] || type;
+  }
+
+  /**
+   * Legacy method - Get meal plan by ID
+   */
+  static async getMealPlanById(id: string, userId: string): Promise<MealPlanResponse> {
+    return this.getMealPlan(id);
+  }
+
+  /**
+   * Legacy method - Get patient meal plans
+   */
+  static async getPatientMealPlans(patientId: string, userId: string): Promise<MealPlanListResponse> {
+    return this.getMealPlans(userId, { patient_id: patientId });
+  }
+
+  /**
+   * Legacy method - Save meal plan
+   */
+  static async saveMealPlan(mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<MealPlanResponse> {
+    return this.createMealPlan(mealPlanData);
   }
 }
 
