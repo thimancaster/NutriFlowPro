@@ -22,7 +22,7 @@ export const calculateTMB = (weight: number, height: number, age: number, sex: '
   
   switch (profile) {
     case 'eutrofico':
-      // Harris-Benedict revisada para perfil eutrófico
+      // Harris-Benedict revisada para perfil eutrófico - constantes corrigidas conforme planilha
       if (sex === 'M') {
         tmb = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
       } else {
@@ -47,7 +47,7 @@ export const calculateTMB = (weight: number, height: number, age: number, sex: '
       break;
       
     default:
-      // Fallback para Harris-Benedict revisada
+      // Fallback para Harris-Benedict revisada - constantes corrigidas conforme planilha
       if (sex === 'M') {
         tmb = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
       } else {
