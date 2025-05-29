@@ -10,6 +10,44 @@ interface LoginResult {
 }
 
 /**
+ * Check rate limit for authentication attempts
+ */
+const checkRateLimit = async (identifier: string, attemptType: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_attempt_type: attemptType,
+      p_max_attempts: 5,
+      p_window_minutes: 15
+    });
+    
+    if (error) {
+      console.warn('Rate limit check failed:', error);
+      return true; // Allow on error to prevent blocking legitimate users
+    }
+    
+    return data === true;
+  } catch (error) {
+    console.warn('Rate limit check error:', error);
+    return true; // Allow on error
+  }
+};
+
+/**
+ * Log security event
+ */
+const logSecurityEvent = async (eventType: string, eventData: any = {}) => {
+  try {
+    await supabase.rpc('log_security_event', {
+      event_type: eventType,
+      event_data: eventData
+    });
+  } catch (error) {
+    console.warn('Failed to log security event:', error);
+  }
+};
+
+/**
  * Handles user login with email and password
  */
 export const login = async (
@@ -30,6 +68,13 @@ export const login = async (
       throw new Error("A senha é obrigatória");
     }
     
+    // Check rate limit
+    const rateLimitOk = await checkRateLimit(email, 'login');
+    if (!rateLimitOk) {
+      await logSecurityEvent('login_rate_limited', { email });
+      throw new Error("Muitas tentativas de login. Tente novamente em alguns minutos.");
+    }
+    
     // Sign in with email and password
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -37,10 +82,24 @@ export const login = async (
     });
     
     if (error) {
+      // Log failed login attempt
+      await logSecurityEvent('login_failed', { 
+        email, 
+        error: error.message,
+        remember 
+      });
+      
       // Handle common errors with user-friendly messages
       const errorMessage = getLoginErrorMessage(error);
       throw new Error(errorMessage);
     }
+    
+    // Log successful login
+    await logSecurityEvent('login_success', { 
+      email, 
+      remember,
+      user_id: data.user?.id 
+    });
     
     console.log("Login successful:", !!data.session);
     
@@ -72,6 +131,9 @@ export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promi
   try {
     console.log("Iniciando login com Google...");
     
+    // Log Google login attempt
+    await logSecurityEvent('google_login_attempt', {});
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -80,6 +142,7 @@ export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promi
     });
     
     if (error) {
+      await logSecurityEvent('google_login_failed', { error: error.message });
       throw new Error(error.message);
     }
     

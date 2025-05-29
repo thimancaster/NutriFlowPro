@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { dbCache } from "@/services/dbCacheService";
 import { PREMIUM_EMAILS, DEVELOPER_EMAILS } from "@/constants/subscriptionConstants";
+import { logSecurityEvent } from "./securityUtils";
 
 interface SubscriptionData {
   isPremium: boolean;
@@ -35,7 +36,7 @@ export async function executeWithRetry<T>(fn: () => Promise<T>, retries = MAX_RE
 /**
  * Check if Supabase is healthy and available
  */
-export async function checkSupabaseHealth(): Promise<boolean> {
+export async function checkSupabaseHealth(): Promise<boolean> => {
   try {
     // Use a simple and fast query to check if Supabase is responsive
     const healthCheck = await supabase.from('subscribers').select('count(*)', { 
@@ -66,6 +67,7 @@ export const validatePremiumStatus = async (
     // Check for developer emails first
     if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
       console.log("Developer email detected in fallback:", fallbackEmail);
+      await logSecurityEvent('premium_check_developer_email', { email: fallbackEmail });
       return true;
     }
     
@@ -87,12 +89,20 @@ export const validatePremiumStatus = async (
     // Check developer emails first for highest priority
     if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
       console.log("Developer email detected:", fallbackEmail);
+      await logSecurityEvent('premium_check_developer_email', { 
+        user_id: userId, 
+        email: fallbackEmail 
+      });
       dbCache.set(CACHE_NAME, cacheKey, true);
       return true;
     }
     
     // Then check premium emails
     if (fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail)) {
+      await logSecurityEvent('premium_check_premium_email', { 
+        user_id: userId, 
+        email: fallbackEmail 
+      });
       dbCache.set(CACHE_NAME, cacheKey, true);
       return true;
     }
@@ -101,6 +111,7 @@ export const validatePremiumStatus = async (
     const isSupabaseHealthy = await checkSupabaseHealth();
     if (!isSupabaseHealthy) {
       console.error("Supabase service issues, using email check");
+      await logSecurityEvent('premium_check_supabase_unhealthy', { user_id: userId });
       
       // Check for developer emails first
       if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
@@ -128,11 +139,25 @@ export const validatePremiumStatus = async (
       return !!data;
     });
     
+    // Log premium check result
+    await logSecurityEvent('premium_check_database', { 
+      user_id: userId, 
+      result,
+      email: fallbackEmail 
+    });
+    
     // Cache the result
     dbCache.set(CACHE_NAME, cacheKey, result);
     return result;
   } catch (err) {
     console.error("Error validating premium status:", err);
+    
+    // Log error
+    await logSecurityEvent('premium_check_error', { 
+      user_id: userId, 
+      error: (err as Error).message,
+      email: fallbackEmail 
+    });
     
     // Check for developer emails first on error
     if (fallbackEmail && DEVELOPER_EMAILS.includes(fallbackEmail)) {
