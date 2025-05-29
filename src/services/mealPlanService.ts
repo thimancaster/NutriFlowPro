@@ -25,6 +25,7 @@ export class MealPlanService {
           *,
           meal_plan_items (
             id,
+            meal_plan_id,
             meal_type,
             food_id,
             food_name,
@@ -68,11 +69,28 @@ export class MealPlanService {
         return { success: false, error: error.message };
       }
 
-      // Transform data to match MealPlan interface
-      const transformedData = data?.map(plan => ({
-        ...plan,
-        meals: this.groupItemsByMealType(plan.meal_plan_items || [])
-      })) || [];
+      // Transform data to match MealPlan interface with proper MealPlanItem structure
+      const transformedData = data?.map(plan => {
+        const items = (plan.meal_plan_items || []).map((item: any) => ({
+          id: item.id,
+          meal_plan_id: item.meal_plan_id || plan.id,
+          meal_type: item.meal_type,
+          food_id: item.food_id,
+          food_name: item.food_name,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fats: item.fats,
+          order_index: item.order_index
+        })) as MealPlanItem[];
+
+        return {
+          ...plan,
+          meals: this.groupItemsByMealType(items)
+        };
+      }) || [];
 
       return { 
         success: true, 
@@ -104,10 +122,25 @@ export class MealPlanService {
         return { success: false, error: error.message };
       }
 
-      // Transform data
+      // Transform data with proper MealPlanItem structure
+      const items = (data.meal_plan_items || []).map((item: any) => ({
+        id: item.id,
+        meal_plan_id: item.meal_plan_id || data.id,
+        meal_type: item.meal_type,
+        food_id: item.food_id,
+        food_name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fats: item.fats,
+        order_index: item.order_index
+      })) as MealPlanItem[];
+
       const transformedData = {
         ...data,
-        meals: this.groupItemsByMealType(data.meal_plan_items || [])
+        meals: this.groupItemsByMealType(items)
       };
 
       return { success: true, data: transformedData as MealPlan };
@@ -388,6 +421,123 @@ export class MealPlanService {
       evening_snack: 'Ceia'
     };
     return names[type] || type;
+  }
+
+  // Legacy method implementations
+  static async getMealPlanById(id: string, userId: string): Promise<MealPlanResponse> {
+    return this.getMealPlan(id);
+  }
+
+  static async getPatientMealPlans(patientId: string, userId: string): Promise<MealPlanListResponse> {
+    return this.getMealPlans(userId, { patient_id: patientId });
+  }
+
+  static async saveMealPlan(mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<MealPlanResponse> {
+    return this.createMealPlan(mealPlanData);
+  }
+
+  static async updateMealPlan(
+    id: string, 
+    updates: Partial<MealPlan>
+  ): Promise<MealPlanResponse> {
+    try {
+      const { data: mealPlan, error: updateError } = await supabase
+        .from('meal_plans')
+        .update({
+          total_calories: updates.total_calories,
+          total_protein: updates.total_protein,
+          total_carbs: updates.total_carbs,
+          total_fats: updates.total_fats,
+          notes: updates.notes,
+          is_template: updates.is_template,
+          day_of_week: updates.day_of_week
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating meal plan:', updateError);
+        return { success: false, error: updateError.message };
+      }
+
+      if (updates.meals) {
+        await supabase
+          .from('meal_plan_items')
+          .delete()
+          .eq('meal_plan_id', id);
+
+        const items = this.flattenMealsToItems(id, updates.meals);
+        if (items.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('meal_plan_items')
+            .insert(items);
+
+          if (itemsError) {
+            console.error('Error updating meal plan items:', itemsError);
+            return { success: false, error: itemsError.message };
+          }
+        }
+      }
+
+      return { success: true, data: { ...mealPlan, meals: updates.meals || [] } as MealPlan };
+    } catch (error: any) {
+      console.error('Error in updateMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deleteMealPlan(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await supabase
+        .from('meal_plan_items')
+        .delete()
+        .eq('meal_plan_id', id);
+
+      const { error } = await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting meal plan:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error in deleteMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async generateMealPlan(
+    userId: string,
+    patientId: string,
+    targets: MacroTargets,
+    date: string = new Date().toISOString().split('T')[0]
+  ): Promise<MealPlanResponse> {
+    try {
+      const { data, error } = await supabase.rpc('generate_meal_plan', {
+        p_user_id: userId,
+        p_patient_id: patientId,
+        p_target_calories: targets.calories,
+        p_target_protein: targets.protein,
+        p_target_carbs: targets.carbs,
+        p_target_fats: targets.fats,
+        p_date: date
+      });
+
+      if (error) {
+        console.error('Error generating meal plan:', error);
+        return { success: false, error: error.message };
+      }
+
+      return this.getMealPlan(data);
+    } catch (error: any) {
+      console.error('Error in generateMealPlan:', error);
+      return { success: false, error: error.message };
+    }
   }
 }
 

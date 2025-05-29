@@ -11,7 +11,9 @@ interface MealPlanEditorProps {
   mealPlan: DetailedMealPlan;
 }
 
-const MEAL_TYPE_CONFIG = {
+type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
+
+const MEAL_TYPE_CONFIG: Record<MealType, { name: string; time: string; color: string }> = {
   breakfast: { name: 'Café da manhã', time: '07:00', color: 'bg-orange-100' },
   morning_snack: { name: 'Lanche da manhã', time: '10:00', color: 'bg-yellow-100' },
   lunch: { name: 'Almoço', time: '12:30', color: 'bg-green-100' },
@@ -76,7 +78,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
         {Object.entries(MEAL_TYPE_CONFIG).map(([mealType, config]) => (
           <MealTypeSection
             key={mealType}
-            mealType={mealType as MealPlanItem['meal_type']}
+            mealType={mealType as MealType}
             config={config}
             items={groupedItems[mealType] || []}
             mealPlanId={mealPlan.id}
