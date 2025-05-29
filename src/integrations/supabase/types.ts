@@ -94,12 +94,15 @@ export type Database = {
           appointment_type_id: string | null
           created_at: string | null
           date: string
+          end_time: string | null
           id: string
           measurements: Json | null
           notes: string | null
           patient_id: string | null
           recommendations: string | null
+          start_time: string | null
           status: string
+          title: string | null
           type: string
           updated_at: string | null
           user_id: string | null
@@ -108,12 +111,15 @@ export type Database = {
           appointment_type_id?: string | null
           created_at?: string | null
           date: string
+          end_time?: string | null
           id?: string
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
           recommendations?: string | null
+          start_time?: string | null
           status?: string
+          title?: string | null
           type: string
           updated_at?: string | null
           user_id?: string | null
@@ -122,12 +128,15 @@ export type Database = {
           appointment_type_id?: string | null
           created_at?: string | null
           date?: string
+          end_time?: string | null
           id?: string
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
           recommendations?: string | null
+          start_time?: string | null
           status?: string
+          title?: string | null
           type?: string
           updated_at?: string | null
           user_id?: string | null

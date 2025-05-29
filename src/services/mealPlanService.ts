@@ -1,159 +1,372 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { MealPlan } from "@/types/meal";
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  MealPlan, 
+  MealPlanItem, 
+  MealPlanFilters, 
+  MealPlanResponse, 
+  MealPlanListResponse,
+  MacroTargets 
+} from '@/types/mealPlan';
 
-export interface MealPlanFilters {
-  patientId?: string;
-  startDate?: string;
-  endDate?: string;
-  limit?: number;
+export class MealPlanService {
+  /**
+   * Get meal plans with optional filters
+   */
+  static async getMealPlans(
+    userId: string, 
+    filters: MealPlanFilters = {}
+  ): Promise<MealPlanListResponse> {
+    try {
+      let query = supabase
+        .from('meal_plans')
+        .select(`
+          *,
+          meal_plan_items (
+            id,
+            meal_type,
+            food_id,
+            food_name,
+            quantity,
+            unit,
+            calories,
+            protein,
+            carbs,
+            fats,
+            order_index
+          )
+        `)
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+
+      // Apply filters
+      if (filters.patient_id) {
+        query = query.eq('patient_id', filters.patient_id);
+      }
+      
+      if (filters.date_from) {
+        query = query.gte('date', filters.date_from);
+      }
+      
+      if (filters.date_to) {
+        query = query.lte('date', filters.date_to);
+      }
+      
+      if (filters.is_template !== undefined) {
+        query = query.eq('is_template', filters.is_template);
+      }
+      
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching meal plans:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Transform data to match MealPlan interface
+      const transformedData = data?.map(plan => ({
+        ...plan,
+        meals: this.groupItemsByMealType(plan.meal_plan_items || [])
+      })) || [];
+
+      return { 
+        success: true, 
+        data: transformedData,
+        total: transformedData.length 
+      };
+    } catch (error: any) {
+      console.error('Error in getMealPlans:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get a single meal plan by ID
+   */
+  static async getMealPlan(id: string): Promise<MealPlanResponse> {
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select(`
+          *,
+          meal_plan_items (*)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching meal plan:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Transform data
+      const transformedData = {
+        ...data,
+        meals: this.groupItemsByMealType(data.meal_plan_items || [])
+      };
+
+      return { success: true, data: transformedData };
+    } catch (error: any) {
+      console.error('Error in getMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Create a new meal plan
+   */
+  static async createMealPlan(
+    mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<MealPlanResponse> {
+    try {
+      // First create the meal plan
+      const { data: mealPlan, error: mealPlanError } = await supabase
+        .from('meal_plans')
+        .insert({
+          user_id: mealPlanData.user_id,
+          patient_id: mealPlanData.patient_id,
+          calculation_id: mealPlanData.calculation_id,
+          date: mealPlanData.date,
+          total_calories: mealPlanData.total_calories,
+          total_protein: mealPlanData.total_protein,
+          total_carbs: mealPlanData.total_carbs,
+          total_fats: mealPlanData.total_fats,
+          notes: mealPlanData.notes,
+          is_template: mealPlanData.is_template,
+          day_of_week: mealPlanData.day_of_week,
+          meals: '[]'
+        })
+        .select()
+        .single();
+
+      if (mealPlanError) {
+        console.error('Error creating meal plan:', mealPlanError);
+        return { success: false, error: mealPlanError.message };
+      }
+
+      // Create meal plan items if meals are provided
+      if (mealPlanData.meals && mealPlanData.meals.length > 0) {
+        const items = this.flattenMealsToItems(mealPlan.id, mealPlanData.meals);
+        
+        const { error: itemsError } = await supabase
+          .from('meal_plan_items')
+          .insert(items);
+
+        if (itemsError) {
+          console.error('Error creating meal plan items:', itemsError);
+          // Try to cleanup the meal plan
+          await supabase.from('meal_plans').delete().eq('id', mealPlan.id);
+          return { success: false, error: itemsError.message };
+        }
+      }
+
+      return { success: true, data: { ...mealPlan, meals: mealPlanData.meals } };
+    } catch (error: any) {
+      console.error('Error in createMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Update a meal plan
+   */
+  static async updateMealPlan(
+    id: string, 
+    updates: Partial<MealPlan>
+  ): Promise<MealPlanResponse> {
+    try {
+      // Update meal plan basic data
+      const { data: mealPlan, error: updateError } = await supabase
+        .from('meal_plans')
+        .update({
+          total_calories: updates.total_calories,
+          total_protein: updates.total_protein,
+          total_carbs: updates.total_carbs,
+          total_fats: updates.total_fats,
+          notes: updates.notes,
+          is_template: updates.is_template,
+          day_of_week: updates.day_of_week
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating meal plan:', updateError);
+        return { success: false, error: updateError.message };
+      }
+
+      // If meals are being updated, replace all items
+      if (updates.meals) {
+        // Delete existing items
+        await supabase
+          .from('meal_plan_items')
+          .delete()
+          .eq('meal_plan_id', id);
+
+        // Insert new items
+        const items = this.flattenMealsToItems(id, updates.meals);
+        if (items.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('meal_plan_items')
+            .insert(items);
+
+          if (itemsError) {
+            console.error('Error updating meal plan items:', itemsError);
+            return { success: false, error: itemsError.message };
+          }
+        }
+      }
+
+      return { success: true, data: { ...mealPlan, meals: updates.meals || [] } };
+    } catch (error: any) {
+      console.error('Error in updateMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Delete a meal plan
+   */
+  static async deleteMealPlan(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Delete items first (cascade should handle this, but being explicit)
+      await supabase
+        .from('meal_plan_items')
+        .delete()
+        .eq('meal_plan_id', id);
+
+      // Delete meal plan
+      const { error } = await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting meal plan:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error in deleteMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Generate meal plan using database function
+   */
+  static async generateMealPlan(
+    userId: string,
+    patientId: string,
+    targets: MacroTargets,
+    date: string = new Date().toISOString().split('T')[0]
+  ): Promise<MealPlanResponse> {
+    try {
+      const { data, error } = await supabase.rpc('generate_meal_plan', {
+        p_user_id: userId,
+        p_patient_id: patientId,
+        p_target_calories: targets.calories,
+        p_target_protein: targets.protein,
+        p_target_carbs: targets.carbs,
+        p_target_fats: targets.fats,
+        p_date: date
+      });
+
+      if (error) {
+        console.error('Error generating meal plan:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Fetch the generated meal plan
+      return this.getMealPlan(data);
+    } catch (error: any) {
+      console.error('Error in generateMealPlan:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Helper method to group meal plan items by meal type
+   */
+  private static groupItemsByMealType(items: MealPlanItem[]) {
+    const grouped = items.reduce((acc, item) => {
+      if (!acc[item.meal_type]) {
+        acc[item.meal_type] = [];
+      }
+      acc[item.meal_type].push({
+        id: item.id,
+        food_id: item.food_id || '',
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fats: item.fats,
+        order_index: item.order_index
+      });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    return Object.entries(grouped).map(([type, foods]) => ({
+      id: `${type}-meal`,
+      type,
+      name: this.getMealTypeName(type),
+      foods,
+      total_calories: foods.reduce((sum, food) => sum + food.calories, 0),
+      total_protein: foods.reduce((sum, food) => sum + food.protein, 0),
+      total_carbs: foods.reduce((sum, food) => sum + food.carbs, 0),
+      total_fats: foods.reduce((sum, food) => sum + food.fats, 0)
+    }));
+  }
+
+  /**
+   * Helper method to flatten meals to items for database storage
+   */
+  private static flattenMealsToItems(mealPlanId: string, meals: any[]) {
+    const items: any[] = [];
+    
+    meals.forEach(meal => {
+      meal.foods.forEach((food: any, index: number) => {
+        items.push({
+          meal_plan_id: mealPlanId,
+          meal_type: meal.type,
+          food_id: food.food_id,
+          food_name: food.name,
+          quantity: food.quantity,
+          unit: food.unit,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fats: food.fats,
+          order_index: index
+        });
+      });
+    });
+
+    return items;
+  }
+
+  /**
+   * Helper method to get meal type display name
+   */
+  private static getMealTypeName(type: string): string {
+    const names: Record<string, string> = {
+      breakfast: 'Café da Manhã',
+      morning_snack: 'Lanche da Manhã',
+      lunch: 'Almoço',
+      afternoon_snack: 'Lanche da Tarde',
+      dinner: 'Jantar',
+      evening_snack: 'Ceia'
+    };
+    return names[type] || type;
+  }
 }
 
-export const getMealPlans = async (
-  userId: string, 
-  filters: MealPlanFilters = {}
-): Promise<{ success: boolean; data?: MealPlan[]; error?: string }> => {
-  try {
-    console.log('Fetching meal plans with filters:', filters);
-
-    // Otimização: Selecionar apenas as colunas necessárias
-    let query = supabase
-      .from('meal_plans')
-      .select(`
-        id,
-        user_id,
-        patient_id,
-        date,
-        total_calories,
-        total_protein,
-        total_carbs,
-        total_fats,
-        created_at,
-        updated_at
-      `)
-      .eq('user_id', userId) // Usar o índice idx_meal_plans_user_id
-      .order('date', { ascending: false }); // Usar o índice idx_meal_plans_user_id_date
-
-    // Aplicar filtro por paciente
-    if (filters.patientId) {
-      query = query.eq('patient_id', filters.patientId);
-    }
-
-    // Aplicar filtros de data (usar índice composto)
-    if (filters.startDate) {
-      query = query.gte('date', filters.startDate);
-    }
-    if (filters.endDate) {
-      query = query.lte('date', filters.endDate);
-    }
-
-    // Aplicar limite
-    if (filters.limit) {
-      query = query.limit(filters.limit);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching meal plans:', error);
-      return { success: false, error: error.message };
-    }
-
-    const mealPlans: MealPlan[] = (data || []).map(plan => ({
-      ...plan,
-      meals: [], // Será carregado separadamente se necessário
-      total_calories: Number(plan.total_calories),
-      total_protein: Number(plan.total_protein),
-      total_carbs: Number(plan.total_carbs),
-      total_fats: Number(plan.total_fats)
-    }));
-
-    return { success: true, data: mealPlans };
-  } catch (error: any) {
-    console.error('Error in getMealPlans:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const getMealPlanById = async (
-  id: string,
-  userId: string
-): Promise<{ success: boolean; data?: MealPlan; error?: string }> => {
-  try {
-    // Otimização: Buscar por ID com verificação de user_id usando índices
-    const { data, error } = await supabase
-      .from('meal_plans')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', userId) // Usar o índice para verificação de segurança
-      .single();
-
-    if (error) {
-      console.error('Error fetching meal plan:', error);
-      return { success: false, error: error.message };
-    }
-
-    if (!data) {
-      return { success: false, error: 'Meal plan not found' };
-    }
-
-    const mealPlan: MealPlan = {
-      ...data,
-      meals: typeof data.meals === 'string' ? JSON.parse(data.meals) : data.meals || [],
-      total_calories: Number(data.total_calories),
-      total_protein: Number(data.total_protein),
-      total_carbs: Number(data.total_carbs),
-      total_fats: Number(data.total_fats)
-    };
-
-    return { success: true, data: mealPlan };
-  } catch (error: any) {
-    console.error('Error in getMealPlanById:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const saveMealPlan = async (mealPlanData: Omit<MealPlan, 'id'>): Promise<{ success: boolean; data?: MealPlan; error?: string }> => {
-  try {
-    const dataToInsert = {
-      patient_id: mealPlanData.patient_id,
-      user_id: mealPlanData.user_id,
-      calculation_id: mealPlanData.calculation_id,
-      date: mealPlanData.date,
-      meals: JSON.stringify(mealPlanData.meals),
-      total_calories: mealPlanData.total_calories,
-      total_protein: mealPlanData.total_protein,
-      total_carbs: mealPlanData.total_carbs,
-      total_fats: mealPlanData.total_fats
-    };
-
-    const { data, error } = await supabase
-      .from('meal_plans')
-      .insert([dataToInsert])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error saving meal plan:', error);
-      return { success: false, error: error.message };
-    }
-
-    const processedData: MealPlan = {
-      ...data,
-      meals: typeof data.meals === 'string' ? JSON.parse(data.meals) : data.meals || []
-    };
-
-    return { success: true, data: processedData };
-  } catch (error: any) {
-    console.error('Error in saveMealPlan:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const getPatientMealPlans = async (
-  userId: string,
-  patientId: string,
-  limit: number = 10
-) => {
-  return getMealPlans(userId, { patientId, limit });
-};
+export const mealPlanService = MealPlanService;

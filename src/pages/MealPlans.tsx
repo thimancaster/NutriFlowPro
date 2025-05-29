@@ -1,88 +1,124 @@
 
-import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import PatientBanner from '@/components/patient/PatientBanner';
-import ContextualNavigation from '@/components/patient/ContextualNavigation';
-import MealPlanGenerator from '@/components/meal-plan/MealPlanGenerator';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PlusCircle, Filter } from 'lucide-react';
+import MealPlanList from '@/components/meal-plan/MealPlanList';
+import { MealPlanFilters } from '@/types/mealPlan';
 
-const MealPlans = () => {
-  const { activePatient, loadPatientById } = usePatient();
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const patientId = searchParams.get('patientId');
-  
-  // Get calculation data from location state if available
-  const calculationData = location.state?.calculationData;
+const MealPlans: React.FC = () => {
+  const { user } = useAuth();
+  const [filters, setFilters] = useState<MealPlanFilters>({});
+  const [activeTab, setActiveTab] = useState('all');
 
-  // Load patient if patientId is provided in URL but not active yet
-  useEffect(() => {
-    if (patientId && (!activePatient || activePatient.id !== patientId)) {
-      loadPatientById(patientId);
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    const newFilters: MealPlanFilters = {};
+    
+    switch (value) {
+      case 'templates':
+        newFilters.is_template = true;
+        break;
+      case 'recent':
+        newFilters.limit = 10;
+        newFilters.date_from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          .toISOString().split('T')[0]; // Last 30 days
+        break;
+      case 'all':
+      default:
+        // No additional filters for 'all'
+        break;
     }
-  }, [patientId, activePatient, loadPatientById]);
+    
+    setFilters(newFilters);
+  };
+
+  const handleCreateNew = () => {
+    // Navigate to meal plan generator or editor
+    window.location.href = '/meal-plan-generator';
+  };
+
+  const handleEdit = (id: string) => {
+    // Navigate to meal plan editor
+    window.location.href = `/meal-plan-editor/${id}`;
+  };
+
+  const handleView = (id: string) => {
+    // Navigate to meal plan viewer
+    window.location.href = `/meal-plan/${id}`;
+  };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p>Você precisa estar logado para acessar os planos alimentares.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <ContextualNavigation currentModule="meal-plans" />
-      
-      <motion.div 
-        className="flex flex-col md:flex-row items-center justify-between mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-3 text-nutri-blue">Planos Alimentares</h1>
-          <p className="text-gray-600 mb-4">
-            Geração automática de cardápios personalizados com base nos macros calculados.
+          <h1 className="text-3xl font-bold">Planos Alimentares</h1>
+          <p className="text-gray-600 mt-1">
+            Gerencie e visualize todos os seus planos alimentares
           </p>
         </div>
-        <img 
-          src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" 
-          alt="Alimentos saudáveis" 
-          className="w-full md:w-1/3 rounded-xl shadow-lg mt-4 md:mt-0"
-        />
-      </motion.div>
-      
-      {/* Display patient banner if patient is selected */}
-      {activePatient && <PatientBanner />}
-      
-      <motion.div 
-        className="bg-white rounded-xl shadow-lg p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <MealPlanGenerator calculationData={calculationData} />
-      </motion.div>
-      
-      <motion.div 
-        className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <div className="bg-white p-5 rounded-xl shadow-md">
-          <h3 className="font-semibold text-lg mb-2 text-nutri-green">Geração Automática</h3>
-          <p className="text-gray-600">
-            O sistema gera automaticamente um cardápio balanceado baseado nos macros calculados.
-          </p>
+        
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </Button>
+          <Button onClick={handleCreateNew}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Novo Plano
+          </Button>
         </div>
-        <div className="bg-white p-5 rounded-xl shadow-md">
-          <h3 className="font-semibold text-lg mb-2 text-nutri-blue">Edição Completa</h3>
-          <p className="text-gray-600">
-            Edite, adicione ou remova alimentos com recálculo automático dos valores nutricionais.
-          </p>
-        </div>
-        <div className="bg-white p-5 rounded-xl shadow-md">
-          <h3 className="font-semibold text-lg mb-2 text-nutri-teal">Base de Alimentos</h3>
-          <p className="text-gray-600">
-            Acesso a uma base completa de alimentos com informações nutricionais detalhadas.
-          </p>
-        </div>
-      </motion.div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">Todos</TabsTrigger>
+          <TabsTrigger value="recent">Recentes</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="mt-6">
+          <MealPlanList 
+            filters={filters}
+            onEdit={handleEdit}
+            onView={handleView}
+            onCreateNew={handleCreateNew}
+          />
+        </TabsContent>
+
+        <TabsContent value="recent" className="mt-6">
+          <MealPlanList 
+            filters={filters}
+            onEdit={handleEdit}
+            onView={handleView}
+            onCreateNew={handleCreateNew}
+          />
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <MealPlanList 
+            filters={filters}
+            onEdit={handleEdit}
+            onView={handleView}
+            onCreateNew={handleCreateNew}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
