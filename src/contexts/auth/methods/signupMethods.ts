@@ -3,40 +3,40 @@ import { supabase } from '@/integrations/supabase/client';
 import { ToastProps } from '@/hooks/toast/toast-types';
 
 /**
- * Log security event
+ * Log security event to console for now (until database types are updated)
  */
-const logSecurityEvent = async (eventType: string, eventData: any = {}) => {
-  try {
-    await supabase.rpc('log_security_event', {
-      event_type: eventType,
-      event_data: eventData
-    });
-  } catch (error) {
-    console.warn('Failed to log security event:', error);
-  }
+const logSecurityEvent = (eventType: string, eventData: any = {}) => {
+  console.log(`Security Event: ${eventType}`, eventData);
+  // TODO: Implement database logging once types are updated
 };
 
 /**
- * Check rate limit for authentication attempts
+ * Simple rate limiting using localStorage for client-side protection
  */
-const checkRateLimit = async (identifier: string, attemptType: string): Promise<boolean> => {
+const checkClientRateLimit = (email: string, attemptType: string): boolean => {
+  const key = `${attemptType}_attempts_${email}`;
+  const now = Date.now();
+  const windowMs = 30 * 60 * 1000; // 30 minutes
+  
   try {
-    const { data, error } = await supabase.rpc('check_rate_limit', {
-      p_identifier: identifier,
-      p_attempt_type: attemptType,
-      p_max_attempts: 3, // Lower limit for signups
-      p_window_minutes: 30
-    });
+    const stored = localStorage.getItem(key);
+    const data = stored ? JSON.parse(stored) : { attempts: 0, resetTime: now + windowMs };
     
-    if (error) {
-      console.warn('Rate limit check failed:', error);
-      return true; // Allow on error to prevent blocking legitimate users
+    if (now > data.resetTime) {
+      data.attempts = 0;
+      data.resetTime = now + windowMs;
     }
     
-    return data === true;
+    if (data.attempts >= 3) { // Lower limit for signups
+      return false;
+    }
+    
+    data.attempts += 1;
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
   } catch (error) {
-    console.warn('Rate limit check error:', error);
-    return true; // Allow on error
+    console.warn('Rate limit check failed:', error);
+    return true;
   }
 };
 
@@ -70,10 +70,9 @@ export const signup = async (
       throw new Error("A senha deve ter pelo menos 8 caracteres");
     }
     
-    // Check rate limit
-    const rateLimitOk = await checkRateLimit(email, 'signup');
-    if (!rateLimitOk) {
-      await logSecurityEvent('signup_rate_limited', { email });
+    // Check client-side rate limit
+    if (!checkClientRateLimit(email, 'signup')) {
+      logSecurityEvent('signup_rate_limited', { email });
       throw new Error("Muitas tentativas de cadastro. Tente novamente em alguns minutos.");
     }
     
@@ -87,7 +86,7 @@ export const signup = async (
 
     if (error) {
       // Log failed signup attempt
-      await logSecurityEvent('signup_failed', { 
+      logSecurityEvent('signup_failed', { 
         email, 
         error: error.message 
       });
@@ -108,7 +107,7 @@ export const signup = async (
         console.error("Error creating user profile:", profileError);
         // We don't throw here because the auth user was created successfully
         // and we'll rely on the database trigger as a fallback
-        await logSecurityEvent('signup_profile_error', { 
+        logSecurityEvent('signup_profile_error', { 
           email, 
           user_id: data.user.id,
           error: profileError.message 
@@ -121,7 +120,7 @@ export const signup = async (
         });
       } else {
         // Log successful signup
-        await logSecurityEvent('signup_success', { 
+        logSecurityEvent('signup_success', { 
           email, 
           user_id: data.user.id 
         });

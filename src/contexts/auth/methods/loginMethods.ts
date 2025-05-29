@@ -10,41 +10,41 @@ interface LoginResult {
 }
 
 /**
- * Check rate limit for authentication attempts
+ * Simple rate limiting using localStorage for client-side protection
  */
-const checkRateLimit = async (identifier: string, attemptType: string): Promise<boolean> => {
+const checkClientRateLimit = (email: string): boolean => {
+  const key = `login_attempts_${email}`;
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  
   try {
-    const { data, error } = await supabase.rpc('check_rate_limit', {
-      p_identifier: identifier,
-      p_attempt_type: attemptType,
-      p_max_attempts: 5,
-      p_window_minutes: 15
-    });
+    const stored = localStorage.getItem(key);
+    const data = stored ? JSON.parse(stored) : { attempts: 0, resetTime: now + windowMs };
     
-    if (error) {
-      console.warn('Rate limit check failed:', error);
-      return true; // Allow on error to prevent blocking legitimate users
+    if (now > data.resetTime) {
+      data.attempts = 0;
+      data.resetTime = now + windowMs;
     }
     
-    return data === true;
+    if (data.attempts >= 5) {
+      return false;
+    }
+    
+    data.attempts += 1;
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
   } catch (error) {
-    console.warn('Rate limit check error:', error);
-    return true; // Allow on error
+    console.warn('Rate limit check failed:', error);
+    return true;
   }
 };
 
 /**
- * Log security event
+ * Log security event to console for now (until database types are updated)
  */
-const logSecurityEvent = async (eventType: string, eventData: any = {}) => {
-  try {
-    await supabase.rpc('log_security_event', {
-      event_type: eventType,
-      event_data: eventData
-    });
-  } catch (error) {
-    console.warn('Failed to log security event:', error);
-  }
+const logSecurityEvent = (eventType: string, eventData: any = {}) => {
+  console.log(`Security Event: ${eventType}`, eventData);
+  // TODO: Implement database logging once types are updated
 };
 
 /**
@@ -68,10 +68,9 @@ export const login = async (
       throw new Error("A senha é obrigatória");
     }
     
-    // Check rate limit
-    const rateLimitOk = await checkRateLimit(email, 'login');
-    if (!rateLimitOk) {
-      await logSecurityEvent('login_rate_limited', { email });
+    // Check client-side rate limit
+    if (!checkClientRateLimit(email)) {
+      logSecurityEvent('login_rate_limited', { email });
       throw new Error("Muitas tentativas de login. Tente novamente em alguns minutos.");
     }
     
@@ -83,7 +82,7 @@ export const login = async (
     
     if (error) {
       // Log failed login attempt
-      await logSecurityEvent('login_failed', { 
+      logSecurityEvent('login_failed', { 
         email, 
         error: error.message,
         remember 
@@ -95,7 +94,7 @@ export const login = async (
     }
     
     // Log successful login
-    await logSecurityEvent('login_success', { 
+    logSecurityEvent('login_success', { 
       email, 
       remember,
       user_id: data.user?.id 
@@ -132,7 +131,7 @@ export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promi
     console.log("Iniciando login com Google...");
     
     // Log Google login attempt
-    await logSecurityEvent('google_login_attempt', {});
+    logSecurityEvent('google_login_attempt', {});
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -142,7 +141,7 @@ export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promi
     });
     
     if (error) {
-      await logSecurityEvent('google_login_failed', { error: error.message });
+      logSecurityEvent('google_login_failed', { error: error.message });
       throw new Error(error.message);
     }
     

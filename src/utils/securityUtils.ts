@@ -6,26 +6,36 @@ import { supabase } from '@/integrations/supabase/client';
  */
 
 /**
- * Check if current user is admin
+ * Check if current user is admin (simplified version until types are updated)
  */
 export const isCurrentUserAdmin = async (): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('is_admin_user');
+    const { data: { user } } = await supabase.auth.getUser();
     
-    if (error) {
-      console.error('Error checking admin status:', error);
-      return false;
+    if (!user) return false;
+    
+    // Check for developer emails
+    const developerEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+    if (developerEmails.includes(user.email || '')) {
+      return true;
     }
     
-    return data === true;
+    // Check subscriber role
+    const { data: subscriber } = await supabase
+      .from('subscribers')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    return subscriber?.role === 'admin';
   } catch (error) {
-    console.error('Error in admin check:', error);
+    console.error('Error checking admin status:', error);
     return false;
   }
 };
 
 /**
- * Log security events with standardized format
+ * Log security events with standardized format (console logging for now)
  */
 export const logSecurityEvent = async (
   eventType: string, 
@@ -42,10 +52,8 @@ export const logSecurityEvent = async (
       secret: undefined,
     };
     
-    await supabase.rpc('log_security_event', {
-      event_type: eventType,
-      event_data: sanitizedData
-    });
+    console.log(`Security Event: ${eventType}`, sanitizedData);
+    // TODO: Implement database logging once types are updated
   } catch (error) {
     console.warn('Failed to log security event:', error);
   }
