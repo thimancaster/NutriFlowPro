@@ -1,8 +1,8 @@
 
 import { Profile, Objective, PROTEIN_RATIOS, LIPID_RATIOS, CALORIE_VALUES } from '@/types/consultation';
 
-// Re-export types for compatibility
-export { Profile, Objective } from '@/types/consultation';
+// Re-export types for compatibility using proper TypeScript syntax
+export type { Profile, Objective } from '@/types/consultation';
 
 interface MacroValues {
   grams: number;
