@@ -1,4 +1,3 @@
-
 import { ConsultationData } from '@/types';
 
 export interface ToastApi {
@@ -59,26 +58,34 @@ export interface CalculatorInputsProps {
 }
 
 export interface CalculatorResultsProps {
-  bmr: number | null;
-  tee: {
+  bmr?: number;
+  tee?: {
     get: number;
-    adjustment: number;
     vet: number;
-  } | null;
-  macros: {
+    adjustment: number;
+  };
+  macros?: {
     protein: { grams: number; kcal: number; percentage: number };
     carbs: { grams: number; kcal: number; percentage: number };
     fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg?: number;
-  } | null;
-  carbsPercentage: string;
-  proteinPercentage: string;
-  fatPercentage: string;
-  handleSavePatient: () => void;
-  handleGenerateMealPlan: () => void;
-  isSavingPatient: boolean;
-  hasPatientName: boolean;
-  user: any;
+    proteinPerKg: number;
+  };
+  carbsPercentage?: number;
+  proteinPercentage?: number;
+  fatPercentage?: number;
+  handleSavePatient?: () => Promise<void>;
+  handleGenerateMealPlan?: () => void;
+  isSavingPatient?: boolean;
+  hasPatientName?: boolean;
+  user?: any;
+  // Novos campos antropométricos
+  weight?: number;
+  height?: number;
+  age?: number;
+  sex?: 'M' | 'F';
+  waist?: number;
+  hip?: number;
+  sum3Folds?: number;
 }
 
 export interface UseCalculatorFormProps {

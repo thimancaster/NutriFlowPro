@@ -3,10 +3,10 @@
 // Redirect all exports to the new modular functions
 
 import { 
-  calculateMacrosByProfile as newCalculateMacrosByProfile,
-  Profile,
-  Objective 
+  calculateMacrosByProfile as newCalculateMacrosByProfile
 } from './nutrition/macroCalculations';
+
+import { Profile, Objective } from '@/types/consultation';
 
 interface MacroValues {
   grams: number;
