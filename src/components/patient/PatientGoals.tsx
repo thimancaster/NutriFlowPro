@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,7 @@ const PatientGoals: React.FC<PatientGoalsProps> = ({ patient, onUpdatePatient })
   const goals: Goal[] = React.useMemo(() => {
     if (!patient.goals || typeof patient.goals !== 'object') return [];
     const goalsData = patient.goals as any;
-    return goalsData.goals || [];
+    return goalsData.customGoals || [];
   }, [patient.goals]);
 
   const handleSaveGoal = async () => {
@@ -76,7 +75,7 @@ const PatientGoals: React.FC<PatientGoalsProps> = ({ patient, onUpdatePatient })
       await onUpdatePatient({
         goals: {
           ...patient.goals,
-          goals: updatedGoals
+          customGoals: updatedGoals
         }
       });
 
@@ -115,7 +114,7 @@ const PatientGoals: React.FC<PatientGoalsProps> = ({ patient, onUpdatePatient })
       await onUpdatePatient({
         goals: {
           ...patient.goals,
-          goals: updatedGoals
+          customGoals: updatedGoals
         }
       });
 
@@ -141,7 +140,7 @@ const PatientGoals: React.FC<PatientGoalsProps> = ({ patient, onUpdatePatient })
       await onUpdatePatient({
         goals: {
           ...patient.goals,
-          goals: updatedGoals
+          customGoals: updatedGoals
         }
       });
 
