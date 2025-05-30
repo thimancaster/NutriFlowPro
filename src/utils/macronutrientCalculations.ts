@@ -3,7 +3,8 @@
 // Redirect all exports to the new modular functions
 
 import { 
-  calculateMacrosByProfile as newCalculateMacrosByProfile
+  calculateMacros as newCalculateMacros,
+  mapProfileToCalculation
 } from './nutrition/macroCalculations';
 
 import { Profile, Objective } from '@/types/consultation';
@@ -25,10 +26,11 @@ interface CalculatedMacros {
 export const calculateMacrosByProfile = (
   profile: Profile,
   weight: number,
-  vet: number
+  vet: number,
+  objective: Objective = 'manutenção'
 ): CalculatedMacros => {
-  // Default to 'manutenção' for backward compatibility
-  return newCalculateMacrosByProfile(profile, weight, vet, 'manutenção');
+  const mappedProfile = mapProfileToCalculation(profile);
+  return newCalculateMacros(vet, weight, objective, mappedProfile);
 };
 
 // Map old profile values to new ones for backward compatibility

@@ -1,5 +1,5 @@
 
-import { calculateMacrosByProfile } from '../utils/nutritionCalculations';
+import { calculateMacrosByProfile } from '../utils/macronutrientCalculations';
 import { Profile } from '../types/consultation';
 
 describe('Macronutrient Calculations', () => {

@@ -6,9 +6,10 @@ import {
   calculateTMB,
   calculateGET,
   calculateVET,
-  calculateMacrosByProfile,
-  validateNutritionInputs
+  validateNutritionInputs,
+  mapProfileToCalculation
 } from './nutritionCalculations';
+import { calculateMacros } from './nutrition/macroCalculations';
 import { 
   Profile, 
   ActivityLevel, 
@@ -19,14 +20,15 @@ import {
  * DEPRECATED: Use calculateTMB from nutritionCalculations instead
  */
 export const calculateBMR = (weight: number, height: number, age: number, sex: 'M' | 'F'): number => {
-  return calculateTMB(weight, height, age, sex, 'eutrofico');
+  const result = calculateTMB(weight, height, age, sex, 'magro');
+  return result.tmb;
 };
 
 /**
  * DEPRECATED: Use calculateGET from nutritionCalculations instead
  */
 export const calculateTDEE = (bmr: number, activityLevel: ActivityLevel): number => {
-  return calculateGET(bmr, activityLevel, 'eutrofico');
+  return calculateGET(bmr, activityLevel, 'magro');
 };
 
 /**
@@ -36,18 +38,20 @@ export const applyObjectiveAdjustment = (tdee: number, objective: Objective, cus
   if (objective === 'personalizado' && customVET !== undefined && customVET > 0) {
     return customVET;
   }
-  return calculateVET(tdee, objective);
+  const result = calculateVET(tdee, activityLevel as any, objective, 'magro');
+  return result.vet;
 };
 
 /**
- * DEPRECATED: Use calculateMacrosByProfile from nutritionCalculations instead
+ * DEPRECATED: Use calculateMacros from nutritionCalculations instead
  */
 export const calculateMacros = (
   weight: number, 
   adjustedTDEE: number, 
   profile: Profile
 ): { protein: number; carbs: number; fat: number } => {
-  const result = calculateMacrosByProfile(profile, weight, adjustedTDEE, 'manutenção');
+  const mappedProfile = mapProfileToCalculation(profile);
+  const result = calculateMacros(adjustedTDEE, weight, 'manutenção', mappedProfile);
   return {
     protein: result.protein.grams,
     carbs: result.carbs.grams,
@@ -82,14 +86,16 @@ export const calculateNutrition = (
     throw new Error(validationError);
   }
 
-  const bmr = calculateTMB(weight, height, age, sex, profile);
-  const tdee = calculateGET(bmr, activityLevel, profile);
-  const adjustedTDEE = objective === 'personalizado' && customVET ? customVET : calculateVET(tdee, objective);
-  const macroResult = calculateMacrosByProfile(profile, weight, adjustedTDEE, objective);
+  const mappedProfile = mapProfileToCalculation(profile);
+  const tmbResult = calculateTMB(weight, height, age, sex, mappedProfile);
+  const get = calculateGET(tmbResult.tmb, activityLevel, mappedProfile);
+  const vetResult = calculateVET(get, activityLevel, objective, mappedProfile);
+  const adjustedTDEE = objective === 'personalizado' && customVET ? customVET : vetResult.vet;
+  const macroResult = calculateMacros(adjustedTDEE, weight, objective, mappedProfile);
 
   return {
-    bmr: Math.round(bmr),
-    tdee: Math.round(tdee),
+    bmr: Math.round(tmbResult.tmb),
+    tdee: Math.round(get),
     adjustedTDEE: Math.round(adjustedTDEE),
     macros: {
       protein: macroResult.protein.grams,

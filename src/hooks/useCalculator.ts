@@ -5,6 +5,7 @@ import { useCalculationSaver } from './useCalculationSaver';
 import { useMealPlanGeneration } from './useMealPlanGeneration';
 import { ActivityLevel, Objective } from '@/types/consultation';
 import { stringToProfile } from '@/components/calculator/utils/profileUtils';
+import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
 
 export const useCalculator = () => {
   const form = useCalculatorForm();
@@ -31,6 +32,10 @@ export const useCalculator = () => {
     const height = parseFloat(form.height);
     const age = parseFloat(form.age);
 
+    // Convert frontend profile to calculation profile
+    const frontendProfile = stringToProfile(form.profile);
+    const calculationProfile = mapProfileToCalculation(frontendProfile);
+
     const results = await nutrition.calculate(
       weight,
       height,
@@ -38,7 +43,7 @@ export const useCalculator = () => {
       form.gender === 'male' ? 'M' : 'F',
       form.activityLevel as ActivityLevel,
       form.objective as Objective,
-      stringToProfile(form.profile)
+      calculationProfile
     );
 
     return results;
