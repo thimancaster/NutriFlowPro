@@ -1,3 +1,4 @@
+
 import { useCalculatorForm } from '../components/calculator/hooks/useCalculatorForm';
 import { useNutritionCalculation } from './useNutritionCalculation';
 import { useCalculationSaver } from './useCalculationSaver';
@@ -10,28 +11,34 @@ export const useCalculator = () => {
   const saver = useCalculationSaver();
   const mealPlan = useMealPlanGeneration();
 
+  // Simple validation function since isFormValid doesn't exist in the new interface
+  const isFormValid = () => {
+    return form.weight.trim() !== '' && 
+           form.height.trim() !== '' && 
+           form.age.trim() !== '' &&
+           parseFloat(form.weight) > 0 &&
+           parseFloat(form.height) > 0 &&
+           parseFloat(form.age) > 0;
+  };
+
   const performCalculation = async () => {
-    if (!form.isFormValid()) {
+    if (!isFormValid()) {
       return null;
     }
 
-    const weight = parseFloat(form.formState.weight);
-    const height = parseFloat(form.formState.height);
-    const age = parseFloat(form.formState.age);
+    const weight = parseFloat(form.weight);
+    const height = parseFloat(form.height);
+    const age = parseFloat(form.age);
 
     const results = await nutrition.calculate(
       weight,
       height,
       age,
-      form.formState.sex,
-      form.formState.activityLevel as ActivityLevel,
-      form.formState.objective as Objective,
-      form.formState.profile
+      form.gender === 'male' ? 'M' : 'F',
+      form.activityLevel as ActivityLevel,
+      form.objective as Objective,
+      form.profile
     );
-
-    if (results) {
-      form.setActiveTab('results');
-    }
 
     return results;
   };
@@ -41,9 +48,9 @@ export const useCalculator = () => {
       return false;
     }
 
-    const weight = parseFloat(form.formState.weight);
-    const height = parseFloat(form.formState.height);
-    const age = parseFloat(form.formState.age);
+    const weight = parseFloat(form.weight);
+    const height = parseFloat(form.height);
+    const age = parseFloat(form.age);
 
     return await saver.saveCalculation({
       patientId,
@@ -51,9 +58,9 @@ export const useCalculator = () => {
       weight,
       height,
       age,
-      gender: form.formState.sex,
-      activityLevel: form.formState.activityLevel,
-      goal: form.formState.objective,
+      gender: form.gender === 'male' ? 'M' : 'F',
+      activityLevel: form.activityLevel,
+      goal: form.objective,
       bmr: nutrition.results.tmb,
       tdee: nutrition.results.vet,
       protein: nutrition.results.macros.protein.grams,
@@ -85,24 +92,49 @@ export const useCalculator = () => {
   };
 
   return {
-    // Estados
-    formState: form.formState,
+    // Form state - individual properties instead of formState object
+    patientName: form.patientName,
+    gender: form.gender,
+    age: form.age,
+    weight: form.weight,
+    height: form.height,
+    objective: form.objective,
+    activityLevel: form.activityLevel,
+    consultationType: form.consultationType,
+    profile: form.profile,
+    carbsPercentage: form.carbsPercentage,
+    proteinPercentage: form.proteinPercentage,
+    fatPercentage: form.fatPercentage,
+    
+    // Results
     results: nutrition.results,
     isCalculating: nutrition.isCalculating,
     isSaving: saver.isSaving,
     isGeneratingMealPlan: mealPlan.isGenerating,
     generatedMealPlan: mealPlan.generatedPlan,
 
-    // Ações
-    updateField: form.updateField,
-    setActiveTab: form.setActiveTab,
+    // Form setters - direct access to individual setters
+    setPatientName: form.setPatientName,
+    setGender: form.setGender,
+    setAge: form.setAge,
+    setWeight: form.setWeight,
+    setHeight: form.setHeight,
+    setObjective: form.setObjective,
+    setActivityLevel: form.setActivityLevel,
+    setCarbsPercentage: form.setCarbsPercentage,
+    setProteinPercentage: form.setProteinPercentage,
+    setFatPercentage: form.setFatPercentage,
+    setProfile: form.setProfile,
+    setConsultationType: form.setConsultationType,
+
+    // Actions
     populateFromPatient: form.populateFromPatient,
     performCalculation,
     saveCalculation,
     generateMealPlan,
     reset,
 
-    // Validação
-    isFormValid: form.isFormValid
+    // Validation
+    isFormValid
   };
 };
