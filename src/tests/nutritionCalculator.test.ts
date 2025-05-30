@@ -54,7 +54,7 @@ describe('Nutrition Calculator', () => {
   });
 
   describe('Macro Calculation by Profile', () => {
-    it('should calculate macros for eutrofico profile', () => {
+    it('should calculate macros for magro profile', () => {
       const result = calculateMacros(2000, 70, 'manutenção', 'magro');
       
       expect(result.protein.grams).toBeGreaterThan(0);
@@ -62,7 +62,7 @@ describe('Nutrition Calculator', () => {
       expect(result.carbs.grams).toBeGreaterThan(0);
     });
 
-    it('should calculate macros for sobrepeso_obesidade profile', () => {
+    it('should calculate macros for obeso profile', () => {
       const result = calculateMacros(1800, 80, 'manutenção', 'obeso');
       
       expect(result.protein.grams).toBeGreaterThan(0);

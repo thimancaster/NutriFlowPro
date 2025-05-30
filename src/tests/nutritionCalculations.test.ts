@@ -68,14 +68,14 @@ describe('VET Calculations', () => {
 });
 
 describe('Macros Calculations', () => {
-  it('calculates maintenance macros correctly for eutrofico', () => {
+  it('calculates maintenance macros correctly for magro profile', () => {
     const macros = calculateMacros(2000, 70, 'manutenção', 'magro');
     expect(macros.protein.grams).toBeGreaterThan(0);
     expect(macros.fat.grams).toBeGreaterThan(0);
     expect(macros.carbs.grams).toBeGreaterThan(0);
   });
 
-  it('calculates weight loss macros correctly for sobrepeso_obesidade', () => {
+  it('calculates weight loss macros correctly for obeso profile', () => {
     const macros = calculateMacros(1800, 80, 'emagrecimento', 'obeso');
     expect(macros.protein.grams).toBeGreaterThan(0);
     expect(macros.fat.grams).toBeGreaterThan(0);
