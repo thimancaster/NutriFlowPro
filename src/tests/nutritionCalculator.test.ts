@@ -8,12 +8,12 @@ import { calculateMacros } from '../utils/nutrition/macroCalculations';
 
 describe('Nutrition Calculator', () => {
   describe('TMB Calculation', () => {
-    it('should calculate TMB correctly for male eutrofico', () => {
+    it('should calculate TMB correctly for male magro', () => {
       const result = calculateTMB(70, 175, 30, 'M', 'eutrofico');
       expect(result.tmb).toBeCloseTo(1667.5, 1);
     });
 
-    it('should calculate TMB correctly for female eutrofico', () => {
+    it('should calculate TMB correctly for female magro', () => {
       const result = calculateTMB(60, 165, 25, 'F', 'eutrofico');
       expect(result.tmb).toBeCloseTo(1372.5, 1);
     });

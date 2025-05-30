@@ -1,5 +1,5 @@
 
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 
@@ -41,7 +41,8 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/signup" element={<Register />} />
+      {/* Redirect /signup to /register */}
+      <Route path="/signup" element={<Navigate to="/register" replace />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pricing" element={<Pricing />} />
