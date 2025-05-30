@@ -1,5 +1,4 @@
-
-import { useCalculatorForm } from './useCalculatorForm';
+import { useCalculatorForm } from '../components/calculator/hooks/useCalculatorForm';
 import { useNutritionCalculation } from './useNutritionCalculation';
 import { useCalculationSaver } from './useCalculationSaver';
 import { useMealPlanGeneration } from './useMealPlanGeneration';
