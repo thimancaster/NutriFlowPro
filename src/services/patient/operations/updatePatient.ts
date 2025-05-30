@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types';
-import { dbCache } from '@/services/dbCache';
 
 interface UpdatePatientResult {
   success: boolean;
@@ -49,10 +48,6 @@ export const updatePatient = async (
       goals: typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals || {},
       measurements: typeof data.measurements === 'string' ? JSON.parse(data.measurements) : data.measurements || {}
     } as Patient;
-    
-    // Invalidate relevant cache entries
-    dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patientId}`);
-    dbCache.invalidate(dbCache.KEYS.PATIENTS);
     
     return {
       success: true,

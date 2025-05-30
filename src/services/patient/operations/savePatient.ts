@@ -1,7 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, AddressDetails } from '@/types/patient';
-import { dbCache } from '@/services/dbCache';
 
 interface SavePatientResult {
   success: boolean;
@@ -69,12 +67,6 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
 
     // Convert the saved patient back to our application's format
     const savedPatient: Patient = processPatientData(data);
-
-    // Invalidate relevant cache entries
-    dbCache.invalidate(dbCache.KEYS.PATIENTS);
-    if (patient.id) {
-      dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patient.id}`);
-    }
     
     return {
       success: true,
@@ -113,10 +105,6 @@ export const updatePatientStatus = async (
     if (error) {
       throw error;
     }
-
-    // Invalidate relevant cache entries
-    dbCache.invalidate(`${dbCache.KEYS.PATIENT}${patientId}`);
-    dbCache.invalidate(dbCache.KEYS.PATIENTS);
   } catch (error) {
     console.error('Error updating patient status:', error);
     throw error;

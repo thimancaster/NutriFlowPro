@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { dbCache } from './dbCache';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CalculationData {
   patient_id: string;
@@ -45,9 +45,6 @@ export async function saveCalculationResults(data: CalculationData) {
       throw error;
     }
     
-    // Invalidate any cached calculations for this patient
-    dbCache.invalidate(`${dbCache.KEYS.CONSULTATIONS}${data.patient_id}`);
-    
     return { success: true, data: calculation };
   } catch (error: any) {
     console.error('Error saving calculation results:', error);
@@ -57,14 +54,6 @@ export async function saveCalculationResults(data: CalculationData) {
 
 export async function getPatientCalculations(patientId: string) {
   try {
-    const cacheKey = `${dbCache.KEYS.CONSULTATIONS}${patientId}`;
-    const cachedData = dbCache.get(cacheKey);
-    
-    if (cachedData) {
-      console.log('Using cached calculations');
-      return { success: true, data: cachedData };
-    }
-    
     const { data, error } = await supabase
       .from('calculations')
       .select('*')
@@ -72,9 +61,6 @@ export async function getPatientCalculations(patientId: string) {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    
-    // Cache the results
-    dbCache.set(cacheKey, data);
     
     return { success: true, data };
   } catch (error: any) {
@@ -85,14 +71,6 @@ export async function getPatientCalculations(patientId: string) {
 
 export async function getCalculationById(calculationId: string) {
   try {
-    const cacheKey = `${dbCache.KEYS.CONSULTATIONS}single_${calculationId}`;
-    const cachedData = dbCache.get(cacheKey);
-    
-    if (cachedData) {
-      console.log('Using cached calculation');
-      return { success: true, data: cachedData };
-    }
-    
     const { data, error } = await supabase
       .from('calculations')
       .select('*')
@@ -100,9 +78,6 @@ export async function getCalculationById(calculationId: string) {
       .single();
     
     if (error) throw error;
-    
-    // Cache the result
-    dbCache.set(cacheKey, data);
     
     return { success: true, data };
   } catch (error: any) {

@@ -1,7 +1,6 @@
 
 import { PREMIUM_EMAILS } from "@/constants/subscriptionConstants";
 import { supabase } from "@/integrations/supabase/client";
-import { dbCache } from "@/services/dbCacheService";
 
 interface SubscriptionData {
   isPremium: boolean;
@@ -13,9 +12,11 @@ interface SubscriptionData {
 
 // Cache configuration
 const CACHE_TTL = 300000; // 5 minute cache lifetime
-const CACHE_NAME = 'premium-validation';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
+
+// In-memory cache for premium validation
+const premiumCache = new Map<string, { value: boolean; timestamp: number }>();
 
 /**
  * Retry mechanism for Supabase queries
@@ -33,8 +34,31 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, delay =
 }
 
 /**
+ * Get cached premium status
+ */
+function getCachedPremiumStatus(userId: string): boolean | null {
+  const cached = premiumCache.get(userId);
+  if (!cached) return null;
+  
+  const isExpired = Date.now() - cached.timestamp > CACHE_TTL;
+  if (isExpired) {
+    premiumCache.delete(userId);
+    return null;
+  }
+  
+  return cached.value;
+}
+
+/**
+ * Set cached premium status
+ */
+function setCachedPremiumStatus(userId: string, value: boolean): void {
+  premiumCache.set(userId, { value, timestamp: Date.now() });
+}
+
+/**
  * Validates if a user has premium status based on email or subscription data
- * using a secure database function with local cache to reduce API calls
+ * using a secure database function with in-memory cache to reduce API calls
  * @param userId User ID
  * @returns Boolean indicating premium status
  */
@@ -50,9 +74,8 @@ export const validatePremiumStatus = async (
   }
 
   // Check cache first
-  const cacheKey = userId;
-  const cachedResult = dbCache.get<boolean>(CACHE_NAME, cacheKey, CACHE_TTL);
-  if (cachedResult !== undefined) {
+  const cachedResult = getCachedPremiumStatus(userId);
+  if (cachedResult !== null) {
     console.log("Using cached premium status:", cachedResult);
     return cachedResult;
   }
@@ -62,7 +85,7 @@ export const validatePremiumStatus = async (
     
     // Check email first for quick response (avoid DB call if possible)
     if (fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail)) {
-      dbCache.set(CACHE_NAME, cacheKey, true);
+      setCachedPremiumStatus(userId, true);
       return true;
     }
 
@@ -76,13 +99,13 @@ export const validatePremiumStatus = async (
       if (healthCheck.error) {
         console.error("Supabase service issues, using email check:", healthCheck.error);
         const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
-        dbCache.set(CACHE_NAME, cacheKey, emailResult);
+        setCachedPremiumStatus(userId, emailResult);
         return emailResult;
       }
     } catch (error) {
       console.error("Error in Supabase health check:", error);
       const emailResult = !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);
-      dbCache.set(CACHE_NAME, cacheKey, emailResult);
+      setCachedPremiumStatus(userId, emailResult);
       return emailResult;
     }
 
@@ -101,12 +124,12 @@ export const validatePremiumStatus = async (
     });
     
     // Cache the result
-    dbCache.set(CACHE_NAME, cacheKey, result);
+    setCachedPremiumStatus(userId, result);
     return result;
   } catch (err) {
     console.error("Error validating premium status:", err);
     // Cache the error state temporarily with shorter expiry
-    dbCache.set(CACHE_NAME, cacheKey, false);
+    setCachedPremiumStatus(userId, false);
     
     // Fallback to email check
     return !!fallbackEmail && PREMIUM_EMAILS.includes(fallbackEmail);

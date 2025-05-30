@@ -1,6 +1,4 @@
 
-import { dbCache } from "@/services/dbCacheService";
-
 // Re-export all utilities from modular files
 export * from './supabase/premiumValidation';
 export * from './supabase/subscriptionUtils';

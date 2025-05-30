@@ -1,6 +1,5 @@
 
 import { useCallback } from 'react';
-import { dbCache } from '@/services/dbCacheService';
 import { PREMIUM_CHECK_CONSTANTS } from './constants';
 import { isDeveloperEmail, isPremiumEmail } from './utils';
 

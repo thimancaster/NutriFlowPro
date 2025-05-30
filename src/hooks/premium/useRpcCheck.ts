@@ -2,7 +2,6 @@
 import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry, checkSupabaseHealth } from './utils';
-import { dbCache } from '@/services/dbCacheService';
 import { PREMIUM_CHECK_CONSTANTS } from './constants';
 
 /**
