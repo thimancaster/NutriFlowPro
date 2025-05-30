@@ -79,9 +79,9 @@ const CalculatorTool: React.FC = () => {
             adjustment: calculator.results?.adjustment || 0
           }}
           macros={calculator.results?.macros || null}
-          carbsPercentage={calculator.carbsPercentage}
-          proteinPercentage={calculator.proteinPercentage}
-          fatPercentage={calculator.fatPercentage}
+          carbsPercentage={parseFloat(calculator.carbsPercentage) || 0}
+          proteinPercentage={parseFloat(calculator.proteinPercentage) || 0}
+          fatPercentage={parseFloat(calculator.fatPercentage) || 0}
           handleSavePatient={handleSavePatient}
           handleGenerateMealPlan={handleGenerateMealPlan}
           isSavingPatient={calculator.isSaving}
