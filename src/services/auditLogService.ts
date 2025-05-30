@@ -1,5 +1,5 @@
-
-import { supabase } from '@/integrations/supabase/client';
+// Simplified audit service without database dependency for now
+// This will log to console until we decide if we need the database table
 
 export interface AuditLogEntry {
   id?: string;
@@ -22,25 +22,30 @@ export interface SecurityEvent {
 }
 
 class AuditLogService {
+  private events: SecurityEvent[] = [];
+
   /**
-   * Log a security/audit event
+   * Log a security/audit event (console only for now)
    */
   async logEvent(entry: Omit<AuditLogEntry, 'id' | 'created_at'>): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('security_audit_log')
-        .insert([{
-          ...entry,
-          ip_address: entry.ip_address || await this.getClientIP(),
-          user_agent: entry.user_agent || navigator.userAgent,
-          created_at: new Date().toISOString()
-        }]);
+      const event: SecurityEvent = {
+        id: crypto.randomUUID(),
+        ...entry,
+        ip_address: entry.ip_address || await this.getClientIP(),
+        user_agent: entry.user_agent || navigator.userAgent,
+        created_at: new Date().toISOString()
+      };
 
-      if (error) {
-        console.error('Error logging audit event:', error);
-        return false;
+      // Store in memory for now
+      this.events.unshift(event);
+      
+      // Keep only last 100 events in memory
+      if (this.events.length > 100) {
+        this.events = this.events.slice(0, 100);
       }
 
+      console.log('Security Event:', event);
       return true;
     } catch (error) {
       console.error('Error in logEvent:', error);
@@ -127,50 +132,19 @@ class AuditLogService {
   }
 
   /**
-   * Get recent security events (admin only)
+   * Get recent security events (from memory for now)
    */
   async getSecurityEvents(limit: number = 100): Promise<SecurityEvent[]> {
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching security events:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getSecurityEvents:', error);
-      return [];
-    }
+    return this.events.slice(0, limit);
   }
 
   /**
    * Get events by user
    */
   async getUserEvents(userId: string, limit: number = 50): Promise<SecurityEvent[]> {
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_log')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching user events:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getUserEvents:', error);
-      return [];
-    }
+    return this.events
+      .filter(event => event.user_id === userId)
+      .slice(0, limit);
   }
 
   /**

@@ -84,7 +84,6 @@ const useCalculatorState = () => {
   };
 
   const handleProfileChange = (profile: Profile) => {
-    console.log('Profile changed to:', profile);
     setFormData(prev => ({
       ...prev,
       profile
@@ -93,8 +92,6 @@ const useCalculatorState = () => {
   };
 
   const handleCalculate = async () => {
-    console.log('Starting calculation with data:', formData);
-    
     // Validation
     if (!formData.weight || !formData.height || !formData.age) {
       toast({
@@ -119,8 +116,6 @@ const useCalculatorState = () => {
         formData.objective as any,
         formData.profile
       );
-
-      console.log('Nutrition calculation results:', nutritionResults);
 
       const calculationResults: CalculationResults = {
         tmbValue: nutritionResults.tmb,
@@ -183,11 +178,9 @@ const useCalculatorState = () => {
   };
 
   const syncPatientData = (patient: Patient) => {
-    console.log('Syncing patient data:', patient);
     setFormData(prev => ({
       ...prev,
       patientName: patient.name,
-      // Check if weight and height properties exist before using them
       weight: (patient as any).weight || prev.weight,
       height: (patient as any).height || prev.height,
       age: (patient as any).age || prev.age,

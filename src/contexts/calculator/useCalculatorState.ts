@@ -4,6 +4,7 @@ import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { stringToProfile } from '@/components/calculator/utils/profileUtils';
+import { calculateCompleteNutrition } from '@/utils/nutritionCalculations';
 
 const initialState: CalculatorState = {
   weight: 70,
@@ -87,7 +88,6 @@ export const useCalculatorState = () => {
   };
   
   const setProfile = (profile: Profile) => {
-    console.log('Setting profile to:', profile);
     setState(prev => ({ ...prev, profile, calculated: false }));
   };
   
@@ -97,8 +97,6 @@ export const useCalculatorState = () => {
   
   const calculateNutrition = () => {
     setState(prev => ({ ...prev, loading: true }));
-    
-    console.log('Calculating nutrition with profile:', state.profile);
     
     // Simulating calculation delay for UI purposes
     setTimeout(() => {
@@ -114,96 +112,24 @@ export const useCalculatorState = () => {
           return;
         }
         
-        // Calculate BMR using Mifflin-St Jeor Equation
-        let bmr: number;
-        if (state.sex === 'M') {
-          bmr = (10 * state.weight) + (6.25 * state.height) - (5 * state.age) + 5;
-        } else {
-          bmr = (10 * state.weight) + (6.25 * state.height) - (5 * state.age) - 161;
-        }
-        
-        // Calculate TDEE based on activity level
-        let activityFactor = 1.2; // Sedentary default
-        switch (state.activityLevel) {
-          case 'sedentario':
-            activityFactor = 1.2;
-            break;
-          case 'leve':
-            activityFactor = 1.375;
-            break;
-          case 'moderado':
-            activityFactor = 1.55;
-            break;
-          case 'intenso':
-            activityFactor = 1.725;
-            break;
-          case 'muito_intenso':
-            activityFactor = 1.9;
-            break;
-        }
-        const tdee = bmr * activityFactor;
-        
-        // Adjust for objective
-        let adjustedTdee = tdee;
-        switch (state.objective) {
-          case 'emagrecimento':
-            adjustedTdee = tdee * 0.8; // 20% deficit
-            break;
-          case 'hipertrofia':
-            adjustedTdee = tdee * 1.15; // 15% surplus
-            break;
-        }
-        
-        // Calculate macros based on profile - CORRIGIDO
-        let protein = 0;
-        let fats = 0;
-        
-        console.log('Using profile for macro calculation:', state.profile);
-        
-        switch (state.profile) {
-          case 'eutrofico':
-            protein = state.weight * 1.4;
-            fats = state.weight * 1.0;
-            break;
-          case 'sobrepeso_obesidade':
-            protein = state.weight * 1.8;
-            fats = state.weight * 0.8;
-            break;
-          case 'atleta':
-            protein = state.weight * 2.0;
-            fats = state.weight * 1.2;
-            break;
-          default:
-            // Fallback to eutrofico
-            protein = state.weight * 1.4;
-            fats = state.weight * 1.0;
-            console.warn('Unknown profile, using eutrofico defaults');
-        }
-        
-        // Calculate protein and fat calories
-        const proteinCals = protein * 4;
-        const fatCals = fats * 9;
-        
-        // Calculate remaining calories for carbs
-        const remainingCals = adjustedTdee - proteinCals - fatCals;
-        const carbs = Math.max(0, remainingCals / 4); // Carbs are 4 cals per gram
-        
-        console.log('Calculation results:', {
-          bmr: Math.round(bmr),
-          tdee: Math.round(adjustedTdee),
-          protein: Math.round(protein),
-          carbs: Math.round(carbs),
-          fats: Math.round(fats),
-          profile: state.profile
-        });
+        // Use the unified calculation function
+        const results = calculateCompleteNutrition(
+          state.weight,
+          state.height,
+          state.age,
+          state.sex,
+          state.activityLevel as any,
+          state.objective as any,
+          state.profile
+        );
         
         setState(prev => ({
           ...prev,
-          bmr: Math.round(bmr),
-          tdee: Math.round(adjustedTdee),
-          protein: Math.round(protein),
-          carbs: Math.round(carbs),
-          fats: Math.round(fats),
+          bmr: Math.round(results.tmb),
+          tdee: Math.round(results.vet),
+          protein: Math.round(results.macros.protein.grams),
+          carbs: Math.round(results.macros.carbs.grams),
+          fats: Math.round(results.macros.fat.grams),
           loading: false,
           calculated: true,
           activeTab: 'results'
@@ -211,7 +137,7 @@ export const useCalculatorState = () => {
         
         toast({
           title: "Cálculo Realizado",
-          description: "Necessidades nutricionais calculadas com sucesso!",
+          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed}`,
         });
         
       } catch (error) {

@@ -1,5 +1,6 @@
 
 import { z } from 'zod';
+import { useState } from 'react';
 
 // Schema para dados do paciente
 export const patientSchema = z.object({
@@ -96,7 +97,7 @@ export const useValidation = <T>(schema: z.ZodSchema<T>) => {
       setErrors({});
       return true;
     } else {
-      setErrors(getValidationErrors(result));
+      setErrors(getValidationErrors(result as z.SafeParseError<any>));
       return false;
     }
   };
