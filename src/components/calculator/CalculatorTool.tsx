@@ -87,9 +87,9 @@ const CalculatorTool: React.FC = () => {
           isSavingPatient={calculator.isSaving}
           hasPatientName={!!calculator.patientName}
           user={user}
-          weight={parseFloat(calculator.weight) || 0}
-          height={parseFloat(calculator.height) || 0}
-          age={parseFloat(calculator.age) || 0}
+          weight={Number(calculator.weight) || 0}
+          height={Number(calculator.height) || 0}
+          age={Number(calculator.age) || 0}
           sex={calculator.gender === 'male' ? 'M' : 'F'}
         />
       </div>
