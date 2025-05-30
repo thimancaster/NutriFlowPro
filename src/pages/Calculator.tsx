@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { User, Plus, Database, Eye } from 'lucide-react';
-import { CalculatorProvider } from '@/contexts/CalculatorContext';
+import { CalculatorProvider } from '@/contexts/calculator/CalculatorContext';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
 
