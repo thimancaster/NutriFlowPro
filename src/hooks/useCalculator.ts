@@ -1,9 +1,11 @@
 
+
 import { useCalculatorForm } from '../components/calculator/hooks/useCalculatorForm';
 import { useNutritionCalculation } from './useNutritionCalculation';
 import { useCalculationSaver } from './useCalculationSaver';
 import { useMealPlanGeneration } from './useMealPlanGeneration';
 import { ActivityLevel, Objective } from '@/types/consultation';
+import { stringToProfile } from '@/components/calculator/utils/profileUtils';
 
 export const useCalculator = () => {
   const form = useCalculatorForm();
@@ -37,7 +39,7 @@ export const useCalculator = () => {
       form.gender === 'male' ? 'M' : 'F',
       form.activityLevel as ActivityLevel,
       form.objective as Objective,
-      form.profile
+      stringToProfile(form.profile)
     );
 
     return results;
@@ -138,3 +140,4 @@ export const useCalculator = () => {
     isFormValid
   };
 };
+
