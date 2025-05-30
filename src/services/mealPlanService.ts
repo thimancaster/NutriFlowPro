@@ -151,114 +151,98 @@ export class MealPlanService {
   }
 
   /**
-   * Create a new meal plan
+   * Create a new meal plan using atomic RPC function
    */
   static async createMealPlan(
     mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>
   ): Promise<MealPlanResponse> {
     try {
-      // First create the meal plan
-      const { data: mealPlan, error: mealPlanError } = await supabase
-        .from('meal_plans')
-        .insert({
-          user_id: mealPlanData.user_id,
-          patient_id: mealPlanData.patient_id,
-          calculation_id: mealPlanData.calculation_id,
-          date: mealPlanData.date,
-          total_calories: mealPlanData.total_calories,
-          total_protein: mealPlanData.total_protein,
-          total_carbs: mealPlanData.total_carbs,
-          total_fats: mealPlanData.total_fats,
-          notes: mealPlanData.notes,
-          is_template: mealPlanData.is_template,
-          day_of_week: mealPlanData.day_of_week,
-          meals: '[]'
-        })
-        .select()
-        .single();
+      // Prepare meal plan data
+      const planData = {
+        user_id: mealPlanData.user_id,
+        patient_id: mealPlanData.patient_id,
+        calculation_id: mealPlanData.calculation_id,
+        date: mealPlanData.date,
+        total_calories: mealPlanData.total_calories,
+        total_protein: mealPlanData.total_protein,
+        total_carbs: mealPlanData.total_carbs,
+        total_fats: mealPlanData.total_fats,
+        notes: mealPlanData.notes,
+        is_template: mealPlanData.is_template,
+        day_of_week: mealPlanData.day_of_week
+      };
 
-      if (mealPlanError) {
-        console.error('Error creating meal plan:', mealPlanError);
-        return { success: false, error: mealPlanError.message };
+      // Prepare meal plan items data
+      const itemsData = this.flattenMealsToItems('', mealPlanData.meals);
+
+      // Call the atomic RPC function
+      const { data: mealPlanId, error } = await supabase.rpc('create_meal_plan_with_items', {
+        p_meal_plan_data: planData,
+        p_meal_plan_items_data: itemsData
+      });
+
+      if (error) {
+        console.error('Error in RPC create_meal_plan_with_items:', error);
+        return { success: false, error: error.message };
       }
 
-      // Create meal plan items if meals are provided
-      if (mealPlanData.meals && mealPlanData.meals.length > 0) {
-        const items = this.flattenMealsToItems(mealPlan.id, mealPlanData.meals);
-        
-        const { error: itemsError } = await supabase
-          .from('meal_plan_items')
-          .insert(items);
-
-        if (itemsError) {
-          console.error('Error creating meal plan items:', itemsError);
-          // Try to cleanup the meal plan
-          await supabase.from('meal_plans').delete().eq('id', mealPlan.id);
-          return { success: false, error: itemsError.message };
-        }
+      if (!mealPlanId) {
+        return { success: false, error: 'RPC function did not return meal plan ID' };
       }
 
-      return { success: true, data: { ...mealPlan, meals: mealPlanData.meals } as MealPlan };
+      // Fetch the complete created meal plan
+      return this.getMealPlan(mealPlanId);
+
     } catch (error: any) {
-      console.error('Error in createMealPlan:', error);
+      console.error('Error creating meal plan:', error);
       return { success: false, error: error.message };
     }
   }
 
   /**
-   * Update a meal plan
+   * Update a meal plan using atomic RPC function
    */
   static async updateMealPlan(
     id: string, 
     updates: Partial<MealPlan>
   ): Promise<MealPlanResponse> {
     try {
-      // Update meal plan basic data
-      const { data: mealPlan, error: updateError } = await supabase
-        .from('meal_plans')
-        .update({
-          total_calories: updates.total_calories,
-          total_protein: updates.total_protein,
-          total_carbs: updates.total_carbs,
-          total_fats: updates.total_fats,
-          notes: updates.notes,
-          is_template: updates.is_template,
-          day_of_week: updates.day_of_week
-        })
-        .eq('id', id)
-        .select()
-        .single();
+      // Prepare meal plan data
+      const planData = {
+        date: updates.date,
+        total_calories: updates.total_calories,
+        total_protein: updates.total_protein,
+        total_carbs: updates.total_carbs,
+        total_fats: updates.total_fats,
+        notes: updates.notes,
+        is_template: updates.is_template,
+        day_of_week: updates.day_of_week
+      };
 
-      if (updateError) {
-        console.error('Error updating meal plan:', updateError);
-        return { success: false, error: updateError.message };
+      // Prepare meal plan items data
+      const itemsData = updates.meals ? this.flattenMealsToItems('', updates.meals) : [];
+
+      // Call the atomic RPC function
+      const { data: success, error } = await supabase.rpc('update_meal_plan_with_items', {
+        p_meal_plan_id: id,
+        p_meal_plan_data: planData,
+        p_meal_plan_items_data: itemsData
+      });
+
+      if (error) {
+        console.error('Error in RPC update_meal_plan_with_items:', error);
+        return { success: false, error: error.message };
       }
 
-      // If meals are being updated, replace all items
-      if (updates.meals) {
-        // Delete existing items
-        await supabase
-          .from('meal_plan_items')
-          .delete()
-          .eq('meal_plan_id', id);
-
-        // Insert new items
-        const items = this.flattenMealsToItems(id, updates.meals);
-        if (items.length > 0) {
-          const { error: itemsError } = await supabase
-            .from('meal_plan_items')
-            .insert(items);
-
-          if (itemsError) {
-            console.error('Error updating meal plan items:', itemsError);
-            return { success: false, error: itemsError.message };
-          }
-        }
+      if (!success) {
+        return { success: false, error: 'RPC function failed to update meal plan' };
       }
 
-      return { success: true, data: { ...mealPlan, meals: updates.meals || [] } as MealPlan };
+      // Fetch the complete updated meal plan
+      return this.getMealPlan(id);
+
     } catch (error: any) {
-      console.error('Error in updateMealPlan:', error);
+      console.error('Error updating meal plan:', error);
       return { success: false, error: error.message };
     }
   }
@@ -369,7 +353,6 @@ export class MealPlanService {
     meals.forEach(meal => {
       meal.foods.forEach((food: any, index: number) => {
         items.push({
-          meal_plan_id: mealPlanId,
           meal_type: meal.type,
           food_id: food.food_id,
           food_name: food.name,

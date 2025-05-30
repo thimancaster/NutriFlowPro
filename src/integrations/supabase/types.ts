@@ -1022,6 +1022,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      create_meal_plan_with_items: {
+        Args: { p_meal_plan_data: Json; p_meal_plan_items_data: Json }
+        Returns: string
+      }
       generate_meal_plan: {
         Args: {
           p_user_id: string
@@ -1081,6 +1085,14 @@ export type Database = {
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
+      }
+      update_meal_plan_with_items: {
+        Args: {
+          p_meal_plan_id: string
+          p_meal_plan_data: Json
+          p_meal_plan_items_data: Json
+        }
+        Returns: boolean
       }
     }
     Enums: {
