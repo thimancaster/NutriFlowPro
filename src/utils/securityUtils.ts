@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import DOMPurify from 'dompurify';
 
 /**
  * Security utility functions
@@ -60,7 +61,30 @@ export const logSecurityEvent = async (
 };
 
 /**
- * Sanitize input to prevent XSS
+ * Sanitizes HTML content using DOMPurify to prevent XSS attacks.
+ * This is a secure method that removes dangerous elements and attributes.
+ */
+export const sanitizeHtml = (html: string): string => {
+  if (!html || typeof html !== 'string') return '';
+  
+  // Configure DOMPurify with secure settings
+  const config = {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'blockquote', 'a', 'span', 'div'
+    ],
+    ALLOWED_ATTR: ['href', 'title', 'class'],
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'style'],
+    KEEP_CONTENT: false
+  };
+  
+  return DOMPurify.sanitize(html, config);
+};
+
+/**
+ * Sanitize input to prevent XSS (for text content, not HTML)
  */
 export const sanitizeInput = (input: string): string => {
   if (typeof input !== 'string') return '';
@@ -200,4 +224,25 @@ export const generateSecureToken = (length: number = 32): string => {
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+};
+
+/**
+ * Test function for XSS prevention - for development/testing only
+ */
+export const testXssPrevention = (): void => {
+  if (process.env.NODE_ENV !== 'development') return;
+  
+  const xssPayloads = [
+    '<script>alert("XSS")</script>',
+    '<img src=x onerror=alert("XSS")>',
+    '<iframe src="javascript:alert(\'XSS\')"></iframe>',
+    '<svg onload=alert("XSS")>',
+    '<div onclick="alert(\'XSS\')">Click me</div>'
+  ];
+  
+  console.log('Testing XSS prevention:');
+  xssPayloads.forEach((payload, index) => {
+    const sanitized = sanitizeHtml(payload);
+    console.log(`Test ${index + 1}: ${payload} => ${sanitized}`);
+  });
 };

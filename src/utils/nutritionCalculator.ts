@@ -6,10 +6,9 @@ import {
   calculateTMB,
   calculateGET,
   calculateVET,
-  validateNutritionInputs,
-  mapProfileToCalculation
+  validateNutritionInputs
 } from './nutritionCalculations';
-import { calculateMacros as calculateMacrosFromModule } from './nutrition/macroCalculations';
+import { calculateMacros as calculateMacrosFromModule, mapProfileToCalculation } from './nutrition/macroCalculations';
 import { 
   Profile, 
   ActivityLevel, 
@@ -20,7 +19,7 @@ import {
  * DEPRECATED: Use calculateTMB from nutritionCalculations instead
  */
 export const calculateBMR = (weight: number, height: number, age: number, sex: 'M' | 'F'): number => {
-  const result = calculateTMB(weight, height, age, sex, 'magro');
+  const result = calculateTMB(weight, height, age, sex, 'eutrofico');
   return result.tmb;
 };
 
@@ -28,7 +27,7 @@ export const calculateBMR = (weight: number, height: number, age: number, sex: '
  * DEPRECATED: Use calculateGET from nutritionCalculations instead
  */
 export const calculateTDEE = (bmr: number, activityLevel: ActivityLevel): number => {
-  return calculateGET(bmr, activityLevel, 'magro');
+  return calculateGET(bmr, activityLevel, 'eutrofico');
 };
 
 /**
@@ -38,7 +37,7 @@ export const applyObjectiveAdjustment = (tdee: number, objective: Objective, cus
   if (objective === 'personalizado' && customVET !== undefined && customVET > 0) {
     return customVET;
   }
-  const result = calculateVET(tdee, 'moderado', objective, 'magro');
+  const result = calculateVET(tdee, 'moderado', objective, 'eutrofico');
   return result.vet;
 };
 
