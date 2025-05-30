@@ -1,206 +1,115 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, Flame, Dumbbell, Utensils } from 'lucide-react';
-import { CalculatorForm, ActivityForm, ResultsDisplay } from './components';
-import { PatientDataHandler } from './components/PatientDataHandler';
-import { CalculatorFooter } from './components/CalculatorFooter';
-import { useCalculationSaveHandler } from './components/CalculationSaveHandler';
-import { useMealPlanHandler } from './components/MealPlanHandler';
-import useCalculatorState from './hooks/useCalculatorState';
-import { Patient } from '@/types';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { CalculatorInputs } from './CalculatorInputs';
+import { CalculatorResults } from './CalculatorResults';
+import { useCalculatorState } from './hooks/useCalculatorState';
+import { useCalculatorForm } from './hooks/useCalculatorForm';
+import { useCalculatorResults } from './hooks/useCalculatorResults';
+import { Patient } from '@/types';
+import PatientDataHandler from './components/PatientDataHandler';
 
-interface CalculatorToolProps {
-  patientData?: Patient | null;
-  onViewProfile?: () => void;
-}
-
-const CalculatorTool: React.FC<CalculatorToolProps> = ({ patientData, onViewProfile }) => {
+const CalculatorTool: React.FC = () => {
   const { user } = useAuth();
-  
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [tempPatientId, setTempPatientId] = useState<string | null>(null);
+
+  // Estados do formulário
   const {
-    activeTab,
-    weight,
-    height,
+    patientName,
+    setPatientName,
+    gender,
+    setGender,
     age,
-    sex,
-    activityLevel,
+    setAge,
+    weight,
+    setWeight,
+    height,
+    setHeight,
     objective,
-    profile,
-    tmbValue,
-    teeObject,
-    macros,
-    calorieSummary,
-    showResults,
-    isCalculating,
-    handleProfileChange,
-    handleInputChange,
-    handleCalculate,
-    handleReset,
-    setActiveTab,
-    setSex,
-    setActivityLevel,
     setObjective,
-    formulaUsed
-  } = useCalculatorState();
-
-  // State management for patient data sync
-  const [patientName, setPatientName] = React.useState<string>('');
-  const [stateWeight, setStateWeight] = React.useState<string>('');
-  const [stateHeight, setStateHeight] = React.useState<string>('');
-  const [stateAge, setStateAge] = React.useState<string>('');
-  const [isSaving, setIsSaving] = React.useState<boolean>(false);
-
-  // Initialize save handler
-  const { handleSaveCalculation } = useCalculationSaveHandler({
-    patientData,
-    user,
-    weight,
-    height,
-    age,
-    sex,
     activityLevel,
-    objective,
-    tmbValue,
-    teeObject,
-    macros,
-    isSaving,
-    onSavingChange: setIsSaving
-  });
+    setActivityLevel,
+    consultationType,
+    setConsultationType,
+    profile,
+    setProfile
+  } = useCalculatorForm();
 
-  // Initialize meal plan handler
-  const { handleGenerateMealPlan } = useMealPlanHandler({
-    patientData,
+  // Estados dos resultados
+  const {
+    bmr,
+    setBmr,
+    tee,
+    setTee,
+    macros,
+    setMacros
+  } = useCalculatorResults({
+    setBmr: (value: number) => setBmr(value),
+    setTee: (value: number) => setTee(value),
+    setMacros: (value: any) => setMacros(value),
+    toast: { toast: () => {}, dismiss: () => {} },
     user,
-    teeObject,
-    macros,
-    tmbValue,
-    objective,
-    onSaveCalculation: () => Promise.resolve(handleSaveCalculation())
+    tempPatientId,
+    setTempPatientId
   });
 
-  // Fix the tab change handler to accept string and convert to proper type
-  const handleTabChange = (value: string) => {
-    if (value === 'tmb' || value === 'activity' || value === 'results') {
-      setActiveTab(value);
-    }
-  };
-
-  // Fix the async handler
-  const handleSaveCalculationWrapper = async (): Promise<void> => {
-    await handleSaveCalculation();
-  };
-  
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       <PatientDataHandler
-        patientData={patientData}
-        onPatientNameChange={setPatientName}
-        onWeightChange={setStateWeight}
-        onHeightChange={setStateHeight}
-        onAgeChange={setStateAge}
-        onSexChange={setSex}
-        onInputChange={handleInputChange}
-      />
-      
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-6 w-6" />
-          Calculadora Nutricional
-        </CardTitle>
-        <CardDescription>
-          Calcule TMB, GET e distribuição de macronutrientes para seus pacientes
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="tmb" disabled={isCalculating}>
-              <span className="flex items-center gap-1">
-                <Flame className="h-4 w-4" />
-                <span className="hidden sm:inline">Dados</span> Básicos
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="activity" disabled={isCalculating || !tmbValue}>
-              <span className="flex items-center gap-1">
-                <Dumbbell className="h-4 w-4" />
-                <span className="hidden sm:inline">Atividade</span> Física
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="results" disabled={isCalculating || !showResults}>
-              <span className="flex items-center gap-1">
-                <Utensils className="h-4 w-4" />
-                Resultados
-              </span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tmb" className="space-y-6">
-            <CalculatorForm 
-              weight={typeof weight === 'number' ? weight : 0}
-              height={typeof height === 'number' ? height : 0}
-              age={typeof age === 'number' ? age : 0}
-              sex={sex}
-              profile={profile}
-              isCalculating={isCalculating}
-              onInputChange={handleInputChange}
-              onSexChange={setSex}
-              onProfileChange={handleProfileChange}
-              onCalculate={handleCalculate}
-              patientSelected={!!patientData}
-            />
-          </TabsContent>
-          
-          <TabsContent value="activity" className="space-y-6">
-            <ActivityForm 
-              activityLevel={activityLevel}
-              objective={objective}
-              tmbValue={tmbValue}
-              isCalculating={isCalculating}
-              onActivityLevelChange={setActivityLevel}
-              onObjectiveChange={setObjective}
-              onCalculate={handleCalculate}
-            />
-          </TabsContent>
-          
-          <TabsContent value="results" className="space-y-6">
-            {showResults && (
-              <ResultsDisplay 
-                teeObject={teeObject}
-                macros={macros}
-                calorieSummary={calorieSummary}
-                objective={objective}
-                onSavePatient={handleSaveCalculationWrapper}
-                onGenerateMealPlan={handleGenerateMealPlan}
-                isSaving={isSaving}
-                patientId={patientData?.id}
-                weight={typeof weight === 'number' ? weight : undefined}
-                height={typeof height === 'number' ? height : undefined}
-                age={typeof age === 'number' ? age : undefined}
-                sex={sex}
-                bodyProfile={profile}
-                activityLevel={activityLevel}
-                tmb={tmbValue || undefined}
-                formulaUsed={formulaUsed}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      
-      <CalculatorFooter
-        showResults={showResults}
-        patientData={patientData}
-        onViewProfile={onViewProfile}
-        onSaveCalculation={handleSaveCalculationWrapper}
-        onGenerateMealPlan={handleGenerateMealPlan}
-        onReset={handleReset}
-        isSaving={isSaving}
-      />
-    </Card>
+        selectedPatient={selectedPatient}
+        patientName={patientName}
+        setPatientName={setPatientName}
+        weight={weight}
+        setWeight={setWeight}
+        height={height}
+        setHeight={setHeight}
+        age={age}
+        setAge={setAge}
+        gender={gender}
+        setGender={setGender}
+        activityLevel={activityLevel}
+        setActivityLevel={setActivityLevel}
+        objective={objective}
+        setObjective={setObjective}
+        consultationType={consultationType}
+        setConsultationType={setConsultationType}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Inputs do Calculador */}
+          <CalculatorInputs
+            patientName={patientName}
+            setPatientName={setPatientName}
+            gender={gender}
+            setGender={setGender}
+            age={age}
+            setAge={setAge}
+            weight={weight}
+            setWeight={setWeight}
+            height={height}
+            setHeight={setHeight}
+            objective={objective}
+            setObjective={setObjective}
+            activityLevel={activityLevel}
+            setActivityLevel={setActivityLevel}
+            consultationType={consultationType}
+            setConsultationType={setConsultationType}
+            profile={profile}
+            setProfile={setProfile}
+            user={user}
+            activePatient={selectedPatient}
+          />
+
+          {/* Resultados do Calculador */}
+          <CalculatorResults
+            bmr={bmr}
+            tee={{ get: tee, vet: tee, adjustment: 0 }}
+            macros={macros}
+            user={user}
+          />
+        </div>
+      </PatientDataHandler>
+    </div>
   );
 };
 

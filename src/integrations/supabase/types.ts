@@ -87,6 +87,13 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_anthropometry_patient_id"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
         ]
       }
       appointments: {
@@ -156,6 +163,13 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_appointments_patient_id"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
         ]
       }
       calculation_history: {
@@ -166,6 +180,7 @@ export type Database = {
           calculation_date: string
           carbs_g: number
           carbs_kcal: number
+          consultation_number: number | null
           created_at: string
           fat_g: number
           fat_kcal: number
@@ -192,6 +207,7 @@ export type Database = {
           calculation_date?: string
           carbs_g: number
           carbs_kcal: number
+          consultation_number?: number | null
           created_at?: string
           fat_g: number
           fat_kcal: number
@@ -218,6 +234,7 @@ export type Database = {
           calculation_date?: string
           carbs_g?: number
           carbs_kcal?: number
+          consultation_number?: number | null
           created_at?: string
           fat_g?: number
           fat_kcal?: number
@@ -240,6 +257,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "calculation_history_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_calculation_history_patient_id"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -330,6 +354,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_calculations_patient_id"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
@@ -481,6 +512,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_meal_plan_items_food_id"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_meal_plan_items_meal_plan_id"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "meal_plan_items_food_id_fkey"
             columns: ["food_id"]
             isOneToOne: false
@@ -549,6 +594,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_meal_plans_calculation_id"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_meal_plans_patient_id"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "meal_plans_patient_id_fkey"
             columns: ["patient_id"]
@@ -687,6 +746,13 @@ export type Database = {
           weight?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_measurements_patient_id"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "measurements_patient_id_fkey"
             columns: ["patient_id"]
@@ -971,6 +1037,26 @@ export type Database = {
       get_food_ids: {
         Args: { food_names: string[] }
         Returns: string[]
+      }
+      get_patient_last_consultation: {
+        Args: { p_patient_id: string }
+        Returns: {
+          consultation_number: number
+          weight: number
+          height: number
+          age: number
+          sex: string
+          body_profile: string
+          activity_level: string
+          objective: string
+          tmb: number
+          get_value: number
+          vet: number
+          protein_g: number
+          carbs_g: number
+          fat_g: number
+          calculation_date: string
+        }[]
       }
       get_subscription_status: {
         Args: { user_id: string }
