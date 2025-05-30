@@ -19,6 +19,5 @@ export {
   CalculatorInputs, 
   MacroDistributionInputs, 
   CalculatorResults,
-  CalculatorActions,
-  useCalculatorState 
+  CalculatorActions
 } from './calculator';
