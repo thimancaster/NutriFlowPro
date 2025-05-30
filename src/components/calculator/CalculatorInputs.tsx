@@ -35,17 +35,8 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
   user,
   activePatient
 }) => {
-  // Use active patient data if available
-  React.useEffect(() => {
-    if (activePatient && !patientName) {
-      setPatientName(activePatient.name || '');
-      setGender(activePatient.gender === 'male' ? 'male' : 'female');
-      setAge(activePatient.age?.toString() || '');
-      setWeight(activePatient.weight?.toString() || '');
-      setHeight(activePatient.height?.toString() || '');
-    }
-  }, [activePatient, patientName]);
-
+  // Remove auto-population effect - fields should always start empty
+  
   return (
     <Card>
       <CardHeader>

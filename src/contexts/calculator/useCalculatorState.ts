@@ -1,16 +1,15 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
-import { stringToProfile } from '@/components/calculator/utils/profileUtils';
 import { calculateCompleteNutrition } from '@/utils/nutritionCalculations';
 
 const initialState: CalculatorState = {
-  weight: 70,
-  height: 170,
-  age: 30,
-  sex: 'M',
+  weight: 0,
+  height: 0,
+  age: 0,
+  sex: 'F',
   activityLevel: 'moderado',
   objective: 'manutenção',
   profile: 'eutrofico',
@@ -27,41 +26,6 @@ const initialState: CalculatorState = {
 export const useCalculatorState = () => {
   const [state, setState] = useState<CalculatorState>(initialState);
   const { toast } = useToast();
-  
-  // Load saved calculator state from localStorage
-  useEffect(() => {
-    try {
-      const savedState = localStorage.getItem('calculatorState');
-      if (savedState) {
-        const parsedState = JSON.parse(savedState);
-        // Ensure profile is valid
-        if (parsedState.profile) {
-          parsedState.profile = stringToProfile(parsedState.profile);
-        }
-        setState(prevState => ({ ...prevState, ...parsedState }));
-      }
-    } catch (error) {
-      console.error('Failed to load calculator state:', error);
-    }
-  }, []);
-  
-  // Save state to localStorage when it changes
-  useEffect(() => {
-    try {
-      const stateToSave = {
-        weight: state.weight,
-        height: state.height,
-        age: state.age,
-        sex: state.sex,
-        activityLevel: state.activityLevel,
-        objective: state.objective,
-        profile: state.profile
-      };
-      localStorage.setItem('calculatorState', JSON.stringify(stateToSave));
-    } catch (error) {
-      console.error('Failed to save calculator state:', error);
-    }
-  }, [state.weight, state.height, state.age, state.sex, state.activityLevel, state.objective, state.profile]);
   
   const setWeight = (weight: number) => {
     setState(prev => ({ ...prev, weight, calculated: false }));
@@ -154,7 +118,10 @@ export const useCalculatorState = () => {
   
   const resetCalculator = () => {
     setState(initialState);
+    // Clear localStorage
     localStorage.removeItem('calculatorState');
+    localStorage.removeItem('calculatorFormState');
+    localStorage.removeItem('calculatorResults');
   };
   
   return {

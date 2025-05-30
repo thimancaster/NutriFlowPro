@@ -10,12 +10,18 @@ import { User, Plus, Database, Eye } from 'lucide-react';
 import { CalculatorProvider } from '@/contexts/calculator/CalculatorContext';
 import PatientBanner from '@/components/patient/PatientBanner';
 import ContextualNavigation from '@/components/patient/ContextualNavigation';
+import { clearCalculatorDataOnStart } from '@/components/calculator/storageUtils';
 
 const CalculatorPage = () => {
   const { activePatient, loadPatientById } = usePatient();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patientId');
   const navigate = useNavigate();
+
+  // Clear calculator data on page load to ensure empty fields
+  useEffect(() => {
+    clearCalculatorDataOnStart();
+  }, []);
 
   // Load patient if patientId is provided in URL but not active yet
   useEffect(() => {

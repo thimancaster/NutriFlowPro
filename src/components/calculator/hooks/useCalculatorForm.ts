@@ -1,22 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CalculatorState } from '../types';
 import { getInitialCalculatorState } from '../utils/initialState';
-import { getCalculatorState, saveCalculatorState } from '../storageUtils';
 
 /**
- * Hook to manage calculator form state
+ * Hook to manage calculator form state - always starts with empty fields
  */
 export const useCalculatorForm = () => {
-  // Try to restore state from storage on initial render
-  const [calculatorState, setCalculatorState] = useState<CalculatorState>(() => {
-    return getCalculatorState() || getInitialCalculatorState();
-  });
-  
-  // Save state to storage whenever it changes
-  useEffect(() => {
-    saveCalculatorState(calculatorState);
-  }, [calculatorState]);
+  // Always start with empty initial state
+  const [calculatorState, setCalculatorState] = useState<CalculatorState>(getInitialCalculatorState);
   
   // Destructure state values for easier access
   const {
@@ -49,6 +41,29 @@ export const useCalculatorForm = () => {
   const setConsultationType = (value: 'primeira_consulta' | 'retorno') => 
     setCalculatorState(prev => ({ ...prev, consultationType: value }));
 
+  // Reset function to clear all fields
+  const resetForm = () => {
+    setCalculatorState(getInitialCalculatorState());
+    // Clear all localStorage entries related to calculator
+    localStorage.removeItem('calculatorState');
+    localStorage.removeItem('calculatorFormState');
+    localStorage.removeItem('calculatorResults');
+  };
+
+  // Optional function to populate from patient data (manual action)
+  const populateFromPatient = (patientData: any) => {
+    if (patientData) {
+      setCalculatorState(prev => ({
+        ...prev,
+        patientName: patientData.name || '',
+        weight: patientData.weight?.toString() || '',
+        height: patientData.height?.toString() || '',
+        age: patientData.age?.toString() || '',
+        gender: patientData.gender === 'male' ? 'male' : 'female'
+      }));
+    }
+  };
+
   return {
     // State values
     patientName,
@@ -76,6 +91,10 @@ export const useCalculatorForm = () => {
     setProteinPercentage,
     setFatPercentage,
     setProfile,
-    setConsultationType
+    setConsultationType,
+    
+    // Actions
+    resetForm,
+    populateFromPatient
   };
 };

@@ -2,7 +2,7 @@
 import { CalculatorState } from '../types';
 
 /**
- * Returns the initial state for the calculator
+ * Returns the initial state for the calculator with empty fields
  */
 export const getInitialCalculatorState = (): CalculatorState => {
   return {
@@ -12,9 +12,9 @@ export const getInitialCalculatorState = (): CalculatorState => {
     gender: 'female',
     activityLevel: 'moderado',
     objective: 'manutenção',
-    carbsPercentage: '50', // Changed to string
-    proteinPercentage: '25', // Changed to string
-    fatPercentage: '25', // Changed to string
+    carbsPercentage: '',
+    proteinPercentage: '',
+    fatPercentage: '',
     patientName: '',
     consultationType: 'primeira_consulta',
     lowCarbOption: false,

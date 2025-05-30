@@ -6,7 +6,19 @@ import { logger } from '@/utils/logger';
 const CALCULATOR_STATE_KEY = 'calculatorState';
 const CALCULATOR_RESULTS_KEY = 'calculatorResults';
 
-// Save calculator state to localStorage
+// Clear all calculator data from localStorage on app start
+export function clearCalculatorDataOnStart(): void {
+  try {
+    localStorage.removeItem(CALCULATOR_STATE_KEY);
+    localStorage.removeItem(CALCULATOR_RESULTS_KEY);
+    localStorage.removeItem('calculatorFormState');
+    console.log('Calculator data cleared from localStorage');
+  } catch (error) {
+    logger.error('Error clearing calculator data:', error);
+  }
+}
+
+// Save calculator state to localStorage (optional - not used by default)
 export function saveCalculatorState(state: CalculatorState): void {
   try {
     localStorage.setItem(CALCULATOR_STATE_KEY, JSON.stringify(state));
@@ -15,15 +27,10 @@ export function saveCalculatorState(state: CalculatorState): void {
   }
 }
 
-// Get calculator state from localStorage
+// Get calculator state from localStorage (returns null to ensure empty fields)
 export function getCalculatorState(): CalculatorState | null {
-  try {
-    const savedState = localStorage.getItem(CALCULATOR_STATE_KEY);
-    return savedState ? JSON.parse(savedState) : null;
-  } catch (error) {
-    logger.error('Error getting calculator state:', error);
-    return null;
-  }
+  // Always return null to ensure fields start empty
+  return null;
 }
 
 // Save calculator results to localStorage
@@ -66,6 +73,7 @@ export function clearCalculatorData(): void {
   try {
     localStorage.removeItem(CALCULATOR_STATE_KEY);
     localStorage.removeItem(CALCULATOR_RESULTS_KEY);
+    localStorage.removeItem('calculatorFormState');
   } catch (error) {
     logger.error('Error clearing calculator data:', error);
   }
