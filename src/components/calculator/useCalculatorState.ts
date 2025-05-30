@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
@@ -24,9 +25,20 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   const [tee, setTee] = useState<number | null>(null);
   const [macros, setMacros] = useState<{carbs: number; protein: number; fat: number; proteinPerKg: number} | null>(null);
   
-  // Get form state and handlers
+  // Get form state and handlers - now getting individual properties
   const {
-    calculatorState,
+    patientName,
+    gender,
+    age,
+    weight,
+    height,
+    objective,
+    activityLevel,
+    consultationType,
+    profile,
+    carbsPercentage,
+    proteinPercentage,
+    fatPercentage,
     setPatientName,
     setGender,
     setAge,
@@ -96,7 +108,20 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   };
   
   // Calculate results function
-  const calculateResults = async (state: CalculatorState) => {
+  const calculateResults = async (formData: {
+    patientName: string;
+    gender: "male" | "female";
+    age: string;
+    weight: string;
+    height: string;
+    objective: string;
+    activityLevel: string;
+    consultationType: string;
+    profile: string;
+    carbsPercentage: string;
+    proteinPercentage: string;
+    fatPercentage: string;
+  }) => {
     setIsCalculating(true);
     
     try {
@@ -106,10 +131,10 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       // Perform calculations using the state and the calculateMacros function from useCalculatorResults
       const calculatedMacros = calculateMacros(
         calculatedTee,
-        state.proteinPercentage,
-        state.carbPercentage,
-        state.fatPercentage,
-        parseFloat(state.weight.toString()) // Convert string to number
+        formData.proteinPercentage,
+        formData.carbsPercentage,
+        formData.fatPercentage,
+        parseFloat(formData.weight) // Convert string to number
       );
 
       // Update state with calculated values
@@ -148,7 +173,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       return;
     }
     
-    if (!calculatorState.patientName) {
+    if (!patientName) {
       toast.toast({
         title: 'Nome do paciente é obrigatório',
         description: 'Digite o nome do paciente antes de salvar.',
@@ -165,11 +190,11 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       // Save patient data
       const patientData = {
         id: patientId,
-        name: calculatorState.patientName,
-        age: parseInt(calculatorState.age),
-        weight: parseFloat(calculatorState.weight.toString()),
-        height: parseInt(calculatorState.height.toString()),
-        gender: calculatorState.gender,
+        name: patientName,
+        age: parseInt(age),
+        weight: parseFloat(weight),
+        height: parseInt(height),
+        gender: gender,
         user_id: user?.id
       };
       
@@ -178,9 +203,9 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
       // Now check result and handle accordingly
       if (result && 'success' in result && result.success) {
         // Convert macros percentages to numbers for calculation
-        const carbsPercentage = parseInt(calculatorState.carbPercentage || '0');
-        const proteinPercentage = parseInt(calculatorState.proteinPercentage || '0');
-        const fatPercentage = parseInt(calculatorState.fatPercentage || '0');
+        const carbsPercentageNum = parseInt(carbsPercentage || '0');
+        const proteinPercentageNum = parseInt(proteinPercentage || '0');
+        const fatPercentageNum = parseInt(fatPercentage || '0');
         
         const currentTee = tee || 0;
         const currentMacros = macros || { carbs: 0, protein: 0, fat: 0, proteinPerKg: 0 };
@@ -190,19 +215,19 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
           user_id: user?.id,
           patient_id: patientId,
           date: new Date(),
-          weight: parseFloat(calculatorState.weight.toString()),
-          height: parseInt(calculatorState.height.toString()),
-          age: parseInt(calculatorState.age),
-          gender: calculatorState.gender,
-          activity_level: calculatorState.activityLevel,
-          objective: calculatorState.objective,
-          consultation_type: calculatorState.consultationType,
+          weight: parseFloat(weight),
+          height: parseInt(height),
+          age: parseInt(age),
+          gender: gender,
+          activity_level: activityLevel,
+          objective: objective,
+          consultation_type: consultationType,
           bmr: bmr || 0,
           vet: currentTee,
-          carbs_percentage: carbsPercentage,
-          protein_percentage: proteinPercentage,
-          fat_percentage: fatPercentage,
-          patient: { name: calculatorState.patientName },
+          carbs_percentage: carbsPercentageNum,
+          protein_percentage: proteinPercentageNum,
+          fat_percentage: fatPercentageNum,
+          patient: { name: patientName },
           results: {
             get: currentTee,
             adjustment: 500,
@@ -215,7 +240,7 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
         
         toast.toast({
           title: 'Paciente salvo',
-          description: `${calculatorState.patientName} foi salvo com sucesso.`,
+          description: `${patientName} foi salvo com sucesso.`,
         });
         
         return { patientId, ...result };
@@ -236,7 +261,21 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
   };
   
   return {
-    calculatorState,
+    // Form state values
+    patientName,
+    gender,
+    age,
+    weight,
+    height,
+    objective,
+    activityLevel,
+    consultationType,
+    profile,
+    carbsPercentage,
+    proteinPercentage,
+    fatPercentage,
+    
+    // Form setters
     setPatientName,
     setGender,
     setAge,
@@ -250,6 +289,8 @@ const useCalculatorState = ({ toast, user, setConsultationData, activePatient }:
     // Return the type-safe setter instead of the original
     setProfile: setProfileSafely,
     setConsultationType,
+    
+    // Calculation state
     isCalculating,
     calculateResults,
     clearCalculatorData,
