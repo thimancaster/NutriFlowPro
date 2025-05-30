@@ -23,20 +23,40 @@ import { TourGuide } from "@/components/tour-guide/TourGuide";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuth(); // Changed from signOut to logout
+  const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', className: 'dashboard-section' },
+    { name: 'Dashboard', href: '/dashboard', className: 'dashboard-section', exact: true },
     { name: 'Pacientes', href: '/patients', className: 'patients-link' },
-    { name: 'Calculadora', href: '/calculator', className: 'calculator-link' },
+    { name: 'Calculadora', href: '/calculator', className: 'calculator-link', exact: true },
     { name: 'Planos Alimentares', href: '/meal-plans', className: 'meal-plans-link' },
-    { name: 'Agendamentos', href: '/appointments', className: 'appointments-link' },
+    { name: 'Agendamentos', href: '/appointments', className: 'appointments-link', exact: true },
   ];
 
-  const isActive = (path: string) => {
-    return location.pathname.startsWith(path);
+  const isActive = (itemHref: string, isExact?: boolean) => {
+    // Se for uma correspondência exata, ou se a rota for a raiz
+    if (isExact || itemHref === '/') {
+      return location.pathname === itemHref;
+    }
+
+    // Para rotas como /patients que podem ter sub-rotas como /patients/new
+    // ou /clinical que tem /clinical/:patientId
+    // Certifica-se de que não estamos ativando "/patients" para "/patient-history" por exemplo
+    if (location.pathname.startsWith(itemHref)) {
+      // Se o itemHref é apenas "/patients" e o pathname é "/patients", ou
+      // se o pathname é "/patients/new" e itemHref é "/patients"
+      // Precisa garantir que não ative "/patients" se o pathname for algo como "/patient-history"
+      if (location.pathname === itemHref) return true; // Correspondência exata da base
+
+      // Verifica se o próximo caractere após o prefixo é um '/'
+      const afterHref = location.pathname.substring(itemHref.length);
+      if (afterHref.startsWith('/')) {
+        return true;
+      }
+    }
+    return false;
   };
 
   const toggleMobileMenu = () => {
@@ -44,7 +64,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const handleSignOut = async () => {
-    await logout(); // Changed from signOut to logout
+    await logout();
   };
 
   return (
@@ -74,7 +94,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       to={item.href}
                       className={cn(
                         "text-sm font-medium transition-colors hover:text-primary",
-                        isActive(item.href)
+                        isActive(item.href, item.exact)
                           ? "text-primary"
                           : "text-muted-foreground",
                         item.className
@@ -148,7 +168,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       to={item.href}
                       className={cn(
                         "text-sm font-medium transition-colors hover:text-primary p-2 rounded-md",
-                        isActive(item.href)
+                        isActive(item.href, item.exact)
                           ? "bg-secondary text-primary"
                           : "text-muted-foreground",
                         item.className
