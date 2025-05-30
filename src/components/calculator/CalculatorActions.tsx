@@ -10,20 +10,23 @@ interface CalculatorActionsProps {
 
 const CalculatorActions = ({ isCalculating, calculateResults }: CalculatorActionsProps) => {
   return (
-    <Button 
-      onClick={calculateResults} 
-      variant="primary"
-      animation="shimmer"
-      disabled={isCalculating}
-      className="flex items-center gap-2"
-    >
-      {isCalculating ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Calculator className="h-4 w-4" />
-      )}
-      {isCalculating ? "Calculando..." : "Calcular"}
-    </Button>
+    <div className="flex justify-center">
+      <Button 
+        onClick={calculateResults} 
+        variant="primary"
+        animation="shimmer"
+        disabled={isCalculating}
+        className="flex items-center gap-2 w-full max-w-md"
+        size="lg"
+      >
+        {isCalculating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Calculator className="h-4 w-4" />
+        )}
+        {isCalculating ? "Calculando..." : "Calcular"}
+      </Button>
+    </div>
   );
 };
 

@@ -1,100 +1,98 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import CalculatorInputs from './CalculatorInputs';
 import CalculatorResults from './CalculatorResults';
-import { useCalculatorForm } from './hooks/useCalculatorForm';
-import { useCalculatorResults } from './hooks/useCalculatorResults';
-import { Patient } from '@/types';
-import PatientDataHandler from './components/PatientDataHandler';
+import CalculatorActions from './CalculatorActions';
+import { useCalculator } from '@/hooks/useCalculator';
+import { Card, CardContent } from '@/components/ui/card';
 
 const CalculatorTool: React.FC = () => {
   const { user } = useAuth();
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [tempPatientId, setTempPatientId] = useState<string | null>(null);
+  const { activePatient } = usePatient();
+  
+  const calculator = useCalculator();
 
-  // Estados do formulário
-  const {
-    patientName,
-    setPatientName,
-    gender,
-    setGender,
-    age,
-    setAge,
-    weight,
-    setWeight,
-    height,
-    setHeight,
-    objective,
-    setObjective,
-    activityLevel,
-    setActivityLevel,
-    consultationType,
-    setConsultationType,
-    profile,
-    setProfile
-  } = useCalculatorForm();
+  const handleCalculate = async () => {
+    await calculator.performCalculation();
+  };
 
-  // Estados dos resultados - usando useState simples
-  const [bmr, setBmr] = useState<number>(0);
-  const [tee, setTee] = useState<{ get: number; vet: number; adjustment: number }>({ get: 0, vet: 0, adjustment: 0 });
-  const [macros, setMacros] = useState<any>(null);
+  const handleSavePatient = async () => {
+    if (!user || !calculator.patientName) return;
+    
+    // Aqui você pode implementar a lógica de salvar paciente
+    console.log('Saving patient...');
+  };
+
+  const handleGenerateMealPlan = async () => {
+    if (!user || !activePatient) return;
+    
+    await calculator.generateMealPlan(user.id, activePatient.id);
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <PatientDataHandler
-        selectedPatient={selectedPatient}
-        patientName={patientName}
-        setPatientName={setPatientName}
-        weight={weight}
-        setWeight={setWeight}
-        height={height}
-        setHeight={setHeight}
-        age={age}
-        setAge={setAge}
-        gender={gender}
-        setGender={setGender}
-        activityLevel={activityLevel}
-        setActivityLevel={setActivityLevel}
-        objective={objective}
-        setObjective={setObjective}
-        consultationType={consultationType}
-        setConsultationType={setConsultationType}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Inputs do Calculador */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Inputs do Calculador */}
+        <div className="space-y-6">
           <CalculatorInputs
-            patientName={patientName}
-            setPatientName={setPatientName}
-            gender={gender}
-            setGender={setGender}
-            age={age}
-            setAge={setAge}
-            weight={weight}
-            setWeight={setWeight}
-            height={height}
-            setHeight={setHeight}
-            objective={objective}
-            setObjective={setObjective}
-            activityLevel={activityLevel}
-            setActivityLevel={setActivityLevel}
-            consultationType={consultationType}
-            setConsultationType={setConsultationType}
-            profile={profile}
-            setProfile={setProfile}
+            patientName={calculator.patientName}
+            setPatientName={calculator.setPatientName}
+            gender={calculator.gender}
+            setGender={calculator.setGender}
+            age={calculator.age}
+            setAge={calculator.setAge}
+            weight={calculator.weight}
+            setWeight={calculator.setWeight}
+            height={calculator.height}
+            setHeight={calculator.setHeight}
+            objective={calculator.objective}
+            setObjective={calculator.setObjective}
+            activityLevel={calculator.activityLevel}
+            setActivityLevel={calculator.setActivityLevel}
+            consultationType={calculator.consultationType}
+            setConsultationType={calculator.setConsultationType}
+            profile={calculator.profile}
+            setProfile={calculator.setProfile}
             user={user}
-            activePatient={selectedPatient}
+            activePatient={activePatient}
           />
-
-          {/* Resultados do Calculador */}
-          <CalculatorResults
-            bmr={bmr}
-            tee={tee}
-            macros={macros}
-            user={user}
-          />
+          
+          {/* Botão Calcular */}
+          <Card>
+            <CardContent className="pt-6">
+              <CalculatorActions
+                isCalculating={calculator.isCalculating}
+                calculateResults={handleCalculate}
+              />
+            </CardContent>
+          </Card>
         </div>
-      </PatientDataHandler>
+
+        {/* Resultados do Calculador */}
+        <CalculatorResults
+          bmr={calculator.results?.tmb || 0}
+          tee={{
+            get: calculator.results?.get || 0,
+            vet: calculator.results?.vet || 0,
+            adjustment: calculator.results?.adjustment || 0
+          }}
+          macros={calculator.results?.macros || null}
+          carbsPercentage={calculator.carbsPercentage}
+          proteinPercentage={calculator.proteinPercentage}
+          fatPercentage={calculator.fatPercentage}
+          handleSavePatient={handleSavePatient}
+          handleGenerateMealPlan={handleGenerateMealPlan}
+          isSavingPatient={calculator.isSaving}
+          hasPatientName={!!calculator.patientName}
+          user={user}
+          weight={parseFloat(calculator.weight) || 0}
+          height={parseFloat(calculator.height) || 0}
+          age={parseFloat(calculator.age) || 0}
+          sex={calculator.gender === 'male' ? 'M' : 'F'}
+        />
+      </div>
     </div>
   );
 };

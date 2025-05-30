@@ -1,5 +1,4 @@
 
-
 import { useCalculatorForm } from '../components/calculator/hooks/useCalculatorForm';
 import { useNutritionCalculation } from './useNutritionCalculation';
 import { useCalculationSaver } from './useCalculationSaver';
@@ -13,7 +12,7 @@ export const useCalculator = () => {
   const saver = useCalculationSaver();
   const mealPlan = useMealPlanGeneration();
 
-  // Simple validation function since isFormValid doesn't exist in the new interface
+  // Simple validation function
   const isFormValid = () => {
     return form.weight.trim() !== '' && 
            form.height.trim() !== '' && 
@@ -94,7 +93,7 @@ export const useCalculator = () => {
   };
 
   return {
-    // Form state - individual properties instead of formState object
+    // Form state - individual properties
     patientName: form.patientName,
     gender: form.gender,
     age: form.age,
@@ -140,4 +139,3 @@ export const useCalculator = () => {
     isFormValid
   };
 };
-

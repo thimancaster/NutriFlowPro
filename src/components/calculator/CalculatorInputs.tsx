@@ -35,7 +35,6 @@ const CalculatorInputs: React.FC<CalculatorInputsProps> = ({
   user,
   activePatient
 }) => {
-  // Remove auto-population effect - fields should always start empty
   
   return (
     <Card>
