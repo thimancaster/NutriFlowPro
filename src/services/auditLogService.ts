@@ -1,5 +1,5 @@
-// Simplified audit service without database dependency for now
-// This will log to console until we decide if we need the database table
+// Enhanced audit service with better security logging
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AuditLogEntry {
   id?: string;
@@ -23,9 +23,10 @@ export interface SecurityEvent {
 
 class AuditLogService {
   private events: SecurityEvent[] = [];
+  private maxMemoryEvents = 1000;
 
   /**
-   * Log a security/audit event (console only for now)
+   * Log a security/audit event
    */
   async logEvent(entry: Omit<AuditLogEntry, 'id' | 'created_at'>): Promise<boolean> {
     try {
@@ -37,20 +38,110 @@ class AuditLogService {
         created_at: new Date().toISOString()
       };
 
-      // Store in memory for now
+      // Store in memory for immediate access
       this.events.unshift(event);
       
-      // Keep only last 100 events in memory
-      if (this.events.length > 100) {
-        this.events = this.events.slice(0, 100);
+      // Keep only recent events in memory
+      if (this.events.length > this.maxMemoryEvents) {
+        this.events = this.events.slice(0, this.maxMemoryEvents);
       }
 
-      console.log('Security Event:', event);
+      // Try to persist to Supabase (Edge Function)
+      try {
+        await this.persistToDatabase(event);
+      } catch (dbError) {
+        console.warn('Failed to persist audit log to database:', dbError);
+        // Continue with in-memory logging
+      }
+
+      // Console log for development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔒 Security Event:', event);
+      }
+
       return true;
     } catch (error) {
       console.error('Error in logEvent:', error);
       return false;
     }
+  }
+
+  /**
+   * Persist audit log to database via Edge Function
+   */
+  private async persistToDatabase(event: SecurityEvent): Promise<void> {
+    try {
+      const { error } = await supabase.functions.invoke('audit-logger', {
+        body: { event }
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      // Fail silently for audit logs to not break main functionality
+      console.warn('Audit log persistence failed:', error);
+    }
+  }
+
+  /**
+   * Log premium access attempt
+   */
+  async logPremiumAccess(userId: string, feature: string, action: string, allowed: boolean, reason?: string) {
+    return this.logEvent({
+      user_id: userId,
+      event_type: allowed ? 'premium_access_granted' : 'premium_access_denied',
+      event_data: {
+        feature,
+        action,
+        reason,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  /**
+   * Log quota violation attempt
+   */
+  async logQuotaViolation(userId: string, quotaType: string, current: number, limit: number) {
+    return this.logEvent({
+      user_id: userId,
+      event_type: 'quota_violation',
+      event_data: {
+        quota_type: quotaType,
+        current_usage: current,
+        limit,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  /**
+   * Log rate limiting event
+   */
+  async logRateLimit(userId: string, endpoint: string, attemptCount: number) {
+    return this.logEvent({
+      user_id: userId,
+      event_type: 'rate_limit_exceeded',
+      event_data: {
+        endpoint,
+        attempt_count: attemptCount,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+
+  /**
+   * Log suspicious activity
+   */
+  async logSuspiciousActivity(userId: string, activity: string, details: any) {
+    return this.logEvent({
+      user_id: userId,
+      event_type: 'suspicious_activity',
+      event_data: {
+        activity,
+        details,
+        timestamp: new Date().toISOString()
+      }
+    });
   }
 
   /**
@@ -132,18 +223,27 @@ class AuditLogService {
   }
 
   /**
-   * Get recent security events (from memory for now)
+   * Get recent security events (from memory)
    */
   async getSecurityEvents(limit: number = 100): Promise<SecurityEvent[]> {
     return this.events.slice(0, limit);
   }
 
   /**
-   * Get events by user
+   * Get events by user (from memory)
    */
   async getUserEvents(userId: string, limit: number = 50): Promise<SecurityEvent[]> {
     return this.events
       .filter(event => event.user_id === userId)
+      .slice(0, limit);
+  }
+
+  /**
+   * Get events by type
+   */
+  async getEventsByType(eventType: string, limit: number = 50): Promise<SecurityEvent[]> {
+    return this.events
+      .filter(event => event.event_type === eventType)
       .slice(0, limit);
   }
 
@@ -158,6 +258,34 @@ class AuditLogService {
     } catch {
       return 'unknown';
     }
+  }
+
+  /**
+   * Clear memory events (for testing or privacy)
+   */
+  clearMemoryEvents(): void {
+    this.events = [];
+  }
+
+  /**
+   * Get statistics about security events
+   */
+  getSecurityStats(): {
+    totalEvents: number;
+    eventTypes: Record<string, number>;
+    recentActivity: SecurityEvent[];
+  } {
+    const eventTypes: Record<string, number> = {};
+    
+    this.events.forEach(event => {
+      eventTypes[event.event_type] = (eventTypes[event.event_type] || 0) + 1;
+    });
+
+    return {
+      totalEvents: this.events.length,
+      eventTypes,
+      recentActivity: this.events.slice(0, 10)
+    };
   }
 }
 
