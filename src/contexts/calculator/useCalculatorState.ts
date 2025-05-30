@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { calculateCompleteNutrition } from '@/utils/nutritionCalculations';
 
 const initialState: CalculatorState = {
