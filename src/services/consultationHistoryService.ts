@@ -41,7 +41,7 @@ export const consultationHistoryService = {
         weight: item.weight,
         height: item.height,
         age: item.age,
-        sex: item.sex,
+        sex: (item.sex as 'M' | 'F') || 'F', // Type assertion with fallback
         body_profile: item.body_profile,
         activity_level: item.activity_level,
         objective: item.objective,
@@ -83,7 +83,7 @@ export const consultationHistoryService = {
         weight: consultation.weight,
         height: consultation.height,
         age: consultation.age,
-        sex: consultation.sex,
+        sex: (consultation.sex as 'M' | 'F') || 'F', // Type assertion with fallback
         body_profile: consultation.body_profile,
         activity_level: consultation.activity_level,
         objective: consultation.objective,

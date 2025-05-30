@@ -18,6 +18,22 @@ export const useCalculatorForm = () => {
     saveCalculatorState(calculatorState);
   }, [calculatorState]);
   
+  // Destructure state values for easier access
+  const {
+    patientName,
+    gender,
+    age,
+    weight,
+    height,
+    objective,
+    activityLevel,
+    consultationType,
+    profile,
+    carbsPercentage,
+    proteinPercentage,
+    fatPercentage
+  } = calculatorState;
+  
   // Setter functions for each state property
   const setPatientName = (value: string) => setCalculatorState(prev => ({ ...prev, patientName: value }));
   const setGender = (value: "male" | "female") => setCalculatorState(prev => ({ ...prev, gender: value }));
@@ -34,7 +50,21 @@ export const useCalculatorForm = () => {
     setCalculatorState(prev => ({ ...prev, consultationType: value }));
 
   return {
-    calculatorState,
+    // State values
+    patientName,
+    gender,
+    age,
+    weight,
+    height,
+    objective,
+    activityLevel,
+    consultationType,
+    profile,
+    carbsPercentage,
+    proteinPercentage,
+    fatPercentage,
+    
+    // Setters
     setPatientName,
     setGender,
     setAge,

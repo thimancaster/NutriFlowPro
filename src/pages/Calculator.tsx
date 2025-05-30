@@ -108,7 +108,7 @@ const CalculatorPage = () => {
       </Card>
       
       <CalculatorProvider>
-        <CalculatorTool patientData={activePatient} onViewProfile={handleViewPatientProfile} />
+        <CalculatorTool />
       </CalculatorProvider>
     </div>
   );

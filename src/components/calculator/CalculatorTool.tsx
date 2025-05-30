@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { CalculatorInputs } from './CalculatorInputs';
-import { CalculatorResults } from './CalculatorResults';
-import { useCalculatorState } from './hooks/useCalculatorState';
+import CalculatorInputs from './CalculatorInputs';
+import CalculatorResults from './CalculatorResults';
 import { useCalculatorForm } from './hooks/useCalculatorForm';
 import { useCalculatorResults } from './hooks/useCalculatorResults';
 import { Patient } from '@/types';
@@ -36,23 +35,10 @@ const CalculatorTool: React.FC = () => {
     setProfile
   } = useCalculatorForm();
 
-  // Estados dos resultados
-  const {
-    bmr,
-    setBmr,
-    tee,
-    setTee,
-    macros,
-    setMacros
-  } = useCalculatorResults({
-    setBmr: (value: number) => setBmr(value),
-    setTee: (value: number) => setTee(value),
-    setMacros: (value: any) => setMacros(value),
-    toast: { toast: () => {}, dismiss: () => {} },
-    user,
-    tempPatientId,
-    setTempPatientId
-  });
+  // Estados dos resultados - usando useState simples
+  const [bmr, setBmr] = useState<number>(0);
+  const [tee, setTee] = useState<{ get: number; vet: number; adjustment: number }>({ get: 0, vet: 0, adjustment: 0 });
+  const [macros, setMacros] = useState<any>(null);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -103,7 +89,7 @@ const CalculatorTool: React.FC = () => {
           {/* Resultados do Calculador */}
           <CalculatorResults
             bmr={bmr}
-            tee={{ get: tee, vet: tee, adjustment: 0 }}
+            tee={tee}
             macros={macros}
             user={user}
           />
