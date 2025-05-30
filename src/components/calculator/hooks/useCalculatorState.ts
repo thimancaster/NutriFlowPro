@@ -4,6 +4,7 @@ import { Profile } from '@/types/consultation';
 import { Patient } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { calculateCompleteNutrition } from '@/utils/nutritionCalculations';
+import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
 import { stringToProfile } from '../utils/profileUtils';
 
 interface CalculatorFormData {
@@ -107,14 +108,17 @@ const useCalculatorState = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // UI feedback
 
-      const nutritionResults = calculateCompleteNutrition(
+      // Map profile to calculation type
+      const mappedProfile = mapProfileToCalculation(formData.profile);
+      
+      const nutritionResults = await calculateCompleteNutrition(
         formData.weight,
         formData.height,
         formData.age,
         formData.sex,
         formData.activityLevel as any,
         formData.objective as any,
-        formData.profile
+        mappedProfile
       );
 
       const calculationResults: CalculationResults = {
@@ -123,7 +127,7 @@ const useCalculatorState = () => {
           tmb: nutritionResults.tmb,
           get: nutritionResults.get,
           vet: nutritionResults.vet,
-          adjustment: nutritionResults.get - nutritionResults.tmb
+          adjustment: nutritionResults.adjustment
         },
         macros: {
           protein: nutritionResults.macros.protein,
@@ -137,7 +141,7 @@ const useCalculatorState = () => {
           carbsCalories: nutritionResults.macros.carbs.kcal,
           fatCalories: nutritionResults.macros.fat.kcal
         },
-        formulaUsed: nutritionResults.formulaUsed
+        formulaUsed: nutritionResults.formula
       };
 
       setResults(calculationResults);
@@ -146,7 +150,7 @@ const useCalculatorState = () => {
 
       toast({
         title: "Cálculo realizado com sucesso",
-        description: `Utilizada fórmula: ${nutritionResults.formulaUsed}`,
+        description: `Utilizada fórmula: ${nutritionResults.formula}`,
       });
 
     } catch (error) {

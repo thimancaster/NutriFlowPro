@@ -6,7 +6,7 @@
 
 import { calculateTMB, TMBResult } from './tmbCalculations';
 import { calculateVET, VETResult } from './vetCalculations';
-import { calculateMacros, MacroResult } from './macroCalculations';
+import { calculateMacros, MacroResult, mapProfileToCalculation } from './macroCalculations';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 export interface CompleteNutritionResult {
@@ -81,6 +81,11 @@ export async function calculateCompleteNutrition(
     }
   };
 }
+
+/**
+ * Helper function to map frontend profile to calculation profile
+ */
+export { mapProfileToCalculation };
 
 /**
  * Gera recomendações específicas baseadas no perfil e objetivos
