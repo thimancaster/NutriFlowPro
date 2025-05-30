@@ -1,85 +1,60 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { PREMIUM_CHECK_CONSTANTS } from './constants';
 
 /**
- * Improved hook to manage premium status cache operations with throttling
+ * Hook to manage premium status cache operations using React Query
  */
 export const useCacheManager = () => {
-  // In-memory cache to reduce localStorage reads
-  const memCache = useRef<Map<string, {value: boolean, timestamp: number}>>(new Map());
+  const queryClient = useQueryClient();
   
   /**
-   * Get premium status from cache
+   * Get premium status from React Query cache
    */
   const getPremiumFromCache = useCallback((userId: string): boolean | undefined => {
-    // First check in-memory cache for faster access
-    const memCached = memCache.current.get(userId);
-    if (memCached && Date.now() - memCached.timestamp < PREMIUM_CHECK_CONSTANTS.CACHE_TTL) {
-      logger.debug(`Using memory cached premium status for ${userId}: ${memCached.value}`);
-      return memCached.value;
+    const cacheKey = ['premium-status', userId];
+    const cachedData = queryClient.getQueryData<{ value: boolean; timestamp: number }>(cacheKey);
+    
+    if (cachedData && Date.now() - cachedData.timestamp < PREMIUM_CHECK_CONSTANTS.CACHE_TTL) {
+      logger.debug(`Using cached premium status for ${userId}: ${cachedData.value}`);
+      return cachedData.value;
     }
     
-    // Then check localStorage
-    try {
-      const cacheKey = `${PREMIUM_CHECK_CONSTANTS.CACHE_PREFIX}${userId}`;
-      const cachedData = localStorage.getItem(cacheKey);
-      
-      if (cachedData) {
-        const { value, timestamp } = JSON.parse(cachedData);
-        
-        // Check if cache is still valid
-        if (Date.now() - timestamp < PREMIUM_CHECK_CONSTANTS.CACHE_TTL) {
-          // Store in memory cache for future fast access
-          memCache.current.set(userId, { value, timestamp });
-          logger.debug(`Using localStorage cached premium status for ${userId}: ${value}`);
-          return value;
-        }
-      }
-      return undefined;
-    } catch (error) {
-      logger.error('Error reading from cache:', error);
-      return undefined;
-    }
-  }, []);
+    return undefined;
+  }, [queryClient]);
   
   /**
-   * Save premium status to cache
+   * Save premium status to React Query cache
    */
   const savePremiumToCache = useCallback((userId: string, isPremium: boolean): void => {
     try {
-      const now = Date.now();
+      const cacheKey = ['premium-status', userId];
       const cacheData = {
         value: isPremium,
-        timestamp: now
+        timestamp: Date.now()
       };
       
-      // Update memory cache
-      memCache.current.set(userId, cacheData);
-      
-      // Update localStorage
-      const cacheKey = `${PREMIUM_CHECK_CONSTANTS.CACHE_PREFIX}${userId}`;
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      queryClient.setQueryData(cacheKey, cacheData);
       logger.debug(`Saved premium status to cache for ${userId}: ${isPremium}`);
     } catch (error) {
       logger.error('Error saving to cache:', error);
     }
-  }, []);
+  }, [queryClient]);
   
   /**
    * Clear cache for a specific user
    */
   const clearUserCache = useCallback((userId: string): void => {
-    memCache.current.delete(userId);
     try {
-      const cacheKey = `${PREMIUM_CHECK_CONSTANTS.CACHE_PREFIX}${userId}`;
-      localStorage.removeItem(cacheKey);
+      const cacheKey = ['premium-status', userId];
+      queryClient.removeQueries({ queryKey: cacheKey });
       logger.debug(`Cleared premium status cache for ${userId}`);
     } catch (error) {
       logger.error('Error clearing cache:', error);
     }
-  }, []);
+  }, [queryClient]);
   
   return {
     getPremiumFromCache,

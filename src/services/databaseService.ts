@@ -1,5 +1,4 @@
 
-import { dbCache } from "./dbCache";
 import { PatientService } from "./patient";
 import { consultationService } from "./consultationService";
 import { mealPlanService } from './mealPlanService';
@@ -7,6 +6,7 @@ import { mealPlanService } from './mealPlanService';
 /**
  * Service to handle all database interactions
  * This acts as a facade for all the individual domain services
+ * Cache is now handled by React Query instead of localStorage
  */
 export const DatabaseService = {
   // Patient-related operations
@@ -28,14 +28,5 @@ export const DatabaseService = {
   getPatientMealPlans: mealPlanService.getPatientMealPlans,
   getMealPlan: async (planId: string, userId: string) => {
     return mealPlanService.getMealPlanById(planId, userId);
-  },
-  
-  /**
-   * Clear all database service caches
-   */
-  clearCache: (): void => {
-    Object.values(dbCache.KEYS).forEach(keyPrefix => {
-      dbCache.invalidate(keyPrefix);
-    });
   }
 };

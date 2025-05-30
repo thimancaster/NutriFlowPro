@@ -19,7 +19,7 @@ import {
  * DEPRECATED: Use calculateTMB from nutritionCalculations instead
  */
 export const calculateBMR = (weight: number, height: number, age: number, sex: 'M' | 'F'): number => {
-  const result = calculateTMB(weight, height, age, sex, 'eutrofico');
+  const result = calculateTMB(weight, height, age, sex, mapProfileToCalculation('eutrofico'));
   return result.tmb;
 };
 
@@ -27,7 +27,7 @@ export const calculateBMR = (weight: number, height: number, age: number, sex: '
  * DEPRECATED: Use calculateGET from nutritionCalculations instead
  */
 export const calculateTDEE = (bmr: number, activityLevel: ActivityLevel): number => {
-  return calculateGET(bmr, activityLevel, 'eutrofico');
+  return calculateGET(bmr, activityLevel, mapProfileToCalculation('eutrofico'));
 };
 
 /**
@@ -37,7 +37,7 @@ export const applyObjectiveAdjustment = (tdee: number, objective: Objective, cus
   if (objective === 'personalizado' && customVET !== undefined && customVET > 0) {
     return customVET;
   }
-  const result = calculateVET(tdee, 'moderado', objective, 'eutrofico');
+  const result = calculateVET(tdee, 'moderado', objective, mapProfileToCalculation('eutrofico'));
   return result.vet;
 };
 
