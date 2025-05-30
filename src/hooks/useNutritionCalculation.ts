@@ -1,27 +1,20 @@
 
 import { useState } from 'react';
-import { Profile, ActivityLevel, Objective } from '@/types/consultation';
-import { calculateCompleteNutrition, validateNutritionInputs } from '@/utils/nutritionCalculations';
-import { useToast } from '@/hooks/use-toast';
+import { calculateCompleteNutrition, CompleteNutritionResult, validateAllParameters } from '@/utils/nutrition/completeCalculation';
+import { ActivityLevel, Objective } from '@/types/consultation';
 
-interface NutritionResults {
-  tmb: number;
-  get: number;
-  vet: number;
-  adjustment: number;
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number };
-    carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg: number;
-  };
-  formulaUsed: string;
+export interface NutritionCalculationState {
+  results: CompleteNutritionResult | null;
+  isCalculating: boolean;
+  error: string | null;
 }
 
 export const useNutritionCalculation = () => {
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [results, setResults] = useState<NutritionResults | null>(null);
-  const { toast } = useToast();
+  const [state, setState] = useState<NutritionCalculationState>({
+    results: null,
+    isCalculating: false,
+    error: null
+  });
 
   const calculate = async (
     weight: number,
@@ -30,62 +23,75 @@ export const useNutritionCalculation = () => {
     sex: 'M' | 'F',
     activityLevel: ActivityLevel,
     objective: Objective,
-    profile: Profile
-  ): Promise<NutritionResults | null> => {
-    setIsCalculating(true);
-    
+    profile: 'magro' | 'obeso' | 'atleta',
+    customMacroPercentages?: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    }
+  ): Promise<CompleteNutritionResult | null> => {
+    setState(prev => ({ ...prev, isCalculating: true, error: null }));
+
     try {
-      // Validar inputs
-      const validationError = validateNutritionInputs(weight, height, age);
-      if (validationError) {
-        toast({
-          title: 'Dados Inválidos',
-          description: validationError,
-          variant: 'destructive'
-        });
-        return null;
+      // Validar parâmetros
+      const validation = validateAllParameters(weight, height, age, sex, activityLevel, objective, profile);
+      
+      if (!validation.isValid) {
+        throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
       }
 
-      // Realizar cálculos usando a função modular consolidada
-      const calculationResults = calculateCompleteNutrition(
+      // Executar cálculo
+      const results = await calculateCompleteNutrition(
         weight,
         height,
         age,
         sex,
         activityLevel,
         objective,
-        profile
+        profile,
+        customMacroPercentages
       );
 
-      setResults(calculationResults);
-      
-      toast({
-        title: 'Cálculo Realizado',
-        description: `Necessidades nutricionais calculadas usando ${calculationResults.formulaUsed}`,
+      setState({
+        results,
+        isCalculating: false,
+        error: null
       });
 
-      return calculationResults;
-    } catch (error: any) {
-      console.error('Erro no cálculo nutricional:', error);
-      toast({
-        title: 'Erro no Cálculo',
-        description: 'Ocorreu um erro ao calcular os valores nutricionais',
-        variant: 'destructive'
+      console.log('Cálculo nutricional concluído:', {
+        formula: results.formula,
+        tmb: results.tmb,
+        vet: results.vet,
+        profile,
+        recommendations: results.recommendations
       });
+
+      return results;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
+      
+      setState({
+        results: null,
+        isCalculating: false,
+        error: errorMessage
+      });
+
+      console.error('Erro no cálculo nutricional:', error);
       return null;
-    } finally {
-      setIsCalculating(false);
     }
   };
 
   const reset = () => {
-    setResults(null);
+    setState({
+      results: null,
+      isCalculating: false,
+      error: null
+    });
   };
 
   return {
+    ...state,
     calculate,
-    reset,
-    isCalculating,
-    results
+    reset
   };
 };

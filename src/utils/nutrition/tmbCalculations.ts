@@ -1,50 +1,177 @@
 
-import { Profile } from '@/types/consultation';
+/**
+ * TMB (Taxa Metabólica Basal) Calculations
+ * Implementa diferentes fórmulas de cálculo baseadas no perfil do paciente
+ */
+
+export interface TMBResult {
+  tmb: number;
+  formula: string;
+  details: {
+    weight: number;
+    height: number;
+    age: number;
+    sex: 'M' | 'F';
+    profile: string;
+  };
+}
 
 /**
- * Calcula TMB usando a fórmula correta baseada no perfil
+ * Calcula TMB usando diferentes fórmulas baseadas no perfil
  */
-export const calculateTMB = (weight: number, height: number, age: number, sex: 'M' | 'F', profile: Profile): number => {
-  if (weight <= 0 || height <= 0 || age <= 0) {
-    throw new Error('Weight, height, and age must be positive values');
-  }
-  
+export function calculateTMB(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F',
+  profile: 'magro' | 'obeso' | 'atleta'
+): TMBResult {
   let tmb: number;
-  
+  let formula: string;
+
   switch (profile) {
-    case 'eutrofico':
-      // Harris-Benedict revisada para perfil eutrófico - constantes corrigidas conforme planilha
-      if (sex === 'M') {
-        tmb = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
-      } else {
-        tmb = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
-      }
-      break;
-      
-    case 'sobrepeso_obesidade':
-      // Harris-Benedict clássica para sobrepeso/obesidade conforme planilha original
-      if (sex === 'M') {
-        tmb = 66.5 + (13.75 * weight) + (5.003 * height) - (6.755 * age);
-      } else {
-        tmb = 655.1 + (9.563 * weight) + (1.850 * height) - (4.676 * age);
-      }
-      break;
-      
     case 'atleta':
-      // Cunningham para atletas (aproximação quando massa magra não disponível)
-      // Assumindo 10-15% de gordura corporal para atletas
-      const estimatedLeanMass = weight * 0.85; // 15% gordura
-      tmb = 500 + (22 * estimatedLeanMass);
+      // Para atletas, usar fórmula Cunningham (mais precisa para pessoas com baixo percentual de gordura)
+      // Como não temos % de gordura, usamos Katch-McArdle modificada ou Ten Haaf
+      tmb = calculateAthletesTMB(weight, height, age, sex);
+      formula = 'Ten Haaf (Atletas)';
       break;
       
+    case 'obeso':
+      // Para obesos, usar fórmula Mifflin-St Jeor (mais precisa para obesidade)
+      tmb = calculateMifflinStJeor(weight, height, age, sex);
+      formula = 'Mifflin-St Jeor (Obesidade)';
+      break;
+      
+    case 'magro':
     default:
-      // Fallback para Harris-Benedict revisada - constantes corrigidas conforme planilha
-      if (sex === 'M') {
-        tmb = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
-      } else {
-        tmb = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
-      }
+      // Para pessoas eutróficas, usar Harris-Benedict revisada
+      tmb = calculateHarrisBenedictRevised(weight, height, age, sex);
+      formula = 'Harris-Benedict Revisada';
+      break;
   }
+
+  return {
+    tmb: Math.round(tmb),
+    formula,
+    details: {
+      weight,
+      height,
+      age,
+      sex,
+      profile
+    }
+  };
+}
+
+/**
+ * Fórmula Harris-Benedict Revisada (1984)
+ * Mais precisa que a versão original de 1919
+ */
+function calculateHarrisBenedictRevised(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F'
+): number {
+  if (sex === 'M') {
+    return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+  } else {
+    return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+  }
+}
+
+/**
+ * Fórmula Mifflin-St Jeor (1990)
+ * Considerada mais precisa para pessoas com sobrepeso/obesidade
+ */
+function calculateMifflinStJeor(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F'
+): number {
+  if (sex === 'M') {
+    return (10 * weight) + (6.25 * height) - (5 * age) + 5;
+  } else {
+    return (10 * weight) + (6.25 * height) - (5 * age) - 161;
+  }
+}
+
+/**
+ * Fórmula Ten Haaf adaptada para atletas
+ * Baseada em estudos recentes com atletas de alta performance
+ * Quando não temos massa magra, usamos estimativa baseada no perfil atlético
+ */
+function calculateAthletesTMB(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F'
+): number {
+  // Estimativa de massa magra para atletas (percentual de gordura baixo)
+  // Homens atletas: ~8-12% gordura, Mulheres atletas: ~14-20% gordura
+  const estimatedBodyFatPercentage = sex === 'M' ? 0.10 : 0.17;
+  const estimatedLeanMass = weight * (1 - estimatedBodyFatPercentage);
   
-  return Math.round(tmb);
-};
+  // Fórmula Ten Haaf adaptada para atletas
+  // TMB = 25.9 * LBM + 284 (para homens) ou 25.9 * LBM + 284 - ajuste para mulheres
+  if (sex === 'M') {
+    return (25.9 * estimatedLeanMass) + 284;
+  } else {
+    // Ajuste para mulheres baseado em diferenças metabólicas
+    return (22.1 * estimatedLeanMass) + 241;
+  }
+}
+
+/**
+ * Fórmula Cunningham (para quando temos massa magra)
+ * Mais precisa para atletas quando conhecemos a composição corporal
+ */
+export function calculateCunninghamTMB(leanBodyMass: number): number {
+  return 500 + (22 * leanBodyMass);
+}
+
+/**
+ * Validação dos parâmetros de entrada
+ */
+export function validateTMBParameters(
+  weight: number,
+  height: number,
+  age: number
+): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (weight <= 0 || weight > 500) {
+    errors.push('Peso deve estar entre 1 e 500 kg');
+  }
+
+  if (height <= 0 || height > 250) {
+    errors.push('Altura deve estar entre 1 e 250 cm');
+  }
+
+  if (age <= 0 || age > 120) {
+    errors.push('Idade deve estar entre 1 e 120 anos');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Calcula múltiplas fórmulas para comparação
+ */
+export function calculateMultipleTMBFormulas(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F'
+): Record<string, number> {
+  return {
+    'Harris-Benedict Revisada': Math.round(calculateHarrisBenedictRevised(weight, height, age, sex)),
+    'Mifflin-St Jeor': Math.round(calculateMifflinStJeor(weight, height, age, sex)),
+    'Ten Haaf (Atletas)': Math.round(calculateAthletesTMB(weight, height, age, sex))
+  };
+}
