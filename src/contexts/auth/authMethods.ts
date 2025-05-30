@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
@@ -9,6 +8,7 @@ import { login, signInWithGoogle } from './methods/loginMethods';
 import { signup } from './methods/signupMethods';
 import { logout } from './methods/logoutMethod';
 import { resetPassword } from './methods/passwordMethods';
+import { auditLogService } from '@/services/auditLogService';
 
 export const useAuthMethods = (
   updateAuthState: (session: any, remember?: boolean) => Promise<void>,
@@ -52,5 +52,71 @@ export const useAuthMethods = (
     logout: handleLogout,
     resetPassword: handleResetPassword,
     signInWithGoogle: handleSignInWithGoogle
+  };
+};
+
+export const enhanceAuthMethods = (existingMethods: any) => {
+  return {
+    ...existingMethods,
+    
+    // Override login to include audit logging
+    login: async (email: string, password: string) => {
+      try {
+        const result = await existingMethods.login(email, password);
+        
+        if (result.success && result.user) {
+          // Log successful login
+          await auditLogService.logLoginAttempt(
+            result.user.id,
+            email,
+            true
+          );
+        }
+        
+        return result;
+      } catch (error: any) {
+        // Log failed login attempt
+        await auditLogService.logLoginAttempt(
+          'unknown',
+          email,
+          false,
+          error.message
+        );
+        throw error;
+      }
+    },
+    
+    // Override signup to include audit logging
+    signup: async (email: string, password: string, metadata?: any) => {
+      try {
+        const result = await existingMethods.signup(email, password, metadata);
+        
+        if (result.success && result.user) {
+          // Log successful signup
+          await auditLogService.logEvent({
+            user_id: result.user.id,
+            event_type: 'user_signup',
+            event_data: {
+              email,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+        
+        return result;
+      } catch (error: any) {
+        // Log failed signup attempt
+        await auditLogService.logEvent({
+          user_id: 'unknown',
+          event_type: 'signup_failed',
+          event_data: {
+            email,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          }
+        });
+        throw error;
+      }
+    }
   };
 };

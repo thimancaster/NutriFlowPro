@@ -1,18 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { isCurrentUserAdmin } from '@/utils/securityUtils';
-
-interface SecurityEvent {
-  id: string;
-  user_id: string;
-  event_type: string;
-  event_data: any;
-  ip_address?: string;
-  user_agent?: string;
-  created_at: string;
-}
+import { auditLogService, SecurityEvent } from '@/services/auditLogService';
 
 export const useSecurityAudit = () => {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
@@ -36,31 +26,24 @@ export const useSecurityAudit = () => {
     
     setIsLoading(true);
     try {
-      // For now, return mock data since the security_audit_log table 
-      // isn't recognized by TypeScript types yet
-      const mockEvents: SecurityEvent[] = [
-        {
-          id: '1',
-          user_id: user?.id || '',
-          event_type: 'login_success',
-          event_data: { email: user?.email },
-          created_at: new Date().toISOString()
-        }
-      ];
-      
-      setEvents(mockEvents);
-      
-      // TODO: Uncomment when database types are updated
-      // const { data, error } = await supabase
-      //   .from('security_audit_log')
-      //   .select('*')
-      //   .order('created_at', { ascending: false })
-      //   .limit(limit);
-
-      // if (error) throw error;
-      // setEvents(data || []);
+      const securityEvents = await auditLogService.getSecurityEvents(limit);
+      setEvents(securityEvents);
     } catch (error) {
       console.error('Error fetching security events:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUserEvents = async (userId: string, limit: number = 50) => {
+    if (!isAdmin) return;
+    
+    setIsLoading(true);
+    try {
+      const userEvents = await auditLogService.getUserEvents(userId, limit);
+      setEvents(userEvents);
+    } catch (error) {
+      console.error('Error fetching user events:', error);
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +62,7 @@ export const useSecurityAudit = () => {
     isLoading,
     isAdmin,
     fetchSecurityEvents,
+    fetchUserEvents,
     getEventsByType,
     getEventsByUser
   };
