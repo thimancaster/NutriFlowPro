@@ -8,6 +8,9 @@
 export * from './nutrition/enpCalculations';
 export * from './nutrition/cleanCalculations';
 
+// Exportar funções de antropometria
+export * from './nutrition/anthropometryCalculations';
+
 // Manter compatibilidade com sistema legado
 export { calculateCompleteNutrition } from './nutrition/completeCalculation';
 export { validateAllParameters } from './nutrition/completeCalculation';

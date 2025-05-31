@@ -111,6 +111,7 @@ const useCalculatorState = () => {
       // Map profile to calculation type
       const mappedProfile = mapProfileToCalculation(formData.profile);
       
+      // Remove await - calculateCompleteNutrition returns object directly, not Promise
       const nutritionResults = calculateCompleteNutrition(
         formData.weight,
         formData.height,
@@ -127,7 +128,7 @@ const useCalculatorState = () => {
           tmb: nutritionResults.tmb,
           get: nutritionResults.get,
           vet: nutritionResults.vet,
-          adjustment: nutritionResults.vet - nutritionResults.get // Calculate adjustment properly
+          adjustment: nutritionResults.vet - nutritionResults.get
         },
         macros: {
           protein: nutritionResults.macros.protein,
@@ -141,7 +142,7 @@ const useCalculatorState = () => {
           carbsCalories: nutritionResults.macros.carbs.kcal,
           fatCalories: nutritionResults.macros.fat.kcal
         },
-        formulaUsed: nutritionResults.formulaUsed || 'Unknown' // Use formulaUsed instead of formula
+        formulaUsed: nutritionResults.formulaUsed || 'Harris-Benedict Revisada'
       };
 
       setResults(calculationResults);
@@ -150,7 +151,7 @@ const useCalculatorState = () => {
 
       toast({
         title: "Cálculo realizado com sucesso",
-        description: `Utilizada fórmula: ${nutritionResults.formulaUsed || 'Unknown'}`, // Use formulaUsed
+        description: `Utilizada fórmula: ${nutritionResults.formulaUsed || 'Harris-Benedict Revisada'}`,
       });
 
     } catch (error) {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/toast';
-import { calculateCompleteNutrition } from '@/utils/nutritionCalculations';
+import { calculateCompleteNutrition, mapProfileToCalculation } from '@/utils/nutritionCalculations';
 
 const initialState: CalculatorState = {
   weight: 0,
@@ -76,7 +76,10 @@ export const useCalculatorState = () => {
           return;
         }
         
-        // Use the unified calculation function
+        // Map profile to calculation type before calling the function
+        const mappedProfile = mapProfileToCalculation(state.profile);
+        
+        // Remove await - calculateCompleteNutrition returns object directly, not Promise
         const results = calculateCompleteNutrition(
           state.weight,
           state.height,
@@ -84,7 +87,7 @@ export const useCalculatorState = () => {
           state.sex,
           state.activityLevel as any,
           state.objective as any,
-          state.profile
+          mappedProfile
         );
         
         setState(prev => ({
@@ -101,7 +104,7 @@ export const useCalculatorState = () => {
         
         toast({
           title: "Cálculo Realizado",
-          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed}`,
+          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed || 'Harris-Benedict Revisada'}`,
         });
         
       } catch (error) {
