@@ -1,16 +1,14 @@
 
 import React from 'react';
-import { logger } from '@/utils/logger';
 
 const MealPlanGenerator: React.FC = () => {
-  // Update the logger call to use proper formatting
-  const logGeneratorInfo = (settings: any) => {
-    logger.info('Generating meal plan with settings:', { details: settings });
-  };
-  
   return (
-    <div>
-      {/* Implementation will go here */}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Gerador de Plano Alimentar</h1>
+      <p className="text-gray-600">
+        Esta é uma versão básica do gerador de planos alimentares. 
+        A implementação completa está em /meal-plan-generator.
+      </p>
     </div>
   );
 };

@@ -71,10 +71,15 @@ export const useMealGeneratorState = () => {
     });
   };
 
+  const resetMealPlan = () => {
+    setMealPlan(null);
+  };
+
   return {
     mealPlan,
     generatorSettings,
     handleSettingsChange,
-    generateMealPlan
+    generateMealPlan,
+    resetMealPlan
   };
 };

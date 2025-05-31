@@ -45,13 +45,14 @@ const MealPlanGenerator: React.FC = () => {
           carbs: calculationData.carbs,
           fats: calculationData.fats,
           results: {
-            tmb: calculationData.bmr,
+            bmr: calculationData.bmr,
             get: calculationData.tdee,
             vet: calculationData.tdee,
+            adjustment: 0,
             macros: {
-              protein: { grams: calculationData.protein },
-              carbs: { grams: calculationData.carbs },
-              fat: { grams: calculationData.fats }
+              protein: calculationData.protein,
+              carbs: calculationData.carbs,
+              fat: calculationData.fats
             }
           },
           systemType: systemType || 'ENP',

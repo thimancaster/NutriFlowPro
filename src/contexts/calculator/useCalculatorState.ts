@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
-import { useToast } from '@/hooks/toast';
+import { useToast } from '@/hooks/use-toast';
 import { calculateCompleteNutrition, mapProfileToCalculation } from '@/utils/nutritionCalculations';
 
 const initialState: CalculatorState = {
@@ -79,7 +79,6 @@ export const useCalculatorState = () => {
         // Map profile to calculation type before calling the function
         const mappedProfile = mapProfileToCalculation(state.profile);
         
-        // Remove await - calculateCompleteNutrition returns object directly, not Promise
         const results = calculateCompleteNutrition(
           state.weight,
           state.height,
