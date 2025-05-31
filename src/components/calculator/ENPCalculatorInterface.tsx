@@ -5,16 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Calculator, Info } from 'lucide-react';
 import { ENPDataInputs } from './inputs/ENPDataInputs';
 import { ENPValidation } from './validation/ENPValidation';
+import { ENPResultsPanel } from './ENPResultsPanel';
 import { useCalculator } from '@/hooks/useCalculator';
 import { ActivityLevel, Objective } from '@/types/consultation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ENPCalculatorInterfaceProps {
   onCalculationComplete?: (results: any) => void;
+  onGenerateMealPlan?: () => void;
+  onExportResults?: () => void;
 }
 
 export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
-  onCalculationComplete
+  onCalculationComplete,
+  onGenerateMealPlan,
+  onExportResults
 }) => {
   // Estados para os 6 campos obrigatórios ENP
   const [weight, setWeight] = useState('');
@@ -60,6 +65,34 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
       }
     } catch (error) {
       console.error('Erro no cálculo ENP:', error);
+    }
+  };
+
+  const handleGenerateMealPlan = () => {
+    if (onGenerateMealPlan) {
+      onGenerateMealPlan();
+    }
+  };
+
+  const handleExportResults = () => {
+    if (onExportResults) {
+      onExportResults();
+    } else {
+      // Funcionalidade de exportação padrão
+      const exportData = {
+        timestamp: new Date().toISOString(),
+        patient: { weight: data.weight, height: data.height, age: data.age, sex: data.sex },
+        parameters: { activityLevel: data.activityLevel, objective: data.objective },
+        results: calculator.results
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `calculo-enp-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
   };
   
@@ -123,33 +156,14 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
         </CardContent>
       </Card>
       
-      {/* Resumo dos Cálculos ENP */}
+      {/* Resultados ENP */}
       {calculator.results && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Resultados ENP</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>TMB:</strong> {calculator.results.tmb} kcal
-                <div className="text-gray-500">Harris-Benedict Revisada</div>
-              </div>
-              <div>
-                <strong>GET:</strong> {calculator.results.get} kcal
-                <div className="text-gray-500">TMB × FA ({activityLevel})</div>
-              </div>
-              <div>
-                <strong>VET:</strong> {calculator.results.vet} kcal
-                <div className="text-gray-500">GET {calculator.results.adjustment >= 0 ? '+' : ''}{calculator.results.adjustment} kcal</div>
-              </div>
-              <div>
-                <strong>Proteína:</strong> {calculator.results.macros.protein.grams}g
-                <div className="text-gray-500">{calculator.results.macros.proteinPerKg}g/kg</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ENPResultsPanel
+          results={calculator.results}
+          weight={data.weight}
+          onGenerateMealPlan={handleGenerateMealPlan}
+          onExportResults={handleExportResults}
+        />
       )}
     </div>
   );
