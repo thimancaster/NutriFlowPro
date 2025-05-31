@@ -9,7 +9,25 @@ export interface NutritionCalculationState {
   error: string | null;
 }
 
-export const useNutritionCalculation = () => {
+export interface UseCalculatorReturn extends NutritionCalculationState {
+  calculate: (
+    weight: number,
+    height: number,
+    age: number,
+    sex: 'M' | 'F',
+    activityLevel: ActivityLevel,
+    objective: Objective,
+    profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
+    customMacroPercentages?: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    }
+  ) => Promise<CompleteNutritionResult | null>;
+  reset: () => void;
+}
+
+export const useCalculator = (): UseCalculatorReturn => {
   const [state, setState] = useState<NutritionCalculationState>({
     results: null,
     isCalculating: false,
@@ -62,10 +80,12 @@ export const useNutritionCalculation = () => {
         error: null
       });
 
-      console.log('Cálculo nutricional concluído:', {
+      console.log('Cálculo nutricional ENP concluído:', {
         formula: results.formula,
         tmb: results.tmb,
+        get: results.get,
         vet: results.vet,
+        adjustment: results.adjustment,
         profile: mappedProfile,
         recommendations: results.recommendations
       });
@@ -99,3 +119,6 @@ export const useNutritionCalculation = () => {
     reset
   };
 };
+
+// Export da função de cálculo para compatibilidade
+export const useNutritionCalculation = useCalculator;

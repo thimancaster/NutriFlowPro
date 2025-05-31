@@ -2,24 +2,23 @@
 import React from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
-import CalculatorInputs from './CalculatorInputs';
+import { ENPCalculatorInterface } from './ENPCalculatorInterface';
 import CalculatorResults from './CalculatorResults';
 import CalculatorActions from './CalculatorActions';
-import { useCalculator } from '@/hooks/useCalculator';
 import { Card, CardContent } from '@/components/ui/card';
 
 const CalculatorTool: React.FC = () => {
   const { user } = useAuth();
   const { activePatient } = usePatient();
   
-  const calculator = useCalculator();
+  const [calculationResults, setCalculationResults] = React.useState<any>(null);
 
-  const handleCalculate = async () => {
-    await calculator.performCalculation();
+  const handleCalculationComplete = (results: any) => {
+    setCalculationResults(results);
   };
 
   const handleSavePatient = async () => {
-    if (!user || !calculator.patientName) return;
+    if (!user) return;
     
     // Aqui você pode implementar a lógica de salvar paciente
     console.log('Saving patient...');
@@ -28,70 +27,39 @@ const CalculatorTool: React.FC = () => {
   const handleGenerateMealPlan = async () => {
     if (!user || !activePatient) return;
     
-    await calculator.generateMealPlan(user.id, activePatient.id);
+    // Aqui você pode implementar a lógica de gerar plano alimentar
+    console.log('Generating meal plan...');
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Inputs do Calculador */}
+        {/* Interface ENP */}
         <div className="space-y-6">
-          <CalculatorInputs
-            patientName={calculator.patientName}
-            setPatientName={calculator.setPatientName}
-            gender={calculator.gender}
-            setGender={calculator.setGender}
-            age={calculator.age}
-            setAge={calculator.setAge}
-            weight={calculator.weight}
-            setWeight={calculator.setWeight}
-            height={calculator.height}
-            setHeight={calculator.setHeight}
-            objective={calculator.objective}
-            setObjective={calculator.setObjective}
-            activityLevel={calculator.activityLevel}
-            setActivityLevel={calculator.setActivityLevel}
-            consultationType={calculator.consultationType}
-            setConsultationType={calculator.setConsultationType}
-            profile={calculator.profile}
-            setProfile={calculator.setProfile}
-            user={user}
-            activePatient={activePatient}
-          />
-          
-          {/* Botão Calcular */}
-          <Card>
-            <CardContent className="pt-6">
-              <CalculatorActions
-                isCalculating={calculator.isCalculating}
-                calculateResults={handleCalculate}
-              />
-            </CardContent>
-          </Card>
+          <ENPCalculatorInterface onCalculationComplete={handleCalculationComplete} />
         </div>
 
         {/* Resultados do Calculador */}
-        <CalculatorResults
-          bmr={calculator.results?.tmb || 0}
-          tee={{
-            get: calculator.results?.get || 0,
-            vet: calculator.results?.vet || 0,
-            adjustment: calculator.results?.adjustment || 0
-          }}
-          macros={calculator.results?.macros || null}
-          carbsPercentage={parseFloat(calculator.carbsPercentage) || 0}
-          proteinPercentage={parseFloat(calculator.proteinPercentage) || 0}
-          fatPercentage={parseFloat(calculator.fatPercentage) || 0}
-          handleSavePatient={handleSavePatient}
-          handleGenerateMealPlan={handleGenerateMealPlan}
-          isSavingPatient={calculator.isSaving}
-          hasPatientName={!!calculator.patientName}
-          user={user}
-          weight={parseFloat(calculator.weight) || 0}
-          height={parseFloat(calculator.height) || 0}
-          age={parseFloat(calculator.age) || 0}
-          sex={calculator.gender === 'male' ? 'M' : 'F'}
-        />
+        {calculationResults && (
+          <CalculatorResults
+            bmr={calculationResults.tmb || 0}
+            tee={{
+              get: calculationResults.get || 0,
+              vet: calculationResults.vet || 0,
+              adjustment: calculationResults.adjustment || 0
+            }}
+            macros={calculationResults.macros || null}
+            handleSavePatient={handleSavePatient}
+            handleGenerateMealPlan={handleGenerateMealPlan}
+            isSavingPatient={false}
+            hasPatientName={true}
+            user={user}
+            weight={70} // Será obtido dos inputs ENP
+            height={175} // Será obtido dos inputs ENP
+            age={30} // Será obtido dos inputs ENP
+            sex="M" // Será obtido dos inputs ENP
+          />
+        )}
       </div>
     </div>
   );
