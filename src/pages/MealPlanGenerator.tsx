@@ -1,19 +1,72 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useMealPlanState } from '@/hooks/useMealPlanState';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useSaveConsultation } from '@/hooks/useSaveConsultation';
+import { useToast } from '@/hooks/use-toast';
 import { MealDistributionItem } from '@/types/meal';
 import MealPlanGeneratorUI from '@/components/MealPlan/MealPlanGeneratorUI';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 const MealPlanGenerator: React.FC = () => {
-  const { activePatient } = usePatient();
-  const { consultationData } = useConsultationData();
+  const location = useLocation();
+  const { activePatient, setActivePatient } = usePatient();
+  const { consultationData, setConsultationData } = useConsultationData();
   const { mealPlan, setMealPlan } = useMealPlan();
   const { handleSaveConsultation } = useSaveConsultation();
   const { saveMealPlan } = useMealPlan();
+  const { toast } = useToast();
+
+  // Verificar se viemos da calculadora ENP
+  const calculationData = location.state?.calculationData;
+  const patientData = location.state?.patientData;
+  const systemType = location.state?.systemType;
+
+  // Configurar dados se viemos da calculadora
+  useEffect(() => {
+    if (calculationData && patientData) {
+      // Configurar paciente se não estiver definido
+      if (!activePatient && patientData) {
+        setActivePatient(patientData);
+      }
+
+      // Criar dados de consulta simulados baseados no cálculo ENP
+      if (!consultationData) {
+        const simulatedConsultationData = {
+          id: `enp-${Date.now()}`,
+          patient_id: patientData.id,
+          objective: calculationData.objective || 'manutenção',
+          totalCalories: calculationData.tdee,
+          protein: calculationData.protein,
+          carbs: calculationData.carbs,
+          fats: calculationData.fats,
+          results: {
+            tmb: calculationData.bmr,
+            get: calculationData.tdee,
+            vet: calculationData.tdee,
+            macros: {
+              protein: { grams: calculationData.protein },
+              carbs: { grams: calculationData.carbs },
+              fat: { grams: calculationData.fats }
+            }
+          },
+          systemType: systemType || 'ENP',
+          createdAt: new Date().toISOString()
+        };
+
+        setConsultationData(simulatedConsultationData);
+
+        toast({
+          title: "Dados ENP carregados",
+          description: `Plano alimentar baseado em ${calculationData.tdee} kcal diárias`,
+        });
+      }
+    }
+  }, [calculationData, patientData, activePatient, consultationData, setActivePatient, setConsultationData, toast, systemType]);
 
   // Default meal distribution setup
   const defaultMealDistribution: MealDistributionItem[] = [
@@ -52,12 +105,22 @@ const MealPlanGenerator: React.FC = () => {
 
   if (!activePatient || !consultationData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+      <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="max-w-md text-center space-y-4">
           <h2 className="text-xl font-semibold mb-2">Dados incompletos</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             É necessário selecionar um paciente e ter dados de consulta para gerar o plano alimentar.
           </p>
+          
+          {systemType === 'ENP' && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-700">
+                <strong>Sistema ENP:</strong> Você foi redirecionado da calculadora ENP. 
+                Certifique-se de que realizou o cálculo e selecionou um paciente antes de gerar o plano.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       </div>
     );
@@ -71,17 +134,30 @@ const MealPlanGenerator: React.FC = () => {
   };
 
   return (
-    <MealPlanGeneratorUI
-      activePatient={patientForUI}
-      consultationData={consultationData}
-      mealDistribution={mealDistribution}
-      totalMealPercent={totalMealPercent}
-      isSaving={isSaving}
-      handleMealPercentChange={handleMealPercentChange}
-      handleSaveMealPlan={handleSaveMealPlan}
-      handleAddMeal={addMeal}
-      handleRemoveMeal={removeMeal}
-    />
+    <div className="space-y-4">
+      {/* Indicador do sistema ENP se aplicável */}
+      {systemType === 'ENP' && (
+        <Alert className="border-green-200 bg-green-50">
+          <Info className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700">
+            <strong>Plano ENP:</strong> Este plano alimentar está sendo gerado usando os resultados 
+            da Engenharia Nutricional Padrão com distribuição otimizada de 6 refeições.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <MealPlanGeneratorUI
+        activePatient={patientForUI}
+        consultationData={consultationData}
+        mealDistribution={mealDistribution}
+        totalMealPercent={totalMealPercent}
+        isSaving={isSaving}
+        handleMealPercentChange={handleMealPercentChange}
+        handleSaveMealPlan={handleSaveMealPlan}
+        handleAddMeal={addMeal}
+        handleRemoveMeal={removeMeal}
+      />
+    </div>
   );
 };
 
