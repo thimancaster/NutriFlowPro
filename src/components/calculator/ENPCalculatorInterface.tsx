@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, Info } from 'lucide-react';
+import { Calculator, Info, Settings } from 'lucide-react';
 import { ENPDataInputs } from './inputs/ENPDataInputs';
 import { ENPValidation } from './validation/ENPValidation';
+import { ENPCalculationValidator } from './validation/ENPCalculationValidator';
 import { ENPResultsPanel } from './ENPResultsPanel';
 import { useCalculator } from '@/hooks/useCalculator';
 import { ActivityLevel, Objective } from '@/types/consultation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ENPCalculatorInterfaceProps {
   onCalculationComplete?: (results: any) => void;
@@ -80,6 +82,7 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
     } else {
       // Funcionalidade de exportação padrão
       const exportData = {
+        system: 'ENP - Engenharia Nutricional Padrão',
         timestamp: new Date().toISOString(),
         patient: { weight: data.weight, height: data.height, age: data.age, sex: data.sex },
         parameters: { activityLevel: data.activityLevel, objective: data.objective },
@@ -90,7 +93,7 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `calculo-enp-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `enp-calculo-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -102,69 +105,82 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
       <Alert className="border-blue-200 bg-blue-50">
         <Info className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-700">
-          <strong>Sistema ENP:</strong> Cálculos baseados na Engenharia Nutricional Padrão.
-          Utiliza Harris-Benedict Revisada, fatores de atividade padronizados e ajustes calóricos fixos.
+          <strong>Sistema ENP v2.0:</strong> Implementação oficial da Engenharia Nutricional Padrão.
+          Harris-Benedict Revisada • Fatores Fixos • Macros Padronizados • Distribuição 6 Refeições.
         </AlertDescription>
       </Alert>
       
-      {/* Inputs de dados */}
-      <ENPDataInputs
-        weight={weight}
-        setWeight={setWeight}
-        height={height}
-        setHeight={setHeight}
-        age={age}
-        setAge={setAge}
-        sex={sex}
-        setSex={setSex}
-        activityLevel={activityLevel}
-        setActivityLevel={setActivityLevel}
-        objective={objective}
-        setObjective={setObjective}
-      />
-      
-      {/* Validação */}
-      <ENPValidation data={data} />
-      
-      {/* Botão de cálculo */}
-      <Card>
-        <CardContent className="pt-6">
-          <Button
-            onClick={handleCalculate}
-            disabled={!isValid || calculator.isCalculating}
-            className="w-full"
-            size="lg"
-          >
-            {calculator.isCalculating ? (
-              <span className="flex items-center">
-                <span className="animate-spin h-4 w-4 mr-2 border-2 border-dashed rounded-full border-current"></span>
-                Calculando ENP...
-              </span>
-            ) : (
-              <span className="flex items-center">
-                <Calculator className="mr-2 h-4 w-4" />
-                Calcular com ENP
-              </span>
-            )}
-          </Button>
+      <Tabs defaultValue="calculator" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="calculator">Calculadora ENP</TabsTrigger>
+          <TabsTrigger value="validator">Validação Sistema</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="calculator" className="space-y-6">
+          {/* Inputs de dados */}
+          <ENPDataInputs
+            weight={weight}
+            setWeight={setWeight}
+            height={height}
+            setHeight={setHeight}
+            age={age}
+            setAge={setAge}
+            sex={sex}
+            setSex={setSex}
+            activityLevel={activityLevel}
+            setActivityLevel={setActivityLevel}
+            objective={objective}
+            setObjective={setObjective}
+          />
           
-          {calculator.error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>{calculator.error}</AlertDescription>
-            </Alert>
+          {/* Validação */}
+          <ENPValidation data={data} />
+          
+          {/* Botão de cálculo */}
+          <Card>
+            <CardContent className="pt-6">
+              <Button
+                onClick={handleCalculate}
+                disabled={!isValid || calculator.isCalculating}
+                className="w-full"
+                size="lg"
+              >
+                {calculator.isCalculating ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin h-4 w-4 mr-2 border-2 border-dashed rounded-full border-current"></span>
+                    Calculando com ENP...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <Calculator className="mr-2 h-4 w-4" />
+                    Calcular com ENP v2.0
+                  </span>
+                )}
+              </Button>
+              
+              {calculator.error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{calculator.error}</AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Resultados ENP */}
+          {calculator.results && (
+            <ENPResultsPanel
+              results={calculator.results}
+              weight={data.weight}
+              onGenerateMealPlan={handleGenerateMealPlan}
+              onExportResults={handleExportResults}
+            />
           )}
-        </CardContent>
-      </Card>
-      
-      {/* Resultados ENP */}
-      {calculator.results && (
-        <ENPResultsPanel
-          results={calculator.results}
-          weight={data.weight}
-          onGenerateMealPlan={handleGenerateMealPlan}
-          onExportResults={handleExportResults}
-        />
-      )}
+        </TabsContent>
+        
+        <TabsContent value="validator">
+          <ENPCalculationValidator />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

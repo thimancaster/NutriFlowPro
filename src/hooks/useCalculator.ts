@@ -1,38 +1,27 @@
 
 import { useState } from 'react';
-import { calculateCompleteNutrition, CompleteNutritionResult, validateAllParameters } from '@/utils/nutrition/completeCalculation';
+import { useNutritionCalculation } from './useNutritionCalculation';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
-export interface NutritionCalculationState {
-  results: CompleteNutritionResult | null;
-  isCalculating: boolean;
-  error: string | null;
+export interface CalculatorResults {
+  tmb: number;
+  get: number;
+  vet: number;
+  adjustment: number;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg: number;
+  };
 }
 
-export interface UseCalculatorReturn extends NutritionCalculationState {
-  calculate: (
-    weight: number,
-    height: number,
-    age: number,
-    sex: 'M' | 'F',
-    activityLevel: ActivityLevel,
-    objective: Objective,
-    profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
-    customMacroPercentages?: {
-      protein: number;
-      carbs: number;
-      fat: number;
-    }
-  ) => Promise<CompleteNutritionResult | null>;
-  reset: () => void;
-}
+export const useCalculator = () => {
+  const [results, setResults] = useState<CalculatorResults | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export const useCalculator = (): UseCalculatorReturn => {
-  const [state, setState] = useState<NutritionCalculationState>({
-    results: null,
-    isCalculating: false,
-    error: null
-  });
+  const nutritionCalculation = useNutritionCalculation();
 
   const calculate = async (
     weight: number,
@@ -41,84 +30,79 @@ export const useCalculator = (): UseCalculatorReturn => {
     sex: 'M' | 'F',
     activityLevel: ActivityLevel,
     objective: Objective,
-    profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
-    customMacroPercentages?: {
-      protein: number;
-      carbs: number;
-      fat: number;
-    }
-  ): Promise<CompleteNutritionResult | null> => {
-    setState(prev => ({ ...prev, isCalculating: true, error: null }));
+    profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' | 'magro' | 'obeso' = 'eutrofico'
+  ): Promise<CalculatorResults | null> => {
+    setIsCalculating(true);
+    setError(null);
 
     try {
-      // Mapear profile para formato esperado pela função
-      const mappedProfile = profile === 'eutrofico' ? 'magro' : 
-                           profile === 'sobrepeso_obesidade' ? 'obeso' : 'atleta';
-      
-      // Validar parâmetros
-      const validation = validateAllParameters(weight, height, age, sex, activityLevel, objective, mappedProfile);
-      
-      if (!validation.isValid) {
-        throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
-      }
+      // Map profile to simplified format for ENP
+      const mappedProfile = profile === 'eutrofico' || profile === 'magro' ? 'magro' :
+                           profile === 'sobrepeso_obesidade' || profile === 'obeso' ? 'obeso' : 'atleta';
 
-      // Executar cálculo
-      const results = await calculateCompleteNutrition(
+      const result = await nutritionCalculation.calculate(
         weight,
         height,
         age,
         sex,
         activityLevel,
         objective,
-        mappedProfile,
-        customMacroPercentages
+        mappedProfile
       );
 
-      setState({
-        results,
-        isCalculating: false,
-        error: null
-      });
+      if (result) {
+        const calculatorResults: CalculatorResults = {
+          tmb: result.tmb,
+          get: result.get,
+          vet: result.vet,
+          adjustment: result.adjustment,
+          macros: {
+            protein: {
+              grams: result.macros.protein.grams,
+              kcal: result.macros.protein.kcal,
+              percentage: result.macros.protein.percentage
+            },
+            carbs: {
+              grams: result.macros.carbs.grams,
+              kcal: result.macros.carbs.kcal,
+              percentage: result.macros.carbs.percentage
+            },
+            fat: {
+              grams: result.macros.fat.grams,
+              kcal: result.macros.fat.kcal,
+              percentage: result.macros.fat.percentage
+            },
+            proteinPerKg: result.macros.proteinPerKg
+          }
+        };
 
-      console.log('Cálculo nutricional ENP concluído:', {
-        formula: results.formula,
-        tmb: results.tmb,
-        get: results.get,
-        vet: results.vet,
-        adjustment: results.adjustment,
-        profile: mappedProfile,
-        recommendations: results.recommendations
-      });
+        setResults(calculatorResults);
+        return calculatorResults;
+      }
 
-      return results;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
-      
-      setState({
-        results: null,
-        isCalculating: false,
-        error: errorMessage
-      });
-
-      console.error('Erro no cálculo nutricional:', error);
       return null;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo ENP';
+      setError(errorMessage);
+      console.error('Erro no cálculo:', error);
+      return null;
+    } finally {
+      setIsCalculating(false);
     }
   };
 
   const reset = () => {
-    setState({
-      results: null,
-      isCalculating: false,
-      error: null
-    });
+    setResults(null);
+    setError(null);
+    setIsCalculating(false);
+    nutritionCalculation.reset();
   };
 
   return {
-    ...state,
+    results,
+    isCalculating,
+    error,
     calculate,
     reset
   };
 };
-
-// Export da função de cálculo para compatibilidade
-export const useNutritionCalculation = useCalculator;
