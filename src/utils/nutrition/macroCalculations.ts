@@ -5,7 +5,7 @@
  */
 
 import { ActivityLevel, Objective } from '@/types/consultation';
-import { calculateMacrosENPWrapper } from './compatibilityMapping';
+import { calculateMacrosENPWrapper, mapToLegacyProfile } from './compatibilityMapping';
 
 export interface MacroValues {
   grams: number;
@@ -28,7 +28,7 @@ export function calculateMacros(
   vet: number,
   weight: number,
   objective: Objective,
-  profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' | 'magro' | 'obeso' | 'atleta',
+  profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' | 'magro' | 'obeso',
   customPercentages?: {
     protein: number;
     carbs: number;
@@ -69,18 +69,19 @@ export function calculateMacros(
  * Mapeia perfil do frontend para perfil dos cálculos
  * Mantém compatibilidade com sistema existente
  */
-export function mapProfileToCalculation(profile: string): 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' {
+export function mapProfileToCalculation(profile: string): 'magro' | 'obeso' | 'atleta' {
   switch (profile) {
-    case 'magro':
     case 'eutrofico':
-      return 'eutrofico';
+      return 'magro';
+    case 'magro':
+      return 'magro';
     case 'obeso':
     case 'sobrepeso_obesidade':
-      return 'sobrepeso_obesidade';
+      return 'obeso';
     case 'atleta':
       return 'atleta';
     default:
-      return 'eutrofico';
+      return 'magro';
   }
 }
 

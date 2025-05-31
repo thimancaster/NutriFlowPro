@@ -1,31 +1,33 @@
 
 /**
- * Complete Nutrition Calculation
- * Orquestra todos os cálculos nutricionais usando as fórmulas específicas
+ * Complete Nutrition Calculation - Implementação ENP Unificada
+ * Integra todos os cálculos conforme Engenharia Nutricional Padrão
  */
 
-import { calculateTMB, TMBResult } from './tmbCalculations';
-import { calculateVET, VETResult } from './vetCalculations';
-import { calculateMacros, MacroResult, mapProfileToCalculation } from './macroCalculations';
 import { ActivityLevel, Objective } from '@/types/consultation';
+import { calculateTMB, validateTMBParameters } from './tmbCalculations';
+import { calculateGET } from './getCalculations';
+import { calculateVET } from './vetCalculations';
+import { calculateMacros, mapProfileToCalculation } from './macroCalculations';
+import { calculateCompleteENP, ENPInputs } from './enpCalculations';
 
 export interface CompleteNutritionResult {
   tmb: number;
   get: number;
   vet: number;
   adjustment: number;
-  macros: MacroResult;
-  formula: string;
-  recommendations: string[];
-  calculations: {
-    tmb: TMBResult;
-    vet: VETResult;
-    macros: MacroResult;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg: number;
   };
+  formula: string;
+  recommendations?: string;
 }
 
 /**
- * Executa cálculo nutricional completo com fórmulas específicas por perfil
+ * Função principal de cálculo nutricional completo usando ENP
  */
 export async function calculateCompleteNutrition(
   weight: number,
@@ -41,109 +43,106 @@ export async function calculateCompleteNutrition(
     fat: number;
   }
 ): Promise<CompleteNutritionResult> {
+  // Usar sistema ENP como preferência
+  try {
+    const enpInputs: ENPInputs = {
+      weight,
+      height,
+      age,
+      sex,
+      activityLevel: activityLevel === 'intenso' ? 'muito_ativo' : 
+                     activityLevel === 'muito_intenso' ? 'extremamente_ativo' : 
+                     activityLevel as any,
+      objective: objective === 'emagrecimento' ? 'perder_peso' :
+                objective === 'manutenção' ? 'manter_peso' :
+                objective === 'hipertrofia' ? 'ganhar_peso' : 'manter_peso'
+    };
+    
+    const enpResults = calculateCompleteENP(enpInputs);
+    
+    return {
+      tmb: enpResults.tmb,
+      get: enpResults.gea,
+      vet: enpResults.get,
+      adjustment: enpResults.get - enpResults.gea,
+      macros: {
+        protein: enpResults.macros.protein,
+        carbs: enpResults.macros.carbs,
+        fat: enpResults.macros.fat,
+        proteinPerKg: enpResults.macros.proteinPerKg
+      },
+      formula: 'ENP - Harris-Benedict Revisada',
+      recommendations: generateENPRecommendations(enpInputs, enpResults)
+    };
+  } catch (error) {
+    console.warn('Erro no cálculo ENP, usando sistema legado:', error);
+    
+    // Fallback para sistema legado
+    return calculateLegacyNutrition(weight, height, age, sex, activityLevel, objective, profile, customMacroPercentages);
+  }
+}
+
+/**
+ * Sistema de cálculo legado (backup)
+ */
+function calculateLegacyNutrition(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F',
+  activityLevel: ActivityLevel,
+  objective: Objective,
+  profile: 'magro' | 'obeso' | 'atleta',
+  customMacroPercentages?: any
+): CompleteNutritionResult {
+  // Mapear profile para formato atual
+  const mappedProfile = profile === 'magro' ? 'eutrofico' : 
+                       profile === 'obeso' ? 'sobrepeso_obesidade' : 'atleta';
   
-  // 1. Calcular TMB com fórmula específica para o perfil
-  const tmbResult = calculateTMB(weight, height, age, sex, profile);
+  // Calcular TMB
+  const tmbResult = calculateTMB(weight, height, age, sex, mappedProfile);
   
-  // 2. Calcular VET considerando perfil de atleta
-  const vetResult = calculateVET(tmbResult.tmb, activityLevel, objective, profile);
+  // Calcular GET
+  const get = calculateGET(tmbResult.tmb, activityLevel, mappedProfile);
   
-  // 3. Calcular macronutrientes
-  const macroResult = calculateMacros(
-    vetResult.vet,
-    weight,
-    objective,
-    profile,
-    customMacroPercentages
-  );
+  // Calcular VET
+  const vetResult = calculateVET(get, activityLevel, objective, profile);
   
-  // 4. Gerar recomendações específicas
-  const recommendations = generateRecommendations(
-    profile,
-    objective,
-    activityLevel,
-    vetResult.vet,
-    weight
-  );
+  // Calcular Macros
+  const macros = calculateMacros(vetResult.vet, weight, objective, mappedProfile, customMacroPercentages);
   
   return {
     tmb: tmbResult.tmb,
-    get: vetResult.get,
+    get,
     vet: vetResult.vet,
     adjustment: vetResult.adjustment,
-    macros: macroResult,
-    formula: tmbResult.formula,
-    recommendations,
-    calculations: {
-      tmb: tmbResult,
-      vet: vetResult,
-      macros: macroResult
-    }
+    macros,
+    formula: tmbResult.formula
   };
 }
 
 /**
- * Helper function to map frontend profile to calculation profile
+ * Gera recomendações baseadas nos resultados ENP
  */
-export { mapProfileToCalculation };
-
-/**
- * Gera recomendações específicas baseadas no perfil e objetivos
- */
-function generateRecommendations(
-  profile: 'magro' | 'obeso' | 'atleta',
-  objective: Objective,
-  activityLevel: ActivityLevel,
-  vet: number,
-  weight: number
-): string[] {
-  const recommendations: string[] = [];
+function generateENPRecommendations(inputs: ENPInputs, results: any): string {
+  const recommendations = [];
   
-  // Recomendações por perfil
-  switch (profile) {
-    case 'atleta':
-      recommendations.push('Fórmula otimizada para atletas de alta performance');
-      recommendations.push('Monitorar composição corporal regularmente');
-      if (objective === 'emagrecimento') {
-        recommendations.push('Evitar déficits calóricos muito agressivos para preservar massa magra');
-      }
-      if (activityLevel === 'muito_intenso') {
-        recommendations.push('Considerar timing nutricional específico para treinos');
-      }
-      break;
-      
-    case 'obeso':
-      recommendations.push('Fórmula Mifflin-St Jeor - mais precisa para sobrepeso/obesidade');
-      recommendations.push('Foco na mudança gradual de hábitos alimentares');
-      if (objective === 'emagrecimento') {
-        recommendations.push('Priorizar alimentos de alta saciedade e baixa densidade calórica');
-      }
-      break;
-      
-    case 'magro':
-      recommendations.push('Fórmula Harris-Benedict Revisada - adequada para peso normal');
-      if (objective === 'hipertrofia') {
-        recommendations.push('Aumentar gradualmente a ingestão calórica');
-        recommendations.push('Priorizar proteínas de alto valor biológico');
-      }
-      break;
+  if (inputs.objective === 'perder_peso') {
+    recommendations.push('Deficit calórico de 500 kcal aplicado conforme ENP');
+    recommendations.push('Monitore o progresso semanalmente');
+  } else if (inputs.objective === 'ganhar_peso') {
+    recommendations.push('Superávit calórico de 400 kcal aplicado conforme ENP');
+    recommendations.push('Combine com treinamento de força');
   }
   
-  // Recomendações por objetivo
-  if (objective === 'manutenção') {
-    recommendations.push('Manter consistência na alimentação e atividade física');
-  }
+  recommendations.push(`Proteína: ${results.macros.proteinPerKg}g/kg conforme padrão ENP`);
+  recommendations.push('Distribua as refeições ao longo do dia');
   
-  // Recomendações por atividade
-  if (activityLevel === 'sedentario') {
-    recommendations.push('Considerar incluir atividade física regular');
-  }
-  
-  return recommendations;
+  return recommendations.join('. ');
 }
 
 /**
- * Valida todos os parâmetros de entrada
+ * Validação completa de parâmetros
  */
 export function validateAllParameters(
   weight: number,
@@ -156,18 +155,32 @@ export function validateAllParameters(
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  // Validações básicas
-  if (weight <= 0 || weight > 500) errors.push('Peso inválido');
-  if (height <= 0 || height > 250) errors.push('Altura inválida');
-  if (age <= 0 || age > 120) errors.push('Idade inválida');
-  if (!['M', 'F'].includes(sex)) errors.push('Sexo inválido');
-  if (!['sedentario', 'leve', 'moderado', 'intenso', 'muito_intenso'].includes(activityLevel)) {
+  // Validar TMB
+  const tmbValidation = validateTMBParameters(weight, height, age);
+  if (!tmbValidation.isValid) {
+    errors.push(...tmbValidation.errors);
+  }
+  
+  // Validar sexo
+  if (!['M', 'F'].includes(sex)) {
+    errors.push('Sexo deve ser M ou F');
+  }
+  
+  // Validar nível de atividade
+  const validActivityLevels = ['sedentario', 'leve', 'moderado', 'intenso', 'muito_intenso'];
+  if (!validActivityLevels.includes(activityLevel)) {
     errors.push('Nível de atividade inválido');
   }
-  if (!['emagrecimento', 'manutenção', 'hipertrofia'].includes(objective)) {
+  
+  // Validar objetivo
+  const validObjectives = ['emagrecimento', 'manutenção', 'hipertrofia', 'personalizado'];
+  if (!validObjectives.includes(objective)) {
     errors.push('Objetivo inválido');
   }
-  if (!['magro', 'obeso', 'atleta'].includes(profile)) {
+  
+  // Validar perfil
+  const validProfiles = ['magro', 'obeso', 'atleta'];
+  if (!validProfiles.includes(profile)) {
     errors.push('Perfil inválido');
   }
   

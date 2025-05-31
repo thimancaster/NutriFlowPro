@@ -1,146 +1,101 @@
 
-import { useCalculatorForm } from '../components/calculator/hooks/useCalculatorForm';
-import { useNutritionCalculation } from './useNutritionCalculation';
-import { useCalculationSaver } from './useCalculationSaver';
-import { useMealPlanGeneration } from './useMealPlanGeneration';
+import { useState } from 'react';
+import { calculateCompleteNutrition, CompleteNutritionResult, validateAllParameters } from '@/utils/nutrition/completeCalculation';
 import { ActivityLevel, Objective } from '@/types/consultation';
-import { stringToProfile } from '@/components/calculator/utils/profileUtils';
-import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
 
-export const useCalculator = () => {
-  const form = useCalculatorForm();
-  const nutrition = useNutritionCalculation();
-  const saver = useCalculationSaver();
-  const mealPlan = useMealPlanGeneration();
+export interface NutritionCalculationState {
+  results: CompleteNutritionResult | null;
+  isCalculating: boolean;
+  error: string | null;
+}
 
-  // Simple validation function
-  const isFormValid = () => {
-    return form.weight.trim() !== '' && 
-           form.height.trim() !== '' && 
-           form.age.trim() !== '' &&
-           parseFloat(form.weight) > 0 &&
-           parseFloat(form.height) > 0 &&
-           parseFloat(form.age) > 0;
-  };
+export const useNutritionCalculation = () => {
+  const [state, setState] = useState<NutritionCalculationState>({
+    results: null,
+    isCalculating: false,
+    error: null
+  });
 
-  const performCalculation = async () => {
-    if (!isFormValid()) {
+  const calculate = async (
+    weight: number,
+    height: number,
+    age: number,
+    sex: 'M' | 'F',
+    activityLevel: ActivityLevel,
+    objective: Objective,
+    profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
+    customMacroPercentages?: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    }
+  ): Promise<CompleteNutritionResult | null> => {
+    setState(prev => ({ ...prev, isCalculating: true, error: null }));
+
+    try {
+      // Mapear profile para formato esperado pela função
+      const mappedProfile = profile === 'eutrofico' ? 'magro' : 
+                           profile === 'sobrepeso_obesidade' ? 'obeso' : 'atleta';
+      
+      // Validar parâmetros
+      const validation = validateAllParameters(weight, height, age, sex, activityLevel, objective, mappedProfile);
+      
+      if (!validation.isValid) {
+        throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
+      }
+
+      // Executar cálculo
+      const results = await calculateCompleteNutrition(
+        weight,
+        height,
+        age,
+        sex,
+        activityLevel,
+        objective,
+        mappedProfile,
+        customMacroPercentages
+      );
+
+      setState({
+        results,
+        isCalculating: false,
+        error: null
+      });
+
+      console.log('Cálculo nutricional concluído:', {
+        formula: results.formula,
+        tmb: results.tmb,
+        vet: results.vet,
+        profile: mappedProfile,
+        recommendations: results.recommendations
+      });
+
+      return results;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
+      
+      setState({
+        results: null,
+        isCalculating: false,
+        error: errorMessage
+      });
+
+      console.error('Erro no cálculo nutricional:', error);
       return null;
     }
-
-    const weight = parseFloat(form.weight);
-    const height = parseFloat(form.height);
-    const age = parseFloat(form.age);
-
-    // Convert frontend profile to calculation profile
-    const frontendProfile = stringToProfile(form.profile);
-    const calculationProfile = mapProfileToCalculation(frontendProfile);
-
-    const results = await nutrition.calculate(
-      weight,
-      height,
-      age,
-      form.gender === 'male' ? 'M' : 'F',
-      form.activityLevel as ActivityLevel,
-      form.objective as Objective,
-      calculationProfile
-    );
-
-    return results;
-  };
-
-  const saveCalculation = async (patientId: string, userId: string) => {
-    if (!nutrition.results) {
-      return false;
-    }
-
-    const weight = parseFloat(form.weight);
-    const height = parseFloat(form.height);
-    const age = parseFloat(form.age);
-
-    return await saver.saveCalculation({
-      patientId,
-      userId,
-      weight,
-      height,
-      age,
-      gender: form.gender === 'male' ? 'M' : 'F',
-      activityLevel: form.activityLevel,
-      goal: form.objective,
-      bmr: nutrition.results.tmb,
-      tdee: nutrition.results.vet,
-      protein: nutrition.results.macros.protein.grams,
-      carbs: nutrition.results.macros.carbs.grams,
-      fats: nutrition.results.macros.fat.grams
-    });
-  };
-
-  const generateMealPlan = async (userId: string, patientId: string) => {
-    if (!nutrition.results) {
-      return;
-    }
-
-    await mealPlan.generateMealPlan({
-      userId,
-      patientId,
-      targets: {
-        calories: nutrition.results.vet,
-        protein: nutrition.results.macros.protein.grams,
-        carbs: nutrition.results.macros.carbs.grams,
-        fats: nutrition.results.macros.fat.grams
-      }
-    });
   };
 
   const reset = () => {
-    form.resetForm();
-    nutrition.reset();
+    setState({
+      results: null,
+      isCalculating: false,
+      error: null
+    });
   };
 
   return {
-    // Form state - individual properties
-    patientName: form.patientName,
-    gender: form.gender,
-    age: form.age,
-    weight: form.weight,
-    height: form.height,
-    objective: form.objective,
-    activityLevel: form.activityLevel,
-    consultationType: form.consultationType,
-    profile: form.profile,
-    carbsPercentage: form.carbsPercentage,
-    proteinPercentage: form.proteinPercentage,
-    fatPercentage: form.fatPercentage,
-    
-    // Results
-    results: nutrition.results,
-    isCalculating: nutrition.isCalculating,
-    isSaving: saver.isSaving,
-    isGeneratingMealPlan: mealPlan.isGenerating,
-    generatedMealPlan: mealPlan.generatedPlan,
-
-    // Form setters - direct access to individual setters
-    setPatientName: form.setPatientName,
-    setGender: form.setGender,
-    setAge: form.setAge,
-    setWeight: form.setWeight,
-    setHeight: form.setHeight,
-    setObjective: form.setObjective,
-    setActivityLevel: form.setActivityLevel,
-    setCarbsPercentage: form.setCarbsPercentage,
-    setProteinPercentage: form.setProteinPercentage,
-    setFatPercentage: form.setFatPercentage,
-    setProfile: form.setProfile,
-    setConsultationType: form.setConsultationType,
-
-    // Actions
-    populateFromPatient: form.populateFromPatient,
-    performCalculation,
-    saveCalculation,
-    generateMealPlan,
-    reset,
-
-    // Validation
-    isFormValid
+    ...state,
+    calculate,
+    reset
   };
 };

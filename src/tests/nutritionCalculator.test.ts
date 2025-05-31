@@ -37,13 +37,13 @@ describe('Nutrition Calculator', () => {
     it('should calculate VET correctly for weight loss', () => {
       const get = 2000;
       const result = calculateVET(get, 'moderado', 'emagrecimento', 'eutrofico');
-      expect(result.vet).toBeCloseTo(1600, 0);
+      expect(result.vet).toBeCloseTo(1500, 0); // 500 kcal déficit ENP
     });
 
     it('should calculate VET correctly for muscle gain', () => {
       const get = 2000;
       const result = calculateVET(get, 'moderado', 'hipertrofia', 'eutrofico');
-      expect(result.vet).toBeCloseTo(2300, 0);
+      expect(result.vet).toBeCloseTo(2400, 0); // 400 kcal superávit ENP
     });
 
     it('should calculate VET correctly for maintenance', () => {

@@ -10,15 +10,15 @@ import { ENPInputs, calculateCompleteENP } from './enpCalculations';
 /**
  * Mapeia Profile do sistema atual para objetivos ENP
  */
-export function mapProfileToENPObjective(profile: Profile, currentObjective?: string): string {
+export function mapProfileToENPObjective(profile: Profile, currentObjective?: string): 'manter_peso' | 'perder_peso' | 'ganhar_peso' {
   // Para perfis específicos, pode haver objetivos padrão
   switch (profile) {
     case 'eutrofico':
-      return currentObjective || 'manter_peso';
+      return (currentObjective as 'manter_peso' | 'perder_peso' | 'ganhar_peso') || 'manter_peso';
     case 'sobrepeso_obesidade':
-      return currentObjective || 'perder_peso';
+      return (currentObjective as 'manter_peso' | 'perder_peso' | 'ganhar_peso') || 'perder_peso';
     case 'atleta':
-      return currentObjective || 'ganhar_peso';
+      return (currentObjective as 'manter_peso' | 'perder_peso' | 'ganhar_peso') || 'ganhar_peso';
     default:
       return 'manter_peso';
   }
@@ -27,8 +27,8 @@ export function mapProfileToENPObjective(profile: Profile, currentObjective?: st
 /**
  * Mapeia ActivityLevel atual para ENP
  */
-export function mapActivityLevelToENP(activityLevel: ActivityLevel): string {
-  const mapping: Record<ActivityLevel, string> = {
+export function mapActivityLevelToENP(activityLevel: ActivityLevel): 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo' {
+  const mapping: Record<ActivityLevel, 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo'> = {
     sedentario: 'sedentario',
     leve: 'leve',
     moderado: 'moderado',
@@ -42,8 +42,8 @@ export function mapActivityLevelToENP(activityLevel: ActivityLevel): string {
 /**
  * Mapeia Objective atual para ENP
  */
-export function mapObjectiveToENP(objective: Objective): string {
-  const mapping: Record<Objective, string> = {
+export function mapObjectiveToENP(objective: Objective): 'manter_peso' | 'perder_peso' | 'ganhar_peso' {
+  const mapping: Record<Objective, 'manter_peso' | 'perder_peso' | 'ganhar_peso'> = {
     emagrecimento: 'perder_peso',
     manutenção: 'manter_peso',
     hipertrofia: 'ganhar_peso',
@@ -51,6 +51,22 @@ export function mapObjectiveToENP(objective: Objective): string {
   };
   
   return mapping[objective] || 'manter_peso';
+}
+
+/**
+ * Mapeia perfil atual para formato compatível com sistema legado
+ */
+export function mapToLegacyProfile(profile: Profile): 'magro' | 'obeso' | 'atleta' {
+  switch (profile) {
+    case 'eutrofico':
+      return 'magro';
+    case 'sobrepeso_obesidade':
+      return 'obeso';
+    case 'atleta':
+      return 'atleta';
+    default:
+      return 'magro';
+  }
 }
 
 /**
@@ -70,12 +86,8 @@ export function calculateWithENPCompatibility(
     height,
     age,
     sex,
-    activityLevel: typeof activityLevel === 'string' ? 
-      mapActivityLevelToENP(activityLevel as ActivityLevel) : 
-      mapActivityLevelToENP(activityLevel),
-    objective: typeof objective === 'string' ? 
-      mapObjectiveToENP(objective as Objective) : 
-      mapObjectiveToENP(objective)
+    activityLevel: mapActivityLevelToENP(activityLevel as ActivityLevel),
+    objective: mapObjectiveToENP(objective as Objective)
   };
   
   return calculateCompleteENP(enpInputs);

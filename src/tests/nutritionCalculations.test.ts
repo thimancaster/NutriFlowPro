@@ -51,13 +51,13 @@ describe('VET Calculations', () => {
   it('calculates VET correctly for weight loss', () => {
     const get = 2000;
     const result = calculateVET(get, 'moderado', 'emagrecimento', 'eutrofico');
-    expect(result.vet).toBeCloseTo(1600, 0); // 20% déficit
+    expect(result.vet).toBeCloseTo(1500, 0); // 500 kcal déficit conforme ENP
   });
 
   it('calculates VET correctly for muscle gain', () => {
     const get = 2000;
     const result = calculateVET(get, 'moderado', 'hipertrofia', 'eutrofico');
-    expect(result.vet).toBeCloseTo(2300, 0); // 15% superávit
+    expect(result.vet).toBeCloseTo(2400, 0); // 400 kcal superávit conforme ENP
   });
 
   it('calculates VET correctly for maintenance', () => {

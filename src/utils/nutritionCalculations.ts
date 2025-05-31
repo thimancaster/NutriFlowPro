@@ -25,17 +25,17 @@ export function calculateCompleteNutrition(
 ) {
   // Import the async function and run it
   import('./nutrition/completeCalculation').then(module => {
-    const { calculateCompleteNutrition: asyncCalc, mapProfileToCalculation } = module;
+    const { calculateCompleteNutrition: asyncCalc } = module;
     const mappedProfile = mapProfileToCalculation(profile);
     return asyncCalc(weight, height, age, sex, activityLevel as any, objective as any, mappedProfile);
   });
   
   // Return a simplified sync version for backward compatibility
   const { calculateTMB } = require('./nutrition/tmbCalculations');
-  const { calculateMacros, mapProfileToCalculation } = require('./nutrition/macroCalculations');
+  const { calculateMacros } = require('./nutrition/macroCalculations');
   
   const mappedProfile = mapProfileToCalculation(profile);
-  const tmbResult = calculateTMB(weight, height, age, sex, mappedProfile);
+  const tmbResult = calculateTMB(weight, height, age, sex, mappedProfile === 'magro' ? 'eutrofico' : mappedProfile === 'obeso' ? 'sobrepeso_obesidade' : 'atleta');
   
   // Simple activity factors for backward compatibility
   const activityFactors: Record<string, number> = {
@@ -48,17 +48,17 @@ export function calculateCompleteNutrition(
   
   const get = tmbResult.tmb * (activityFactors[activityLevel] || 1.55);
   
-  // Simple objective adjustments
+  // Simple objective adjustments - usar ajustes ENP
   const objectiveAdjustments: Record<string, number> = {
-    emagrecimento: -0.20,
+    emagrecimento: -500,  // ENP: déficit de 500 kcal
     manutenção: 0,
-    hipertrofia: 0.15
+    hipertrofia: 400      // ENP: superávit de 400 kcal
   };
   
-  const adjustment = get * (objectiveAdjustments[objective] || 0);
+  const adjustment = objectiveAdjustments[objective] || 0;
   const vet = get + adjustment;
   
-  const macros = calculateMacros(vet, weight, objective as any, mappedProfile);
+  const macros = calculateMacros(vet, weight, objective as any, mappedProfile === 'magro' ? 'eutrofico' : mappedProfile === 'obeso' ? 'sobrepeso_obesidade' : 'atleta');
   
   return {
     tmb: tmbResult.tmb,
@@ -78,6 +78,10 @@ function mapProfileToCalculation(profile: string): 'magro' | 'obeso' | 'atleta' 
       return 'obeso';
     case 'atleta':
       return 'atleta';
+    case 'magro':
+      return 'magro';
+    case 'obeso':
+      return 'obeso';
     default:
       return 'magro';
   }
