@@ -22,14 +22,15 @@ export interface CompleteNutritionResult {
     fat: { grams: number; kcal: number; percentage: number };
     proteinPerKg: number;
   };
-  formula: string;
+  formulaUsed: string;
   recommendations?: string;
 }
 
 /**
  * Função principal de cálculo nutricional completo usando ENP
+ * Agora é síncrona para compatibilidade com hooks existentes
  */
-export async function calculateCompleteNutrition(
+export function calculateCompleteNutrition(
   weight: number,
   height: number,
   age: number,
@@ -42,7 +43,7 @@ export async function calculateCompleteNutrition(
     carbs: number;
     fat: number;
   }
-): Promise<CompleteNutritionResult> {
+): CompleteNutritionResult {
   // Usar sistema ENP como preferência
   try {
     const enpInputs: ENPInputs = {
@@ -71,7 +72,7 @@ export async function calculateCompleteNutrition(
         fat: enpResults.macros.fat,
         proteinPerKg: enpResults.macros.proteinPerKg
       },
-      formula: 'ENP - Harris-Benedict Revisada',
+      formulaUsed: 'ENP - Harris-Benedict Revisada',
       recommendations: generateENPRecommendations(enpInputs, enpResults)
     };
   } catch (error) {
@@ -117,7 +118,7 @@ function calculateLegacyNutrition(
     vet: vetResult.vet,
     adjustment: vetResult.adjustment,
     macros,
-    formula: tmbResult.formula
+    formulaUsed: tmbResult.formula
   };
 }
 

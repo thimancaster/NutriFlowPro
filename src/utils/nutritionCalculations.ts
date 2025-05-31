@@ -19,7 +19,7 @@ export { validateAllParameters } from './nutrition/completeCalculation';
 export { calculateTMB } from './nutrition/tmbCalculations';
 export { calculateGET } from './nutrition/getCalculations';
 export { calculateVET } from './nutrition/vetCalculations';
-export { calculateMacros } from './nutrition/macroCalculations';
+export { calculateMacros, mapProfileToCalculation } from './nutrition/macroCalculations';
 
 // Função principal recomendada (ENP)
 export { calculateENPNutrition, validateENPData } from './nutrition/cleanCalculations';
