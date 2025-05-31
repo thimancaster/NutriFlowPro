@@ -40,8 +40,8 @@ export const useNutritionCalculation = () => {
         throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
       }
 
-      // Executar cálculo
-      const results = await calculateCompleteNutrition(
+      // Executar cálculo (agora é síncrono)
+      const results = calculateCompleteNutrition(
         weight,
         height,
         age,
@@ -59,7 +59,7 @@ export const useNutritionCalculation = () => {
       });
 
       console.log('Cálculo nutricional concluído:', {
-        formula: results.formula,
+        formulaUsed: results.formulaUsed,
         tmb: results.tmb,
         vet: results.vet,
         profile,
