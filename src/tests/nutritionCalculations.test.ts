@@ -8,75 +8,75 @@ import {
 } from '../utils/nutritionCalculations';
 import { calculateMacros } from '../utils/nutrition/macroCalculations';
 
-describe('TMB Calculations for Magro Profile', () => {
+describe('TMB Calculations for Eutrofico Profile', () => {
   it('calculates correctly for women', () => {
-    const result = calculateTMB(60, 165, 30, 'F', 'magro');
+    const result = calculateTMB(60, 165, 30, 'F', 'eutrofico');
     expect(result.tmb).toBeCloseTo(1378.5, 0);
   });
 
   it('calculates correctly for men', () => {
-    const result = calculateTMB(70, 175, 30, 'M', 'magro');
+    const result = calculateTMB(70, 175, 30, 'M', 'eutrofico');
     expect(result.tmb).toBeCloseTo(1697, 0);
   });
 });
 
 describe('TMB Calculations for Obeso Profile', () => {
   it('calculates correctly for women', () => {
-    const result = calculateTMB(80, 165, 30, 'F', 'obeso');
+    const result = calculateTMB(80, 165, 30, 'F', 'sobrepeso_obesidade');
     expect(result.tmb).toBeCloseTo(1281.25, 0);
   });
 
   it('calculates correctly for men', () => {
-    const result = calculateTMB(90, 175, 30, 'M', 'obeso');
+    const result = calculateTMB(90, 175, 30, 'M', 'sobrepeso_obesidade');
     expect(result.tmb).toBeCloseTo(1781.25, 0);
   });
 });
 
 describe('GET Calculations', () => {
-  it('calculates correctly with various activity factors for magro', () => {
+  it('calculates correctly with various activity factors for eutrofico', () => {
     const tmb = 1500;
-    expect(calculateGET(tmb, 'leve', 'magro')).toBeCloseTo(2062.5);
-    expect(calculateGET(tmb, 'moderado', 'magro')).toBeCloseTo(2325);
-    expect(calculateGET(tmb, 'intenso', 'magro')).toBeCloseTo(2587.5);
+    expect(calculateGET(tmb, 'leve', 'eutrofico')).toBeCloseTo(2062.5);
+    expect(calculateGET(tmb, 'moderado', 'eutrofico')).toBeCloseTo(2325);
+    expect(calculateGET(tmb, 'intenso', 'eutrofico')).toBeCloseTo(2587.5);
   });
 
   it('handles factors for obeso correctly', () => {
     const tmb = 1500;
-    expect(calculateGET(tmb, 'leve', 'obeso')).toBeCloseTo(2062.5);
-    expect(calculateGET(tmb, 'moderado', 'obeso')).toBeCloseTo(2325);
+    expect(calculateGET(tmb, 'leve', 'sobrepeso_obesidade')).toBeCloseTo(2062.5);
+    expect(calculateGET(tmb, 'moderado', 'sobrepeso_obesidade')).toBeCloseTo(2325);
   });
 });
 
 describe('VET Calculations', () => {
   it('calculates VET correctly for weight loss', () => {
     const get = 2000;
-    const result = calculateVET(get, 'moderado', 'emagrecimento', 'magro');
+    const result = calculateVET(get, 'moderado', 'emagrecimento', 'eutrofico');
     expect(result.vet).toBeCloseTo(1600, 0); // 20% déficit
   });
 
   it('calculates VET correctly for muscle gain', () => {
     const get = 2000;
-    const result = calculateVET(get, 'moderado', 'hipertrofia', 'magro');
+    const result = calculateVET(get, 'moderado', 'hipertrofia', 'eutrofico');
     expect(result.vet).toBeCloseTo(2300, 0); // 15% superávit
   });
 
   it('calculates VET correctly for maintenance', () => {
     const get = 2000;
-    const result = calculateVET(get, 'moderado', 'manutenção', 'magro');
+    const result = calculateVET(get, 'moderado', 'manutenção', 'eutrofico');
     expect(result.vet).toBe(2000);
   });
 });
 
 describe('Macros Calculations', () => {
-  it('calculates maintenance macros correctly for magro profile', () => {
-    const macros = calculateMacros(2000, 70, 'manutenção', 'magro');
+  it('calculates maintenance macros correctly for eutrofico profile', () => {
+    const macros = calculateMacros(2000, 70, 'manutenção', 'eutrofico');
     expect(macros.protein.grams).toBeGreaterThan(0);
     expect(macros.fat.grams).toBeGreaterThan(0);
     expect(macros.carbs.grams).toBeGreaterThan(0);
   });
 
   it('calculates weight loss macros correctly for obeso profile', () => {
-    const macros = calculateMacros(1800, 80, 'emagrecimento', 'obeso');
+    const macros = calculateMacros(1800, 80, 'emagrecimento', 'sobrepeso_obesidade');
     expect(macros.protein.grams).toBeGreaterThan(0);
     expect(macros.fat.grams).toBeGreaterThan(0);
     expect(macros.carbs.grams).toBeGreaterThan(0);

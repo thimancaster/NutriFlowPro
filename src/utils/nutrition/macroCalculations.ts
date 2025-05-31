@@ -1,10 +1,11 @@
 
 /**
- * Macro Calculations
- * Calcula distribuição de macronutrientes baseada no perfil e objetivos
+ * Macro Calculations - Atualizado para ENP
+ * Mantém compatibilidade com sistema existente usando padrões ENP
  */
 
 import { ActivityLevel, Objective } from '@/types/consultation';
+import { calculateMacrosENPWrapper } from './compatibilityMapping';
 
 export interface MacroValues {
   grams: number;
@@ -20,120 +21,66 @@ export interface MacroResult {
 }
 
 /**
- * Distribuição de macronutrientes por perfil e objetivo
- */
-const MACRO_DISTRIBUTIONS = {
-  magro: {
-    emagrecimento: { protein: 25, carbs: 45, fat: 30 },
-    manutenção: { protein: 20, carbs: 50, fat: 30 },
-    hipertrofia: { protein: 25, carbs: 50, fat: 25 }
-  },
-  obeso: {
-    emagrecimento: { protein: 30, carbs: 35, fat: 35 },
-    manutenção: { protein: 25, carbs: 45, fat: 30 },
-    hipertrofia: { protein: 25, carbs: 45, fat: 30 }
-  },
-  atleta: {
-    emagrecimento: { protein: 30, carbs: 40, fat: 30 },
-    manutenção: { protein: 25, carbs: 50, fat: 25 },
-    hipertrofia: { protein: 25, carbs: 55, fat: 20 }
-  }
-} as const;
-
-/**
- * Proteína por peso corporal (g/kg) baseada no perfil e objetivo
- */
-const PROTEIN_PER_KG = {
-  magro: {
-    emagrecimento: 1.6,
-    manutenção: 1.2,
-    hipertrofia: 1.8
-  },
-  obeso: {
-    emagrecimento: 1.8,
-    manutenção: 1.4,
-    hipertrofia: 1.6
-  },
-  atleta: {
-    emagrecimento: 2.2,
-    manutenção: 1.8,
-    hipertrofia: 2.0
-  }
-} as const;
-
-/**
- * Calcula macronutrientes baseado no VET, peso e perfil
+ * Calcula macronutrientes usando padrões ENP
+ * Mantém assinatura para compatibilidade com código existente
  */
 export function calculateMacros(
   vet: number,
   weight: number,
   objective: Objective,
-  profile: 'magro' | 'obeso' | 'atleta',
+  profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' | 'magro' | 'obeso' | 'atleta',
   customPercentages?: {
     protein: number;
     carbs: number;
     fat: number;
   }
 ): MacroResult {
-  // Usar percentuais customizados se fornecidos
-  const percentages = customPercentages || MACRO_DISTRIBUTIONS[profile][objective];
+  // Se percentuais customizados forem fornecidos, usar eles
+  if (customPercentages) {
+    const proteinKcal = (vet * customPercentages.protein) / 100;
+    const carbsKcal = (vet * customPercentages.carbs) / 100;
+    const fatKcal = (vet * customPercentages.fat) / 100;
+    
+    return {
+      protein: {
+        grams: Math.round(proteinKcal / 4),
+        kcal: Math.round(proteinKcal),
+        percentage: customPercentages.protein
+      },
+      carbs: {
+        grams: Math.round(carbsKcal / 4),
+        kcal: Math.round(carbsKcal),
+        percentage: customPercentages.carbs
+      },
+      fat: {
+        grams: Math.round(fatKcal / 9),
+        kcal: Math.round(fatKcal),
+        percentage: customPercentages.fat
+      },
+      proteinPerKg: Math.round((proteinKcal / 4) / weight * 100) / 100
+    };
+  }
   
-  // Calcular calorias por macronutriente
-  const proteinKcal = (vet * percentages.protein) / 100;
-  const carbsKcal = (vet * percentages.carbs) / 100;
-  const fatKcal = (vet * percentages.fat) / 100;
-  
-  // Converter para gramas (4 kcal/g para proteína e carbs, 9 kcal/g para gordura)
-  const proteinGrams = proteinKcal / 4;
-  const carbsGrams = carbsKcal / 4;
-  const fatGrams = fatKcal / 9;
-  
-  // Calcular proteína por kg
-  const proteinPerKg = PROTEIN_PER_KG[profile][objective];
-  
-  // Verificar se a proteína calculada atende a recomendação por peso
-  const recommendedProteinGrams = weight * proteinPerKg;
-  const finalProteinGrams = Math.max(proteinGrams, recommendedProteinGrams);
-  const finalProteinKcal = finalProteinGrams * 4;
-  
-  // Ajustar carboidratos se a proteína foi aumentada
-  const remainingKcal = vet - finalProteinKcal - fatKcal;
-  const finalCarbsKcal = Math.max(0, remainingKcal);
-  const finalCarbsGrams = finalCarbsKcal / 4;
-  
-  return {
-    protein: {
-      grams: Math.round(finalProteinGrams),
-      kcal: Math.round(finalProteinKcal),
-      percentage: Math.round((finalProteinKcal / vet) * 100)
-    },
-    carbs: {
-      grams: Math.round(finalCarbsGrams),
-      kcal: Math.round(finalCarbsKcal),
-      percentage: Math.round((finalCarbsKcal / vet) * 100)
-    },
-    fat: {
-      grams: Math.round(fatGrams),
-      kcal: Math.round(fatKcal),
-      percentage: Math.round((fatKcal / vet) * 100)
-    },
-    proteinPerKg: proteinPerKg
-  };
+  // Usar padrões ENP através do wrapper de compatibilidade
+  return calculateMacrosENPWrapper(vet, weight, objective, profile);
 }
 
 /**
  * Mapeia perfil do frontend para perfil dos cálculos
+ * Mantém compatibilidade com sistema existente
  */
-export function mapProfileToCalculation(profile: string): 'magro' | 'obeso' | 'atleta' {
+export function mapProfileToCalculation(profile: string): 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' {
   switch (profile) {
+    case 'magro':
     case 'eutrofico':
-      return 'magro';
+      return 'eutrofico';
+    case 'obeso':
     case 'sobrepeso_obesidade':
-      return 'obeso';
+      return 'sobrepeso_obesidade';
     case 'atleta':
       return 'atleta';
     default:
-      return 'magro';
+      return 'eutrofico';
   }
 }
 
