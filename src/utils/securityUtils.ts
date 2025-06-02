@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import DOMPurify from 'dompurify';
 
@@ -36,32 +35,7 @@ export const isCurrentUserAdmin = async (): Promise<boolean> => {
 };
 
 /**
- * Log security events with standardized format
- */
-export const logSecurityEvent = async (
-  eventType: string, 
-  eventData: Record<string, any> = {},
-  sensitive: boolean = false
-): Promise<void> => {
-  try {
-    // Filter sensitive data if not in sensitive mode
-    const sanitizedData = sensitive ? eventData : {
-      ...eventData,
-      // Remove potentially sensitive fields
-      password: undefined,
-      token: undefined,
-      secret: undefined,
-    };
-    
-    console.log(`Security Event: ${eventType}`, sanitizedData);
-    // TODO: Implement database logging once types are updated
-  } catch (error) {
-    console.warn('Failed to log security event:', error);
-  }
-};
-
-/**
- * Enhanced HTML sanitization
+ * Enhanced HTML sanitization with stricter rules
  */
 export const sanitizeHtml = (html: string): string => {
   if (!html || typeof html !== 'string') return '';
@@ -69,20 +43,25 @@ export const sanitizeHtml = (html: string): string => {
   const config = {
     ALLOWED_TAGS: [
       'p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'blockquote', 'a', 'span', 'div'
+      'blockquote', 'span', 'div'
     ],
-    ALLOWED_ATTR: ['href', 'title', 'class'],
+    ALLOWED_ATTR: ['class'],
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'style'],
-    KEEP_CONTENT: false
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'link', 'style'],
+    FORBID_ATTR: [
+      'onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'style',
+      'onmouseout', 'onchange', 'onsubmit', 'onreset', 'onselect', 'onunload'
+    ],
+    KEEP_CONTENT: false,
+    ALLOW_DATA_ATTR: false,
+    ALLOW_UNKNOWN_PROTOCOLS: false
   };
   
   return DOMPurify.sanitize(html, config);
 };
 
 /**
- * Enhanced input sanitization for text content
+ * Enhanced input sanitization for text content with XSS prevention
  */
 export const sanitizeInput = (input: string): string => {
   if (typeof input !== 'string') return '';
@@ -93,6 +72,8 @@ export const sanitizeInput = (input: string): string => {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;')
+    .replace(/\\/g, '&#x5C;')
+    .replace(/`/g, '&#x60;')
     .trim();
 };
 
@@ -269,7 +250,7 @@ export const csrfTokenManager = {
 };
 
 /**
- * Content Security Policy helper
+ * Enhanced Content Security Policy helper with stricter rules
  */
 export const applyCSPHeaders = (): void => {
   if (typeof document !== 'undefined') {
@@ -281,8 +262,11 @@ export const applyCSPHeaders = (): void => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co https://api.stripe.com",
-      "frame-src 'self' https://js.stripe.com https://accounts.google.com"
+      "connect-src 'self' https://*.supabase.co https://api.stripe.com https://viacep.com.br",
+      "frame-src 'self' https://js.stripe.com https://accounts.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
     ].join('; ');
     
     document.head.appendChild(meta);
@@ -321,7 +305,7 @@ export const sessionSecurity = {
 };
 
 /**
- * Input validation for common patterns
+ * Enhanced input validation with additional security checks
  */
 export const inputValidation = {
   cpf: (cpf: string): boolean => {
@@ -357,6 +341,92 @@ export const inputValidation = {
   },
   
   name: (name: string): boolean => {
-    return name.trim().length >= 2 && /^[a-zA-ZÀ-ÿ\s]+$/.test(name);
+    if (!name || name.trim().length < 2) return false;
+    
+    // Check for potential XSS patterns
+    const xssPatterns = /<script|javascript:|onload=|onerror=/i;
+    if (xssPatterns.test(name)) return false;
+    
+    // Allow only letters, spaces, and common name characters
+    return /^[a-zA-ZÀ-ÿ\s\-'\.]+$/.test(name);
+  },
+
+  /**
+   * Enhanced email validation with additional security checks
+   */
+  email: (email: string): boolean => {
+    if (!email || typeof email !== 'string') return false;
+    
+    // Check for potential injection patterns
+    const injectionPatterns = /[<>'"`;\\]/;
+    if (injectionPatterns.test(email)) return false;
+    
+    return isValidEmail(email);
+  },
+
+  /**
+   * SQL injection pattern detection
+   */
+  hasSQLInjection: (input: string): boolean => {
+    const sqlPatterns = [
+      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/i,
+      /['"`;\\]/,
+      /--/,
+      /\/\*/,
+      /\*\//,
+      /xp_/i,
+      /sp_/i
+    ];
+    
+    return sqlPatterns.some(pattern => pattern.test(input));
+  }
+};
+
+/**
+ * Apply security headers to requests
+ */
+export const securityHeaders = {
+  /**
+   * Get security headers for API requests
+   */
+  getHeaders: (): Record<string, string> => {
+    const token = csrfTokenManager.get();
+    return {
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      ...(token && { 'X-CSRF-Token': token })
+    };
+  }
+};
+
+/**
+ * Security event logging with enhanced data
+ */
+export const logSecurityEvent = async (
+  eventType: string, 
+  eventData: Record<string, any> = {},
+  sensitive: boolean = false
+): Promise<void> => {
+  try {
+    const sanitizedData = sensitive ? eventData : {
+      ...eventData,
+      password: undefined,
+      token: undefined,
+      secret: undefined,
+      email: eventData.email ? eventData.email.replace(/(.{2}).*(@.*)/, '$1***$2') : undefined
+    };
+    
+    console.log(`Security Event: ${eventType}`, {
+      ...sanitizedData,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    });
+    
+    // TODO: Implement database logging once types are updated
+  } catch (error) {
+    console.warn('Failed to log security event:', error);
   }
 };

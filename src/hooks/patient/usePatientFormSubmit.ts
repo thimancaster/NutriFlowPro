@@ -3,12 +3,17 @@ import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { PatientService } from '@/services/patient';
 import { Patient, AddressDetails } from '@/types';
+import { csrfProtection, rateLimiter } from '@/utils/securityValidation';
 
 interface UsePatientFormSubmitProps {
   editPatient?: Patient;
   onSuccess?: () => void;
   userId: string;
-  validateForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => boolean;
+  validateAndSanitizeForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => {
+    isValid: boolean;
+    errors: Record<string, string>;
+    sanitizedData: any;
+  };
   formData: any;
   birthDate?: Date | undefined;
   address: AddressDetails;
@@ -19,7 +24,7 @@ export const usePatientFormSubmit = ({
   editPatient,
   onSuccess,
   userId,
-  validateForm,
+  validateAndSanitizeForm,
   formData,
   birthDate,
   address,
@@ -31,7 +36,23 @@ export const usePatientFormSubmit = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm(formData, birthDate, address)) {
+    // Rate limiting for patient creation/updates
+    const rateLimitKey = editPatient ? `patient_update_${editPatient.id}` : `patient_create_${userId}`;
+    const rateCheck = rateLimiter.checkLimit(rateLimitKey, 5, 60000); // 5 attempts per minute
+    
+    if (!rateCheck.allowed) {
+      toast({
+        title: "Muitas tentativas",
+        description: "Aguarde um momento antes de tentar novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate and sanitize form data
+    const validation = validateAndSanitizeForm(formData, birthDate, address);
+    
+    if (!validation.isValid) {
       toast({
         title: "Formulário inválido",
         description: "Por favor, corrija os campos destacados.",
@@ -52,54 +73,57 @@ export const usePatientFormSubmit = ({
     setIsLoading(true);
 
     try {
+      // Use sanitized data from validation
+      const sanitizedFormData = validation.sanitizedData;
+      
       // Format birth_date for database
       const formattedBirthDate = birthDate ? 
         birthDate.toISOString().split('T')[0] : null;
       
       // Ensure gender is in the correct format for the database constraint
       let genderValue: 'male' | 'female' | 'other' | undefined;
-      if (formData.sex === 'M') {
+      if (sanitizedFormData.sex === 'M') {
         genderValue = 'male';
-      } else if (formData.sex === 'F') {
+      } else if (sanitizedFormData.sex === 'F') {
         genderValue = 'female';
-      } else if (formData.sex === 'O') {
+      } else if (sanitizedFormData.sex === 'O') {
         genderValue = 'other';
       } else {
         genderValue = undefined;
       }
       
-      // Format data for Supabase
-      const patientData: Partial<Patient> = {
-        name: formData.name,
-        gender: genderValue, // Use the corrected gender value
+      // Format data for Supabase with CSRF protection
+      let patientData: Partial<Patient> = {
+        name: sanitizedFormData.name,
+        gender: genderValue,
         birth_date: formattedBirthDate,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        secondaryPhone: formData.secondaryPhone || null,
-        cpf: formData.cpf || null,
+        email: sanitizedFormData.email || null,
+        phone: sanitizedFormData.phone || null,
+        secondaryPhone: sanitizedFormData.secondaryPhone || null,
+        cpf: sanitizedFormData.cpf || null,
         user_id: userId,
-        status: formData.status || 'active',
-        // Use address as an object rather than string
-        address: Object.values(address).some(value => value) ? address : null,
-        notes: notes || null,
+        status: sanitizedFormData.status || 'active',
+        address: Object.values(sanitizedFormData.address || {}).some(value => value) ? sanitizedFormData.address : null,
+        notes: sanitizedFormData.notes || null,
         goals: {
-          objective: formData.objective,
-          profile: formData.profile,
+          objective: sanitizedFormData.objective,
+          profile: sanitizedFormData.profile,
         },
       };
 
-      console.log('Submitting patient data:', patientData);
+      // Add CSRF protection
+      patientData = csrfProtection.attachToken(patientData);
+
+      console.log('Submitting sanitized patient data:', patientData);
 
       let result;
       
       if (editPatient) {
-        // Use the PatientService to update existing patient
         result = await PatientService.savePatient({
           ...patientData,
           id: editPatient.id
         });
       } else {
-        // Use the PatientService to insert new patient
         result = await PatientService.savePatient(patientData);
       }
       
@@ -109,10 +133,9 @@ export const usePatientFormSubmit = ({
       
       toast({
         title: editPatient ? "Paciente atualizado" : "Paciente cadastrado",
-        description: `${formData.name} foi ${editPatient ? 'atualizado' : 'adicionado(a)'} com sucesso.`,
+        description: `${sanitizedFormData.name} foi ${editPatient ? 'atualizado' : 'adicionado(a)'} com sucesso.`,
       });
       
-      // Call success callback if provided
       if (onSuccess) {
         onSuccess();
       }

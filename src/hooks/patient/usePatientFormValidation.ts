@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { validateField } from '@/utils/patientValidation';
+import { validateSecureForm } from '@/utils/securityValidation';
 
 export const usePatientFormValidation = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -15,42 +16,50 @@ export const usePatientFormValidation = () => {
   };
 
   const validateForm = (formData: any, birthDate?: Date | undefined, address?: any) => {
-    let isValid = true;
-    const newErrors = {} as Record<string, string>;
-    
-    // Validate basic info
-    const fields = ['name', 'sex', 'email', 'phone', 'secondaryPhone', 'cpf', 'objective', 'profile'];
-    fields.forEach(field => {
-      const error = validateField(field, formData[field as keyof typeof formData]);
-      if (error) {
-        newErrors[field] = error;
-        isValid = false;
-      }
+    // Use the new secure validation
+    const validation = validateSecureForm.patient({
+      ...formData,
+      address,
+      birthDate
     });
-    
-    // Validate birth date
+
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return false;
+    }
+
+    // Additional birth date validation
     if (!birthDate) {
-      newErrors.birthDate = 'Data de nascimento é obrigatória';
-      isValid = false;
+      const newErrors = { ...validation.errors, birthDate: 'Data de nascimento é obrigatória' };
+      setErrors(newErrors);
+      return false;
     }
-    
-    // Address validation can be partial
-    if (address?.cep) {
-      const error = validateField('address.cep', address.cep);
-      if (error) {
-        newErrors['address.cep'] = error;
-        isValid = false;
-      }
-    }
-    
-    setErrors(newErrors);
-    return isValid;
+
+    setErrors({});
+    return true;
+  };
+
+  const validateAndSanitizeForm = (formData: any, birthDate?: Date | undefined, address?: any) => {
+    const validation = validateSecureForm.patient({
+      ...formData,
+      address,
+      birthDate
+    });
+
+    return {
+      isValid: validation.isValid && !!birthDate,
+      errors: validation.isValid && !birthDate ? 
+        { ...validation.errors, birthDate: 'Data de nascimento é obrigatória' } : 
+        validation.errors,
+      sanitizedData: validation.sanitizedData
+    };
   };
 
   return {
     errors,
     setErrors,
     handleValidateField,
-    validateForm
+    validateForm,
+    validateAndSanitizeForm
   };
 };

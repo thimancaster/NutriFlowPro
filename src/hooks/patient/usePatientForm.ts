@@ -29,7 +29,8 @@ export const usePatientForm = ({ editPatient, initialData, onSuccess, userId }: 
   const {
     errors,
     handleValidateField,
-    validateForm
+    validateForm,
+    validateAndSanitizeForm
   } = usePatientFormValidation();
 
   const {
@@ -39,7 +40,7 @@ export const usePatientForm = ({ editPatient, initialData, onSuccess, userId }: 
     editPatient,
     onSuccess,
     userId,
-    validateForm: (formData, birthDate, address) => validateForm(formData, birthDate, address),
+    validateAndSanitizeForm,
     formData,
     birthDate,
     address,

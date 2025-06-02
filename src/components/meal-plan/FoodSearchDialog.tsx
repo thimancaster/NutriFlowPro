@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { validateSecureForm, rateLimiter } from '@/utils/securityValidation';
+import { useToast } from '@/hooks/use-toast';
 
 interface Food {
   id: string;
@@ -28,13 +30,36 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
   onClose,
   onFoodSelect
 }) => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(false);
 
   const searchFoods = async (term: string) => {
-    if (!term.trim()) {
+    // Validate and sanitize search term
+    const validation = validateSecureForm.foodSearch(term);
+    
+    if (!validation.isValid) {
+      if (validation.error) {
+        toast({
+          title: "Termo de busca inválido",
+          description: validation.error,
+          variant: "destructive"
+        });
+      }
       setFoods([]);
+      return;
+    }
+
+    // Rate limiting for search requests
+    const rateCheck = rateLimiter.checkLimit('food_search', 10, 60000); // 10 searches per minute
+    
+    if (!rateCheck.allowed) {
+      toast({
+        title: "Muitas buscas",
+        description: "Aguarde um momento antes de buscar novamente.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -43,17 +68,27 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
       const { data, error } = await supabase
         .from('foods')
         .select('*')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${validation.sanitizedTerm}%`)
         .limit(20);
 
       if (error) {
         console.error('Error searching foods:', error);
+        toast({
+          title: "Erro na busca",
+          description: "Não foi possível buscar alimentos no momento.",
+          variant: "destructive"
+        });
         return;
       }
 
       setFoods(data || []);
     } catch (error) {
       console.error('Error searching foods:', error);
+      toast({
+        title: "Erro na busca",
+        description: "Erro inesperado durante a busca.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -61,7 +96,11 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      searchFoods(searchTerm);
+      if (searchTerm.trim()) {
+        searchFoods(searchTerm);
+      } else {
+        setFoods([]);
+      }
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -72,6 +111,22 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
     onClose();
     setSearchTerm('');
     setFoods([]);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Basic client-side validation
+    if (value.length > 100) {
+      toast({
+        title: "Termo muito longo",
+        description: "O termo de busca deve ter no máximo 100 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSearchTerm(value);
   };
 
   return (
@@ -87,8 +142,10 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
             <Input
               placeholder="Digite o nome do alimento..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10"
+              maxLength={100}
+              autoComplete="off"
             />
           </div>
           
