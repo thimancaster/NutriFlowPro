@@ -7,19 +7,23 @@ import { Save, Download, Edit } from 'lucide-react';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { MealPlan } from '@/types/mealPlan';
 
-const MealPlanEditingStep: React.FC = () => {
-  const {
-    currentMealPlan,
-    isSaving,
-    saveMealPlan,
-    setCurrentStep
-  } = useMealPlanWorkflow();
+interface MealPlanEditingStepProps {
+  mealPlan: MealPlan;
+  onSave: (updates: Partial<MealPlan>) => Promise<void>;
+  onBack: () => void;
+}
 
-  if (!currentMealPlan) return null;
+const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
+  mealPlan,
+  onSave,
+  onBack
+}) => {
+  const { isSaving, setCurrentStep } = useMealPlanWorkflow();
 
   const handleSave = async () => {
-    await saveMealPlan({});
+    await onSave({});
     setCurrentStep('completed');
   };
 
@@ -35,20 +39,20 @@ const MealPlanEditingStep: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Plano Alimentar - {format(new Date(currentMealPlan.date), 'dd/MM/yyyy', { locale: ptBR })}
+              Plano Alimentar - {format(new Date(mealPlan.date), 'dd/MM/yyyy', { locale: ptBR })}
             </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">
-                {Math.round(currentMealPlan.total_calories)} kcal
+                {Math.round(mealPlan.total_calories)} kcal
               </Badge>
               <Badge variant="outline">
-                P: {Math.round(currentMealPlan.total_protein)}g
+                P: {Math.round(mealPlan.total_protein)}g
               </Badge>
               <Badge variant="outline">
-                C: {Math.round(currentMealPlan.total_carbs)}g
+                C: {Math.round(mealPlan.total_carbs)}g
               </Badge>
               <Badge variant="outline">
-                G: {Math.round(currentMealPlan.total_fats)}g
+                G: {Math.round(mealPlan.total_fats)}g
               </Badge>
             </div>
           </div>
@@ -57,7 +61,7 @@ const MealPlanEditingStep: React.FC = () => {
 
       {/* Meals */}
       <div className="grid gap-4">
-        {currentMealPlan.meals.map((meal) => (
+        {mealPlan.meals.map((meal) => (
           <Card key={meal.id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">

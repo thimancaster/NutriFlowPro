@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Utensils, Plus, Save } from 'lucide-react';
-import { mealPlanService } from '@/services/mealPlanService';
+import { MealPlanService } from '@/services/mealPlanService';
 import { MealPlan } from '@/types/mealPlan';
 
 interface MealAssemblyProps {
@@ -20,7 +20,7 @@ const MealAssembly: React.FC<MealAssemblyProps> = ({ mealPlan, onSave }) => {
     
     setIsSaving(true);
     try {
-      const result = await mealPlanService.saveMealPlan(mealPlan);
+      const result = await MealPlanService.createMealPlan(mealPlan);
       if (result.success && result.data) {
         onSave?.(result.data);
       }

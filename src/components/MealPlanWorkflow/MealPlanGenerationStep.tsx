@@ -5,20 +5,26 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Utensils, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
+import { Patient, ConsultationData } from '@/types';
 
-const MealPlanGenerationStep: React.FC = () => {
+interface MealPlanGenerationStepProps {
+  patient: Patient | null;
+  calculationData: ConsultationData | null;
+  onGenerate: () => Promise<void>;
+  onBack: () => void;
+}
+
+const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
+  patient,
+  calculationData,
+  onGenerate,
+  onBack
+}) => {
   const { user } = useAuth();
-  const {
-    patient,
-    calculationData,
-    isGenerating,
-    generateMealPlan
-  } = useMealPlanWorkflow();
+  const { isGenerating } = useMealPlanWorkflow();
 
   const handleGenerate = async () => {
-    if (user) {
-      await generateMealPlan(user.id);
-    }
+    await onGenerate();
   };
 
   if (!calculationData) return null;

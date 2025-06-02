@@ -1,7 +1,7 @@
 
 import { PatientService } from "./patient";
 import { consultationService } from "./consultationService";
-import { mealPlanService } from './mealPlanService';
+import { MealPlanService } from './mealPlanService';
 
 /**
  * Service to handle all database interactions
@@ -24,9 +24,10 @@ export const DatabaseService = {
   getConsultation: consultationService.getConsultation,
   
   // Meal plan-related operations
-  saveMealPlan: mealPlanService.saveMealPlan,
-  getPatientMealPlans: mealPlanService.getPatientMealPlans,
-  getMealPlan: async (planId: string, userId: string) => {
-    return mealPlanService.getMealPlanById(planId, userId);
+  saveMealPlan: MealPlanService.createMealPlan,
+  getPatientMealPlans: (patientId: string, userId: string) => 
+    MealPlanService.getMealPlans(userId, { patient_id: patientId }),
+  getMealPlan: async (planId: string) => {
+    return MealPlanService.getMealPlan(planId);
   }
 };
