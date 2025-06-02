@@ -20,6 +20,7 @@ import PatientProfile from '@/pages/PatientProfile';
 import Calculator from '@/pages/Calculator';
 import MealPlans from '@/pages/MealPlans';
 import MealPlanGenerator from '@/pages/MealPlanGenerator';
+import MealPlanWorkflowPage from '@/pages/MealPlanWorkflowPage';
 import Appointments from '@/pages/Appointments';
 import Clinical from '@/pages/Clinical';
 import PatientHistory from '@/pages/PatientHistory';
@@ -59,6 +60,7 @@ const AppRoutes = () => {
         <Route path="calculator" element={<Calculator />} />
         <Route path="meal-plans" element={<MealPlans />} />
         <Route path="meal-plan-generator" element={<MealPlanGenerator />} />
+        <Route path="meal-plan-workflow" element={<MealPlanWorkflowPage />} />
         <Route path="appointments" element={<Appointments />} />
         <Route path="clinical" element={<Clinical />} />
         <Route path="clinical/:patientId" element={<Clinical />} />
