@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -262,7 +261,6 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
             <ENPResultsPanel
               results={calculator.results}
               weight={data.weight}
-              onGenerateMealPlan={handleGenerateMealPlan}
               onExportResults={handleExportResults}
             />
           )}
