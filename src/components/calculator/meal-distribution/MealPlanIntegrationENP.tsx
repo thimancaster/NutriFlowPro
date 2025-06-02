@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, ChefHat, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
 
@@ -14,7 +15,7 @@ interface MealPlanIntegrationENPProps {
     fat: { grams: number; kcal: number };
   };
   weight: number;
-  onGenerateMealPlan: () => void;
+  calculationData: any;
   onExportResults: () => void;
   isGenerating?: boolean;
 }
@@ -23,14 +24,35 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
   vet,
   macros,
   weight,
-  onGenerateMealPlan,
+  calculationData,
   onExportResults,
   isGenerating = false
 }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { activePatient } = usePatient();
   
   const canGenerateMealPlan = user && activePatient && vet > 0;
+  
+  const handleGenerateMealPlan = () => {
+    if (!canGenerateMealPlan) return;
+    
+    // Navigate to new meal plan workflow with calculation data
+    navigate('/meal-plan-workflow', {
+      state: {
+        patientData: activePatient,
+        calculationData: {
+          id: `enp-${Date.now()}`,
+          totalCalories: vet,
+          protein: macros.protein.grams,
+          carbs: macros.carbs.grams,
+          fats: macros.fat.grams,
+          systemType: 'ENP',
+          ...calculationData
+        }
+      }
+    });
+  };
   
   return (
     <Card>
@@ -81,7 +103,7 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
         {/* Ações */}
         <div className="space-y-3">
           <Button
-            onClick={onGenerateMealPlan}
+            onClick={handleGenerateMealPlan}
             disabled={!canGenerateMealPlan || isGenerating}
             className="w-full"
             size="lg"
