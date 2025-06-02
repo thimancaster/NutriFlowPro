@@ -18,11 +18,12 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/Icons';
 import { Checkbox } from "@/components/ui/checkbox"
+import { csrfTokenManager } from '@/utils/securityUtils';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
-  password: z.string().min(6, {
-    message: "A senha deve ter pelo menos 6 caracteres.",
+  password: z.string().min(8, {
+    message: "A senha deve ter pelo menos 8 caracteres.",
   }),
   rememberMe: z.boolean().default(false)
 })
@@ -53,6 +54,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+      // Generate CSRF token for this login attempt
+      const csrfToken = csrfTokenManager.generate();
+      
       const result = await login(values.email, values.password, values.rememberMe);
 
       if (result.success) {
@@ -82,6 +86,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   async function handleGoogleLogin() {
     if (onGoogleLogin) {
       try {
+        // Generate CSRF token for Google login
+        const csrfToken = csrfTokenManager.generate();
+        
         const result = await onGoogleLogin();
         if (!result.success && result.error) {
           toast({
@@ -110,7 +117,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="seuemail@exemplo.com" {...field} />
+                <Input 
+                  placeholder="seuemail@exemplo.com" 
+                  autoComplete="email"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -128,7 +139,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
                 </Link>
               </div>
               <FormControl>
-                <Input type="password" {...field} />
+                <Input 
+                  type="password" 
+                  autoComplete="current-password"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

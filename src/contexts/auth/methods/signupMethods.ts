@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ToastProps } from '@/hooks/toast/toast-types';
+import { validatePasswordStrength, checkClientRateLimit } from '@/utils/securityUtils';
 
 /**
  * Log security event to console for now (until database types are updated)
@@ -11,37 +12,7 @@ const logSecurityEvent = (eventType: string, eventData: any = {}) => {
 };
 
 /**
- * Simple rate limiting using localStorage for client-side protection
- */
-const checkClientRateLimit = (email: string, attemptType: string): boolean => {
-  const key = `${attemptType}_attempts_${email}`;
-  const now = Date.now();
-  const windowMs = 30 * 60 * 1000; // 30 minutes
-  
-  try {
-    const stored = localStorage.getItem(key);
-    const data = stored ? JSON.parse(stored) : { attempts: 0, resetTime: now + windowMs };
-    
-    if (now > data.resetTime) {
-      data.attempts = 0;
-      data.resetTime = now + windowMs;
-    }
-    
-    if (data.attempts >= 3) { // Lower limit for signups
-      return false;
-    }
-    
-    data.attempts += 1;
-    localStorage.setItem(key, JSON.stringify(data));
-    return true;
-  } catch (error) {
-    console.warn('Rate limit check failed:', error);
-    return true;
-  }
-};
-
-/**
- * Handles user registration with email, password and name
+ * Handles user registration with enhanced security validation
  */
 export const signup = async (
   email: string, 
@@ -65,13 +36,14 @@ export const signup = async (
       throw new Error("O nome é obrigatório");
     }
     
-    // Check password strength
-    if (password.length < 8) {
-      throw new Error("A senha deve ter pelo menos 8 caracteres");
+    // Enhanced password validation
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+      throw new Error(passwordValidation.errors[0]);
     }
     
     // Check client-side rate limit
-    if (!checkClientRateLimit(email, 'signup')) {
+    if (!checkClientRateLimit(`signup_${email}`, 3, 30 * 60 * 1000)) {
       logSecurityEvent('signup_rate_limited', { email });
       throw new Error("Muitas tentativas de cadastro. Tente novamente em alguns minutos.");
     }
@@ -80,12 +52,12 @@ export const signup = async (
       email,
       password,
       options: {
-        data: { name }
+        data: { name },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     });
 
     if (error) {
-      // Log failed signup attempt
       logSecurityEvent('signup_failed', { 
         email, 
         error: error.message 
@@ -105,8 +77,6 @@ export const signup = async (
 
       if (profileError) {
         console.error("Error creating user profile:", profileError);
-        // We don't throw here because the auth user was created successfully
-        // and we'll rely on the database trigger as a fallback
         logSecurityEvent('signup_profile_error', { 
           email, 
           user_id: data.user.id,
@@ -119,7 +89,6 @@ export const signup = async (
           variant: "warning"
         });
       } else {
-        // Log successful signup
         logSecurityEvent('signup_success', { 
           email, 
           user_id: data.user.id 
@@ -127,7 +96,7 @@ export const signup = async (
         
         toast({
           title: "Conta criada com sucesso",
-          description: "Bem-vindo ao NutriFlow Pro!",
+          description: "Bem-vindo ao NutriFlow Pro! Verifique seu email para confirmar sua conta.",
         });
       }
       

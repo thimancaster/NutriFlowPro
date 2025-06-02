@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import DOMPurify from 'dompurify';
 
 /**
- * Security utility functions
+ * Enhanced security utility functions
  */
 
 /**
@@ -36,7 +36,7 @@ export const isCurrentUserAdmin = async (): Promise<boolean> => {
 };
 
 /**
- * Log security events with standardized format (console logging for now)
+ * Log security events with standardized format
  */
 export const logSecurityEvent = async (
   eventType: string, 
@@ -61,13 +61,11 @@ export const logSecurityEvent = async (
 };
 
 /**
- * Sanitizes HTML content using DOMPurify to prevent XSS attacks.
- * This is a secure method that removes dangerous elements and attributes.
+ * Enhanced HTML sanitization
  */
 export const sanitizeHtml = (html: string): string => {
   if (!html || typeof html !== 'string') return '';
   
-  // Configure DOMPurify with secure settings
   const config = {
     ALLOWED_TAGS: [
       'p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -84,7 +82,7 @@ export const sanitizeHtml = (html: string): string => {
 };
 
 /**
- * Sanitize input to prevent XSS (for text content, not HTML)
+ * Enhanced input sanitization for text content
  */
 export const sanitizeInput = (input: string): string => {
   if (typeof input !== 'string') return '';
@@ -94,28 +92,27 @@ export const sanitizeInput = (input: string): string => {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+    .replace(/\//g, '&#x2F;')
+    .trim();
 };
 
 /**
- * Validate email format with enhanced security
+ * Enhanced email validation
  */
 export const isValidEmail = (email: string): boolean => {
   if (!email || typeof email !== 'string') return false;
   
-  // Enhanced email regex that prevents common injection attempts
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   
-  // Additional security checks
-  if (email.length > 320) return false; // RFC 5321 limit
-  if (email.includes('..')) return false; // Consecutive dots
-  if (email.startsWith('.') || email.endsWith('.')) return false; // Leading/trailing dots
+  if (email.length > 320) return false;
+  if (email.includes('..')) return false;
+  if (email.startsWith('.') || email.endsWith('.')) return false;
   
   return emailRegex.test(email);
 };
 
 /**
- * Validate password strength
+ * Enhanced password strength validation
  */
 export const validatePasswordStrength = (password: string): {
   isValid: boolean;
@@ -129,9 +126,11 @@ export const validatePasswordStrength = (password: string): {
     return { isValid: false, errors: ['A senha é obrigatória'], score: 0 };
   }
   
-  // Length check
+  // Enhanced length check
   if (password.length < 8) {
     errors.push('A senha deve ter pelo menos 8 caracteres');
+  } else if (password.length >= 12) {
+    score += 2; // Bonus for longer passwords
   } else {
     score += 1;
   }
@@ -161,27 +160,33 @@ export const validatePasswordStrength = (password: string): {
     score += 1;
   }
   
-  // Common patterns check
+  // Enhanced security checks
   if (/(.)\1{2,}/.test(password)) {
     errors.push('A senha não deve conter caracteres repetidos consecutivos');
     score -= 1;
   }
   
-  // Sequential patterns
-  if (/123|abc|qwe/i.test(password)) {
-    errors.push('A senha não deve conter sequências óbvias');
+  if (/123|abc|qwe|password|senha/i.test(password)) {
+    errors.push('A senha não deve conter sequências óbvias ou palavras comuns');
     score -= 1;
   }
   
+  // Check against common passwords
+  const commonPasswords = ['12345678', 'password', 'qwerty123', 'admin123'];
+  if (commonPasswords.some(common => password.toLowerCase().includes(common))) {
+    errors.push('A senha é muito comum e insegura');
+    score -= 2;
+  }
+  
   return {
-    isValid: errors.length === 0 && score >= 3,
+    isValid: errors.length === 0 && score >= 4,
     errors,
     score: Math.max(0, score)
   };
 };
 
 /**
- * Rate limiting utility (client-side helper)
+ * Enhanced rate limiting with exponential backoff
  */
 export const checkClientRateLimit = (
   key: string, 
@@ -193,12 +198,24 @@ export const checkClientRateLimit = (
   
   try {
     const stored = localStorage.getItem(storageKey);
-    const data = stored ? JSON.parse(stored) : { attempts: 0, resetTime: now + windowMs };
+    const data = stored ? JSON.parse(stored) : { 
+      attempts: 0, 
+      resetTime: now + windowMs,
+      lastAttempt: 0
+    };
     
     // Reset if window has passed
     if (now > data.resetTime) {
       data.attempts = 0;
       data.resetTime = now + windowMs;
+    }
+    
+    // Exponential backoff - increase delay after each failed attempt
+    const timeSinceLastAttempt = now - data.lastAttempt;
+    const requiredDelay = Math.min(1000 * Math.pow(2, data.attempts), 60000); // Max 1 minute
+    
+    if (data.attempts > 0 && timeSinceLastAttempt < requiredDelay) {
+      return false;
     }
     
     // Check if rate limit exceeded
@@ -208,6 +225,7 @@ export const checkClientRateLimit = (
     
     // Increment attempts
     data.attempts += 1;
+    data.lastAttempt = now;
     localStorage.setItem(storageKey, JSON.stringify(data));
     
     return true;
@@ -218,7 +236,7 @@ export const checkClientRateLimit = (
 };
 
 /**
- * Generate secure random string
+ * Generate secure random string for CSRF tokens
  */
 export const generateSecureToken = (length: number = 32): string => {
   const array = new Uint8Array(length);
@@ -227,22 +245,118 @@ export const generateSecureToken = (length: number = 32): string => {
 };
 
 /**
- * Test function for XSS prevention - for development/testing only
+ * CSRF Token Management
  */
-export const testXssPrevention = (): void => {
-  if (process.env.NODE_ENV !== 'development') return;
+export const csrfTokenManager = {
+  generate: (): string => {
+    const token = generateSecureToken(32);
+    sessionStorage.setItem('csrf_token', token);
+    return token;
+  },
   
-  const xssPayloads = [
-    '<script>alert("XSS")</script>',
-    '<img src=x onerror=alert("XSS")>',
-    '<iframe src="javascript:alert(\'XSS\')"></iframe>',
-    '<svg onload=alert("XSS")>',
-    '<div onclick="alert(\'XSS\')">Click me</div>'
-  ];
+  get: (): string | null => {
+    return sessionStorage.getItem('csrf_token');
+  },
   
-  console.log('Testing XSS prevention:');
-  xssPayloads.forEach((payload, index) => {
-    const sanitized = sanitizeHtml(payload);
-    console.log(`Test ${index + 1}: ${payload} => ${sanitized}`);
-  });
+  validate: (token: string): boolean => {
+    const storedToken = sessionStorage.getItem('csrf_token');
+    return storedToken === token && token.length === 64;
+  },
+  
+  clear: (): void => {
+    sessionStorage.removeItem('csrf_token');
+  }
+};
+
+/**
+ * Content Security Policy helper
+ */
+export const applyCSPHeaders = (): void => {
+  if (typeof document !== 'undefined') {
+    const meta = document.createElement('meta');
+    meta.httpEquiv = 'Content-Security-Policy';
+    meta.content = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://js.stripe.com https://accounts.google.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      "connect-src 'self' https://*.supabase.co https://api.stripe.com",
+      "frame-src 'self' https://js.stripe.com https://accounts.google.com"
+    ].join('; ');
+    
+    document.head.appendChild(meta);
+  }
+};
+
+/**
+ * Session security enhancements
+ */
+export const sessionSecurity = {
+  // Check if session is about to expire (within 5 minutes)
+  isSessionExpiring: (session: any): boolean => {
+    if (!session?.expires_at) return false;
+    const expiresAt = new Date(session.expires_at * 1000);
+    const now = new Date();
+    const fiveMinutes = 5 * 60 * 1000;
+    return (expiresAt.getTime() - now.getTime()) < fiveMinutes;
+  },
+  
+  // Generate session fingerprint for additional security
+  generateFingerprint: (): string => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx?.fillText('security-fingerprint', 2, 2);
+    
+    const fingerprint = [
+      navigator.userAgent,
+      navigator.language,
+      screen.width + 'x' + screen.height,
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+      canvas.toDataURL()
+    ].join('|');
+    
+    return btoa(fingerprint).slice(0, 32);
+  }
+};
+
+/**
+ * Input validation for common patterns
+ */
+export const inputValidation = {
+  cpf: (cpf: string): boolean => {
+    const cleaned = cpf.replace(/\D/g, '');
+    if (cleaned.length !== 11) return false;
+    
+    // Check for known invalid patterns
+    if (/^(\d)\1{10}$/.test(cleaned)) return false;
+    
+    // Validate CPF algorithm
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cleaned[i]) * (10 - i);
+    }
+    let remainder = sum % 11;
+    let digit1 = remainder < 2 ? 0 : 11 - remainder;
+    
+    if (parseInt(cleaned[9]) !== digit1) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cleaned[i]) * (11 - i);
+    }
+    remainder = sum % 11;
+    let digit2 = remainder < 2 ? 0 : 11 - remainder;
+    
+    return parseInt(cleaned[10]) === digit2;
+  },
+  
+  phone: (phone: string): boolean => {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length >= 10 && cleaned.length <= 11;
+  },
+  
+  name: (name: string): boolean => {
+    return name.trim().length >= 2 && /^[a-zA-ZÀ-ÿ\s]+$/.test(name);
+  }
 };

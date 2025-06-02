@@ -2,42 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ToastProps } from '@/hooks/toast/toast-types';
 import { Session } from '@supabase/supabase-js';
+import { checkClientRateLimit, isValidEmail } from '@/utils/securityUtils';
 
 interface LoginResult {
   success: boolean;
   session?: Session | null;
   error?: Error;
 }
-
-/**
- * Simple rate limiting using localStorage for client-side protection
- */
-const checkClientRateLimit = (email: string): boolean => {
-  const key = `login_attempts_${email}`;
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  
-  try {
-    const stored = localStorage.getItem(key);
-    const data = stored ? JSON.parse(stored) : { attempts: 0, resetTime: now + windowMs };
-    
-    if (now > data.resetTime) {
-      data.attempts = 0;
-      data.resetTime = now + windowMs;
-    }
-    
-    if (data.attempts >= 5) {
-      return false;
-    }
-    
-    data.attempts += 1;
-    localStorage.setItem(key, JSON.stringify(data));
-    return true;
-  } catch (error) {
-    console.warn('Rate limit check failed:', error);
-    return true;
-  }
-};
 
 /**
  * Log security event to console for now (until database types are updated)
@@ -48,7 +19,7 @@ const logSecurityEvent = (eventType: string, eventData: any = {}) => {
 };
 
 /**
- * Handles user login with email and password
+ * Handles user login with enhanced security validation
  */
 export const login = async (
   email: string, 
@@ -59,19 +30,23 @@ export const login = async (
   try {
     console.log("Attempting login for:", email);
     
-    // Validate inputs
+    // Enhanced input validation
     if (!email.trim()) {
       throw new Error("O email é obrigatório");
+    }
+    
+    if (!isValidEmail(email)) {
+      throw new Error("Formato de email inválido");
     }
     
     if (!password) {
       throw new Error("A senha é obrigatória");
     }
     
-    // Check client-side rate limit
-    if (!checkClientRateLimit(email)) {
+    // Enhanced rate limiting with exponential backoff
+    if (!checkClientRateLimit(`login_${email}`, 5, 15 * 60 * 1000)) {
       logSecurityEvent('login_rate_limited', { email });
-      throw new Error("Muitas tentativas de login. Tente novamente em alguns minutos.");
+      throw new Error("Muitas tentativas de login. Tente novamente em 15 minutos.");
     }
     
     // Sign in with email and password
@@ -100,6 +75,9 @@ export const login = async (
       user_id: data.user?.id 
     });
     
+    // Clear rate limit on successful login
+    localStorage.removeItem(`rate_limit_login_${email}`);
+    
     console.log("Login successful:", !!data.session);
     
     return { 
@@ -124,7 +102,7 @@ export const login = async (
 };
 
 /**
- * Handles Google OAuth sign-in
+ * Handles Google OAuth sign-in with enhanced security
  */
 export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promise<LoginResult> => {
   try {
@@ -137,6 +115,10 @@ export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promi
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
       }
     });
     
