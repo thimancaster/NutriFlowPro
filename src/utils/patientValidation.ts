@@ -62,13 +62,13 @@ const addressSchema = z.object({
   state: z.string().optional(),
 });
 
-// Patient schema for validation with improved CPF handling
+// Patient schema for validation with improved gender handling
 export const patientSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "E-mail inválido" }).or(z.string().length(0)),
   phone: z.string().regex(phoneRegex, { message: "Telefone inválido: Use o formato (XX) XXXXX-XXXX" }).or(z.string().length(0)),
   secondaryPhone: z.string().regex(phoneRegex, { message: "Telefone secundário inválido: Use o formato (XX) XXXXX-XXXX" }).or(z.string().length(0)).optional(),
-  sex: z.enum(["M", "F", "O"], { message: "Selecione o gênero" }),
+  sex: z.enum(["M", "F", "O"], { message: "Selecione o sexo" }),
   birthDate: z.date({ required_error: "Data de nascimento é obrigatória" }).optional(),
   cpf: z.string()
        .refine(
@@ -134,6 +134,14 @@ export const validateField = (field: string, value: any): string | null => {
     // Special case for birthDate
     if (field === 'birthDate' && !value) {
       return "Data de nascimento é obrigatória";
+    }
+    
+    // Special validation for sex field
+    if (field === 'sex') {
+      if (!value || !['M', 'F', 'O'].includes(value)) {
+        return "Selecione um sexo válido";
+      }
+      return null;
     }
     
     // Handle standard fields

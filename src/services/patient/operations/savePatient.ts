@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, AddressDetails } from '@/types/patient';
 
@@ -20,6 +21,14 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       };
     }
     
+    // Validate gender value before saving
+    if (patient.gender && !['male', 'female', 'other'].includes(patient.gender)) {
+      return {
+        success: false,
+        error: `Invalid gender value: ${patient.gender}. Must be 'male', 'female', or 'other'.`
+      };
+    }
+    
     // Prepare the data for insertion/update
     const patientData = {
       ...patient,
@@ -27,7 +36,9 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address,
       goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals,
       measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements,
-      name: patient.name // Ensure name is definitely present
+      name: patient.name, // Ensure name is definitely present
+      // Ensure gender is set to null if undefined to avoid constraint issues
+      gender: patient.gender || null
     };
 
     let data, error;
@@ -58,6 +69,7 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
     }
 
     if (error) {
+      console.error('Supabase error:', error);
       throw error;
     }
 
@@ -75,9 +87,19 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
     
   } catch (error: any) {
     console.error('Error saving patient:', error);
+    
+    // Provide more specific error messages for common issues
+    let errorMessage = error.message || 'Failed to save patient';
+    
+    if (error.message && error.message.includes('check_gender')) {
+      errorMessage = 'Valor de gênero inválido. Por favor, selecione Masculino, Feminino ou Outro.';
+    } else if (error.message && error.message.includes('violates')) {
+      errorMessage = 'Dados inválidos. Verifique se todos os campos obrigatórios foram preenchidos corretamente.';
+    }
+    
     return {
       success: false,
-      error: error.message || 'Failed to save patient'
+      error: errorMessage
     };
   }
 };

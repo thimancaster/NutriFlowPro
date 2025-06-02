@@ -56,17 +56,29 @@ export const usePatientFormSubmit = ({
       const formattedBirthDate = birthDate ? 
         birthDate.toISOString().split('T')[0] : null;
       
+      // Ensure gender is in the correct format for the database constraint
+      let genderValue: 'male' | 'female' | 'other' | undefined;
+      if (formData.sex === 'M') {
+        genderValue = 'male';
+      } else if (formData.sex === 'F') {
+        genderValue = 'female';
+      } else if (formData.sex === 'O') {
+        genderValue = 'other';
+      } else {
+        genderValue = undefined;
+      }
+      
       // Format data for Supabase
       const patientData: Partial<Patient> = {
         name: formData.name,
-        gender: formData.sex,
-        birth_date: formattedBirthDate, // Store as string in DB format
+        gender: genderValue, // Use the corrected gender value
+        birth_date: formattedBirthDate,
         email: formData.email || null,
         phone: formData.phone || null,
         secondaryPhone: formData.secondaryPhone || null,
         cpf: formData.cpf || null,
         user_id: userId,
-        status: formData.status,
+        status: formData.status || 'active',
         // Use address as an object rather than string
         address: Object.values(address).some(value => value) ? address : null,
         notes: notes || null,
