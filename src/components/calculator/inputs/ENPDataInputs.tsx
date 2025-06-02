@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ActivityLevel, Objective } from '@/types/consultation';
 import { Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ENPDataInputsProps {
   weight: string;
@@ -60,16 +59,12 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center">
           Dados ENP - Engenharia Nutricional Padrão
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 ml-2 text-blue-500" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">Campos obrigatórios conforme documento<br/>Engenharia Nutricional Padrão (ENP) Seção 2</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="relative group ml-2">
+            <Info className="h-4 w-4 text-blue-500 cursor-help" />
+            <div className="absolute left-0 top-6 hidden group-hover:block z-50 bg-black text-white text-xs rounded px-2 py-1 whitespace-nowrap max-w-xs">
+              Campos obrigatórios conforme documento<br/>Engenharia Nutricional Padrão (ENP) Seção 2
+            </div>
+          </div>
         </CardTitle>
       </CardHeader>
       
@@ -87,6 +82,8 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
               min="1"
               max="500"
               step="0.1"
+              autoComplete="off"
+              className="bg-white"
             />
           </div>
           
@@ -101,6 +98,8 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
               min="1"
               max="250"
               step="0.1"
+              autoComplete="off"
+              className="bg-white"
             />
           </div>
           
@@ -114,6 +113,8 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
               placeholder="Ex: 30"
               min="1"
               max="120"
+              autoComplete="off"
+              className="bg-white"
             />
           </div>
         </div>
@@ -141,12 +142,12 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
         <div className="space-y-3">
           <Label>Nível de Atividade Física <span className="text-red-500">*</span></Label>
           <Select value={activityLevel} onValueChange={(value) => setActivityLevel(value as ActivityLevel)}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white">
               <SelectValue placeholder="Selecione o nível de atividade" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border shadow-lg z-50">
               {activityOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-100">
                   <div>
                     <div className="font-medium">{option.label}</div>
                     <div className="text-sm text-gray-500">{option.description}</div>
@@ -161,12 +162,12 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
         <div className="space-y-3">
           <Label>Objetivo Principal <span className="text-red-500">*</span></Label>
           <Select value={objective} onValueChange={(value) => setObjective(value as Objective)}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white">
               <SelectValue placeholder="Selecione o objetivo" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border shadow-lg z-50">
               {objectiveOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-100">
                   <div>
                     <div className="font-medium">{option.label}</div>
                     <div className="text-sm text-gray-500">{option.description}</div>
