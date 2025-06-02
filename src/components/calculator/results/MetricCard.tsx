@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Info } from 'lucide-react';
 
@@ -26,16 +25,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-1">
           {title}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-gray-500" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">{infoText}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="relative group">
+            <Info className="h-4 w-4 text-gray-500 cursor-help" />
+            <div className="absolute left-0 top-6 hidden group-hover:block z-50 bg-black text-white text-xs rounded px-2 py-1 whitespace-nowrap max-w-xs">
+              {infoText}
+            </div>
+          </div>
         </CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
