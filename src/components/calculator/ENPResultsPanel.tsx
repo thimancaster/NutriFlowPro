@@ -17,7 +17,6 @@ interface ENPResultsPanelProps {
     };
   };
   weight: number;
-  onGenerateMealPlan: () => void;
   onExportResults: () => void;
   isGeneratingMealPlan?: boolean;
 }
@@ -25,7 +24,6 @@ interface ENPResultsPanelProps {
 export const ENPResultsPanel: React.FC<ENPResultsPanelProps> = ({
   results,
   weight,
-  onGenerateMealPlan,
   onExportResults,
   isGeneratingMealPlan = false
 }) => {
@@ -49,7 +47,7 @@ export const ENPResultsPanel: React.FC<ENPResultsPanelProps> = ({
         vet={results.vet}
         macros={results.macros}
         weight={weight}
-        onGenerateMealPlan={onGenerateMealPlan}
+        calculationData={results}
         onExportResults={onExportResults}
         isGenerating={isGeneratingMealPlan}
       />
