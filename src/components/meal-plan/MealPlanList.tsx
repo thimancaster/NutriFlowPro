@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
   onView,
   onCreateNew
 }) => {
+  const navigate = useNavigate();
   const { data: response, isLoading, error } = useMealPlans(filters);
   const { deleteMealPlan, isDeleting } = useMealPlanMutations();
 
@@ -29,6 +31,30 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este plano alimentar?')) {
       await deleteMealPlan.mutateAsync(id);
+    }
+  };
+
+  const handleEditClick = (id: string) => {
+    if (onEdit) {
+      onEdit(id);
+    } else {
+      navigate(`/meal-plan-editor/${id}`);
+    }
+  };
+
+  const handleViewClick = (id: string) => {
+    if (onView) {
+      onView(id);
+    } else {
+      navigate(`/meal-plan/${id}`);
+    }
+  };
+
+  const handleCreateNewClick = () => {
+    if (onCreateNew) {
+      onCreateNew();
+    } else {
+      navigate('/meal-plan-generator');
     }
   };
 
@@ -76,12 +102,10 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
           <p className="text-gray-500 mb-4">
             Crie seu primeiro plano alimentar para começar.
           </p>
-          {onCreateNew && (
-            <Button onClick={onCreateNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Plano Alimentar
-            </Button>
-          )}
+          <Button onClick={handleCreateNewClick}>
+            <Plus className="h-4 w-4 mr-2" />
+            Criar Plano Alimentar
+          </Button>
         </CardContent>
       </Card>
     );
@@ -91,12 +115,10 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Planos Alimentares</h2>
-        {onCreateNew && (
-          <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Plano
-          </Button>
-        )}
+        <Button onClick={handleCreateNewClick}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Plano
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -107,7 +129,7 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
                 <div className="flex-1">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {formatDate(plan.date)}
+                    {formatDate ? formatDate(plan.date) : new Date(plan.date).toLocaleDateString('pt-BR')}
                   </CardTitle>
                   {plan.patient_id && (
                     <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
@@ -172,28 +194,24 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
               )}
 
               <div className="flex gap-2 pt-2">
-                {onView && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onView(plan.id)}
-                    className="flex-1"
-                  >
-                    <FileText className="h-3 w-3 mr-1" />
-                    Ver
-                  </Button>
-                )}
-                {onEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(plan.id)}
-                    className="flex-1"
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Editar
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewClick(plan.id)}
+                  className="flex-1"
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  Ver
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditClick(plan.id)}
+                  className="flex-1"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  Editar
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"

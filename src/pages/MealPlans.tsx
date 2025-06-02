@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { MealPlanFilters } from '@/types/mealPlan';
 
 const MealPlans: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<MealPlanFilters>({});
   const [activeTab, setActiveTab] = useState('all');
 
@@ -37,18 +39,15 @@ const MealPlans: React.FC = () => {
   };
 
   const handleCreateNew = () => {
-    // Navigate to meal plan generator or editor
-    window.location.href = '/meal-plan-generator';
+    navigate('/meal-plan-generator');
   };
 
   const handleEdit = (id: string) => {
-    // Navigate to meal plan editor
-    window.location.href = `/meal-plan-editor/${id}`;
+    navigate(`/meal-plan-editor/${id}`);
   };
 
   const handleView = (id: string) => {
-    // Navigate to meal plan viewer
-    window.location.href = `/meal-plan/${id}`;
+    navigate(`/meal-plan/${id}`);
   };
 
   if (!user) {

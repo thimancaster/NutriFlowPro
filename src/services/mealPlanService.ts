@@ -21,23 +21,7 @@ export class MealPlanService {
     try {
       let query = supabase
         .from('meal_plans')
-        .select(`
-          *,
-          meal_plan_items (
-            id,
-            meal_plan_id,
-            meal_type,
-            food_id,
-            food_name,
-            quantity,
-            unit,
-            calories,
-            protein,
-            carbs,
-            fats,
-            order_index
-          )
-        `)
+        .select('*')
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
@@ -62,35 +46,36 @@ export class MealPlanService {
         query = query.limit(filters.limit);
       }
 
-      const { data, error } = await query;
+      const { data: plans, error } = await query;
 
       if (error) {
         console.error('Error fetching meal plans:', error);
         return { success: false, error: error.message };
       }
 
-      // Transform data to match MealPlan interface with proper MealPlanItem structure
-      const transformedData = data?.map(plan => {
-        const items = (plan.meal_plan_items || []).map((item: any) => ({
-          id: item.id,
-          meal_plan_id: item.meal_plan_id || plan.id,
-          meal_type: item.meal_type,
-          food_id: item.food_id,
-          food_name: item.food_name,
-          quantity: item.quantity,
-          unit: item.unit,
-          calories: item.calories,
-          protein: item.protein,
-          carbs: item.carbs,
-          fats: item.fats,
-          order_index: item.order_index
-        })) as MealPlanItem[];
+      // Fetch items for each meal plan separately
+      const transformedData = await Promise.all(
+        (plans || []).map(async (plan) => {
+          const { data: items, error: itemsError } = await supabase
+            .from('meal_plan_items')
+            .select('*')
+            .eq('meal_plan_id', plan.id)
+            .order('meal_type, order_index');
 
-        return {
-          ...plan,
-          meals: this.groupItemsByMealType(items)
-        };
-      }) || [];
+          if (itemsError) {
+            console.error('Error fetching meal plan items:', itemsError);
+            return {
+              ...plan,
+              meals: []
+            };
+          }
+
+          return {
+            ...plan,
+            meals: this.groupItemsByMealType(items || [])
+          };
+        })
+      );
 
       return { 
         success: true, 
@@ -108,12 +93,9 @@ export class MealPlanService {
    */
   static async getMealPlan(id: string): Promise<MealPlanResponse> {
     try {
-      const { data, error } = await supabase
+      const { data: plan, error } = await supabase
         .from('meal_plans')
-        .select(`
-          *,
-          meal_plan_items (*)
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -122,25 +104,21 @@ export class MealPlanService {
         return { success: false, error: error.message };
       }
 
-      // Transform data with proper MealPlanItem structure
-      const items = (data.meal_plan_items || []).map((item: any) => ({
-        id: item.id,
-        meal_plan_id: item.meal_plan_id || data.id,
-        meal_type: item.meal_type,
-        food_id: item.food_id,
-        food_name: item.food_name,
-        quantity: item.quantity,
-        unit: item.unit,
-        calories: item.calories,
-        protein: item.protein,
-        carbs: item.carbs,
-        fats: item.fats,
-        order_index: item.order_index
-      })) as MealPlanItem[];
+      // Fetch items separately
+      const { data: items, error: itemsError } = await supabase
+        .from('meal_plan_items')
+        .select('*')
+        .eq('meal_plan_id', id)
+        .order('meal_type, order_index');
+
+      if (itemsError) {
+        console.error('Error fetching meal plan items:', itemsError);
+        return { success: false, error: itemsError.message };
+      }
 
       const transformedData = {
-        ...data,
-        meals: this.groupItemsByMealType(items)
+        ...plan,
+        meals: this.groupItemsByMealType(items || [])
       };
 
       return { success: true, data: transformedData as MealPlan };
@@ -151,7 +129,7 @@ export class MealPlanService {
   }
 
   /**
-   * Create a new meal plan using atomic RPC function
+   * Create a new meal plan
    */
   static async createMealPlan(
     mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>
@@ -169,29 +147,42 @@ export class MealPlanService {
         total_fats: mealPlanData.total_fats,
         notes: mealPlanData.notes,
         is_template: mealPlanData.is_template,
-        day_of_week: mealPlanData.day_of_week
+        day_of_week: mealPlanData.day_of_week,
+        meals: JSON.stringify(mealPlanData.meals)
       };
 
-      // Prepare meal plan items data
-      const itemsData = this.flattenMealsToItems('', mealPlanData.meals);
-
-      // Call the atomic RPC function
-      const { data: mealPlanId, error } = await supabase.rpc('create_meal_plan_with_items', {
-        p_meal_plan_data: planData,
-        p_meal_plan_items_data: itemsData
-      });
+      // Create meal plan
+      const { data: plan, error } = await supabase
+        .from('meal_plans')
+        .insert(planData)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Error in RPC create_meal_plan_with_items:', error);
+        console.error('Error creating meal plan:', error);
         return { success: false, error: error.message };
       }
 
-      if (!mealPlanId) {
-        return { success: false, error: 'RPC function did not return meal plan ID' };
+      // Create meal plan items
+      if (mealPlanData.meals && mealPlanData.meals.length > 0) {
+        const itemsData = this.flattenMealsToItems(plan.id, mealPlanData.meals);
+        
+        if (itemsData.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('meal_plan_items')
+            .insert(itemsData);
+
+          if (itemsError) {
+            console.error('Error creating meal plan items:', itemsError);
+            // Clean up the meal plan if items creation failed
+            await supabase.from('meal_plans').delete().eq('id', plan.id);
+            return { success: false, error: itemsError.message };
+          }
+        }
       }
 
-      // Fetch the complete created meal plan
-      return this.getMealPlan(mealPlanId);
+      // Return the complete meal plan
+      return this.getMealPlan(plan.id);
 
     } catch (error: any) {
       console.error('Error creating meal plan:', error);
@@ -200,45 +191,60 @@ export class MealPlanService {
   }
 
   /**
-   * Update a meal plan using atomic RPC function
+   * Update a meal plan
    */
   static async updateMealPlan(
     id: string, 
     updates: Partial<MealPlan>
   ): Promise<MealPlanResponse> {
     try {
-      // Prepare meal plan data
-      const planData = {
-        date: updates.date,
-        total_calories: updates.total_calories,
-        total_protein: updates.total_protein,
-        total_carbs: updates.total_carbs,
-        total_fats: updates.total_fats,
-        notes: updates.notes,
-        is_template: updates.is_template,
-        day_of_week: updates.day_of_week
-      };
+      // Update meal plan
+      const planUpdates: any = {};
+      if (updates.date) planUpdates.date = updates.date;
+      if (updates.total_calories) planUpdates.total_calories = updates.total_calories;
+      if (updates.total_protein) planUpdates.total_protein = updates.total_protein;
+      if (updates.total_carbs) planUpdates.total_carbs = updates.total_carbs;
+      if (updates.total_fats) planUpdates.total_fats = updates.total_fats;
+      if (updates.notes !== undefined) planUpdates.notes = updates.notes;
+      if (updates.is_template !== undefined) planUpdates.is_template = updates.is_template;
+      if (updates.day_of_week !== undefined) planUpdates.day_of_week = updates.day_of_week;
+      if (updates.meals) planUpdates.meals = JSON.stringify(updates.meals);
 
-      // Prepare meal plan items data
-      const itemsData = updates.meals ? this.flattenMealsToItems('', updates.meals) : [];
+      planUpdates.updated_at = new Date().toISOString();
 
-      // Call the atomic RPC function
-      const { data: success, error } = await supabase.rpc('update_meal_plan_with_items', {
-        p_meal_plan_id: id,
-        p_meal_plan_data: planData,
-        p_meal_plan_items_data: itemsData
-      });
+      const { error } = await supabase
+        .from('meal_plans')
+        .update(planUpdates)
+        .eq('id', id);
 
       if (error) {
-        console.error('Error in RPC update_meal_plan_with_items:', error);
+        console.error('Error updating meal plan:', error);
         return { success: false, error: error.message };
       }
 
-      if (!success) {
-        return { success: false, error: 'RPC function failed to update meal plan' };
+      // Update items if meals are provided
+      if (updates.meals) {
+        // Delete existing items
+        await supabase
+          .from('meal_plan_items')
+          .delete()
+          .eq('meal_plan_id', id);
+
+        // Insert new items
+        const itemsData = this.flattenMealsToItems(id, updates.meals);
+        if (itemsData.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('meal_plan_items')
+            .insert(itemsData);
+
+          if (itemsError) {
+            console.error('Error updating meal plan items:', itemsError);
+            return { success: false, error: itemsError.message };
+          }
+        }
       }
 
-      // Fetch the complete updated meal plan
+      // Return updated meal plan
       return this.getMealPlan(id);
 
     } catch (error: any) {
@@ -252,13 +258,7 @@ export class MealPlanService {
    */
   static async deleteMealPlan(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // Delete items first (cascade should handle this, but being explicit)
-      await supabase
-        .from('meal_plan_items')
-        .delete()
-        .eq('meal_plan_id', id);
-
-      // Delete meal plan
+      // Items will be deleted automatically due to CASCADE
       const { error } = await supabase
         .from('meal_plans')
         .delete()
@@ -353,6 +353,7 @@ export class MealPlanService {
     meals.forEach(meal => {
       meal.foods.forEach((food: any, index: number) => {
         items.push({
+          meal_plan_id: mealPlanId,
           meal_type: meal.type,
           food_id: food.food_id,
           food_name: food.name,
@@ -384,32 +385,12 @@ export class MealPlanService {
     };
     return names[type] || type;
   }
-
-  /**
-   * Legacy method - Get meal plan by ID
-   */
-  static async getMealPlanById(id: string, userId: string): Promise<MealPlanResponse> {
-    return this.getMealPlan(id);
-  }
-
-  /**
-   * Legacy method - Get patient meal plans
-   */
-  static async getPatientMealPlans(patientId: string, userId: string): Promise<MealPlanListResponse> {
-    return this.getMealPlans(userId, { patient_id: patientId });
-  }
-
-  /**
-   * Legacy method - Save meal plan
-   */
-  static async saveMealPlan(mealPlanData: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<MealPlanResponse> {
-    return this.createMealPlan(mealPlanData);
-  }
 }
 
 export const mealPlanService = MealPlanService;
 
 // Legacy exports for backward compatibility
-export const saveMealPlan = MealPlanService.saveMealPlan;
-export const getPatientMealPlans = MealPlanService.getPatientMealPlans;
-export const getMealPlanById = MealPlanService.getMealPlanById;
+export const saveMealPlan = MealPlanService.createMealPlan;
+export const getPatientMealPlans = (patientId: string, userId: string) => 
+  MealPlanService.getMealPlans(userId, { patient_id: patientId });
+export const getMealPlanById = MealPlanService.getMealPlan;

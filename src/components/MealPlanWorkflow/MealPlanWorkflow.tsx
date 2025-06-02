@@ -1,79 +1,90 @@
 
-import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Calculator, Utensils, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Calculator, FileText, Users } from 'lucide-react';
+import WorkflowProgress from './WorkflowProgress';
 import MealPlanGenerationStep from './MealPlanGenerationStep';
 import MealPlanEditingStep from './MealPlanEditingStep';
-import WorkflowProgress from './WorkflowProgress';
 
 const MealPlanWorkflow: React.FC = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { activePatient } = usePatient();
   const {
     patient,
     calculationData,
+    currentMealPlan,
     currentStep,
     setPatient,
     setCalculationData,
-    setCurrentStep
+    setCurrentStep,
+    generateMealPlan,
+    saveMealPlan,
+    resetWorkflow
   } = useMealPlanWorkflow();
 
-  // Handle data from calculation/ENP system
+  // Initialize workflow with active patient if available
   useEffect(() => {
-    const locationState = location.state;
-    if (locationState) {
-      if (locationState.patientData) {
-        setPatient(locationState.patientData);
-      }
-      if (locationState.calculationData) {
-        setCalculationData(locationState.calculationData);
-        setCurrentStep('generation');
-      }
+    if (activePatient && !patient) {
+      setPatient(activePatient);
     }
-  }, [location.state, setPatient, setCalculationData, setCurrentStep]);
+  }, [activePatient, patient, setPatient]);
+
+  const handleSelectPatient = () => {
+    navigate('/patients');
+  };
+
+  const handleCalculateNutrition = () => {
+    if (patient) {
+      navigate(`/calculator?patientId=${patient.id}`);
+    } else {
+      navigate('/calculator');
+    }
+  };
+
+  const handleGenerateMealPlan = async () => {
+    if (!user || !patient) return;
+    
+    // Use mock calculation data if none available
+    const mockCalculationData = {
+      id: 'mock',
+      totalCalories: 2000,
+      protein: 150,
+      carbs: 200,
+      fats: 67
+    };
+
+    if (!calculationData) {
+      setCalculationData(mockCalculationData);
+    }
+
+    await generateMealPlan(user.id);
+  };
+
+  const handleBackToCalculator = () => {
+    if (patient) {
+      navigate(`/calculator?patientId=${patient.id}`);
+    } else {
+      navigate('/calculator');
+    }
+  };
+
+  const handleStartOver = () => {
+    resetWorkflow();
+    setCurrentStep('calculation');
+  };
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-6">
+      <div className="container mx-auto p-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Acesso Restrito</h2>
-            <p className="text-gray-600">Faça login para acessar o gerador de planos alimentares.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!patient || !calculationData) {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-6">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Dados Necessários
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-600">
-              Para gerar um plano alimentar, é necessário:
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
-              <li>Paciente selecionado</li>
-              <li>Cálculo nutricional realizado</li>
-            </ul>
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-700">
-                Acesse a calculadora ENP, realize o cálculo e clique em "Gerar Plano Alimentar"
-                para ser direcionado automaticamente para este fluxo.
-              </AlertDescription>
-            </Alert>
+            <p>Você precisa estar logado para acessar o gerador de planos alimentares.</p>
           </CardContent>
         </Card>
       </div>
@@ -82,43 +93,163 @@ const MealPlanWorkflow: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
-          <Utensils className="h-8 w-8 text-green-600" />
-          Gerador de Plano Alimentar
-        </h1>
-        <p className="text-gray-600">
-          Paciente: <strong>{patient.name}</strong> | 
-          Meta: <strong>{calculationData.totalCalories || 'N/A'} kcal</strong>
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/meal-plans')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Gerador de Plano Alimentar</h1>
+            <p className="text-gray-600">
+              {patient ? `Paciente: ${patient.name}` : 'Selecione um paciente para começar'}
+            </p>
+          </div>
+        </div>
+        
+        {currentStep !== 'calculation' && (
+          <Button variant="outline" onClick={handleStartOver}>
+            Recomeçar
+          </Button>
+        )}
       </div>
 
-      {/* Progress Indicator */}
       <WorkflowProgress currentStep={currentStep} />
 
-      {/* Main Content */}
-      <div className="space-y-6">
-        {currentStep === 'generation' && (
-          <MealPlanGenerationStep />
-        )}
-        
-        {currentStep === 'editing' && (
-          <MealPlanEditingStep />
-        )}
-        
-        {currentStep === 'completed' && (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
-              <h2 className="text-xl font-semibold mb-2">Plano Alimentar Concluído</h2>
-              <p className="text-gray-600 mb-4">
-                O plano alimentar foi salvo com sucesso e está disponível no histórico do paciente.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {/* Step 1: Patient Selection and Calculation */}
+      {currentStep === 'calculation' && (
+        <div className="space-y-6">
+          {!patient && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Selecionar Paciente
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Primeiro, selecione um paciente para gerar o plano alimentar.
+                </p>
+                <Button onClick={handleSelectPatient}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Selecionar Paciente
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {patient && !calculationData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Calcular Necessidades Nutricionais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h3 className="font-semibold text-blue-900">Paciente: {patient.name}</h3>
+                    <p className="text-blue-700 text-sm mt-1">
+                      Agora precisamos calcular as necessidades nutricionais deste paciente.
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={handleCalculateNutrition}>
+                      <Calculator className="h-4 w-4 mr-2" />
+                      Ir para Calculadora
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        // Skip calculation with mock data for demo
+                        const mockData = {
+                          id: 'mock',
+                          totalCalories: 2000,
+                          protein: 150,
+                          carbs: 200,
+                          fats: 67
+                        };
+                        setCalculationData(mockData);
+                        setCurrentStep('generation');
+                      }}
+                    >
+                      Usar Valores Padrão (Demo)
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {patient && calculationData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Pronto para Gerar Plano
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <h3 className="font-semibold text-green-900">Dados Disponíveis:</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2 text-sm">
+                      <div>
+                        <span className="text-green-700">Calorias:</span>
+                        <div className="font-bold">{calculationData.totalCalories}</div>
+                      </div>
+                      <div>
+                        <span className="text-green-700">Proteína:</span>
+                        <div className="font-bold">{calculationData.protein}g</div>
+                      </div>
+                      <div>
+                        <span className="text-green-700">Carboidratos:</span>
+                        <div className="font-bold">{calculationData.carbs}g</div>
+                      </div>
+                      <div>
+                        <span className="text-green-700">Gorduras:</span>
+                        <div className="font-bold">{calculationData.fats}g</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={() => setCurrentStep('generation')}>
+                      Gerar Plano Alimentar
+                    </Button>
+                    <Button variant="outline" onClick={handleBackToCalculator}>
+                      Recalcular
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Step 2: Meal Plan Generation */}
+      {currentStep === 'generation' && (
+        <MealPlanGenerationStep
+          patient={patient}
+          calculationData={calculationData}
+          onGenerate={handleGenerateMealPlan}
+          onBack={() => setCurrentStep('calculation')}
+        />
+      )}
+
+      {/* Step 3: Meal Plan Editing */}
+      {currentStep === 'editing' && currentMealPlan && (
+        <MealPlanEditingStep
+          mealPlan={currentMealPlan}
+          onSave={saveMealPlan}
+          onBack={() => setCurrentStep('generation')}
+        />
+      )}
     </div>
   );
 };
