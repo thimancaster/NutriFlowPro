@@ -69,65 +69,83 @@ export const useAuthStateManager = () => {
     setState(prev => ({ ...prev, isLoading, loading: isLoading }));
   };
   
-  // Update session
+  // Update session with better error handling
   const updateAuthState = async (newSession: Session | null, remember: boolean = false) => {
-    if (!newSession) {
+    try {
+      if (!newSession) {
+        setAuthenticated(null, null);
+        clearStoredSession();
+        return;
+      }
+      
+      if (remember) {
+        storeSession(newSession, remember);
+      }
+      
+      const isPremium = newSession.user ? await checkPremiumStatus(newSession.user.id) : false;
+      setAuthenticated(newSession.user, newSession, isPremium);
+    } catch (error) {
+      console.error('Error updating auth state:', error);
       setAuthenticated(null, null);
       clearStoredSession();
-      return;
     }
-    
-    if (remember) {
-      storeSession(newSession, remember);
-    }
-    
-    const isPremium = newSession.user ? await checkPremiumStatus(newSession.user.id) : false;
-    setAuthenticated(newSession.user, newSession, isPremium);
   };
   
-  // Initialize auth state
+  // Initialize auth state with improved error handling
   useEffect(() => {
     let mounted = true;
     
     const initialize = async () => {
       try {
+        if (!mounted) return;
+        
         setLoading(true);
         
-        // Set up auth state change listener first
+        // Check for existing session first
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          if (mounted) {
+            setAuthenticated(null, null);
+          }
+        } else if (sessionData.session && mounted) {
+          const storedSession = getStoredSession();
+          const remember = !!storedSession;
+          await updateAuthState(sessionData.session, remember);
+        } else if (mounted) {
+          setAuthenticated(null, null);
+        }
+        
+        // Set up auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (!mounted) return;
             
             console.log('Auth state changed:', event, !!session);
             
-            if (event === 'SIGNED_IN' && session) {
-              const storedSession = getStoredSession();
-              const remember = !!storedSession;
-              await updateAuthState(session, remember);
-            } else if (event === 'SIGNED_OUT') {
-              setAuthenticated(null, null);
-              clearStoredSession();
-            } else if (event === 'TOKEN_REFRESHED' && session) {
-              const storedSession = getStoredSession();
-              const remember = !!storedSession;
-              await updateAuthState(session, remember);
+            try {
+              if (event === 'SIGNED_IN' && session) {
+                const storedSession = getStoredSession();
+                const remember = !!storedSession;
+                await updateAuthState(session, remember);
+              } else if (event === 'SIGNED_OUT') {
+                setAuthenticated(null, null);
+                clearStoredSession();
+              } else if (event === 'TOKEN_REFRESHED' && session) {
+                const storedSession = getStoredSession();
+                const remember = !!storedSession;
+                await updateAuthState(session, remember);
+              }
+            } catch (error) {
+              console.error('Error handling auth state change:', error);
+              if (mounted) {
+                setAuthenticated(null, null);
+                clearStoredSession();
+              }
             }
           }
         );
-        
-        // Then check for existing session
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          setAuthenticated(null, null);
-        } else if (data.session) {
-          const storedSession = getStoredSession();
-          const remember = !!storedSession;
-          await updateAuthState(data.session, remember);
-        } else {
-          setAuthenticated(null, null);
-        }
         
         return () => {
           mounted = false;

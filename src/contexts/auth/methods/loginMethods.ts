@@ -14,11 +14,10 @@ interface LoginResult {
  */
 const logSecurityEvent = (eventType: string, eventData: any = {}) => {
   console.log(`Security Event: ${eventType}`, eventData);
-  // TODO: Implement database logging once types are updated
 };
 
 /**
- * Handles user login with enhanced security validation
+ * Handles user login with enhanced security validation and better error handling
  */
 export const login = async (
   email: string, 
@@ -30,7 +29,7 @@ export const login = async (
     console.log("Attempting login for:", email);
     
     // Enhanced input validation
-    if (!email.trim()) {
+    if (!email?.trim()) {
       throw new Error("O email é obrigatório");
     }
     
@@ -48,8 +47,12 @@ export const login = async (
       throw new Error("Muitas tentativas de login. Tente novamente em 15 minutos.");
     }
     
-    // Clear any existing session first
-    await supabase.auth.signOut();
+    // Clear any existing session first to avoid conflicts
+    try {
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      console.warn('Warning: Could not sign out existing session:', signOutError);
+    }
     
     // Sign in with email and password
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -68,6 +71,10 @@ export const login = async (
       // Handle common errors with user-friendly messages
       const errorMessage = getLoginErrorMessage(error);
       throw new Error(errorMessage);
+    }
+    
+    if (!data.session) {
+      throw new Error("Falha na autenticação. Tente novamente.");
     }
     
     // Log successful login
@@ -156,7 +163,7 @@ export const signInWithGoogle = async (toast: (props: any) => any): Promise<Logi
 function getLoginErrorMessage(error: Error): string {
   const message = error.message.toLowerCase();
   
-  if (message.includes("invalid login credentials")) {
+  if (message.includes("invalid login credentials") || message.includes("invalid_credentials")) {
     return "Email ou senha incorretos. Por favor, verifique suas credenciais.";
   } 
   
@@ -176,8 +183,12 @@ function getLoginErrorMessage(error: Error): string {
     return "Erro de conexão. Por favor, verifique sua internet e tente novamente.";
   }
 
-  if (message.includes("database error")) {
-    return "Erro no servidor. Por favor, tente novamente em alguns instantes.";
+  if (message.includes("database error") || message.includes("unexpected_failure")) {
+    return "Erro temporário no servidor. Por favor, tente novamente em alguns instantes.";
+  }
+
+  if (message.includes("user not found")) {
+    return "Usuário não encontrado. Verifique o email ou registre-se.";
   }
   
   // Return original message if no specific match
