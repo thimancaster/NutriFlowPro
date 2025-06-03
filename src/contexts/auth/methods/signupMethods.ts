@@ -1,116 +1,83 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ToastProps } from '@/hooks/toast/toast-types';
-import { validatePasswordStrength, checkClientRateLimit } from '@/utils/securityUtils';
+import { isValidEmail, validatePasswordStrength } from '@/utils/securityUtils';
 
-/**
- * Log security event to console for now (until database types are updated)
- */
-const logSecurityEvent = (eventType: string, eventData: any = {}) => {
-  console.log(`Security Event: ${eventType}`, eventData);
-  // TODO: Implement database logging once types are updated
-};
+interface SignupResult {
+  success: boolean;
+  error?: Error;
+  user?: any;
+}
 
-/**
- * Handles user registration with enhanced security validation
- */
 export const signup = async (
-  email: string, 
-  password: string, 
-  name: string, 
-  toast: (props: ToastProps) => any
-) => {
+  email: string,
+  password: string,
+  name: string,
+  toast: (props: any) => any
+): Promise<SignupResult> => {
   try {
-    console.log("Attempting signup for:", email);
-    
-    // Validate inputs
-    if (!email.trim()) {
-      throw new Error("O email é obrigatório");
+    // Validate email
+    if (!email || !isValidEmail(email)) {
+      throw new Error("Por favor, insira um email válido.");
     }
-    
-    if (!password) {
-      throw new Error("A senha é obrigatória");
-    }
-    
-    if (!name.trim()) {
-      throw new Error("O nome é obrigatório");
-    }
-    
-    // Enhanced password validation
+
+    // Validate password
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.isValid) {
       throw new Error(passwordValidation.errors[0]);
     }
-    
-    // Check client-side rate limit
-    if (!checkClientRateLimit(`signup_${email}`, 3, 30 * 60 * 1000)) {
-      logSecurityEvent('signup_rate_limited', { email });
-      throw new Error("Muitas tentativas de cadastro. Tente novamente em alguns minutos.");
+
+    // Validate name
+    if (!name || name.trim().length < 2) {
+      throw new Error("Por favor, insira um nome válido.");
     }
-    
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim().toLowerCase(),
       password,
       options: {
-        data: { name },
+        data: {
+          name: name.trim(),
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     });
 
     if (error) {
-      logSecurityEvent('signup_failed', { 
-        email, 
-        error: error.message 
-      });
       throw error;
     }
 
-    if (data.user) {
-      // Create profile for the new user
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert([{ 
-          id: data.user.id,
-          name,
-          email
-        }]);
+    toast({
+      title: "Conta criada com sucesso!",
+      description: "Verifique seu email para confirmar sua conta.",
+    });
 
-      if (profileError) {
-        console.error("Error creating user profile:", profileError);
-        logSecurityEvent('signup_profile_error', { 
-          email, 
-          user_id: data.user.id,
-          error: profileError.message 
-        });
-        
-        toast({
-          title: "Conta criada com avisos",
-          description: "Sua conta foi criada, mas houve um problema ao configurar seu perfil. Entre em contato com o suporte se necessário.",
-          variant: "warning"
-        });
-      } else {
-        logSecurityEvent('signup_success', { 
-          email, 
-          user_id: data.user.id 
-        });
-        
-        toast({
-          title: "Conta criada com sucesso",
-          description: "Bem-vindo ao NutriFlow Pro! Verifique seu email para confirmar sua conta.",
-        });
-      }
-      
-      return { success: true };
-    }
-    
-    return { success: false, error: new Error("Falha ao criar usuário") };
+    return {
+      success: true,
+      user: data.user
+    };
+
   } catch (error: any) {
-    console.error("Signup error:", error.message);
+    console.error("Signup error:", error);
+    
+    let errorMessage = "Erro ao criar conta. Tente novamente.";
+    
+    if (error.message.includes("User already registered")) {
+      errorMessage = "Este email já está registrado. Tente fazer login.";
+    } else if (error.message.includes("Password should be")) {
+      errorMessage = "A senha deve ter pelo menos 6 caracteres.";
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
     toast({
       title: "Erro ao criar conta",
-      description: error.message || "Ocorreu um problema ao tentar criar sua conta.",
-      variant: "destructive"
+      description: errorMessage,
+      variant: "destructive",
     });
-    return { success: false, error };
+
+    return {
+      success: false,
+      error: new Error(errorMessage)
+    };
   }
 };

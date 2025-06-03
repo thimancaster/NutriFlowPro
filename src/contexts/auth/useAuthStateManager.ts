@@ -66,7 +66,7 @@ export const useAuthStateManager = () => {
     }
     
     if (remember) {
-      storeSession(newSession);
+      storeSession(newSession, remember);
     }
     
     const isPremium = newSession.user ? await checkPremiumStatus(newSession.user.id) : false;
@@ -75,34 +75,70 @@ export const useAuthStateManager = () => {
   
   // Initialize auth state
   useEffect(() => {
+    let mounted = true;
+    
     const initialize = async () => {
       try {
         setLoading(true);
         
-        // Try to get session from Supabase
+        // Set up auth state change listener first
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return;
+            
+            console.log('Auth state changed:', event, !!session);
+            
+            if (event === 'SIGNED_IN' && session) {
+              const storedSession = getStoredSession();
+              const remember = !!storedSession;
+              await updateAuthState(session, remember);
+            } else if (event === 'SIGNED_OUT') {
+              setAuthenticated(null, null);
+              clearStoredSession();
+            } else if (event === 'TOKEN_REFRESHED' && session) {
+              const storedSession = getStoredSession();
+              const remember = !!storedSession;
+              await updateAuthState(session, remember);
+            }
+          }
+        );
+        
+        // Then check for existing session
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          throw error;
-        }
-        
-        if (data.session) {
+          console.error('Error getting session:', error);
+          setAuthenticated(null, null);
+        } else if (data.session) {
           const storedSession = getStoredSession();
           const remember = !!storedSession;
-          
           await updateAuthState(data.session, remember);
         } else {
           setAuthenticated(null, null);
         }
+        
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error('Error initializing authentication:', error);
-        setAuthenticated(null, null);
+        if (mounted) {
+          setAuthenticated(null, null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
     
-    initialize();
+    const cleanup = initialize();
+    
+    return () => {
+      mounted = false;
+      cleanup?.then(cleanupFn => cleanupFn?.());
+    };
   }, []);
   
   return {

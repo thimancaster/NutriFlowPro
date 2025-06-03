@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ToastProps } from '@/hooks/toast/toast-types';
 import { Session } from '@supabase/supabase-js';
 import { checkClientRateLimit, isValidEmail } from '@/utils/securityUtils';
 
@@ -25,7 +24,7 @@ export const login = async (
   email: string, 
   password: string, 
   remember: boolean = false,
-  toast: (props: ToastProps) => any
+  toast: (props: any) => any
 ): Promise<LoginResult> => {
   try {
     console.log("Attempting login for:", email);
@@ -49,9 +48,12 @@ export const login = async (
       throw new Error("Muitas tentativas de login. Tente novamente em 15 minutos.");
     }
     
+    // Clear any existing session first
+    await supabase.auth.signOut();
+    
     // Sign in with email and password
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password
     });
     
@@ -104,7 +106,7 @@ export const login = async (
 /**
  * Handles Google OAuth sign-in with enhanced security
  */
-export const signInWithGoogle = async (toast: (props: ToastProps) => any): Promise<LoginResult> => {
+export const signInWithGoogle = async (toast: (props: any) => any): Promise<LoginResult> => {
   try {
     console.log("Iniciando login com Google...");
     
@@ -172,6 +174,10 @@ function getLoginErrorMessage(error: Error): string {
   
   if (message.includes("network") || message.includes("connection")) {
     return "Erro de conexão. Por favor, verifique sua internet e tente novamente.";
+  }
+
+  if (message.includes("database error")) {
+    return "Erro no servidor. Por favor, tente novamente em alguns instantes.";
   }
   
   // Return original message if no specific match

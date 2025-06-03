@@ -22,8 +22,8 @@ import { csrfTokenManager } from '@/utils/securityUtils';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
-  password: z.string().min(8, {
-    message: "A senha deve ter pelo menos 8 caracteres.",
+  password: z.string().min(6, {
+    message: "A senha deve ter pelo menos 6 caracteres.",
   }),
   rememberMe: z.boolean().default(false)
 })
@@ -54,6 +54,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+      console.log('Attempting login with:', values.email);
+      
       // Generate CSRF token for this login attempt
       const csrfToken = csrfTokenManager.generate();
       
@@ -64,8 +66,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o painel...",
         });
-        navigate(from);
+        
+        // Give a moment for state to update then navigate
+        setTimeout(() => {
+          navigate(from, { replace: true });
+        }, 100);
       } else {
+        console.error('Login failed:', result.error);
         toast({
           title: "Erro ao realizar login",
           description: result.error?.message || "Credenciais inválidas.",
@@ -73,6 +80,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
         });
       }
     } catch (error: any) {
+      console.error('Login exception:', error);
       toast({
         title: "Erro ao realizar login",
         description: error?.message || "Ocorreu um erro durante o login. Tente novamente.",

@@ -1,63 +1,48 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ToastProps } from '@/hooks/toast/toast-types';
+import { isValidEmail } from '@/utils/securityUtils';
 
-/**
- * Handles password reset request
- */
+interface PasswordResetResult {
+  success: boolean;
+  error?: Error;
+}
+
 export const resetPassword = async (
-  email: string, 
-  toast: (props: ToastProps) => any
-) => {
+  email: string,
+  toast: (props: any) => any
+): Promise<PasswordResetResult> => {
   try {
+    if (!email || !isValidEmail(email)) {
+      throw new Error("Por favor, insira um email válido.");
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/#/reset-password',
+      redirectTo: `${window.location.origin}/reset-password`
     });
-    
-    if (error) throw error;
-    
+
+    if (error) {
+      throw error;
+    }
+
     toast({
-      title: "E-mail enviado",
+      title: "Email enviado!",
       description: "Verifique sua caixa de entrada para redefinir sua senha.",
     });
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error("Reset password error:", error.message);
-    toast({
-      title: "Erro ao enviar e-mail",
-      description: error.message || "Ocorreu um problema ao tentar enviar o e-mail de redefinição de senha.",
-      variant: "destructive"
-    });
-    return { success: false, error };
-  }
-};
 
-/**
- * Updates user's password
- */
-export const updatePassword = async (
-  password: string,
-  toast: (props: ToastProps) => any
-) => {
-  try {
-    const { error } = await supabase.auth.updateUser({ password });
-    
-    if (error) throw error;
-    
-    toast({
-      title: "Senha alterada com sucesso",
-      description: "Sua nova senha foi definida.",
-    });
-    
     return { success: true };
+
   } catch (error: any) {
-    console.error("Update password error:", error.message);
+    console.error("Password reset error:", error);
+    
     toast({
-      title: "Erro ao atualizar senha",
-      description: error.message || "Ocorreu um problema ao tentar atualizar sua senha.",
-      variant: "destructive"
+      title: "Erro ao enviar email",
+      description: error.message || "Não foi possível enviar o email de recuperação.",
+      variant: "destructive",
     });
-    return { success: false, error };
+
+    return {
+      success: false,
+      error: new Error(error.message)
+    };
   }
 };

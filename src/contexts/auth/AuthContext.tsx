@@ -2,8 +2,9 @@
 import React, { createContext, useContext } from 'react';
 import { AuthContextType } from './types';
 import { useAuthStateManager } from './useAuthStateManager';
-import { useToast } from '@/hooks/toast';
+import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { login, signup, logout, resetPassword, signInWithGoogle } from './methods';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -57,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout: handleLogout,
     resetPassword: handleResetPassword,
     signInWithGoogle: handleSignInWithGoogle,
-    updateAuthState // Expose this function for AuthHandler
+    updateAuthState
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -70,6 +71,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-// Import auth methods
-import { login, signup, logout, resetPassword, signInWithGoogle } from './methods';
