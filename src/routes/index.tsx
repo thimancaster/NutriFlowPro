@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
@@ -34,6 +33,7 @@ import NotFound from '@/pages/NotFound';
 import Onboarding from '@/pages/Onboarding';
 import AddTestimonial from '@/pages/AddTestimonial';
 import Recursos from '@/pages/Recursos';
+import UnifiedSignup from '@/pages/UnifiedSignup';
 
 const AppRoutes = () => {
   return (
@@ -41,14 +41,15 @@ const AppRoutes = () => {
       {/* Public routes */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      {/* Redirect /signup to /register */}
-      <Route path="/signup" element={<Navigate to="/register" replace />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/recursos" element={<Recursos />} />
-
+      
+      {/* Replace old signup routes with unified version */}
+      <Route path="/signup" element={<UnifiedSignup />} />
+      <Route path="/register" element={<Navigate to="/signup" replace />} />
+      
       {/* Protected routes using ProtectedLayout */}
       <Route path="/*" element={<ProtectedLayout />}>
         <Route path="dashboard" element={<Dashboard />} />

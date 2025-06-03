@@ -430,3 +430,84 @@ export const logSecurityEvent = async (
     console.warn('Failed to log security event:', error);
   }
 };
+
+/**
+ * Enhanced security utilities for authentication
+ */
+
+// Rate limiting storage key
+const RATE_LIMIT_PREFIX = 'rl_';
+
+/**
+ * Server-side rate limiting check (client-side implementation)
+ * In production, this should be implemented on the server
+ */
+export const checkServerRateLimit = (action: string, maxAttempts: number = 5, windowMs: number = 15 * 60 * 1000): boolean => {
+  const key = `${RATE_LIMIT_PREFIX}${action}`;
+  const now = Date.now();
+  
+  try {
+    const stored = localStorage.getItem(key);
+    const data = stored ? JSON.parse(stored) : { attempts: [], lastReset: now };
+    
+    // Clean old attempts outside the window
+    data.attempts = data.attempts.filter((timestamp: number) => now - timestamp < windowMs);
+    
+    // Check if we're over the limit
+    if (data.attempts.length >= maxAttempts) {
+      return false;
+    }
+    
+    // Add current attempt
+    data.attempts.push(now);
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    return true;
+  } catch (error) {
+    console.error('Rate limiting error:', error);
+    return true; // Allow on error to avoid blocking legitimate users
+  }
+};
+
+/**
+ * Validate professional registration number (CRN)
+ */
+export const validateCRN = (crn: string): { isValid: boolean; message?: string } => {
+  if (!crn || crn.trim().length === 0) {
+    return { isValid: true }; // Optional field
+  }
+  
+  // Basic CRN format validation (CRN-X XXXXX)
+  const crnRegex = /^CRN-\d+\s+\d{4,6}$/i;
+  
+  if (!crnRegex.test(crn.trim())) {
+    return {
+      isValid: false,
+      message: "Formato de CRN inválido. Use o formato: CRN-1 12345"
+    };
+  }
+  
+  return { isValid: true };
+};
+
+/**
+ * Validate phone number (Brazilian format)
+ */
+export const validatePhone = (phone: string): { isValid: boolean; message?: string } => {
+  if (!phone || phone.trim().length === 0) {
+    return { isValid: true }; // Optional field
+  }
+  
+  // Remove non-numeric characters
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Check if it's a valid Brazilian phone number (10 or 11 digits)
+  if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+    return {
+      isValid: false,
+      message: "Telefone deve ter 10 ou 11 dígitos"
+    };
+  }
+  
+  return { isValid: true };
+};
