@@ -50,14 +50,30 @@ export const login = async (
     // Clear any existing session first to avoid conflicts
     try {
       await supabase.auth.signOut();
+      console.log("Previous session cleared successfully");
     } catch (signOutError) {
       console.warn('Warning: Could not sign out existing session:', signOutError);
     }
+
+    // Add a small delay to ensure cleanup is complete
+    await new Promise(resolve => setTimeout(resolve, 100));
     
-    // Sign in with email and password
+    console.log("Attempting signInWithPassword...");
+    
+    // Sign in with email and password with additional options
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
-      password
+      password,
+      options: {
+        skipBrowserRedirect: true
+      }
+    });
+    
+    console.log("SignIn response:", { 
+      hasData: !!data, 
+      hasSession: !!data?.session, 
+      hasUser: !!data?.user,
+      error: error?.message 
     });
     
     if (error) {
@@ -74,7 +90,11 @@ export const login = async (
     }
     
     if (!data.session) {
-      throw new Error("Falha na autenticação. Tente novamente.");
+      throw new Error("Falha na autenticação. Sessão não foi criada.");
+    }
+
+    if (!data.user) {
+      throw new Error("Falha na autenticação. Dados do usuário não encontrados.");
     }
     
     // Log successful login
@@ -87,14 +107,22 @@ export const login = async (
     // Clear rate limit on successful login
     localStorage.removeItem(`rate_limit_login_${email}`);
     
-    console.log("Login successful:", !!data.session);
+    console.log("Login successful:", {
+      sessionExists: !!data.session,
+      userId: data.user.id,
+      userEmail: data.user.email
+    });
     
     return { 
       success: true,
       session: data.session
     };
   } catch (error: any) {
-    console.error("Login error:", error.message);
+    console.error("Login error details:", {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     
     toast({
       title: "Erro ao fazer login",
@@ -189,6 +217,10 @@ function getLoginErrorMessage(error: Error): string {
 
   if (message.includes("user not found")) {
     return "Usuário não encontrado. Verifique o email ou registre-se.";
+  }
+
+  if (message.includes("email_change_token")) {
+    return "Erro de configuração no servidor. Tente novamente em alguns instantes.";
   }
   
   // Return original message if no specific match

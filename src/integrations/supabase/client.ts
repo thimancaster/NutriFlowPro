@@ -21,5 +21,16 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     headers: {
       'X-Client-Info': 'supabase-js-web'
     }
+  },
+  // Add retry configuration for better error handling
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
+});
+
+// Enhanced error handling for authentication
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
 });

@@ -1173,6 +1173,17 @@ export type Database = {
         Args: { p_meal_plan_id: string }
         Returns: undefined
       }
+      safe_get_user_by_email: {
+        Args: { user_email: string }
+        Returns: {
+          id: string
+          email: string
+          encrypted_password: string
+          email_confirmed_at: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
       update_meal_plan_with_items: {
         Args: {
           p_meal_plan_id: string

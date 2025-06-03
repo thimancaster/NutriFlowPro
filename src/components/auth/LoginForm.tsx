@@ -54,12 +54,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      console.log('Attempting login with:', values.email);
+      console.log('Login form submission:', { 
+        email: values.email, 
+        rememberMe: values.rememberMe,
+        timestamp: new Date().toISOString()
+      });
       
       // Generate CSRF token for this login attempt
       const csrfToken = csrfTokenManager.generate();
+      console.log('CSRF token generated for login');
       
       const result = await login(values.email, values.password, values.rememberMe);
+
+      console.log('Login result:', { 
+        success: result.success, 
+        hasSession: !!result.session,
+        errorMessage: result.error?.message 
+      });
 
       if (result.success) {
         toast({
@@ -69,15 +80,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
         
         // Give a moment for state to update then navigate
         setTimeout(() => {
+          console.log('Navigating to:', from);
           navigate(from, { replace: true });
         }, 100);
       } else {
         console.error('Login failed:', result.error);
-        toast({
-          title: "Erro ao realizar login",
-          description: result.error?.message || "Credenciais inválidas.",
-          variant: "destructive",
-        });
+        
+        // Clear the form on authentication failure
+        if (result.error?.message.includes("credenciais") || 
+            result.error?.message.includes("senha") ||
+            result.error?.message.includes("email")) {
+          form.reset({
+            email: values.email,
+            password: "",
+            rememberMe: values.rememberMe
+          });
+        }
       }
     } catch (error: any) {
       console.error('Login exception:', error);
@@ -96,6 +114,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
       try {
         // Generate CSRF token for Google login
         const csrfToken = csrfTokenManager.generate();
+        console.log('CSRF token generated for Google login');
         
         const result = await onGoogleLogin();
         if (!result.success && result.error) {
@@ -128,6 +147,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
                 <Input 
                   placeholder="seuemail@exemplo.com" 
                   autoComplete="email"
+                  disabled={isSubmitting}
                   {...field} 
                 />
               </FormControl>
@@ -150,6 +170,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
                 <Input 
                   type="password" 
                   autoComplete="current-password"
+                  disabled={isSubmitting}
                   {...field} 
                 />
               </FormControl>
@@ -167,6 +188,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
                 <Checkbox 
                   checked={field.value} 
                   onCheckedChange={field.onChange}
+                  disabled={isSubmitting}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
@@ -199,6 +221,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
               type="button"
               variant="outline"
               onClick={handleGoogleLogin}
+              disabled={isSubmitting}
               className="w-full"
             >
               <Icons.google className="mr-2 h-4 w-4" />
