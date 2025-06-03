@@ -60,13 +60,10 @@ export const login = async (
     
     console.log("Attempting signInWithPassword...");
     
-    // Sign in with email and password with additional options
+    // Sign in with email and password
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
-      password,
-      options: {
-        skipBrowserRedirect: true
-      }
+      password
     });
     
     console.log("SignIn response:", { 
