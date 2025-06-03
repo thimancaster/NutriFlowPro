@@ -10,9 +10,9 @@ export const enhancedSignup = async (
   email: string, 
   password: string, 
   name: string, 
+  toast: (props: ToastProps) => any,
   phone?: string,
-  crn?: string,
-  toast: (props: ToastProps) => any
+  crn?: string
 ) => {
   try {
     console.log("Enhanced signup attempt for:", email);
@@ -71,7 +71,6 @@ export const enhancedSignup = async (
         toast({
           title: "Verificação de email necessária",
           description: `Enviamos um link de verificação para ${email}. Verifique seu email antes de fazer login.`,
-          duration: 8000
         });
       }
 

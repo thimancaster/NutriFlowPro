@@ -35,7 +35,6 @@ const EmailVerificationRequired: React.FC<EmailVerificationRequiredProps> = ({
       toast({
         title: "Para reenviar a verificação",
         description: "Tente fazer login novamente. Se a conta não estiver verificada, um novo email será enviado automaticamente.",
-        duration: 8000,
       });
       onResendSuccess?.();
     } catch (error) {

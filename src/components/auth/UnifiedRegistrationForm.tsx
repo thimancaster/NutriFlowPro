@@ -100,7 +100,6 @@ const UnifiedRegistrationForm: React.FC<UnifiedRegistrationFormProps> = ({
         toast({
           title: "Conta criada com sucesso!",
           description: "Verifique seu email para confirmar sua conta antes de fazer login.",
-          duration: 6000,
         });
         onSuccess?.();
       } else {
