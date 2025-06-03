@@ -1,314 +1,186 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { Clock, Utensils, Info, AlertTriangle } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { getFoodDetails, getNutritionalValues, getFoodRestrictions } from '@/integrations/supabase/functions';
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { getFoodDetails } from '@/integrations/supabase/functions';
+import NutritionalAnalysis from './NutritionalAnalysis';
 
 interface FoodDetail {
   id: string;
   name: string;
-  brand?: string;
-  description?: string;
-  category?: string;
-  subcategory?: string;
-  caloric_density?: string;
-  glycemic_index?: string;
-  source?: string;
-}
-
-interface FoodMeasure {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  type?: string;
-  is_default: boolean;
-}
-
-interface NutritionalValue {
-  id?: string;
-  measure_id?: string;
+  food_group: string;
   calories: number;
   protein: number;
-  fat: number;
   carbs: number;
+  fats: number;
   fiber?: number;
-  sugar?: number;
   sodium?: number;
-  potassium?: number;
-  calcium?: number;
-  iron?: number;
-  vitamin_a?: number;
-  vitamin_c?: number;
-  vitamin_d?: number;
-  vitamin_e?: number;
-}
-
-interface FoodRestriction {
-  id: string;
-  restriction_name: string;
+  sugar?: number;
+  saturated_fat?: number;
+  glycemic_index?: number;
+  is_organic?: boolean;
+  allergens?: string[];
+  season?: string[];
+  preparation_time?: number;
+  cost_level?: string;
+  availability?: string;
+  sustainability_score?: number;
+  serving_suggestion?: string;
+  portion_size: number;
+  portion_unit: string;
+  nutritional_info?: any;
 }
 
 interface FoodDetailsProps {
   foodId: string;
+  onBack: () => void;
+  onEdit?: (food: FoodDetail) => void;
+  onDelete?: (foodId: string) => void;
 }
 
-const FoodDetails: React.FC<FoodDetailsProps> = ({ foodId }) => {
+const FoodDetails: React.FC<FoodDetailsProps> = ({
+  foodId,
+  onBack,
+  onEdit,
+  onDelete
+}) => {
   const [food, setFood] = useState<FoodDetail | null>(null);
-  const [measures, setMeasures] = useState<FoodMeasure[]>([]);
-  const [selectedMeasure, setSelectedMeasure] = useState<string | null>(null);
-  const [nutritionalValues, setNutritionalValues] = useState<NutritionalValue | null>(null);
-  const [restrictions, setRestrictions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('nutrition');
-  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchFoodData = async () => {
+    loadFoodDetails();
+  }, [foodId]);
+
+  const loadFoodDetails = async () => {
+    try {
       setLoading(true);
-      try {
-        // Get food details
-        const foodData = await getFoodDetails(foodId);
-        
-        if (foodData) {
-          setFood(foodData);
-          
-          // Create a default measure based on portion info
-          const defaultMeasure: FoodMeasure = {
-            id: foodId,
-            name: 'Porção',
-            quantity: 100,
-            unit: 'g',
-            is_default: true
-          };
-          
-          setMeasures([defaultMeasure]);
-          setSelectedMeasure(defaultMeasure.id);
-          
-          // Get nutritional values
-          const nutritionData = await getNutritionalValues(foodId);
-          if (nutritionData) {
-            setNutritionalValues(nutritionData);
-          }
-          
-          // Get food restrictions (if implemented)
-          const restrictionsData = await getFoodRestrictions(foodId);
-          if (restrictionsData && Array.isArray(restrictionsData)) {
-            setRestrictions(restrictionsData.map(r => r.restriction_name));
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching food details:', error);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar os detalhes do alimento.',
-          variant: 'destructive'
-        });
-      } finally {
-        setLoading(false);
+      const foodData = await getFoodDetails(foodId);
+      if (foodData) {
+        // Fix the type conversion for glycemic_index
+        const formattedFood: FoodDetail = {
+          ...foodData,
+          glycemic_index: foodData.glycemic_index ? Number(foodData.glycemic_index) : undefined
+        };
+        setFood(formattedFood);
       }
-    };
-
-    if (foodId) {
-      fetchFoodData();
+    } catch (error) {
+      console.error('Error loading food details:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [foodId, toast]);
-
-  const handleSelectMeasure = (measureId: string) => {
-    setSelectedMeasure(measureId);
   };
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-3/4 mb-2" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-6 w-1/2" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-6 w-full" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando detalhes do alimento...</p>
+        </div>
+      </div>
     );
   }
 
   if (!food) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center p-10">
-          <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
-          <h3 className="text-lg font-semibold">Alimento não encontrado</h3>
-          <p className="text-muted-foreground">
-            Não foi possível encontrar informações para este alimento.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="text-center p-8">
+        <p className="text-gray-600 mb-4">Alimento não encontrado.</p>
+        <Button onClick={onBack} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">{food.name}</CardTitle>
-        {food.brand && <p className="text-muted-foreground">{food.brand}</p>}
-        <div className="flex flex-wrap gap-2 mt-2">
-          {food.category && (
-            <Badge variant="secondary">{food.category}</Badge>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Button onClick={onBack} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        
+        <div className="flex gap-2">
+          {onEdit && (
+            <Button onClick={() => onEdit(food)} variant="outline">
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
           )}
-          {food.subcategory && (
-            <Badge variant="outline">{food.subcategory}</Badge>
+          {onDelete && (
+            <Button 
+              onClick={() => onDelete(food.id)} 
+              variant="outline"
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </Button>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="nutrition">
-              <Utensils className="mr-2 h-4 w-4" />
-              Valores Nutricionais
-            </TabsTrigger>
-            <TabsTrigger value="info">
-              <Info className="mr-2 h-4 w-4" />
-              Informações
-            </TabsTrigger>
-          </TabsList>
+      </div>
 
-          <TabsContent value="nutrition">
-            <div className="space-y-4">
+      {/* Food Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3">
+            {food.name}
+            {food.is_organic && (
+              <Badge variant="outline" className="text-green-600 border-green-600">
+                Orgânico
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-2">Informações Básicas</h3>
+              <div className="space-y-2 text-sm">
+                <div><span className="font-medium">Grupo:</span> {food.food_group}</div>
+                <div><span className="font-medium">Porção:</span> {food.portion_size}{food.portion_unit}</div>
+                {food.preparation_time && (
+                  <div><span className="font-medium">Tempo de preparo:</span> {food.preparation_time} min</div>
+                )}
+                {food.cost_level && (
+                  <div><span className="font-medium">Custo:</span> {food.cost_level}</div>
+                )}
+                {food.availability && (
+                  <div><span className="font-medium">Disponibilidade:</span> {food.availability}</div>
+                )}
+              </div>
+            </div>
+
+            {food.serving_suggestion && (
               <div>
-                <label className="text-sm font-medium">Medida:</label>
-                {measures.length > 0 && (
-                  <Select
-                    value={selectedMeasure || ''}
-                    onValueChange={handleSelectMeasure}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma medida" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {measures.map((measure) => (
-                        <SelectItem key={measure.id} value={measure.id}>
-                          {measure.name} ({measure.quantity} {measure.unit})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <h3 className="font-semibold mb-2">Sugestão de Consumo</h3>
+                <p className="text-sm text-gray-600">{food.serving_suggestion}</p>
               </div>
+            )}
+          </div>
 
-              {nutritionalValues && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold">Macronutrientes</h3>
-                    <div className="grid grid-cols-4 gap-2 mt-2">
-                      <div className="border rounded-lg p-3 text-center">
-                        <p className="text-xs text-muted-foreground">Calorias</p>
-                        <p className="font-bold">{nutritionalValues.calories} kcal</p>
-                      </div>
-                      <div className="border rounded-lg p-3 text-center">
-                        <p className="text-xs text-muted-foreground">Proteína</p>
-                        <p className="font-bold">{nutritionalValues.protein} g</p>
-                      </div>
-                      <div className="border rounded-lg p-3 text-center">
-                        <p className="text-xs text-muted-foreground">Carboidratos</p>
-                        <p className="font-bold">{nutritionalValues.carbs} g</p>
-                      </div>
-                      <div className="border rounded-lg p-3 text-center">
-                        <p className="text-xs text-muted-foreground">Gorduras</p>
-                        <p className="font-bold">{nutritionalValues.fat} g</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {(nutritionalValues.fiber || nutritionalValues.sugar) && (
-                    <div>
-                      <h3 className="font-semibold">Detalhamento de Carboidratos</h3>
-                      <div className="grid grid-cols-2 gap-2 mt-2">
-                        {nutritionalValues.fiber !== undefined && (
-                          <div className="border rounded-lg p-3 text-center">
-                            <p className="text-xs text-muted-foreground">Fibras</p>
-                            <p className="font-bold">{nutritionalValues.fiber} g</p>
-                          </div>
-                        )}
-                        {nutritionalValues.sugar !== undefined && (
-                          <div className="border rounded-lg p-3 text-center">
-                            <p className="text-xs text-muted-foreground">Açúcares</p>
-                            <p className="font-bold">{nutritionalValues.sugar} g</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="info">
-            <div className="space-y-4">
-              {food.description && (
-                <div>
-                  <h3 className="font-semibold mb-1">Descrição</h3>
-                  <p>{food.description}</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                {food.caloric_density && (
-                  <div>
-                    <h3 className="text-sm font-semibold">Densidade Calórica</h3>
-                    <p>{food.caloric_density}</p>
-                  </div>
-                )}
-                {food.glycemic_index && (
-                  <div>
-                    <h3 className="text-sm font-semibold">Índice Glicêmico</h3>
-                    <p>{food.glycemic_index}</p>
-                  </div>
-                )}
+          {food.season && food.season.length > 0 && (
+            <div className="mt-4">
+              <h3 className="font-semibold mb-2">Sazonalidade</h3>
+              <div className="flex flex-wrap gap-1">
+                {food.season.map((season) => (
+                  <Badge key={season} variant="secondary">
+                    {season}
+                  </Badge>
+                ))}
               </div>
-
-              {food.source && (
-                <div>
-                  <h3 className="text-sm font-semibold">Fonte</h3>
-                  <p>{food.source}</p>
-                </div>
-              )}
-
-              {restrictions.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-1">Restrições Alimentares</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {restrictions.map((restriction) => (
-                      <Badge key={restriction} variant="destructive">
-                        {restriction}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Nutritional Analysis */}
+      <NutritionalAnalysis food={food} />
+    </div>
   );
 };
 

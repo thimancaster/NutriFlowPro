@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { seedTestimonials as seedTestimonialsData } from './seedTestimonials';
 import { logger } from './logger';
@@ -98,6 +99,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Arroz integral cozido",
       food_group: "cereais_e_graos",
+      category: "cereais_e_graos",
       calories: 112,
       protein: 2.6,
       carbs: 22.0,
@@ -119,6 +121,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Quinoa cozida",
       food_group: "cereais_e_graos",
+      category: "cereais_e_graos",
       calories: 120,
       protein: 4.4,
       carbs: 21.3,
@@ -141,6 +144,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Banana nanica",
       food_group: "frutas",
+      category: "frutas",
       calories: 89,
       protein: 1.1,
       carbs: 22.8,
@@ -164,6 +168,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Abacate",
       food_group: "frutas",
+      category: "frutas",
       calories: 160,
       protein: 2.0,
       carbs: 8.5,
@@ -188,6 +193,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Peito de frango grelhado",
       food_group: "proteinas",
+      category: "proteinas",
       calories: 165,
       protein: 31.0,
       carbs: 0.0,
@@ -210,6 +216,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Salmão grelhado",
       food_group: "proteinas",
+      category: "proteinas",
       calories: 208,
       protein: 25.4,
       carbs: 0.0,
@@ -233,6 +240,7 @@ export const seedEnhancedFoodData = async () => {
     {
       name: "Brócolis cozido",
       food_group: "vegetais",
+      category: "vegetais",
       calories: 34,
       protein: 2.8,
       carbs: 7.0,

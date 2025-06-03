@@ -1,142 +1,208 @@
 
-import React, { useEffect, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Filter, Plus } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import FoodCategoryFilter from '@/components/food-database/FoodCategoryFilter';
-import FoodList from '@/components/food-database/FoodList';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Database, Search, TrendingUp, Award, Brain } from 'lucide-react';
+import EnhancedFoodSearch from '@/components/food-database/EnhancedFoodSearch';
 import FoodDetails from '@/components/food-database/FoodDetails';
-import FoodForm from '@/components/food-database/FoodForm';
-import { usePremiumGuard } from '@/hooks/usePremiumGuard';
+import NutritionalAnalysis from '@/components/food-database/NutritionalAnalysis';
+import RecommendationEngine from '@/components/food-database/RecommendationEngine';
+import TrendAnalysisDashboard from '@/components/food-database/TrendAnalysisDashboard';
+import GamificationSystem from '@/components/food-database/GamificationSystem';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 const FoodDatabase = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('browse');
-  const { toast } = useToast();
-  // Fix: The first parameter should be a boolean (isPremiumFeature)
-  const { hasAccess } = usePremiumGuard(true);
+  const { user } = useAuth();
+  const [selectedFood, setSelectedFood] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('search');
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleFoodSelect = (food: any) => {
+    setSelectedFood(food);
   };
 
-  const handleFoodSelect = (foodId: string) => {
-    setSelectedFoodId(foodId);
-    setActiveTab('details');
+  const handleBackToSearch = () => {
+    setSelectedFood(null);
   };
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    // Reset selected food when changing tabs
-    if (value !== 'details') {
-      setSelectedFoodId(null);
-    }
-  };
-
-  const handleAddFood = () => {
-    if (!hasAccess) {
-      toast({
-        title: 'Recurso Premium',
-        description: 'Para adicionar alimentos personalizados, você precisa ter uma conta premium.',
-      });
-      return;
-    }
-    setActiveTab('add');
+  // Mock patient profile for recommendations
+  const mockPatientProfile = {
+    age: 35,
+    gender: 'female',
+    activityLevel: 'moderate',
+    goals: ['weight_loss', 'muscle_gain'],
+    restrictions: ['lactose'],
+    preferences: ['organic', 'sustainable']
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Base de Dados Alimentar</h1>
-          <p className="text-muted-foreground">
-            Explore a base de dados alimentar completa com valores nutricionais
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+      <Helmet>
+        <title>Base de Dados de Alimentos - NutriFlow Pro</title>
+      </Helmet>
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-nutri-blue mb-2">
+            Base de Dados de Alimentos
+          </h1>
+          <p className="text-gray-600">
+            Sistema inteligente para busca, análise e recomendação de alimentos
           </p>
         </div>
-        <Button 
-          variant="default" 
-          className="bg-nutri-green hover:bg-nutri-green-dark" 
-          onClick={handleAddFood}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          <span>Adicionar Alimento</span>
-        </Button>
-      </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="browse">Explorar Alimentos</TabsTrigger>
-          <TabsTrigger value="details" disabled={!selectedFoodId}>
-            Detalhes do Alimento
-          </TabsTrigger>
-          <TabsTrigger value="add">Adicionar Alimento</TabsTrigger>
-        </TabsList>
+        {selectedFood ? (
+          <FoodDetails
+            foodId={selectedFood.id}
+            onBack={handleBackToSearch}
+          />
+        ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="search" className="flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                Busca Avançada
+              </TabsTrigger>
+              <TabsTrigger value="recommendations" className="flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Recomendações IA
+              </TabsTrigger>
+              <TabsTrigger value="trends" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Análise de Tendências
+              </TabsTrigger>
+              <TabsTrigger value="gamification" className="flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                Gamificação
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Gestão de Dados
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="browse">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Explorar Alimentos</CardTitle>
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar alimentos..."
-                      value={searchTerm}
-                      onChange={handleSearch}
-                      className="pl-8"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                </div>
-                {showFilters && <FoodCategoryFilter onCategorySelect={setSelectedCategory} selectedCategory={selectedCategory} />}
-                {selectedCategory && (
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="px-3 py-1">
-                      {selectedCategory}
-                      <button 
-                        className="ml-2 hover:text-destructive" 
-                        onClick={() => setSelectedCategory(null)}
-                      >
-                        ×
-                      </button>
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <FoodList 
-                searchTerm={searchTerm} 
-                categoryId={selectedCategory} 
+            <TabsContent value="search" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    Busca Inteligente de Alimentos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EnhancedFoodSearch 
+                    onFoodSelect={handleFoodSelect}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="recommendations" className="space-y-6">
+              <RecommendationEngine 
+                patientProfile={mockPatientProfile}
                 onFoodSelect={handleFoodSelect}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="details">
-          {selectedFoodId && <FoodDetails foodId={selectedFoodId} />}
-        </TabsContent>
-        
-        <TabsContent value="add">
-          <FoodForm />
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+
+            <TabsContent value="trends" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Dashboard de Análise de Tendências
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TrendAnalysisDashboard 
+                    patientId={user?.id}
+                    timeRange="month"
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="gamification" className="space-y-6">
+              <GamificationSystem 
+                userId={user?.id || ''}
+              />
+            </TabsContent>
+
+            <TabsContent value="database" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Estatísticas Gerais</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total de Alimentos:</span>
+                        <span className="font-semibold">2,847</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Categorias:</span>
+                        <span className="font-semibold">15</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Alimentos Orgânicos:</span>
+                        <span className="font-semibold">384</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Última Atualização:</span>
+                        <span className="font-semibold">Hoje</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Qualidade dos Dados</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Dados Completos:</span>
+                        <span className="font-semibold text-green-600">94%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Com Análise Nutricional:</span>
+                        <span className="font-semibold text-blue-600">87%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Verificados:</span>
+                        <span className="font-semibold text-purple-600">76%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Ações Rápidas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <button className="w-full text-left p-2 rounded hover:bg-gray-50 text-sm">
+                        📊 Exportar Relatório
+                      </button>
+                      <button className="w-full text-left p-2 rounded hover:bg-gray-50 text-sm">
+                        🔄 Sincronizar Dados
+                      </button>
+                      <button className="w-full text-left p-2 rounded hover:bg-gray-50 text-sm">
+                        ➕ Adicionar Alimento
+                      </button>
+                      <button className="w-full text-left p-2 rounded hover:bg-gray-50 text-sm">
+                        🏷️ Gerenciar Categorias
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
     </div>
   );
 };
