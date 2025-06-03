@@ -1,5 +1,5 @@
 
-import { Session } from '@supabase/supabase-js';
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface User {
   id: string;
@@ -7,6 +7,10 @@ export interface User {
   name?: string;
   created_at?: string;
   updated_at?: string;
+  // Adicionar propriedades do Supabase para compatibilidade
+  user_metadata?: any;
+  app_metadata?: any;
+  aud?: string;
 }
 
 export interface AuthState {

@@ -16,8 +16,38 @@ export const useUserSubscription = () => {
   const queryClient = useQueryClient();
   const refetchInProgressRef = useRef(false);
   
+  // Convert our custom user type to Supabase user type for the query
+  const supabaseUser = user ? {
+    id: user.id,
+    email: user.email,
+    user_metadata: user.user_metadata || {},
+    app_metadata: user.app_metadata || {},
+    aud: user.aud || 'authenticated',
+    created_at: user.created_at || new Date().toISOString(),
+    updated_at: user.updated_at || new Date().toISOString(),
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: null,
+    role: 'authenticated',
+    phone: null,
+    email_confirmed_at: null,
+    phone_confirmed_at: null,
+    recovery_sent_at: null,
+    new_email: null,
+    invited_at: null,
+    action_link: null,
+    email_change_sent_at: null,
+    email_change_confirm_status: 0,
+    banned_until: null,
+    new_phone: null,
+    phone_change_sent_at: null,
+    phone_change_token: null,
+    email_change_token_current: null,
+    email_change_token_new: null,
+    is_anonymous: false
+  } : null;
+  
   // Use the main subscription query hook with optimized settings
-  const query = useSubscriptionQuery(user, isAuthenticated);
+  const query = useSubscriptionQuery(supabaseUser, isAuthenticated);
   
   // Determine premium status safely with fallback
   const isPremiumUser = query.data?.isPremium || false;

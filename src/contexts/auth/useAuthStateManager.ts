@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthState } from './types';
 import useAuthStorage from '@/hooks/auth/useAuthStorage';
@@ -30,12 +30,24 @@ export const useAuthStateManager = () => {
   const { storeSession, getStoredSession, clearStoredSession } = useAuthStorage();
   const { checkPremiumStatus } = usePremiumCheck();
   
+  // Convert Supabase user to our User type with proper typing
+  const convertSupabaseUser = (supabaseUser: SupabaseUser) => ({
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    name: supabaseUser.user_metadata?.name,
+    created_at: supabaseUser.created_at,
+    updated_at: supabaseUser.updated_at,
+    user_metadata: supabaseUser.user_metadata,
+    app_metadata: supabaseUser.app_metadata,
+    aud: supabaseUser.aud
+  });
+  
   // Methods to update authentication state
-  const setAuthenticated = (user: User | null, session: Session | null, isPremium: boolean = false) => {
+  const setAuthenticated = (user: SupabaseUser | null, session: Session | null, isPremium: boolean = false) => {
     setState({
       isLoading: false,
       isAuthenticated: !!user,
-      user,
+      user: user ? convertSupabaseUser(user) : null,
       session,
       isPremium,
       loading: false,
