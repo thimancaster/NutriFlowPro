@@ -6,9 +6,6 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://lnyixnhsrovzdxybmjfa.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxueWl4bmhzcm92emR4eWJtamZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxNzEwOTUsImV4cCI6MjA1ODc0NzA5NX0.a9Su1YiPudHkbt70262y4YBGTBwlqikvKHxahqb7hiA";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
@@ -20,12 +17,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   global: {
     headers: {
       'X-Client-Info': 'supabase-js-web'
-    }
-  },
-  // Add retry configuration for better error handling
-  realtime: {
-    params: {
-      eventsPerSecond: 10
     }
   }
 });

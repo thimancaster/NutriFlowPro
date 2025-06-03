@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/Icons';
 import { Checkbox } from "@/components/ui/checkbox"
-import { csrfTokenManager } from '@/utils/securityUtils';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
@@ -60,10 +59,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
         timestamp: new Date().toISOString()
       });
       
-      // Generate CSRF token for this login attempt
-      const csrfToken = csrfTokenManager.generate();
-      console.log('CSRF token generated for login');
-      
       const result = await login(values.email, values.password, values.rememberMe);
 
       console.log('Login result:', { 
@@ -86,15 +81,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
       } else {
         console.error('Login failed:', result.error);
         
-        // Clear the form on authentication failure
+        // Clear the form password on authentication failure
         if (result.error?.message.includes("credenciais") || 
             result.error?.message.includes("senha") ||
             result.error?.message.includes("email")) {
-          form.reset({
-            email: values.email,
-            password: "",
-            rememberMe: values.rememberMe
-          });
+          form.setValue("password", "");
         }
       }
     } catch (error: any) {
@@ -112,10 +103,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   async function handleGoogleLogin() {
     if (onGoogleLogin) {
       try {
-        // Generate CSRF token for Google login
-        const csrfToken = csrfTokenManager.generate();
-        console.log('CSRF token generated for Google login');
-        
         const result = await onGoogleLogin();
         if (!result.success && result.error) {
           toast({

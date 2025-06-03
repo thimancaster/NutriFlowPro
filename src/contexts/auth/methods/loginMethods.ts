@@ -47,20 +47,9 @@ export const login = async (
       throw new Error("Muitas tentativas de login. Tente novamente em 15 minutos.");
     }
     
-    // Clear any existing session first to avoid conflicts
-    try {
-      await supabase.auth.signOut();
-      console.log("Previous session cleared successfully");
-    } catch (signOutError) {
-      console.warn('Warning: Could not sign out existing session:', signOutError);
-    }
-
-    // Add a small delay to ensure cleanup is complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
     console.log("Attempting signInWithPassword...");
     
-    // Sign in with email and password
+    // Sign in with email and password - simplified approach
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password
