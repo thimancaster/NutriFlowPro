@@ -1,38 +1,125 @@
 
 import { supabase } from './client';
 
-// Function to get all food categories
+// Function to get all food categories from the new standardized table
 export const getFoodCategories = async () => {
-  // Get distinct food groups from the foods table
   const { data, error } = await supabase
-    .from('foods')
-    .select('category, food_group')
-    .not('food_group', 'is', null);
+    .from('food_categories')
+    .select('id, name, display_name, color, icon, description')
+    .order('sort_order');
   
   if (error) {
     console.error('Error fetching food categories:', error);
     return [];
   }
   
-  // Transform the data into the expected format and deduplicate
-  const uniqueCategories = Array.from(
-    new Map(data.map((item: any) => [
-      item.category, 
-      { id: item.category, name: item.food_group }
-    ])).values()
-  );
-  
-  return uniqueCategories || [];
+  return data?.map(category => ({
+    id: category.id,
+    name: category.display_name,
+    color: category.color,
+    icon: category.icon,
+    description: category.description
+  })) || [];
 };
 
-// Function to get food details by ID
+// Enhanced function to get foods with new nutritional data
+export const getFoodsWithNutrition = async (filters?: {
+  category?: string;
+  searchTerm?: string;
+  mealTime?: string[];
+  isOrganic?: boolean;
+  allergensFree?: string[];
+}) => {
+  let query = supabase
+    .from('foods')
+    .select(`
+      id,
+      name,
+      food_group,
+      calories,
+      protein,
+      carbs,
+      fats,
+      fiber,
+      sodium,
+      sugar,
+      saturated_fat,
+      portion_size,
+      portion_unit,
+      meal_time,
+      glycemic_index,
+      is_organic,
+      allergens,
+      season,
+      preparation_time,
+      cost_level,
+      availability,
+      sustainability_score,
+      serving_suggestion
+    `);
+
+  if (filters?.category) {
+    query = query.eq('food_group', filters.category);
+  }
+
+  if (filters?.searchTerm) {
+    query = query.ilike('name', `%${filters.searchTerm}%`);
+  }
+
+  if (filters?.mealTime && filters.mealTime.length > 0) {
+    query = query.overlaps('meal_time', filters.mealTime);
+  }
+
+  if (filters?.isOrganic !== undefined) {
+    query = query.eq('is_organic', filters.isOrganic);
+  }
+
+  if (filters?.allergensFree && filters.allergensFree.length > 0) {
+    // Filter out foods that contain any of the specified allergens
+    for (const allergen of filters.allergensFree) {
+      query = query.not('allergens', 'cs', `{${allergen}}`);
+    }
+  }
+
+  const { data, error } = await query.order('name');
+
+  if (error) {
+    console.error('Error fetching foods:', error);
+    return [];
+  }
+
+  return data || [];
+};
+
+// Function to get food details with enhanced nutritional information
 export const getFoodDetails = async (foodId: string) => {
   const { data, error } = await supabase
     .from('foods')
     .select(`
       id,
       name,
-      food_group
+      food_group,
+      calories,
+      protein,
+      carbs,
+      fats,
+      fiber,
+      sodium,
+      sugar,
+      saturated_fat,
+      portion_size,
+      portion_unit,
+      meal_time,
+      glycemic_index,
+      is_organic,
+      allergens,
+      season,
+      preparation_time,
+      cost_level,
+      availability,
+      sustainability_score,
+      serving_suggestion,
+      nutritional_info
     `)
     .eq('id', foodId)
     .single();
@@ -42,44 +129,170 @@ export const getFoodDetails = async (foodId: string) => {
     return null;
   }
   
-  return {
-    id: data.id,
-    name: data.name,
-    category: data.food_group
-  };
+  return data;
 };
 
-// Function to get nutritional values by food ID
-export const getNutritionalValues = async (foodId: string) => {
+// Function to calculate nutritional density using the database function
+export const calculateNutritionalDensity = async (foodId: string) => {
   const { data, error } = await supabase
+    .rpc('calculate_nutritional_density', { food_id: foodId });
+  
+  if (error) {
+    console.error('Error calculating nutritional density:', error);
+    return 0;
+  }
+  
+  return data || 0;
+};
+
+// Enhanced function to generate intelligent meal plans
+export const generateIntelligentMealPlan = async (
+  userId: string,
+  patientId: string,
+  targetCalories: number,
+  targetProtein: number,
+  targetCarbs: number,
+  targetFats: number,
+  preferences: string[] = [],
+  restrictions: string[] = [],
+  date: string = new Date().toISOString().split('T')[0]
+) => {
+  const { data, error } = await supabase
+    .rpc('generate_intelligent_meal_plan', {
+      p_user_id: userId,
+      p_patient_id: patientId,
+      p_target_calories: targetCalories,
+      p_target_protein: targetProtein,
+      p_target_carbs: targetCarbs,
+      p_target_fats: targetFats,
+      p_preferences: preferences,
+      p_restrictions: restrictions,
+      p_date: date
+    });
+
+  if (error) {
+    console.error('Error generating intelligent meal plan:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+// Function to get food substitutions with nutritional similarity
+export const getFoodSubstitutions = async (foodId: string) => {
+  const { data, error } = await supabase
+    .from('food_substitutions')
+    .select(`
+      id,
+      reason,
+      recommendations,
+      nutritional_similarity,
+      substitute:foods!substitute_id (
+        id,
+        name,
+        calories,
+        protein,
+        carbs,
+        fats,
+        food_group
+      )
+    `)
+    .eq('food_id', foodId);
+
+  if (error) {
+    console.error('Error fetching food substitutions:', error);
+    return [];
+  }
+
+  return data || [];
+};
+
+// Function to search foods by nutritional criteria
+export const searchFoodsByNutrition = async (criteria: {
+  minProtein?: number;
+  maxCalories?: number;
+  minFiber?: number;
+  maxSodium?: number;
+  maxGlycemicIndex?: number;
+  sustainabilityScore?: number;
+}) => {
+  let query = supabase
     .from('foods')
     .select(`
+      id,
+      name,
+      food_group,
       calories,
       protein,
       carbs,
-      fats
-    `)
-    .eq('id', foodId)
-    .single();
-  
-  if (error) {
-    console.error('Error fetching nutritional values:', error);
-    return null;
+      fats,
+      fiber,
+      sodium,
+      glycemic_index,
+      sustainability_score,
+      portion_size,
+      portion_unit
+    `);
+
+  if (criteria.minProtein !== undefined) {
+    query = query.gte('protein', criteria.minProtein);
   }
+
+  if (criteria.maxCalories !== undefined) {
+    query = query.lte('calories', criteria.maxCalories);
+  }
+
+  if (criteria.minFiber !== undefined) {
+    query = query.gte('fiber', criteria.minFiber);
+  }
+
+  if (criteria.maxSodium !== undefined) {
+    query = query.lte('sodium', criteria.maxSodium);
+  }
+
+  if (criteria.maxGlycemicIndex !== undefined) {
+    query = query.lte('glycemic_index', criteria.maxGlycemicIndex);
+  }
+
+  if (criteria.sustainabilityScore !== undefined) {
+    query = query.gte('sustainability_score', criteria.sustainabilityScore);
+  }
+
+  const { data, error } = await query
+    .order('protein', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('Error searching foods by nutrition:', error);
+    return [];
+  }
+
+  return data || [];
+};
+
+// Legacy functions for backward compatibility
+export const getNutritionalValues = async (foodId: string) => {
+  const food = await getFoodDetails(foodId);
   
-  // Transform to expected format
+  if (!food) return null;
+  
   return {
     id: foodId,
     measure_id: foodId,
-    calories: data.calories,
-    protein: data.protein,
-    carbs: data.carbs,
-    fat: data.fats
+    calories: food.calories,
+    protein: food.protein,
+    carbs: food.carbs,
+    fat: food.fats
   };
 };
 
-// Function to get food restrictions by food ID
 export const getFoodRestrictions = async (foodId: string) => {
-  // Since we don't have actual restrictions yet, return empty array
-  return [];
+  const food = await getFoodDetails(foodId);
+  
+  if (!food) return [];
+  
+  return food.allergens?.map((allergen: string) => ({
+    id: `${foodId}-${allergen}`,
+    restriction_name: allergen
+  })) || [];
 };

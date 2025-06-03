@@ -365,6 +365,39 @@ export type Database = {
           },
         ]
       }
+      food_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       food_substitutions: {
         Row: {
           created_at: string | null
@@ -412,52 +445,88 @@ export type Database = {
       }
       foods: {
         Row: {
+          allergens: string[] | null
+          availability: string | null
           calories: number
           carbs: number
           category: string
+          cost_level: string | null
           created_at: string | null
           fats: number
+          fiber: number | null
           food_group: string
+          glycemic_index: number | null
           id: string
+          is_organic: boolean | null
           meal_time: string[] | null
           name: string
           nutritional_info: Json | null
           portion_size: number
           portion_unit: string
+          preparation_time: number | null
           protein: number
+          saturated_fat: number | null
+          season: string[] | null
           serving_suggestion: string | null
+          sodium: number | null
+          sugar: number | null
+          sustainability_score: number | null
         }
         Insert: {
+          allergens?: string[] | null
+          availability?: string | null
           calories: number
           carbs: number
           category: string
+          cost_level?: string | null
           created_at?: string | null
           fats: number
+          fiber?: number | null
           food_group?: string
+          glycemic_index?: number | null
           id?: string
+          is_organic?: boolean | null
           meal_time?: string[] | null
           name: string
           nutritional_info?: Json | null
           portion_size: number
           portion_unit: string
+          preparation_time?: number | null
           protein: number
+          saturated_fat?: number | null
+          season?: string[] | null
           serving_suggestion?: string | null
+          sodium?: number | null
+          sugar?: number | null
+          sustainability_score?: number | null
         }
         Update: {
+          allergens?: string[] | null
+          availability?: string | null
           calories?: number
           carbs?: number
           category?: string
+          cost_level?: string | null
           created_at?: string | null
           fats?: number
+          fiber?: number | null
           food_group?: string
+          glycemic_index?: number | null
           id?: string
+          is_organic?: boolean | null
           meal_time?: string[] | null
           name?: string
           nutritional_info?: Json | null
           portion_size?: number
           portion_unit?: string
+          preparation_time?: number | null
           protein?: number
+          saturated_fat?: number | null
+          season?: string[] | null
           serving_suggestion?: string | null
+          sodium?: number | null
+          sugar?: number | null
+          sustainability_score?: number | null
         }
         Relationships: []
       }
@@ -1014,6 +1083,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_nutritional_density: {
+        Args: { food_id: string }
+        Returns: number
+      }
       calculate_nutritional_similarity: {
         Args: { original_id: string; substitute_id: string }
         Returns: Json
@@ -1024,6 +1097,20 @@ export type Database = {
       }
       create_meal_plan_with_items: {
         Args: { p_meal_plan_data: Json; p_meal_plan_items_data: Json }
+        Returns: string
+      }
+      generate_intelligent_meal_plan: {
+        Args: {
+          p_user_id: string
+          p_patient_id: string
+          p_target_calories: number
+          p_target_protein: number
+          p_target_carbs: number
+          p_target_fats: number
+          p_preferences?: string[]
+          p_restrictions?: string[]
+          p_date?: string
+        }
         Returns: string
       }
       generate_meal_plan: {
