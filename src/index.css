@@ -44,6 +44,45 @@
     --sidebar-border: 142 60% 40%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 142 70% 45%;
+    --primary-foreground: 222.2 84% 4.9%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142 70% 45%;
+
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217.2 32.6% 17.5%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 142 70% 45%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 142 70% 45%;
+  }
 }
 
 @layer base {
@@ -64,15 +103,37 @@
   :focus {
     @apply outline-none ring-2 ring-primary ring-opacity-50;
   }
+
+  /* Dark mode improvements */
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* Ensure proper contrast in dark mode */
+  .dark .text-gray-600 {
+    @apply text-gray-400;
+  }
+
+  .dark .text-gray-700 {
+    @apply text-gray-300;
+  }
+
+  .dark .text-gray-800 {
+    @apply text-gray-200;
+  }
+
+  .dark .text-gray-900 {
+    @apply text-gray-100;
+  }
 }
 
 @layer components {
   .nutri-card {
-    @apply rounded-xl shadow-md bg-white p-6 transition-all duration-300 hover:shadow-lg;
+    @apply rounded-xl shadow-md bg-card p-6 transition-all duration-300 hover:shadow-lg border;
   }
   
   .nutri-input {
-    @apply rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-nutri-green;
+    @apply rounded-lg border border-input bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground;
   }
 
   /* Enhanced button styles with animations */
@@ -126,16 +187,35 @@
   .float-animation {
     @apply animate-float;
   }
+
+  /* Toast improvements for better visibility */
+  .toast-viewport {
+    @apply z-[100];
+  }
+
+  /* Dropdown improvements for dark mode */
+  .dropdown-content {
+    @apply bg-popover border border-border shadow-lg;
+  }
+
+  /* Modal improvements */
+  .modal-overlay {
+    @apply bg-black/50 backdrop-blur-sm;
+  }
+
+  .modal-content {
+    @apply bg-card border border-border shadow-xl;
+  }
 }
 
 @layer utilities {
   /* Interactive text link animation */
   .text-link {
-    @apply relative inline-block text-nutri-blue;
+    @apply relative inline-block text-primary;
   }
   
   .text-link::after {
-    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-nutri-blue 
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary 
            transition-all duration-300 ease-out;
   }
   
@@ -159,5 +239,28 @@
   
   .text-gradient-green {
     @apply text-gradient from-nutri-green to-nutri-green-light;
+  }
+
+  /* Dark mode specific utilities */
+  .dark-card {
+    @apply dark:bg-card dark:border-border;
+  }
+
+  .dark-text {
+    @apply dark:text-foreground;
+  }
+
+  .dark-bg {
+    @apply dark:bg-background;
+  }
+
+  /* High contrast for accessibility */
+  .high-contrast {
+    @apply contrast-125;
+  }
+
+  /* Better focus indicators */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
   }
 }
