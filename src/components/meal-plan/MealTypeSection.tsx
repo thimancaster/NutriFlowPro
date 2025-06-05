@@ -8,6 +8,7 @@ import { MealPlanItem } from '@/types/mealPlan';
 import AddItemDialog from './AddItemDialog';
 import FoodSearchDialog from './FoodSearchDialog';
 import EditItemDialog from './EditItemDialog';
+import { getMealSuggestions } from '@/utils/brazilianFoodDatabase';
 
 interface MealTypeSectionProps {
   mealType: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
@@ -22,70 +23,6 @@ interface MealTypeSectionProps {
   onItemRemove: (itemId: string) => void;
   onItemAdd: (item: MealPlanItem) => void;
 }
-
-// Sugestões mais específicas e variadas por refeição
-const MEAL_FOOD_SUGGESTIONS: Record<string, string[]> = {
-  breakfast: [
-    'Pão integral com queijo minas',
-    'Tapioca com queijo cottage',
-    'Aveia com banana e canela',
-    'Ovo mexido com torrada',
-    'Iogurte grego com granola',
-    'Vitamina de mamão com aveia',
-    'Café com leite desnatado',
-    'Pão francês com requeijão light'
-  ],
-  morning_snack: [
-    'Banana com pasta de amendoim',
-    'Iogurte natural com mel',
-    'Mix de castanhas (3 unidades)',
-    'Maçã com canela',
-    'Água de coco gelada',
-    'Pera com 2 castanhas',
-    'Biscoito integral (2 unidades)',
-    'Vitamina de frutas vermelhas'
-  ],
-  lunch: [
-    'Arroz integral com feijão carioca',
-    'Peito de frango grelhado',
-    'Salada verde com tomate',
-    'Brócolis refogado no alho',
-    'Peixe tilápia com batata doce',
-    'Carne magra com quinoa',
-    'Cenoura refogada na manteiga',
-    'Salada completa temperada'
-  ],
-  afternoon_snack: [
-    'Sanduíche natural de peito de peru',
-    'Vitamina de banana com aveia',
-    'Biscoito integral com chá verde',
-    'Iogurte com frutas picadas',
-    'Castanhas do Pará (3 unidades)',
-    'Batata doce cozida pequena',
-    'Água de coco com biscoito',
-    'Smoothie de frutas tropicais'
-  ],
-  dinner: [
-    'Sopa de legumes variados',
-    'Peixe grelhado com salada',
-    'Omelete de legumes',
-    'Peito de peru com quinoa',
-    'Salada completa com proteína',
-    'Caldo de legumes com torrada',
-    'Salmão grelhado com brócolis',
-    'Frango desfiado com purê de abóbora'
-  ],
-  evening_snack: [
-    'Leite morno com canela',
-    'Chá de camomila relaxante',
-    'Torrada integral com geleia diet',
-    'Iogurte natural pequeno',
-    'Maçã assada com canela',
-    'Biscoito integral simples',
-    'Água com rodela de limão',
-    'Chá de erva-doce morno'
-  ]
-};
 
 const MealTypeSection: React.FC<MealTypeSectionProps> = ({
   mealType,
@@ -126,17 +63,20 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
   };
 
   const handleEditItem = (item: MealPlanItem) => {
+    console.log('Editing item:', item);
     setEditingItem(item);
     setShowEditDialog(true);
   };
 
   const handleSaveEdit = (updatedItem: MealPlanItem) => {
+    console.log('Saving edited item:', updatedItem);
     onItemUpdate(updatedItem);
     setShowEditDialog(false);
     setEditingItem(null);
   };
 
-  const suggestions = MEAL_FOOD_SUGGESTIONS[mealType] || [];
+  // Obter sugestões específicas para esta refeição
+  const suggestions = getMealSuggestions(mealType);
 
   return (
     <Card>
@@ -166,7 +106,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
               <p>Nenhum alimento adicionado ainda</p>
             </div>
             
-            {/* Sugestões de alimentos para a refeição */}
+            {/* Sugestões específicas para cada refeição */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-2">Sugestões para {config.name}:</h4>
               <div className="flex flex-wrap gap-2">
@@ -203,7 +143,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
                         size="sm" 
                         variant="ghost"
                         onClick={() => handleEditItem(item)}
-                        className="text-blue-600 hover:text-blue-700"
+                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
@@ -211,7 +151,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
                         size="sm" 
                         variant="ghost" 
                         onClick={() => onItemRemove(item.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

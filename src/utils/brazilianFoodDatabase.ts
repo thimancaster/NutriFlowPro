@@ -8,517 +8,871 @@ export interface BrazilianFood {
   carbs: number;
   fats: number;
   portion: string;
+  portionSize: number;
   commonUse: string;
 }
 
 export const brazilianFoodDatabase: BrazilianFood[] = [
-  // Café da Manhã - Diversificado
+  // PROTEÍNAS - LATICÍNIOS
   {
-    name: 'Pão francês integral',
-    category: 'carboidrato',
-    mealTime: ['breakfast'],
-    calories: 135,
-    protein: 4.5,
-    carbs: 26,
-    fats: 1.2,
-    portion: '50g (1 unidade)',
-    commonUse: 'Base do café da manhã brasileiro'
+    name: 'Iogurte Desnatado',
+    category: 'proteina',
+    mealTime: ['breakfast', 'morning_snack', 'afternoon_snack'],
+    calories: 57,
+    protein: 5.8,
+    carbs: 7.8,
+    fats: 0.0,
+    portion: '1 pote (160g)',
+    portionSize: 160,
+    commonUse: 'Rico em probióticos, ideal para lanches'
   },
   {
-    name: 'Pão de forma integral',
-    category: 'carboidrato',
-    mealTime: ['breakfast'],
-    calories: 69,
-    protein: 3.1,
-    carbs: 12.5,
-    fats: 1.1,
-    portion: '25g (1 fatia)',
-    commonUse: 'Alternativa para sanduíches'
-  },
-  {
-    name: 'Tapioca',
-    category: 'carboidrato',
-    mealTime: ['breakfast', 'afternoon_snack'],
-    calories: 98,
-    protein: 0.2,
-    carbs: 25,
-    fats: 0.1,
-    portion: '30g (1 unidade média)',
-    commonUse: 'Típico do nordeste brasileiro'
-  },
-  {
-    name: 'Queijo minas frescal',
+    name: 'Iogurte Integral',
     category: 'proteina',
     mealTime: ['breakfast', 'morning_snack'],
-    calories: 75,
-    protein: 11,
-    carbs: 1.5,
-    fats: 2.8,
-    portion: '30g (1 fatia)',
+    calories: 126,
+    protein: 6.8,
+    carbs: 9.1,
+    fats: 7.0,
+    portion: '1 pote (160g)',
+    portionSize: 160,
+    commonUse: 'Mais cremoso e saboroso'
+  },
+  {
+    name: 'Leite Desnatado',
+    category: 'proteina',
+    mealTime: ['breakfast', 'evening_snack'],
+    calories: 84,
+    protein: 6.4,
+    carbs: 9.3,
+    fats: 2.4,
+    portion: '1 copo (200ml)',
+    portionSize: 200,
+    commonUse: 'Base para vitaminas e café'
+  },
+  {
+    name: 'Leite Integral',
+    category: 'proteina',
+    mealTime: ['breakfast', 'evening_snack'],
+    calories: 124,
+    protein: 6.2,
+    carbs: 9.8,
+    fats: 6.4,
+    portion: '1 copo (200ml)',
+    portionSize: 200,
+    commonUse: 'Mais nutritivo e saboroso'
+  },
+  {
+    name: 'Queijo Branco',
+    category: 'proteina',
+    mealTime: ['breakfast', 'morning_snack', 'afternoon_snack'],
+    calories: 69.3,
+    protein: 4.2,
+    carbs: 0.8,
+    fats: 5.4,
+    portion: '1 fatia (30g)',
+    portionSize: 30,
     commonUse: 'Acompanha pães e tapioca'
   },
   {
-    name: 'Requeijão light',
+    name: 'Queijo Mussarela',
     category: 'proteina',
-    mealTime: ['breakfast'],
-    calories: 54,
-    protein: 3.2,
-    carbs: 2.1,
-    fats: 4.1,
-    portion: '20g (1 colher de sopa)',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 36.5,
+    protein: 2.5,
+    carbs: 0.2,
+    fats: 2.8,
+    portion: '1 fatia (13g)',
+    portionSize: 13,
+    commonUse: 'Para sanduíches e lanches'
+  },
+  {
+    name: 'Requeijão Light',
+    category: 'proteina',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 43.2,
+    protein: 2.9,
+    carbs: 0.5,
+    fats: 3.2,
+    portion: '1 colher sobremesa (23g)',
+    portionSize: 23,
     commonUse: 'Cremoso para pães'
   },
   {
-    name: 'Ovo cozido',
-    category: 'proteina',
-    mealTime: ['breakfast', 'morning_snack'],
-    calories: 78,
-    protein: 6.3,
-    carbs: 0.6,
-    fats: 5.3,
-    portion: '50g (1 unidade)',
-    commonUse: 'Proteína completa'
-  },
-  {
-    name: 'Ovo mexido',
+    name: 'Requeijão Tradicional',
     category: 'proteina',
     mealTime: ['breakfast'],
-    calories: 91,
-    protein: 6.5,
-    carbs: 0.7,
-    fats: 7.2,
-    portion: '60g (1 ovo preparado)',
-    commonUse: 'Preparo tradicional'
+    calories: 53.6,
+    protein: 1.5,
+    carbs: 1.5,
+    fats: 3.8,
+    portion: '1 colher sobremesa (23g)',
+    portionSize: 23,
+    commonUse: 'Sabor tradicional brasileiro'
+  },
+
+  // PROTEÍNAS - OVOS
+  {
+    name: 'Ovo inteiro',
+    category: 'proteina',
+    mealTime: ['breakfast', 'lunch', 'dinner'],
+    calories: 74.5,
+    protein: 6.2,
+    carbs: 0.6,
+    fats: 5.0,
+    portion: '1 unidade (50g)',
+    portionSize: 50,
+    commonUse: 'Proteína completa e versátil'
+  },
+  {
+    name: 'Clara de Ovo',
+    category: 'proteina',
+    mealTime: ['breakfast', 'morning_snack'],
+    calories: 17,
+    protein: 3.5,
+    carbs: 0.3,
+    fats: 0.0,
+    portion: '1 unidade (34g)',
+    portionSize: 34,
+    commonUse: 'Proteína pura sem gordura'
+  },
+
+  // PROTEÍNAS - CARNES E AVES
+  {
+    name: 'Filé de Frango Grelhado',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 183.6,
+    protein: 29.6,
+    carbs: 0.3,
+    fats: 6.2,
+    portion: '1 bife médio (100g)',
+    portionSize: 100,
+    commonUse: 'Proteína magra principal'
+  },
+  {
+    name: 'Sobrecoxa de frango assada',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 154.5,
+    protein: 15.6,
+    carbs: 0.2,
+    fats: 9.6,
+    portion: '1 unidade média (65g)',
+    portionSize: 65,
+    commonUse: 'Mais saborosa que o peito'
+  },
+  {
+    name: 'Coxa de frango assada',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 129,
+    protein: 13.0,
+    carbs: 0.3,
+    fats: 8.0,
+    portion: '1 unidade média (55g)',
+    portionSize: 55,
+    commonUse: 'Opção econômica e saborosa'
+  },
+  {
+    name: 'Frango desfiado cozido',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner', 'afternoon_snack'],
+    calories: 29.4,
+    protein: 5.5,
+    carbs: 0.0,
+    fats: 0.6,
+    portion: '1 colher sopa (18g)',
+    portionSize: 18,
+    commonUse: 'Para sanduíches e saladas'
+  },
+  {
+    name: 'Patinho bife grelhado',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 219,
+    protein: 35.9,
+    carbs: 0.0,
+    fats: 7.3,
+    portion: '1 bife médio (100g)',
+    portionSize: 100,
+    commonUse: 'Carne magra e saborosa'
+  },
+  {
+    name: 'Patinho carne moída',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 73.2,
+    protein: 6.0,
+    carbs: 0.2,
+    fats: 5.2,
+    portion: '1 colher sopa (25g)',
+    portionSize: 25,
+    commonUse: 'Versátil para pratos variados'
+  },
+  {
+    name: 'Filé Mignon Grelhado',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 219.7,
+    protein: 32.8,
+    carbs: 0.0,
+    fats: 8.8,
+    portion: '1 bife médio (100g)',
+    portionSize: 100,
+    commonUse: 'Corte nobre e macio'
+  },
+  {
+    name: 'Músculo Cozido',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 85.4,
+    protein: 11.0,
+    carbs: 0.0,
+    fats: 4.2,
+    portion: '1 pedaço médio (35g)',
+    portionSize: 35,
+    commonUse: 'Rico em colágeno'
+  },
+  {
+    name: 'Peito de peru',
+    category: 'proteina',
+    mealTime: ['breakfast', 'afternoon_snack', 'dinner'],
+    calories: 16.8,
+    protein: 3.8,
+    carbs: 0.0,
+    fats: 0.1,
+    portion: '1 fatia (16g)',
+    portionSize: 16,
+    commonUse: 'Proteína magra para lanches'
+  },
+  {
+    name: 'Presunto',
+    category: 'proteina',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 33.9,
+    protein: 3.0,
+    carbs: 0.0,
+    fats: 2.2,
+    portion: '1 fatia (15g)',
+    portionSize: 15,
+    commonUse: 'Clássico para sanduíches'
+  },
+
+  // PROTEÍNAS - PEIXES
+  {
+    name: 'Peixe Tilápia Grelhada',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 122,
+    protein: 21.0,
+    carbs: 0.0,
+    fats: 4.2,
+    portion: '1 bife médio (120g)',
+    portionSize: 120,
+    commonUse: 'Peixe de água doce popular'
+  },
+  {
+    name: 'Salmão Grelhado',
+    category: 'proteina',
+    mealTime: ['lunch', 'dinner'],
+    calories: 242.7,
+    protein: 26.1,
+    carbs: 0.0,
+    fats: 14.5,
+    portion: '1 bife (100g)',
+    portionSize: 100,
+    commonUse: 'Rico em ômega 3'
+  },
+  {
+    name: 'Atum',
+    category: 'proteina',
+    mealTime: ['lunch', 'afternoon_snack'],
+    calories: 46.2,
+    protein: 10.3,
+    carbs: 0.6,
+    fats: 0.2,
+    portion: '1 colher sopa (40g)',
+    portionSize: 40,
+    commonUse: 'Prático para saladas'
+  },
+  {
+    name: 'Sardinha em óleo',
+    category: 'proteina',
+    mealTime: ['lunch', 'afternoon_snack'],
+    calories: 36,
+    protein: 4.3,
+    carbs: 0.3,
+    fats: 1.0,
+    portion: '1 colher sopa (20g)',
+    portionSize: 20,
+    commonUse: 'Rica em cálcio'
+  },
+
+  // CARBOIDRATOS - GRÃOS E CEREAIS
+  {
+    name: 'Feijão',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 52.4,
+    protein: 2.8,
+    carbs: 7.1,
+    fats: 1.3,
+    portion: '1 concha (86g)',
+    portionSize: 86,
+    commonUse: 'Base da alimentação brasileira'
+  },
+  {
+    name: 'Arroz Branco',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 105.9,
+    protein: 1.9,
+    carbs: 21.6,
+    fats: 1.0,
+    portion: '1 escumadeira média (85g)',
+    portionSize: 85,
+    commonUse: 'Acompanhamento clássico'
+  },
+  {
+    name: 'Arroz Integral',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 45.2,
+    protein: 0.8,
+    carbs: 8.6,
+    fats: 0.7,
+    portion: '1 escumadeira média (59g)',
+    portionSize: 59,
+    commonUse: 'Versão mais nutritiva'
   },
   {
     name: 'Aveia em flocos',
     category: 'carboidrato',
     mealTime: ['breakfast'],
-    calories: 68,
-    protein: 2.4,
-    carbs: 12,
-    fats: 1.4,
-    portion: '20g (2 colheres de sopa)',
-    commonUse: 'Vitaminas e mingaus'
+    calories: 57,
+    protein: 2.3,
+    carbs: 9.8,
+    fats: 1.3,
+    portion: '1 colher sopa (15g)',
+    portionSize: 15,
+    commonUse: 'Para vitaminas e mingaus'
   },
   {
-    name: 'Granola caseira',
+    name: 'Farelo de aveia',
     category: 'carboidrato',
     mealTime: ['breakfast'],
-    calories: 89,
-    protein: 2.8,
-    carbs: 14,
-    fats: 3.2,
-    portion: '20g (2 colheres de sopa)',
-    commonUse: 'Acompanha iogurtes'
+    calories: 34,
+    protein: 1.8,
+    carbs: 4.2,
+    fats: 1.1,
+    portion: '1 colher sopa (10g)',
+    portionSize: 10,
+    commonUse: 'Rico em fibras'
+  },
+
+  // CARBOIDRATOS - TUBÉRCULOS
+  {
+    name: 'Batata Inglesa',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 36.1,
+    protein: 0.8,
+    carbs: 8.3,
+    fats: 0.0,
+    portion: '1 unidade (70g)',
+    portionSize: 70,
+    commonUse: 'Versátil para acompanhamentos'
   },
   {
-    name: 'Banana prata',
+    name: 'Batata Doce',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'afternoon_snack'],
+    calories: 42,
+    protein: 0.6,
+    carbs: 9.7,
+    fats: 0.1,
+    portion: 'fatia pequena (40g)',
+    portionSize: 40,
+    commonUse: 'Carboidrato de baixo índice glicêmico'
+  },
+  {
+    name: 'Mandioca',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 125,
+    protein: 0.6,
+    carbs: 30.1,
+    fats: 0.3,
+    portion: '1 pedaço (100g)',
+    portionSize: 100,
+    commonUse: 'Tradicional da culinária brasileira'
+  },
+  {
+    name: 'Mandioquinha',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 38,
+    protein: 0.6,
+    carbs: 8.8,
+    fats: 0.0,
+    portion: '1 pedaço (50g)',
+    portionSize: 50,
+    commonUse: 'Sabor suave e nutritiva'
+  },
+
+  // CARBOIDRATOS - MASSAS E PÃES
+  {
+    name: 'Macarrão',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 284,
+    protein: 8.8,
+    carbs: 59.0,
+    fats: 1.4,
+    portion: 'escumadeira (80g)',
+    portionSize: 80,
+    commonUse: 'Base para diversos pratos'
+  },
+  {
+    name: 'Macarrão Integral',
+    category: 'carboidrato',
+    mealTime: ['lunch', 'dinner'],
+    calories: 271,
+    protein: 10.0,
+    carbs: 56.0,
+    fats: 0.8,
+    portion: 'escumadeira (80g)',
+    portionSize: 80,
+    commonUse: 'Versão mais nutritiva'
+  },
+  {
+    name: 'Pão Integral',
+    category: 'carboidrato',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 61,
+    protein: 3.4,
+    carbs: 9.0,
+    fats: 1.3,
+    portion: '1 fatia (25g)',
+    portionSize: 25,
+    commonUse: 'Rico em fibras'
+  },
+  {
+    name: 'Pão Francês',
+    category: 'carboidrato',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 150,
+    protein: 4.9,
+    carbs: 30.8,
+    fats: 1.1,
+    portion: '1 unidade (50g)',
+    portionSize: 50,
+    commonUse: 'Clássico do café da manhã'
+  },
+  {
+    name: 'Pão de Queijo',
+    category: 'carboidrato',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 94.3,
+    protein: 2.9,
+    carbs: 10.5,
+    fats: 4.5,
+    portion: '1 unidade (33g)',
+    portionSize: 33,
+    commonUse: 'Típico de Minas Gerais'
+  },
+  {
+    name: 'Goma de Tapioca',
+    category: 'carboidrato',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 43,
+    protein: 0.0,
+    carbs: 10.8,
+    fats: 0.1,
+    portion: '1 colher sopa (15g)',
+    portionSize: 15,
+    commonUse: 'Para tapioca regional'
+  },
+  {
+    name: 'Torrada integral',
+    category: 'carboidrato',
+    mealTime: ['breakfast', 'evening_snack'],
+    calories: 36.6,
+    protein: 1.3,
+    carbs: 7.3,
+    fats: 0.3,
+    portion: '1 unidade (10g)',
+    portionSize: 10,
+    commonUse: 'Lanche leve e crocante'
+  },
+
+  // FRUTAS
+  {
+    name: 'Morango',
     category: 'fruta',
     mealTime: ['breakfast', 'morning_snack', 'afternoon_snack'],
-    calories: 98,
-    protein: 1.3,
-    carbs: 26,
-    fats: 0.1,
-    portion: '86g (1 unidade média)',
-    commonUse: 'Vitaminas e lanches'
+    calories: 3.6,
+    protein: 0.0,
+    carbs: 0.8,
+    fats: 0.0,
+    portion: '1 unidade (12g)',
+    portionSize: 12,
+    commonUse: 'Rico em vitamina C'
   },
   {
-    name: 'Mamão papaya',
+    name: 'Melancia',
     category: 'fruta',
-    mealTime: ['breakfast'],
-    calories: 43,
-    protein: 0.5,
-    carbs: 11,
-    fats: 0.1,
-    portion: '100g (1 fatia média)',
-    commonUse: 'Digestivo matinal'
-  },
-  {
-    name: 'Café com leite',
-    category: 'bebida',
-    mealTime: ['breakfast'],
-    calories: 42,
-    protein: 2.1,
-    carbs: 4.8,
-    fats: 1.6,
-    portion: '100ml (1/2 xícara)',
-    commonUse: 'Bebida tradicional'
-  },
-  
-  // Lanche da Manhã - Variado
-  {
-    name: 'Iogurte natural desnatado',
-    category: 'proteina',
     mealTime: ['morning_snack', 'afternoon_snack'],
-    calories: 51,
-    protein: 4.3,
-    carbs: 6.6,
-    fats: 0.2,
-    portion: '100g (1 pote pequeno)',
-    commonUse: 'Lanches saudáveis'
+    calories: 32,
+    protein: 0.6,
+    carbs: 7.1,
+    fats: 0.4,
+    portion: '1 fatia (100g)',
+    portionSize: 100,
+    commonUse: 'Hidratante e refrescante'
   },
   {
-    name: 'Iogurte grego',
-    category: 'proteina',
-    mealTime: ['morning_snack'],
-    calories: 97,
-    protein: 9.0,
-    carbs: 3.6,
-    fats: 5.0,
-    portion: '100g (1 pote)',
-    commonUse: 'Rico em proteínas'
+    name: 'Melão',
+    category: 'fruta',
+    mealTime: ['morning_snack', 'afternoon_snack'],
+    calories: 22.5,
+    protein: 0.4,
+    carbs: 5.5,
+    fats: 0.0,
+    portion: '1 fatia média (90g)',
+    portionSize: 90,
+    commonUse: 'Doce e hidratante'
+  },
+  {
+    name: 'Maçã',
+    category: 'fruta',
+    mealTime: ['morning_snack', 'afternoon_snack', 'evening_snack'],
+    calories: 78,
+    protein: 0.3,
+    carbs: 20.7,
+    fats: 0.2,
+    portion: '1 unidade (150g)',
+    portionSize: 150,
+    commonUse: 'Rica em fibras'
+  },
+  {
+    name: 'Banana',
+    category: 'fruta',
+    mealTime: ['breakfast', 'morning_snack', 'afternoon_snack'],
+    calories: 69,
+    protein: 0.7,
+    carbs: 17.5,
+    fats: 0.3,
+    portion: '1 unidade (75g)',
+    portionSize: 75,
+    commonUse: 'Rica em potássio'
+  },
+  {
+    name: 'Mamão papaia',
+    category: 'fruta',
+    mealTime: ['breakfast', 'morning_snack'],
+    calories: 39,
+    protein: 0.6,
+    carbs: 9.8,
+    fats: 0.1,
+    portion: '1 fatia pequena (100g)',
+    portionSize: 100,
+    commonUse: 'Digestivo e nutritivo'
+  },
+  {
+    name: 'Mamão formosa',
+    category: 'fruta',
+    mealTime: ['breakfast', 'morning_snack'],
+    calories: 32,
+    protein: 0.5,
+    carbs: 8.3,
+    fats: 0.1,
+    portion: '1 fatia pequena (100g)',
+    portionSize: 100,
+    commonUse: 'Suave e digestivo'
+  },
+  {
+    name: 'Abacaxi',
+    category: 'fruta',
+    mealTime: ['morning_snack', 'afternoon_snack'],
+    calories: 36.7,
+    protein: 0.2,
+    carbs: 9.3,
+    fats: 0.3,
+    portion: '1 fatia média (75g)',
+    portionSize: 75,
+    commonUse: 'Rico em enzimas digestivas'
+  },
+  {
+    name: 'Laranja',
+    category: 'fruta',
+    mealTime: ['morning_snack', 'afternoon_snack'],
+    calories: 42.3,
+    protein: 0.8,
+    carbs: 10.6,
+    fats: 0.1,
+    portion: '1 unidade (90g)',
+    portionSize: 90,
+    commonUse: 'Rica em vitamina C'
+  },
+  {
+    name: 'Abacate',
+    category: 'fruta',
+    mealTime: ['afternoon_snack'],
+    calories: 32.2,
+    protein: 0.4,
+    carbs: 1.4,
+    fats: 3.0,
+    portion: '1 colher sopa amassado (20g)',
+    portionSize: 20,
+    commonUse: 'Rico em gorduras boas'
+  },
+
+  // GORDURAS - ÓLEOS E OLEAGINOSAS
+  {
+    name: 'Azeite de oliva extravirgem',
+    category: 'gordura',
+    mealTime: ['lunch', 'dinner'],
+    calories: 18,
+    protein: 0.0,
+    carbs: 0.0,
+    fats: 2.0,
+    portion: '1 colher chá rasa (2g)',
+    portionSize: 2,
+    commonUse: 'Para temperos e finalização'
+  },
+  {
+    name: 'Castanha de caju',
+    category: 'gordura',
+    mealTime: ['morning_snack', 'afternoon_snack'],
+    calories: 15,
+    protein: 0.5,
+    carbs: 0.8,
+    fats: 1.1,
+    portion: '1 unidade (2,5g)',
+    portionSize: 2.5,
+    commonUse: 'Lanche nutritivo'
   },
   {
     name: 'Castanha do Pará',
     category: 'gordura',
     mealTime: ['morning_snack', 'afternoon_snack'],
-    calories: 187,
-    protein: 4.1,
-    carbs: 3.6,
-    fats: 18.8,
-    portion: '30g (3 unidades)',
-    commonUse: 'Fonte de selênio'
+    calories: 27,
+    protein: 0.6,
+    carbs: 0.6,
+    fats: 0.5,
+    portion: '1 unidade (4g)',
+    portionSize: 4,
+    commonUse: 'Rica em selênio'
   },
   {
-    name: 'Amêndoas',
+    name: 'Noz',
     category: 'gordura',
     mealTime: ['morning_snack', 'afternoon_snack'],
-    calories: 164,
-    protein: 6.0,
-    carbs: 6.1,
-    fats: 14.2,
-    portion: '30g (23 unidades)',
-    commonUse: 'Lanche nutritivo'
+    calories: 32,
+    protein: 0.7,
+    carbs: 0.9,
+    fats: 3.0,
+    portion: '1 unidade (5g)',
+    portionSize: 5,
+    commonUse: 'Rica em ômega 3'
   },
   {
-    name: 'Maçã gala',
-    category: 'fruta',
-    mealTime: ['morning_snack', 'afternoon_snack', 'evening_snack'],
-    calories: 63,
-    protein: 0.3,
-    carbs: 17,
-    fats: 0.2,
-    portion: '130g (1 unidade)',
-    commonUse: 'Fruta prática'
+    name: 'Amendoim',
+    category: 'gordura',
+    mealTime: ['afternoon_snack'],
+    calories: 112,
+    protein: 4.8,
+    carbs: 3.9,
+    fats: 8.8,
+    portion: '1 colher sopa cheia (19g)',
+    portionSize: 19,
+    commonUse: 'Rico em proteína vegetal'
   },
   {
-    name: 'Pera williams',
-    category: 'fruta',
+    name: 'Amêndoa',
+    category: 'gordura',
     mealTime: ['morning_snack', 'afternoon_snack'],
-    calories: 57,
-    protein: 0.4,
-    carbs: 15,
-    fats: 0.1,
-    portion: '100g (1 unidade)',
+    calories: 6,
+    protein: 0.2,
+    carbs: 0.2,
+    fats: 0.5,
+    portion: '1 unidade (1g)',
+    portionSize: 1,
+    commonUse: 'Rica em vitamina E'
+  },
+  {
+    name: 'Pasta de amendoim',
+    category: 'gordura',
+    mealTime: ['breakfast', 'afternoon_snack'],
+    calories: 94,
+    protein: 3.8,
+    carbs: 3.6,
+    fats: 7.9,
+    portion: '1 colher sopa (16g)',
+    portionSize: 16,
+    commonUse: 'Para pães e vitaminas'
+  },
+
+  // VEGETAIS E LEGUMES
+  {
+    name: 'Shitake',
+    category: 'vegetal',
+    mealTime: ['lunch', 'dinner'],
+    calories: 34.5,
+    protein: 3.1,
+    carbs: 4.4,
+    fats: 0.5,
+    portion: '100g',
+    portionSize: 100,
+    commonUse: 'Cogumelo saboroso e nutritivo'
+  },
+  {
+    name: 'Shimeje',
+    category: 'vegetal',
+    mealTime: ['lunch', 'dinner'],
+    calories: 16.8,
+    protein: 2.5,
+    carbs: 1.7,
+    fats: 0.0,
+    portion: '100g',
+    portionSize: 100,
+    commonUse: 'Cogumelo delicado'
+  },
+  {
+    name: 'Ervilha',
+    category: 'vegetal',
+    mealTime: ['lunch', 'dinner'],
+    calories: 10.5,
+    protein: 0.7,
+    carbs: 1.8,
+    fats: 0.0,
+    portion: '1 colher sopa (13g)',
+    portionSize: 13,
     commonUse: 'Rica em fibras'
   },
-  
-  // Almoço - Completo e variado
   {
-    name: 'Arroz branco cozido',
-    category: 'carboidrato',
-    mealTime: ['lunch', 'dinner'],
-    calories: 128,
-    protein: 2.6,
-    carbs: 28,
-    fats: 0.2,
-    portion: '100g (4 colheres de sopa)',
-    commonUse: 'Base da refeição brasileira'
-  },
-  {
-    name: 'Arroz integral cozido',
-    category: 'carboidrato',
-    mealTime: ['lunch', 'dinner'],
-    calories: 111,
-    protein: 2.3,
-    carbs: 23,
-    fats: 0.9,
-    portion: '100g (4 colheres de sopa)',
-    commonUse: 'Versão mais nutritiva'
-  },
-  {
-    name: 'Feijão carioca cozido',
+    name: 'Soja',
     category: 'proteina',
     mealTime: ['lunch', 'dinner'],
-    calories: 76,
-    protein: 4.8,
-    carbs: 13.6,
-    fats: 0.5,
-    portion: '86g (1 concha)',
-    commonUse: 'Dupla clássica com arroz'
+    calories: 41.5,
+    protein: 3.9,
+    carbs: 2.3,
+    fats: 2.1,
+    portion: '1 colher sopa (24g)',
+    portionSize: 24,
+    commonUse: 'Proteína vegetal completa'
   },
   {
-    name: 'Feijão preto cozido',
+    name: 'Grão de bico',
     category: 'proteina',
     mealTime: ['lunch', 'dinner'],
-    calories: 77,
-    protein: 4.5,
-    carbs: 14,
-    fats: 0.5,
-    portion: '86g (1 concha)',
-    commonUse: 'Típico do Rio de Janeiro'
-  },
-  {
-    name: 'Peito de frango grelhado',
-    category: 'proteina',
-    mealTime: ['lunch', 'dinner'],
-    calories: 165,
-    protein: 31,
-    carbs: 0,
-    fats: 3.6,
-    portion: '100g (1 filé)',
-    commonUse: 'Proteína magra principal'
-  },
-  {
-    name: 'Coxão mole grelhado',
-    category: 'proteina',
-    mealTime: ['lunch', 'dinner'],
-    calories: 171,
-    protein: 30,
-    carbs: 0,
-    fats: 5.1,
-    portion: '100g (1 bife)',
-    commonUse: 'Carne bovina magra'
-  },
-  {
-    name: 'Peixe tilápia grelhado',
-    category: 'proteina',
-    mealTime: ['lunch', 'dinner'],
-    calories: 129,
-    protein: 26,
-    carbs: 0,
-    fats: 2.7,
-    portion: '100g (1 filé)',
-    commonUse: 'Peixe de água doce'
-  },
-  {
-    name: 'Salmão grelhado',
-    category: 'proteina',
-    mealTime: ['lunch', 'dinner'],
-    calories: 208,
-    protein: 25,
-    carbs: 0,
-    fats: 12,
-    portion: '100g (1 filé)',
-    commonUse: 'Rico em ômega 3'
-  },
-  {
-    name: 'Alface americana',
-    category: 'vegetal',
-    mealTime: ['lunch', 'dinner'],
-    calories: 11,
-    protein: 1.4,
-    carbs: 1.7,
-    fats: 0.2,
-    portion: '80g (2 xícaras)',
-    commonUse: 'Base de saladas'
-  },
-  {
-    name: 'Tomate salada',
-    category: 'vegetal',
-    mealTime: ['lunch', 'dinner'],
-    calories: 15,
-    protein: 1.1,
-    carbs: 2.9,
-    fats: 0.2,
-    portion: '80g (1 tomate médio)',
-    commonUse: 'Complemento de saladas'
-  },
-  {
-    name: 'Cenoura refogada',
-    category: 'vegetal',
-    mealTime: ['lunch', 'dinner'],
-    calories: 35,
-    protein: 0.9,
-    carbs: 8.2,
-    fats: 0.2,
-    portion: '100g (1 porção)',
-    commonUse: 'Legume doce e nutritivo'
-  },
-  {
-    name: 'Brócolis refogado',
-    category: 'vegetal',
-    mealTime: ['lunch', 'dinner'],
-    calories: 25,
-    protein: 3.0,
-    carbs: 5.0,
-    fats: 0.4,
-    portion: '100g (3 floretes)',
-    commonUse: 'Rico em vitaminas'
-  },
-  {
-    name: 'Batata doce cozida',
-    category: 'carboidrato',
-    mealTime: ['lunch', 'afternoon_snack'],
-    calories: 86,
-    protein: 1.6,
-    carbs: 20,
-    fats: 0.1,
-    portion: '100g (1 unidade pequena)',
-    commonUse: 'Carboidrato complexo'
-  },
-  
-  // Lanche da Tarde - Leves e nutritivos
-  {
-    name: 'Biscoito integral',
-    category: 'carboidrato',
-    mealTime: ['afternoon_snack'],
-    calories: 45,
-    protein: 1.2,
-    carbs: 7.8,
-    fats: 1.2,
-    portion: '10g (2 unidades)',
-    commonUse: 'Lanche prático'
-  },
-  {
-    name: 'Vitamina de frutas',
-    category: 'bebida',
-    mealTime: ['afternoon_snack'],
-    calories: 89,
-    protein: 3.2,
-    carbs: 18,
-    fats: 0.8,
-    portion: '200ml (1 copo)',
-    commonUse: 'Refrescante e nutritivo'
-  },
-  {
-    name: 'Sanduíche natural',
-    category: 'misto',
-    mealTime: ['afternoon_snack'],
-    calories: 156,
-    protein: 8.2,
-    carbs: 18,
-    fats: 6.1,
-    portion: '80g (1/2 sanduíche)',
-    commonUse: 'Lanche equilibrado'
-  },
-  {
-    name: 'Água de coco',
-    category: 'bebida',
-    mealTime: ['morning_snack', 'afternoon_snack'],
-    calories: 19,
-    protein: 0.7,
-    carbs: 3.7,
-    fats: 0.2,
-    portion: '100ml (1/2 copo)',
-    commonUse: 'Hidratante natural'
-  },
-  
-  // Jantar - Leve e digestivo
-  {
-    name: 'Sopa de legumes',
-    category: 'vegetal',
-    mealTime: ['dinner'],
-    calories: 65,
+    calories: 39.3,
     protein: 2.1,
-    carbs: 12,
-    fats: 1.2,
-    portion: '250ml (1 prato)',
-    commonUse: 'Jantar leve e nutritivo'
+    carbs: 6.5,
+    fats: 0.6,
+    portion: '1 colher sopa (24g)',
+    portionSize: 24,
+    commonUse: 'Rico em fibras e proteína'
   },
+
+  // SUCOS E BEBIDAS
   {
-    name: 'Salada completa',
-    category: 'vegetal',
-    mealTime: ['dinner'],
-    calories: 78,
-    protein: 3.2,
-    carbs: 12,
-    fats: 2.8,
-    portion: '150g (1 prato)',
-    commonUse: 'Mix de vegetais frescos'
-  },
-  {
-    name: 'Omelete simples',
-    category: 'proteina',
-    mealTime: ['dinner'],
-    calories: 154,
-    protein: 11,
-    carbs: 1.1,
-    fats: 11.5,
-    portion: '100g (2 ovos)',
-    commonUse: 'Proteína leve para jantar'
-  },
-  {
-    name: 'Peito de peru',
-    category: 'proteina',
-    mealTime: ['dinner'],
-    calories: 104,
-    protein: 23,
-    carbs: 0,
-    fats: 1.2,
-    portion: '100g (3 fatias)',
-    commonUse: 'Proteína magra'
-  },
-  {
-    name: 'Quinoa cozida',
-    category: 'carboidrato',
-    mealTime: ['lunch', 'dinner'],
-    calories: 120,
-    protein: 4.4,
-    carbs: 22,
-    fats: 1.9,
-    portion: '100g (4 colheres de sopa)',
-    commonUse: 'Pseudocereal nutritivo'
-  },
-  
-  // Ceia - Leve e relaxante
-  {
-    name: 'Leite desnatado morno',
-    category: 'proteina',
-    mealTime: ['evening_snack'],
-    calories: 35,
-    protein: 3.4,
-    carbs: 4.9,
-    fats: 0.1,
-    portion: '100ml (1/2 copo)',
-    commonUse: 'Relaxante para dormir'
-  },
-  {
-    name: 'Chá de camomila',
+    name: 'Suco de laranja',
     category: 'bebida',
-    mealTime: ['evening_snack'],
-    calories: 2,
-    protein: 0,
-    carbs: 0.4,
-    fats: 0,
-    portion: '200ml (1 xícara)',
-    commonUse: 'Calmante natural'
+    mealTime: ['breakfast', 'morning_snack'],
+    calories: 83.6,
+    protein: 1.1,
+    carbs: 19.6,
+    fats: 0.2,
+    portion: '1 copo médio (200ml)',
+    portionSize: 200,
+    commonUse: 'Rico em vitamina C'
   },
   {
-    name: 'Torrada integral',
-    category: 'carboidrato',
-    mealTime: ['evening_snack'],
-    calories: 62,
-    protein: 2.4,
-    carbs: 12,
-    fats: 0.9,
-    portion: '20g (1 fatia)',
-    commonUse: 'Lanche leve noturno'
-  },
-  {
-    name: 'Geleia diet',
-    category: 'doce',
-    mealTime: ['evening_snack'],
-    calories: 8,
-    protein: 0.1,
-    carbs: 2.1,
-    fats: 0,
-    portion: '10g (1 colher de chá)',
-    commonUse: 'Complemento doce sem açúcar'
+    name: 'Suco de uva integral',
+    category: 'bebida',
+    mealTime: ['afternoon_snack'],
+    calories: 123.2,
+    protein: 0.6,
+    carbs: 30.2,
+    fats: 0.0,
+    portion: '1 copo médio (200ml)',
+    portionSize: 200,
+    commonUse: 'Rico em antioxidantes'
   }
 ];
 
-// Função para obter sugestões específicas por refeição com maior variedade
+// Função para obter sugestões específicas por refeição sem repetição
 export const getMealSuggestions = (mealType: string): string[] => {
   const foodsForMeal = brazilianFoodDatabase.filter(food => food.mealTime.includes(mealType));
   
-  // Embaralhar a lista para dar variedade
-  const shuffled = foodsForMeal.sort(() => 0.5 - Math.random());
-  
-  return shuffled
-    .map(food => `${food.name} (${food.portion})`)
-    .slice(0, 8); // Limitar a 8 sugestões
+  // Criar categorias balanceadas para cada refeição
+  const categorizedSuggestions: Record<string, string[]> = {
+    breakfast: [
+      'Pão Francês com Requeijão Light',
+      'Ovo inteiro mexido com torrada',
+      'Mamão papaia com granola',
+      'Iogurte Integral com morango',
+      'Tapioca com queijo branco',
+      'Aveia com banana amassada',
+      'Leite Integral com café',
+      'Pão integral com pasta de amendoim'
+    ],
+    morning_snack: [
+      'Banana com castanhas',
+      'Iogurte Desnatado natural',
+      'Maçã com amêndoas',
+      'Mamão formosa pequeno',
+      'Mix de oleaginosas',
+      'Morango com iogurte',
+      'Melão em fatias',
+      'Água de coco natural'
+    ],
+    lunch: [
+      'Arroz Integral com feijão',
+      'Filé de Frango Grelhado',
+      'Batata doce assada',
+      'Tilápia grelhada com legumes',
+      'Macarrão integral com molho',
+      'Patinho grelhado com batata',
+      'Salmão com quinoa',
+      'Mandioca com carne moída'
+    ],
+    afternoon_snack: [
+      'Pão integral com peito de peru',
+      'Batata doce pequena assada',
+      'Queijo branco com biscoito',
+      'Laranja com castanha de caju',
+      'Abacaxi em fatias',
+      'Pão de queijo pequeno',
+      'Uva com amendoim',
+      'Suco natural de frutas'
+    ],
+    dinner: [
+      'Omelete com legumes',
+      'Sopa de legumes variados',
+      'Peito de peru com salada',
+      'Tilápia com batata inglesa',
+      'Frango desfiado com arroz',
+      'Salmão com brócolis',
+      'Músculo cozido com mandioquinha',
+      'Ovos com torrada integral'
+    ],
+    evening_snack: [
+      'Leite morno com canela',
+      'Torrada integral light',
+      'Maçã pequena assada',
+      'Iogurte desnatado',
+      'Chá de ervas relaxante',
+      'Biscoito integral simples',
+      'Clara de ovo batida',
+      'Agua com limão'
+    ]
+  };
+
+  return categorizedSuggestions[mealType] || [];
 };
 
 // Função para buscar alimentos por categoria
@@ -536,9 +890,27 @@ export const calculateNutrition = (food: BrazilianFood, multiplier: number = 1) 
   };
 };
 
-// Função para obter alimentos aleatórios para evitar repetição
-export const getRandomFoodsForMeal = (mealType: string, count: number = 3): BrazilianFood[] => {
+// Função para obter alimentos balanceados para cada refeição
+export const getBalancedFoodsForMeal = (mealType: string): BrazilianFood[] => {
   const availableFoods = brazilianFoodDatabase.filter(food => food.mealTime.includes(mealType));
-  const shuffled = availableFoods.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  
+  // Distribuir por categorias para variedade
+  const categoryCounts: Record<string, number> = {};
+  const selectedFoods: BrazilianFood[] = [];
+  
+  // Limite por categoria para evitar repetição
+  const maxPerCategory = 2;
+  
+  for (const food of availableFoods) {
+    if (!categoryCounts[food.category]) {
+      categoryCounts[food.category] = 0;
+    }
+    
+    if (categoryCounts[food.category] < maxPerCategory) {
+      selectedFoods.push(food);
+      categoryCounts[food.category]++;
+    }
+  }
+  
+  return selectedFoods.slice(0, 6); // Limitar a 6 para não sobrecarregar
 };
