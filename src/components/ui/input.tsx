@@ -18,6 +18,12 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           // Garantir contraste no tema claro
           ":root:not(.dark) & { color: rgb(17 24 39); }",
           ":root:not(.dark) &::placeholder { color: rgb(107 114 128); opacity: 1; }",
+          // Efeitos de hover e focus modernos
+          "magnetic-hover ripple-effect transition-all duration-300",
+          "hover:border-nutri-green hover:shadow-md hover:bg-gradient-to-r hover:from-transparent hover:to-nutri-green/5 hover:scale-[1.01]",
+          "dark:hover:border-dark-accent-green dark:hover:to-dark-accent-green/5",
+          "focus:border-nutri-blue focus:bg-gradient-to-r focus:from-nutri-blue/5 focus:to-transparent focus:scale-[1.02]",
+          "dark:focus:border-nutri-blue dark:focus:from-nutri-blue/5",
           className
         )}
         ref={ref}
@@ -29,4 +35,3 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 Input.displayName = "Input"
 
 export { Input }
-

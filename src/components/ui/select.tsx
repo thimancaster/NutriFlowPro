@@ -24,13 +24,17 @@ const SelectTrigger = React.forwardRef<
       // Garantir contraste no tema claro
       ":root:not(.dark) & { color: rgb(17 24 39); }",
       ":root:not(.dark) &[data-placeholder] { color: rgb(107 114 128); }",
+      // Efeitos de hover modernos
+      "magnetic-hover ripple-effect transition-all duration-300",
+      "hover:border-nutri-green hover:shadow-md hover:bg-gradient-to-r hover:from-transparent hover:to-nutri-green/5",
+      "dark:hover:border-dark-accent-green dark:hover:to-dark-accent-green/5",
       className
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-hover:rotate-180" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ))
@@ -83,8 +87,10 @@ const SelectContent = React.forwardRef<
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         // Garantir fundo sólido e contraste adequado
-        "bg-white dark:bg-popover",
+        "bg-white dark:bg-popover backdrop-blur-md",
         ":root:not(.dark) & { background-color: white; color: rgb(17 24 39); border-color: rgb(229 231 235); }",
+        // Efeitos modernos para o dropdown
+        "animate-in slide-in-from-top-2 duration-300",
         className
       )}
       position={position}
@@ -134,17 +140,26 @@ const SelectItem = React.forwardRef<
       // Garantir contraste no tema claro
       ":root:not(.dark) & { color: rgb(17 24 39); }",
       ":root:not(.dark) &:focus { background-color: rgb(243 244 246); }",
+      // Efeitos de hover modernos e inovadores
+      "side-expand magnetic-hover ripple-effect transition-all duration-300 ease-out",
+      "hover:bg-gradient-to-r hover:from-nutri-green/10 hover:to-transparent hover:text-nutri-green hover:translate-x-1 hover:shadow-sm",
+      "dark:hover:from-dark-accent-green/10 dark:hover:text-dark-accent-green",
+      "focus:bg-gradient-to-r focus:from-nutri-blue/10 focus:to-transparent focus:text-nutri-blue focus:scale-[1.02]",
+      "dark:focus:from-nutri-blue/10 dark:focus:text-nutri-blue",
+      "active:scale-[0.98] active:bg-nutri-green/20",
       className
     )}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check className="h-4 w-4 animate-in zoom-in-50 duration-200" />
       </SelectPrimitive.ItemIndicator>
     </span>
 
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText className="transition-all duration-200">
+      {children}
+    </SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ))
 SelectItem.displayName = SelectPrimitive.Item.displayName
@@ -173,4 +188,3 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
-

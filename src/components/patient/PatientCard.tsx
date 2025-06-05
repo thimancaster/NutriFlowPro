@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Patient } from '@/types/patient';
-import { Card, CardContent } from '@/components/ui';
+import { ModernCard, ModernCardContent } from '@/components/ui/modern-card';
 import { Badge } from '@/components/ui';
 import { formatDate } from '@/utils/dateUtils';
 import { calculateAge, calculateBMI } from '@/utils/patient';
@@ -24,10 +24,10 @@ const PatientCard: React.FC<PatientCardProps> = ({
   // Status indicator logic
   const getStatusIndicator = () => {
     if (patient.status === 'archived') {
-      return <Badge variant="outline">Arquivado</Badge>;
+      return <Badge variant="outline" className="magnetic-hover">Arquivado</Badge>;
     }
     
-    return <Badge variant="success">Ativo</Badge>;
+    return <Badge variant="success" className="magnetic-hover">Ativo</Badge>;
   };
   
   // Calculate BMI if there's enough data
@@ -39,12 +39,12 @@ const PatientCard: React.FC<PatientCardProps> = ({
   if (variant === 'compact') {
     return (
       <div 
-        className={`p-3 border-b hover:bg-gray-50 cursor-pointer flex items-center justify-between ${className}`}
+        className={`p-3 border-b hover:bg-gray-50 dark:hover:bg-dark-bg-elevated/60 cursor-pointer flex items-center justify-between transition-all duration-300 side-expand magnetic-hover hover:translate-x-1 ${className}`}
         onClick={onClick}
       >
         <div>
-          <h3 className="font-medium">{patient.name}</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="font-medium text-glow-hover transition-all duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-dark-text-muted transition-colors duration-300">
             {patient.email || patient.phone || 'Sem contato'}
           </p>
         </div>
@@ -56,24 +56,24 @@ const PatientCard: React.FC<PatientCardProps> = ({
   // Preview variant for quick view
   if (variant === 'preview') {
     return (
-      <Card className={`w-72 shadow-lg ${className}`}>
-        <CardContent className="p-4">
+      <ModernCard variant="magnetic" className={`w-72 shadow-lg ${className}`}>
+        <ModernCardContent className="p-4">
           <div className="flex justify-between items-start mb-3">
-            <h3 className="font-medium">{patient.name}</h3>
+            <h3 className="font-medium text-glow-hover">{patient.name}</h3>
             {getStatusIndicator()}
           </div>
           
           {patient.measurements && (
-            <div className="mb-2">
-              <p className="text-sm">
-                <span className="text-gray-500">Peso:</span> {patient.measurements.weight} kg
+            <div className="mb-2 space-y-1">
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
+                <span className="text-gray-500 dark:text-dark-text-muted">Peso:</span> {patient.measurements.weight} kg
               </p>
-              <p className="text-sm">
-                <span className="text-gray-500">Altura:</span> {patient.measurements.height} cm
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
+                <span className="text-gray-500 dark:text-dark-text-muted">Altura:</span> {patient.measurements.height} cm
               </p>
               {bmi && (
-                <p className="text-sm">
-                  <span className="text-gray-500">IMC:</span> {bmi}
+                <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
+                  <span className="text-gray-500 dark:text-dark-text-muted">IMC:</span> {bmi}
                 </p>
               )}
             </div>
@@ -81,31 +81,36 @@ const PatientCard: React.FC<PatientCardProps> = ({
           
           {patient.goals && (
             <div className="mb-2">
-              <p className="text-sm">
-                <span className="text-gray-500">Objetivo:</span> {patient.goals.objective || 'Não definido'}
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
+                <span className="text-gray-500 dark:text-dark-text-muted">Objetivo:</span> {patient.goals.objective || 'Não definido'}
               </p>
             </div>
           )}
           
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-dark-text-muted transition-colors duration-300">
             Última consulta: {patient.last_appointment ? formatDate(patient.last_appointment) : 'Nenhuma'}
           </div>
-        </CardContent>
-      </Card>
+        </ModernCardContent>
+      </ModernCard>
     );
   }
   
   // Default full variant
   return (
-    <Card className={`${onClick ? 'cursor-pointer' : ''} ${className}`} onClick={onClick}>
-      <CardContent className="p-4">
+    <ModernCard 
+      variant="hover-lift" 
+      interactive={!!onClick}
+      className={className} 
+      onClick={onClick}
+    >
+      <ModernCardContent className="p-4">
         <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-xl font-semibold">{patient.name}</h2>
-            <p className="text-gray-500">{patient.email || 'Sem email'}</p>
-            <p className="text-gray-500">{patient.phone || 'Sem telefone'}</p>
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold text-glow-hover">{patient.name}</h2>
+            <p className="text-gray-500 dark:text-dark-text-muted transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.email || 'Sem email'}</p>
+            <p className="text-gray-500 dark:text-dark-text-muted transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.phone || 'Sem telefone'}</p>
             {patient.birth_date && (
-              <p className="text-gray-500">{calculateAge(patient.birth_date)} anos</p>
+              <p className="text-gray-500 dark:text-dark-text-muted transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{calculateAge(patient.birth_date)} anos</p>
             )}
           </div>
           {getStatusIndicator()}
@@ -113,21 +118,21 @@ const PatientCard: React.FC<PatientCardProps> = ({
         
         <div className="grid grid-cols-2 gap-4">
           {patient.measurements && (
-            <div>
-              <h3 className="text-sm font-medium mb-1">Medidas</h3>
-              <p className="text-sm">Peso: {patient.measurements.weight} kg</p>
-              <p className="text-sm">Altura: {patient.measurements.height} cm</p>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium mb-1 text-glow-hover">Medidas</h3>
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">Peso: {patient.measurements.weight} kg</p>
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">Altura: {patient.measurements.height} cm</p>
               {bmi && (
-                <p className="text-sm">IMC: {bmi}</p>
+                <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">IMC: {bmi}</p>
               )}
             </div>
           )}
           
           {patient.goals && (
-            <div>
-              <h3 className="text-sm font-medium mb-1">Objetivos</h3>
-              <p className="text-sm">{patient.goals.objective || 'Não definido'}</p>
-              <p className="text-sm">{patient.goals.profile || ''}</p>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium mb-1 text-glow-hover">Objetivos</h3>
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.goals.objective || 'Não definido'}</p>
+              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.goals.profile || ''}</p>
             </div>
           )}
         </div>
@@ -137,8 +142,8 @@ const PatientCard: React.FC<PatientCardProps> = ({
             {/* Action buttons will be added here */}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </ModernCardContent>
+    </ModernCard>
   );
 };
 
