@@ -1,6 +1,6 @@
-
 /* Componentes de overlay e modais */
 @layer components {
+
   /* Dropdown com backdrop blur */
   .dropdown-content {
     @apply bg-popover border border-border shadow-xl backdrop-blur-md z-50;
