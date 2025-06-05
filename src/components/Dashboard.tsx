@@ -14,9 +14,9 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Loading fallback com design refinado
 const LoadingFallback = () => (
-  <div className="w-full p-6 bg-card rounded-xl border dark:bg-dark-bg-card dark:border-dark-border-primary shadow-sm dark:shadow-dark-md backdrop-blur-sm">
-    <Skeleton className="h-6 w-1/3 mb-4 dark:bg-dark-bg-surface" />
-    <Skeleton className="h-32 w-full dark:bg-dark-bg-surface" />
+  <div className="w-full p-6 bg-card rounded-xl border shadow-sm backdrop-blur-sm dark:bg-dark-bg-card dark:border-dark-border-primary dark:shadow-dark-md">
+    <Skeleton className="h-6 w-1/3 mb-4 bg-gray-200 dark:bg-dark-bg-surface" />
+    <Skeleton className="h-32 w-full bg-gray-200 dark:bg-dark-bg-surface" />
   </div>
 );
 
@@ -67,7 +67,7 @@ const Dashboard = () => {
   const activePlans = dashboardData?.activePlans || 0;
   
   return (
-    <div className="min-h-screen dark-gradient-bg">
+    <div className="min-h-screen bg-background dark:bg-dark-bg-primary">
       <motion.div 
         className="space-y-8"
         variants={containerVariants}
@@ -131,10 +131,10 @@ const Dashboard = () => {
         </motion.div>
       </motion.div>
       
-      {/* Efeito de gradiente sutil no fundo */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 dark:bg-dark-accent-green/5 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 dark:bg-nutri-blue/5 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
+      {/* Efeito de gradiente sutil no fundo - só no modo escuro */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden dark:block hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-dark-accent-green/5 rounded-full blur-3xl animate-pulse-soft" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-nutri-blue/5 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
       </div>
     </div>
   );

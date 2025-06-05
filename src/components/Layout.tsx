@@ -61,15 +61,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <div className="flex flex-col min-h-screen dark-bg">
+        <div className="flex flex-col min-h-screen bg-background dark:bg-dark-bg-primary">
           <TourGuide />
           
           {/* Header aprimorado com glass effect */}
-          <header className="border-b dark-border bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80 sticky top-0 z-50">
+          <header className="border-b border-border bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80 dark:border-dark-border-primary sticky top-0 z-50">
             <div className="container mx-auto px-4 flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link to="/dashboard" className="flex items-center nutri-brand group">
-                  <span className="text-nutri-green nutri-text transition-colors duration-200 group-hover:text-nutri-green-light">Nutri</span>
+                  <span className="text-nutri-green nutri-text transition-colors duration-200 group-hover:text-nutri-green-light dark:text-dark-accent-green">Nutri</span>
                   <span className="text-nutri-blue flow-text transition-colors duration-200 group-hover:text-nutri-blue-light">Flow</span>
                   <span className="text-muted-foreground pro-text ml-1 dark:text-dark-text-muted">Pro</span>
                 </Link>
@@ -85,8 +85,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       className={cn(
                         "text-sm font-medium transition-all duration-200 hover:text-primary px-3 py-2 rounded-md relative overflow-hidden",
                         isActive(item.href, item.exact)
-                          ? "text-primary bg-primary/10 dark:bg-dark-accent-green/10 dark:text-dark-accent-green shadow-sm"
-                          : "text-muted-foreground dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-bg-elevated/60",
+                          ? "text-primary bg-primary/10 shadow-sm dark:bg-dark-accent-green/10 dark:text-dark-accent-green"
+                          : "text-muted-foreground hover:bg-gray-100 dark:text-dark-text-muted dark:hover:bg-dark-bg-elevated/60",
                         item.className
                       )}
                     >
@@ -102,7 +102,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full hover-scale">
                         <Avatar className="h-8 w-8 avatar-enhanced">
                           <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.email || ''} />
-                          <AvatarFallback className="dark:bg-dark-bg-elevated dark:text-dark-text-primary bg-gradient-to-br from-nutri-green/20 to-nutri-blue/20">
+                          <AvatarFallback className="bg-gradient-to-br from-nutri-green/20 to-nutri-blue/20 dark:bg-dark-bg-elevated dark:text-dark-text-primary">
                             {user.email?.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -111,7 +111,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <DropdownMenuContent className="w-56 dropdown-content glass-effect" align="end" forceMount>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none dark:text-dark-text-primary">
+                          <p className="text-sm font-medium leading-none text-foreground dark:text-dark-text-primary">
                             {user.user_metadata?.name || user.email}
                           </p>
                           <p className="text-xs leading-none text-muted-foreground dark:text-dark-text-muted">
@@ -119,17 +119,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                           </p>
                         </div>
                       </DropdownMenuLabel>
-                      <DropdownMenuSeparator className="dark:bg-dark-border-primary" />
+                      <DropdownMenuSeparator className="border-border dark:border-dark-border-primary" />
                       <DropdownMenuItem asChild>
-                        <Link to="/profile" className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200">
+                        <Link to="/profile" className="cursor-pointer text-foreground hover:bg-accent dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200">
                           <User className="mr-2 h-4 w-4" />
                           <span>Perfil</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="dark:bg-dark-border-primary" />
+                      <DropdownMenuSeparator className="border-border dark:border-dark-border-primary" />
                       <DropdownMenuItem 
                         onClick={handleSignOut} 
-                        className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200"
+                        className="cursor-pointer text-foreground hover:bg-accent dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sair</span>
@@ -142,7 +142,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-all duration-200 hover-scale"
+                  className="md:hidden text-foreground hover:bg-accent dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-all duration-200 hover-scale"
                   onClick={toggleMobileMenu}
                 >
                   {mobileMenuOpen ? (
@@ -159,7 +159,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             
             {/* Mobile Navigation aprimorada */}
             {mobileMenuOpen && (
-              <div className="md:hidden py-4 px-4 border-t dark-border bg-background/95 backdrop-blur-md dark:bg-dark-bg-secondary/95">
+              <div className="md:hidden py-4 px-4 border-t border-border bg-background/95 backdrop-blur-md dark:bg-dark-bg-secondary/95 dark:border-dark-border-primary">
                 <nav className="flex flex-col space-y-2">
                   {navigation.map((item) => (
                     <Link
@@ -169,7 +169,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         "text-sm font-medium transition-all duration-200 hover:text-primary p-3 rounded-md",
                         isActive(item.href, item.exact)
                           ? "bg-primary/10 text-primary dark:bg-dark-accent-green/10 dark:text-dark-accent-green"
-                          : "text-muted-foreground dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-bg-elevated/60",
+                          : "text-muted-foreground hover:bg-gray-100 dark:text-dark-text-muted dark:hover:bg-dark-bg-elevated/60",
                         item.className
                       )}
                       onClick={() => setMobileMenuOpen(false)}
@@ -183,7 +183,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </header>
           
           {/* Main content com gradiente sutil */}
-          <main className="flex-1 bg-background dark-gradient-bg">
+          <main className="flex-1 bg-background dark:bg-dark-bg-primary">
             <div className="container mx-auto px-4 py-6">
               <BreadcrumbNav />
               {children}
@@ -191,9 +191,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </main>
           
           {/* Footer refinado */}
-          <footer className="border-t dark-border py-6 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80">
+          <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80 dark:border-dark-border-primary">
             <div className="container mx-auto px-4">
-              <p className="dark:text-dark-text-muted">
+              <p className="text-muted-foreground dark:text-dark-text-muted">
                 © {new Date().getFullYear()} NutriFlow Pro. Todos os direitos reservados.
               </p>
             </div>

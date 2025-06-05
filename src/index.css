@@ -419,17 +419,13 @@
     @apply from-dark-accent-green to-emerald-400;
   }
 
-  /* Utilitários específicos para modo escuro */
+  /* Utilitários específicos para modo escuro - REMOVENDO dark-bg QUE ESTAVA CAUSANDO PROBLEMA */
   .dark-card {
     @apply dark:bg-dark-bg-card dark:border-dark-border-primary;
   }
 
   .dark-text {
     @apply dark:text-dark-text-primary;
-  }
-
-  .dark-bg {
-    @apply dark:bg-dark-bg-primary;
   }
 
   .dark-bg-secondary {
