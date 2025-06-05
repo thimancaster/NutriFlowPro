@@ -78,25 +78,36 @@ export default {
           'premium-yellow': '#fbbf24',
           'premium-gold': '#f59e0b',
         },
-        // Dark mode specific colors
-        'dark-bg': {
-          'primary': '#121212',      // Fundo principal
-          'secondary': '#1A1A1A',    // Fundo alternativo
-          'card': '#1F1F1F',         // Fundo de cartões
-          'elevated': '#2C2C2C',     // Fundo elevado
-          'surface': '#333333',      // Superfícies
-        },
-        'dark-border': {
-          'primary': '#3D3D3D',      // Bordas principais
-          'secondary': '#444444',    // Bordas secundárias
-          'subtle': '#2A2A2A',       // Bordas sutis
-        },
-        'dark-text': {
-          'primary': '#FFFFFF',      // Texto principal
-          'secondary': '#F1F1F1',    // Texto secundário
-          'muted': '#B0B0B0',        // Texto desbotado
-          'subtle': '#CCCCCC',       // Texto sutil
-          'placeholder': '#666666',   // Placeholders
+        // Paleta refinada para modo escuro - tons mais suaves e harmoniosos
+        'dark': {
+          'bg': {
+            'primary': '#0a0a0b',        // Fundo principal mais profundo
+            'secondary': '#111114',      // Fundo secundário mais sutil
+            'card': '#161619',           // Cards com contraste suave
+            'elevated': '#1c1c20',       // Elementos elevados
+            'surface': '#232327',        // Superfícies interativas
+            'overlay': '#2a2a2f',        // Overlays e modais
+          },
+          'border': {
+            'primary': '#2d2d32',        // Bordas principais mais visíveis
+            'secondary': '#38383e',      // Bordas secundárias
+            'subtle': '#242429',         // Bordas sutis
+            'accent': '#404049',         // Bordas com destaque
+          },
+          'text': {
+            'primary': '#ffffff',        // Texto principal - branco puro
+            'secondary': '#e4e4e7',      // Texto secundário - quase branco
+            'muted': '#a1a1aa',          // Texto desbotado mais legível
+            'subtle': '#71717a',         // Texto sutil
+            'placeholder': '#52525b',    // Placeholders
+            'disabled': '#3f3f46',       // Texto desabilitado
+          },
+          'accent': {
+            'green': '#22d3aa',          // Verde mais vibrante para modo escuro
+            'blue': '#3b82f6',           // Azul mantido
+            'yellow': '#fbbf24',         // Amarelo premium
+            'red': '#ef4444',            // Vermelho para alertas
+          }
         }
       },
       borderRadius: {
@@ -184,6 +195,14 @@ export default {
             transform: 'translateY(0)',
             opacity: '1'
           }
+        },
+        'glow': {
+          '0%, 100%': {
+            boxShadow: '0 0 20px rgba(34, 211, 170, 0.3)'
+          },
+          '50%': {
+            boxShadow: '0 0 30px rgba(34, 211, 170, 0.5)'
+          }
         }
       },
       animation: {
@@ -195,7 +214,8 @@ export default {
         'float': 'float 3s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
         'slide-in-from-top': 'slide-in-from-top 0.3s ease-out',
-        'slide-in-from-bottom': 'slide-in-from-bottom 0.3s ease-out'
+        'slide-in-from-bottom': 'slide-in-from-bottom 0.3s ease-out',
+        'glow': 'glow 2s ease-in-out infinite'
       },
       transitionProperty: {
         'colors': 'background-color, border-color, color, fill, stroke',
@@ -206,11 +226,20 @@ export default {
         '400': '400ms',
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(34, 197, 94, 0.3)',
+        'glow': '0 0 20px rgba(34, 211, 170, 0.3)',
         'glow-blue': '0 0 20px rgba(59, 130, 246, 0.3)',
-        'inner-glow': 'inset 0 0 20px rgba(34, 197, 94, 0.1)',
-        'dark-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
-        'dark-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+        'inner-glow': 'inset 0 0 20px rgba(34, 211, 170, 0.1)',
+        'dark-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.6)',
+        'dark-md': '0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3)',
+        'dark-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
+        'dark-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3)',
+        'dark-2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        'dark-inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.3)',
+        'dark-glow': '0 0 20px rgba(34, 211, 170, 0.4)',
+        'dark-glow-blue': '0 0 20px rgba(59, 130, 246, 0.4)',
+      },
+      backdropBlur: {
+        'xs': '2px',
       }
     }
   },

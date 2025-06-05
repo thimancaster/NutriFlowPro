@@ -15,7 +15,7 @@ import {
 import { LogOut, Menu, User, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Import our new components
+// Import our components
 import { BreadcrumbNav } from "@/components/ui/breadcrumb-nav";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ThemeProvider } from "@/hooks/theme/use-theme-provider";
@@ -36,21 +36,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   ];
 
   const isActive = (itemHref: string, isExact?: boolean) => {
-    // Se for uma correspondência exata, ou se a rota for a raiz
     if (isExact || itemHref === '/') {
       return location.pathname === itemHref;
     }
 
-    // Para rotas como /patients que podem ter sub-rotas como /patients/new
-    // ou /clinical que tem /clinical/:patientId
-    // Certifica-se de que não estamos ativando "/patients" para "/patient-history" por exemplo
     if (location.pathname.startsWith(itemHref)) {
-      // Se o itemHref é apenas "/patients" e o pathname é "/patients", ou
-      // se o pathname é "/patients/new" e itemHref é "/patients"
-      // Precisa garantir que não ative "/patients" se o pathname for algo como "/patient-history"
-      if (location.pathname === itemHref) return true; // Correspondência exata da base
-
-      // Verifica se o próximo caractere após o prefixo é um '/'
+      if (location.pathname === itemHref) return true;
       const afterHref = location.pathname.substring(itemHref.length);
       if (afterHref.startsWith('/')) {
         return true;
@@ -71,54 +62,56 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <ThemeProvider>
       <ToastProvider>
         <div className="flex flex-col min-h-screen dark-bg">
-          {/* Add our tour guide component */}
           <TourGuide />
           
-          {/* Header with dark mode support */}
-          <header className="border-b dark-border bg-background">
+          {/* Header aprimorado com glass effect */}
+          <header className="border-b dark-border bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80 sticky top-0 z-50">
             <div className="container mx-auto px-4 flex justify-between items-center h-16">
               <div className="flex items-center">
-                <Link to="/dashboard" className="flex items-center">
-                  <span className="text-xl font-bold text-nutri-green">Nutri</span>
-                  <span className="text-xl font-bold text-nutri-blue">Flow</span>
-                  <span className="text-sm font-semibold ml-1 text-muted-foreground">Pro</span>
+                <Link to="/dashboard" className="flex items-center nutri-brand group">
+                  <span className="text-nutri-green nutri-text transition-colors duration-200 group-hover:text-nutri-green-light">Nutri</span>
+                  <span className="text-nutri-blue flow-text transition-colors duration-200 group-hover:text-nutri-blue-light">Flow</span>
+                  <span className="text-muted-foreground pro-text ml-1 dark:text-dark-text-muted">Pro</span>
                 </Link>
               </div>
               
               <div className="flex items-center gap-4">
-                {/* Desktop Navigation */}
-                <nav className="hidden md:flex space-x-4">
+                {/* Navigation melhorada */}
+                <nav className="hidden md:flex space-x-2">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
                       className={cn(
-                        "text-sm font-medium transition-colors hover:text-primary dark-nav-item px-3 py-2",
+                        "text-sm font-medium transition-all duration-200 hover:text-primary dark-nav-item px-3 py-2 rounded-md relative overflow-hidden",
                         isActive(item.href, item.exact)
-                          ? "text-primary dark-nav-item active"
+                          ? "text-primary dark-nav-item active shadow-sm"
                           : "text-muted-foreground",
                         item.className
                       )}
                     >
-                      {item.name}
+                      <span className="relative z-10">{item.name}</span>
+                      {isActive(item.href, item.exact) && (
+                        <div className="absolute inset-0 bg-primary/10 dark:bg-dark-accent-green/10 rounded-md" />
+                      )}
                     </Link>
                   ))}
                 </nav>
                 
-                {/* User Menu */}
+                {/* User Menu aprimorado */}
                 {user && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full hover-scale">
                         <Avatar className="h-8 w-8 avatar-enhanced">
                           <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.email || ''} />
-                          <AvatarFallback className="dark:bg-dark-bg-elevated dark:text-dark-text-primary">
+                          <AvatarFallback className="dark:bg-dark-bg-elevated dark:text-dark-text-primary bg-gradient-to-br from-nutri-green/20 to-nutri-blue/20">
                             {user.email?.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 dropdown-content" align="end" forceMount>
+                    <DropdownMenuContent className="w-56 dropdown-content glass-effect" align="end" forceMount>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none dark:text-dark-text-primary">
@@ -131,7 +124,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator className="dark:bg-dark-border-primary" />
                       <DropdownMenuItem asChild>
-                        <Link to="/profile" className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated">
+                        <Link to="/profile" className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200">
                           <User className="mr-2 h-4 w-4" />
                           <span>Perfil</span>
                         </Link>
@@ -139,7 +132,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       <DropdownMenuSeparator className="dark:bg-dark-border-primary" />
                       <DropdownMenuItem 
                         onClick={handleSignOut} 
-                        className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated"
+                        className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sair</span>
@@ -148,11 +141,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   </DropdownMenu>
                 )}
                 
-                {/* Mobile menu button */}
+                {/* Mobile menu button aprimorado */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated"
+                  className="md:hidden dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-all duration-200 hover-scale"
                   onClick={toggleMobileMenu}
                 >
                   {mobileMenuOpen ? (
@@ -162,21 +155,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   )}
                 </Button>
                 
-                {/* Add theme toggle button */}
+                {/* Theme toggle aprimorado */}
                 <ThemeToggle />
               </div>
             </div>
             
-            {/* Mobile Navigation */}
+            {/* Mobile Navigation aprimorada */}
             {mobileMenuOpen && (
-              <div className="md:hidden py-2 px-4 border-t dark-border bg-background">
+              <div className="md:hidden py-4 px-4 border-t dark-border bg-background/95 backdrop-blur-md dark:bg-dark-bg-secondary/95">
                 <nav className="flex flex-col space-y-2">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
                       className={cn(
-                        "text-sm font-medium transition-colors hover:text-primary p-2 rounded-md dark-nav-item",
+                        "text-sm font-medium transition-all duration-200 hover:text-primary p-3 rounded-md dark-nav-item",
                         isActive(item.href, item.exact)
                           ? "bg-secondary text-primary dark-nav-item active"
                           : "text-muted-foreground",
@@ -192,17 +185,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             )}
           </header>
           
-          <main className="flex-1 bg-background">
+          {/* Main content com gradiente sutil */}
+          <main className="flex-1 bg-background dark-gradient-bg">
             <div className="container mx-auto px-4 py-6">
-              {/* Add breadcrumb navigation */}
               <BreadcrumbNav />
-              
-              {/* Render the main content */}
               {children}
             </div>
           </main>
           
-          <footer className="border-t dark-border py-4 text-center text-sm text-muted-foreground bg-background">
+          {/* Footer refinado */}
+          <footer className="border-t dark-border py-6 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80">
             <div className="container mx-auto px-4">
               <p className="dark:text-dark-text-muted">
                 © {new Date().getFullYear()} NutriFlow Pro. Todos os direitos reservados.
