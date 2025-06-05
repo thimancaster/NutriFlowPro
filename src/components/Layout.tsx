@@ -70,12 +70,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen dark-bg">
           {/* Add our tour guide component */}
           <TourGuide />
           
-          {/* Keep existing navbar, but add theme toggle */}
-          <header className="border-b">
+          {/* Header with dark mode support */}
+          <header className="border-b dark-border bg-background">
             <div className="container mx-auto px-4 flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link to="/dashboard" className="flex items-center">
@@ -93,9 +93,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       key={item.name}
                       to={item.href}
                       className={cn(
-                        "text-sm font-medium transition-colors hover:text-primary",
+                        "text-sm font-medium transition-colors hover:text-primary dark-nav-item px-3 py-2",
                         isActive(item.href, item.exact)
-                          ? "text-primary"
+                          ? "text-primary dark-nav-item active"
                           : "text-muted-foreground",
                         item.className
                       )}
@@ -110,28 +110,37 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                        <Avatar className="h-8 w-8">
+                        <Avatar className="h-8 w-8 avatar-enhanced">
                           <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.email || ''} />
-                          <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback className="dark:bg-dark-bg-elevated dark:text-dark-text-primary">
+                            {user.email?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuContent className="w-56 dropdown-content" align="end" forceMount>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">{user.user_metadata?.name || user.email}</p>
-                          <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                          <p className="text-sm font-medium leading-none dark:text-dark-text-primary">
+                            {user.user_metadata?.name || user.email}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground dark:text-dark-text-muted">
+                            {user.email}
+                          </p>
                         </div>
                       </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="dark:bg-dark-border-primary" />
                       <DropdownMenuItem asChild>
-                        <Link to="/profile" className="cursor-pointer">
+                        <Link to="/profile" className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated">
                           <User className="mr-2 h-4 w-4" />
                           <span>Perfil</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                      <DropdownMenuSeparator className="dark:bg-dark-border-primary" />
+                      <DropdownMenuItem 
+                        onClick={handleSignOut} 
+                        className="cursor-pointer dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated"
+                      >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sair</span>
                       </DropdownMenuItem>
@@ -143,7 +152,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden"
+                  className="md:hidden dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated"
                   onClick={toggleMobileMenu}
                 >
                   {mobileMenuOpen ? (
@@ -160,16 +169,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             
             {/* Mobile Navigation */}
             {mobileMenuOpen && (
-              <div className="md:hidden py-2 px-4 border-t">
+              <div className="md:hidden py-2 px-4 border-t dark-border bg-background">
                 <nav className="flex flex-col space-y-2">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
                       className={cn(
-                        "text-sm font-medium transition-colors hover:text-primary p-2 rounded-md",
+                        "text-sm font-medium transition-colors hover:text-primary p-2 rounded-md dark-nav-item",
                         isActive(item.href, item.exact)
-                          ? "bg-secondary text-primary"
+                          ? "bg-secondary text-primary dark-nav-item active"
                           : "text-muted-foreground",
                         item.className
                       )}
@@ -183,7 +192,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             )}
           </header>
           
-          <main className="flex-1">
+          <main className="flex-1 bg-background">
             <div className="container mx-auto px-4 py-6">
               {/* Add breadcrumb navigation */}
               <BreadcrumbNav />
@@ -193,9 +202,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </div>
           </main>
           
-          <footer className="border-t py-4 text-center text-sm text-muted-foreground">
+          <footer className="border-t dark-border py-4 text-center text-sm text-muted-foreground bg-background">
             <div className="container mx-auto px-4">
-              <p>© {new Date().getFullYear()} NutriFlow Pro. Todos os direitos reservados.</p>
+              <p className="dark:text-dark-text-muted">
+                © {new Date().getFullYear()} NutriFlow Pro. Todos os direitos reservados.
+              </p>
             </div>
           </footer>
         </div>

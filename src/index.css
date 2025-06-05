@@ -46,41 +46,41 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 7%; /* #121212 */
+    --foreground: 0 0% 100%; /* #FFFFFF */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 12%; /* #1F1F1F */
+    --card-foreground: 0 0% 94%; /* #F1F1F1 */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 17%; /* #2C2C2C */
+    --popover-foreground: 0 0% 100%; /* #FFFFFF */
 
     --primary: 142 70% 45%;
-    --primary-foreground: 222.2 84% 4.9%;
+    --primary-foreground: 0 0% 7%; /* #121212 */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 20%; /* #333333 */
+    --secondary-foreground: 0 0% 69%; /* #B0B0B0 */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 15%; /* #262626 */
+    --muted-foreground: 0 0% 69%; /* #B0B0B0 */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 17%; /* #2C2C2C */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 0 0% 24%; /* #3D3D3D */
+    --input: 0 0% 27%; /* #444444 */
     --ring: 142 70% 45%;
 
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217.2 32.6% 17.5%;
-    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-background: 0 0% 7%; /* #121212 */
+    --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
+    --sidebar-primary: 0 0% 17%; /* #2C2C2C */
+    --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
     --sidebar-accent: 142 70% 45%;
-    --sidebar-accent-foreground: 222.2 84% 4.9%;
-    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 0 0% 7%; /* #121212 */
+    --sidebar-border: 0 0% 24%; /* #3D3D3D */
     --sidebar-ring: 142 70% 45%;
   }
 }
@@ -91,7 +91,8 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   /* Smooth scrolling and transitions */
@@ -109,21 +110,67 @@
     color-scheme: dark;
   }
 
-  /* Ensure proper contrast in dark mode */
+  /* Dark mode specific improvements */
+  .dark body {
+    @apply bg-dark-bg-primary text-dark-text-primary;
+  }
+
   .dark .text-gray-600 {
-    @apply text-gray-400;
+    @apply text-dark-text-muted;
   }
 
   .dark .text-gray-700 {
-    @apply text-gray-300;
+    @apply text-dark-text-subtle;
   }
 
   .dark .text-gray-800 {
-    @apply text-gray-200;
+    @apply text-dark-text-secondary;
   }
 
   .dark .text-gray-900 {
-    @apply text-gray-100;
+    @apply text-dark-text-primary;
+  }
+
+  .dark .bg-white {
+    @apply bg-dark-bg-card;
+  }
+
+  .dark .bg-gray-50 {
+    @apply bg-dark-bg-secondary;
+  }
+
+  .dark .bg-gray-100 {
+    @apply bg-dark-bg-elevated;
+  }
+
+  .dark .bg-blue-50 {
+    @apply bg-dark-bg-secondary;
+  }
+
+  .dark .border-gray-200 {
+    @apply border-dark-border-primary;
+  }
+
+  .dark .border-gray-300 {
+    @apply border-dark-border-secondary;
+  }
+
+  /* Enhanced scrollbar for dark mode */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-dark-bg-secondary;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-dark-border-primary rounded-full;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-border-secondary;
   }
 }
 
@@ -131,9 +178,17 @@
   .nutri-card {
     @apply rounded-xl shadow-md bg-card p-6 transition-all duration-300 hover:shadow-lg border;
   }
+
+  .dark .nutri-card {
+    @apply bg-dark-bg-card border-dark-border-primary shadow-dark-lg hover:shadow-dark-xl;
+  }
   
   .nutri-input {
-    @apply rounded-lg border border-input bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground;
+    @apply rounded-lg border border-input bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground transition-colors duration-200;
+  }
+
+  .dark .nutri-input {
+    @apply bg-dark-bg-elevated border-dark-border-secondary text-dark-text-primary placeholder:text-dark-text-placeholder;
   }
 
   /* Enhanced button styles with animations */
@@ -160,10 +215,19 @@
     @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark;
   }
 
+  /* Dark mode specific button adjustments */
+  .dark .nutri-button::after {
+    @apply bg-white/10;
+  }
+
   /* Avatar enhancements */
   .avatar-enhanced {
     @apply transition-all duration-300 hover:scale-105 hover:shadow-md
            hover:ring-2 hover:ring-white hover:ring-opacity-70;
+  }
+
+  .dark .avatar-enhanced {
+    @apply hover:ring-dark-border-secondary;
   }
   
   /* Animation utilities */
@@ -174,10 +238,18 @@
   .hover-lift {
     @apply transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg;
   }
+
+  .dark .hover-lift {
+    @apply hover:shadow-dark-lg;
+  }
   
   .shimmer-effect {
     @apply bg-gradient-to-r from-transparent via-white/20 to-transparent
            bg-[length:200%_100%] animate-shimmer;
+  }
+
+  .dark .shimmer-effect {
+    @apply via-white/10;
   }
   
   .subtle-pulse {
@@ -198,13 +270,57 @@
     @apply bg-popover border border-border shadow-lg;
   }
 
+  .dark .dropdown-content {
+    @apply bg-dark-bg-elevated border-dark-border-primary shadow-dark-lg;
+  }
+
   /* Modal improvements */
   .modal-overlay {
     @apply bg-black/50 backdrop-blur-sm;
   }
 
+  .dark .modal-overlay {
+    @apply bg-black/70;
+  }
+
   .modal-content {
     @apply bg-card border border-border shadow-xl;
+  }
+
+  .dark .modal-content {
+    @apply bg-dark-bg-card border-dark-border-primary shadow-dark-xl;
+  }
+
+  /* Dark mode specific card variants */
+  .dark-premium-card {
+    @apply bg-gradient-to-br from-dark-bg-elevated to-dark-bg-surface border-dark-border-primary;
+  }
+
+  .dark-dashboard-hero {
+    @apply bg-gradient-to-br from-nutri-blue/20 to-nutri-blue-dark/20 border-dark-border-primary;
+  }
+
+  /* Dark mode testimonials */
+  .dark-testimonial-card {
+    @apply bg-dark-bg-card border-dark-border-subtle shadow-dark-lg;
+  }
+
+  /* Dark mode form elements */
+  .dark-form-field {
+    @apply bg-dark-bg-elevated border-dark-border-secondary text-dark-text-primary;
+  }
+
+  .dark-form-field:focus {
+    @apply border-primary ring-primary/20;
+  }
+
+  /* Dark mode navigation */
+  .dark-nav-item {
+    @apply text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-bg-elevated/50 rounded-md transition-all duration-200;
+  }
+
+  .dark-nav-item.active {
+    @apply text-primary bg-primary/10;
   }
 }
 
@@ -227,6 +343,10 @@
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
+
+  .dark .card-hover {
+    @apply hover:shadow-dark-lg;
+  }
   
   /* Gradient effects */
   .text-gradient {
@@ -243,15 +363,23 @@
 
   /* Dark mode specific utilities */
   .dark-card {
-    @apply dark:bg-card dark:border-border;
+    @apply dark:bg-dark-bg-card dark:border-dark-border-primary;
   }
 
   .dark-text {
-    @apply dark:text-foreground;
+    @apply dark:text-dark-text-primary;
   }
 
   .dark-bg {
-    @apply dark:bg-background;
+    @apply dark:bg-dark-bg-primary;
+  }
+
+  .dark-bg-secondary {
+    @apply dark:bg-dark-bg-secondary;
+  }
+
+  .dark-surface {
+    @apply dark:bg-dark-bg-surface;
   }
 
   /* High contrast for accessibility */
@@ -262,5 +390,36 @@
   /* Better focus indicators */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .dark .focus-ring {
+    @apply focus:ring-offset-dark-bg-primary;
+  }
+
+  /* Dark mode gradient backgrounds */
+  .dark-gradient-bg {
+    @apply dark:bg-gradient-to-b dark:from-dark-bg-primary dark:to-dark-bg-secondary;
+  }
+
+  .dark-hero-gradient {
+    @apply dark:bg-gradient-to-br dark:from-nutri-blue/10 dark:to-nutri-blue-dark/5;
+  }
+
+  /* Dark mode borders */
+  .dark-border {
+    @apply dark:border-dark-border-primary;
+  }
+
+  .dark-border-subtle {
+    @apply dark:border-dark-border-subtle;
+  }
+
+  /* Dark mode shadows */
+  .dark-shadow {
+    @apply dark:shadow-dark-lg;
+  }
+
+  .dark-shadow-xl {
+    @apply dark:shadow-dark-xl;
   }
 }

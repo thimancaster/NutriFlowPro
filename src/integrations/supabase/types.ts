@@ -87,13 +87,6 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_anthropometry_patient_id"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
         ]
       }
       appointments: {
@@ -151,20 +144,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "appointments_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_appointments_patient_id"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -262,13 +241,6 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_calculation_history_patient_id"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
         ]
       }
       calculations: {
@@ -344,20 +316,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "calculations_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "calculations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_calculations_patient_id"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -581,20 +539,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_meal_plan_items_food_id"
-            columns: ["food_id"]
-            isOneToOne: false
-            referencedRelation: "foods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_meal_plan_items_meal_plan_id"
-            columns: ["meal_plan_id"]
-            isOneToOne: false
-            referencedRelation: "meal_plans"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "meal_plan_items_food_id_fkey"
             columns: ["food_id"]
             isOneToOne: false
@@ -664,17 +608,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_meal_plans_calculation_id"
+            foreignKeyName: "meal_plans_calculation_id_fkey"
             columns: ["calculation_id"]
             isOneToOne: false
             referencedRelation: "calculations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_meal_plans_patient_id"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
           {
@@ -682,13 +619,6 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meal_plans_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -816,13 +746,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_measurements_patient_id"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "measurements_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
@@ -845,7 +768,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          secondaryPhone: string | null
+          secondaryphone: string | null
           status: string
           updated_at: string | null
           user_id: string | null
@@ -863,7 +786,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
-          secondaryPhone?: string | null
+          secondaryphone?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string | null
@@ -881,20 +804,12 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
-          secondaryPhone?: string | null
+          secondaryphone?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "patients_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       stripe_events: {
         Row: {
@@ -1083,35 +998,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      calculate_nutritional_density: {
-        Args: { food_id: string }
-        Returns: number
-      }
-      calculate_nutritional_similarity: {
-        Args: { original_id: string; substitute_id: string }
-        Returns: Json
-      }
       check_user_premium_status: {
         Args: { user_id: string }
         Returns: boolean
-      }
-      create_meal_plan_with_items: {
-        Args: { p_meal_plan_data: Json; p_meal_plan_items_data: Json }
-        Returns: string
-      }
-      generate_intelligent_meal_plan: {
-        Args: {
-          p_user_id: string
-          p_patient_id: string
-          p_target_calories: number
-          p_target_protein: number
-          p_target_carbs: number
-          p_target_fats: number
-          p_preferences?: string[]
-          p_restrictions?: string[]
-          p_date?: string
-        }
-        Returns: string
       }
       generate_meal_plan: {
         Args: {
@@ -1125,28 +1014,18 @@ export type Database = {
         }
         Returns: string
       }
-      get_food_ids: {
-        Args: { food_names: string[] }
-        Returns: string[]
-      }
-      get_patient_last_consultation: {
-        Args: { p_patient_id: string }
+      get_subscriber_by_customer_id: {
+        Args: { customer_id: string }
         Returns: {
-          consultation_number: number
-          weight: number
-          height: number
-          age: number
-          sex: string
-          body_profile: string
-          activity_level: string
-          objective: string
-          tmb: number
-          get_value: number
-          vet: number
-          protein_g: number
-          carbs_g: number
-          fat_g: number
-          calculation_date: string
+          user_id: string
+          email: string
+        }[]
+      }
+      get_subscriber_by_customer_id_safe: {
+        Args: { customer_id: string }
+        Returns: {
+          user_id: string
+          email: string
         }[]
       }
       get_subscription_status: {
@@ -1155,9 +1034,29 @@ export type Database = {
           is_premium: boolean
           role: string
           email: string
+          stripe_customer_id: string
+          subscription_start: string
+          subscription_end: string
+          payment_status: string
+        }[]
+      }
+      get_subscription_status_safe: {
+        Args: { user_id: string }
+        Returns: {
+          is_premium: boolean
+          role: string
+          email: string
+          stripe_customer_id: string
+          subscription_start: string
+          subscription_end: string
+          payment_status: string
         }[]
       }
       get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
+      get_user_role_safe: {
         Args: { user_id: string }
         Returns: string
       }
@@ -1169,28 +1068,41 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      is_user_premium_safe: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
       }
-      safe_get_user_by_email: {
-        Args: { user_email: string }
-        Returns: {
-          id: string
-          email: string
-          encrypted_password: string
-          email_confirmed_at: string
-          created_at: string
-          updated_at: string
-        }[]
-      }
-      update_meal_plan_with_items: {
+      upsert_subscriber: {
         Args: {
-          p_meal_plan_id: string
-          p_meal_plan_data: Json
-          p_meal_plan_items_data: Json
+          p_user_id: string
+          p_email: string
+          p_stripe_customer_id?: string
+          p_stripe_subscription_id?: string
+          p_is_premium?: boolean
+          p_role?: string
+          p_payment_status?: string
+          p_subscription_start?: string
+          p_subscription_end?: string
         }
-        Returns: boolean
+        Returns: undefined
+      }
+      upsert_subscriber_safe: {
+        Args: {
+          p_user_id: string
+          p_email: string
+          p_stripe_customer_id?: string
+          p_stripe_subscription_id?: string
+          p_is_premium?: boolean
+          p_role?: string
+          p_payment_status?: string
+          p_subscription_start?: string
+          p_subscription_end?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

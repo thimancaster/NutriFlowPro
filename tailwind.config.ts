@@ -75,6 +75,28 @@ export default {
           'gray-light': '#f1f5f9',
           'gray': '#94a3b8',
           'gray-dark': '#64748b',
+          'premium-yellow': '#fbbf24',
+          'premium-gold': '#f59e0b',
+        },
+        // Dark mode specific colors
+        'dark-bg': {
+          'primary': '#121212',      // Fundo principal
+          'secondary': '#1A1A1A',    // Fundo alternativo
+          'card': '#1F1F1F',         // Fundo de cartões
+          'elevated': '#2C2C2C',     // Fundo elevado
+          'surface': '#333333',      // Superfícies
+        },
+        'dark-border': {
+          'primary': '#3D3D3D',      // Bordas principais
+          'secondary': '#444444',    // Bordas secundárias
+          'subtle': '#2A2A2A',       // Bordas sutis
+        },
+        'dark-text': {
+          'primary': '#FFFFFF',      // Texto principal
+          'secondary': '#F1F1F1',    // Texto secundário
+          'muted': '#B0B0B0',        // Texto desbotado
+          'subtle': '#CCCCCC',       // Texto sutil
+          'placeholder': '#666666',   // Placeholders
         }
       },
       borderRadius: {
@@ -187,6 +209,8 @@ export default {
         'glow': '0 0 20px rgba(34, 197, 94, 0.3)',
         'glow-blue': '0 0 20px rgba(59, 130, 246, 0.3)',
         'inner-glow': 'inset 0 0 20px rgba(34, 197, 94, 0.1)',
+        'dark-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+        'dark-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
       }
     }
   },

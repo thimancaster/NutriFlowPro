@@ -17,12 +17,12 @@ const Dashboard = () => {
   const { dashboardData } = useDashboardData(user?.id);
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark-gradient-bg">
       <Helmet>
         <title>Dashboard - NutriFlow Pro</title>
       </Helmet>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-nutri-blue">Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6 text-nutri-blue dark:text-nutri-blue-light">Dashboard</h1>
         
         <motion.div
           initial={{ opacity: 0, y: 10 }}
