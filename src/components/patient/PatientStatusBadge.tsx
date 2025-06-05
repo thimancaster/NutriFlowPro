@@ -10,7 +10,7 @@ import {
   UserPlus,
   LucideIcon
 } from 'lucide-react';
-import { Badge } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
 
 interface PatientStatusBadgeProps {
   patient: Patient;

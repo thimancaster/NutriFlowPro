@@ -83,17 +83,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       key={item.name}
                       to={item.href}
                       className={cn(
-                        "text-sm font-medium transition-all duration-200 hover:text-primary dark-nav-item px-3 py-2 rounded-md relative overflow-hidden",
+                        "text-sm font-medium transition-all duration-200 hover:text-primary px-3 py-2 rounded-md relative overflow-hidden",
                         isActive(item.href, item.exact)
-                          ? "text-primary dark-nav-item active shadow-sm"
-                          : "text-muted-foreground",
+                          ? "text-primary bg-primary/10 dark:bg-dark-accent-green/10 dark:text-dark-accent-green shadow-sm"
+                          : "text-muted-foreground dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-bg-elevated/60",
                         item.className
                       )}
                     >
                       <span className="relative z-10">{item.name}</span>
-                      {isActive(item.href, item.exact) && (
-                        <div className="absolute inset-0 bg-primary/10 dark:bg-dark-accent-green/10 rounded-md" />
-                      )}
                     </Link>
                   ))}
                 </nav>
@@ -169,10 +166,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       key={item.name}
                       to={item.href}
                       className={cn(
-                        "text-sm font-medium transition-all duration-200 hover:text-primary p-3 rounded-md dark-nav-item",
+                        "text-sm font-medium transition-all duration-200 hover:text-primary p-3 rounded-md",
                         isActive(item.href, item.exact)
-                          ? "bg-secondary text-primary dark-nav-item active"
-                          : "text-muted-foreground",
+                          ? "bg-primary/10 text-primary dark:bg-dark-accent-green/10 dark:text-dark-accent-green"
+                          : "text-muted-foreground dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-bg-elevated/60",
                         item.className
                       )}
                       onClick={() => setMobileMenuOpen(false)}
