@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types/patient';
@@ -22,6 +23,15 @@ export const usePatientQuery = (patientId: string | undefined) => {
         secondaryPhone: data.secondaryphone,
         gender: data.gender as 'male' | 'female' | 'other' | undefined,
         status: data.status as 'active' | 'archived',
+        measurements: typeof data.measurements === 'string' 
+          ? JSON.parse(data.measurements) 
+          : data.measurements || {},
+        goals: typeof data.goals === 'string' 
+          ? JSON.parse(data.goals) 
+          : data.goals || {},
+        address: typeof data.address === 'string' && data.address.startsWith('{')
+          ? JSON.parse(data.address)
+          : data.address,
       };
       
       return patient;
@@ -74,6 +84,15 @@ export const usePatientsQuery = (userId: string | undefined, filters?: {
         secondaryPhone: patient.secondaryphone,
         gender: patient.gender as 'male' | 'female' | 'other' | undefined,
         status: patient.status as 'active' | 'archived',
+        measurements: typeof patient.measurements === 'string' 
+          ? JSON.parse(patient.measurements) 
+          : patient.measurements || {},
+        goals: typeof patient.goals === 'string' 
+          ? JSON.parse(patient.goals) 
+          : patient.goals || {},
+        address: typeof patient.address === 'string' && patient.address && patient.address.startsWith('{')
+          ? JSON.parse(patient.address)
+          : patient.address,
       }));
       
       return patients;
