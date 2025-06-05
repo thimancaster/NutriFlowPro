@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { MealPlanItem } from '@/types/mealPlan';
 import AddItemDialog from './AddItemDialog';
 import FoodSearchDialog from './FoodSearchDialog';
+import EditItemDialog from './EditItemDialog';
 
 interface MealTypeSectionProps {
   mealType: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
@@ -22,63 +23,67 @@ interface MealTypeSectionProps {
   onItemAdd: (item: MealPlanItem) => void;
 }
 
-// Configuração atualizada com sugestões mais apropriadas para o padrão brasileiro
+// Sugestões mais específicas e variadas por refeição
 const MEAL_FOOD_SUGGESTIONS: Record<string, string[]> = {
   breakfast: [
-    'Pão integral com queijo branco',
-    'Aveia com frutas vermelhas',
+    'Pão integral com queijo minas',
     'Tapioca com queijo cottage',
-    'Vitamina de banana com aveia',
-    'Ovos mexidos com torrada integral',
-    'Iogurte natural com granola',
+    'Aveia com banana e canela',
+    'Ovo mexido com torrada',
+    'Iogurte grego com granola',
+    'Vitamina de mamão com aveia',
     'Café com leite desnatado',
-    'Suco de laranja natural'
+    'Pão francês com requeijão light'
   ],
   morning_snack: [
     'Banana com pasta de amendoim',
-    'Iogurte grego com mel',
-    'Mix de castanhas',
+    'Iogurte natural com mel',
+    'Mix de castanhas (3 unidades)',
     'Maçã com canela',
-    'Biscoito integral com queijo',
-    'Água de coco',
-    'Chá verde com torrada'
+    'Água de coco gelada',
+    'Pera com 2 castanhas',
+    'Biscoito integral (2 unidades)',
+    'Vitamina de frutas vermelhas'
   ],
   lunch: [
-    'Arroz integral com feijão',
+    'Arroz integral com feijão carioca',
     'Peito de frango grelhado',
-    'Salada verde com azeite',
-    'Legumes refogados',
-    'Peixe assado com batata doce',
+    'Salada verde com tomate',
+    'Brócolis refogado no alho',
+    'Peixe tilápia com batata doce',
     'Carne magra com quinoa',
-    'Salada de folhas verdes',
-    'Suco natural sem açúcar'
+    'Cenoura refogada na manteiga',
+    'Salada completa temperada'
   ],
   afternoon_snack: [
-    'Frutas da estação',
-    'Sanduíche natural integral',
-    'Vitamina de frutas',
-    'Biscoito integral com chá',
-    'Iogurte com frutas',
-    'Castanhas e amêndoas',
-    'Água saborizada natural'
+    'Sanduíche natural de peito de peru',
+    'Vitamina de banana com aveia',
+    'Biscoito integral com chá verde',
+    'Iogurte com frutas picadas',
+    'Castanhas do Pará (3 unidades)',
+    'Batata doce cozida pequena',
+    'Água de coco com biscoito',
+    'Smoothie de frutas tropicais'
   ],
   dinner: [
-    'Sopa de legumes',
+    'Sopa de legumes variados',
     'Peixe grelhado com salada',
-    'Frango desfiado com purê de abóbora',
     'Omelete de legumes',
-    'Carne magra com brócolis',
+    'Peito de peru com quinoa',
     'Salada completa com proteína',
-    'Legumes no vapor',
-    'Chá digestivo'
+    'Caldo de legumes com torrada',
+    'Salmão grelhado com brócolis',
+    'Frango desfiado com purê de abóbora'
   ],
   evening_snack: [
     'Leite morno com canela',
-    'Chá calmante',
-    'Iogurte natural',
-    'Frutas leves (maçã, pêra)',
+    'Chá de camomila relaxante',
+    'Torrada integral com geleia diet',
+    'Iogurte natural pequeno',
+    'Maçã assada com canela',
     'Biscoito integral simples',
-    'Água com limão'
+    'Água com rodela de limão',
+    'Chá de erva-doce morno'
   ]
 };
 
@@ -93,6 +98,8 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
 }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<MealPlanItem | null>(null);
 
   const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
   const totalProtein = items.reduce((sum, item) => sum + item.protein, 0);
@@ -116,6 +123,17 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
     };
 
     onItemAdd(newItem);
+  };
+
+  const handleEditItem = (item: MealPlanItem) => {
+    setEditingItem(item);
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEdit = (updatedItem: MealPlanItem) => {
+    onItemUpdate(updatedItem);
+    setShowEditDialog(false);
+    setEditingItem(null);
   };
 
   const suggestions = MEAL_FOOD_SUGGESTIONS[mealType] || [];
@@ -181,7 +199,12 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => handleEditItem(item)}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
                         <Edit className="h-3 w-3" />
                       </Button>
                       <Button 
@@ -227,6 +250,13 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
         isOpen={showSearchDialog}
         onClose={() => setShowSearchDialog(false)}
         onFoodSelect={handleFoodSelect}
+      />
+
+      <EditItemDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        item={editingItem}
+        onSave={handleSaveEdit}
       />
     </Card>
   );

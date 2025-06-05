@@ -13,7 +13,7 @@ interface MealPlanEditorProps {
 
 type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
 
-// Configuração das refeições em ordem cronológica
+// Configuração das refeições em ordem cronológica correta
 const MEAL_TYPE_CONFIG: Record<MealType, { name: string; time: string; color: string }> = {
   breakfast: { name: 'Café da Manhã', time: '07:00', color: 'bg-orange-100' },
   morning_snack: { name: 'Lanche da Manhã', time: '10:00', color: 'bg-yellow-100' },
@@ -23,14 +23,14 @@ const MEAL_TYPE_CONFIG: Record<MealType, { name: string; time: string; color: st
   evening_snack: { name: 'Ceia', time: '21:30', color: 'bg-pink-100' }
 };
 
-// Ordem cronológica das refeições
+// Ordem cronológica das refeições (atualizada)
 const MEAL_ORDER: MealType[] = [
-  'breakfast',
-  'morning_snack', 
-  'lunch',
-  'afternoon_snack',
-  'dinner',
-  'evening_snack'
+  'breakfast',        // Café da Manhã - 07:00
+  'morning_snack',    // Lanche da Manhã - 10:00
+  'lunch',            // Almoço - 12:30
+  'afternoon_snack',  // Lanche da Tarde - 15:30
+  'dinner',           // Jantar - 19:00
+  'evening_snack'     // Ceia - 21:30
 ];
 
 const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
@@ -46,18 +46,30 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
   }, {} as Record<string, MealPlanItem[]>);
 
   const handleItemUpdate = (updatedItem: MealPlanItem) => {
+    console.log('Updating item:', updatedItem);
     setItems(prev => prev.map(item => 
       item.id === updatedItem.id ? updatedItem : item
     ));
   };
 
   const handleItemRemove = (itemId: string) => {
+    console.log('Removing item:', itemId);
     setItems(prev => prev.filter(item => item.id !== itemId));
   };
 
   const handleItemAdd = (newItem: MealPlanItem) => {
+    console.log('Adding new item:', newItem);
     setItems(prev => [...prev, newItem]);
   };
+
+  // Recalcular totais baseados nos itens atuais
+  const currentTotals = items.reduce((acc, item) => {
+    acc.calories += item.calories;
+    acc.protein += item.protein;
+    acc.carbs += item.carbs;
+    acc.fats += item.fats;
+    return acc;
+  }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
 
   return (
     <div className="space-y-6">
@@ -69,16 +81,16 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
             </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">
-                {mealPlan.total_calories.toFixed(0)} kcal
+                {currentTotals.calories.toFixed(0)} kcal
               </Badge>
               <Badge variant="outline">
-                P: {mealPlan.total_protein.toFixed(0)}g
+                P: {currentTotals.protein.toFixed(0)}g
               </Badge>
               <Badge variant="outline">
-                C: {mealPlan.total_carbs.toFixed(0)}g
+                C: {currentTotals.carbs.toFixed(0)}g
               </Badge>
               <Badge variant="outline">
-                G: {mealPlan.total_fats.toFixed(0)}g
+                G: {currentTotals.fats.toFixed(0)}g
               </Badge>
             </div>
           </div>
