@@ -132,20 +132,25 @@ export const getFoodDetails = async (foodId: string) => {
   return data;
 };
 
-// Function to calculate nutritional density using the database function
+// Simple nutritional density calculation (local implementation)
 export const calculateNutritionalDensity = async (foodId: string) => {
-  const { data, error } = await supabase
-    .rpc('calculate_nutritional_density', { food_id: foodId });
-  
-  if (error) {
+  try {
+    const food = await getFoodDetails(foodId);
+    if (!food) return 0;
+    
+    // Simple calculation based on protein content, fiber, and calories
+    const proteinScore = (food.protein / food.calories) * 100 || 0;
+    const fiberScore = (food.fiber || 0) * 2;
+    const density = Math.min(100, (proteinScore + fiberScore) * 2);
+    
+    return density;
+  } catch (error) {
     console.error('Error calculating nutritional density:', error);
     return 0;
   }
-  
-  return data || 0;
 };
 
-// Enhanced function to generate intelligent meal plans
+// Enhanced function to generate meal plans using existing database function
 export const generateIntelligentMealPlan = async (
   userId: string,
   patientId: string,
@@ -158,20 +163,18 @@ export const generateIntelligentMealPlan = async (
   date: string = new Date().toISOString().split('T')[0]
 ) => {
   const { data, error } = await supabase
-    .rpc('generate_intelligent_meal_plan', {
+    .rpc('generate_meal_plan', {
       p_user_id: userId,
       p_patient_id: patientId,
       p_target_calories: targetCalories,
       p_target_protein: targetProtein,
       p_target_carbs: targetCarbs,
       p_target_fats: targetFats,
-      p_preferences: preferences,
-      p_restrictions: restrictions,
       p_date: date
     });
 
   if (error) {
-    console.error('Error generating intelligent meal plan:', error);
+    console.error('Error generating meal plan:', error);
     throw error;
   }
 

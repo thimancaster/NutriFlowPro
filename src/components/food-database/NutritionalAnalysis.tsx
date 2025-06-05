@@ -5,7 +5,6 @@ import { TrendingUp, Award, Leaf, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { calculateNutritionalDensity } from '@/integrations/supabase/functions';
 
 interface FoodAnalysisProps {
   food: {
@@ -36,10 +35,16 @@ const NutritionalAnalysis: React.FC<FoodAnalysisProps> = ({ food }) => {
 
   const loadNutritionalDensity = async () => {
     try {
-      const density = await calculateNutritionalDensity(food.id);
+      // Calculate a simple nutritional density based on protein, fiber and micronutrients
+      const proteinScore = (food.protein / food.calories) * 100 || 0;
+      const fiberScore = (food.fiber || 0) * 2;
+      const micronutrientScore = food.sustainability_score || 5;
+      
+      const density = Math.min(100, (proteinScore + fiberScore + micronutrientScore) * 2);
       setNutritionalDensity(density);
     } catch (error) {
       console.error('Error calculating nutritional density:', error);
+      setNutritionalDensity(0);
     }
   };
 

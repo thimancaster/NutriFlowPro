@@ -2,167 +2,128 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ConsultationHistoryData {
+  id: string;
+  patient_id: string;
   consultation_number: number;
-  weight: number;
-  height: number;
-  age: number;
-  sex: 'M' | 'F';
-  body_profile: string;
-  activity_level: string;
-  objective: string;
+  calculation_date: string;
   tmb: number;
-  get_value: number;
   vet: number;
+  get: number;
   protein_g: number;
   carbs_g: number;
   fat_g: number;
-  calculation_date: string;
+  protein_kcal: number;
+  carbs_kcal: number;
+  fat_kcal: number;
+  formula_used: string;
+  activity_level: string;
+  objective: string;
+  body_profile: string;
+  sex: string;
+  age: number;
+  weight: number;
+  height: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
-export const consultationHistoryService = {
-  /**
-   * Buscar histórico completo de consultas de um paciente
-   */
-  async getPatientHistory(patientId: string): Promise<ConsultationHistoryData[]> {
-    try {
-      const { data, error } = await supabase
-        .from('calculation_history')
-        .select('*')
-        .eq('patient_id', patientId)
-        .order('consultation_number', { ascending: false });
+export const saveConsultationHistory = async (
+  patientId: string,
+  userId: string,
+  calculationData: Omit<ConsultationHistoryData, 'id' | 'created_at' | 'updated_at' | 'patient_id' | 'user_id'>
+): Promise<string> => {
+  const { data, error } = await supabase
+    .from('calculation_history')
+    .insert({
+      patient_id: patientId,
+      user_id: userId,
+      ...calculationData
+    })
+    .select('id')
+    .single();
 
-      if (error) {
-        console.error('Error fetching patient history:', error);
-        return [];
-      }
+  if (error) {
+    console.error('Error saving consultation history:', error);
+    throw new Error('Erro ao salvar histórico da consulta');
+  }
 
-      return data.map(item => ({
-        consultation_number: item.consultation_number,
-        weight: item.weight,
-        height: item.height,
-        age: item.age,
-        sex: (item.sex as 'M' | 'F') || 'F', // Type assertion with fallback
-        body_profile: item.body_profile,
-        activity_level: item.activity_level,
-        objective: item.objective,
-        tmb: item.tmb,
-        get_value: item.get,
-        vet: item.vet,
-        protein_g: item.protein_g,
-        carbs_g: item.carbs_g,
-        fat_g: item.fat_g,
-        calculation_date: item.calculation_date
-      }));
-    } catch (error) {
-      console.error('Error in getPatientHistory:', error);
-      return [];
+  return data.id;
+};
+
+export const getConsultationHistory = async (
+  patientId: string, 
+  userId: string
+): Promise<ConsultationHistoryData[]> => {
+  const { data, error } = await supabase
+    .from('calculation_history')
+    .select('*')
+    .eq('patient_id', patientId)
+    .eq('user_id', userId)
+    .order('consultation_number', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching consultation history:', error);
+    throw new Error('Erro ao buscar histórico de consultas');
+  }
+
+  return data || [];
+};
+
+export const getLastConsultationNumber = async (
+  patientId: string, 
+  userId: string
+): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from('calculation_history')
+      .select('consultation_number')
+      .eq('patient_id', patientId)
+      .eq('user_id', userId)
+      .order('consultation_number', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('Error fetching last consultation number:', error);
+      return 0;
     }
-  },
 
-  /**
-   * Buscar dados da última consulta usando a função do banco
-   */
-  async getLastConsultation(patientId: string): Promise<ConsultationHistoryData | null> {
-    try {
-      const { data, error } = await supabase.rpc('get_patient_last_consultation', {
-        p_patient_id: patientId
-      });
-
-      if (error) {
-        console.error('Error fetching last consultation:', error);
-        return null;
-      }
-
-      if (!data || data.length === 0) {
-        return null;
-      }
-
-      const consultation = data[0];
-      return {
-        consultation_number: consultation.consultation_number,
-        weight: consultation.weight,
-        height: consultation.height,
-        age: consultation.age,
-        sex: (consultation.sex as 'M' | 'F') || 'F', // Type assertion with fallback
-        body_profile: consultation.body_profile,
-        activity_level: consultation.activity_level,
-        objective: consultation.objective,
-        tmb: consultation.tmb,
-        get_value: consultation.get_value,
-        vet: consultation.vet,
-        protein_g: consultation.protein_g,
-        carbs_g: consultation.carbs_g,
-        fat_g: consultation.fat_g,
-        calculation_date: consultation.calculation_date
-      };
-    } catch (error) {
-      console.error('Error in getLastConsultation:', error);
-      return null;
+    // Ensure data is an array and has at least one element
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0].consultation_number || 0;
     }
-  },
 
-  /**
-   * Salvar nova consulta no histórico
-   */
-  async saveConsultation(consultationData: {
-    patient_id: string;
-    user_id: string;
-    weight: number;
-    height: number;
-    age: number;
-    sex: 'M' | 'F';
-    body_profile: string;
-    activity_level: string;
-    objective: string;
-    tmb: number;
-    get: number;
-    vet: number;
-    protein_g: number;
-    carbs_g: number;
-    fat_g: number;
-    protein_kcal: number;
-    carbs_kcal: number;
-    fat_kcal: number;
-    formula_used: string;
-    notes?: string;
-  }): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('calculation_history')
-        .insert([consultationData]);
+    return 0;
+  } catch (error) {
+    console.error('Error in getLastConsultationNumber:', error);
+    return 0;
+  }
+};
 
-      if (error) {
-        console.error('Error saving consultation:', error);
-        return false;
-      }
+export const updateConsultationHistory = async (
+  id: string,
+  updates: Partial<ConsultationHistoryData>
+): Promise<void> => {
+  const { error } = await supabase
+    .from('calculation_history')
+    .update(updates)
+    .eq('id', id);
 
-      return true;
-    } catch (error) {
-      console.error('Error in saveConsultation:', error);
-      return false;
-    }
-  },
+  if (error) {
+    console.error('Error updating consultation history:', error);
+    throw new Error('Erro ao atualizar histórico da consulta');
+  }
+};
 
-  /**
-   * Determinar se é primeira consulta ou retorno
-   */
-  async getConsultationType(patientId: string): Promise<'primeira_consulta' | 'retorno'> {
-    try {
-      const { data, error } = await supabase
-        .from('calculation_history')
-        .select('id')
-        .eq('patient_id', patientId)
-        .limit(1);
+export const deleteConsultationHistory = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('calculation_history')
+    .delete()
+    .eq('id', id);
 
-      if (error) {
-        console.error('Error checking consultation type:', error);
-        return 'primeira_consulta';
-      }
-
-      return data && data.length > 0 ? 'retorno' : 'primeira_consulta';
-    } catch (error) {
-      console.error('Error in getConsultationType:', error);
-      return 'primeira_consulta';
-    }
+  if (error) {
+    console.error('Error deleting consultation history:', error);
+    throw new Error('Erro ao deletar histórico da consulta');
   }
 };
