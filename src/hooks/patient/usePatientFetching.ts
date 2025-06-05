@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types/patient';
@@ -22,6 +21,7 @@ export const usePatientQuery = (patientId: string | undefined) => {
         ...data,
         secondaryPhone: data.secondaryphone,
         gender: data.gender as 'male' | 'female' | 'other' | undefined,
+        status: data.status as 'active' | 'archived',
       };
       
       return patient;
@@ -73,6 +73,7 @@ export const usePatientsQuery = (userId: string | undefined, filters?: {
         ...patient,
         secondaryPhone: patient.secondaryphone,
         gender: patient.gender as 'male' | 'female' | 'other' | undefined,
+        status: patient.status as 'active' | 'archived',
       }));
       
       return patients;
