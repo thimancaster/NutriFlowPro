@@ -24,10 +24,25 @@ const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
   const { isGenerating } = useMealPlanWorkflow();
 
   const handleGenerate = async () => {
+    console.log('Generate button clicked');
     await onGenerate();
   };
 
-  if (!calculationData) return null;
+  if (!calculationData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Dados de cálculo não encontrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Não foi possível encontrar os dados de cálculo nutricional.</p>
+          <Button onClick={onBack} className="mt-4">
+            Voltar para cálculo
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,6 +127,12 @@ const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
               <li>• Quantidades calculadas automaticamente</li>
               <li>• Possibilidade de edição e personalização posterior</li>
             </ul>
+          </div>
+
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={onBack}>
+              Voltar para Cálculo
+            </Button>
           </div>
         </CardContent>
       </Card>

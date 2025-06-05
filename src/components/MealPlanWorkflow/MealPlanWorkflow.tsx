@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
@@ -13,6 +13,7 @@ import MealPlanEditingStep from './MealPlanEditingStep';
 
 const MealPlanWorkflow: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { activePatient } = usePatient();
   const {
@@ -28,7 +29,28 @@ const MealPlanWorkflow: React.FC = () => {
     resetWorkflow
   } = useMealPlanWorkflow();
 
-  // Initialize workflow with active patient if available
+  // Initialize workflow with data from navigation state
+  useEffect(() => {
+    const state = location.state;
+    console.log('Workflow state received:', state);
+    
+    if (state) {
+      // Set patient data
+      if (state.patientData && !patient) {
+        console.log('Setting patient from state:', state.patientData);
+        setPatient(state.patientData);
+      }
+      
+      // Set calculation data
+      if (state.calculationData && !calculationData) {
+        console.log('Setting calculation data from state:', state.calculationData);
+        setCalculationData(state.calculationData);
+        setCurrentStep('generation');
+      }
+    }
+  }, [location.state, patient, calculationData, setPatient, setCalculationData, setCurrentStep]);
+
+  // Initialize with active patient if available
   useEffect(() => {
     if (activePatient && !patient) {
       setPatient(activePatient);
@@ -48,21 +70,12 @@ const MealPlanWorkflow: React.FC = () => {
   };
 
   const handleGenerateMealPlan = async () => {
-    if (!user || !patient) return;
-    
-    // Use mock calculation data if none available
-    const mockCalculationData = {
-      id: 'mock',
-      totalCalories: 2000,
-      protein: 150,
-      carbs: 200,
-      fats: 67
-    };
-
-    if (!calculationData) {
-      setCalculationData(mockCalculationData);
+    if (!user || !patient || !calculationData) {
+      console.error('Missing required data for meal plan generation');
+      return;
     }
-
+    
+    console.log('Generating meal plan with data:', { patient, calculationData });
     await generateMealPlan(user.id);
   };
 

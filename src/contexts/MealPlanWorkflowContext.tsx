@@ -61,7 +61,9 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
       return;
     }
 
+    console.log('Starting meal plan generation with:', { patient, calculationData });
     setIsGenerating(true);
+    
     try {
       const targets: MacroTargets = {
         calories: calculationData.totalCalories || 2000,
@@ -69,6 +71,8 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
         carbs: calculationData.carbs || 200,
         fats: calculationData.fats || 67
       };
+
+      console.log('Generating meal plan with targets:', targets);
 
       const result = await MealPlanServiceV2.generateMealPlan({
         userId,
@@ -78,6 +82,7 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
       });
 
       if (result.success && result.data) {
+        console.log('Meal plan generated successfully:', result.data);
         setCurrentMealPlan(result.data);
         setCurrentStep('editing');
         toast({
@@ -85,6 +90,7 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
           description: 'Plano alimentar gerado com sucesso!'
         });
       } else {
+        console.error('Failed to generate meal plan:', result.error);
         toast({
           title: 'Erro',
           description: result.error || 'Erro ao gerar plano alimentar',
@@ -146,6 +152,7 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
   }, [currentMealPlan, toast]);
 
   const resetWorkflow = useCallback(() => {
+    console.log('Resetting workflow');
     setPatient(null);
     setCalculationData(null);
     setCurrentMealPlan(null);

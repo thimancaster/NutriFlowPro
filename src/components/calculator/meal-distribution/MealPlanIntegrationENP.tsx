@@ -37,7 +37,20 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
   const handleGenerateMealPlan = () => {
     if (!canGenerateMealPlan) return;
     
-    // Navigate to new meal plan workflow with calculation data
+    console.log('Navigating to meal plan workflow with data:', {
+      activePatient,
+      calculationData: {
+        id: `enp-${Date.now()}`,
+        totalCalories: vet,
+        protein: macros.protein.grams,
+        carbs: macros.carbs.grams,
+        fats: macros.fat.grams,
+        systemType: 'ENP',
+        ...calculationData
+      }
+    });
+    
+    // Navigate to meal plan workflow with calculation data
     navigate('/meal-plan-workflow', {
       state: {
         patientData: activePatient,
@@ -62,7 +75,7 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
     if (user.name) parts.push(user.name);
     
     // Access CRN from user metadata or direct property
-    const crn = user.user_metadata?.crn || user.crn;
+    const crn = user.user_metadata?.crn || (user as any).crn;
     if (crn) parts.push(`CRN: ${crn}`);
     
     if (parts.length > 0) {
