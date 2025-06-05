@@ -132,9 +132,19 @@ export class MealPlanServiceV2 {
   }
 
   /**
-   * Group meal plan items by meal type
+   * Group meal plan items by meal type in chronological order
    */
   private static groupItemsByMealType(items: MealPlanItem[]) {
+    // Define the chronological order of meals
+    const mealOrder = [
+      'breakfast',
+      'morning_snack', 
+      'lunch',
+      'afternoon_snack',
+      'dinner',
+      'evening_snack'
+    ];
+
     const grouped = items.reduce((acc, item) => {
       if (!acc[item.meal_type]) {
         acc[item.meal_type] = [];
@@ -154,16 +164,19 @@ export class MealPlanServiceV2 {
       return acc;
     }, {} as Record<string, any[]>);
 
-    return Object.entries(grouped).map(([type, foods]) => ({
-      id: `${type}-meal`,
-      type: type as 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack',
-      name: this.getMealTypeName(type),
-      foods,
-      total_calories: foods.reduce((sum, food) => sum + food.calories, 0),
-      total_protein: foods.reduce((sum, food) => sum + food.protein, 0),
-      total_carbs: foods.reduce((sum, food) => sum + food.carbs, 0),
-      total_fats: foods.reduce((sum, food) => sum + food.fats, 0)
-    }));
+    // Return meals in chronological order
+    return mealOrder
+      .filter(mealType => grouped[mealType])
+      .map(mealType => ({
+        id: `${mealType}-meal`,
+        type: mealType as 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack',
+        name: this.getMealTypeName(mealType),
+        foods: grouped[mealType] || [],
+        total_calories: (grouped[mealType] || []).reduce((sum, food) => sum + food.calories, 0),
+        total_protein: (grouped[mealType] || []).reduce((sum, food) => sum + food.protein, 0),
+        total_carbs: (grouped[mealType] || []).reduce((sum, food) => sum + food.carbs, 0),
+        total_fats: (grouped[mealType] || []).reduce((sum, food) => sum + food.fats, 0)
+      }));
   }
 
   /**
@@ -194,7 +207,7 @@ export class MealPlanServiceV2 {
   }
 
   /**
-   * Get meal type display name
+   * Get meal type display name in Portuguese
    */
   private static getMealTypeName(type: string): string {
     const names: Record<string, string> = {

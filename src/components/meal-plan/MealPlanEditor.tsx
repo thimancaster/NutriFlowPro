@@ -13,14 +13,25 @@ interface MealPlanEditorProps {
 
 type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
 
+// Configuração das refeições em ordem cronológica
 const MEAL_TYPE_CONFIG: Record<MealType, { name: string; time: string; color: string }> = {
-  breakfast: { name: 'Café da manhã', time: '07:00', color: 'bg-orange-100' },
-  morning_snack: { name: 'Lanche da manhã', time: '10:00', color: 'bg-yellow-100' },
+  breakfast: { name: 'Café da Manhã', time: '07:00', color: 'bg-orange-100' },
+  morning_snack: { name: 'Lanche da Manhã', time: '10:00', color: 'bg-yellow-100' },
   lunch: { name: 'Almoço', time: '12:30', color: 'bg-green-100' },
-  afternoon_snack: { name: 'Lanche da tarde', time: '15:30', color: 'bg-blue-100' },
+  afternoon_snack: { name: 'Lanche da Tarde', time: '15:30', color: 'bg-blue-100' },
   dinner: { name: 'Jantar', time: '19:00', color: 'bg-purple-100' },
   evening_snack: { name: 'Ceia', time: '21:30', color: 'bg-pink-100' }
 };
+
+// Ordem cronológica das refeições
+const MEAL_ORDER: MealType[] = [
+  'breakfast',
+  'morning_snack', 
+  'lunch',
+  'afternoon_snack',
+  'dinner',
+  'evening_snack'
+];
 
 const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
   const [items, setItems] = useState<MealPlanItem[]>(mealPlan.items || []);
@@ -75,11 +86,11 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
       </Card>
 
       <div className="grid gap-6">
-        {Object.entries(MEAL_TYPE_CONFIG).map(([mealType, config]) => (
+        {MEAL_ORDER.map((mealType) => (
           <MealTypeSection
             key={mealType}
-            mealType={mealType as MealType}
-            config={config}
+            mealType={mealType}
+            config={MEAL_TYPE_CONFIG[mealType]}
             items={groupedItems[mealType] || []}
             mealPlanId={mealPlan.id}
             onItemUpdate={handleItemUpdate}
