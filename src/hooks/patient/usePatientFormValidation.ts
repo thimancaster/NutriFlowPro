@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
 import { validateField } from '@/utils/patientValidation';
-import { validateSecureForm } from '@/utils/securityValidation';
+import { enhancedValidateSecureForm } from '@/utils/enhancedSecurityValidation';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 export const usePatientFormValidation = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { user } = useAuth();
 
   const handleValidateField = (field: string, value: any) => {
     console.log('Validating field in hook:', field, 'with value:', value);
@@ -18,18 +20,18 @@ export const usePatientFormValidation = () => {
     return !error;
   };
 
-  const validateForm = (formData: any, birthDate?: Date | undefined, address?: any) => {
-    console.log('Validating complete form:', { formData, birthDate, address });
+  const validateForm = async (formData: any, birthDate?: Date | undefined, address?: any) => {
+    console.log('Validating complete form with enhanced security:', { formData, birthDate, address });
     
-    // Use the new secure validation
-    const validation = validateSecureForm.patient({
+    // Use the enhanced secure validation with server-side validation
+    const validation = await enhancedValidateSecureForm.patient({
       ...formData,
       address,
       birthDate
-    });
+    }, user?.id);
 
     if (!validation.isValid) {
-      console.log('Form validation failed:', validation.errors);
+      console.log('Enhanced form validation failed:', validation.errors);
       setErrors(validation.errors);
       return false;
     }
@@ -42,19 +44,19 @@ export const usePatientFormValidation = () => {
       return false;
     }
 
-    console.log('Form validation passed');
+    console.log('Enhanced form validation passed');
     setErrors({});
     return true;
   };
 
-  const validateAndSanitizeForm = (formData: any, birthDate?: Date | undefined, address?: any) => {
-    console.log('Validating and sanitizing form:', { formData, birthDate, address });
+  const validateAndSanitizeForm = async (formData: any, birthDate?: Date | undefined, address?: any) => {
+    console.log('Validating and sanitizing form with enhanced security:', { formData, birthDate, address });
     
-    const validation = validateSecureForm.patient({
+    const validation = await enhancedValidateSecureForm.patient({
       ...formData,
       address,
       birthDate
-    });
+    }, user?.id);
 
     const result = {
       isValid: validation.isValid && !!birthDate,
@@ -64,7 +66,7 @@ export const usePatientFormValidation = () => {
       sanitizedData: validation.sanitizedData
     };
 
-    console.log('Validation and sanitization result:', result);
+    console.log('Enhanced validation and sanitization result:', result);
     return result;
   };
 
