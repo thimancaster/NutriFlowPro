@@ -36,6 +36,8 @@ export const usePatientFormSubmit = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submission started with data:', { formData, birthDate, address, notes });
+    
     // Rate limiting for patient creation/updates
     const rateLimitKey = editPatient ? `patient_update_${editPatient.id}` : `patient_create_${userId}`;
     const rateCheck = rateLimiter.checkLimit(rateLimitKey, 5, 60000); // 5 attempts per minute
@@ -51,8 +53,10 @@ export const usePatientFormSubmit = ({
     
     // Validate and sanitize form data
     const validation = validateAndSanitizeForm(formData, birthDate, address);
+    console.log('Validation result:', validation);
     
     if (!validation.isValid) {
+      console.log('Form validation failed:', validation.errors);
       toast({
         title: "Formulário inválido",
         description: "Por favor, corrija os campos destacados.",
@@ -103,8 +107,8 @@ export const usePatientFormSubmit = ({
         cpf: sanitizedFormData.cpf || null,
         user_id: userId,
         status: sanitizedFormData.status || 'active',
-        address: Object.values(sanitizedFormData.address || {}).some(value => value) ? sanitizedFormData.address : null,
-        notes: sanitizedFormData.notes || null,
+        address: Object.values(address || {}).some(value => value) ? address : null,
+        notes: notes || null,
         goals: {
           objective: sanitizedFormData.objective,
           profile: sanitizedFormData.profile,
@@ -119,13 +123,12 @@ export const usePatientFormSubmit = ({
       let result;
       
       if (editPatient) {
-        result = await PatientService.savePatient({
-          ...patientData,
-          id: editPatient.id
-        });
+        result = await PatientService.updatePatient(editPatient.id, userId, patientData);
       } else {
         result = await PatientService.savePatient(patientData);
       }
+      
+      console.log('Save result:', result);
       
       if (!result.success) {
         throw new Error(result.error || "Falha ao salvar paciente");

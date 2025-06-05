@@ -45,6 +45,9 @@ const PatientForm = ({ onSuccess, editPatient, onCancel, initialData }: PatientF
     userId
   });
 
+  console.log('PatientForm rendered with errors:', errors);
+  console.log('PatientForm formData:', formData);
+
   return (
     <Card className="nutri-card w-full">
       <CardHeader>

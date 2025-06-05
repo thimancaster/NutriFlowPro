@@ -62,7 +62,7 @@ const addressSchema = z.object({
   state: z.string().optional(),
 });
 
-// Patient schema for validation with improved gender handling
+// Patient schema for validation with corrected field names
 export const patientSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "E-mail inválido" }).or(z.string().length(0)),
@@ -96,6 +96,8 @@ export type PatientFormData = z.infer<typeof patientSchema>;
 // Validate specific field
 export const validateField = (field: string, value: any): string | null => {
   try {
+    console.log('Validating field:', field, 'with value:', value);
+    
     // For empty optional fields, don't validate
     if ((field === 'email' || field === 'phone' || field === 'secondaryPhone' || field === 'cpf') && 
         (!value || value === '')) {

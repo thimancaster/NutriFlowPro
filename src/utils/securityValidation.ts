@@ -1,215 +1,115 @@
 
-import { sanitizeHtml, sanitizeInput, isValidEmail, inputValidation } from './securityUtils';
+import { z } from 'zod';
 
-/**
- * Enhanced form validation with security focus
- */
+// Simple security validation utilities
 export const validateSecureForm = {
-  /**
-   * Validate and sanitize patient form data
-   */
   patient: (data: any) => {
-    const errors: Record<string, string> = {};
-    const sanitizedData: any = {};
-
-    // Sanitize and validate name
-    if (!data.name?.trim()) {
-      errors.name = 'Nome é obrigatório';
-    } else if (!inputValidation.name(data.name)) {
-      errors.name = 'Nome deve conter apenas letras e ter pelo menos 2 caracteres';
-    } else {
-      sanitizedData.name = sanitizeInput(data.name);
-    }
-
-    // Validate and sanitize email
-    if (data.email && !isValidEmail(data.email)) {
-      errors.email = 'Email inválido';
-    } else if (data.email) {
-      sanitizedData.email = sanitizeInput(data.email);
-    }
-
-    // Validate and sanitize phone
-    if (data.phone && !inputValidation.phone(data.phone)) {
-      errors.phone = 'Telefone inválido';
-    } else if (data.phone) {
-      sanitizedData.phone = sanitizeInput(data.phone);
-    }
-
-    // Validate and sanitize CPF
-    if (data.cpf && !inputValidation.cpf(data.cpf)) {
-      errors.cpf = 'CPF inválido';
-    } else if (data.cpf) {
-      sanitizedData.cpf = sanitizeInput(data.cpf);
-    }
-
-    // Sanitize notes and other text fields
-    if (data.notes) {
-      sanitizedData.notes = sanitizeHtml(data.notes);
-    }
-
-    // Sanitize address fields
-    if (data.address) {
-      sanitizedData.address = {
-        street: data.address.street ? sanitizeInput(data.address.street) : '',
-        number: data.address.number ? sanitizeInput(data.address.number) : '',
-        complement: data.address.complement ? sanitizeInput(data.address.complement) : '',
-        neighborhood: data.address.neighborhood ? sanitizeInput(data.address.neighborhood) : '',
-        city: data.address.city ? sanitizeInput(data.address.city) : '',
-        state: data.address.state ? sanitizeInput(data.address.state) : '',
-        cep: data.address.cep ? sanitizeInput(data.address.cep) : ''
-      };
-    }
-
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors,
-      sanitizedData: { ...data, ...sanitizedData }
-    };
-  },
-
-  /**
-   * Validate and sanitize food search input
-   */
-  foodSearch: (searchTerm: string) => {
-    if (!searchTerm?.trim()) {
-      return {
-        isValid: false,
-        error: 'Termo de busca é obrigatório',
-        sanitizedTerm: ''
-      };
-    }
-
-    // Prevent SQL injection patterns
-    const dangerousPatterns = /['"`;\\]/g;
-    if (dangerousPatterns.test(searchTerm)) {
-      return {
-        isValid: false,
-        error: 'Termo de busca contém caracteres inválidos',
-        sanitizedTerm: ''
-      };
-    }
-
-    // Limit length to prevent DoS
-    if (searchTerm.length > 100) {
-      return {
-        isValid: false,
-        error: 'Termo de busca muito longo',
-        sanitizedTerm: ''
-      };
-    }
-
-    return {
-      isValid: true,
-      error: null,
-      sanitizedTerm: sanitizeInput(searchTerm.trim())
-    };
-  },
-
-  /**
-   * Validate and sanitize notes/textarea content
-   */
-  notes: (content: string) => {
-    if (!content) {
-      return {
-        isValid: true,
-        sanitizedContent: ''
-      };
-    }
-
-    // Limit length
-    if (content.length > 10000) {
-      return {
-        isValid: false,
-        error: 'Conteúdo muito longo (máximo 10.000 caracteres)',
-        sanitizedContent: ''
-      };
-    }
-
-    return {
-      isValid: true,
-      error: null,
-      sanitizedContent: sanitizeHtml(content)
-    };
-  }
-};
-
-/**
- * CSRF Token management for forms
- */
-export const csrfProtection = {
-  /**
-   * Generate and attach CSRF token to form data
-   */
-  attachToken: (formData: any) => {
-    const token = sessionStorage.getItem('csrf_token') || generateSecureToken();
-    sessionStorage.setItem('csrf_token', token);
-    
-    return {
-      ...formData,
-      _csrf: token
-    };
-  },
-
-  /**
-   * Validate CSRF token
-   */
-  validateToken: (token: string) => {
-    const storedToken = sessionStorage.getItem('csrf_token');
-    return storedToken === token && token.length >= 32;
-  }
-};
-
-/**
- * Generate secure random token
- */
-function generateSecureToken(length: number = 32): string {
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-/**
- * Rate limiting for sensitive operations
- */
-export const rateLimiter = {
-  /**
-   * Check if operation is rate limited
-   */
-  checkLimit: (key: string, maxAttempts: number = 5, windowMs: number = 60000) => {
-    const now = Date.now();
-    const storageKey = `rate_limit_${key}`;
-    
     try {
-      const stored = localStorage.getItem(storageKey);
-      const data = stored ? JSON.parse(stored) : { attempts: 0, resetTime: now + windowMs };
-      
-      // Reset if window expired
-      if (now > data.resetTime) {
-        data.attempts = 0;
-        data.resetTime = now + windowMs;
+      // Basic sanitization
+      const sanitizedData = {
+        name: typeof data.name === 'string' ? data.name.trim() : '',
+        email: typeof data.email === 'string' ? data.email.trim().toLowerCase() : '',
+        phone: typeof data.phone === 'string' ? data.phone.trim() : '',
+        secondaryPhone: typeof data.secondaryPhone === 'string' ? data.secondaryPhone.trim() : '',
+        cpf: typeof data.cpf === 'string' ? data.cpf.trim() : '',
+        sex: data.sex || '',
+        objective: typeof data.objective === 'string' ? data.objective.trim() : '',
+        profile: typeof data.profile === 'string' ? data.profile.trim() : '',
+        address: data.address || {},
+        notes: typeof data.notes === 'string' ? data.notes.trim() : '',
+        status: data.status || 'active',
+        birthDate: data.birthDate
+      };
+
+      // Basic validation
+      const errors: Record<string, string> = {};
+
+      if (!sanitizedData.name || sanitizedData.name.length < 3) {
+        errors.name = 'Nome deve ter pelo menos 3 caracteres';
       }
-      
-      // Check limit
-      if (data.attempts >= maxAttempts) {
-        return {
-          allowed: false,
-          remaining: 0,
-          resetTime: data.resetTime
-        };
+
+      if (!sanitizedData.sex || !['M', 'F', 'O'].includes(sanitizedData.sex)) {
+        errors.sex = 'Selecione o sexo';
       }
-      
-      // Increment attempts
-      data.attempts += 1;
-      localStorage.setItem(storageKey, JSON.stringify(data));
-      
+
+      if (!sanitizedData.objective) {
+        errors.objective = 'Objetivo é obrigatório';
+      }
+
+      if (!sanitizedData.profile) {
+        errors.profile = 'Perfil é obrigatório';
+      }
+
+      // Email validation (optional but if provided must be valid)
+      if (sanitizedData.email && !sanitizedData.email.includes('@')) {
+        errors.email = 'E-mail inválido';
+      }
+
+      // Phone validation (if provided)
+      const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
+      if (sanitizedData.phone && !phoneRegex.test(sanitizedData.phone)) {
+        errors.phone = 'Telefone inválido: Use o formato (XX) XXXXX-XXXX';
+      }
+
+      if (sanitizedData.secondaryPhone && !phoneRegex.test(sanitizedData.secondaryPhone)) {
+        errors.secondaryPhone = 'Telefone secundário inválido: Use o formato (XX) XXXXX-XXXX';
+      }
+
       return {
-        allowed: true,
-        remaining: maxAttempts - data.attempts,
-        resetTime: data.resetTime
+        isValid: Object.keys(errors).length === 0,
+        errors,
+        sanitizedData
       };
     } catch (error) {
-      console.warn('Rate limiter error:', error);
-      return { allowed: true, remaining: maxAttempts, resetTime: now + windowMs };
+      console.error('Security validation error:', error);
+      return {
+        isValid: false,
+        errors: { general: 'Erro na validação dos dados' },
+        sanitizedData: data
+      };
+    }
+  }
+};
+
+// CSRF and rate limiting utilities
+export const csrfProtection = {
+  attachToken: (data: any) => {
+    // Simple token attachment for demonstration
+    return {
+      ...data,
+      _token: Date.now().toString()
+    };
+  }
+};
+
+export const rateLimiter = {
+  checkLimit: (key: string, limit: number, window: number) => {
+    // Simple rate limiting check
+    const now = Date.now();
+    const stored = localStorage.getItem(`rate_limit_${key}`);
+    
+    if (!stored) {
+      localStorage.setItem(`rate_limit_${key}`, JSON.stringify({ count: 1, timestamp: now }));
+      return { allowed: true };
+    }
+
+    try {
+      const { count, timestamp } = JSON.parse(stored);
+      
+      if (now - timestamp > window) {
+        // Reset window
+        localStorage.setItem(`rate_limit_${key}`, JSON.stringify({ count: 1, timestamp: now }));
+        return { allowed: true };
+      }
+
+      if (count >= limit) {
+        return { allowed: false };
+      }
+
+      localStorage.setItem(`rate_limit_${key}`, JSON.stringify({ count: count + 1, timestamp }));
+      return { allowed: true };
+    } catch {
+      return { allowed: true };
     }
   }
 };

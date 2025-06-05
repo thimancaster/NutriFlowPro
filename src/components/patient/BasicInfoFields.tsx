@@ -30,6 +30,12 @@ const BasicInfoFields = ({
   errors,
   validateField
 }: BasicInfoFieldsProps) => {
+  
+  const handleFieldBlur = (fieldName: string, value: any) => {
+    console.log('Field blur:', fieldName, value);
+    validateField(fieldName, value);
+  };
+
   return (
     <>
       <TextField 
@@ -40,7 +46,7 @@ const BasicInfoFields = ({
         onChange={handleChange} 
         required 
         error={errors.name}
-        onBlur={() => validateField('name', formData.name)}
+        onBlur={() => handleFieldBlur('name', formData.name)}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -53,13 +59,16 @@ const BasicInfoFields = ({
           mask={formatCpf}
           placeholder="000.000.000-00"
           error={errors.cpf}
-          onBlur={() => validateField('cpf', formData.cpf)}
+          onBlur={() => handleFieldBlur('cpf', formData.cpf)}
         />
         
         <RadioGroupField 
           label="Sexo" 
           value={formData.sex || ''} 
-          onChange={(value) => handleSelectChange('sex', value)} 
+          onChange={(value) => {
+            handleSelectChange('sex', value);
+            handleFieldBlur('sex', value);
+          }} 
           required
           options={[
             { value: "M", label: "Masculino" },
@@ -67,17 +76,18 @@ const BasicInfoFields = ({
             { value: "O", label: "Outro" }
           ]}
           error={errors.sex}
-          onBlur={() => validateField('sex', formData.sex)}
         />
       </div>
       
       <DateField 
         value={birthDate} 
-        onChange={setBirthDate}
+        onChange={(date) => {
+          setBirthDate(date);
+          handleFieldBlur('birthDate', date);
+        }}
         label="Data de Nascimento"
         required
         error={errors.birthDate}
-        onBlur={() => validateField('birthDate', birthDate)}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -91,7 +101,7 @@ const BasicInfoFields = ({
           mask={formatPhone}
           placeholder="(00) 00000-0000"
           error={errors.phone}
-          onBlur={() => validateField('phone', formData.phone)}
+          onBlur={() => handleFieldBlur('phone', formData.phone)}
         />
         
         <TextField 
@@ -103,7 +113,7 @@ const BasicInfoFields = ({
           mask={formatPhone}
           placeholder="(00) 00000-0000"
           error={errors.secondaryPhone}
-          onBlur={() => validateField('secondaryPhone', formData.secondaryPhone)}
+          onBlur={() => handleFieldBlur('secondaryPhone', formData.secondaryPhone)}
         />
       </div>
       
@@ -116,7 +126,7 @@ const BasicInfoFields = ({
         type="email"
         placeholder="exemplo@email.com"
         error={errors.email}
-        onBlur={() => validateField('email', formData.email)}
+        onBlur={() => handleFieldBlur('email', formData.email)}
       />
     </>
   );
