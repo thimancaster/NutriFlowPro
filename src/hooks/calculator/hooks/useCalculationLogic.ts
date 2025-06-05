@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CalculatorState } from '@/components/calculator/types';
 import { useToast } from '@/hooks/use-toast';
@@ -63,36 +64,39 @@ export const useCalculationLogic = (calculatorState: CalculatorState) => {
   ): { carbs: number; protein: number; fat: number } => {
     // Default macro distribution (carbs/protein/fat percentages)
     let carbsPercent = 0.50;
-    let proteinPercent = 0.25;
-    let fatPercent = 0.25;
-    
+    let proteinPercent = 0.20;
+    let fatPercent = 0.30;
+
     // Adjust based on objective
     switch (objective) {
       case 'emagrecimento':
-        carbsPercent = lowCarbOption ? 0.25 : 0.40;
-        proteinPercent = 0.35;
+        carbsPercent = lowCarbOption ? 0.30 : 0.45;
+        proteinPercent = 0.30;
         fatPercent = lowCarbOption ? 0.40 : 0.25;
-        // Apply a caloric deficit
-        tee = tee * 0.85;
         break;
       case 'hipertrofia':
-        carbsPercent = 0.50;
-        proteinPercent = 0.30;
+        carbsPercent = 0.55;
+        proteinPercent = 0.25;
         fatPercent = 0.20;
-        // Apply a caloric surplus
-        tee = tee * 1.10;
         break;
-      case 'manutenção':
+      case 'manutencao':
       default:
-        // Keep default distribution
+        carbsPercent = 0.50;
+        proteinPercent = 0.20;
+        fatPercent = 0.30;
         break;
     }
-    
-    // Calculate grams of each macronutrient
-    const proteinGrams = Math.round((tee * proteinPercent) / 4); // 4 calories per gram
-    const carbsGrams = Math.round((tee * carbsPercent) / 4); // 4 calories per gram
-    const fatGrams = Math.round((tee * fatPercent) / 9); // 9 calories per gram
-    
+
+    // Calculate macro calories
+    const carbsCalories = tee * carbsPercent;
+    const proteinCalories = tee * proteinPercent;
+    const fatCalories = tee * fatPercent;
+
+    // Convert to grams (4 kcal/g for carbs and protein, 9 kcal/g for fat)
+    const carbsGrams = Math.round(carbsCalories / 4);
+    const proteinGrams = Math.round(proteinCalories / 4);
+    const fatGrams = Math.round(fatCalories / 9);
+
     return {
       carbs: carbsGrams,
       protein: proteinGrams,
@@ -100,104 +104,73 @@ export const useCalculationLogic = (calculatorState: CalculatorState) => {
     };
   };
 
-  // Validate inputs for calculation
-  const validateInputsForCalculation = (state: CalculatorState): string | null => {
-    if (!state.weight || !state.height || !state.age) {
-      return "Preencha todos os campos obrigatórios: peso, altura e idade.";
-    }
-    
-    const weight = parseFloat(state.weight);
-    const height = parseFloat(state.height);
-    const age = parseFloat(state.age);
-    
-    if (isNaN(weight) || isNaN(height) || isNaN(age)) {
-      return "Os valores numéricos são inválidos.";
-    }
-    
-    if (weight <= 0 || weight > 300) {
-      return "Peso deve estar entre 1 e 300 kg.";
-    }
-    
-    if (height <= 0 || height > 250) {
-      return "Altura deve estar entre 1 e 250 cm.";
-    }
-    
-    if (age <= 0 || age > 120) {
-      return "Idade deve estar entre 1 e 120 anos.";
-    }
-    
-    return null;
-  };
-
-  // Perform all calculations
-  const performCalculations = (): CalculationResults => {
-    // Validate inputs first
-    const validationError = validateInputsForCalculation(calculatorState);
-    if (validationError) {
-      toast({
-        title: "Dados incompletos",
-        description: validationError,
-        variant: "destructive"
-      });
-      return { bmr: null, tee: null, macros: null };
-    }
-    
+  // Main calculation function
+  const performCalculation = () => {
     try {
+      // Validate inputs
+      if (!calculatorState.weight || !calculatorState.height || !calculatorState.age) {
+        toast({
+          title: "Dados incompletos",
+          description: "Preencha peso, altura e idade para realizar o cálculo.",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      const weight = Number(calculatorState.weight);
+      const height = Number(calculatorState.height);
+      const age = Number(calculatorState.age);
+
+      if (weight <= 0 || height <= 0 || age <= 0) {
+        toast({
+          title: "Valores inválidos",
+          description: "Peso, altura e idade devem ser valores positivos.",
+          variant: "destructive"
+        });
+        return null;
+      }
+
       // Calculate BMR
       const bmr = calculateBMR(calculatorState);
       
-      // Calculate TEE based on activity level
+      // Calculate TEE
       const tee = calculateTEE(bmr, calculatorState.activityLevel);
       
-      // Calculate macros based on objective and TEE
+      // Calculate macros
       const macros = calculateMacrosByObjective(
         calculatorState.objective,
         tee,
-        Number(calculatorState.weight),
-        calculatorState.lowCarbOption || false,
+        weight,
+        false, // lowCarbOption - could be a state if needed
         calculatorState.gender
       );
-      
-      return { bmr, tee, macros };
-    } catch (error) {
-      console.error("Error in calculation:", error);
+
+      const calculationResults = { bmr, tee, macros };
+      setResults(calculationResults);
+
       toast({
-        title: "Erro de cálculo",
-        description: "Ocorreu um erro ao realizar os cálculos. Verifique os dados e tente novamente.",
+        title: "Cálculo realizado",
+        description: `TMB: ${Math.round(bmr)} kcal | GET: ${Math.round(tee)} kcal`,
+      });
+
+      return calculationResults;
+    } catch (error) {
+      console.error('Erro no cálculo:', error);
+      toast({
+        title: "Erro no cálculo",
+        description: "Ocorreu um erro ao realizar o cálculo. Verifique os dados.",
         variant: "destructive"
       });
-      return { bmr: null, tee: null, macros: null };
+      return null;
     }
   };
-  
-  // Function to trigger calculations and update state
-  const calculateResults = () => {
-    const newResults = performCalculations();
-    setResults(newResults);
-    return newResults;
-  };
-  
-  // Check if the form has errors
-  const hasErrors = (): boolean => {
-    const requiredFields = ['weight', 'height', 'age'];
-    
-    for (const field of requiredFields) {
-      if (!calculatorState[field]) {
-        toast({
-          title: "Dados incompletos",
-          description: `Por favor, preencha o campo ${field}.`,
-          variant: "destructive"
-        });
-        return true;
-      }
-    }
-    
-    return false;
-  };
-  
+
   return {
     results,
-    calculateResults,
-    hasErrors
+    setResults,
+    performCalculation,
+    calculateBMR,
+    calculateTEE,
+    calculateMacrosByObjective
   };
 };

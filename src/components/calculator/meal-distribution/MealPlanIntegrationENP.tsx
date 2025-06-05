@@ -53,6 +53,21 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
       }
     });
   };
+
+  // Formatar exibição do profissional
+  const getProfessionalDisplay = () => {
+    if (!user) return 'Profissional não identificado';
+    
+    const parts = [];
+    if (user.name) parts.push(user.name);
+    if (user.crn) parts.push(`CRN: ${user.crn}`);
+    
+    if (parts.length > 0) {
+      return parts.join(' - ');
+    }
+    
+    return user.email;
+  };
   
   return (
     <Card>
@@ -91,12 +106,12 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
           </div>
         </div>
 
-        {/* Status do Paciente */}
-        {activePatient && (
+        {/* Status do Paciente e Profissional */}
+        {activePatient && user && (
           <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
             <strong>Paciente:</strong> {activePatient.name}
             <br />
-            <strong>Profissional:</strong> {user?.email}
+            <strong>Profissional:</strong> {getProfessionalDisplay()}
           </div>
         )}
 
