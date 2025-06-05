@@ -67,6 +67,11 @@ export const usePatientFormValidation = () => {
     };
 
     console.log('Enhanced validation and sanitization result:', result);
+    
+    if (!result.isValid) {
+      setErrors(result.errors);
+    }
+    
     return result;
   };
 

@@ -6,20 +6,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import { PatientProvider } from "./contexts/patient/PatientContext";
-import { GlobalErrorBoundary } from "./components/error/GlobalErrorBoundary";
+import GlobalErrorBoundary from "./components/error/GlobalErrorBoundary";
 import SecurityMonitor from "./components/security/SecurityMonitor";
 import Layout from "./components/Layout";
 import LandingPage from "./components/LandingPage";
 import Dashboard from "./components/Dashboard";
 import Patients from "./components/Patients";
 import CalculatorTool from "./components/calculator/CalculatorTool";
-import { MealPlanWorkflow } from "./components/MealPlanWorkflow/MealPlanWorkflow";
+import MealPlanWorkflow from "./components/MealPlanWorkflow/MealPlanWorkflow";
 import ConsultationFormWrapper from "./components/Consultation/ConsultationFormWrapper";
-import { ClinicalWorkflow } from "./components/clinical/ClinicalWorkflow";
+import ClinicalWorkflow from "./components/clinical/ClinicalWorkflow";
 import PatientHistory from "./components/PatientHistory";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthHandler from "./components/auth/AuthHandler";
-import { ProfileSettings } from "./components/Settings/ProfileSettings";
+import ProfileSettings from "./components/Settings/ProfileSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,7 +89,7 @@ const App = () => {
                     element={
                       <ProtectedRoute>
                         <Layout>
-                          <ConsultationFormWrapper />
+                          <div>Consultations feature coming soon</div>
                         </Layout>
                       </ProtectedRoute>
                     }

@@ -33,6 +33,11 @@ export const usePatientForm = ({ editPatient, initialData, onSuccess, userId }: 
     validateAndSanitizeForm
   } = usePatientFormValidation();
 
+  // Create a wrapper for validateAndSanitizeForm to match expected signature
+  const validateAndSanitizeFormSync = async (formData: any, birthDate?: Date, address?: any) => {
+    return await validateAndSanitizeForm(formData, birthDate, address);
+  };
+
   const {
     isLoading,
     handleSubmit
@@ -40,7 +45,7 @@ export const usePatientForm = ({ editPatient, initialData, onSuccess, userId }: 
     editPatient,
     onSuccess,
     userId,
-    validateAndSanitizeForm,
+    validateAndSanitizeForm: validateAndSanitizeFormSync,
     formData,
     birthDate,
     address,

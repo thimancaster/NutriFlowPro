@@ -11,11 +11,11 @@ interface UsePatientFormSubmitProps {
   editPatient?: Patient;
   onSuccess?: () => void;
   userId: string;
-  validateAndSanitizeForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => {
+  validateAndSanitizeForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => Promise<{
     isValid: boolean;
     errors: Record<string, string>;
     sanitizedData: any;
-  };
+  }>;
   formData: any;
   birthDate?: Date | undefined;
   address: AddressDetails;
@@ -68,7 +68,7 @@ export const usePatientFormSubmit = ({
     }
     
     // Enhanced client and server-side validation
-    const validation = validateAndSanitizeForm(formData, birthDate, address);
+    const validation = await validateAndSanitizeForm(formData, birthDate, address);
     console.log('Client validation result:', validation);
     
     if (!validation.isValid) {
