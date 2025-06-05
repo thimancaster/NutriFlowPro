@@ -3,19 +3,17 @@ import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { PatientService } from '@/services/patient';
 import { Patient, AddressDetails } from '@/types';
-import { enhancedCsrfProtection, enhancedRateLimiter } from '@/utils/enhancedSecurityValidation';
-import { useSecurityValidation } from '@/hooks/useSecurityValidation';
-import { logSecurityEvent, SecurityEvents } from '@/utils/auditLogger';
+import { csrfProtection, rateLimiter } from '@/utils/securityValidation';
 
 interface UsePatientFormSubmitProps {
   editPatient?: Patient;
   onSuccess?: () => void;
   userId: string;
-  validateAndSanitizeForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => Promise<{
+  validateAndSanitizeForm: (formData: any, birthDate?: Date | undefined, address?: AddressDetails) => {
     isValid: boolean;
     errors: Record<string, string>;
     sanitizedData: any;
-  }>;
+  };
   formData: any;
   birthDate?: Date | undefined;
   address: AddressDetails;
@@ -34,16 +32,15 @@ export const usePatientFormSubmit = ({
 }: UsePatientFormSubmitProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { validatePatientData, checkQuota } = useSecurityValidation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Form submission started with enhanced security validation:', { formData, birthDate, address, notes });
+    console.log('Form submission started with data:', { formData, birthDate, address, notes });
     
-    // Enhanced rate limiting with server-side tracking
-    const rateLimitKey = editPatient ? `patient_update_${editPatient.id}` : `patient_create`;
-    const rateCheck = await enhancedRateLimiter.checkLimit(userId, rateLimitKey, 5);
+    // Rate limiting for patient creation/updates
+    const rateLimitKey = editPatient ? `patient_update_${editPatient.id}` : `patient_create_${userId}`;
+    const rateCheck = rateLimiter.checkLimit(rateLimitKey, 5, 60000); // 5 attempts per minute
     
     if (!rateCheck.allowed) {
       toast({
@@ -53,47 +50,16 @@ export const usePatientFormSubmit = ({
       });
       return;
     }
-
-    // Check premium quota for new patients
-    if (!editPatient) {
-      const quotaCheck = await checkQuota('patients', 'create');
-      if (!quotaCheck.canAccess) {
-        toast({
-          title: "Limite atingido",
-          description: quotaCheck.reason || "Limite de pacientes atingido para sua conta.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
     
-    // Enhanced client and server-side validation
-    const validation = await validateAndSanitizeForm(formData, birthDate, address);
-    console.log('Client validation result:', validation);
+    // Validate and sanitize form data
+    const validation = validateAndSanitizeForm(formData, birthDate, address);
+    console.log('Validation result:', validation);
     
     if (!validation.isValid) {
-      console.log('Client validation failed:', validation.errors);
+      console.log('Form validation failed:', validation.errors);
       toast({
         title: "Formulário inválido",
         description: "Por favor, corrija os campos destacados.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Server-side validation for critical fields
-    const serverValidation = await validatePatientData(
-      validation.sanitizedData.name,
-      validation.sanitizedData.email,
-      validation.sanitizedData.phone,
-      validation.sanitizedData.cpf
-    );
-
-    if (!serverValidation.isValid) {
-      console.log('Server validation failed:', serverValidation.errors);
-      toast({
-        title: "Dados inválidos",
-        description: "Verifique os dados informados.",
         variant: "destructive",
       });
       return;
@@ -130,7 +96,7 @@ export const usePatientFormSubmit = ({
         genderValue = undefined;
       }
       
-      // Format data for Supabase with enhanced CSRF protection
+      // Format data for Supabase with CSRF protection
       let patientData: Partial<Patient> = {
         name: sanitizedFormData.name,
         gender: genderValue,
@@ -149,8 +115,8 @@ export const usePatientFormSubmit = ({
         },
       };
 
-      // Add enhanced CSRF protection
-      patientData = enhancedCsrfProtection.attachToken(patientData);
+      // Add CSRF protection
+      patientData = csrfProtection.attachToken(patientData);
 
       console.log('Submitting sanitized patient data:', patientData);
 
@@ -158,20 +124,8 @@ export const usePatientFormSubmit = ({
       
       if (editPatient) {
         result = await PatientService.updatePatient(editPatient.id, userId, patientData);
-        
-        // Log security event for patient update
-        await logSecurityEvent(userId, {
-          eventType: SecurityEvents.PATIENT_UPDATED,
-          eventData: { patientId: editPatient.id, patientName: sanitizedFormData.name }
-        });
       } else {
         result = await PatientService.savePatient(patientData);
-        
-        // Log security event for patient creation
-        await logSecurityEvent(userId, {
-          eventType: SecurityEvents.PATIENT_CREATED,
-          eventData: { patientName: sanitizedFormData.name }
-        });
       }
       
       console.log('Save result:', result);
@@ -191,17 +145,6 @@ export const usePatientFormSubmit = ({
       
     } catch (error: any) {
       console.error("Error saving patient:", error);
-      
-      // Log security event for failed operation
-      await logSecurityEvent(userId, {
-        eventType: editPatient ? SecurityEvents.PATIENT_UPDATED : SecurityEvents.PATIENT_CREATED,
-        eventData: { 
-          success: false, 
-          error: error.message,
-          patientName: formData.name 
-        }
-      });
-      
       toast({
         title: "Erro ao salvar paciente",
         description: error.message,

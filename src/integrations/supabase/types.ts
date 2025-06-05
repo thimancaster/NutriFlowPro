@@ -264,7 +264,7 @@ export type Database = {
           status: string
           tdee: number
           tipo: string
-          user_id: string
+          user_id: string | null
           weight: number
         }
         Insert: {
@@ -287,7 +287,7 @@ export type Database = {
           status?: string
           tdee: number
           tipo?: string
-          user_id: string
+          user_id?: string | null
           weight: number
         }
         Update: {
@@ -310,7 +310,7 @@ export type Database = {
           status?: string
           tdee?: number
           tipo?: string
-          user_id?: string
+          user_id?: string | null
           weight?: number
         }
         Relationships: [
@@ -570,7 +570,7 @@ export type Database = {
           total_fats: number
           total_protein: number
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           calculation_id?: string | null
@@ -587,7 +587,7 @@ export type Database = {
           total_fats: number
           total_protein: number
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           calculation_id?: string | null
@@ -604,7 +604,7 @@ export type Database = {
           total_fats?: number
           total_protein?: number
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -771,7 +771,7 @@ export type Database = {
           secondaryphone: string | null
           status: string
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -789,7 +789,7 @@ export type Database = {
           secondaryphone?: string | null
           status?: string
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -807,7 +807,7 @@ export type Database = {
           secondaryphone?: string | null
           status?: string
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -998,10 +998,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_premium_quota: {
-        Args: { p_user_id: string; p_feature: string; p_action?: string }
-        Returns: Json
-      }
       check_user_premium_status: {
         Args: { user_id: string }
         Returns: boolean
@@ -1076,16 +1072,6 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
-      log_security_event: {
-        Args: {
-          p_user_id: string
-          p_event_type: string
-          p_event_data?: Json
-          p_ip_address?: string
-          p_user_agent?: string
-        }
-        Returns: undefined
-      }
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
@@ -1117,15 +1103,6 @@ export type Database = {
           p_subscription_end?: string
         }
         Returns: undefined
-      }
-      validate_patient_data: {
-        Args: {
-          p_name: string
-          p_email?: string
-          p_phone?: string
-          p_cpf?: string
-        }
-        Returns: Json
       }
     }
     Enums: {

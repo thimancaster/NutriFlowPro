@@ -21,14 +21,6 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       };
     }
     
-    // Ensure user_id is present
-    if (!patient.user_id) {
-      return {
-        success: false,
-        error: 'User ID is required'
-      };
-    }
-    
     // Validate gender value before saving
     if (patient.gender && !['male', 'female', 'other'].includes(patient.gender)) {
       return {
@@ -37,22 +29,16 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       };
     }
     
-    // Prepare the data for insertion/update - ensure all fields match database schema
+    // Prepare the data for insertion/update
     const patientData = {
-      name: patient.name,
-      user_id: patient.user_id,
-      email: patient.email || null,
-      phone: patient.phone || null,
-      secondaryphone: patient.secondaryPhone || null, // Note: database uses 'secondaryphone'
-      cpf: patient.cpf || null,
-      gender: patient.gender || null,
-      birth_date: patient.birth_date || null,
-      status: patient.status || 'active',
-      // Convert complex objects to strings for storage
-      address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address || null,
-      goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals || null,
-      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements || null,
-      notes: patient.notes || null,
+      ...patient,
+      // Convert complex objects to strings for storage if needed
+      address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address,
+      goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals,
+      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements,
+      name: patient.name, // Ensure name is definitely present
+      // Ensure gender is set to null if undefined to avoid constraint issues
+      gender: patient.gender || null
     };
 
     let data, error;
@@ -177,7 +163,6 @@ const processPatientData = (data: any): Patient => {
   // Process database data into our Patient type
   const patient: Patient = {
     ...data,
-    secondaryPhone: data.secondaryphone, // Map database field to our type
     status: (data.status as 'active' | 'archived') || 'active',
     gender: safeGender(data.gender),
     goals: (data.goals as Record<string, any>) || {},
