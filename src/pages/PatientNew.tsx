@@ -86,12 +86,12 @@ const PatientNew = () => {
 
 	try {
 		return (
-			<div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+			<div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-dark-bg-primary dark:to-dark-bg-secondary">
 				<div className="container mx-auto px-4 py-8">
-					<h1 className="text-3xl font-bold text-nutri-blue mb-2">
+					<h1 className="text-3xl font-bold text-nutri-blue dark:text-nutri-blue-light mb-2">
 						{id ? "Editar Paciente" : "Novo Paciente"}
 					</h1>
-					<p className="text-gray-600 mb-6">
+					<p className="text-gray-600 dark:text-dark-text-muted mb-6">
 						{id
 							? "Atualize os dados do paciente conforme necessário"
 							: "Preencha os dados para cadastrar um novo paciente"}
@@ -107,7 +107,7 @@ const PatientNew = () => {
 								<h3 className="text-lg font-semibold text-red-600 mb-2">
 									Erro ao carregar paciente
 								</h3>
-								<p className="text-gray-600 mb-4">{error.message}</p>
+								<p className="text-gray-600 dark:text-dark-text-muted mb-4">{error.message}</p>
 								<button
 									onClick={() => navigate("/patients")}
 									className="px-4 py-2 bg-nutri-blue text-white rounded hover:bg-blue-600">
@@ -129,13 +129,13 @@ const PatientNew = () => {
 	} catch (renderError) {
 		console.error("PatientNew render error:", renderError);
 		return (
-			<div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+			<div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-dark-bg-primary dark:to-dark-bg-secondary">
 				<div className="container mx-auto px-4 py-8">
 					<div className="text-center">
 						<h1 className="text-2xl font-bold text-red-600 mb-4">
 							Erro de Renderização
 						</h1>
-						<p className="text-gray-600 mb-4">
+						<p className="text-gray-600 dark:text-dark-text-muted mb-4">
 							Ocorreu um erro ao carregar esta página.
 						</p>
 						<button
@@ -151,3 +151,4 @@ const PatientNew = () => {
 };
 
 export default PatientNew;
+

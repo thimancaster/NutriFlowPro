@@ -13,6 +13,11 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           "autofill:bg-background autofill:text-foreground",
           "[&:-webkit-autofill]:bg-background [&:-webkit-autofill]:text-foreground",
           "[&:-webkit-autofill]:!bg-white [&:-webkit-autofill:hover]:!bg-white [&:-webkit-autofill:focus]:!bg-white [&:-webkit-autofill:active]:!bg-white",
+          // Cores específicas para tema claro
+          "text-foreground placeholder:text-muted-foreground",
+          // Garantir contraste no tema claro
+          ":root:not(.dark) & { color: rgb(17 24 39); }",
+          ":root:not(.dark) &::placeholder { color: rgb(107 114 128); opacity: 1; }",
           className
         )}
         ref={ref}
@@ -24,3 +29,4 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 Input.displayName = "Input"
 
 export { Input }
+
