@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { MealPlanItem } from '@/types/mealPlan';
+import { useToast } from '@/hooks/use-toast';
 
 interface EditItemDialogProps {
   open: boolean;
@@ -21,6 +22,8 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
 }) => {
   const [quantity, setQuantity] = useState(0);
   const [originalItem, setOriginalItem] = useState<MealPlanItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (item) {
@@ -41,17 +44,44 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
     };
   };
 
-  const handleSave = () => {
-    if (!originalItem) return;
+  const handleSave = async () => {
+    if (!originalItem || quantity <= 0) {
+      toast({
+        title: "Erro",
+        description: "A quantidade deve ser maior que zero",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const nutrition = calculateNutrition(quantity);
-    const updatedItem: MealPlanItem = {
-      ...originalItem,
-      quantity,
-      ...nutrition
-    };
+    try {
+      setIsLoading(true);
+      
+      const nutrition = calculateNutrition(quantity);
+      const updatedItem: MealPlanItem = {
+        ...originalItem,
+        quantity,
+        ...nutrition
+      };
 
-    onSave(updatedItem);
+      onSave(updatedItem);
+      
+      toast({
+        title: "Sucesso",
+        description: "Item atualizado com sucesso!",
+      });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erro ao salvar item:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar as alterações",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!item) return null;
@@ -83,6 +113,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
               min="0.1"
               step="0.1"
               className="mt-1"
+              disabled={isLoading}
             />
           </div>
 
@@ -99,10 +130,18 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={handleSave} className="flex-1">
-              Salvar Alterações
+            <Button 
+              onClick={handleSave} 
+              className="flex-1" 
+              disabled={isLoading || quantity <= 0}
+            >
+              {isLoading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
           </div>

@@ -1,14 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DetailedMealPlan, MealPlanItem } from '@/types/mealPlan';
 import MealTypeSection from './MealTypeSection';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
+import { MealPlanService } from '@/services/mealPlanService';
 
 interface MealPlanEditorProps {
   mealPlan: DetailedMealPlan;
+  onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
 }
 
 type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
@@ -33,8 +36,17 @@ const MEAL_ORDER: MealType[] = [
   'evening_snack'     // Ceia - 21:30
 ];
 
-const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
+const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ 
+  mealPlan, 
+  onMealPlanUpdate 
+}) => {
   const [items, setItems] = useState<MealPlanItem[]>(mealPlan.items || []);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setItems(mealPlan.items || []);
+  }, [mealPlan.items]);
 
   // Agrupar itens por tipo de refeição
   const groupedItems = items.reduce((acc, item) => {
@@ -45,21 +57,80 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
     return acc;
   }, {} as Record<string, MealPlanItem[]>);
 
-  const handleItemUpdate = (updatedItem: MealPlanItem) => {
+  const saveMealPlanChanges = async (updatedItems: MealPlanItem[]) => {
+    try {
+      setIsLoading(true);
+      
+      // Calcular novos totais
+      const newTotals = updatedItems.reduce((acc, item) => {
+        acc.calories += item.calories;
+        acc.protein += item.protein;
+        acc.carbs += item.carbs;
+        acc.fats += item.fats;
+        return acc;
+      }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
+
+      // Atualizar o plano alimentar
+      const updatedMealPlan = {
+        ...mealPlan,
+        total_calories: newTotals.calories,
+        total_protein: newTotals.protein,
+        total_carbs: newTotals.carbs,
+        total_fats: newTotals.fats,
+        items: updatedItems
+      };
+
+      const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedMealPlan);
+      
+      if (result.success && result.data) {
+        toast({
+          title: "Sucesso",
+          description: "Plano alimentar atualizado com sucesso!",
+        });
+        
+        if (onMealPlanUpdate) {
+          onMealPlanUpdate(result.data as DetailedMealPlan);
+        }
+      } else {
+        throw new Error(result.error || 'Erro ao salvar alterações');
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar plano alimentar:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar alterações no plano alimentar",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleItemUpdate = async (updatedItem: MealPlanItem) => {
     console.log('Updating item:', updatedItem);
-    setItems(prev => prev.map(item => 
+    
+    const updatedItems = items.map(item => 
       item.id === updatedItem.id ? updatedItem : item
-    ));
+    );
+    
+    setItems(updatedItems);
+    await saveMealPlanChanges(updatedItems);
   };
 
-  const handleItemRemove = (itemId: string) => {
+  const handleItemRemove = async (itemId: string) => {
     console.log('Removing item:', itemId);
-    setItems(prev => prev.filter(item => item.id !== itemId));
+    
+    const updatedItems = items.filter(item => item.id !== itemId);
+    setItems(updatedItems);
+    await saveMealPlanChanges(updatedItems);
   };
 
-  const handleItemAdd = (newItem: MealPlanItem) => {
+  const handleItemAdd = async (newItem: MealPlanItem) => {
     console.log('Adding new item:', newItem);
-    setItems(prev => [...prev, newItem]);
+    
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    await saveMealPlanChanges(updatedItems);
   };
 
   // Recalcular totais baseados nos itens atuais
@@ -108,6 +179,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
             onItemUpdate={handleItemUpdate}
             onItemRemove={handleItemRemove}
             onItemAdd={handleItemAdd}
+            isLoading={isLoading}
           />
         ))}
       </div>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { MealPlanItem } from '@/types/mealPlan';
 import AddItemDialog from './AddItemDialog';
 import FoodSearchDialog from './FoodSearchDialog';
@@ -22,6 +22,7 @@ interface MealTypeSectionProps {
   onItemUpdate: (item: MealPlanItem) => void;
   onItemRemove: (itemId: string) => void;
   onItemAdd: (item: MealPlanItem) => void;
+  isLoading?: boolean;
 }
 
 const MealTypeSection: React.FC<MealTypeSectionProps> = ({
@@ -31,7 +32,8 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
   mealPlanId,
   onItemUpdate,
   onItemRemove,
-  onItemAdd
+  onItemAdd,
+  isLoading = false
 }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
@@ -60,6 +62,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
     };
 
     onItemAdd(newItem);
+    setShowSearchDialog(false);
   };
 
   const handleEditItem = (item: MealPlanItem) => {
@@ -75,11 +78,15 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
     setEditingItem(null);
   };
 
+  const handleRemoveItem = (itemId: string) => {
+    onItemRemove(itemId);
+  };
+
   // Obter sugestões específicas para esta refeição
   const suggestions = getMealSuggestions(mealType);
 
   return (
-    <Card>
+    <Card className={isLoading ? 'opacity-50' : ''}>
       <CardHeader className={`${config.color} border-b`}>
         <div className="flex justify-between items-center">
           <div>
@@ -87,11 +94,25 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
             <p className="text-sm text-gray-600">{config.time}</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setShowSearchDialog(true)}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => setShowSearchDialog(true)}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-1" />
+              )}
               Buscar Alimento
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setShowAddDialog(true)}>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => setShowAddDialog(true)}
+              disabled={isLoading}
+            >
               <Plus className="h-4 w-4 mr-1" />
               Adicionar Manual
             </Button>
@@ -143,6 +164,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
                         size="sm" 
                         variant="ghost"
                         onClick={() => handleEditItem(item)}
+                        disabled={isLoading}
                         className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                       >
                         <Edit className="h-3 w-3" />
@@ -150,7 +172,8 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
                       <Button 
                         size="sm" 
                         variant="ghost" 
-                        onClick={() => onItemRemove(item.id)}
+                        onClick={() => handleRemoveItem(item.id)}
+                        disabled={isLoading}
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-3 w-3" />
