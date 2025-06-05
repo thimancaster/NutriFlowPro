@@ -47,6 +47,10 @@ export const useMealPlanHandler = ({
     }
 
     try {
+      // Get weight and height from measurements or use defaults
+      const weight = patientData.measurements?.weight || 0;
+      const height = patientData.measurements?.height || 0;
+      
       // Primeiro, salvar o cálculo no banco de dados
       const calculationData = {
         user_id: user.id,
@@ -57,8 +61,8 @@ export const useMealPlanHandler = ({
         carbs: macros.carbs.grams || 0,
         fats: macros.fat.grams || 0,
         goal: objective,
-        weight: patientData.weight || 0,
-        height: patientData.height || 0,
+        weight: weight,
+        height: height,
         age: patientData.age || 0,
         gender: patientData.gender || 'other',
         activity_level: 'moderado', // valor padrão se não especificado

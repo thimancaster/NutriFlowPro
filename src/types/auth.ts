@@ -5,6 +5,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  crn?: string;
   created_at?: string;
   updated_at?: string;
   // Adicionar propriedades do Supabase para compatibilidade

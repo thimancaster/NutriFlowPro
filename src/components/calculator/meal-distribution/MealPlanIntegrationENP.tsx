@@ -60,7 +60,10 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
     
     const parts = [];
     if (user.name) parts.push(user.name);
-    if (user.crn) parts.push(`CRN: ${user.crn}`);
+    
+    // Access CRN from user metadata or direct property
+    const crn = user.user_metadata?.crn || user.crn;
+    if (crn) parts.push(`CRN: ${crn}`);
     
     if (parts.length > 0) {
       return parts.join(' - ');
