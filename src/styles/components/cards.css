@@ -1,0 +1,31 @@
+
+/* Componentes de cards e elementos visuais */
+@layer components {
+  /* Cards com hierarquia visual refinada */
+  .nutri-card {
+    @apply rounded-xl shadow-lg bg-card p-6 transition-all duration-300 hover:shadow-xl border backdrop-blur-sm;
+  }
+
+  .dark .nutri-card {
+    @apply bg-dark-bg-card border-dark-border-primary shadow-dark-lg hover:shadow-dark-xl;
+    background: linear-gradient(135deg, theme('colors.dark.bg.card') 0%, theme('colors.dark.bg.elevated') 100%);
+  }
+
+  /* Cards premium com gradientes */
+  .dark-premium-card {
+    @apply border-dark-border-accent;
+    background: linear-gradient(135deg, theme('colors.dark.bg.elevated') 0%, theme('colors.dark.bg.surface') 100%);
+    box-shadow: 0 0 30px rgba(34, 211, 170, 0.1);
+  }
+
+  .dark-dashboard-hero {
+    @apply border-dark-border-accent;
+    background: linear-gradient(135deg, rgba(34, 211, 170, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+  }
+
+  /* Cards de depoimento */
+  .dark-testimonial-card {
+    @apply bg-dark-bg-card border-dark-border-subtle shadow-dark-lg backdrop-blur-sm;
+    background: linear-gradient(135deg, theme('colors.dark.bg.card') 0%, theme('colors.dark.bg.elevated') 100%);
+  }
+}

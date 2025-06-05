@@ -1,0 +1,27 @@
+
+/* Componentes de navegação */
+@layer components {
+  /* Avatar melhorado */
+  .avatar-enhanced {
+    @apply transition-all duration-300 hover:scale-110 hover:shadow-lg
+           hover:ring-2 hover:ring-white/20 backdrop-blur-sm;
+  }
+
+  .dark .avatar-enhanced {
+    @apply hover:ring-dark-accent-green/30 hover:shadow-dark-glow;
+  }
+
+  /* Navegação aprimorada */
+  .dark-nav-item {
+    @apply text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-bg-elevated/60 
+           rounded-md transition-all duration-200 backdrop-blur-sm;
+  }
+
+  .dark-nav-item.active {
+    @apply text-dark-accent-green bg-dark-accent-green/10 shadow-inner;
+  }
+
+  .dark-nav-item:hover {
+    @apply shadow-sm;
+  }
+}

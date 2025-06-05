@@ -1,0 +1,36 @@
+
+/* Componentes de botões com animações */
+@layer components {
+  /* Botões com animações suaves */
+  .nutri-button {
+    @apply relative px-6 py-2 rounded-lg font-medium transition-all duration-300 
+           hover:shadow-lg active:shadow-inner active:scale-[0.98]
+           will-change-transform overflow-hidden backdrop-blur-sm;
+  }
+
+  .nutri-button::after {
+    @apply content-[''] absolute top-0 left-0 w-full h-full bg-white/10 opacity-0 
+           transition-all duration-300 pointer-events-none rounded-lg;
+  }
+
+  .nutri-button:hover::after {
+    @apply opacity-100;
+  }
+
+  .nutri-button-primary {
+    @apply nutri-button bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg;
+  }
+  
+  .nutri-button-secondary {
+    @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark shadow-lg;
+  }
+
+  /* Botões específicos para modo escuro */
+  .dark .nutri-button::after {
+    @apply bg-white/5;
+  }
+
+  .dark .nutri-button-primary {
+    @apply bg-dark-accent-green text-dark-bg-primary hover:bg-dark-accent-green/90 shadow-dark-glow;
+  }
+}

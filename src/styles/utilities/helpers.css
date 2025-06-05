@@ -1,0 +1,135 @@
+
+/* Classes utilitárias e helpers */
+@layer utilities {
+  /* Link animado melhorado */
+  .text-link {
+    @apply relative inline-block text-primary transition-colors duration-200;
+  }
+  
+  .text-link::after {
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary 
+           transition-all duration-300 ease-out;
+  }
+  
+  .text-link:hover::after {
+    @apply w-full;
+  }
+
+  .dark .text-link {
+    @apply text-dark-accent-green;
+  }
+
+  .dark .text-link::after {
+    @apply bg-dark-accent-green;
+  }
+  
+  /* Efeitos de card melhorados */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  .dark .card-hover {
+    @apply hover:shadow-dark-xl;
+  }
+  
+  /* Gradientes de texto */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+  
+  .text-gradient-blue {
+    @apply text-gradient from-nutri-blue to-nutri-blue-light;
+  }
+  
+  .text-gradient-green {
+    @apply text-gradient from-nutri-green to-nutri-green-light;
+  }
+
+  .dark .text-gradient-green {
+    @apply from-dark-accent-green to-emerald-400;
+  }
+
+  /* Utilitários específicos para modo escuro */
+  .dark-card {
+    @apply dark:bg-dark-bg-card dark:border-dark-border-primary;
+  }
+
+  .dark-text {
+    @apply dark:text-dark-text-primary;
+  }
+
+  .dark-bg-secondary {
+    @apply dark:bg-dark-bg-secondary;
+  }
+
+  .dark-surface {
+    @apply dark:bg-dark-bg-surface;
+  }
+
+  /* Contraste alto para acessibilidade */
+  .high-contrast {
+    @apply contrast-125;
+  }
+
+  /* Indicadores de foco melhorados */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .dark .focus-ring {
+    @apply focus:ring-dark-accent-green focus:ring-offset-dark-bg-primary;
+  }
+
+  /* Gradientes de fundo para modo escuro */
+  .dark-gradient-bg {
+    background: linear-gradient(135deg, theme('colors.dark.bg.primary') 0%, theme('colors.dark.bg.secondary') 100%);
+  }
+
+  .dark-hero-gradient {
+    background: linear-gradient(135deg, rgba(34, 211, 170, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+  }
+
+  /* Bordas refinadas */
+  .dark-border {
+    @apply dark:border-dark-border-primary;
+  }
+
+  .dark-border-subtle {
+    @apply dark:border-dark-border-subtle;
+  }
+
+  .dark-border-accent {
+    @apply dark:border-dark-border-accent;
+  }
+
+  /* Sombras aprimoradas */
+  .dark-shadow {
+    @apply dark:shadow-dark-lg;
+  }
+
+  .dark-shadow-xl {
+    @apply dark:shadow-dark-xl;
+  }
+
+  .dark-glow {
+    @apply dark:shadow-dark-glow;
+  }
+
+  /* Efeito de brilho para elementos importantes */
+  .glow-on-hover {
+    @apply transition-all duration-300;
+  }
+
+  .dark .glow-on-hover:hover {
+    @apply shadow-dark-glow;
+  }
+
+  /* Backdrop blur para overlays */
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+
+  .dark .glass-effect {
+    @apply bg-dark-bg-overlay/60 border-dark-border-primary/50;
+  }
+}

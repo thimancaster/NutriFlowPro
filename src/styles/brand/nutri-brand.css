@@ -1,0 +1,20 @@
+
+/* Estilos específicos da marca NutriFlow */
+@layer utilities {
+  /* Melhorias para elementos específicos do NutriFlow */
+  .nutri-brand {
+    @apply font-bold text-xl;
+  }
+
+  .dark .nutri-brand .nutri-text {
+    @apply text-dark-accent-green;
+  }
+
+  .dark .nutri-brand .flow-text {
+    @apply text-nutri-blue;
+  }
+
+  .dark .nutri-brand .pro-text {
+    @apply text-dark-text-muted text-sm;
+  }
+}

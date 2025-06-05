@@ -1,0 +1,24 @@
+
+/* Estilos globais base e reset */
+@layer base {
+  * {
+    @apply border-border transition-colors duration-200;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Garante que o html sempre tenha o fundo correto */
+  html {
+    @apply bg-background;
+    scroll-behavior: smooth;
+  }
+
+  /* Focus styles aprimorados para modo escuro */
+  :focus {
+    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
+  }
+}
