@@ -68,6 +68,92 @@ export const validateSecureForm = {
         sanitizedData: data
       };
     }
+  },
+
+  foodSearch: (searchTerm: string) => {
+    try {
+      // Basic sanitization for search term
+      const sanitizedTerm = typeof searchTerm === 'string' ? searchTerm.trim() : '';
+      
+      // Basic validation
+      if (sanitizedTerm.length === 0) {
+        return {
+          isValid: false,
+          error: 'Termo de busca não pode estar vazio',
+          sanitizedTerm: ''
+        };
+      }
+
+      if (sanitizedTerm.length > 100) {
+        return {
+          isValid: false,
+          error: 'Termo de busca muito longo (máximo 100 caracteres)',
+          sanitizedTerm: sanitizedTerm.substring(0, 100)
+        };
+      }
+
+      // Check for potential malicious content
+      const dangerousPatterns = /<script|javascript:|data:|vbscript:|on\w+=/i;
+      if (dangerousPatterns.test(sanitizedTerm)) {
+        return {
+          isValid: false,
+          error: 'Termo de busca contém caracteres inválidos',
+          sanitizedTerm: ''
+        };
+      }
+
+      return {
+        isValid: true,
+        error: null,
+        sanitizedTerm
+      };
+    } catch (error) {
+      console.error('Food search validation error:', error);
+      return {
+        isValid: false,
+        error: 'Erro na validação do termo de busca',
+        sanitizedTerm: ''
+      };
+    }
+  },
+
+  notes: (content: string) => {
+    try {
+      // Basic sanitization for notes content
+      const sanitizedContent = typeof content === 'string' ? content.trim() : '';
+      
+      // Basic validation
+      if (sanitizedContent.length > 10000) {
+        return {
+          isValid: false,
+          error: 'Conteúdo muito longo (máximo 10.000 caracteres)',
+          sanitizedContent: sanitizedContent.substring(0, 10000)
+        };
+      }
+
+      // Check for potential malicious content (basic XSS prevention)
+      const dangerousPatterns = /<script|javascript:|data:|vbscript:|on\w+=/i;
+      if (dangerousPatterns.test(sanitizedContent)) {
+        return {
+          isValid: false,
+          error: 'Conteúdo contém caracteres inválidos',
+          sanitizedContent: sanitizedContent.replace(dangerousPatterns, '')
+        };
+      }
+
+      return {
+        isValid: true,
+        error: null,
+        sanitizedContent
+      };
+    } catch (error) {
+      console.error('Notes validation error:', error);
+      return {
+        isValid: false,
+        error: 'Erro na validação do conteúdo',
+        sanitizedContent: ''
+      };
+    }
   }
 };
 
