@@ -17,7 +17,7 @@ const Dashboard = () => {
   const { dashboardData } = useDashboardData(user?.id);
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark-gradient-bg">
+    <div className="min-h-screen bg-background dark:bg-dark-bg-primary">
       <Helmet>
         <title>Dashboard - NutriFlow Pro</title>
       </Helmet>

@@ -106,8 +106,9 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Smooth scrolling melhorado */
+  /* Garante que o html sempre tenha o fundo correto */
   html {
+    @apply bg-background;
     scroll-behavior: smooth;
   }
 
@@ -119,6 +120,10 @@
   /* Dark mode base improvements */
   .dark {
     color-scheme: dark;
+  }
+
+  .dark html {
+    @apply bg-dark-bg-primary;
   }
 
   .dark body {
@@ -197,7 +202,7 @@
 @layer components {
   /* Cards com hierarquia visual refinada */
   .nutri-card {
-    @apply rounded-xl shadow-md bg-card p-6 transition-all duration-300 hover:shadow-lg border backdrop-blur-sm;
+    @apply rounded-xl shadow-lg bg-card p-6 transition-all duration-300 hover:shadow-xl border backdrop-blur-sm;
   }
 
   .dark .nutri-card {
@@ -222,7 +227,7 @@
   /* Botões com animações suaves */
   .nutri-button {
     @apply relative px-6 py-2 rounded-lg font-medium transition-all duration-300 
-           hover:shadow-md active:shadow-inner active:scale-[0.98]
+           hover:shadow-lg active:shadow-inner active:scale-[0.98]
            will-change-transform overflow-hidden backdrop-blur-sm;
   }
 
@@ -236,11 +241,11 @@
   }
 
   .nutri-button-primary {
-    @apply nutri-button bg-nutri-green text-white hover:bg-nutri-green-dark;
+    @apply nutri-button bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg;
   }
   
   .nutri-button-secondary {
-    @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark;
+    @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark shadow-lg;
   }
 
   /* Botões específicos para modo escuro */
@@ -254,7 +259,7 @@
 
   /* Avatar melhorado */
   .avatar-enhanced {
-    @apply transition-all duration-300 hover:scale-105 hover:shadow-md
+    @apply transition-all duration-300 hover:scale-110 hover:shadow-lg
            hover:ring-2 hover:ring-white/20 backdrop-blur-sm;
   }
 
@@ -268,7 +273,7 @@
   }
   
   .hover-lift {
-    @apply transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg;
+    @apply transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl;
   }
 
   .dark .hover-lift {
@@ -301,7 +306,7 @@
 
   /* Dropdown com backdrop blur */
   .dropdown-content {
-    @apply bg-popover border border-border shadow-lg backdrop-blur-md;
+    @apply bg-popover border border-border shadow-xl backdrop-blur-md z-50;
   }
 
   .dark .dropdown-content {
@@ -395,7 +400,7 @@
   
   /* Efeitos de card melhorados */
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
 
   .dark .card-hover {
@@ -419,7 +424,7 @@
     @apply from-dark-accent-green to-emerald-400;
   }
 
-  /* Utilitários específicos para modo escuro - REMOVENDO dark-bg QUE ESTAVA CAUSANDO PROBLEMA */
+  /* Utilitários específicos para modo escuro */
   .dark-card {
     @apply dark:bg-dark-bg-card dark:border-dark-border-primary;
   }

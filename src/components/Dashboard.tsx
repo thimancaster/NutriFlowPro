@@ -81,7 +81,7 @@ const Dashboard = () => {
           </motion.div>
         )}
         
-        {/* Hero section com efeito de brilho */}
+        {/* Hero section com efeito de brilho - corrigindo o fundo */}
         <motion.div 
           variants={itemVariants}
           className="glow-on-hover"
