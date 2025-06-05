@@ -31,9 +31,12 @@ export const validatePatientDataServer = async (
       };
     }
 
+    // Cast the response to our expected type and handle the structure
+    const result = data as unknown as { isValid: boolean; errors?: Record<string, string> };
+    
     return {
-      isValid: data.isValid,
-      errors: data.errors || {}
+      isValid: result.isValid,
+      errors: result.errors || {}
     };
   } catch (error) {
     console.error('Validation failed:', error);

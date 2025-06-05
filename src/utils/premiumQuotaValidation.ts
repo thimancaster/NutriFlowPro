@@ -36,7 +36,8 @@ export const checkPremiumQuota = async (
       };
     }
 
-    return data as QuotaCheckResult;
+    // Cast the response to our expected type
+    return data as unknown as QuotaCheckResult;
   } catch (error) {
     console.error('Quota check failed:', error);
     return {
