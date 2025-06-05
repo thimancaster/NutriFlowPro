@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PatientFilters } from '@/types';
 import { Search } from 'lucide-react';
@@ -19,44 +19,60 @@ const PatientFiltersComponent: React.FC<PatientFiltersComponentProps> = ({
   onStatusChange,
   onSearch
 }) => {
+  const [localSearchValue, setLocalSearchValue] = useState(filters.search || '');
+
   const handleSearchChange = (value: string) => {
-    onFiltersChange({ search: value });
+    setLocalSearchValue(value);
+  };
+
+  const handleSearchSubmit = () => {
+    onFiltersChange({ search: localSearchValue, page: 1 });
+    onSearch();
   };
 
   const handleStatusFilterChange = (value: 'active' | 'archived' | 'all') => {
     onStatusChange(value);
   };
 
-  const handleSearchClick = () => {
-    onSearch();
+  const handleClearFilters = () => {
+    setLocalSearchValue('');
+    onFiltersChange({ search: '', status: '', page: 1 });
   };
 
   return (
-    <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border space-y-4">
+    <div className="mb-6 bg-white dark:bg-dark-bg-card p-4 rounded-lg shadow-sm border dark:border-dark-border-primary space-y-4">
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
           <SearchField 
-            value={filters.search || ''} 
+            value={localSearchValue} 
             onChange={handleSearchChange}
-            onSearch={handleSearchClick}
+            onSearch={handleSearchSubmit}
           />
         </div>
         
         <div className="w-full md:w-48">
           <StatusFilter 
-            value={filters.status} 
+            value={filters.status || 'all'} 
             onChange={handleStatusFilterChange} 
           />
         </div>
         
-        <div>
+        <div className="flex gap-2">
           <Button 
             variant="default" 
-            onClick={handleSearchClick}
+            onClick={handleSearchSubmit}
             className="w-full md:w-auto"
           >
             <Search className="h-4 w-4 mr-2" />
             Buscar
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleClearFilters}
+            className="w-full md:w-auto"
+          >
+            Limpar
           </Button>
         </div>
       </div>

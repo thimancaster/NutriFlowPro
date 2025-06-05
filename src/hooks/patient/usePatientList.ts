@@ -2,8 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Patient, PatientFilters, PatientListResponse } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { usePatientFetching } from './usePatientFetching';
-import { usePatientFilters } from './usePatientFilters';
+import { getPatients } from '@/services/patient/operations/getPatients';
 
 interface PaginationInfo {
   currentPage: number;
@@ -25,52 +24,109 @@ interface UsePatientListReturn {
   refetch: () => Promise<void>;
 }
 
+const defaultFilters: PatientFilters = {
+  status: '',
+  search: '',
+  sortBy: 'name',
+  sortOrder: 'asc',
+  page: 1,
+  limit: 10
+};
+
 export const usePatientList = (): UsePatientListReturn => {
   const { user } = useAuth();
-  const { filters, updateFilters, handleStatusChange } = usePatientFilters();
-  const { patients, isLoading, error, fetchPatients } = usePatientFetching(user?.id);
-  const [response, setResponse] = useState<PatientListResponse>({
-    patients: [],
-    total: 0,
-    page: 1,
+  const [filters, setFilters] = useState<PatientFilters>(defaultFilters);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
     totalPages: 1,
-    limit: 10
+    total: 0,
+    pageSize: 10
   });
 
-  // Fetch data whenever filters change
-  useEffect(() => {
-    if (user?.id) {
-      fetchPatients(filters).then(setResponse);
+  const fetchPatients = useCallback(async () => {
+    if (!user?.id) {
+      setPatients([]);
+      setError(null);
+      return;
     }
-  }, [user?.id, filters, fetchPatients]);
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log('Fetching patients with filters:', filters);
+      
+      const response = await getPatients(
+        user.id,
+        {
+          search: filters.search,
+          status: filters.status === '' ? 'all' : (filters.status as 'active' | 'archived' | 'all'),
+          sortBy: filters.sortBy,
+          sortOrder: filters.sortOrder
+        },
+        filters.page || 1,
+        filters.limit || 10
+      );
+
+      if (response.success && response.data) {
+        setPatients(response.data);
+        const total = response.total || 0;
+        const pageSize = filters.limit || 10;
+        
+        setPagination({
+          currentPage: filters.page || 1,
+          totalPages: Math.ceil(total / pageSize),
+          total,
+          pageSize
+        });
+      } else {
+        setError(response.error || 'Erro ao carregar pacientes');
+        setPatients([]);
+      }
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+      setError('Erro ao carregar pacientes');
+      setPatients([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id, filters]);
+
+  // Fetch data when user or filters change
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
 
   const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
-    updateFilters(newFilters);
-  }, [updateFilters]);
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters,
+      page: newFilters.page !== undefined ? newFilters.page : 1
+    }));
+  }, []);
 
   const handlePageChange = useCallback((page: number) => {
-    updateFilters({ page });
-  }, [updateFilters]);
+    setFilters(prev => ({ ...prev, page }));
+  }, []);
+
+  const handleStatusChange = useCallback((status: 'active' | 'archived' | '') => {
+    setFilters(prev => ({ ...prev, status, page: 1 }));
+  }, []);
 
   const refetch = useCallback(async () => {
-    if (user?.id) {
-      const newResponse = await fetchPatients(filters);
-      setResponse(newResponse);
-    }
-  }, [user?.id, filters, fetchPatients]);
+    await fetchPatients();
+  }, [fetchPatients]);
 
   return {
-    patients: response.patients,
+    patients,
     isLoading,
-    error: error || null,
+    error,
     filters,
-    pagination: {
-      currentPage: response.page,
-      totalPages: response.totalPages,
-      total: response.total,
-      pageSize: response.limit
-    },
-    totalPatients: response.total,
+    pagination,
+    totalPatients: pagination.total,
     handleFilterChange,
     handlePageChange,
     handleStatusChange,

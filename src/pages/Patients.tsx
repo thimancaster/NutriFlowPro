@@ -26,10 +26,10 @@ const Patients = () => {
   // Custom wrapper for the patient detail functionality
   const { 
     patient, 
-    refetch,
-    isLoading,
-    error,
-    isError
+    refetch: refetchPatientDetail,
+    isLoading: isPatientDetailLoading,
+    error: patientDetailError,
+    isError: isPatientDetailError
   } = usePatientDetail();
   
   // Manual implementation of the missing properties
@@ -54,14 +54,17 @@ const Patients = () => {
     totalPatients,
     pagination,
     filters,
+    isLoading,
+    error,
     handlePageChange,
     handleFilterChange,
-    handleStatusChange
+    handleStatusChange,
+    refetch
   } = usePatientList();
   
   // Function to handle patient status change and refresh
   const handlePatientStatusChange = async () => {
-    refetch();
+    await refetch();
     if (patient) {
       // Refresh the patient details after status change
       const updatedPatient = patients.find(p => p.id === patient.id);
@@ -112,6 +115,11 @@ const Patients = () => {
     handleStatusChange(mappedStatus as 'active' | 'archived' | '');
   };
 
+  const handleSearchAction = () => {
+    // The search is handled automatically by the filter changes
+    console.log('Search triggered');
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PatientPageHeader />
@@ -120,7 +128,7 @@ const Patients = () => {
         filters={filters}
         onFiltersChange={handleFilterChange}
         onStatusChange={handleStatusChangeWrapper}
-        onSearch={() => refetch()}
+        onSearch={handleSearchAction}
       />
       
       <Card>
@@ -130,9 +138,9 @@ const Patients = () => {
         <CardContent>
           {isLoading ? (
             <PatientLoadingState />
-          ) : isError ? (
+          ) : error ? (
             <PatientErrorState 
-              errorMessage={error?.message || "Failed to load patients"} 
+              errorMessage={error} 
               onRetry={() => refetch()} 
             />
           ) : (
