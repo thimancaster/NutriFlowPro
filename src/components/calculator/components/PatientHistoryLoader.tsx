@@ -96,7 +96,7 @@ const PatientHistoryLoader: React.FC<PatientHistoryLoaderProps> = ({
               </div>
               <div>
                 <span className="text-muted-foreground">GET:</span>
-                <div className="font-medium">{Math.round(lastConsultation.get_value)} kcal</div>
+                <div className="font-medium">{Math.round(lastConsultation.get)} kcal</div>
               </div>
             </div>
 

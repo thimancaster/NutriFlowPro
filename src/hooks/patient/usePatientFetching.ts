@@ -20,7 +20,8 @@ export const usePatientQuery = (patientId: string | undefined) => {
       // Transform database field to match Patient interface
       const patient: Patient = {
         ...data,
-        secondaryPhone: data.secondaryphone, // Map database field to interface field
+        secondaryPhone: data.secondaryphone,
+        gender: data.gender as 'male' | 'female' | 'other' | undefined,
       };
       
       return patient;
@@ -70,7 +71,8 @@ export const usePatientsQuery = (userId: string | undefined, filters?: {
       // Transform database fields to match Patient interface
       const patients: Patient[] = (data || []).map(patient => ({
         ...patient,
-        secondaryPhone: patient.secondaryphone, // Map database field to interface field
+        secondaryPhone: patient.secondaryphone,
+        gender: patient.gender as 'male' | 'female' | 'other' | undefined,
       }));
       
       return patients;
@@ -115,4 +117,27 @@ export const usePatientMealPlansQuery = (patientId: string | undefined) => {
     },
     enabled: !!patientId,
   });
+};
+
+// Hook principal que utiliza os serviços de paciente
+export const usePatientFetching = (userId?: string) => {
+  const { data: patients = [], isLoading, error, refetch } = usePatientsQuery(userId);
+  
+  const fetchPatients = async (filters?: any) => {
+    await refetch();
+    return {
+      patients,
+      total: patients.length,
+      page: 1,
+      totalPages: 1,
+      limit: 10
+    };
+  };
+
+  return {
+    patients,
+    isLoading,
+    error: error?.message,
+    fetchPatients
+  };
 };

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { consultationHistoryService, ConsultationHistoryData } from '@/services/consultationHistoryService';
+import { ConsultationHistoryData, consultationHistoryService } from '@/services/consultationHistoryService';
 import { useToast } from '@/hooks/use-toast';
 
 export interface UsePatientConsultationHistoryReturn {
@@ -33,7 +33,7 @@ export const usePatientConsultationHistory = (patientId?: string): UsePatientCon
 
     try {
       // Buscar histórico completo
-      const historyData = await consultationHistoryService.getPatientHistory(patientId);
+      const historyData = await consultationHistoryService.getPatientHistory(patientId, '');
       setHistory(historyData);
 
       // Buscar última consulta

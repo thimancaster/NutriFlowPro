@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -111,19 +110,19 @@ const PatientDataHandler: React.FC<PatientDataHandlerProps> = ({
         height: parseFloat(height),
         age: parseInt(age),
         sex: gender === 'male' ? 'M' as const : 'F' as const,
-        body_profile: 'eutrofico', // Default - pode ser melhorado com lógica de classificação
+        body_profile: 'eutrofico',
         activity_level: activityLevel,
         objective: objective,
         tmb: calculationData.bmr,
         get: calculationData.tdee,
-        vet: calculationData.tdee, // VET = GET para simplificar
+        vet: calculationData.tdee,
         protein_g: calculationData.macros.protein.grams,
         carbs_g: calculationData.macros.carbs.grams,
         fat_g: calculationData.macros.fat.grams,
         protein_kcal: calculationData.macros.protein.kcal,
         carbs_kcal: calculationData.macros.carbs.kcal,
         fat_kcal: calculationData.macros.fat.kcal,
-        formula_used: 'Harris-Benedict', // Default
+        formula_used: 'Harris-Benedict',
         notes: `Consulta realizada em ${new Date().toLocaleDateString('pt-BR')}`
       };
 
