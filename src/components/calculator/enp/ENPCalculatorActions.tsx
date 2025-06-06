@@ -14,7 +14,7 @@ interface ENPCalculatorActionsProps {
   isGeneratingMealPlan?: boolean;
 }
 
-const ENPCalculatorActions: React.FC<ENPCalculatorActionsProps> = ({
+export const ENPCalculatorActions: React.FC<ENPCalculatorActionsProps> = ({
   results,
   onExport,
   onGenerateMealPlan,

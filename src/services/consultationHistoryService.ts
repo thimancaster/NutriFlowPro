@@ -56,6 +56,11 @@ export const getConsultationHistory = async (
   patientId: string, 
   userId: string
 ): Promise<ConsultationHistoryData[]> => {
+  if (!userId) {
+    console.warn('User ID is required for fetching consultation history');
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('calculation_history')
     .select('*')
@@ -65,6 +70,10 @@ export const getConsultationHistory = async (
 
   if (error) {
     console.error('Error fetching consultation history:', error);
+    // Se for erro de dados não encontrados, retornar array vazio em vez de erro
+    if (error.code === 'PGRST116') {
+      return [];
+    }
     throw new Error('Erro ao buscar histórico de consultas');
   }
 
@@ -76,6 +85,10 @@ export const getLastConsultationNumber = async (
   userId: string
 ): Promise<number> => {
   try {
+    if (!userId) {
+      return 0;
+    }
+
     const { data, error } = await supabase
       .from('calculation_history')
       .select('consultation_number')
@@ -127,18 +140,24 @@ export const deleteConsultationHistory = async (id: string): Promise<void> => {
   }
 };
 
-// Objeto do serviço agrupado (mantido para compatibilidade)
+// Objeto do serviço agrupado com métodos corrigidos
 export const consultationHistoryService = {
   saveConsultation: async (data: any) => {
     return true; // Simplified implementation
   },
   getPatientHistory: getConsultationHistory,
-  getLastConsultation: async (patientId: string) => {
-    const history = await getConsultationHistory(patientId, '');
+  getLastConsultation: async (patientId: string, userId?: string) => {
+    if (!userId) {
+      return null;
+    }
+    const history = await getConsultationHistory(patientId, userId);
     return history[0] || null;
   },
-  getConsultationType: async (patientId: string) => {
-    const history = await getConsultationHistory(patientId, '');
+  getConsultationType: async (patientId: string, userId?: string) => {
+    if (!userId) {
+      return 'primeira_consulta';
+    }
+    const history = await getConsultationHistory(patientId, userId);
     return history.length === 0 ? 'primeira_consulta' : 'retorno';
   }
 };
