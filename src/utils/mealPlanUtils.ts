@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Default meal distribution percentages
@@ -90,18 +91,18 @@ function generateFoodSuggestions(carbs: number, protein: number, fat: number, me
 }
 
 // Save meal plan to database
-export async function saveMealPlan(consultationId: string, meals: any[], totalMacros: any) {
+export async function saveMealPlan(calculationId: string, meals: any[], totalMacros: any) {
   try {
     const { data, error } = await supabase
       .from('meal_plans')
       .insert({
-        consultation_id: consultationId,
+        calculation_id: calculationId, // Fixed: use calculation_id instead of consultation_id
         meals,
         total_calories: totalMacros.totalCalories,
         total_protein: totalMacros.totalProtein,
         total_carbs: totalMacros.totalCarbs,
         total_fats: totalMacros.totalFats,
-        date: new Date().toISOString()
+        date: new Date().toISOString().split('T')[0] // Format as date string
       })
       .select()
       .maybeSingle();
