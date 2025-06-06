@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Appointment } from '@/types';
 import { useAppointmentForm } from '@/hooks/appointments/useAppointmentForm';
 import AppointmentFormFields from './form/AppointmentFormFields';
+import { Calendar, X } from 'lucide-react';
 
 // Add this global declaration to allow storage of appointment types in window
 declare global {
@@ -52,17 +53,26 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? 'Edite os detalhes do agendamento abaixo.' 
-              : 'Preencha os detalhes para agendar uma nova consulta.'}
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-3 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Calendar className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-bold text-foreground">
+                {isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground text-base mt-1">
+                {isEditing 
+                  ? 'Edite os detalhes do agendamento abaixo.' 
+                  : 'Preencha os detalhes para agendar uma nova consulta.'}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <AppointmentFormFields 
             formData={formData}
             handleChange={handleChange}
@@ -70,12 +80,33 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
             isEditing={isEditing}
           />
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="h-11 text-base font-medium"
+              disabled={isSubmitting}
+            >
+              <X className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Agendar'}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="h-11 text-base font-medium bg-primary hover:bg-primary/90"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {isEditing ? 'Atualizar Agendamento' : 'Criar Agendamento'}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>
