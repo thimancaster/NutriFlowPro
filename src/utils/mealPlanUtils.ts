@@ -1,4 +1,5 @@
 
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Default meal distribution percentages
@@ -91,12 +92,13 @@ function generateFoodSuggestions(carbs: number, protein: number, fat: number, me
 }
 
 // Save meal plan to database
-export async function saveMealPlan(calculationId: string, meals: any[], totalMacros: any) {
+export async function saveMealPlan(calculationId: string, meals: any[], totalMacros: any, userId: string) {
   try {
     const { data, error } = await supabase
       .from('meal_plans')
       .insert({
-        calculation_id: calculationId, // Fixed: use calculation_id instead of consultation_id
+        user_id: userId, // Add required user_id field
+        calculation_id: calculationId,
         meals,
         total_calories: totalMacros.totalCalories,
         total_protein: totalMacros.totalProtein,
@@ -122,3 +124,4 @@ export async function saveMealPlan(calculationId: string, meals: any[], totalMac
     };
   }
 }
+
