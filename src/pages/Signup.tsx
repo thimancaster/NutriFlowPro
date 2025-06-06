@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
@@ -117,142 +117,166 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-nutri-blue flex flex-col items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-nutri-blue via-nutri-blue-dark to-blue-900 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 w-96 h-96 bg-white opacity-5 rounded-full mix-blend-overlay transform -translate-y-1/2 -translate-x-1/2"></div>
+        <div className="absolute bottom-10 right-10 w-64 h-64 bg-nutri-green opacity-10 rounded-full mix-blend-overlay transform translate-y-1/2 translate-x-1/2"></div>
+      </div>
+
+      <div className="w-full max-w-lg relative z-10">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">NutriFlow Pro</h1>
-          <p className="text-blue-100 text-lg">Sistema completo para nutricionistas</p>
+          <h1 className="text-5xl font-bold text-white mb-3">NutriFlow Pro</h1>
+          <p className="text-blue-100 text-xl font-medium">Sistema completo para nutricionistas</p>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-white">Criar Conta</h2>
-            <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step >= 1 ? 'bg-white text-nutri-blue' : 'bg-white/30 text-white'
-              }`}>
-                {step > 1 ? <ArrowRight className="h-5 w-5" /> : 1}
-              </div>
-              <div className={`h-1 w-5 ${step > 1 ? 'bg-white' : 'bg-white/30'}`}></div>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step >= 2 ? 'bg-white text-nutri-blue' : 'bg-white/30 text-white'
-              }`}>
-                2
+        {/* Form Container */}
+        <div className="backdrop-blur-md bg-white/15 rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+          <div className="p-8">
+            {/* Progress Indicator */}
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-white">Criar Conta</h2>
+              <div className="flex items-center space-x-2">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                  step >= 1 ? 'bg-white text-nutri-blue shadow-lg' : 'bg-white/20 text-white/60'
+                }`}>
+                  {step > 1 ? <CheckCircle className="h-6 w-6" /> : '1'}
+                </div>
+                <div className={`h-1 w-8 rounded transition-all ${step > 1 ? 'bg-white' : 'bg-white/30'}`}></div>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                  step >= 2 ? 'bg-white text-nutri-blue shadow-lg' : 'bg-white/20 text-white/60'
+                }`}>
+                  2
+                </div>
               </div>
             </div>
-          </div>
-          
-          <form onSubmit={handleRegister} className="space-y-4">
-            {step === 1 ? (
-              <>
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-blue-100 mb-1">
-                    Nome completo
-                  </label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
-                    placeholder="Seu nome completo"
-                    autoComplete="name"
-                    required
-                  />
-                </div>
+            
+            <form onSubmit={handleRegister} className="space-y-6">
+              {step === 1 ? (
+                <>
+                  <div>
+                    <label htmlFor="name" className="block text-lg font-semibold text-white mb-2">
+                      Nome completo
+                    </label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-14 text-lg bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white/50 font-medium"
+                      placeholder="Digite seu nome completo"
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-blue-100 mb-1">
-                    E-mail profissional
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
-                    placeholder="seu@email.com"
-                    autoComplete="email"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="email" className="block text-lg font-semibold text-white mb-2">
+                      E-mail profissional
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-14 text-lg bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white/50 font-medium"
+                      placeholder="seu@email.com"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
 
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="w-full bg-white text-nutri-blue hover:bg-blue-100 font-medium mt-2"
-                >
-                  Continuar
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-blue-100 mb-1">
-                    Senha
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
-                    placeholder="Mínimo 8 caracteres"
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-
-                <PasswordStrengthMeter 
-                  password={password} 
-                  className="bg-white/10 p-3 rounded-lg"
-                />
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-blue-100 mb-1">
-                    Confirmar senha
-                  </label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
-                    placeholder="Digite a senha novamente"
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-
-                <div className="flex space-x-3 pt-2">
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="flex-1 bg-transparent border-white text-white hover:bg-white/20"
+                    onClick={handleNextStep}
+                    className="w-full h-14 text-lg font-bold bg-white text-nutri-blue hover:bg-white/90 shadow-lg transition-all duration-200 hover:scale-[1.02] mt-8"
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Voltar
+                    Continuar
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-white text-nutri-blue hover:bg-blue-100 font-medium"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Criando..." : "Criar conta"}
-                  </Button>
-                </div>
-              </>
-            )}
-          </form>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="password" className="block text-lg font-semibold text-white mb-2">
+                      Senha
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-14 text-lg bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white/50 font-medium"
+                      placeholder="Mínimo 8 caracteres"
+                      autoComplete="new-password"
+                      required
+                    />
+                  </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-blue-100">
-              Já tem uma conta?{" "}
-              <Link to="/login" className="text-white hover:underline font-medium">
-                Faça login
-              </Link>
-            </p>
+                  <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
+                    <PasswordStrengthMeter password={password} />
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirmPassword" className="block text-lg font-semibold text-white mb-2">
+                      Confirmar senha
+                    </label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="h-14 text-lg bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white/50 font-medium"
+                      placeholder="Digite a senha novamente"
+                      autoComplete="new-password"
+                      required
+                    />
+                  </div>
+
+                  {/* Warning about email verification */}
+                  <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-xl p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-yellow-900 font-bold text-sm">!</span>
+                      </div>
+                      <div>
+                        <p className="text-yellow-100 font-semibold text-base leading-relaxed">
+                          <strong>Verificação de email obrigatória:</strong> Após criar sua conta, você receberá um email de confirmação. É necessário verificar seu email antes de poder fazer login.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setStep(1)}
+                      className="flex-1 h-14 text-lg font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-200"
+                    >
+                      <ArrowLeft className="mr-2 h-5 w-5" />
+                      Voltar
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 h-14 text-lg font-bold bg-white text-nutri-blue hover:bg-white/90 shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Criando..." : "Criar conta"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </form>
+
+            <div className="mt-8 text-center border-t border-white/20 pt-6">
+              <p className="text-lg text-white/90 font-medium">
+                Já tem uma conta?{" "}
+                <Link to="/login" className="text-white font-bold hover:underline transition-colors">
+                  Faça login
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

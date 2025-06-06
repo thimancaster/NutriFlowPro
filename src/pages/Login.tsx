@@ -29,14 +29,16 @@ const Login = () => {
 
   return (
     <AuthLayout>
-      <AuthHeader 
-        title="NutriFlow Pro" 
-        subtitle="Sistema completo para nutricionistas" 
-      />
+      <div className="p-8">
+        <AuthHeader 
+          title="NutriFlow Pro" 
+          subtitle="Sistema completo para nutricionistas" 
+        />
 
-      <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 max-w-md w-full mx-auto">
-        <h2 className="text-2xl font-semibold text-white mb-6 text-center">Login</h2>
-        <LoginForm onGoogleLogin={signInWithGoogle} />
+        <div className="mt-8">
+          <h2 className="text-3xl font-bold text-white mb-8 text-center">Login</h2>
+          <LoginForm onGoogleLogin={signInWithGoogle} />
+        </div>
       </div>
     </AuthLayout>
   );
