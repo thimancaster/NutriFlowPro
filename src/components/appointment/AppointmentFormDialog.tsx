@@ -53,17 +53,17 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-3 pb-4 border-b border-border">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white dark:bg-dark-bg-elevated border border-gray-200 dark:border-dark-border-secondary">
+        <DialogHeader className="space-y-3 pb-4 border-b border-gray-200 dark:border-dark-border-secondary">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Calendar className="h-6 w-6 text-primary" />
+            <div className="p-2 bg-nutri-green/10 dark:bg-dark-accent-green/10 rounded-lg">
+              <Calendar className="h-6 w-6 text-nutri-green dark:text-dark-accent-green" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-foreground">
+              <DialogTitle className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">
                 {isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground text-base mt-1">
+              <DialogDescription className="text-gray-600 dark:text-dark-text-secondary text-base mt-1">
                 {isEditing 
                   ? 'Edite os detalhes do agendamento abaixo.' 
                   : 'Preencha os detalhes para agendar uma nova consulta.'}
@@ -80,12 +80,12 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
             isEditing={isEditing}
           />
           
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200 dark:border-dark-border-secondary">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onClose}
-              className="h-11 text-base font-medium"
+              className="h-11 text-base font-medium text-gray-700 dark:text-dark-text-secondary border-gray-300 dark:border-dark-border-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-secondary"
               disabled={isSubmitting}
             >
               <X className="mr-2 h-4 w-4" />
@@ -94,11 +94,11 @@ const AppointmentFormDialog: React.FC<AppointmentFormDialogProps> = ({
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="h-11 text-base font-medium bg-primary hover:bg-primary/90"
+              className="h-11 text-base font-medium bg-nutri-green hover:bg-nutri-green/90 dark:bg-dark-accent-green dark:hover:bg-dark-accent-green/90 text-white"
             >
               {isSubmitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   Salvando...
                 </>
               ) : (
