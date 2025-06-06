@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ENPDataInputs } from '../inputs/ENPDataInputs';
 import { ENPValidation } from '../validation/ENPValidation';
 import { ENPCalculationValidator } from '../validation/ENPCalculationValidator';
 import { ENPResultsPanel } from '../ENPResultsPanel';
-import { ENPCalculatorActions } from './ENPCalculatorActions';
+import ENPCalculatorActions from './ENPCalculatorActions';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 interface ENPCalculatorFormProps {
