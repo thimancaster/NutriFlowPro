@@ -86,22 +86,22 @@ const PatientStatusActions: React.FC<PatientStatusActionsProps> = ({ patient, on
       </Button>
       
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary">
           <AlertDialogHeader>
-            <AlertDialogTitle>
+            <AlertDialogTitle className="text-gray-900 dark:text-dark-text-primary">
               {isArchived ? 'Reativar Paciente' : 'Arquivar Paciente'}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-gray-600 dark:text-dark-text-secondary">
               {isArchived
                 ? `Tem certeza que deseja reativar ${patient.name}? O paciente voltará a aparecer na lista de pacientes ativos.`
                 : `Tem certeza que deseja arquivar ${patient.name}? O paciente não aparecerá na lista padrão de pacientes.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="text-gray-700 dark:text-dark-text-secondary">Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleStatusChange}
-              className={isArchived ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"}
+              className={isArchived ? "bg-green-600 hover:bg-green-700 text-white" : "bg-amber-600 hover:bg-amber-700 text-white"}
             >
               {isArchived ? 'Sim, reativar' : 'Sim, arquivar'}
             </AlertDialogAction>

@@ -55,10 +55,10 @@ const SaveCalculationDialog: React.FC<SaveCalculationDialogProps> = ({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary">
         <DialogHeader>
-          <DialogTitle>Salvar Cálculo no Histórico</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-gray-900 dark:text-dark-text-primary">Salvar Cálculo no Histórico</DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-dark-text-secondary">
             Este cálculo será salvo no histórico do paciente para acompanhamento da evolução.
           </DialogDescription>
         </DialogHeader>
@@ -66,31 +66,32 @@ const SaveCalculationDialog: React.FC<SaveCalculationDialogProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">TMB:</span>
-              <span className="ml-2 font-medium">{calculationData.tmb} kcal</span>
+              <span className="text-gray-600 dark:text-dark-text-muted">TMB:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-dark-text-primary">{calculationData.tmb} kcal</span>
             </div>
             <div>
-              <span className="text-gray-500">GET:</span>
-              <span className="ml-2 font-medium">{calculationData.get} kcal</span>
+              <span className="text-gray-600 dark:text-dark-text-muted">GET:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-dark-text-primary">{calculationData.get} kcal</span>
             </div>
             <div>
-              <span className="text-gray-500">VET:</span>
-              <span className="ml-2 font-medium">{calculationData.vet} kcal</span>
+              <span className="text-gray-600 dark:text-dark-text-muted">VET:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-dark-text-primary">{calculationData.vet} kcal</span>
             </div>
             <div>
-              <span className="text-gray-500">Objetivo:</span>
-              <span className="ml-2 font-medium">{calculationData.objective}</span>
+              <span className="text-gray-600 dark:text-dark-text-muted">Objetivo:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-dark-text-primary">{calculationData.objective}</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
+            <Label htmlFor="notes" className="text-gray-900 dark:text-dark-text-primary">Observações (opcional)</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Adicione observações sobre este cálculo..."
               rows={3}
+              className="bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder"
             />
           </div>
 

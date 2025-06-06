@@ -64,21 +64,22 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary">
         <DialogHeader>
-          <DialogTitle>Enviar Plano por Email</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-gray-900 dark:text-dark-text-primary">Enviar Plano por Email</DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-dark-text-secondary">
             Envie o plano alimentar diretamente para o email do paciente.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <p className="text-sm font-medium">Email do destinatário</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">Email do destinatário</p>
             <Input 
               type="email" 
               placeholder={patientEmail || "exemplo@email.com"} 
               value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder"
             />
           </div>
           
@@ -92,7 +93,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({
             <Button 
               onClick={handleShareEmail} 
               disabled={emailSending}
-              className="bg-nutri-blue hover:bg-nutri-blue-dark"
+              className="bg-nutri-blue hover:bg-nutri-blue-dark text-white"
             >
               {emailSending ? "Enviando..." : "Enviar"}
             </Button>
