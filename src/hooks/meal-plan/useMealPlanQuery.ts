@@ -10,7 +10,10 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
 
   return useQuery({
     queryKey: ['meal-plans', user?.id, filters],
-    queryFn: () => MealPlanService.getMealPlans(user!.id, filters),
+    queryFn: async () => {
+      const data = await MealPlanService.getMealPlans(user!.id, filters);
+      return { success: true, data };
+    },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

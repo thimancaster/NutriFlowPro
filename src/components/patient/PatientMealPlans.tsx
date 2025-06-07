@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,7 @@ interface PatientMealPlansProps {
 const PatientMealPlans: React.FC<PatientMealPlansProps> = ({ patientId }) => {
   const { data: response, isLoading } = useMealPlans({ patient_id: patientId, limit: 10 });
   
-  const mealPlans = response?.success ? response.data || [] : [];
+  const mealPlans = response?.data || [];
 
   const handleCreateNew = () => {
     window.location.href = `/meal-plan-generator?patient=${patientId}`;

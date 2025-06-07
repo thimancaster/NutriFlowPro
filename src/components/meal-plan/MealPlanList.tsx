@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +25,7 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
   const { data: response, isLoading, error } = useMealPlans(filters);
   const { deleteMealPlan, isDeleting } = useMealPlanMutations();
 
-  const mealPlans = response?.success ? response.data || [] : [];
+  const mealPlans = response?.data || [];
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este plano alimentar?')) {
@@ -79,12 +78,12 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
     );
   }
 
-  if (error || (response && !response.success)) {
+  if (error) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
           <p className="text-red-600">
-            Erro ao carregar planos alimentares: {response?.error || 'Erro desconhecido'}
+            Erro ao carregar planos alimentares: {error.message || 'Erro desconhecido'}
           </p>
         </CardContent>
       </Card>
