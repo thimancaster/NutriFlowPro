@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Database, Sync, BarChart3, Leaf } from 'lucide-react';
+import { Loader2, Database, RefreshCw, BarChart3, Leaf } from 'lucide-react';
 import { initializeFoodDatabase, getFoodDatabaseStats } from '@/utils/seedDataUtils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -144,7 +143,7 @@ const FoodDatabaseManager: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Sync className="mr-2 h-4 w-4" />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   Sincronizar
                 </>
               )}
@@ -202,9 +201,9 @@ const FoodDatabaseManager: React.FC = () => {
                   <div key={category} className="flex items-center justify-between">
                     <Badge 
                       variant="secondary" 
-                      className={`${getCategoryColor(category)} flex-1 justify-between`}
+                      className="flex-1 justify-between bg-blue-100 text-blue-800"
                     >
-                      <span className="text-xs">{getCategoryDisplayName(category)}</span>
+                      <span className="text-xs">{category}</span>
                       <span className="font-bold">{count}</span>
                     </Badge>
                   </div>

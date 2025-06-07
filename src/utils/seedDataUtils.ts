@@ -29,22 +29,14 @@ const checkTestimonialsExist = async (): Promise<boolean> => {
 
 /**
  * Initialize testimonials in development mode if they don't exist
- * This function is optimized to:
- * 1. Only run in development mode
- * 2. Check if testimonials already exist before trying to create them
- * 3. Only try to initialize testimonials once per session
  */
 export const initializeTestimonials = async (): Promise<void> => {
-  // Skip if not in development or already initialized in this session
   if (process.env.NODE_ENV !== 'development' || testimonialsInitialized) {
     return;
   }
   
   try {
-    // Mark as initialized to prevent multiple attempts in the same session
     testimonialsInitialized = true;
-    
-    // Check if testimonials already exist
     const testimonialsExist = await checkTestimonialsExist();
     
     if (testimonialsExist) {
@@ -52,7 +44,6 @@ export const initializeTestimonials = async (): Promise<void> => {
       return;
     }
     
-    // If no testimonials exist, seed them
     logger.info('No testimonials found, seeding initial data');
     await seedTestimonialsData();
     logger.info('Testimonials seeded successfully');
@@ -63,7 +54,6 @@ export const initializeTestimonials = async (): Promise<void> => {
 
 /**
  * Reset testimonials (for development/testing use only)
- * This will delete all testimonials and re-seed them
  */
 export const resetTestimonials = async (): Promise<void> => {
   if (process.env.NODE_ENV !== 'development') {
@@ -72,7 +62,6 @@ export const resetTestimonials = async (): Promise<void> => {
   }
   
   try {
-    // Delete all existing testimonials
     const { error: deleteError } = await supabase
       .from('testimonials')
       .delete()
@@ -82,10 +71,7 @@ export const resetTestimonials = async (): Promise<void> => {
       throw deleteError;
     }
     
-    // Reset the initialized flag
     testimonialsInitialized = false;
-    
-    // Re-seed testimonials
     await seedTestimonialsData();
     logger.info('Testimonials reset successfully');
   } catch (error) {
@@ -104,7 +90,6 @@ export const initializeFoodDatabase = async (): Promise<{
   try {
     logger.info('Iniciando inicialização do banco de alimentos...');
     
-    // Verificar se já existem alimentos no banco
     const { count, error: countError } = await supabase
       .from('foods')
       .select('*', { count: 'exact', head: true });
@@ -116,7 +101,6 @@ export const initializeFoodDatabase = async (): Promise<{
     const foodCount = count || 0;
     logger.info(`Alimentos existentes no banco: ${foodCount}`);
     
-    // Se já temos muitos alimentos, pular a sincronização
     if (foodCount > 50) {
       logger.info('Banco de alimentos já inicializado, pulando sincronização');
       return {
@@ -125,7 +109,6 @@ export const initializeFoodDatabase = async (): Promise<{
       };
     }
     
-    // Executar sincronização com dados brasileiros
     logger.info('Executando sincronização com dados brasileiros...');
     const syncResult = await syncBrazilianFoodData();
     
@@ -156,14 +139,6 @@ export const initializeFoodDatabase = async (): Promise<{
 };
 
 /**
- * Função para popular dados de alimentos aprimorados (mantida para compatibilidade)
- */
-export const seedEnhancedFoodData = async () => {
-  logger.info('seedEnhancedFoodData chamada - redirecionando para initializeFoodDatabase');
-  return await initializeFoodDatabase();
-};
-
-/**
  * Get food statistics from the database
  */
 export const getFoodDatabaseStats = async () => {
@@ -173,20 +148,20 @@ export const getFoodDatabaseStats = async () => {
       .from('foods')
       .select('*', { count: 'exact', head: true });
 
-    // Alimentos por categoria
-    const { data: categoryStats } = await supabase
+    // Alimentos por categoria - buscar dados reais
+    const { data: foodsData } = await supabase
       .from('foods')
-      .select('food_group')
-      .then(result => {
-        if (result.data) {
-          const stats = result.data.reduce((acc, food) => {
-            acc[food.food_group] = (acc[food.food_group] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          return { data: stats, error: null };
+      .select('food_group');
+
+    // Processar dados para criar estatísticas por categoria
+    const categoryStats: Record<string, number> = {};
+    if (foodsData) {
+      foodsData.forEach(food => {
+        if (food.food_group) {
+          categoryStats[food.food_group] = (categoryStats[food.food_group] || 0) + 1;
         }
-        return result;
       });
+    }
 
     // Alimentos orgânicos
     const { count: organicFoods } = await supabase
@@ -197,7 +172,7 @@ export const getFoodDatabaseStats = async () => {
     return {
       total: totalFoods || 0,
       organic: organicFoods || 0,
-      byCategory: categoryStats || {},
+      byCategory: categoryStats,
       lastUpdated: new Date().toISOString()
     };
 
@@ -206,9 +181,17 @@ export const getFoodDatabaseStats = async () => {
     return {
       total: 0,
       organic: 0,
-      byCategory: {},
+      byCategory: {} as Record<string, number>,
       lastUpdated: new Date().toISOString(),
       error: error
     };
   }
+};
+
+/**
+ * Função para popular dados de alimentos aprimorados (mantida para compatibilidade)
+ */
+export const seedEnhancedFoodData = async () => {
+  logger.info('seedEnhancedFoodData chamada - redirecionando para initializeFoodDatabase');
+  return await initializeFoodDatabase();
 };

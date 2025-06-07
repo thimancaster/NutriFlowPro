@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { MealPlanItem } from '@/types/mealPlan';
+import { FoodService } from '@/services/foodService';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2, Calculator } from 'lucide-react';
 
 interface EditItemDialogProps {
   open: boolean;
@@ -21,31 +23,68 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
   onSave
 }) => {
   const [quantity, setQuantity] = useState(0);
-  const [originalItem, setOriginalItem] = useState<MealPlanItem | null>(null);
+  const [unit, setUnit] = useState('g');
   const [isLoading, setIsLoading] = useState(false);
+  const [calculatedNutrition, setCalculatedNutrition] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fats: 0
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     if (item) {
       setQuantity(item.quantity);
-      setOriginalItem(item);
+      setUnit(item.unit);
+      calculateNutrition(item.quantity);
     }
   }, [item]);
 
-  const calculateNutrition = (newQuantity: number) => {
-    if (!originalItem) return { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  const calculateNutrition = async (newQuantity: number) => {
+    if (!item || !item.food_id) {
+      // Se não há food_id, usar proporção baseada nos valores atuais
+      if (item && item.quantity > 0) {
+        const factor = newQuantity / item.quantity;
+        setCalculatedNutrition({
+          calories: Math.round(item.calories * factor * 10) / 10,
+          protein: Math.round(item.protein * factor * 10) / 10,
+          carbs: Math.round(item.carbs * factor * 10) / 10,
+          fats: Math.round(item.fats * factor * 10) / 10
+        });
+      }
+      return;
+    }
 
-    const factor = newQuantity / originalItem.quantity;
-    return {
-      calories: originalItem.calories * factor,
-      protein: originalItem.protein * factor,
-      carbs: originalItem.carbs * factor,
-      fats: originalItem.fats * factor
-    };
+    try {
+      // Buscar dados originais do alimento
+      const food = await FoodService.getFoodById(item.food_id);
+      if (food) {
+        const nutrition = FoodService.calculateNutrition(food, newQuantity);
+        setCalculatedNutrition(nutrition);
+      }
+    } catch (error) {
+      console.error('Erro ao calcular nutrição:', error);
+      // Fallback para cálculo proporcional
+      if (item.quantity > 0) {
+        const factor = newQuantity / item.quantity;
+        setCalculatedNutrition({
+          calories: Math.round(item.calories * factor * 10) / 10,
+          protein: Math.round(item.protein * factor * 10) / 10,
+          carbs: Math.round(item.carbs * factor * 10) / 10,
+          fats: Math.round(item.fats * factor * 10) / 10
+        });
+      }
+    }
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    setQuantity(newQuantity);
+    calculateNutrition(newQuantity);
   };
 
   const handleSave = async () => {
-    if (!originalItem || quantity <= 0) {
+    if (!item || quantity <= 0) {
       toast({
         title: "Erro",
         description: "A quantidade deve ser maior que zero",
@@ -57,11 +96,14 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
     try {
       setIsLoading(true);
       
-      const nutrition = calculateNutrition(quantity);
       const updatedItem: MealPlanItem = {
-        ...originalItem,
+        ...item,
         quantity,
-        ...nutrition
+        unit,
+        calories: calculatedNutrition.calories,
+        protein: calculatedNutrition.protein,
+        carbs: calculatedNutrition.carbs,
+        fats: calculatedNutrition.fats
       };
 
       onSave(updatedItem);
@@ -86,56 +128,97 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
 
   if (!item) return null;
 
-  const nutrition = calculateNutrition(quantity);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar Item</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Editar Item
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium">{item.food_name}</h4>
+            <h4 className="font-medium text-lg">{item.food_name}</h4>
             <p className="text-sm text-gray-600">
-              Unidade: {item.unit}
+              Unidade original: {item.unit}
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="edit-quantity">Quantidade ({item.unit})</Label>
-            <Input
-              id="edit-quantity"
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              min="0.1"
-              step="0.1"
-              className="mt-1"
-              disabled={isLoading}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="edit-quantity">Quantidade</Label>
+              <Input
+                id="edit-quantity"
+                type="number"
+                value={quantity}
+                onChange={(e) => handleQuantityChange(Number(e.target.value))}
+                min="0.1"
+                step="0.1"
+                className="mt-1"
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="edit-unit">Unidade</Label>
+              <Input
+                id="edit-unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="mt-1"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="text-sm font-medium mb-2">
-              Valores nutricionais (quantidade atual):
+          <div className="bg-blue-50 p-4 rounded-lg border">
+            <div className="text-sm font-medium mb-3 text-blue-900">
+              Valores nutricionais calculados:
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>Calorias: {nutrition.calories.toFixed(0)} kcal</div>
-              <div>Proteínas: {nutrition.protein.toFixed(1)}g</div>
-              <div>Carboidratos: {nutrition.carbs.toFixed(1)}g</div>
-              <div>Gorduras: {nutrition.fats.toFixed(1)}g</div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-white p-2 rounded text-center">
+                <div className="font-bold text-lg text-blue-600">
+                  {calculatedNutrition.calories.toFixed(0)}
+                </div>
+                <div className="text-gray-600">kcal</div>
+              </div>
+              <div className="bg-white p-2 rounded text-center">
+                <div className="font-bold text-lg text-red-600">
+                  {calculatedNutrition.protein.toFixed(1)}g
+                </div>
+                <div className="text-gray-600">Proteínas</div>
+              </div>
+              <div className="bg-white p-2 rounded text-center">
+                <div className="font-bold text-lg text-yellow-600">
+                  {calculatedNutrition.carbs.toFixed(1)}g
+                </div>
+                <div className="text-gray-600">Carboidratos</div>
+              </div>
+              <div className="bg-white p-2 rounded text-center">
+                <div className="font-bold text-lg text-green-600">
+                  {calculatedNutrition.fats.toFixed(1)}g
+                </div>
+                <div className="text-gray-600">Gorduras</div>
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-2">
             <Button 
               onClick={handleSave} 
               className="flex-1" 
               disabled={isLoading || quantity <= 0}
             >
-              {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar Alterações'
+              )}
             </Button>
             <Button 
               variant="outline" 

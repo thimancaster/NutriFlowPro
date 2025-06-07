@@ -1,189 +1,186 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { validateSecureForm, rateLimiter } from '@/utils/securityValidation';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Search, Loader2 } from 'lucide-react';
+import { FoodService, Food } from '@/services/foodService';
 import { useToast } from '@/hooks/use-toast';
-
-interface Food {
-  id: string;
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  portion_size: number;
-  portion_unit: string;
-}
 
 interface FoodSearchDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onFoodSelect: (food: Food) => void;
+  mealType?: string;
 }
 
 const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
   isOpen,
   onClose,
-  onFoodSelect
+  onFoodSelect,
+  mealType
 }) => {
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [foods, setFoods] = useState<Food[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const { toast } = useToast();
 
-  const searchFoods = async (term: string) => {
-    // Validate and sanitize search term
-    const validation = validateSecureForm.foodSearch(term);
-    
-    if (!validation.isValid) {
-      if (validation.error) {
-        toast({
-          title: "Termo de busca inválido",
-          description: validation.error,
-          variant: "destructive"
-        });
-      }
-      setFoods([]);
-      return;
-    }
-
-    // Rate limiting for search requests
-    const rateCheck = rateLimiter.checkLimit('food_search', 10, 60000); // 10 searches per minute
-    
-    if (!rateCheck.allowed) {
-      toast({
-        title: "Muitas buscas",
-        description: "Aguarde um momento antes de buscar novamente.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('foods')
-        .select('*')
-        .ilike('name', `%${validation.sanitizedTerm}%`)
-        .limit(20);
-
-      if (error) {
-        console.error('Error searching foods:', error);
-        toast({
-          title: "Erro na busca",
-          description: "Não foi possível buscar alimentos no momento.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setFoods(data || []);
-    } catch (error) {
-      console.error('Error searching foods:', error);
-      toast({
-        title: "Erro na busca",
-        description: "Erro inesperado durante a busca.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const categories = [
+    { value: '', label: 'Todas as categorias' },
+    { value: 'proteinas', label: 'Proteínas' },
+    { value: 'frutas', label: 'Frutas' },
+    { value: 'cereais_e_graos', label: 'Cereais e Grãos' },
+    { value: 'vegetais', label: 'Vegetais' },
+    { value: 'gorduras', label: 'Gorduras' },
+    { value: 'leguminosas', label: 'Leguminosas' },
+    { value: 'tuberculos', label: 'Tubérculos' },
+    { value: 'bebidas', label: 'Bebidas' }
+  ];
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchTerm.trim()) {
-        searchFoods(searchTerm);
-      } else {
-        setFoods([]);
-      }
-    }, 300);
+    if (isOpen) {
+      searchFoods();
+    }
+  }, [isOpen, searchQuery, selectedCategory, mealType]);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  const searchFoods = async () => {
+    setIsLoading(true);
+    try {
+      const filters: any = {
+        limit: 50
+      };
+
+      if (searchQuery) {
+        filters.query = searchQuery;
+      }
+
+      if (selectedCategory) {
+        filters.food_group = selectedCategory;
+      }
+
+      if (mealType) {
+        filters.meal_time = mealType;
+      }
+
+      const results = await FoodService.searchFoods(filters);
+      setFoods(results);
+    } catch (error) {
+      console.error('Erro ao buscar alimentos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar alimentos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFoodSelect = (food: Food) => {
     onFoodSelect(food);
     onClose();
-    setSearchTerm('');
-    setFoods([]);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    // Basic client-side validation
-    if (value.length > 100) {
-      toast({
-        title: "Termo muito longo",
-        description: "O termo de busca deve ter no máximo 100 caracteres.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setSearchTerm(value);
+  const handleClose = () => {
+    setSearchQuery('');
+    setSelectedCategory('');
+    setFoods([]);
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Buscar Alimentos</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Digite o nome do alimento..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="pl-10"
-              maxLength={100}
-              autoComplete="off"
-            />
+
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+          {/* Filtros */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Digite o nome do alimento..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <Button
+                  key={category.value}
+                  variant={selectedCategory === category.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category.value)}
+                >
+                  {category.label}
+                </Button>
+              ))}
+            </div>
           </div>
-          
-          <div className="max-h-96 overflow-y-auto space-y-2">
-            {loading && (
-              <div className="text-center py-4">
-                <p className="text-gray-500">Buscando...</p>
+
+          {/* Lista de Alimentos */}
+          <div className="flex-1 overflow-y-auto border rounded-lg">
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                Buscando alimentos...
+              </div>
+            ) : foods.length === 0 ? (
+              <div className="text-center p-8 text-gray-500">
+                {searchQuery || selectedCategory ? 
+                  'Nenhum alimento encontrado com os filtros aplicados' : 
+                  'Digite para buscar alimentos'
+                }
+              </div>
+            ) : (
+              <div className="divide-y">
+                {foods.map((food) => (
+                  <div
+                    key={food.id}
+                    className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => handleFoodSelect(food)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{food.name}</h4>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {food.food_group}
+                          </Badge>
+                          {food.is_organic && (
+                            <Badge variant="outline" className="text-xs text-green-600">
+                              Orgânico
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {food.portion_size} {food.portion_unit}
+                        </p>
+                      </div>
+                      
+                      <div className="text-right text-sm">
+                        <div className="font-medium">{food.calories} kcal</div>
+                        <div className="text-gray-500">
+                          P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            
-            {!loading && foods.length === 0 && searchTerm && (
-              <div className="text-center py-4">
-                <p className="text-gray-500">Nenhum alimento encontrado</p>
-              </div>
-            )}
-            
-            {foods.map((food) => (
-              <div
-                key={food.id}
-                className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
-                onClick={() => handleFoodSelect(food)}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{food.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {food.portion_size} {food.portion_unit}
-                    </p>
-                  </div>
-                  <div className="text-right text-sm">
-                    <p className="font-medium">{food.calories} kcal</p>
-                    <p className="text-gray-500">
-                      P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={handleClose}>
+              Cancelar
+            </Button>
           </div>
         </div>
       </DialogContent>
