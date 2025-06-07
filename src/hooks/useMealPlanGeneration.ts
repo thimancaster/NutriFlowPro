@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { mealPlanService } from '@/services/mealPlanService';
+import { MealPlanService } from '@/services/mealPlanService';
 import { MealPlan, MealPlanGenerationParams } from '@/types/mealPlan';
 import { useToast } from '@/hooks/use-toast';
 
@@ -12,7 +12,7 @@ export const useMealPlanGeneration = () => {
   const generateMealPlan = async (params: MealPlanGenerationParams) => {
     setIsGenerating(true);
     try {
-      const result = await mealPlanService.generateMealPlan(
+      const result = await MealPlanService.generateMealPlan(
         params.userId,
         params.patientId,
         params.targets,

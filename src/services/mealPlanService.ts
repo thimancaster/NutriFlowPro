@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanItem, DetailedMealPlan } from '@/types/mealPlan';
+import { MealPlan, MealPlanItem, DetailedMealPlan, MealPlanFilters, MealPlanMeal } from '@/types/mealPlan';
 
 export class MealPlanService {
   /**
@@ -25,9 +24,112 @@ export class MealPlanService {
         throw error;
       }
 
-      return { success: true, data };
+      return { 
+        success: true, 
+        data: {
+          ...data,
+          meals: typeof data.meals === 'string' ? JSON.parse(data.meals) : data.meals
+        } as MealPlan
+      };
     } catch (error: any) {
       console.error('Erro ao criar plano alimentar:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get meal plans with filters
+   */
+  static async getMealPlans(userId: string, filters: MealPlanFilters = {}): Promise<MealPlan[]> {
+    try {
+      let query = supabase
+        .from('meal_plans')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (filters.patient_id) {
+        query = query.eq('patient_id', filters.patient_id);
+      }
+
+      if (filters.date_from) {
+        query = query.gte('date', filters.date_from);
+      }
+
+      if (filters.date_to) {
+        query = query.lte('date', filters.date_to);
+      }
+
+      if (filters.is_template !== undefined) {
+        query = query.eq('is_template', filters.is_template);
+      }
+
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      query = query.order('date', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map(plan => ({
+        ...plan,
+        meals: typeof plan.meals === 'string' ? JSON.parse(plan.meals) : plan.meals
+      })) as MealPlan[];
+    } catch (error) {
+      console.error('Erro ao buscar planos alimentares:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get meal plan by ID
+   */
+  static async getMealPlan(id: string): Promise<MealPlan | null> {
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return {
+        ...data,
+        meals: typeof data.meals === 'string' ? JSON.parse(data.meals) : data.meals
+      } as MealPlan;
+    } catch (error) {
+      console.error('Erro ao buscar plano alimentar:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete meal plan
+   */
+  static async deleteMealPlan(id: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      const { error } = await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao deletar plano alimentar:', error);
       return { success: false, error: error.message };
     }
   }
@@ -106,8 +208,9 @@ export class MealPlanService {
 
       return {
         ...mealPlan,
+        meals: typeof mealPlan.meals === 'string' ? JSON.parse(mealPlan.meals) : mealPlan.meals,
         items: items || []
-      };
+      } as DetailedMealPlan;
     } catch (error) {
       console.error('Erro ao buscar plano alimentar:', error);
       return null;
@@ -316,3 +419,6 @@ export class MealPlanService {
     }
   }
 }
+
+// Export a default instance for backward compatibility
+export const mealPlanService = MealPlanService;
