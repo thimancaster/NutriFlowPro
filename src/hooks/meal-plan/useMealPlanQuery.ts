@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { mealPlanService } from '@/services/mealPlanService';
+import { MealPlanService } from '@/services/mealPlanService';
 import { MealPlan, MealPlanFilters, MacroTargets } from '@/types/mealPlan';
 
 export const useMealPlans = (filters: MealPlanFilters = {}) => {
@@ -10,7 +10,10 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
 
   return useQuery({
     queryKey: ['meal-plans', user?.id, filters],
-    queryFn: () => mealPlanService.getMealPlans(user!.id, filters),
+    queryFn: async () => {
+      const data = await MealPlanService.getMealPlans(user!.id, filters);
+      return { success: true, data };
+    },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -19,7 +22,7 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
 export const useMealPlan = (id: string) => {
   return useQuery({
     queryKey: ['meal-plan', id],
-    queryFn: () => mealPlanService.getMealPlan(id),
+    queryFn: () => MealPlanService.getMealPlan(id),
     enabled: !!id,
   });
 };
@@ -31,7 +34,7 @@ export const useMealPlanMutations = () => {
 
   const createMealPlan = useMutation({
     mutationFn: (data: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>) =>
-      mealPlanService.createMealPlan(data),
+      MealPlanService.createMealPlan(data),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
@@ -51,7 +54,7 @@ export const useMealPlanMutations = () => {
 
   const updateMealPlan = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<MealPlan> }) =>
-      mealPlanService.updateMealPlan(id, data),
+      MealPlanService.updateMealPlan(id, data),
     onSuccess: (result, variables) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
@@ -71,7 +74,7 @@ export const useMealPlanMutations = () => {
   });
 
   const deleteMealPlan = useMutation({
-    mutationFn: (id: string) => mealPlanService.deleteMealPlan(id),
+    mutationFn: (id: string) => MealPlanService.deleteMealPlan(id),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
@@ -99,7 +102,7 @@ export const useMealPlanMutations = () => {
       targets: MacroTargets; 
       date?: string;
     }) => 
-      mealPlanService.generateMealPlan(user!.id, patientId, targets, date),
+      MealPlanService.generateMealPlan(user!.id, patientId, targets, date),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });

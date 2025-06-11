@@ -1,201 +1,201 @@
+export interface ValidationResult {
+  isValid: boolean;
+  sanitizedTerm?: string;
+  sanitizedContent?: string;
+  sanitizedData?: any;
+  error?: string;
+  errors?: Record<string, string>;
+}
 
-import { z } from 'zod';
-
-// Simple security validation utilities
 export const validateSecureForm = {
-  patient: (data: any) => {
-    try {
-      // Basic sanitization
-      const sanitizedData = {
-        name: typeof data.name === 'string' ? data.name.trim() : '',
-        email: typeof data.email === 'string' ? data.email.trim().toLowerCase() : '',
-        phone: typeof data.phone === 'string' ? data.phone.trim() : '',
-        secondaryPhone: typeof data.secondaryPhone === 'string' ? data.secondaryPhone.trim() : '',
-        cpf: typeof data.cpf === 'string' ? data.cpf.trim() : '',
-        sex: data.sex || '',
-        objective: typeof data.objective === 'string' ? data.objective.trim() : '',
-        profile: typeof data.profile === 'string' ? data.profile.trim() : '',
-        address: data.address || {},
-        notes: typeof data.notes === 'string' ? data.notes.trim() : '',
-        status: data.status || 'active',
-        birthDate: data.birthDate
-      };
-
-      // Basic validation
-      const errors: Record<string, string> = {};
-
-      if (!sanitizedData.name || sanitizedData.name.length < 3) {
-        errors.name = 'Nome deve ter pelo menos 3 caracteres';
-      }
-
-      if (!sanitizedData.sex || !['M', 'F', 'O'].includes(sanitizedData.sex)) {
-        errors.sex = 'Selecione o sexo';
-      }
-
-      if (!sanitizedData.objective) {
-        errors.objective = 'Objetivo é obrigatório';
-      }
-
-      if (!sanitizedData.profile) {
-        errors.profile = 'Perfil é obrigatório';
-      }
-
-      // Email validation (optional but if provided must be valid)
-      if (sanitizedData.email && !sanitizedData.email.includes('@')) {
-        errors.email = 'E-mail inválido';
-      }
-
-      // Phone validation (if provided)
-      const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
-      if (sanitizedData.phone && !phoneRegex.test(sanitizedData.phone)) {
-        errors.phone = 'Telefone inválido: Use o formato (XX) XXXXX-XXXX';
-      }
-
-      if (sanitizedData.secondaryPhone && !phoneRegex.test(sanitizedData.secondaryPhone)) {
-        errors.secondaryPhone = 'Telefone secundário inválido: Use o formato (XX) XXXXX-XXXX';
-      }
-
-      return {
-        isValid: Object.keys(errors).length === 0,
-        errors,
-        sanitizedData
-      };
-    } catch (error) {
-      console.error('Security validation error:', error);
-      return {
-        isValid: false,
-        errors: { general: 'Erro na validação dos dados' },
-        sanitizedData: data
-      };
+  foodSearch: (searchTerm: string): ValidationResult => {
+    // Basic validation
+    if (!searchTerm) {
+      return { isValid: false, error: 'Termo de busca não pode estar vazio' };
     }
+
+    if (searchTerm.length > 100) {
+      return { isValid: false, error: 'Termo de busca muito longo' };
+    }
+
+    // Remove potentially dangerous characters
+    const sanitized = searchTerm.replace(/[<>\"'%;()&+]/g, '');
+    
+    // Check for SQL injection patterns
+    const sqlPatterns = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER)\b)/i;
+    if (sqlPatterns.test(sanitized)) {
+      return { isValid: false, error: 'Termo de busca contém caracteres não permitidos' };
+    }
+
+    return { isValid: true, sanitizedTerm: sanitized.trim() };
   },
 
-  foodSearch: (searchTerm: string) => {
-    try {
-      // Basic sanitization for search term
-      const sanitizedTerm = typeof searchTerm === 'string' ? searchTerm.trim() : '';
-      
-      // Basic validation
-      if (sanitizedTerm.length === 0) {
-        return {
-          isValid: false,
-          error: 'Termo de busca não pode estar vazio',
-          sanitizedTerm: ''
-        };
-      }
-
-      if (sanitizedTerm.length > 100) {
-        return {
-          isValid: false,
-          error: 'Termo de busca muito longo (máximo 100 caracteres)',
-          sanitizedTerm: sanitizedTerm.substring(0, 100)
-        };
-      }
-
-      // Check for potential malicious content
-      const dangerousPatterns = /<script|javascript:|data:|vbscript:|on\w+=/i;
-      if (dangerousPatterns.test(sanitizedTerm)) {
-        return {
-          isValid: false,
-          error: 'Termo de busca contém caracteres inválidos',
-          sanitizedTerm: ''
-        };
-      }
-
-      return {
-        isValid: true,
-        error: null,
-        sanitizedTerm
-      };
-    } catch (error) {
-      console.error('Food search validation error:', error);
-      return {
-        isValid: false,
-        error: 'Erro na validação do termo de busca',
-        sanitizedTerm: ''
-      };
+  notes: (content: string): ValidationResult => {
+    // Basic validation for notes content
+    if (!content) {
+      return { isValid: true, sanitizedContent: '' };
     }
+
+    if (content.length > 10000) {
+      return { isValid: false, error: 'Conteúdo muito longo (máximo 10.000 caracteres)' };
+    }
+
+    // Remove potentially dangerous HTML/script tags but keep line breaks
+    const sanitized = content
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
+
+    return { isValid: true, sanitizedContent: sanitized };
   },
 
-  notes: (content: string) => {
-    try {
-      // Basic sanitization for notes content
-      const sanitizedContent = typeof content === 'string' ? content.trim() : '';
-      
-      // Basic validation
-      if (sanitizedContent.length > 10000) {
-        return {
-          isValid: false,
-          error: 'Conteúdo muito longo (máximo 10.000 caracteres)',
-          sanitizedContent: sanitizedContent.substring(0, 10000)
-        };
-      }
+  patient: (patientData: any): ValidationResult => {
+    const errors: Record<string, string> = {};
+    const sanitizedData: any = {};
 
-      // Check for potential malicious content (basic XSS prevention)
-      const dangerousPatterns = /<script|javascript:|data:|vbscript:|on\w+=/i;
-      if (dangerousPatterns.test(sanitizedContent)) {
-        return {
-          isValid: false,
-          error: 'Conteúdo contém caracteres inválidos',
-          sanitizedContent: sanitizedContent.replace(dangerousPatterns, '')
-        };
-      }
-
-      return {
-        isValid: true,
-        error: null,
-        sanitizedContent
-      };
-    } catch (error) {
-      console.error('Notes validation error:', error);
-      return {
-        isValid: false,
-        error: 'Erro na validação do conteúdo',
-        sanitizedContent: ''
-      };
+    // Validate and sanitize name
+    if (!patientData.name || patientData.name.trim().length === 0) {
+      errors.name = 'Nome é obrigatório';
+    } else if (patientData.name.length > 100) {
+      errors.name = 'Nome muito longo';
+    } else {
+      sanitizedData.name = patientData.name.trim().replace(/[<>\"'%;()&+]/g, '');
     }
-  }
-};
 
-// CSRF and rate limiting utilities
-export const csrfProtection = {
-  attachToken: (data: any) => {
-    // Simple token attachment for demonstration
+    // Validate email if provided
+    if (patientData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(patientData.email)) {
+        errors.email = 'Email inválido';
+      } else {
+        sanitizedData.email = patientData.email.trim().toLowerCase();
+      }
+    }
+
+    // Validate phone if provided
+    if (patientData.phone) {
+      const phoneRegex = /^[\d\s\-\(\)\+]+$/;
+      if (!phoneRegex.test(patientData.phone)) {
+        errors.phone = 'Telefone inválido';
+      } else {
+        sanitizedData.phone = patientData.phone.replace(/[^\d]/g, '');
+      }
+    }
+
+    // Validate CPF if provided
+    if (patientData.cpf) {
+      const cpfRegex = /^\d{11}$/;
+      const cleanCpf = patientData.cpf.replace(/[^\d]/g, '');
+      if (!cpfRegex.test(cleanCpf)) {
+        errors.cpf = 'CPF inválido';
+      } else {
+        sanitizedData.cpf = cleanCpf;
+      }
+    }
+
+    // Validate gender
+    if (patientData.sex) {
+      if (!['M', 'F', 'O'].includes(patientData.sex)) {
+        errors.sex = 'Sexo inválido';
+      } else {
+        sanitizedData.sex = patientData.sex;
+      }
+    }
+
+    // Validate objectives
+    if (patientData.objective) {
+      const validObjectives = ['emagrecimento', 'manutenção', 'hipertrofia', 'saúde', 'desempenho'];
+      if (!validObjectives.includes(patientData.objective)) {
+        errors.objective = 'Objetivo inválido';
+      } else {
+        sanitizedData.objective = patientData.objective;
+      }
+    }
+
+    // Validate profile
+    if (patientData.profile) {
+      const validProfiles = ['eutrofico', 'sobrepeso_obesidade', 'atleta'];
+      if (!validProfiles.includes(patientData.profile)) {
+        errors.profile = 'Perfil inválido';
+      } else {
+        sanitizedData.profile = patientData.profile;
+      }
+    }
+
+    // Validate address
+    if (patientData.address) {
+      sanitizedData.address = {};
+      for (const [key, value] of Object.entries(patientData.address)) {
+        if (typeof value === 'string' && value.length > 0) {
+          sanitizedData.address[key] = (value as string).trim().replace(/[<>\"'%;()&+]/g, '');
+        }
+      }
+    }
+
+    // Copy other safe fields
+    if (patientData.secondaryPhone) {
+      sanitizedData.secondaryPhone = patientData.secondaryPhone.replace(/[^\d]/g, '');
+    }
+    if (patientData.status) {
+      sanitizedData.status = patientData.status;
+    }
+    if (patientData.birthDate) {
+      sanitizedData.birthDate = patientData.birthDate;
+    }
+
     return {
-      ...data,
-      _token: Date.now().toString()
+      isValid: Object.keys(errors).length === 0,
+      errors,
+      sanitizedData
     };
   }
 };
 
-export const rateLimiter = {
-  checkLimit: (key: string, limit: number, window: number) => {
-    // Simple rate limiting check
+class RateLimiter {
+  private requests = new Map<string, number[]>();
+  
+  checkLimit(key: string, maxRequests: number, windowMs: number) {
     const now = Date.now();
-    const stored = localStorage.getItem(`rate_limit_${key}`);
+    const windowStart = now - windowMs;
     
-    if (!stored) {
-      localStorage.setItem(`rate_limit_${key}`, JSON.stringify({ count: 1, timestamp: now }));
-      return { allowed: true };
+    if (!this.requests.has(key)) {
+      this.requests.set(key, []);
     }
-
-    try {
-      const { count, timestamp } = JSON.parse(stored);
-      
-      if (now - timestamp > window) {
-        // Reset window
-        localStorage.setItem(`rate_limit_${key}`, JSON.stringify({ count: 1, timestamp: now }));
-        return { allowed: true };
-      }
-
-      if (count >= limit) {
-        return { allowed: false };
-      }
-
-      localStorage.setItem(`rate_limit_${key}`, JSON.stringify({ count: count + 1, timestamp }));
-      return { allowed: true };
-    } catch {
-      return { allowed: true };
+    
+    const requests = this.requests.get(key)!;
+    
+    // Remove old requests outside the window
+    const validRequests = requests.filter(time => time > windowStart);
+    
+    if (validRequests.length >= maxRequests) {
+      return { allowed: false, retryAfter: Math.ceil((validRequests[0] + windowMs - now) / 1000) };
     }
+    
+    // Add current request
+    validRequests.push(now);
+    this.requests.set(key, validRequests);
+    
+    return { allowed: true };
+  }
+}
+
+export const rateLimiter = new RateLimiter();
+
+export const csrfProtection = {
+  generateToken: (): string => {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  },
+  
+  attachToken: <T extends object>(data: T): T & { _csrf: string } => {
+    return {
+      ...data,
+      _csrf: csrfProtection.generateToken()
+    };
+  },
+  
+  validateToken: (token: string): boolean => {
+    // Basic token validation - in production this would be more sophisticated
+    return typeof token === 'string' && token.length > 10;
   }
 };

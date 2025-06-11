@@ -122,109 +122,119 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="seuemail@exemplo.com" 
-                  autoComplete="email"
-                  disabled={isSubmitting}
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Senha</FormLabel>
-                <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800">
-                  Esqueceu a senha?
-                </Link>
-              </div>
-              <FormControl>
-                <Input 
-                  type="password" 
-                  autoComplete="current-password"
-                  disabled={isSubmitting}
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="rememberMe"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox 
-                  checked={field.value} 
-                  onCheckedChange={field.onChange}
-                  disabled={isSubmitting}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
+    <div className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base font-semibold text-white">Email</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="seuemail@exemplo.com" 
+                    autoComplete="email"
+                    disabled={isSubmitting}
+                    className="h-12 text-base bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white/50"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-200 text-sm font-medium" />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel className="text-base font-semibold text-white">Senha</FormLabel>
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-sm text-white/80 hover:text-white underline font-medium transition-colors"
+                  >
+                    Esqueceu a senha?
+                  </Link>
+                </div>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    autoComplete="current-password"
+                    disabled={isSubmitting}
+                    className="h-12 text-base bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white/50"
+                    placeholder="Digite sua senha"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-200 text-sm font-medium" />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="rememberMe"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox 
+                    checked={field.value} 
+                    onCheckedChange={field.onChange}
+                    disabled={isSubmitting}
+                    className="border-white/30 data-[state=checked]:bg-white data-[state=checked]:text-nutri-blue"
+                  />
+                </FormControl>
+                <FormLabel className="text-sm font-medium text-white cursor-pointer">
                   Lembrar de mim
                 </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
-        
-        <div className="space-y-4">
-          <Button 
-            disabled={isSubmitting} 
-            className="w-full bg-blue-600 hover:bg-blue-700" 
-            type="submit"
-          >
-            {isSubmitting ? (
-              <>
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                Aguarde...
-              </>
-            ) : (
-              "Entrar"
+              </FormItem>
             )}
-          </Button>
+          />
           
-          {onGoogleLogin && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGoogleLogin}
-              disabled={isSubmitting}
-              className="w-full"
+          <div className="space-y-4 pt-2">
+            <Button 
+              disabled={isSubmitting} 
+              className="w-full h-12 text-base font-semibold bg-white text-nutri-blue hover:bg-white/90 shadow-lg transition-all duration-200 hover:scale-[1.02]" 
+              type="submit"
             >
-              <Icons.google className="mr-2 h-4 w-4" />
-              Continuar com Google
+              {isSubmitting ? (
+                <>
+                  <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
+                  Aguarde...
+                </>
+              ) : (
+                "Entrar"
+              )}
             </Button>
-          )}
-        </div>
-      </form>
+            
+            {onGoogleLogin && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                disabled={isSubmitting}
+                className="w-full h-12 text-base font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-200 hover:scale-[1.02]"
+              >
+                <Icons.google className="mr-2 h-5 w-5" />
+                Continuar com Google
+              </Button>
+            )}
+          </div>
+        </form>
+      </Form>
       
-      <div className="mt-6 text-center text-sm">
-        Não tem uma conta?{" "}
-        <Link to="/register" className="text-blue-600 hover:underline">
-          Registre-se agora
-        </Link>
+      <div className="text-center border-t border-white/20 pt-6">
+        <p className="text-base text-white/90">
+          Não tem uma conta?{" "}
+          <Link to="/register" className="text-white font-semibold hover:underline transition-colors">
+            Registre-se agora
+          </Link>
+        </p>
       </div>
-    </Form>
+    </div>
   );
 };
 

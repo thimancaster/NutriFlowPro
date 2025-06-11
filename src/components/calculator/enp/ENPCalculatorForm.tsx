@@ -5,7 +5,8 @@ import { ENPDataInputs } from '../inputs/ENPDataInputs';
 import { ENPValidation } from '../validation/ENPValidation';
 import { ENPCalculationValidator } from '../validation/ENPCalculationValidator';
 import { ENPResultsPanel } from '../ENPResultsPanel';
-import { ENPCalculatorActions } from './ENPCalculatorActions';
+import ENPCalculatorActions from './ENPCalculatorActions';
+import CalculatorActions from '../CalculatorActions';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 interface ENPCalculatorFormProps {
@@ -63,6 +64,16 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
   results,
   onExportResults
 }) => {
+  const handleGenerateMealPlan = () => {
+    // This will be implemented by the parent component
+    console.log('Generate meal plan clicked');
+  };
+
+  const handleReset = () => {
+    // This will be implemented by the parent component
+    console.log('Reset clicked');
+  };
+
   return (
     <Tabs defaultValue="calculator" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -90,13 +101,20 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
         {/* Validação */}
         <ENPValidation data={validatedData} />
         
-        {/* Botão de cálculo */}
-        <ENPCalculatorActions
-          onCalculate={onCalculate}
-          isValid={isValid}
-          isCalculating={isCalculating}
-          error={error}
-        />
+        {/* Botão de cálculo - only show if no results yet */}
+        {!results && (
+          <CalculatorActions
+            isCalculating={isCalculating}
+            calculateResults={onCalculate}
+          />
+        )}
+        
+        {/* Show error if exists */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
         
         {/* Resultados ENP */}
         {results && (
@@ -104,6 +122,16 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
             results={results}
             weight={validatedData.weight}
             onExportResults={onExportResults}
+          />
+        )}
+
+        {/* ENP Calculator Actions - only show when we have results */}
+        {results && (
+          <ENPCalculatorActions
+            results={results}
+            onExport={onExportResults}
+            onGenerateMealPlan={handleGenerateMealPlan}
+            onReset={handleReset}
           />
         )}
       </TabsContent>

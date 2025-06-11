@@ -22,35 +22,49 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
   isEditing
 }) => {
   return (
-    <div className="grid gap-4 py-4">
-      <PatientSelect 
-        value={formData.patient_id || ''} 
-        onChange={(value) => handleSelectChange('patient_id', value)} 
-      />
+    <div className="space-y-6 py-4">
+      {/* Patient Selection */}
+      <div className="space-y-2">
+        <Label htmlFor="patient" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
+          Paciente *
+        </Label>
+        <PatientSelect 
+          value={formData.patient_id || ''} 
+          onChange={(value) => handleSelectChange('patient_id', value)} 
+        />
+      </div>
       
-      <AppointmentTypeSelect 
-        value={formData.appointment_type_id || formData.type || ''} 
-        onChange={(value) => handleSelectChange('appointment_type_id', value)} 
-      />
+      {/* Appointment Type Selection */}
+      <div className="space-y-2">
+        <Label htmlFor="type" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
+          Tipo de Consulta *
+        </Label>
+        <AppointmentTypeSelect 
+          value={formData.appointment_type_id || formData.type || ''} 
+          onChange={(value) => handleSelectChange('appointment_type_id', value)} 
+        />
+      </div>
 
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="title" className="text-right">
-          Título
+      {/* Title Field */}
+      <div className="space-y-2">
+        <Label htmlFor="title" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
+          Título da Consulta *
         </Label>
         <Input
           id="title"
           name="title"
           value={formData.title || ''}
           onChange={handleChange}
-          className="col-span-3"
-          placeholder="Título da consulta"
+          placeholder="Ex: Consulta inicial, Retorno nutricional..."
           required
+          className="h-12 text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green"
         />
       </div>
 
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="start_time" className="text-right">
-          Data e Hora
+      {/* Date and Time Field */}
+      <div className="space-y-2">
+        <Label htmlFor="start_time" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
+          Data e Hora *
         </Label>
         <Input
           id="start_time"
@@ -58,13 +72,14 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
           type="datetime-local"
           value={typeof formData.start_time === 'string' ? formData.start_time : ''}
           onChange={handleChange}
-          className="col-span-3"
           required
+          className="h-12 text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green"
         />
       </div>
 
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="notes" className="text-right">
+      {/* Notes Field */}
+      <div className="space-y-2">
+        <Label htmlFor="notes" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
           Observações
         </Label>
         <Textarea
@@ -72,17 +87,23 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
           name="notes"
           value={formData.notes || ''}
           onChange={handleChange}
-          className="col-span-3"
-          rows={3}
-          placeholder="Observações sobre a consulta"
+          rows={4}
+          placeholder="Observações importantes sobre a consulta..."
+          className="text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green resize-none"
         />
       </div>
 
+      {/* Status Field (only for editing) */}
       {isEditing && (
-        <StatusSelect 
-          value={formData.status || 'scheduled'} 
-          onChange={(value) => handleSelectChange('status', value)} 
-        />
+        <div className="space-y-2">
+          <Label htmlFor="status" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
+            Status da Consulta
+          </Label>
+          <StatusSelect 
+            value={formData.status || 'scheduled'} 
+            onChange={(value) => handleSelectChange('status', value)} 
+          />
+        </div>
       )}
     </div>
   );

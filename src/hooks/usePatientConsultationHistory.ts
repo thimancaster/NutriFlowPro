@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ConsultationHistoryData, consultationHistoryService } from '@/services/consultationHistoryService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 export interface UsePatientConsultationHistoryReturn {
   history: ConsultationHistoryData[];
@@ -19,9 +20,10 @@ export const usePatientConsultationHistory = (patientId?: string): UsePatientCon
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchData = async () => {
-    if (!patientId) {
+    if (!patientId || !user?.id) {
       setHistory([]);
       setLastConsultation(null);
       setConsultationType('primeira_consulta');
@@ -32,16 +34,16 @@ export const usePatientConsultationHistory = (patientId?: string): UsePatientCon
     setError(null);
 
     try {
-      // Buscar histórico completo
-      const historyData = await consultationHistoryService.getPatientHistory(patientId, '');
+      // Buscar histórico completo com user_id
+      const historyData = await consultationHistoryService.getPatientHistory(patientId, user.id);
       setHistory(historyData);
 
       // Buscar última consulta
-      const lastData = await consultationHistoryService.getLastConsultation(patientId);
+      const lastData = historyData.length > 0 ? historyData[0] : null;
       setLastConsultation(lastData);
 
       // Determinar tipo de consulta
-      const type = await consultationHistoryService.getConsultationType(patientId);
+      const type = historyData.length === 0 ? 'primeira_consulta' : 'retorno';
       setConsultationType(type);
 
       console.log(`Paciente ${patientId}: ${type} - ${historyData.length} consultas anteriores`);
@@ -49,12 +51,16 @@ export const usePatientConsultationHistory = (patientId?: string): UsePatientCon
     } catch (err: any) {
       const errorMessage = 'Erro ao carregar histórico de consultas';
       setError(errorMessage);
-      toast({
-        title: 'Erro',
-        description: errorMessage,
-        variant: 'destructive'
-      });
       console.error('Error fetching consultation history:', err);
+      
+      // Só mostrar toast de erro se for um erro real, não se for apenas dados não encontrados
+      if (err.message && !err.message.includes('not found') && !err.message.includes('PGRST116')) {
+        toast({
+          title: 'Erro',
+          description: errorMessage,
+          variant: 'destructive'
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +68,7 @@ export const usePatientConsultationHistory = (patientId?: string): UsePatientCon
 
   useEffect(() => {
     fetchData();
-  }, [patientId]);
+  }, [patientId, user?.id]);
 
   return {
     history,

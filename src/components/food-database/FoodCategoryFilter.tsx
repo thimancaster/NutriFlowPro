@@ -1,84 +1,94 @@
 
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getFoodCategories } from '@/integrations/supabase/functions';
 
-interface FoodCategory {
-  id: string;
-  name: string;
-  color?: string;
-}
-
 interface FoodCategoryFilterProps {
-  onCategorySelect: (categoryId: string | null) => void;
   selectedCategory: string | null;
+  onCategoryChange: (categoryId: string | null) => void;
 }
 
 const FoodCategoryFilter: React.FC<FoodCategoryFilterProps> = ({ 
-  onCategorySelect, 
-  selectedCategory 
+  selectedCategory, 
+  onCategoryChange 
 }) => {
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      try {
-        // Get categories from the function that handles the specific query
-        const categoriesData = await getFoodCategories();
-        setCategories(categoriesData || []);
-      } catch (error) {
-        console.error('Error fetching food categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await getFoodCategories();
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
+        <div className="h-4 bg-muted rounded w-1/4"></div>
+        <div className="flex flex-wrap gap-2">
+          {[...Array(8)].map((_, index) => (
+            <div key={index} className="h-8 bg-muted rounded w-20"></div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <h3 className="text-sm font-medium mb-3">Filtrar por categoria</h3>
-      <RadioGroup 
-        value={selectedCategory || ''} 
-        onValueChange={(value) => onCategorySelect(value || null)}
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="" id="all-categories" />
-          <Label htmlFor="all-categories" className="cursor-pointer">
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-foreground">Categorias</h3>
+      <ScrollArea className="w-full">
+        <div className="flex flex-wrap gap-2 pb-2">
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => onCategoryChange(null)}
+            className="h-8"
+          >
             Todas
-          </Label>
-        </div>
-        
-        {categories.map((category) => (
-          <div key={category.id} className="flex items-center space-x-2">
-            <RadioGroupItem 
-              value={category.id} 
-              id={category.id} 
-              style={{ borderColor: category.color }} 
-            />
-            <Label htmlFor={category.id} className="cursor-pointer">
+            {selectedCategory === null && (
+              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                ✓
+              </Badge>
+            )}
+          </Button>
+          
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => onCategoryChange(category.id)}
+              className="h-8"
+              style={{
+                borderColor: selectedCategory === category.id ? category.color : undefined,
+                backgroundColor: selectedCategory === category.id ? category.color : undefined
+              }}
+            >
+              {category.icon && (
+                <span className="mr-1">{category.icon}</span>
+              )}
               {category.name}
-            </Label>
-          </div>
-        ))}
-      </RadioGroup>
+              {selectedCategory === category.id && (
+                <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                  ✓
+                </Badge>
+              )}
+            </Button>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 };

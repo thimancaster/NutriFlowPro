@@ -34,31 +34,31 @@ const PatientArchiveDialog: React.FC<PatientArchiveDialogProps> = ({
   
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary">
         <AlertDialogHeader>
-          <AlertDialogTitle>
+          <AlertDialogTitle className="text-gray-900 dark:text-dark-text-primary">
             {isActive ? 'Arquivar paciente' : 'Reativar paciente'}
           </AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-gray-600 dark:text-dark-text-secondary">
             {isActive ? (
-              <>Você está prestes a arquivar o paciente <strong>{patientName}</strong>. 
+              <>Você está prestes a arquivar o paciente <strong className="text-gray-900 dark:text-dark-text-primary">{patientName}</strong>. 
               Pacientes arquivados não aparecem na listagem principal, 
               mas podem ser restaurados mais tarde.</>
             ) : (
-              <>Você está prestes a reativar o paciente <strong>{patientName}</strong>. 
+              <>Você está prestes a reativar o paciente <strong className="text-gray-900 dark:text-dark-text-primary">{patientName}</strong>. 
               Pacientes ativos aparecem na listagem principal.</>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isArchiving}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isArchiving} className="text-gray-700 dark:text-dark-text-secondary">Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
               onArchive();
             }}
             disabled={isArchiving}
-            className={isActive ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+            className={isActive ? "bg-red-600 hover:bg-red-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
           >
             {isArchiving ? (
               `${isActive ? 'Arquivando...' : 'Reativando...'}`

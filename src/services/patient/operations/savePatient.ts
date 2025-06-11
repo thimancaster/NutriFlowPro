@@ -29,17 +29,28 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       };
     }
     
-    // Prepare the data for insertion/update
-    const patientData = {
-      ...patient,
-      // Convert complex objects to strings for storage if needed
-      address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address,
-      goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals,
-      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements,
-      name: patient.name, // Ensure name is definitely present
-      // Ensure gender is set to null if undefined to avoid constraint issues
-      gender: patient.gender || null
+    // Prepare the data for insertion/update - only include fields that exist in the database
+    const patientData: any = {
+      name: patient.name,
+      email: patient.email || null,
+      phone: patient.phone || null,
+      cpf: patient.cpf || null,
+      birth_date: patient.birth_date || null,
+      gender: patient.gender || null,
+      status: patient.status || 'active',
+      notes: patient.notes || null,
+      // Handle secondaryPhone -> secondaryphone (database column name)
+      secondaryphone: patient.secondaryPhone || null,
+      // Convert complex objects to JSON strings for storage
+      address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address || null,
+      goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals || null,
+      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements || null,
     };
+
+    // Only add user_id if it exists and is not undefined
+    if (patient.user_id) {
+      patientData.user_id = patient.user_id;
+    }
 
     let data, error;
 
@@ -56,11 +67,21 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       data = updateResult.data;
       error = updateResult.error;
     } else {
-      // Insert new patient
+      // Insert new patient - user_id is required for new patients
+      if (!patient.user_id) {
+        return {
+          success: false,
+          error: 'User ID is required for new patients'
+        };
+      }
+      
       console.log('Inserting new patient');
       const insertResult = await supabase
         .from('patients')
-        .insert(patientData)
+        .insert({
+          ...patientData,
+          user_id: patient.user_id // Ensure user_id is included for inserts
+        })
         .select()
         .single();
       
@@ -167,7 +188,9 @@ const processPatientData = (data: any): Patient => {
     gender: safeGender(data.gender),
     goals: (data.goals as Record<string, any>) || {},
     measurements: (data.measurements as Record<string, any>) || {},
-    address: addressData
+    address: addressData,
+    // Handle database column name mapping
+    secondaryPhone: data.secondaryphone
   };
 
   return patient;

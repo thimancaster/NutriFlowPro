@@ -3,12 +3,7 @@
 
   /* Dropdown com backdrop blur */
   .dropdown-content {
-    @apply bg-popover border border-border shadow-xl backdrop-blur-md z-50;
-  }
-
-  .dark .dropdown-content {
-    @apply bg-dark-bg-overlay border-dark-border-primary shadow-dark-xl;
-    background: rgba(28, 28, 32, 0.95);
+    @apply bg-white dark:bg-dark-bg-elevated border border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary shadow-xl backdrop-blur-md z-50;
   }
 
   /* Modal com efeitos aprimorados */
@@ -16,21 +11,62 @@
     @apply bg-black/60 backdrop-blur-sm;
   }
 
-  .dark .modal-overlay {
-    @apply bg-black/80;
-  }
-
   .modal-content {
-    @apply bg-card border border-border shadow-xl backdrop-blur-md;
-  }
-
-  .dark .modal-content {
-    @apply bg-dark-bg-overlay border-dark-border-primary shadow-dark-2xl;
-    background: rgba(28, 28, 32, 0.98);
+    @apply bg-white dark:bg-dark-bg-elevated border border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary shadow-xl backdrop-blur-md;
   }
 
   /* Toast melhorado */
   .toast-viewport {
     @apply z-[100];
+  }
+
+  /* Popover específicos */
+  .popover-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Alert dialogs */
+  .alert-dialog-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Dialog específicos */
+  .dialog-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Hover cards */
+  .hover-card-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Tooltip específicos */
+  .tooltip-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Select dropdowns */
+  .select-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Command palettes */
+  .command-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Context menus */
+  .context-menu-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Dropdown menus */
+  .dropdown-menu-content {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+
+  /* Calendar popovers */
+  .calendar-popover {
+    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
   }
 }
