@@ -1,5 +1,3 @@
-
-// Re-export from new hooks location to maintain backward compatibility
-import { useToast, toast, type ToastProps, type ToastApi } from "./toast";
-
-export { useToast, toast, type ToastProps, type ToastApi };
+// Re-export from use-sonner-toast to maintain compatibility
+export {useToast, toast} from "./use-sonner-toast";
+export type {ToastProps} from "./use-sonner-toast";
