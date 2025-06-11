@@ -228,7 +228,7 @@ export const generateExtensiveFoodDatabase = (): SeedFood[] => {
 		});
 	});
 
-	// 4. CARBOIDRATOS - CEREAIS E GRÃOS (480+ variações)
+	// 4. CEREAIS E GRÃOS (480+ variações)
 	const grains = [
 		{name: "Arroz Branco", protein: 3, carbs: 28, fat: 0.3, calories: 130},
 		{name: "Arroz Integral", protein: 3, carbs: 23, fat: 1, calories: 112},
@@ -260,7 +260,7 @@ export const generateExtensiveFoodDatabase = (): SeedFood[] => {
 			grainQualities.forEach((quality) => {
 				foods.push({
 					name: `${grain.name} ${quality} ${prep}`,
-					food_group: "Carboidratos",
+					food_group: "Cereais e Grãos",
 					category: "Cereais",
 					calories: grain.calories,
 					protein: grain.protein,
@@ -293,7 +293,44 @@ export const generateExtensiveFoodDatabase = (): SeedFood[] => {
 		});
 	});
 
-	// 5. VEGETAIS E LEGUMES (500+ variações)
+	// 5. TUBÉRCULOS (200+ variações)
+	const tubers = [
+		{name: "Batata Inglesa", protein: 2, carbs: 17, fat: 0.1, calories: 77},
+		{name: "Batata Doce", protein: 2, carbs: 20, fat: 0.1, calories: 86},
+		{name: "Mandioca", protein: 1, carbs: 38, fat: 0.3, calories: 160},
+		{name: "Inhame", protein: 2, carbs: 27, fat: 0.2, calories: 118},
+		{name: "Cará", protein: 2, carbs: 28, fat: 0.1, calories: 120},
+		{name: "Mandioquinha", protein: 1, carbs: 22, fat: 0.3, calories: 95},
+	];
+
+	const tuberPreparations = ["Cozido", "Assado", "Frito", "Purê", "Refogado"];
+
+	tubers.forEach((tuber) => {
+		tuberPreparations.forEach((prep) => {
+			foods.push({
+				name: `${tuber.name} ${prep}`,
+				food_group: "Tubérculos",
+				category: "Raízes",
+				calories: prep === "Frito" ? tuber.calories * 1.5 : tuber.calories,
+				protein: tuber.protein,
+				carbs: tuber.carbs,
+				fats: prep === "Frito" ? tuber.fat * 3 : tuber.fat,
+				portion_size: 100,
+				portion_unit: "g",
+				meal_time: ["lunch", "dinner"],
+				allergens: [],
+				season: ["Ano todo"],
+				preparation_time: prep === "Cozido" ? 25 : 20,
+				cost_level: "baixo",
+				availability: "comum",
+				sustainability_score: 8,
+				fiber: 3,
+				glycemic_index: prep === "Frito" ? 85 : 65,
+			});
+		});
+	});
+
+	// 6. VEGETAIS E LEGUMES (500+ variações)
 	const vegetables = [
 		{name: "Brócolis", protein: 3, carbs: 7, fat: 0.4, calories: 34},
 		{name: "Couve-flor", protein: 2, carbs: 5, fat: 0.3, calories: 25},
@@ -683,7 +720,7 @@ export const generateExtensiveFoodDatabase = (): SeedFood[] => {
 			pastaSauces.forEach((sauce) => {
 				foods.push({
 					name: `${pasta.name} ${type} ${sauce}`,
-					food_group: "Carboidratos",
+					food_group: "Massas",
 					category: "Massas",
 					calories: pasta.calories,
 					protein: pasta.protein,
@@ -798,6 +835,133 @@ export const generateExtensiveFoodDatabase = (): SeedFood[] => {
 	return foods;
 };
 
+// Function to standardize existing food_group values in the database
+async function standardizeFoodGroups() {
+	console.log("🔄 Standardizing food_group values...");
+
+	// Define the mapping from various formats to standardized values
+	const foodGroupMappings: Record<string, string> = {
+		// Current inconsistent values to standardized values (lowercase/inconsistent formats)
+		proteinas: "Proteínas",
+		protein: "Proteínas",
+		proteins: "Proteínas",
+		meat: "Proteínas", // English meat -> Proteínas
+		meats: "Proteínas",
+		carne: "Proteínas",
+		carnes: "Proteínas",
+		frutas: "Frutas",
+		fruit: "Frutas",
+		fruits: "Frutas",
+		fruta: "Frutas",
+		vegetais: "Vegetais",
+		vegetables: "Vegetais",
+		vegetal: "Vegetais",
+		verduras: "Vegetais",
+		legumes: "Vegetais",
+		gorduras: "Gorduras",
+		fats: "Gorduras",
+		lipids: "Gorduras",
+		lipídios: "Gorduras",
+		bebidas: "Bebidas",
+		drinks: "Bebidas",
+		beverages: "Bebidas",
+		bebida: "Bebidas",
+		carboidratos: "Cereais e Grãos", // Map old carboidratos to cereais e grãos
+		carbohydrates: "Cereais e Grãos",
+		carbs: "Cereais e Grãos",
+		grains: "Cereais e Grãos",
+		cereals: "Cereais e Grãos",
+		condimentos: "Condimentos",
+		spices: "Condimentos",
+		seasonings: "Condimentos",
+		temperos: "Condimentos",
+		cereais_e_graos: "Cereais e Grãos",
+		cereais: "Cereais e Grãos",
+		graos: "Cereais e Grãos",
+		grãos: "Cereais e Grãos",
+		leguminosas: "Proteínas",
+		legumes_secos: "Proteínas", // Dry legumes are protein sources
+		tuberculos: "Tubérculos",
+		tubers: "Tubérculos",
+		raizes: "Tubérculos",
+		massas: "Massas",
+		pasta: "Massas",
+		pastas: "Massas",
+		dairy: "Proteínas",
+		laticinios: "Proteínas",
+		laticínios: "Proteínas",
+		eggs: "Proteínas",
+		ovos: "Proteínas",
+		fibras: "Vegetais",
+		fiber: "Vegetais",
+		// Keep already correct values (proper case)
+		Proteínas: "Proteínas",
+		Frutas: "Frutas",
+		Vegetais: "Vegetais",
+		Gorduras: "Gorduras",
+		Bebidas: "Bebidas",
+		"Cereais e Grãos": "Cereais e Grãos",
+		Massas: "Massas",
+		Condimentos: "Condimentos",
+		"Pratos Prontos": "Pratos Prontos",
+		Lanches: "Lanches",
+		// Legacy mappings with proper case
+		Carboidratos: "Cereais e Grãos", // Convert old Carboidratos to Cereais e Grãos
+		Leguminosas: "Proteínas",
+		Tubérculos: "Tubérculos", // Note: this is the correct form
+		Laticínios: "Proteínas",
+		Ovos: "Proteínas",
+		// Handle variations with mixed case
+		PROTEINAS: "Proteínas",
+		FRUTAS: "Frutas",
+		VEGETAIS: "Vegetais",
+		MEAT: "Proteínas",
+		CARNES: "Proteínas",
+		// Other potential variations
+		snacks: "Lanches",
+		lanches: "Lanches",
+		ready_meals: "Pratos Prontos",
+		pratos_prontos: "Pratos Prontos",
+		refeicoes: "Pratos Prontos",
+		// Nuts and seeds (should be fats/gorduras)
+		nuts: "Gorduras",
+		seeds: "Gorduras",
+		nozes: "Gorduras",
+		sementes: "Gorduras",
+	};
+
+	// Get all distinct food_group values
+	const {data: foodGroups} = await supabase
+		.from("foods")
+		.select("food_group")
+		.not("food_group", "is", null);
+
+	if (!foodGroups) return;
+
+	const distinctGroups = [...new Set(foodGroups.map((f) => f.food_group))];
+	console.log("📋 Found food groups:", distinctGroups);
+
+	// Update each non-standard food group
+	for (const [oldValue, newValue] of Object.entries(foodGroupMappings)) {
+		if (oldValue !== newValue && distinctGroups.includes(oldValue)) {
+			console.log(`   🔄 Updating "${oldValue}" → "${newValue}"`);
+
+			const {error} = await supabase
+				.from("foods")
+				.update({food_group: newValue})
+				.eq("food_group", oldValue);
+
+			if (error) {
+				console.error(`   ❌ Error updating ${oldValue}:`, error);
+			} else {
+				console.log(`   ✓ Updated all "${oldValue}" foods to "${newValue}"`);
+			}
+		}
+	}
+
+	console.log("✅ Food group standardization completed!");
+}
+
 // Function to insert foods in batches
 async function insertFoodsInBatches(foods: SeedFood[], batchSize: number = 100) {
 	console.log(`Starting to insert ${foods.length} foods in batches of ${batchSize}...`);
@@ -845,6 +1009,9 @@ async function main() {
 		}
 
 		console.log("✓ Database connection successful");
+
+		// Standardize existing food groups first
+		await standardizeFoodGroups();
 
 		// Get current food count
 		const {count: currentCount} = await supabase
