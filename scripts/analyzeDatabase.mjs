@@ -23,7 +23,7 @@ async function analyzeFoodDatabase() {
 		const {data: allFoods} = await supabase.from("foods").select("food_group");
 
 		if (allFoods) {
-			const groupCounts: Record<string, number> = {};
+			const groupCounts = {};
 			allFoods.forEach((food) => {
 				const group = food.food_group || "NULL";
 				groupCounts[group] = (groupCounts[group] || 0) + 1;
