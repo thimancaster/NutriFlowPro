@@ -29,6 +29,7 @@ import Pricing from "@/pages/Pricing";
 import NotFound from "@/pages/NotFound";
 import Onboarding from "@/pages/Onboarding";
 import AddTestimonial from "@/pages/AddTestimonial";
+import {ToastTest} from "@/components/ToastTest";
 import Recursos from "@/pages/Recursos";
 import UnifiedSignup from "@/pages/UnifiedSignup";
 
@@ -72,6 +73,7 @@ const AppRoutes = () => {
 				<Route path="settings" element={<Settings />} />
 				<Route path="subscription" element={<Subscription />} />
 				<Route path="add-testimonial" element={<AddTestimonial />} />
+				<Route path="toast-test" element={<ToastTest />} />
 				<Route path="*" element={<NotFound />} />
 			</Route>
 		</Routes>

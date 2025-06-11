@@ -1,5 +1,4 @@
+// Re-export from the main hooks location
+import {useToast, toast, type ToastProps} from "@/hooks/use-toast";
 
-// Re-export from new hooks location to maintain backward compatibility
-import { useToast, toast, type ToastProps, type ToastApi } from "@/hooks/toast";
-
-export { useToast, toast, type ToastProps, type ToastApi };
+export {useToast, toast, type ToastProps};

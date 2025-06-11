@@ -1,7 +1,6 @@
-
 import React, {useEffect} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
-import {useToast} from "@/hooks/toast";
+import {useToast} from "@/hooks/use-toast";
 import PatientForm from "@/components/PatientForm";
 import {useQuery} from "@tanstack/react-query";
 import {PatientService} from "@/services/patient";
@@ -107,7 +106,9 @@ const PatientNew = () => {
 								<h3 className="text-lg font-semibold text-red-600 mb-2">
 									Erro ao carregar paciente
 								</h3>
-								<p className="text-gray-600 dark:text-dark-text-muted mb-4">{error.message}</p>
+								<p className="text-gray-600 dark:text-dark-text-muted mb-4">
+									{error.message}
+								</p>
 								<button
 									onClick={() => navigate("/patients")}
 									className="px-4 py-2 bg-nutri-blue text-white rounded hover:bg-blue-600">
@@ -151,4 +152,3 @@ const PatientNew = () => {
 };
 
 export default PatientNew;
-
