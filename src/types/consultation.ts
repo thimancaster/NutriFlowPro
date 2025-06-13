@@ -1,3 +1,6 @@
+
+import { GERFormula } from './gerFormulas';
+
 // Sex types
 export type Sex = 'M' | 'F';
 
