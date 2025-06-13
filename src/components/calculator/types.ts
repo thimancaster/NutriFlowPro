@@ -1,4 +1,5 @@
 import { ConsultationData } from '@/types';
+import { GERFormula } from '@/types/gerFormulas';
 
 export interface ToastApi {
   toast: (props: any) => void;
@@ -19,6 +20,8 @@ export interface CalculatorState {
   consultationType: string;
   lowCarbOption?: boolean;
   profile?: string;
+  gerFormula?: GERFormula; // NEW: Selected GER formula
+  bodyFatPercentage?: string; // NEW: Body fat percentage
   [key: string]: any;
 }
 

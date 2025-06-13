@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { CalculatorState } from '../types';
+import { GERFormula } from '@/types/gerFormulas';
 import { getInitialCalculatorState } from '../utils/initialState';
 
 /**
@@ -23,7 +24,9 @@ export const useCalculatorForm = () => {
     profile,
     carbsPercentage,
     proteinPercentage,
-    fatPercentage
+    fatPercentage,
+    gerFormula,
+    bodyFatPercentage
   } = calculatorState;
   
   // Setter functions for each state property
@@ -40,6 +43,10 @@ export const useCalculatorForm = () => {
   const setProfile = (value: string) => setCalculatorState(prev => ({ ...prev, profile: value }));
   const setConsultationType = (value: 'primeira_consulta' | 'retorno') => 
     setCalculatorState(prev => ({ ...prev, consultationType: value }));
+  
+  // NEW: GER formula setter
+  const setGERFormula = (value: GERFormula) => setCalculatorState(prev => ({ ...prev, gerFormula: value }));
+  const setBodyFatPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, bodyFatPercentage: value }));
 
   // Reset function to clear all fields
   const resetForm = () => {
@@ -59,7 +66,8 @@ export const useCalculatorForm = () => {
         weight: patientData.weight?.toString() || '',
         height: patientData.height?.toString() || '',
         age: patientData.age?.toString() || '',
-        gender: patientData.gender === 'male' ? 'male' : 'female'
+        gender: patientData.gender === 'male' ? 'male' : 'female',
+        bodyFatPercentage: patientData.bodyFatPercentage?.toString() || ''
       }));
     }
   };
@@ -78,6 +86,8 @@ export const useCalculatorForm = () => {
     carbsPercentage,
     proteinPercentage,
     fatPercentage,
+    gerFormula,
+    bodyFatPercentage,
     
     // Setters
     setPatientName,
@@ -92,6 +102,8 @@ export const useCalculatorForm = () => {
     setFatPercentage,
     setProfile,
     setConsultationType,
+    setGERFormula,
+    setBodyFatPercentage,
     
     // Actions
     resetForm,

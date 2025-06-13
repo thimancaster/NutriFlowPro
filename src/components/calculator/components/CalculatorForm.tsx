@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Profile } from '@/types/consultation';
+import { GERFormula } from '@/types/gerFormulas';
 import { Calculator, User, Activity } from 'lucide-react';
+import GERFormulaSelection from '../inputs/GERFormulaSelection';
 
 interface CalculatorFormProps {
   weight: number;
@@ -15,10 +17,13 @@ interface CalculatorFormProps {
   age: number;
   sex: 'M' | 'F';
   profile: Profile;
+  gerFormula?: GERFormula;
+  bodyFatPercentage?: number;
   isCalculating: boolean;
   onInputChange: (field: string, value: any) => void;
   onSexChange: (sex: 'M' | 'F') => void;
   onProfileChange: (profile: Profile) => void;
+  onGERFormulaChange: (formula: GERFormula) => void;
   onCalculate: () => void;
   patientSelected: boolean;
 }
@@ -29,13 +34,19 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
   age,
   sex,
   profile,
+  gerFormula,
+  bodyFatPercentage,
   isCalculating,
   onInputChange,
   onSexChange,
   onProfileChange,
+  onGERFormulaChange,
   onCalculate,
   patientSelected
 }) => {
+  // Verificar se todos os campos obrigatórios estão preenchidos
+  const isFormValid = weight && height && age && gerFormula;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -123,16 +134,43 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-500 mt-1">
-              O perfil determina a fórmula de cálculo e os fatores aplicados
+              O perfil determina a recomendação da fórmula GER ideal
+            </p>
+          </div>
+
+          {/* Campo opcional para % de gordura corporal */}
+          <div>
+            <Label htmlFor="bodyFat">Percentual de Gordura Corporal (%)</Label>
+            <Input
+              id="bodyFat"
+              type="number"
+              value={bodyFatPercentage || ''}
+              onChange={(e) => onInputChange('bodyFatPercentage', parseFloat(e.target.value) || undefined)}
+              placeholder="Ex: 15"
+              min="3"
+              max="50"
+              step="0.1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Opcional - necessário para fórmulas Katch-McArdle e Cunningham
             </p>
           </div>
         </CardContent>
       </Card>
 
+      {/* Seleção obrigatória da fórmula GER */}
+      <GERFormulaSelection
+        selectedFormula={gerFormula}
+        onFormulaChange={onGERFormulaChange}
+        profile={profile}
+        hasBodyFat={!!bodyFatPercentage}
+        required={true}
+      />
+
       <div className="flex justify-center">
         <Button 
           onClick={onCalculate}
-          disabled={isCalculating || !weight || !height || !age}
+          disabled={isCalculating || !isFormValid}
           size="lg"
           className="w-full max-w-md"
         >
@@ -150,6 +188,13 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         </Button>
       </div>
 
+      {!isFormValid && (
+        <div className="text-center text-sm text-red-600">
+          {!gerFormula && "Selecione uma equação GER para continuar"}
+          {gerFormula && (!weight || !height || !age) && "Preencha todos os dados antropométricos obrigatórios"}
+        </div>
+      )}
+
       {patientSelected && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center gap-2 text-blue-800 text-sm">
@@ -157,7 +202,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
             <span className="font-medium">Paciente selecionado</span>
           </div>
           <p className="text-blue-600 text-xs mt-1">
-            Os dados foram preenchidos automaticamente com as informações do paciente
+            Os dados foram preenchidos automaticamente. Selecione a equação GER apropriada para este paciente.
           </p>
         </div>
       )}
