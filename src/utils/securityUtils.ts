@@ -321,7 +321,7 @@ export const inputValidation = {
       sum += parseInt(cleaned[i]) * (10 - i);
     }
     let remainder = sum % 11;
-    let digit1 = remainder < 2 ? 0 : 11 - remainder;
+    const digit1 = remainder < 2 ? 0 : 11 - remainder;
     
     if (parseInt(cleaned[9]) !== digit1) return false;
     
@@ -330,7 +330,7 @@ export const inputValidation = {
       sum += parseInt(cleaned[i]) * (11 - i);
     }
     remainder = sum % 11;
-    let digit2 = remainder < 2 ? 0 : 11 - remainder;
+    const digit2 = remainder < 2 ? 0 : 11 - remainder;
     
     return parseInt(cleaned[10]) === digit2;
   },

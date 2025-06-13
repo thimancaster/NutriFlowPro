@@ -1,53 +1,77 @@
-
 /* Tema escuro - Variáveis e estilos específicos */
 @layer base {
   .dark {
     /* Fundo principal com gradiente sutil */
-    --background: 0 0% 4%; /* #0a0a0b */
-    --foreground: 0 0% 100%; /* #ffffff */
+    --background: 0 0% 4%;
+    /* #0a0a0b */
+    --foreground: 0 0% 100%;
+    /* #ffffff */
 
     /* Cards com hierarquia visual clara */
-    --card: 0 0% 9%; /* #161619 */
-    --card-foreground: 0 0% 95%; /* #f2f2f2 */
+    --card: 0 0% 9%;
+    /* #161619 */
+    --card-foreground: 0 0% 95%;
+    /* #f2f2f2 */
 
     /* Popovers e dropdowns mais visíveis */
-    --popover: 0 0% 11%; /* #1c1c20 */
-    --popover-foreground: 0 0% 100%; /* #ffffff */
+    --popover: 0 0% 11%;
+    /* #1c1c20 */
+    --popover-foreground: 0 0% 100%;
+    /* #ffffff */
 
     /* Cores primárias com melhor contraste */
-    --primary: 166 76% 46%; /* Verde mais vibrante #22d3aa */
-    --primary-foreground: 0 0% 4%; /* #0a0a0b */
+    --primary: 166 76% 46%;
+    /* Verde mais vibrante #22d3aa */
+    --primary-foreground: 0 0% 4%;
+    /* #0a0a0b */
 
     /* Elementos secundários mais sutis */
-    --secondary: 0 0% 14%; /* #232327 */
-    --secondary-foreground: 0 0% 89%; /* #e4e4e7 */
+    --secondary: 0 0% 14%;
+    /* #232327 */
+    --secondary-foreground: 0 0% 89%;
+    /* #e4e4e7 */
 
     /* Elementos mutados com melhor legibilidade */
-    --muted: 0 0% 12%; /* #1f1f23 */
-    --muted-foreground: 0 0% 67%; /* #a1a1aa */
+    --muted: 0 0% 12%;
+    /* #1f1f23 */
+    --muted-foreground: 0 0% 67%;
+    /* #a1a1aa */
 
     /* Acentos mais harmoniosos */
-    --accent: 0 0% 16%; /* #292a2f */
-    --accent-foreground: 0 0% 100%; /* #ffffff */
+    --accent: 0 0% 16%;
+    /* #292a2f */
+    --accent-foreground: 0 0% 100%;
+    /* #ffffff */
 
     /* Cores destrutivas mais suaves */
     --destructive: 0 65% 51%;
     --destructive-foreground: 0 0% 100%;
 
     /* Bordas com melhor definição */
-    --border: 0 0% 18%; /* #2d2d32 */
-    --input: 0 0% 22%; /* #38383e */
-    --ring: 166 76% 46%; /* #22d3aa */
+    --border: 0 0% 18%;
+    /* #2d2d32 */
+    --input: 0 0% 22%;
+    /* #38383e */
+    --ring: 166 76% 46%;
+    /* #22d3aa */
 
     /* Sidebar com tema escuro refinado */
-    --sidebar-background: 0 0% 6%; /* #0f0f11 */
-    --sidebar-foreground: 0 0% 100%; /* #ffffff */
-    --sidebar-primary: 0 0% 16%; /* #292a2f */
-    --sidebar-primary-foreground: 0 0% 100%; /* #ffffff */
-    --sidebar-accent: 166 76% 46%; /* #22d3aa */
-    --sidebar-accent-foreground: 0 0% 4%; /* #0a0a0b */
-    --sidebar-border: 0 0% 18%; /* #2d2d32 */
-    --sidebar-ring: 166 76% 46%; /* #22d3aa */
+    --sidebar-background: 0 0% 6%;
+    /* #0f0f11 */
+    --sidebar-foreground: 0 0% 100%;
+    /* #ffffff */
+    --sidebar-primary: 0 0% 16%;
+    /* #292a2f */
+    --sidebar-primary-foreground: 0 0% 100%;
+    /* #ffffff */
+    --sidebar-accent: 166 76% 46%;
+    /* #22d3aa */
+    --sidebar-accent-foreground: 0 0% 4%;
+    /* #0a0a0b */
+    --sidebar-border: 0 0% 18%;
+    /* #2d2d32 */
+    --sidebar-ring: 166 76% 46%;
+    /* #22d3aa */
 
     /* Configurações específicas do tema escuro */
     color-scheme: dark;
@@ -55,55 +79,13 @@
 
   /* Dark mode base improvements */
   .dark html {
-    @apply bg-dark-bg-primary;
+    background-color: hsl(var(--background));
   }
 
   .dark body {
-    @apply bg-dark-bg-primary text-dark-text-primary;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     background-image: radial-gradient(circle at 50% 50%, rgba(34, 211, 170, 0.02) 0%, transparent 50%);
-  }
-
-  /* Melhorias específicas para texto no modo escuro */
-  .dark .text-gray-600 {
-    @apply text-dark-text-muted;
-  }
-
-  .dark .text-gray-700 {
-    @apply text-dark-text-subtle;
-  }
-
-  .dark .text-gray-800 {
-    @apply text-dark-text-secondary;
-  }
-
-  .dark .text-gray-900 {
-    @apply text-dark-text-primary;
-  }
-
-  /* Fundos com hierarquia visual clara */
-  .dark .bg-white {
-    @apply bg-dark-bg-card;
-  }
-
-  .dark .bg-gray-50 {
-    @apply bg-dark-bg-secondary;
-  }
-
-  .dark .bg-gray-100 {
-    @apply bg-dark-bg-elevated;
-  }
-
-  .dark .bg-blue-50 {
-    @apply bg-dark-bg-surface/50;
-  }
-
-  /* Bordas com melhor definição */
-  .dark .border-gray-200 {
-    @apply border-dark-border-primary;
-  }
-
-  .dark .border-gray-300 {
-    @apply border-dark-border-secondary;
   }
 
   /* Scrollbar personalizada para modo escuro */
@@ -113,103 +95,23 @@
   }
 
   .dark ::-webkit-scrollbar-track {
-    @apply bg-dark-bg-secondary rounded-full;
+    background-color: hsl(var(--muted));
+    border-radius: 9999px;
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    @apply bg-dark-border-accent rounded-full;
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
     transition: background-color 0.2s ease;
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    @apply bg-dark-accent-green/30;
+    background-color: hsl(var(--primary) / 0.3);
   }
 
   /* Seleção de texto melhorada */
   .dark ::selection {
-    @apply bg-dark-accent-green/20 text-dark-text-primary;
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
   }
 }
-
-/* Estilos específicos para o tema claro - garantindo contraste adequado */
-@layer base {
-  /* Garantindo que o tema claro tenha contraste adequado */
-  :root:not(.dark) {
-    /* Textos com contraste adequado no tema claro */
-    --foreground: 222.2 84% 4.9%; /* Texto escuro */
-    --muted-foreground: 215.4 16.3% 46.9%; /* Texto secundário */
-  }
-
-  /* Correções específicas para o tema claro */
-  :root:not(.dark) .text-white {
-    @apply text-gray-900;
-  }
-
-  :root:not(.dark) .text-gray-100 {
-    @apply text-gray-900;
-  }
-
-  :root:not(.dark) .text-gray-200 {
-    @apply text-gray-800;
-  }
-
-  :root:not(.dark) .text-gray-300 {
-    @apply text-gray-700;
-  }
-
-  :root:not(.dark) .placeholder-white {
-    @apply placeholder-gray-500;
-  }
-
-  :root:not(.dark) .placeholder-gray-100 {
-    @apply placeholder-gray-500;
-  }
-
-  :root:not(.dark) .placeholder-gray-200 {
-    @apply placeholder-gray-500;
-  }
-
-  /* Garantindo que labels e textos de formulário sejam visíveis no tema claro */
-  :root:not(.dark) label {
-    @apply text-gray-900;
-  }
-
-  :root:not(.dark) .text-sm {
-    @apply text-gray-700;
-  }
-
-  :root:not(.dark) .font-medium {
-    @apply text-gray-900;
-  }
-
-  /* Placeholders de input no tema claro */
-  :root:not(.dark) input::placeholder,
-  :root:not(.dark) textarea::placeholder,
-  :root:not(.dark) select::placeholder {
-    @apply text-gray-500 opacity-100;
-  }
-
-  /* Select values no tema claro */
-  :root:not(.dark) [data-placeholder] {
-    @apply text-gray-500;
-  }
-
-  /* Texto de erro no tema claro */
-  :root:not(.dark) .text-red-300 {
-    @apply text-red-600;
-  }
-
-  :root:not(.dark) .text-red-400 {
-    @apply text-red-600;
-  }
-
-  /* Melhorar contraste de textos específicos */
-  :root:not(.dark) .text-muted-foreground {
-    @apply text-gray-600;
-  }
-
-  :root:not(.dark) .text-foreground {
-    @apply text-gray-900;
-  }
-}
-

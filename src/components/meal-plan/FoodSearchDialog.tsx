@@ -1,11 +1,10 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useCallback, useRef} from "react";
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Search, Loader2, ChevronLeft, ChevronRight} from "lucide-react";
 import {FoodService, Food} from "@/services/foodService";
-import {useToast} from "@/hooks/use-toast";
 
 interface FoodSearchDialogProps {
 	isOpen: boolean;
@@ -13,6 +12,146 @@ interface FoodSearchDialogProps {
 	onFoodSelect: (food: Food) => void;
 	mealType?: string;
 }
+
+// Helper component for rendering food list content
+const FoodListContent: React.FC<{
+	error: string;
+	isLoading: boolean;
+	foods: Food[];
+	searchQuery: string;
+	selectedCategory: string;
+	mealType?: string;
+	ignoreMealTypeFilter: boolean;
+	onFoodSelect: (food: Food) => void;
+	onRetry: () => void;
+	onForceReset: () => void;
+	showLoadingHelp: boolean;
+}> = ({
+	error,
+	isLoading,
+	foods,
+	searchQuery,
+	selectedCategory,
+	mealType,
+	ignoreMealTypeFilter,
+	onFoodSelect,
+	onRetry,
+	onForceReset,
+	showLoadingHelp,
+}) => {
+	if (error) {
+		return (
+			<div className="text-center p-8 text-red-500 min-h-[200px] flex flex-col justify-center">
+				<p>{error}</p>
+				<div className="flex flex-col gap-2 mt-4">
+					<Button variant="outline" onClick={onRetry}>
+						Tentar novamente
+					</Button>
+					<Button variant="outline" onClick={onForceReset} className="text-orange-600">
+						Reiniciar busca
+					</Button>
+				</div>
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center p-8 min-h-[200px]">
+				<div className="text-center">
+					<div className="flex items-center justify-center mb-4">
+						<Loader2 className="h-6 w-6 animate-spin mr-2" />
+						Buscando alimentos...
+					</div>
+					{showLoadingHelp && (
+						<div className="mt-4">
+							<p className="text-sm text-gray-600 mb-3">
+								A busca está demorando mais que o esperado
+							</p>
+							<Button variant="outline" onClick={onForceReset} size="sm">
+								Reiniciar busca
+							</Button>
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	}
+
+	if (foods.length === 0) {
+		const hasActiveFilters =
+			searchQuery || selectedCategory || (mealType && !ignoreMealTypeFilter);
+
+		return (
+			<div className="text-center p-8 text-gray-500 min-h-[200px] flex flex-col justify-center">
+				{hasActiveFilters ? (
+					"Nenhum alimento encontrado com os filtros aplicados"
+				) : (
+					<div className="space-y-4">
+						<p>
+							Digite o nome de um alimento ou selecione uma categoria para começar a
+							busca
+						</p>
+						<Button variant="outline" onClick={onRetry} disabled={isLoading}>
+							{isLoading ? (
+								<>
+									<Loader2 className="h-4 w-4 animate-spin mr-2" />
+									Carregando...
+								</>
+							) : (
+								"Mostrar todos os alimentos"
+							)}
+						</Button>
+					</div>
+				)}
+			</div>
+		);
+	}
+
+	return (
+		<div className="divide-y">
+			{foods.map((food) => (
+				<button
+					key={food.id}
+					type="button"
+					className="p-4 hover:bg-gray-50 cursor-pointer transition-colors text-left border-none bg-transparent w-full"
+					onClick={() => onFoodSelect(food)}
+					tabIndex={0}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							onFoodSelect(food);
+						}
+					}}>
+					<div className="flex justify-between items-start">
+						<div className="flex-1">
+							<h4 className="font-medium text-gray-900">{food.name}</h4>
+							<div className="flex gap-2 mt-1">
+								<Badge variant="secondary" className="text-xs">
+									{food.food_group}
+								</Badge>
+								{food.is_organic && (
+									<Badge variant="outline" className="text-xs text-green-600">
+										Orgânico
+									</Badge>
+								)}
+							</div>
+							<p className="text-sm text-gray-600 mt-1">
+								{food.portion_size} {food.portion_unit}
+							</p>
+						</div>
+						<div className="text-right text-sm">
+							<div className="font-medium">{food.calories} kcal</div>
+							<div className="text-gray-500">
+								P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
+							</div>
+						</div>
+					</div>
+				</button>
+			))}
+		</div>
+	);
+};
 
 const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 	isOpen,
@@ -29,7 +168,14 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 	const [totalCount, setTotalCount] = useState(0);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [ignoreMealTypeFilter, setIgnoreMealTypeFilter] = useState(false);
-	const {toast} = useToast();
+	const [error, setError] = useState("");
+	const [abortController, setAbortController] = useState<AbortController | null>(null);
+	const [actualItemsPerPage, setActualItemsPerPage] = useState(20); // Track actual items per page
+	const [showLoadingHelp, setShowLoadingHelp] = useState(false); // Show help after prolonged loading
+
+	// Use a ref to track if we've done the initial search to prevent loops
+	const hasInitialSearched = useRef(false);
+	const isSearchInProgress = useRef(false);
 
 	const pageSize = 20; // 20 items per page for dialog
 
@@ -48,89 +194,481 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 		{value: "lanches", label: "Lanches"},
 	];
 
-	const searchFoods = async (page: number = currentPage) => {
-		if (page === 1) {
-			setIsLoading(true);
-		} else {
-			setLoadingMore(true);
+	// Helper function to determine if search should proceed
+	const shouldPerformSearch = useCallback(
+		(forceSearch: boolean) => {
+			const hasSearchQuery = searchQuery.trim();
+			const hasSpecificCategory = selectedCategory && selectedCategory !== "";
+			const hasMealType = mealType && !ignoreMealTypeFilter;
+
+			return (
+				forceSearch ||
+				hasSearchQuery ||
+				hasSpecificCategory ||
+				hasMealType ||
+				(selectedCategory === "" && hasInitialSearched.current)
+			);
+		},
+		[searchQuery, selectedCategory, mealType, ignoreMealTypeFilter]
+	);
+
+	// Helper function to reset search state
+	const resetSearchState = useCallback(() => {
+		setFoods([]);
+		setTotalPages(1);
+		setTotalCount(0);
+		setCurrentPage(1);
+		setIsLoading(false);
+		setLoadingMore(false);
+		setError("");
+	}, []);
+
+	// Force reset function to break out of stuck states
+	const forceReset = useCallback(() => {
+		console.log("🔄 Force reset initiated");
+
+		// Abort any ongoing requests
+		if (abortController) {
+			abortController.abort();
 		}
 
-		try {
+		// Force reset all flags and states
+		isSearchInProgress.current = false;
+		hasInitialSearched.current = false;
+		setAbortController(null);
+		setShowLoadingHelp(false);
+
+		// Reset UI state
+		resetSearchState();
+
+		console.log("✅ Force reset completed");
+	}, [abortController, resetSearchState]);
+
+	// Helper function to build search filters - made more stable
+	const buildSearchFilters = useCallback(
+		(
+			page: number,
+			forceSearch: boolean,
+			searchParams: {
+				searchQuery: string;
+				selectedCategory: string;
+				mealType?: string;
+				ignoreMealTypeFilter: boolean;
+			}
+		) => {
 			const filters: any = {
 				page,
 				pageSize,
+				forceLoad: forceSearch,
 			};
 
-			if (searchQuery) {
-				filters.query = searchQuery;
+			const hasSearchQuery = searchParams.searchQuery.trim();
+			const hasSpecificCategory =
+				searchParams.selectedCategory && searchParams.selectedCategory !== "";
+			const hasMealType = searchParams.mealType && !searchParams.ignoreMealTypeFilter;
+
+			if (hasSearchQuery) {
+				filters.query = searchParams.searchQuery.trim();
 			}
 
-			if (selectedCategory) {
-				filters.food_group = selectedCategory;
+			if (hasSpecificCategory) {
+				filters.food_group = searchParams.selectedCategory;
 			}
 
-			if (mealType && !ignoreMealTypeFilter) {
-				filters.meal_time = mealType;
+			if (hasMealType) {
+				filters.meal_time = searchParams.mealType;
 			}
 
-			console.log("Searching with filters:", filters); // Debug log
+			return filters;
+		},
+		[pageSize]
+	);
 
-			const results = await FoodService.searchFoods(filters);
-			setFoods(results.data);
-			setTotalPages(results.totalPages);
-			setTotalCount(results.count);
-			setCurrentPage(page);
-		} catch (error) {
-			console.error("Erro ao buscar alimentos:", error);
-			toast({
-				title: "Erro",
-				description: "Erro ao buscar alimentos",
-				variant: "destructive",
+	// Helper function to calculate actual page size - made more stable
+	const calculateActualPageSize = useCallback(
+		(
+			forceSearch: boolean,
+			searchParams: {
+				selectedCategory: string;
+				searchQuery: string;
+				mealType?: string;
+				ignoreMealTypeFilter: boolean;
+			}
+		) => {
+			const categorySelected =
+				searchParams.selectedCategory && searchParams.selectedCategory !== "";
+			const queryEntered = searchParams.searchQuery.trim();
+			const mealTypeActive = searchParams.mealType && !searchParams.ignoreMealTypeFilter;
+			const isSimpleCategorySearch = categorySelected && !queryEntered && !mealTypeActive;
+
+			return forceSearch || isSimpleCategorySearch ? 100 : pageSize;
+		},
+		[pageSize]
+	);
+
+	// Helper function to handle search errors
+	const handleSearchError = useCallback((error: any, abortController: AbortController) => {
+		console.error("Search error:", error);
+
+		if (abortController.signal.aborted) {
+			console.log("Search was aborted");
+			return;
+		}
+
+		if (error instanceof Error) {
+			if (error.message === "Search timeout") {
+				setError("A busca está demorando muito. Tente novamente.");
+			} else if (error.message.includes("Database query timeout")) {
+				setError("Conexão com o banco de dados está lenta. Tente novamente.");
+			} else {
+				setError("Erro ao buscar alimentos. Tente novamente.");
+			}
+		} else {
+			setError("Erro ao buscar alimentos. Tente novamente.");
+		}
+
+		setFoods([]);
+		setTotalCount(0);
+	}, []);
+
+	// Main search function - simplified by extracting helper functions
+	const performSearch = useCallback(
+		async (page: number, forceSearch: boolean = false) => {
+			console.log("performSearch called:", {
+				page,
+				forceSearch,
+				selectedCategory,
+				isLoading,
+				loadingMore,
 			});
+
+			// Check if we should search
+			if (!shouldPerformSearch(forceSearch)) {
+				console.log("Skipping search - no search criteria provided");
+				resetSearchState();
+				return;
+			}
+
+			// Prevent concurrent searches
+			if ((isLoading || loadingMore || isSearchInProgress.current) && !forceSearch) {
+				console.log("Search already in progress, skipping...");
+				return;
+			}
+
+			// Set up search
+			isSearchInProgress.current = true;
+
+			if (abortController) {
+				abortController.abort();
+			}
+
+			const newAbortController = new AbortController();
+			setAbortController(newAbortController);
+
+			if (page === 1) {
+				setIsLoading(true);
+			} else {
+				setLoadingMore(true);
+			}
+
+			try {
+				const searchParams = {
+					searchQuery,
+					selectedCategory,
+					mealType,
+					ignoreMealTypeFilter,
+				};
+
+				const filters = buildSearchFilters(page, forceSearch, searchParams);
+				console.log("🔍 Search params:", searchParams);
+				console.log("🔧 Built filters:", filters);
+				console.log("Searching with filters:", filters);
+
+				// Execute search with timeout (reduced to match service timeout)
+				const searchPromise = FoodService.searchFoods(filters);
+				const timeoutPromise = new Promise((_, reject) => {
+					setTimeout(() => reject(new Error("Search timeout")), 12000); // Reduced from 20s to 12s
+				});
+
+				const results = (await Promise.race([searchPromise, timeoutPromise])) as any;
+				console.log("API call completed with results:", {
+					hasResults: !!results,
+					dataLength: results?.data?.length,
+					count: results?.count,
+				});
+
+				if (newAbortController.signal.aborted) {
+					console.log("Search request was aborted");
+					return;
+				}
+
+				// Process results
+				const foods = results?.data ?? [];
+				const totalCount = results?.count ?? 0;
+				const totalPages = results?.totalPages ?? 1;
+				const actualPageSize = calculateActualPageSize(forceSearch, searchParams);
+
+				console.log("📦 Processing results:", {
+					foodsCount: foods.length,
+					selectedCategory,
+					sampleFoods: foods
+						.slice(0, 3)
+						.map((f) => ({name: f.name, food_group: f.food_group})),
+				});
+
+				if (page === 1) {
+					setFoods(foods);
+					setActualItemsPerPage(actualPageSize);
+				} else {
+					setFoods((prev) => [...prev, ...foods]);
+				}
+
+				setTotalCount(totalCount);
+				setTotalPages(totalPages);
+				setCurrentPage(page);
+				setError("");
+			} catch (error) {
+				handleSearchError(error, newAbortController);
+			} finally {
+				if (!newAbortController.signal.aborted) {
+					console.log("Search completed, resetting loading states");
+					setIsLoading(false);
+					setLoadingMore(false);
+				} else {
+					console.log("Search was aborted, keeping loading states");
+				}
+				setAbortController(null);
+				isSearchInProgress.current = false;
+			}
+		},
+		[
+			shouldPerformSearch,
+			resetSearchState,
+			buildSearchFilters,
+			calculateActualPageSize,
+			handleSearchError,
+		]
+	);
+
+	// Separate function for initial search to avoid useCallback dependencies
+	const performInitialSearch = useCallback(async () => {
+		if (hasInitialSearched.current || isSearchInProgress.current) {
+			return;
+		}
+
+		hasInitialSearched.current = true;
+		setCurrentPage(1);
+		console.log("Triggering forced search on dialog open");
+
+		const filters: any = {
+			page: 1,
+			pageSize,
+			forceLoad: true,
+		};
+
+		console.log("Initial search with filters:", filters);
+
+		try {
+			isSearchInProgress.current = true;
+			setIsLoading(true);
+
+			// Add timeout protection for initial search
+			const searchPromise = FoodService.searchFoods(filters);
+			const timeoutPromise = new Promise((_, reject) => {
+				setTimeout(() => reject(new Error("Initial search timeout")), 12000); // Reduced to 12 seconds to be closer to service timeout
+			});
+
+			const results = (await Promise.race([searchPromise, timeoutPromise])) as any;
+			console.log("Initial search completed:", results);
+
+			const foods = results?.data ?? [];
+			const totalCount = results?.count ?? 0;
+			const totalPages = results?.totalPages ?? 1;
+
+			setFoods(foods);
+			setTotalCount(totalCount);
+			setTotalPages(totalPages);
+			setCurrentPage(1);
+			setActualItemsPerPage(100); // Force load uses 100 items per page
+			setError("");
+		} catch (error) {
+			console.error("Initial search error:", error);
+			if (error instanceof Error) {
+				if (error.message === "Initial search timeout") {
+					setError("Carregamento inicial está demorando muito. Tente novamente.");
+				} else if (error.message.includes("Database query timeout")) {
+					setError("Conexão com o banco de dados está lenta. Tente novamente.");
+				} else {
+					setError("Erro ao carregar alimentos iniciais. Tente novamente.");
+				}
+			} else {
+				setError("Erro ao carregar alimentos iniciais");
+			}
+			setFoods([]);
+			setTotalCount(0);
 		} finally {
 			setIsLoading(false);
-			setLoadingMore(false);
+			isSearchInProgress.current = false; // Always reset this flag
 		}
-	};
+	}, [pageSize]);
 
+	// Effect for when dialog opens - use ref to prevent infinite loops
 	useEffect(() => {
+		console.log("Dialog open effect triggered:", {
+			isOpen,
+			hasInitialSearched: hasInitialSearched.current,
+		});
 		if (isOpen) {
-			setCurrentPage(1);
-			searchFoods(1);
+			performInitialSearch();
+
+			// Aggressive safety reset: if search is stuck, force reset after 15 seconds
+			const safetyTimeout = setTimeout(() => {
+				if (isSearchInProgress.current || isLoading || loadingMore) {
+					console.warn(
+						"⚠️ Force resetting stuck search - dialog has been loading for 15+ seconds"
+					);
+					forceReset();
+				}
+			}, 15000); // Reduced from 30s to 15s for faster recovery
+
+			return () => clearTimeout(safetyTimeout);
+		} else if (!isOpen) {
+			// Reset ref when dialog closes
+			hasInitialSearched.current = false;
+			isSearchInProgress.current = false;
+			console.log("Dialog closed, resetting search state");
 		}
-	}, [isOpen, searchQuery, selectedCategory, mealType, ignoreMealTypeFilter]);
+	}, [isOpen, performInitialSearch, forceReset, isLoading, loadingMore]);
 
-	const handlePageChange = (newPage: number) => {
-		if (newPage >= 1 && newPage <= totalPages && !loadingMore) {
-			searchFoods(newPage);
+	// Effect for search query changes (debounced)
+	useEffect(() => {
+		if (isOpen && searchQuery.trim()) {
+			const timeoutId = setTimeout(() => {
+				setCurrentPage(1);
+				performSearch(1);
+			}, 300); // Debounce search queries
+
+			return () => clearTimeout(timeoutId);
 		}
-	};
+	}, [searchQuery, isOpen, performSearch]);
 
-	const handleFoodSelect = (food: Food) => {
-		onFoodSelect(food);
-		onClose();
-	};
+	// Effect for category changes
+	useEffect(() => {
+		if (isOpen && hasInitialSearched.current) {
+			const timeoutId = setTimeout(() => {
+				setCurrentPage(1);
+				performSearch(1);
+			}, 100);
 
-	const handleClose = () => {
+			return () => clearTimeout(timeoutId);
+		}
+	}, [selectedCategory, isOpen, performSearch]);
+
+	// Effect for meal type filter changes
+	useEffect(() => {
+		if (isOpen && hasInitialSearched.current) {
+			const timeoutId = setTimeout(() => {
+				setCurrentPage(1);
+				performSearch(1);
+			}, 150);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [ignoreMealTypeFilter, isOpen, performSearch]);
+
+	// Effect to show loading help after prolonged loading
+	useEffect(() => {
+		if (isLoading) {
+			setShowLoadingHelp(false);
+			const helpTimeout = setTimeout(() => {
+				setShowLoadingHelp(true);
+			}, 5000); // Show help after 5 seconds of loading
+
+			return () => {
+				clearTimeout(helpTimeout);
+				setShowLoadingHelp(false);
+			};
+		} else {
+			setShowLoadingHelp(false);
+		}
+	}, [isLoading]);
+
+	// Helper function to get meal type display name
+	const getMealTypeDisplayName = useCallback((mealType: string): string => {
+		const mealTypeMap: Record<string, string> = {
+			breakfast: "Café da manhã",
+			lunch: "Almoço",
+			dinner: "Jantar",
+		};
+		return mealTypeMap[mealType] || mealType;
+	}, []);
+
+	// Helper function for handling page changes
+	const handlePageChange = useCallback(
+		(newPage: number) => {
+			if (newPage >= 1 && newPage <= totalPages && !loadingMore) {
+				performSearch(newPage);
+			}
+		},
+		[totalPages, loadingMore, performSearch]
+	);
+
+	// Helper function for handling food selection
+	const handleFoodSelect = useCallback(
+		(food: Food) => {
+			onFoodSelect(food);
+			onClose();
+		},
+		[onFoodSelect, onClose]
+	);
+
+	// Helper function for handling dialog close with cleanup
+	const handleClose = useCallback(() => {
+		// Cancel any ongoing search requests
+		if (abortController) {
+			abortController.abort();
+			setAbortController(null);
+		}
+
+		// Reset all state
 		setSearchQuery("");
 		setSelectedCategory("");
 		setFoods([]);
 		setCurrentPage(1);
 		setTotalPages(1);
 		setTotalCount(0);
+		setIsLoading(false);
+		setLoadingMore(false);
+		setIgnoreMealTypeFilter(false);
+		setError("");
+		setActualItemsPerPage(20);
+
+		// Reset the refs
+		hasInitialSearched.current = false;
+		isSearchInProgress.current = false;
+
 		onClose();
-	};
+	}, [abortController, onClose]);
+
+	// Cleanup effect to cancel requests on unmount
+	useEffect(() => {
+		return () => {
+			if (abortController) {
+				abortController.abort();
+			}
+		};
+	}, [abortController]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-				<DialogHeader>
+			<DialogContent className="max-w-4xl h-[80vh] overflow-hidden flex flex-col">
+				<DialogHeader className="flex-shrink-0">
 					<DialogTitle>Buscar Alimentos</DialogTitle>
 				</DialogHeader>
 
-				<div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+				<div className="space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
 					{/* Filtros */}
-					<div className="space-y-3">
+					<div className="space-y-3 flex-shrink-0">
 						<div className="relative">
 							<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
 							<Input
@@ -160,14 +698,7 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 							<div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border">
 								<div className="flex items-center space-x-2">
 									<span className="text-sm font-medium text-blue-700">
-										Filtro ativo:{" "}
-										{mealType === "breakfast"
-											? "Café da manhã"
-											: mealType === "lunch"
-											? "Almoço"
-											: mealType === "dinner"
-											? "Jantar"
-											: mealType}
+										Filtro ativo: {getMealTypeDisplayName(mealType)}
 									</span>
 									<span className="text-xs text-blue-600">
 										({totalCount} alimentos disponíveis)
@@ -186,71 +717,33 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 					</div>
 
 					{/* Lista de Alimentos */}
-					<div className="flex-1 overflow-y-auto border rounded-lg">
-						{isLoading ? (
-							<div className="flex items-center justify-center p-8">
-								<Loader2 className="h-6 w-6 animate-spin mr-2" />
-								Buscando alimentos...
-							</div>
-						) : foods.length === 0 ? (
-							<div className="text-center p-8 text-gray-500">
-								{searchQuery || selectedCategory
-									? "Nenhum alimento encontrado com os filtros aplicados"
-									: "Digite para buscar alimentos"}
-							</div>
-						) : (
-							<div className="divide-y">
-								{foods.map((food) => (
-									<div
-										key={food.id}
-										className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-										onClick={() => handleFoodSelect(food)}>
-										<div className="flex justify-between items-start">
-											<div className="flex-1">
-												<h4 className="font-medium text-gray-900">
-													{food.name}
-												</h4>
-												<div className="flex gap-2 mt-1">
-													<Badge variant="secondary" className="text-xs">
-														{food.food_group}
-													</Badge>
-													{food.is_organic && (
-														<Badge
-															variant="outline"
-															className="text-xs text-green-600">
-															Orgânico
-														</Badge>
-													)}
-												</div>
-												<p className="text-sm text-gray-600 mt-1">
-													{food.portion_size} {food.portion_unit}
-												</p>
-											</div>
-
-											<div className="text-right text-sm">
-												<div className="font-medium">
-													{food.calories} kcal
-												</div>
-												<div className="text-gray-500">
-													P: {food.protein}g | C: {food.carbs}g | G:{" "}
-													{food.fats}g
-												</div>
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
-						)}
+					<div className="flex-1 overflow-y-auto border rounded-lg min-h-[420px] max-h-[420px]">
+						<FoodListContent
+							error={error}
+							isLoading={isLoading}
+							foods={foods}
+							searchQuery={searchQuery}
+							selectedCategory={selectedCategory}
+							mealType={mealType}
+							ignoreMealTypeFilter={ignoreMealTypeFilter}
+							onFoodSelect={handleFoodSelect}
+							onRetry={() => {
+								setError("");
+								performSearch(1, true);
+							}}
+							onForceReset={forceReset}
+							showLoadingHelp={showLoadingHelp}
+						/>
 					</div>
 
-					{/* Results info and pagination */}
-					{!isLoading && totalCount > 0 && (
-						<div className="space-y-3 pt-2">
+					{/* Pagination Controls - Fixed Footer */}
+					{foods.length > 0 && (
+						<div className="space-y-3 pt-2 border-t flex-shrink-0 bg-white">
 							<div className="flex items-center justify-between text-sm text-gray-600">
 								<span>
-									Mostrando {(currentPage - 1) * pageSize + 1}-
-									{Math.min(currentPage * pageSize, totalCount)} de {totalCount}{" "}
-									alimentos
+									Mostrando {(currentPage - 1) * actualItemsPerPage + 1}-
+									{Math.min(currentPage * actualItemsPerPage, totalCount)} de{" "}
+									{totalCount} alimentos
 								</span>
 								<span>
 									Página {currentPage} de {totalPages}
@@ -318,7 +811,7 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 						</div>
 					)}
 
-					<div className="flex justify-end gap-2 pt-4 border-t">
+					<div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0">
 						<Button variant="outline" onClick={handleClose}>
 							Cancelar
 						</Button>
