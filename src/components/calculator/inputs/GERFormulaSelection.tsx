@@ -4,28 +4,36 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Info, Calculator } from 'lucide-react';
-import { GER_FORMULAS } from '@/types/gerFormulas';
+import { GERFormula, GER_FORMULAS } from '@/types/gerFormulas';
 import { recommendGERFormula } from '@/utils/nutrition/gerCalculations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useENPCalculator } from '@/contexts/calculator/ENPCalculatorContext';
 import { FormulaSelectItem } from './FormulaSelectItem';
+import { Profile } from '@/types/consultation';
 
-const GERFormulaSelection: React.FC = () => {
-  const {
-    gerFormula: selectedFormula,
-    setGERFormula: onFormulaChange,
-    profile,
-    validatedData,
-  } = useENPCalculator();
+interface GERFormulaSelectionProps {
+  selectedFormula: GERFormula | undefined;
+  onFormulaChange: (value: GERFormula) => void;
+  profile: Profile;
+  hasBodyFat: boolean;
+  age?: number;
+  weight?: number;
+  height?: number;
+  required?: boolean;
+}
 
-  const hasBodyFat = !!validatedData.bodyFatPercentage;
-  const { age, weight, height } = validatedData;
-  const required = true;
-
+const GERFormulaSelection: React.FC<GERFormulaSelectionProps> = ({
+  selectedFormula,
+  onFormulaChange,
+  profile,
+  hasBodyFat,
+  age,
+  weight,
+  height,
+  required = true,
+}) => {
   const recommendedFormula = profile ? recommendGERFormula(profile, hasBodyFat, age, weight, height) : null;
-  
+
   return (
     <TooltipProvider>
       <Card>
@@ -51,7 +59,7 @@ const GERFormulaSelection: React.FC = () => {
             <Label htmlFor="ger-formula">
               Equação para Gasto Energético de Repouso (GER) {required && <span className="text-red-500">*</span>}
             </Label>
-            <Select value={selectedFormula} onValueChange={onFormulaChange}>
+            <Select value={selectedFormula} onValueChange={(value) => onFormulaChange(value as GERFormula)}>
               <SelectTrigger id="ger-formula" className="mt-2">
                 <SelectValue placeholder="Selecione a equação GER" />
               </SelectTrigger>

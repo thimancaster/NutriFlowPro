@@ -9,6 +9,7 @@ import ENPCalculatorActions from './ENPCalculatorActions';
 import CalculatorActions from '../CalculatorActions';
 import GERFormulaSelection from '../inputs/GERFormulaSelection';
 import { useENPCalculator } from '@/contexts/calculator/ENPCalculatorContext';
+import { GERFormula } from '@/types/gerFormulas';
 
 // Nenhuma propriedade é mais necessária, pois o estado vem do contexto.
 export const ENPCalculatorForm: React.FC = () => {
@@ -28,6 +29,14 @@ export const ENPCalculatorForm: React.FC = () => {
   const handleGenerateMealPlan = () => {
     console.log('Generate meal plan clicked');
   };
+  
+  const transformedResults = results ? {
+    tmb: results.ger,
+    get: results.tdee,
+    vet: results.finalVET,
+    adjustment: results.objectiveAdjustment,
+    macros: results.macros,
+  } : null;
 
   return (
     <Tabs defaultValue="calculator" className="w-full">
@@ -57,8 +66,15 @@ export const ENPCalculatorForm: React.FC = () => {
           setBodyFatPercentage={setBodyFatPercentage}
         />
         
-        {/* Este componente foi refatorado e não precisa de props */}
-        <GERFormulaSelection />
+        <GERFormulaSelection
+          selectedFormula={gerFormula}
+          onFormulaChange={(value) => setGERFormula(value)}
+          profile={profile}
+          hasBodyFat={!!validatedData.bodyFatPercentage}
+          age={validatedData.age}
+          weight={validatedData.weight}
+          height={validatedData.height}
+        />
 
         {/* Passamos as props pois não podemos editar este componente */}
         <ENPValidation errors={validationErrors} warnings={validationWarnings} />
@@ -85,7 +101,7 @@ export const ENPCalculatorForm: React.FC = () => {
               </div>
             )}
             <ENPResultsPanel
-              results={results}
+              results={transformedResults}
               weight={validatedData.weight}
               onExportResults={handleExportResults}
             />

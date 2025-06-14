@@ -165,6 +165,9 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         profile={profile}
         hasBodyFat={!!bodyFatPercentage}
         required={true}
+        age={age}
+        weight={weight}
+        height={height}
       />
 
       <div className="flex justify-center">
