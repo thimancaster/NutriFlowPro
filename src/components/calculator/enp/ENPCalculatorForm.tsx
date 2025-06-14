@@ -31,11 +31,15 @@ export const ENPCalculatorForm: React.FC = () => {
   };
   
   const transformedResults = results ? {
-    tmb: results.ger,
-    get: results.tdee,
-    vet: results.finalVET,
-    adjustment: results.objectiveAdjustment,
-    macros: results.macros,
+    tmb: results.tmb,
+    get: results.gea,
+    vet: results.get,
+    adjustment: results.get - results.gea,
+    macros: {
+      protein: { grams: results.macros.protein.grams, kcal: results.macros.protein.kcal },
+      carbs: { grams: results.macros.carbs.grams, kcal: results.macros.carbs.kcal },
+      fat: { grams: results.macros.fat.grams, kcal: results.macros.fat.kcal },
+    },
   } : null;
 
   return (
@@ -68,7 +72,7 @@ export const ENPCalculatorForm: React.FC = () => {
         
         <GERFormulaSelection
           selectedFormula={gerFormula}
-          onFormulaChange={(value) => setGERFormula(value)}
+          onFormulaChange={(value) => setGERFormula(value as GERFormula)}
           profile={profile}
           hasBodyFat={!!validatedData.bodyFatPercentage}
           age={validatedData.age}
@@ -93,7 +97,7 @@ export const ENPCalculatorForm: React.FC = () => {
           </div>
         )}
         
-        {results && (
+        {results && transformedResults && (
           <>
             {results.gerFormulaName && (
               <div className="text-sm text-center text-gray-700 bg-gray-50 p-3 rounded-md border">
