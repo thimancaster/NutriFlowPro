@@ -1,4 +1,3 @@
-
 /**
  * Mapeamento de Compatibilidade entre Sistema Legado e ENP
  * Permite transição gradual e compatibilidade com código existente
@@ -6,6 +5,7 @@
 
 import { Profile, ActivityLevel, Objective } from '@/types/consultation';
 import { ENPInputs, calculateCompleteENP } from './enpCalculations';
+import { GERFormula } from '@/types/gerFormulas';
 
 /**
  * Mapeia Profile do sistema atual para objetivos ENP
@@ -79,7 +79,8 @@ export function calculateWithENPCompatibility(
   sex: 'M' | 'F',
   activityLevel: ActivityLevel | string,
   objective: Objective | string,
-  profile?: Profile
+  profile?: Profile,
+  gerFormula: GERFormula = 'harris_benedict_revisada'
 ) {
   const enpInputs: ENPInputs = {
     weight,
@@ -87,7 +88,8 @@ export function calculateWithENPCompatibility(
     age,
     sex,
     activityLevel: mapActivityLevelToENP(activityLevel as ActivityLevel),
-    objective: mapObjectiveToENP(objective as Objective)
+    objective: mapObjectiveToENP(objective as Objective),
+    gerFormula
   };
   
   return calculateCompleteENP(enpInputs);

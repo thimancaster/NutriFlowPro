@@ -1,4 +1,3 @@
-
 /**
  * ENP Clean Calculations - Sistema Limpo e Padronizado
  * Mantém apenas as funções essenciais para ENP
@@ -6,6 +5,7 @@
 
 import { calculateCompleteENP, ENPInputs, ENPResults } from './enpCalculations';
 import { ActivityLevel, Objective } from '@/types/consultation';
+import { GERFormula } from '@/types/gerFormulas';
 
 // Mapeamento simples para compatibilidade com tipos existentes
 export function mapToENPActivityLevel(level: ActivityLevel): 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo' {
@@ -38,7 +38,8 @@ export function calculateENPNutrition(
   age: number,
   sex: 'M' | 'F',
   activityLevel: ActivityLevel,
-  objective: Objective
+  objective: Objective,
+  gerFormula: GERFormula = 'harris_benedict_revisada'
 ): ENPResults {
   const enpInputs: ENPInputs = {
     weight,
@@ -46,7 +47,8 @@ export function calculateENPNutrition(
     age,
     sex,
     activityLevel: mapToENPActivityLevel(activityLevel),
-    objective: mapToENPObjective(objective)
+    objective: mapToENPObjective(objective),
+    gerFormula
   };
 
   return calculateCompleteENP(enpInputs);

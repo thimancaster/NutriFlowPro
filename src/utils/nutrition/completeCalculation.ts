@@ -10,6 +10,7 @@ import { calculateGET } from './getCalculations';
 import { calculateVET } from './vetCalculations';
 import { calculateMacros, mapProfileToCalculation } from './macroCalculations';
 import { calculateCompleteENP, ENPInputs } from './enpCalculations';
+import { GERFormula } from '@/types/gerFormulas';
 
 export interface CompleteNutritionResult {
   tmb: number;
@@ -42,7 +43,9 @@ export function calculateCompleteNutrition(
     protein: number;
     carbs: number;
     fat: number;
-  }
+  },
+  gerFormula: GERFormula = 'harris_benedict_revisada',
+  bodyFatPercentage?: number
 ): CompleteNutritionResult {
   // Usar sistema ENP como preferência
   try {
@@ -56,7 +59,9 @@ export function calculateCompleteNutrition(
                      activityLevel as any,
       objective: objective === 'emagrecimento' ? 'perder_peso' :
                 objective === 'manutenção' ? 'manter_peso' :
-                objective === 'hipertrofia' ? 'ganhar_peso' : 'manter_peso'
+                objective === 'hipertrofia' ? 'ganhar_peso' : 'manter_peso',
+      gerFormula,
+      bodyFatPercentage
     };
     
     const enpResults = calculateCompleteENP(enpInputs);
@@ -72,7 +77,7 @@ export function calculateCompleteNutrition(
         fat: enpResults.macros.fat,
         proteinPerKg: enpResults.macros.proteinPerKg
       },
-      formulaUsed: 'ENP - Harris-Benedict Revisada',
+      formulaUsed: enpResults.gerFormulaName,
       recommendations: generateENPRecommendations(enpInputs, enpResults)
     };
   } catch (error) {
