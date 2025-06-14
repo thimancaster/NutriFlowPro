@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 import { GERFormula } from '@/types/gerFormulas';
@@ -50,7 +49,6 @@ export const useENPValidation = (
         objective: mapToENPObjective(validatedData.objective),
         gerFormula: validatedData.gerFormula as GERFormula,
         bodyFatPercentage: validatedData.bodyFatPercentage,
-        profile: validatedData.profile,
     };
     return validateENPInputs(inputs);
   }, [validatedData]);
