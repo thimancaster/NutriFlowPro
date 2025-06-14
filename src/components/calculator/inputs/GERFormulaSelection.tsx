@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -103,9 +102,9 @@ const GERFormulaSelection: React.FC<GERFormulaSelectionProps> = ({
           </div>
           
           {selectedFormula && GER_FORMULAS[selectedFormula].requiresBodyFat && !hasBodyFat && (
-            <Alert variant="warning">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
+            <Alert className="border-amber-200 bg-amber-50">
+              <Info className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700">
                 A fórmula <strong>{GER_FORMULAS[selectedFormula].name}</strong> requer o percentual de gordura corporal. 
                 Os resultados podem ser imprecisos sem esta informação.
               </AlertDescription>
