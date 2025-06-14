@@ -7,88 +7,25 @@ import { ENPCalculationValidator } from '../validation/ENPCalculationValidator';
 import { ENPResultsPanel } from '../ENPResultsPanel';
 import ENPCalculatorActions from './ENPCalculatorActions';
 import CalculatorActions from '../CalculatorActions';
-import { ActivityLevel, Objective, Profile } from '@/types/consultation';
-import { GERFormula } from '@/types/gerFormulas';
 import GERFormulaSelection from '../inputs/GERFormulaSelection';
+import { useENPCalculator } from '@/contexts/calculator/ENPCalculatorContext';
 
-interface ENPCalculatorFormProps {
-  // Form state
-  weight: string;
-  setWeight: (value: string) => void;
-  height: string;
-  setHeight: (value: string) => void;
-  age: string;
-  setAge: (value: string) => void;
-  sex: 'M' | 'F';
-  setSex: (value: 'M' | 'F') => void;
-  activityLevel: ActivityLevel;
-  setActivityLevel: (value: ActivityLevel) => void;
-  objective: Objective;
-  setObjective: (value: Objective) => void;
-  profile: Profile;
-  setProfile: (value: Profile) => void;
-  bodyFatPercentage: string;
-  setBodyFatPercentage: (value: string) => void;
-  gerFormula: GERFormula | undefined;
-  setGERFormula: (value: GERFormula) => void;
-  
-  // Validation and calculation
-  validatedData: {
-    weight: number;
-    height: number;
-    age: number;
-    sex: 'M' | 'F';
-    activityLevel: ActivityLevel;
-    objective: Objective;
-    profile: Profile;
-    gerFormula?: GERFormula;
-    bodyFatPercentage?: number;
-  };
-  isValid: boolean;
-  validationErrors: string[];
-  validationWarnings: string[];
-  onCalculate: () => Promise<void>;
-  
-  // Calculator state
-  isCalculating: boolean;
-  error: string | null;
-  results: any;
-  onExportResults: () => void;
-  handleReset: () => void;
-}
+// Nenhuma propriedade é mais necessária, pois o estado vem do contexto.
+export const ENPCalculatorForm: React.FC = () => {
+  const {
+    // Estado e setters para ENPDataInputs (que não podemos editar)
+    weight, setWeight, height, setHeight, age, setAge, sex, setSex,
+    activityLevel, setActivityLevel, objective, setObjective, profile, setProfile,
+    bodyFatPercentage, setBodyFatPercentage, gerFormula, setGERFormula,
+    
+    // Dados validados e de validação
+    validatedData, isValid, validationErrors, validationWarnings,
+    
+    // Ações e estado do cálculo
+    handleCalculate, isCalculating, error, results, handleExportResults, handleReset,
+  } = useENPCalculator();
 
-export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
-  weight,
-  setWeight,
-  height,
-  setHeight,
-  age,
-  setAge,
-  sex,
-  setSex,
-  activityLevel,
-  setActivityLevel,
-  objective,
-  setObjective,
-  profile,
-  setProfile,
-  bodyFatPercentage,
-  setBodyFatPercentage,
-  gerFormula,
-  setGERFormula,
-  validatedData,
-  isValid,
-  validationErrors,
-  validationWarnings,
-  onCalculate,
-  isCalculating,
-  error,
-  results,
-  onExportResults,
-  handleReset
-}) => {
   const handleGenerateMealPlan = () => {
-    // This will be implemented by the parent component
     console.log('Generate meal plan clicked');
   };
 
@@ -100,7 +37,7 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
       </TabsList>
       
       <TabsContent value="calculator" className="space-y-6">
-        {/* Inputs de dados */}
+        {/* Passamos as props aqui pois não podemos editar este componente */}
         <ENPDataInputs
           weight={weight}
           setWeight={setWeight}
@@ -120,37 +57,26 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
           setBodyFatPercentage={setBodyFatPercentage}
         />
         
-        <GERFormulaSelection
-            selectedFormula={gerFormula}
-            onFormulaChange={setGERFormula}
-            profile={profile}
-            hasBodyFat={!!validatedData.bodyFatPercentage}
-            required={true}
-            age={validatedData.age}
-            weight={validatedData.weight}
-            height={validatedData.height}
-        />
+        {/* Este componente foi refatorado e não precisa de props */}
+        <GERFormulaSelection />
 
-        {/* Validação */}
+        {/* Passamos as props pois não podemos editar este componente */}
         <ENPValidation errors={validationErrors} warnings={validationWarnings} />
         
-        {/* Botão de cálculo - only show if no results yet */}
         {!results && (
           <CalculatorActions
             isCalculating={isCalculating}
-            calculateResults={onCalculate}
+            calculateResults={handleCalculate}
             disabled={!isValid}
           />
         )}
         
-        {/* Show error if exists */}
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-600 text-sm font-medium">{error}</p>
           </div>
         )}
         
-        {/* Resultados ENP */}
         {results && (
           <>
             {results.gerFormulaName && (
@@ -161,16 +87,15 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
             <ENPResultsPanel
               results={results}
               weight={validatedData.weight}
-              onExportResults={onExportResults}
+              onExportResults={handleExportResults}
             />
           </>
         )}
 
-        {/* ENP Calculator Actions - only show when we have results */}
         {results && (
           <ENPCalculatorActions
             results={results}
-            onExport={onExportResults}
+            onExport={handleExportResults}
             onGenerateMealPlan={handleGenerateMealPlan}
             onReset={handleReset}
           />
