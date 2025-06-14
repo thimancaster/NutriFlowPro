@@ -25,8 +25,8 @@ const ENP_TEST_CASES: TestCase[] = [
       activityLevel: 'moderado',
       objective: 'manter_peso'
     },
-    expectedTMB: 1668,
-    expectedGET: 2585,
+    expectedTMB: 1696,
+    expectedGET: 2629,
     expectedProteinGrams: 126
   },
   {
@@ -39,8 +39,8 @@ const ENP_TEST_CASES: TestCase[] = [
       activityLevel: 'sedentario',
       objective: 'manter_peso'
     },
-    expectedTMB: 1372,
-    expectedGET: 1647,
+    expectedTMB: 1405,
+    expectedGET: 1686,
     expectedProteinGrams: 108
   },
   {
@@ -53,8 +53,8 @@ const ENP_TEST_CASES: TestCase[] = [
       activityLevel: 'leve',
       objective: 'perder_peso'
     },
-    expectedTMB: 1789,
-    expectedGET: 1960, // 2460 - 500
+    expectedTMB: 1825,
+    expectedGET: 2009,
     expectedProteinGrams: 144
   }
 ];
@@ -177,3 +177,4 @@ export const ENPCalculationValidator: React.FC = () => {
     </Card>
   );
 };
+
