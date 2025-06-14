@@ -2,6 +2,8 @@
  * Engenharia Nutricional Padrão (ENP) - Cálculos Padronizados
  * Implementação completa baseada no documento ENP oficial
  */
+import { GERFormula, GER_FORMULAS } from "@/types/gerFormulas";
+import { calculateGER } from "./gerCalculations";
 
 export interface ENPInputs {
   weight: number;  // kg
@@ -10,10 +12,12 @@ export interface ENPInputs {
   sex: 'M' | 'F';
   activityLevel: 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo';
   objective: 'manter_peso' | 'perder_peso' | 'ganhar_peso';
+  gerFormula: GERFormula;
+  bodyFatPercentage?: number;
 }
 
 export interface ENPResults {
-  tmb: number;
+  tmb: number; // Represents GER
   gea: number;  // Gasto Energético em Atividade (TMB * FA)
   get: number;  // Gasto Energético Total (com ajuste de objetivo)
   macros: {
@@ -22,11 +26,13 @@ export interface ENPResults {
     fat: { grams: number; kcal: number; percentage: number };
     proteinPerKg: number;
   };
+  gerFormulaName: string;
 }
 
 /**
  * Fórmula Harris-Benedict Revisada - ÚNICA FÓRMULA ENP
  * Seção 3.1 da ENP
+ * @deprecated Use calculateGER from gerCalculations.ts instead. Kept for reference.
  */
 export function calculateTMB_ENP(weight: number, height: number, age: number, sex: 'M' | 'F'): number {
   if (sex === 'M') {
@@ -142,9 +148,18 @@ export function calculateCompleteENP(inputs: ENPInputs): ENPResults {
   if (inputs.weight <= 0 || inputs.height <= 0 || inputs.age <= 0) {
     throw new Error('Valores de peso, altura e idade devem ser maiores que zero');
   }
+  if (!inputs.gerFormula) {
+    throw new Error('É obrigatório selecionar uma fórmula GER.');
+  }
   
-  // Cálculo TMB (Harris-Benedict Revisada)
-  const tmb = calculateTMB_ENP(inputs.weight, inputs.height, inputs.age, inputs.sex);
+  // Cálculo GER (TMB) com a fórmula selecionada
+  const { ger: tmb, formulaName } = calculateGER(inputs.gerFormula, {
+    weight: inputs.weight,
+    height: inputs.height,
+    age: inputs.age,
+    sex: inputs.sex,
+    bodyFatPercentage: inputs.bodyFatPercentage
+  });
   
   // Cálculo GEA (TMB * Fator Atividade)
   const gea = calculateGEA_ENP(tmb, inputs.activityLevel);
@@ -159,7 +174,8 @@ export function calculateCompleteENP(inputs: ENPInputs): ENPResults {
     tmb: Math.round(tmb),
     gea,
     get,
-    macros
+    macros,
+    gerFormulaName: formulaName
   };
 }
 
@@ -179,6 +195,15 @@ export function validateENPInputs(inputs: ENPInputs): { isValid: boolean; errors
   
   if (inputs.age <= 0 || inputs.age > 120) {
     errors.push('Idade deve estar entre 1 e 120 anos');
+  }
+
+  if (!inputs.gerFormula) {
+    errors.push('A seleção da fórmula GER é obrigatória.');
+  } else {
+    const formulaInfo = GER_FORMULAS[inputs.gerFormula];
+    if (formulaInfo.requiresBodyFat && (inputs.bodyFatPercentage === undefined || inputs.bodyFatPercentage <= 0)) {
+        errors.push(`A fórmula ${formulaInfo.name} requer um valor válido para percentual de gordura corporal.`);
+    }
   }
   
   const validActivityLevels = ['sedentario', 'leve', 'moderado', 'muito_ativo', 'extremamente_ativo'];

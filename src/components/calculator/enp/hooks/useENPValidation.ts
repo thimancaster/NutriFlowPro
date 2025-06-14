@@ -1,6 +1,7 @@
 
 import { useMemo } from 'react';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+import { GERFormula } from '@/types/gerFormulas';
 
 interface ValidationData {
   weight: number;
@@ -9,6 +10,9 @@ interface ValidationData {
   sex: 'M' | 'F';
   activityLevel: ActivityLevel;
   objective: Objective;
+  profile: Profile;
+  gerFormula?: GERFormula;
+  bodyFatPercentage?: number;
 }
 
 export const useENPValidation = (
@@ -17,7 +21,10 @@ export const useENPValidation = (
   age: string,
   sex: 'M' | 'F',
   activityLevel: ActivityLevel,
-  objective: Objective
+  objective: Objective,
+  profile: Profile,
+  gerFormula?: GERFormula,
+  bodyFatPercentage?: string
 ) => {
   const validatedData = useMemo((): ValidationData => ({
     weight: parseFloat(weight) || 0,
@@ -25,13 +32,17 @@ export const useENPValidation = (
     age: parseFloat(age) || 0,
     sex,
     activityLevel,
-    objective
-  }), [weight, height, age, sex, activityLevel, objective]);
+    objective,
+    profile,
+    gerFormula,
+    bodyFatPercentage: parseFloat(bodyFatPercentage || '') || undefined
+  }), [weight, height, age, sex, activityLevel, objective, profile, gerFormula, bodyFatPercentage]);
   
   const isValid = useMemo(() => 
     validatedData.weight > 0 && 
     validatedData.height > 0 && 
-    validatedData.age > 0
+    validatedData.age > 0 &&
+    !!validatedData.gerFormula // Formula is now required
   , [validatedData]);
   
   return {

@@ -7,7 +7,9 @@ import { ENPCalculationValidator } from '../validation/ENPCalculationValidator';
 import { ENPResultsPanel } from '../ENPResultsPanel';
 import ENPCalculatorActions from './ENPCalculatorActions';
 import CalculatorActions from '../CalculatorActions';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+import { GERFormula } from '@/types/gerFormulas';
+import GERFormulaSelection from '../inputs/GERFormulaSelection';
 
 interface ENPCalculatorFormProps {
   // Form state
@@ -23,6 +25,12 @@ interface ENPCalculatorFormProps {
   setActivityLevel: (value: ActivityLevel) => void;
   objective: Objective;
   setObjective: (value: Objective) => void;
+  profile: Profile;
+  setProfile: (value: Profile) => void;
+  bodyFatPercentage: string;
+  setBodyFatPercentage: (value: string) => void;
+  gerFormula: GERFormula | undefined;
+  setGERFormula: (value: GERFormula) => void;
   
   // Validation and calculation
   validatedData: {
@@ -32,6 +40,9 @@ interface ENPCalculatorFormProps {
     sex: 'M' | 'F';
     activityLevel: ActivityLevel;
     objective: Objective;
+    profile: Profile;
+    gerFormula?: GERFormula;
+    bodyFatPercentage?: number;
   };
   isValid: boolean;
   onCalculate: () => Promise<void>;
@@ -41,6 +52,7 @@ interface ENPCalculatorFormProps {
   error: string | null;
   results: any;
   onExportResults: () => void;
+  handleReset: () => void;
 }
 
 export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
@@ -56,22 +68,24 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
   setActivityLevel,
   objective,
   setObjective,
+  profile,
+  setProfile,
+  bodyFatPercentage,
+  setBodyFatPercentage,
+  gerFormula,
+  setGERFormula,
   validatedData,
   isValid,
   onCalculate,
   isCalculating,
   error,
   results,
-  onExportResults
+  onExportResults,
+  handleReset
 }) => {
   const handleGenerateMealPlan = () => {
     // This will be implemented by the parent component
     console.log('Generate meal plan clicked');
-  };
-
-  const handleReset = () => {
-    // This will be implemented by the parent component
-    console.log('Reset clicked');
   };
 
   return (
@@ -96,8 +110,20 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
           setActivityLevel={setActivityLevel}
           objective={objective}
           setObjective={setObjective}
+          profile={profile}
+          setProfile={setProfile}
+          bodyFatPercentage={bodyFatPercentage}
+          setBodyFatPercentage={setBodyFatPercentage}
         />
         
+        <GERFormulaSelection
+            selectedFormula={gerFormula}
+            onFormulaChange={setGERFormula}
+            profile={profile}
+            hasBodyFat={!!validatedData.bodyFatPercentage}
+            required={true}
+        />
+
         {/* Validação */}
         <ENPValidation data={validatedData} />
         
@@ -106,23 +132,31 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
           <CalculatorActions
             isCalculating={isCalculating}
             calculateResults={onCalculate}
+            disabled={!isValid}
           />
         )}
         
         {/* Show error if exists */}
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-600 text-sm font-medium">{error}</p>
           </div>
         )}
         
         {/* Resultados ENP */}
         {results && (
-          <ENPResultsPanel
-            results={results}
-            weight={validatedData.weight}
-            onExportResults={onExportResults}
-          />
+          <>
+            {results.gerFormulaName && (
+              <div className="text-sm text-center text-gray-700 bg-gray-50 p-3 rounded-md border">
+                Cálculo de TMB realizado com a fórmula: <strong>{results.gerFormulaName}</strong>
+              </div>
+            )}
+            <ENPResultsPanel
+              results={results}
+              weight={validatedData.weight}
+              onExportResults={onExportResults}
+            />
+          </>
         )}
 
         {/* ENP Calculator Actions - only show when we have results */}

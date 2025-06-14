@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 import { Info } from 'lucide-react';
 
 interface ENPDataInputsProps {
@@ -21,6 +21,10 @@ interface ENPDataInputsProps {
   setActivityLevel: (value: ActivityLevel) => void;
   objective: Objective;
   setObjective: (value: Objective) => void;
+  profile: Profile;
+  setProfile: (value: Profile) => void;
+  bodyFatPercentage: string;
+  setBodyFatPercentage: (value: string) => void;
 }
 
 export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
@@ -35,7 +39,11 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
   activityLevel,
   setActivityLevel,
   objective,
-  setObjective
+  setObjective,
+  profile,
+  setProfile,
+  bodyFatPercentage,
+  setBodyFatPercentage
 }) => {
   // Opções de nível de atividade conforme ENP Seção 3.2
   const activityOptions = [
@@ -58,7 +66,7 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          Dados ENP - Engenharia Nutricional Padrão
+          Dados do Paciente (ENP)
           <div className="relative group ml-2">
             <Info className="h-4 w-4 text-blue-500 cursor-help" />
             <div className="absolute left-0 top-6 hidden group-hover:block z-50 bg-black text-white text-xs rounded px-2 py-1 whitespace-nowrap max-w-xs">
@@ -137,6 +145,44 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
             </div>
           </RadioGroup>
         </div>
+
+        {/* Profile and Body Fat */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <Label htmlFor="profile">Perfil Corporal <span className="text-red-500">*</span></Label>
+            <Select value={profile} onValueChange={(value) => setProfile(value as Profile)}>
+              <SelectTrigger id="profile" className="bg-white">
+                <SelectValue placeholder="Selecione o perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="eutrofico">Eutrófico (peso normal)</SelectItem>
+                <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade</SelectItem>
+                <SelectItem value="atleta">Atleta/Musculoso</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500">
+              O perfil ajuda a recomendar a equação GER ideal.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bodyFat">Gordura Corporal (%)</Label>
+            <Input
+              id="bodyFat"
+              type="number"
+              value={bodyFatPercentage}
+              onChange={(e) => setBodyFatPercentage(e.target.value)}
+              placeholder="Ex: 15"
+              min="3"
+              max="50"
+              step="0.1"
+              autoComplete="off"
+              className="bg-white"
+            />
+            <p className="text-xs text-gray-500">
+              Necessário para fórmulas como Katch-McArdle.
+            </p>
+          </div>
+        </div>
         
         {/* Nível de Atividade Física */}
         <div className="space-y-3">
@@ -179,7 +225,7 @@ export const ENPDataInputs: React.FC<ENPDataInputsProps> = ({
         </div>
         
         <div className="text-xs text-gray-500">
-          <span className="text-red-500">*</span> Campos obrigatórios conforme ENP
+          <span className="text-red-500">*</span> Campos obrigatórios
         </div>
       </CardContent>
     </Card>

@@ -13,7 +13,10 @@ export const useENPCalculatorLogic = () => {
     formState.age,
     formState.sex,
     formState.activityLevel,
-    formState.objective
+    formState.objective,
+    formState.profile,
+    formState.gerFormula,
+    formState.bodyFatPercentage
   );
   const calculation = useENPCalculation();
   const exportLogic = useENPExport();
@@ -26,6 +29,11 @@ export const useENPCalculatorLogic = () => {
     exportLogic.handleExportResults(calculation.results, validation.validatedData);
   }, [exportLogic, calculation.results, validation.validatedData]);
 
+  const handleReset = useCallback(() => {
+    formState.resetForm();
+    calculation.reset();
+  }, [formState, calculation]);
+
   return {
     // Form state
     ...formState,
@@ -37,6 +45,7 @@ export const useENPCalculatorLogic = () => {
     // Actions
     handleCalculate,
     handleExportResults,
+    handleReset,
     
     // Calculator state
     isCalculating: calculation.isCalculating,

@@ -2,7 +2,8 @@
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+import { GER_FORMULAS } from '@/types/gerFormulas';
 
 interface ENPValidationProps {
   data: {
@@ -12,6 +13,9 @@ interface ENPValidationProps {
     sex: 'M' | 'F';
     activityLevel: ActivityLevel;
     objective: Objective;
+    profile: Profile;
+    gerFormula?: string;
+    bodyFatPercentage?: number;
   };
 }
 
@@ -44,6 +48,15 @@ export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
     if (!data.objective) {
       errors.push('Objetivo deve ser selecionado');
     }
+
+    if (!data.gerFormula) {
+      errors.push('Seleção da equação GER é obrigatória');
+    } else {
+      const formulaInfo = GER_FORMULAS[data.gerFormula as keyof typeof GER_FORMULAS];
+      if (formulaInfo?.requiresBodyFat && (!data.bodyFatPercentage || data.bodyFatPercentage <= 0)) {
+        warnings.push(`A fórmula ${formulaInfo.name} necessita do percentual de gordura. O resultado pode ser impreciso.`);
+      }
+    }
     
     // Validações de alerta ENP
     if (data.age && data.age < 18) {
@@ -67,7 +80,7 @@ export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
       <Alert className="border-green-200 bg-green-50">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-700">
-          ✅ Todos os dados necessários para cálculo ENP foram informados corretamente
+          ✅ Todos os dados necessários para o cálculo foram informados corretamente.
         </AlertDescription>
       </Alert>
     );
@@ -79,8 +92,8 @@ export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Dados obrigatórios ENP faltando:</strong>
-            <ul className="mt-1 ml-4 list-disc">
+            <strong>Dados obrigatórios faltando:</strong>
+            <ul className="mt-1 ml-4 list-disc pl-5">
               {validation.errors.map((error, index) => (
                 <li key={index}>{error}</li>
               ))}
@@ -94,7 +107,7 @@ export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-700">
             <strong>Atenção:</strong>
-            <ul className="mt-1 ml-4 list-disc">
+            <ul className="mt-1 ml-4 list-disc pl-5">
               {validation.warnings.map((warning, index) => (
                 <li key={index}>{warning}</li>
               ))}

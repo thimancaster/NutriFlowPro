@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+import { GERFormula } from '@/types/gerFormulas';
 
 export const useENPFormState = () => {
   const [weight, setWeight] = useState('');
@@ -10,6 +11,10 @@ export const useENPFormState = () => {
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>('moderado');
   const [objective, setObjective] = useState<Objective>('manutenção');
   
+  const [profile, setProfile] = useState<Profile>('eutrofico');
+  const [gerFormula, setGERFormula] = useState<GERFormula | undefined>(undefined);
+  const [bodyFatPercentage, setBodyFatPercentage] = useState('');
+
   const resetForm = () => {
     setWeight('');
     setHeight('');
@@ -17,6 +22,9 @@ export const useENPFormState = () => {
     setSex('M');
     setActivityLevel('moderado');
     setObjective('manutenção');
+    setProfile('eutrofico');
+    setGERFormula(undefined);
+    setBodyFatPercentage('');
   };
   
   return {
@@ -32,6 +40,12 @@ export const useENPFormState = () => {
     setActivityLevel,
     objective,
     setObjective,
+    profile,
+    setProfile,
+    gerFormula,
+    setGERFormula,
+    bodyFatPercentage,
+    setBodyFatPercentage,
     resetForm
   };
 };

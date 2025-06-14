@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, TestTube } from 'lucide-react';
 import { calculateCompleteENP, ENPInputs } from '@/utils/nutrition/enpCalculations';
+import { GERFormula } from '@/types/gerFormulas';
 
 interface TestCase {
   name: string;
-  inputs: ENPInputs;
+  inputs: Omit<ENPInputs, 'gerFormula'> & { gerFormula: GERFormula };
   expectedTMB: number;
   expectedGET: number;
   expectedProteinGrams: number;
@@ -16,45 +17,49 @@ interface TestCase {
 
 const ENP_TEST_CASES: TestCase[] = [
   {
-    name: 'Homem Adulto Moderado',
+    name: 'Homem (Harris-Benedict Revisada)',
     inputs: {
       weight: 70,
       height: 175,
       age: 30,
       sex: 'M',
       activityLevel: 'moderado',
-      objective: 'manter_peso'
+      objective: 'manter_peso',
+      gerFormula: 'harris_benedict_revisada'
     },
     expectedTMB: 1696,
     expectedGET: 2629,
     expectedProteinGrams: 126
   },
   {
-    name: 'Mulher Adulta Sedentária',
+    name: 'Mulher (Mifflin-St Jeor)',
     inputs: {
       weight: 60,
       height: 165,
       age: 25,
       sex: 'F',
       activityLevel: 'sedentario',
-      objective: 'manter_peso'
+      objective: 'manter_peso',
+      gerFormula: 'mifflin_st_jeor'
     },
-    expectedTMB: 1405,
-    expectedGET: 1686,
+    expectedTMB: 1345,
+    expectedGET: 1614,
     expectedProteinGrams: 108
   },
   {
-    name: 'Emagrecimento Homem',
+    name: 'Atleta (Katch-McArdle)',
     inputs: {
       weight: 80,
       height: 180,
       age: 35,
       sex: 'M',
       activityLevel: 'leve',
-      objective: 'perder_peso'
+      objective: 'perder_peso',
+      gerFormula: 'katch_mcardle',
+      bodyFatPercentage: 15
     },
-    expectedTMB: 1825,
-    expectedGET: 2009,
+    expectedTMB: 1839,
+    expectedGET: 2029,
     expectedProteinGrams: 144
   }
 ];
@@ -177,4 +182,3 @@ export const ENPCalculationValidator: React.FC = () => {
     </Card>
   );
 };
-
