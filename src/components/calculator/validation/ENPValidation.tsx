@@ -2,80 +2,14 @@
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
-import { ActivityLevel, Objective, Profile } from '@/types/consultation';
-import { GER_FORMULAS } from '@/types/gerFormulas';
 
 interface ENPValidationProps {
-  data: {
-    weight: number;
-    height: number;
-    age: number;
-    sex: 'M' | 'F';
-    activityLevel: ActivityLevel;
-    objective: Objective;
-    profile: Profile;
-    gerFormula?: string;
-    bodyFatPercentage?: number;
-  };
+  errors: string[];
+  warnings: string[];
 }
 
-export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
-  const validateENPRequirements = () => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-    
-    // Validações obrigatórias ENP Seção 2
-    if (!data.weight || data.weight <= 0 || data.weight > 500) {
-      errors.push('Peso deve estar entre 1 e 500 kg');
-    }
-    
-    if (!data.height || data.height <= 0 || data.height > 250) {
-      errors.push('Altura deve estar entre 1 e 250 cm');
-    }
-    
-    if (!data.age || data.age <= 0 || data.age > 120) {
-      errors.push('Idade deve estar entre 1 e 120 anos');
-    }
-    
-    if (!data.sex || !['M', 'F'].includes(data.sex)) {
-      errors.push('Sexo deve ser informado (Masculino/Feminino)');
-    }
-    
-    if (!data.activityLevel) {
-      errors.push('Nível de atividade física deve ser selecionado');
-    }
-    
-    if (!data.objective) {
-      errors.push('Objetivo deve ser selecionado');
-    }
-
-    if (!data.gerFormula) {
-      errors.push('Seleção da equação GER é obrigatória');
-    } else {
-      const formulaInfo = GER_FORMULAS[data.gerFormula as keyof typeof GER_FORMULAS];
-      if (formulaInfo?.requiresBodyFat && (!data.bodyFatPercentage || data.bodyFatPercentage <= 0)) {
-        warnings.push(`A fórmula ${formulaInfo.name} necessita do percentual de gordura. O resultado pode ser impreciso.`);
-      }
-    }
-    
-    // Validações de alerta ENP
-    if (data.age && data.age < 18) {
-      warnings.push('Cálculos ENP são validados para adultos (≥18 anos)');
-    }
-    
-    if (data.weight && data.height) {
-      const imc = data.weight / Math.pow(data.height / 100, 2);
-      if (imc < 16 || imc > 40) {
-        warnings.push('IMC fora da faixa usual - considere avaliação médica');
-      }
-    }
-    
-    return { errors, warnings, isValid: errors.length === 0 };
-  };
-  
-  const validation = validateENPRequirements();
-  
-  if (validation.isValid && validation.warnings.length === 0) {
+export const ENPValidation: React.FC<ENPValidationProps> = ({ errors, warnings }) => {
+  if (errors.length === 0 && warnings.length === 0) {
     return (
       <Alert className="border-green-200 bg-green-50">
         <CheckCircle className="h-4 w-4 text-green-600" />
@@ -88,13 +22,13 @@ export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
   
   return (
     <div className="space-y-2">
-      {validation.errors.length > 0 && (
+      {errors.length > 0 && (
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Dados obrigatórios faltando:</strong>
+            <strong>Dados obrigatórios faltando ou inválidos:</strong>
             <ul className="mt-1 ml-4 list-disc pl-5">
-              {validation.errors.map((error, index) => (
+              {errors.map((error, index) => (
                 <li key={index}>{error}</li>
               ))}
             </ul>
@@ -102,13 +36,13 @@ export const ENPValidation: React.FC<ENPValidationProps> = ({ data }) => {
         </Alert>
       )}
       
-      {validation.warnings.length > 0 && (
+      {warnings.length > 0 && (
         <Alert className="border-amber-200 bg-amber-50">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-700">
             <strong>Atenção:</strong>
             <ul className="mt-1 ml-4 list-disc pl-5">
-              {validation.warnings.map((warning, index) => (
+              {warnings.map((warning, index) => (
                 <li key={index}>{warning}</li>
               ))}
             </ul>

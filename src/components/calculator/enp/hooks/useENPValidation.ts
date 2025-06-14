@@ -2,6 +2,8 @@
 import { useMemo } from 'react';
 import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 import { GERFormula } from '@/types/gerFormulas';
+import { ENPInputs, validateENPInputs } from '@/utils/nutrition/enpCalculations';
+import { mapToENPActivityLevel, mapToENPObjective } from '@/utils/nutrition/cleanCalculations';
 
 interface ValidationData {
   weight: number;
@@ -38,15 +40,25 @@ export const useENPValidation = (
     bodyFatPercentage: parseFloat(bodyFatPercentage || '') || undefined
   }), [weight, height, age, sex, activityLevel, objective, profile, gerFormula, bodyFatPercentage]);
   
-  const isValid = useMemo(() => 
-    validatedData.weight > 0 && 
-    validatedData.height > 0 && 
-    validatedData.age > 0 &&
-    !!validatedData.gerFormula // Formula is now required
-  , [validatedData]);
+  const validationResult = useMemo(() => {
+    const inputs: ENPInputs = {
+        weight: validatedData.weight,
+        height: validatedData.height,
+        age: validatedData.age,
+        sex: validatedData.sex,
+        activityLevel: mapToENPActivityLevel(validatedData.activityLevel),
+        objective: mapToENPObjective(validatedData.objective),
+        gerFormula: validatedData.gerFormula as GERFormula,
+        bodyFatPercentage: validatedData.bodyFatPercentage,
+        profile: validatedData.profile,
+    };
+    return validateENPInputs(inputs);
+  }, [validatedData]);
   
   return {
     validatedData,
-    isValid
+    isValid: validationResult.isValid,
+    errors: validationResult.errors,
+    warnings: validationResult.warnings,
   };
 };

@@ -45,6 +45,8 @@ interface ENPCalculatorFormProps {
     bodyFatPercentage?: number;
   };
   isValid: boolean;
+  validationErrors: string[];
+  validationWarnings: string[];
   onCalculate: () => Promise<void>;
   
   // Calculator state
@@ -76,6 +78,8 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
   setGERFormula,
   validatedData,
   isValid,
+  validationErrors,
+  validationWarnings,
   onCalculate,
   isCalculating,
   error,
@@ -125,7 +129,7 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
         />
 
         {/* Validação */}
-        <ENPValidation data={validatedData} />
+        <ENPValidation errors={validationErrors} warnings={validationWarnings} />
         
         {/* Botão de cálculo - only show if no results yet */}
         {!results && (

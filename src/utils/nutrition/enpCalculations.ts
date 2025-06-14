@@ -182,42 +182,58 @@ export function calculateCompleteENP(inputs: ENPInputs): ENPResults {
 /**
  * Validação de parâmetros de entrada ENP
  */
-export function validateENPInputs(inputs: ENPInputs): { isValid: boolean; errors: string[] } {
+export function validateENPInputs(inputs: ENPInputs): { isValid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
-  
-  if (inputs.weight <= 0 || inputs.weight > 500) {
+  const warnings: string[] = [];
+
+  if (!inputs.weight || inputs.weight <= 0 || inputs.weight > 500) {
     errors.push('Peso deve estar entre 1 e 500 kg');
   }
   
-  if (inputs.height <= 0 || inputs.height > 250) {
+  if (!inputs.height || inputs.height <= 0 || inputs.height > 250) {
     errors.push('Altura deve estar entre 1 e 250 cm');
   }
   
-  if (inputs.age <= 0 || inputs.age > 120) {
+  if (!inputs.age || inputs.age <= 0 || inputs.age > 120) {
     errors.push('Idade deve estar entre 1 e 120 anos');
   }
 
+  if (!inputs.sex || !['M', 'F'].includes(inputs.sex)) {
+    errors.push('Sexo deve ser informado (Masculino/Feminino)');
+  }
+  
+  if (!inputs.activityLevel) {
+    errors.push('Nível de atividade física deve ser selecionado');
+  }
+  
+  if (!inputs.objective) {
+    errors.push('Objetivo deve ser selecionado');
+  }
+
   if (!inputs.gerFormula) {
-    errors.push('A seleção da fórmula GER é obrigatória.');
+    errors.push('A seleção da equação GER é obrigatória.');
   } else {
     const formulaInfo = GER_FORMULAS[inputs.gerFormula];
     if (formulaInfo.requiresBodyFat && (inputs.bodyFatPercentage === undefined || inputs.bodyFatPercentage <= 0)) {
         errors.push(`A fórmula ${formulaInfo.name} requer um valor válido para percentual de gordura corporal.`);
     }
   }
-  
-  const validActivityLevels = ['sedentario', 'leve', 'moderado', 'muito_ativo', 'extremamente_ativo'];
-  if (!validActivityLevels.includes(inputs.activityLevel)) {
-    errors.push('Nível de atividade inválido');
+
+  // Warnings
+  if (inputs.age && inputs.age < 18) {
+    warnings.push('Cálculos ENP são validados para adultos (≥18 anos)');
   }
-  
-  const validObjectives = ['manter_peso', 'perder_peso', 'ganhar_peso'];
-  if (!validObjectives.includes(inputs.objective)) {
-    errors.push('Objetivo inválido');
+    
+  if (inputs.weight && inputs.height) {
+    const imc = inputs.weight / Math.pow(inputs.height / 100, 2);
+    if (imc > 0 && (imc < 16 || imc > 40)) {
+      warnings.push('IMC fora da faixa usual - considere avaliação médica');
+    }
   }
   
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
+    warnings
   };
 }

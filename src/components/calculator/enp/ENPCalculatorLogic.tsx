@@ -41,6 +41,8 @@ export const useENPCalculatorLogic = () => {
     // Validation
     validatedData: validation.validatedData,
     isValid: validation.isValid,
+    validationErrors: validation.errors,
+    validationWarnings: validation.warnings,
     
     // Actions
     handleCalculate,
