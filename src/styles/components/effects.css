@@ -1,6 +1,8 @@
 
-/* Efeitos visuais e animações */
+/* Efeitos visuais, animações e micro-interações */
 @layer components {
+  /* --- Efeitos básicos --- */
+
   /* Efeitos de hover refinados */
   .hover-scale {
     @apply transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98];
@@ -31,5 +33,140 @@
   
   .float-animation {
     @apply animate-float;
+  }
+
+  /* --- Efeitos modernos e micro-interações --- */
+
+  /* Efeito Magnético: Atrai o elemento para o cursor */
+  .magnetic-hover {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  /* Efeito Ripple: Onda ao clicar */
+  .ripple-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple-effect::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+    transition: none;
+  }
+  .dark .ripple-effect::after {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .ripple-effect:active::after {
+    transform: scale(300, 300) translate(-50%);
+    opacity: 1;
+    transition: transform 0.8s, opacity 1s;
+  }
+
+  /* Efeito de Borda Animada */
+  .animated-border {
+    position: relative;
+  }
+  .animated-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px; /* Espessura da borda */
+    background: conic-gradient(from var(--angle, 0deg), transparent, theme('colors.nutri.green'), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rotate 4s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+  .dark .animated-border::before {
+     background: conic-gradient(from var(--angle, 0deg), transparent, theme('colors.dark.accent.green'), transparent);
+  }
+  .animated-border:hover::before {
+    opacity: 1;
+  }
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes rotate {
+    to {
+      --angle: 360deg;
+    }
+  }
+
+  /* Efeito de Elevação com Sombra Colorida */
+  .colored-shadow-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .colored-shadow-lift:hover {
+    transform: translateY(-4px);
+  }
+  .dark .colored-shadow-lift:hover {
+    box-shadow: 0 10px 20px -5px theme('colors.dark.accent.green' / 20%);
+  }
+
+  /* Efeito de Profundidade 3D */
+  .depth-3d {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .depth-3d:hover {
+    transform: translateY(-2px) perspective(1000px) rotateX(2deg);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+  }
+  .dark .depth-3d:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.3);
+  }
+  
+  /* Efeito de Expansão Lateral para Destaque */
+  .side-expand::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background-color: theme('colors.primary.DEFAULT');
+    transition: width 0.3s ease-out;
+  }
+  .dark .side-expand::before {
+    background-color: theme('colors.dark.accent.green');
+  }
+  .side-expand:hover::before {
+    width: 80%;
+  }
+
+  /* Efeito de Texto Brilhante no Hover */
+  .text-glow-hover {
+    transition: text-shadow 0.3s ease;
+  }
+  .dark .text-glow-hover:hover {
+    text-shadow: 0 0 8px theme('colors.dark.accent.green' / 50%);
+  }
+
+  /* Efeito de Pulso Suave */
+  .soft-pulse:hover {
+    animation: pulse-soft 1.5s infinite ease-in-out;
+  }
+
+  /* Efeito de Gradiente que se Move */
+  .gradient-shift {
+    background-size: 200% auto;
+    transition: background-position 0.5s ease;
+  }
+  .gradient-shift:hover {
+    background-position: right center;
   }
 }

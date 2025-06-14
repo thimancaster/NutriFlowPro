@@ -1,0 +1,162 @@
+
+/* Melhorias de base e sobrescritas de estilo para modo escuro */
+@layer base {
+  /* Dark mode base improvements */
+  .dark html {
+    @apply bg-dark-bg-primary;
+  }
+
+  .dark body {
+    @apply bg-dark-bg-primary text-dark-text-primary;
+    background-image: radial-gradient(circle at 50% 50%, rgba(34, 211, 170, 0.02) 0%, transparent 50%);
+  }
+
+  /* Melhorias específicas para texto no modo escuro */
+  .dark .text-gray-600 {
+    @apply text-dark-text-muted;
+  }
+
+  .dark .text-gray-700 {
+    @apply text-dark-text-subtle;
+  }
+
+  .dark .text-gray-800 {
+    @apply text-dark-text-secondary;
+  }
+
+  .dark .text-gray-900 {
+    @apply text-dark-text-primary;
+  }
+
+  /* Fundos com hierarquia visual clara */
+  .dark .bg-white {
+    @apply bg-dark-bg-card;
+  }
+
+  .dark .bg-gray-50 {
+    @apply bg-dark-bg-secondary;
+  }
+
+  .dark .bg-gray-100 {
+    @apply bg-dark-bg-elevated;
+  }
+
+  .dark .bg-blue-50 {
+    @apply bg-dark-bg-surface/50;
+  }
+
+  /* Bordas com melhor definição */
+  .dark .border-gray-200 {
+    @apply border-dark-border-primary;
+  }
+
+  .dark .border-gray-300 {
+    @apply border-dark-border-secondary;
+  }
+
+  /* Scrollbar personalizada para modo escuro */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-dark-bg-secondary rounded-full;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-dark-border-accent rounded-full;
+    transition: background-color 0.2s ease;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-accent-green/30;
+  }
+
+  /* Seleção de texto melhorada */
+  .dark ::selection {
+    @apply bg-dark-accent-green/20 text-dark-text-primary;
+  }
+}
+
+/* Estilos específicos para o tema claro - garantindo contraste adequado */
+@layer base {
+  /* Garantindo que o tema claro tenha contraste adequado */
+  :root:not(.dark) {
+    /* Textos com contraste adequado no tema claro */
+    --foreground: 222.2 84% 4.9%; /* Texto escuro */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Texto secundário */
+  }
+
+  /* Correções específicas para o tema claro */
+  :root:not(.dark) .text-white {
+    @apply text-gray-900;
+  }
+
+  :root:not(.dark) .text-gray-100 {
+    @apply text-gray-900;
+  }
+
+  :root:not(.dark) .text-gray-200 {
+    @apply text-gray-800;
+  }
+
+  :root:not(.dark) .text-gray-300 {
+    @apply text-gray-700;
+  }
+
+  :root:not(.dark) .placeholder-white {
+    @apply placeholder-gray-500;
+  }
+
+  :root:not(.dark) .placeholder-gray-100 {
+    @apply placeholder-gray-500;
+  }
+
+  :root:not(.dark) .placeholder-gray-200 {
+    @apply placeholder-gray-500;
+  }
+
+  /* Garantindo que labels e textos de formulário sejam visíveis no tema claro */
+  :root:not(.dark) label {
+    @apply text-gray-900;
+  }
+
+  :root:not(.dark) .text-sm {
+    @apply text-gray-700;
+  }
+
+  :root:not(.dark) .font-medium {
+    @apply text-gray-900;
+  }
+
+  /* Placeholders de input no tema claro */
+  :root:not(.dark) input::placeholder,
+  :root:not(.dark) textarea::placeholder,
+  :root:not(.dark) select::placeholder {
+    @apply text-gray-500 opacity-100;
+  }
+
+  /* Select values no tema claro */
+  :root:not(.dark) [data-placeholder] {
+    @apply text-gray-500;
+  }
+
+  /* Texto de erro no tema claro */
+  :root:not(.dark) .text-red-300 {
+    @apply text-red-600;
+  }
+
+  :root:not(.dark) .text-red-400 {
+    @apply text-red-600;
+  }
+
+  /* Melhorar contraste de textos específicos */
+  :root:not(.dark) .text-muted-foreground {
+    @apply text-gray-600;
+  }
+
+  :root:not(.dark) .text-foreground {
+    @apply text-gray-900;
+  }
+}
