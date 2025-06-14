@@ -126,6 +126,9 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
             profile={profile}
             hasBodyFat={!!validatedData.bodyFatPercentage}
             required={true}
+            age={validatedData.age}
+            weight={validatedData.weight}
+            height={validatedData.height}
         />
 
         {/* Validação */}

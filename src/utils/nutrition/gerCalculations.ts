@@ -1,4 +1,3 @@
-
 import { GERFormula } from '@/types/gerFormulas';
 
 export interface GERCalculationParams {
@@ -149,19 +148,46 @@ export function calculateGER(formula: GERFormula, params: GERCalculationParams):
 }
 
 /**
- * Recomenda a fórmula GER baseada no perfil do paciente
+ * Calculates Body Mass Index (BMI)
+ */
+const calculateIMC = (weight: number, height: number): number => {
+    if (!weight || !height || height <= 0) return 0;
+    return weight / Math.pow(height / 100, 2);
+};
+
+
+/**
+ * Recomenda a fórmula GER baseada no perfil do paciente e dados antropométricos
  */
 export function recommendGERFormula(
   profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
-  hasBodyFat: boolean = false
+  hasBodyFat: boolean = false,
+  age?: number,
+  weight?: number,
+  height?: number,
 ): GERFormula {
-  switch (profile) {
-    case 'sobrepeso_obesidade':
+  // Priority 1: High BMI suggests Owen
+  if (weight && height) {
+    const imc = calculateIMC(weight, height);
+    if (imc >= 30) {
       return 'owen';
-    case 'atleta':
-      return hasBodyFat ? 'katch_mcardle' : 'mifflin_st_jeor';
-    case 'eutrofico':
-    default:
-      return 'mifflin_st_jeor';
+    }
   }
+  
+  // Priority 2: Athlete profile
+  if (profile === 'atleta') {
+    // Katch-McArdle is best if body fat is known.
+    // Cunningham is an alternative for athletes, which also requires body fat.
+    return hasBodyFat ? 'katch_mcardle' : 'cunningham';
+  }
+  
+  // Priority 3: Age-specific recommendations
+  if (age) {
+    if (age < 18 || age > 65) {
+      return 'schofield';
+    }
+  }
+
+  // Default for healthy adults
+  return 'mifflin_st_jeor';
 }
