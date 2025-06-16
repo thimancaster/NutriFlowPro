@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
-import { calculateCompleteNutrition, CompleteNutritionResult, validateAllParameters } from '@/utils/nutrition/completeCalculation';
+import { calculateCompleteNutritionLegacy, LegacyCalculationResult, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 export interface NutritionCalculationState {
-  results: CompleteNutritionResult | null;
+  results: LegacyCalculationResult | null;
   isCalculating: boolean;
   error: string | null;
 }
@@ -29,27 +29,26 @@ export const useNutritionCalculation = () => {
       carbs: number;
       fat: number;
     }
-  ): Promise<CompleteNutritionResult | null> => {
+  ): Promise<LegacyCalculationResult | null> => {
     setState(prev => ({ ...prev, isCalculating: true, error: null }));
 
     try {
-      // Validar parâmetros
-      const validation = validateAllParameters(weight, height, age, sex, activityLevel, objective, profile);
+      // Validar parâmetros using legacy function
+      const validation = validateLegacyParameters(weight, height, age, sex, activityLevel, objective, profile);
       
       if (!validation.isValid) {
         throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
       }
 
-      // Executar cálculo (agora é síncrono)
-      const results = calculateCompleteNutrition(
+      // Use legacy calculation function with 7 parameters
+      const results = calculateCompleteNutritionLegacy(
         weight,
         height,
         age,
         sex,
         activityLevel,
         objective,
-        profile,
-        customMacroPercentages
+        profile
       );
 
       setState({
