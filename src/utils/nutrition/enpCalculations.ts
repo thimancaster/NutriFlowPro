@@ -19,6 +19,24 @@ export interface ENPMacroResult {
   fat: { grams: number; kcal: number };
 }
 
+export interface ENPInputs {
+  weight: number;
+  height: number;
+  age: number;
+  sex: 'M' | 'F';
+  activityLevel: ActivityLevel;
+  objective: Objective;
+  profile: Profile;
+  bodyFatPercentage?: number;
+}
+
+export interface ENPResults {
+  tmb: number;
+  gea: number;
+  get: number;
+  macros: ENPMacroResult;
+}
+
 /**
  * Calcula TMB usando Harris-Benedict Revisada (padrão ENP)
  */
@@ -127,6 +145,23 @@ export function calculateMacros_ENP(
       grams: fatGrams,
       kcal: fatKcal
     }
+  };
+}
+
+/**
+ * Cálculo completo ENP com todas as etapas
+ */
+export function calculateCompleteENP(inputs: ENPInputs): ENPResults {
+  const tmb = calculateTMB_ENP(inputs.weight, inputs.height, inputs.age, inputs.sex);
+  const gea = calculateGEA_ENP(tmb, inputs.activityLevel);
+  const get = calculateGET_ENP(gea, inputs.objective);
+  const macros = calculateMacros_ENP(get, inputs.weight, inputs.objective, inputs.profile);
+
+  return {
+    tmb,
+    gea,
+    get,
+    macros
   };
 }
 

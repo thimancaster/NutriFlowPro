@@ -4,6 +4,7 @@ import { useENPFormState } from './hooks/useENPFormState';
 import { useENPValidation } from './hooks/useENPValidation';
 import { useENPCalculation } from './hooks/useENPCalculation';
 import { useENPExport } from './hooks/useENPExport';
+import { ActivityLevel, Objective } from '@/types/consultation';
 
 export const useENPCalculatorLogic = () => {
   const formState = useENPFormState();
@@ -26,7 +27,14 @@ export const useENPCalculatorLogic = () => {
   }, [calculation, validation]);
 
   const handleExportResults = useCallback(() => {
-    exportLogic.handleExportResults(calculation.results, validation.validatedData);
+    // Transform validated data to match export interface
+    const exportData = {
+      ...validation.validatedData,
+      activityLevel: validation.validatedData.activityLevel as ActivityLevel,
+      objective: validation.validatedData.objective as Objective,
+      bodyFatPercentage: validation.validatedData.bodyFatPercentage || 0
+    };
+    exportLogic.handleExportResults(calculation.results, exportData);
   }, [exportLogic, calculation.results, validation.validatedData]);
 
   const handleReset = useCallback(() => {

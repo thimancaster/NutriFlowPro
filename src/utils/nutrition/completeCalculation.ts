@@ -1,197 +1,160 @@
 
 /**
- * Complete Nutrition Calculation - Implementação ENP Unificada
- * Integra todos os cálculos conforme Engenharia Nutricional Padrão
+ * Sistema completo de cálculos nutricionais
+ * Integra todas as fórmulas GER com cálculos de macronutrientes
  */
 
-import { ActivityLevel, Objective } from '@/types/consultation';
-import { calculateTMB, validateTMBParameters } from './tmbCalculations';
-import { calculateGET } from './getCalculations';
-import { calculateVET } from './vetCalculations';
-import { calculateMacros, mapProfileToCalculation } from './macroCalculations';
-import { calculateCompleteENP, ENPInputs } from './enpCalculations';
 import { GERFormula } from '@/types/gerFormulas';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+import { calculateGER } from './gerCalculations';
+import { calculateCompleteENP, ENPInputs } from './enpCalculations';
+import { ACTIVITY_FACTORS, OBJECTIVE_FACTORS } from '@/types/consultation';
 
-export interface CompleteNutritionResult {
-  tmb: number;
+export interface CompleteCalculationInputs {
+  weight: number;
+  height: number;
+  age: number;
+  sex: 'M' | 'F';
+  activityLevel: ActivityLevel;
+  objective: Objective;
+  profile: Profile;
+  gerFormula: GERFormula;
+  bodyFatPercentage?: number;
+}
+
+export interface CompleteCalculationResults {
+  ger: number;
+  gea: number;
   get: number;
-  vet: number;
-  adjustment: number;
   macros: {
     protein: { grams: number; kcal: number; percentage: number };
     carbs: { grams: number; kcal: number; percentage: number };
     fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg: number;
   };
-  formulaUsed: string;
-  recommendations?: string;
+  gerFormulaName: string;
+  proteinPerKg: number;
 }
 
 /**
- * Função principal de cálculo nutricional completo usando ENP
- * Agora é síncrona para compatibilidade com hooks existentes
+ * Cálculo completo usando qualquer fórmula GER
  */
-export function calculateCompleteNutrition(
-  weight: number,
-  height: number,
-  age: number,
-  sex: 'M' | 'F',
-  activityLevel: ActivityLevel,
-  objective: Objective,
-  profile: 'magro' | 'obeso' | 'atleta',
-  customMacroPercentages?: {
-    protein: number;
-    carbs: number;
-    fat: number;
-  },
-  gerFormula: GERFormula = 'harris_benedict_revisada',
-  bodyFatPercentage?: number
-): CompleteNutritionResult {
-  // Usar sistema ENP como preferência
-  try {
-    const enpInputs: ENPInputs = {
-      weight,
-      height,
-      age,
-      sex,
-      activityLevel: activityLevel === 'intenso' ? 'muito_ativo' : 
-                     activityLevel === 'muito_intenso' ? 'extremamente_ativo' : 
-                     activityLevel as any,
-      objective: objective === 'emagrecimento' ? 'perder_peso' :
-                objective === 'manutenção' ? 'manter_peso' :
-                objective === 'hipertrofia' ? 'ganhar_peso' : 'manter_peso',
-      gerFormula,
-      bodyFatPercentage
-    };
-    
-    const enpResults = calculateCompleteENP(enpInputs);
-    
-    return {
-      tmb: enpResults.tmb,
-      get: enpResults.gea,
-      vet: enpResults.get,
-      adjustment: enpResults.get - enpResults.gea,
-      macros: {
-        protein: enpResults.macros.protein,
-        carbs: enpResults.macros.carbs,
-        fat: enpResults.macros.fat,
-        proteinPerKg: enpResults.macros.proteinPerKg
-      },
-      formulaUsed: enpResults.gerFormulaName,
-      recommendations: generateENPRecommendations(enpInputs, enpResults)
-    };
-  } catch (error) {
-    console.warn('Erro no cálculo ENP, usando sistema legado:', error);
-    
-    // Fallback para sistema legado
-    return calculateLegacyNutrition(weight, height, age, sex, activityLevel, objective, profile, customMacroPercentages);
+export function calculateComplete(inputs: CompleteCalculationInputs): CompleteCalculationResults {
+  // 1. Calcular GER usando a fórmula selecionada
+  const gerResult = calculateGER(inputs.gerFormula, {
+    weight: inputs.weight,
+    height: inputs.height,
+    age: inputs.age,
+    sex: inputs.sex,
+    bodyFatPercentage: inputs.bodyFatPercentage
+  });
+
+  // 2. Calcular GEA (aplicar fator de atividade)
+  const activityFactor = ACTIVITY_FACTORS[inputs.activityLevel] || 1.2;
+  const gea = Math.round(gerResult.ger * activityFactor);
+
+  // 3. Calcular GET (aplicar ajuste por objetivo)
+  let get = gea;
+  switch (inputs.objective) {
+    case 'emagrecimento':
+      get = gea - 500;
+      break;
+    case 'hipertrofia':
+      get = gea + 400;
+      break;
+    case 'manutenção':
+    default:
+      get = gea;
+      break;
   }
-}
 
-/**
- * Sistema de cálculo legado (backup)
- */
-function calculateLegacyNutrition(
-  weight: number,
-  height: number,
-  age: number,
-  sex: 'M' | 'F',
-  activityLevel: ActivityLevel,
-  objective: Objective,
-  profile: 'magro' | 'obeso' | 'atleta',
-  customMacroPercentages?: any
-): CompleteNutritionResult {
-  // Mapear profile para formato atual
-  const mappedProfile = profile === 'magro' ? 'eutrofico' : 
-                       profile === 'obeso' ? 'sobrepeso_obesidade' : 'atleta';
+  // 4. Calcular macronutrientes usando sistema ENP
+  const enpInputs: ENPInputs = {
+    weight: inputs.weight,
+    height: inputs.height,
+    age: inputs.age,
+    sex: inputs.sex,
+    activityLevel: inputs.activityLevel,
+    objective: inputs.objective,
+    profile: inputs.profile,
+    bodyFatPercentage: inputs.bodyFatPercentage
+  };
+
+  const enpResult = calculateCompleteENP(enpInputs);
   
-  // Calcular TMB
-  const tmbResult = calculateTMB(weight, height, age, sex, mappedProfile);
+  // Ajustar macros para o GET calculado com a fórmula GER específica
+  const macroAdjustmentFactor = get / enpResult.get;
   
-  // Calcular GET
-  const get = calculateGET(tmbResult.tmb, activityLevel, mappedProfile);
-  
-  // Calcular VET
-  const vetResult = calculateVET(get, activityLevel, objective, profile);
-  
-  // Calcular Macros
-  const macros = calculateMacros(vetResult.vet, weight, objective, mappedProfile, customMacroPercentages);
-  
+  const adjustedMacros = {
+    protein: {
+      grams: Math.round(enpResult.macros.protein.grams * macroAdjustmentFactor),
+      kcal: Math.round(enpResult.macros.protein.kcal * macroAdjustmentFactor),
+      percentage: 0
+    },
+    carbs: {
+      grams: Math.round(enpResult.macros.carbs.grams * macroAdjustmentFactor),
+      kcal: Math.round(enpResult.macros.carbs.kcal * macroAdjustmentFactor),
+      percentage: 0
+    },
+    fat: {
+      grams: Math.round(enpResult.macros.fat.grams * macroAdjustmentFactor),
+      kcal: Math.round(enpResult.macros.fat.kcal * macroAdjustmentFactor),
+      percentage: 0
+    }
+  };
+
+  // Calcular percentuais finais
+  adjustedMacros.protein.percentage = Math.round((adjustedMacros.protein.kcal / get) * 100 * 100) / 100;
+  adjustedMacros.carbs.percentage = Math.round((adjustedMacros.carbs.kcal / get) * 100 * 100) / 100;
+  adjustedMacros.fat.percentage = Math.round((adjustedMacros.fat.kcal / get) * 100 * 100) / 100;
+
+  const proteinPerKg = Math.round((adjustedMacros.protein.grams / inputs.weight) * 100) / 100;
+
   return {
-    tmb: tmbResult.tmb,
+    ger: gerResult.ger,
+    gea,
     get,
-    vet: vetResult.vet,
-    adjustment: vetResult.adjustment,
-    macros,
-    formulaUsed: tmbResult.formula
+    macros: adjustedMacros,
+    gerFormulaName: gerResult.formulaName,
+    proteinPerKg
   };
 }
 
 /**
- * Gera recomendações baseadas nos resultados ENP
+ * Validação completa incluindo requisitos específicos das fórmulas
  */
-function generateENPRecommendations(inputs: ENPInputs, results: any): string {
-  const recommendations = [];
-  
-  if (inputs.objective === 'perder_peso') {
-    recommendations.push('Deficit calórico de 500 kcal aplicado conforme ENP');
-    recommendations.push('Monitore o progresso semanalmente');
-  } else if (inputs.objective === 'ganhar_peso') {
-    recommendations.push('Superávit calórico de 400 kcal aplicado conforme ENP');
-    recommendations.push('Combine com treinamento de força');
-  }
-  
-  recommendations.push(`Proteína: ${results.macros.proteinPerKg}g/kg conforme padrão ENP`);
-  recommendations.push('Distribua as refeições ao longo do dia');
-  
-  return recommendations.join('. ');
-}
-
-/**
- * Validação completa de parâmetros
- */
-export function validateAllParameters(
-  weight: number,
-  height: number,
-  age: number,
-  sex: 'M' | 'F',
-  activityLevel: ActivityLevel,
-  objective: Objective,
-  profile: 'magro' | 'obeso' | 'atleta'
-): { isValid: boolean; errors: string[] } {
+export function validateCompleteInputs(inputs: CompleteCalculationInputs): {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+} {
   const errors: string[] = [];
-  
-  // Validar TMB
-  const tmbValidation = validateTMBParameters(weight, height, age);
-  if (!tmbValidation.isValid) {
-    errors.push(...tmbValidation.errors);
+  const warnings: string[] = [];
+
+  // Validações básicas
+  if (!inputs.weight || inputs.weight <= 0 || inputs.weight > 500) {
+    errors.push('Peso deve estar entre 1 e 500 kg');
   }
-  
-  // Validar sexo
-  if (!['M', 'F'].includes(sex)) {
-    errors.push('Sexo deve ser M ou F');
+
+  if (!inputs.height || inputs.height <= 0 || inputs.height > 250) {
+    errors.push('Altura deve estar entre 1 e 250 cm');
   }
-  
-  // Validar nível de atividade
-  const validActivityLevels = ['sedentario', 'leve', 'moderado', 'intenso', 'muito_intenso'];
-  if (!validActivityLevels.includes(activityLevel)) {
-    errors.push('Nível de atividade inválido');
+
+  if (!inputs.age || inputs.age <= 0 || inputs.age > 120) {
+    errors.push('Idade deve estar entre 1 e 120 anos');
   }
-  
-  // Validar objetivo
-  const validObjectives = ['emagrecimento', 'manutenção', 'hipertrofia', 'personalizado'];
-  if (!validObjectives.includes(objective)) {
-    errors.push('Objetivo inválido');
+
+  // Validação específica de % gordura para fórmulas que REQUEREM
+  if ((inputs.gerFormula === 'katch_mcardle' || inputs.gerFormula === 'cunningham') && !inputs.bodyFatPercentage) {
+    errors.push(`A fórmula ${inputs.gerFormula === 'katch_mcardle' ? 'Katch-McArdle' : 'Cunningham'} requer obrigatoriamente o percentual de gordura corporal`);
   }
-  
-  // Validar perfil
-  const validProfiles = ['magro', 'obeso', 'atleta'];
-  if (!validProfiles.includes(profile)) {
-    errors.push('Perfil inválido');
+
+  if (inputs.bodyFatPercentage && (inputs.bodyFatPercentage < 3 || inputs.bodyFatPercentage > 50)) {
+    errors.push('Percentual de gordura deve estar entre 3% e 50%');
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
+    warnings
   };
 }

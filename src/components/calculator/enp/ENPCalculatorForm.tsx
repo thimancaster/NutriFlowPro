@@ -11,10 +11,9 @@ import GERFormulaSelection from '../inputs/GERFormulaSelection';
 import { useENPCalculator } from '@/contexts/calculator/ENPCalculatorContext';
 import { GERFormula } from '@/types/gerFormulas';
 
-// Nenhuma propriedade é mais necessária, pois o estado vem do contexto.
 export const ENPCalculatorForm: React.FC = () => {
   const {
-    // Estado e setters para ENPDataInputs (que não podemos editar)
+    // Estado e setters para ENPDataInputs
     weight, setWeight, height, setHeight, age, setAge, sex, setSex,
     activityLevel, setActivityLevel, objective, setObjective, profile, setProfile,
     bodyFatPercentage, setBodyFatPercentage, gerFormula, setGERFormula,
@@ -42,6 +41,10 @@ export const ENPCalculatorForm: React.FC = () => {
     },
   } : null;
 
+  // Transform validation errors and warnings to string arrays
+  const errorMessages = validationErrors.map(error => error.message);
+  const warningMessages = validationWarnings.map(warning => warning.message);
+
   return (
     <Tabs defaultValue="calculator" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -50,7 +53,6 @@ export const ENPCalculatorForm: React.FC = () => {
       </TabsList>
       
       <TabsContent value="calculator" className="space-y-6">
-        {/* Passamos as props aqui pois não podemos editar este componente */}
         <ENPDataInputs
           weight={weight}
           setWeight={setWeight}
@@ -80,8 +82,7 @@ export const ENPCalculatorForm: React.FC = () => {
           height={validatedData.height}
         />
 
-        {/* Passamos as props pois não podemos editar este componente */}
-        <ENPValidation errors={validationErrors} warnings={validationWarnings} />
+        <ENPValidation errors={errorMessages} warnings={warningMessages} />
         
         {!results && (
           <CalculatorActions

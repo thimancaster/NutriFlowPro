@@ -87,15 +87,15 @@ export const useENPValidation = (
       });
     }
 
-    // Validações específicas da fórmula GER
+    // Validações específicas da fórmula GER - REQUERIMENTOS OBRIGATÓRIOS
     if (gerFormula) {
       const formulaInfo = GER_FORMULAS[gerFormula];
       
-      // Fórmulas que requerem % de gordura corporal
-      if (formulaInfo.requiresBodyFat && !validatedData.bodyFatPercentage) {
+      // Fórmulas que REQUEREM % de gordura corporal (obrigatório)
+      if ((gerFormula === 'katch_mcardle' || gerFormula === 'cunningham') && !validatedData.bodyFatPercentage) {
         errors.push({
           field: 'bodyFatPercentage',
-          message: `A fórmula ${formulaInfo.name} requer o percentual de gordura corporal`
+          message: `A fórmula ${formulaInfo.name} requer obrigatoriamente o percentual de gordura corporal`
         });
       }
 
@@ -109,7 +109,7 @@ export const useENPValidation = (
         }
       }
 
-      // Avisos específicos por fórmula
+      // Avisos específicos por fórmula (não bloqueiam o cálculo)
       switch (gerFormula) {
         case 'harris_benedict_revisada':
           if (validatedData.weight / Math.pow(validatedData.height / 100, 2) > 30) {
@@ -130,6 +130,7 @@ export const useENPValidation = (
           break;
 
         case 'owen':
+          // Owen usa apenas peso corporal - não requer % gordura
           if (validatedData.weight / Math.pow(validatedData.height / 100, 2) < 25) {
             warnings.push({
               field: 'gerFormula',
@@ -139,21 +140,18 @@ export const useENPValidation = (
           break;
 
         case 'katch_mcardle':
-          if (!validatedData.bodyFatPercentage) {
+          // Já validado como obrigatório acima
+          if (validatedData.bodyFatPercentage && profile !== 'atleta') {
             warnings.push({
-              field: 'bodyFatPercentage',
-              message: 'Fórmula Katch-McArdle requer % de gordura para máxima precisão'
+              field: 'gerFormula',
+              message: 'Fórmula Katch-McArdle é mais indicada para atletas'
             });
           }
           break;
 
         case 'cunningham':
-          if (!validatedData.bodyFatPercentage) {
-            warnings.push({
-              field: 'bodyFatPercentage',
-              message: 'Fórmula Cunningham requer % de gordura para máxima precisão'
-            });
-          } else if (profile !== 'atleta') {
+          // Já validado como obrigatório acima
+          if (profile !== 'atleta') {
             warnings.push({
               field: 'gerFormula',
               message: 'Fórmula Cunningham é mais indicada para atletas de elite'
@@ -162,6 +160,7 @@ export const useENPValidation = (
           break;
 
         case 'schofield':
+          // Schofield tem diferentes equações por faixa etária - não requer % gordura
           if (validatedData.age >= 18 && validatedData.age <= 65) {
             warnings.push({
               field: 'gerFormula',

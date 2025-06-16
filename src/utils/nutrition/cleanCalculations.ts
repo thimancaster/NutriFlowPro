@@ -1,96 +1,114 @@
+
 /**
- * ENP Clean Calculations - Sistema Limpo e Padronizado
- * Mantém apenas as funções essenciais para ENP
+ * Sistema limpo e organizado de cálculos nutricionais
+ * Substitui funções legadas e garante consistência
  */
 
 import { calculateCompleteENP, ENPInputs, ENPResults } from './enpCalculations';
-import { ActivityLevel, Objective } from '@/types/consultation';
-import { GERFormula } from '@/types/gerFormulas';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 
-// Mapeamento simples para compatibilidade com tipos existentes
-export function mapToENPActivityLevel(level: ActivityLevel): 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo' {
-  const mapping: Record<ActivityLevel, 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo'> = {
-    sedentario: 'sedentario',
-    leve: 'leve',
-    moderado: 'moderado',
-    intenso: 'muito_ativo',
-    muito_intenso: 'extremamente_ativo'
-  };
-  return mapping[level];
-}
-
-export function mapToENPObjective(objective: Objective): 'manter_peso' | 'perder_peso' | 'ganhar_peso' {
-  const mapping: Record<Objective, 'manter_peso' | 'perder_peso' | 'ganhar_peso'> = {
-    manutenção: 'manter_peso',
-    emagrecimento: 'perder_peso',
-    hipertrofia: 'ganhar_peso',
-    personalizado: 'manter_peso'
-  };
-  return mapping[objective];
+/**
+ * Interface padronizada para entrada de dados
+ */
+export interface CleanCalculationInputs {
+  weight: number;
+  height: number;
+  age: number;
+  sex: 'M' | 'F';
+  activityLevel: ActivityLevel;
+  objective: Objective;
+  profile: Profile;
+  bodyFatPercentage?: number;
 }
 
 /**
- * Função principal unificada para cálculos ENP
+ * Interface padronizada para resultados
  */
-export function calculateENPNutrition(
-  weight: number,
-  height: number,
-  age: number,
-  sex: 'M' | 'F',
-  activityLevel: ActivityLevel,
-  objective: Objective,
-  gerFormula: GERFormula = 'harris_benedict_revisada'
-): ENPResults {
+export interface CleanCalculationResults {
+  tmb: number;
+  gea: number;
+  get: number;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+  };
+  proteinPerKg: number;
+}
+
+/**
+ * Função principal que substitui todos os cálculos legados
+ */
+export function calculateNutritionClean(inputs: CleanCalculationInputs): CleanCalculationResults {
   const enpInputs: ENPInputs = {
-    weight,
-    height,
-    age,
-    sex,
-    activityLevel: mapToENPActivityLevel(activityLevel),
-    objective: mapToENPObjective(objective),
-    gerFormula
+    weight: inputs.weight,
+    height: inputs.height,
+    age: inputs.age,
+    sex: inputs.sex,
+    activityLevel: inputs.activityLevel,
+    objective: inputs.objective,
+    profile: inputs.profile,
+    bodyFatPercentage: inputs.bodyFatPercentage
   };
 
-  return calculateCompleteENP(enpInputs);
+  const enpResults = calculateCompleteENP(enpInputs);
+  
+  // Calcular percentuais
+  const totalKcal = enpResults.get;
+  const proteinPercentage = Math.round((enpResults.macros.protein.kcal / totalKcal) * 100 * 100) / 100;
+  const carbsPercentage = Math.round((enpResults.macros.carbs.kcal / totalKcal) * 100 * 100) / 100;
+  const fatPercentage = Math.round((enpResults.macros.fat.kcal / totalKcal) * 100 * 100) / 100;
+  
+  const proteinPerKg = Math.round((enpResults.macros.protein.grams / inputs.weight) * 100) / 100;
+
+  return {
+    tmb: enpResults.tmb,
+    gea: enpResults.gea,
+    get: enpResults.get,
+    macros: {
+      protein: {
+        grams: enpResults.macros.protein.grams,
+        kcal: enpResults.macros.protein.kcal,
+        percentage: proteinPercentage
+      },
+      carbs: {
+        grams: enpResults.macros.carbs.grams,
+        kcal: enpResults.macros.carbs.kcal,
+        percentage: carbsPercentage
+      },
+      fat: {
+        grams: enpResults.macros.fat.grams,
+        kcal: enpResults.macros.fat.kcal,
+        percentage: fatPercentage
+      }
+    },
+    proteinPerKg
+  };
 }
 
 /**
- * Validação de entrada padronizada ENP
+ * Valida entrada de dados
  */
-export function validateENPData(
-  weight: number,
-  height: number,
-  age: number,
-  sex: 'M' | 'F',
-  activityLevel: ActivityLevel,
-  objective: Objective
-): { isValid: boolean; errors: string[] } {
+export function validateCalculationInputs(inputs: CleanCalculationInputs): { 
+  isValid: boolean; 
+  errors: string[] 
+} {
   const errors: string[] = [];
 
-  if (!weight || weight <= 0 || weight > 500) {
+  if (!inputs.weight || inputs.weight <= 0 || inputs.weight > 500) {
     errors.push('Peso deve estar entre 1 e 500 kg');
   }
 
-  if (!height || height <= 0 || height > 250) {
+  if (!inputs.height || inputs.height <= 0 || inputs.height > 250) {
     errors.push('Altura deve estar entre 1 e 250 cm');
   }
 
-  if (!age || age <= 0 || age > 120) {
+  if (!inputs.age || inputs.age <= 0 || inputs.age > 120) {
     errors.push('Idade deve estar entre 1 e 120 anos');
   }
 
-  if (!['M', 'F'].includes(sex)) {
+  if (!['M', 'F'].includes(inputs.sex)) {
     errors.push('Sexo deve ser M ou F');
-  }
-
-  const validActivityLevels = ['sedentario', 'leve', 'moderado', 'intenso', 'muito_intenso'];
-  if (!validActivityLevels.includes(activityLevel)) {
-    errors.push('Nível de atividade inválido');
-  }
-
-  const validObjectives = ['manutenção', 'emagrecimento', 'hipertrofia', 'personalizado'];
-  if (!validObjectives.includes(objective)) {
-    errors.push('Objetivo inválido');
   }
 
   return {
