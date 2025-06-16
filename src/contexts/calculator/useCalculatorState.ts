@@ -79,6 +79,7 @@ export const useCalculatorState = () => {
         // Map profile to calculation type before calling the function
         const mappedProfile = mapProfileToCalculation(state.profile);
         
+        // Use the legacy function with correct signature (7 parameters)
         const results = calculateCompleteNutrition(
           state.weight,
           state.height,

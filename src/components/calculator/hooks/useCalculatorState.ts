@@ -111,7 +111,7 @@ const useCalculatorState = () => {
       // Map profile to calculation type
       const mappedProfile = mapProfileToCalculation(formData.profile);
       
-      // Use the legacy function with the correct signature
+      // Use the legacy function with the correct signature (7 parameters)
       const nutritionResults = calculateCompleteNutrition(
         formData.weight,
         formData.height,
