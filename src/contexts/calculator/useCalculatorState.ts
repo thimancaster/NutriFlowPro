@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
-import { calculateCompleteNutrition, mapProfileToCalculation } from '@/utils/nutritionCalculations';
+import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
+import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
 
 const initialState: CalculatorState = {
   weight: 0,
@@ -80,7 +80,7 @@ export const useCalculatorState = () => {
         const mappedProfile = mapProfileToCalculation(state.profile);
         
         // Use the legacy function with correct signature (7 parameters)
-        const results = calculateCompleteNutrition(
+        const results = calculateCompleteNutritionLegacy(
           state.weight,
           state.height,
           state.age,
@@ -104,7 +104,7 @@ export const useCalculatorState = () => {
         
         toast({
           title: "Cálculo Realizado",
-          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed || 'Harris-Benedict Revisada'}`,
+          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed}`,
         });
         
       } catch (error) {

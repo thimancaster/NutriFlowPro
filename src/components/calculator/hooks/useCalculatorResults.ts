@@ -1,100 +1,135 @@
 
-import { useCallback } from 'react';
-import { 
-  calculateBMR, 
-  calculateMacros, 
-  calculateTEE, 
-} from '../utils/calculations';
+/**
+ * Results management for calculator
+ */
 
-// Export as named export to match the import in useCalculatorState
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { calculateCompleteNutritionLegacy, LegacyCalculationResult, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
+import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
+import { ActivityLevel, Objective } from '@/types/consultation';
+
+export interface CalculationResults {
+  tmbValue: number;
+  teeObject: {
+    tmb: number;
+    get: number;
+    vet: number;
+    adjustment: number;
+  };
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg: number;
+  };
+  calorieSummary: any;
+  formulaUsed: string;
+}
+
 export const useCalculatorResults = () => {
-  // Calculate BMR
-  const calculateBasalMetabolicRate = useCallback((
-    gender: string,
-    weight: string,
-    height: string,
-    age: string
-  ) => {
-    return calculateBMR(gender, weight, height, age);
-  }, []);
+  const [results, setResults] = useState<CalculationResults | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const { toast } = useToast();
 
-  // Calculate Total Energy Expenditure
-  const calculateTotalEnergyExpenditure = useCallback((
-    bmr: number,
+  const handleCalculate = async (
+    weight: number,
+    height: number,
+    age: number,
+    sex: 'M' | 'F',
     activityLevel: string,
-    objective: string
+    objective: string,
+    profile: string
   ) => {
-    return calculateTEE(bmr, activityLevel, objective);
-  }, []);
-
-  // Calculate macronutrients
-  const calculateMacronutrients = useCallback((
-    tee: number,
-    proteinPercentage: string,
-    carbsPercentage: string,
-    fatPercentage: string,
-    weight: number
-  ) => {
-    return calculateMacros(
-      tee,
-      carbsPercentage,
-      proteinPercentage,
-      fatPercentage,
-      weight
-    );
-  }, []);
-
-  // Calculate everything at once
-  const calculateResults = useCallback((state: any) => {
-    try {
-      // Step 1: Calculate BMR
-      const bmr = calculateBasalMetabolicRate(
-        state.gender,
-        state.weight,
-        state.height,
-        state.age
-      );
-
-      // Step 2: Calculate TEE
-      const tee = calculateTotalEnergyExpenditure(
-        bmr,
-        state.activityLevel,
-        state.objective
-      );
-
-      // Step 3: Calculate macros
-      const macros = calculateMacronutrients(
-        tee.vet,
-        state.proteinPercentage,
-        state.carbsPercentage,
-        state.fatPercentage,
-        parseFloat(state.weight)
-      );
-
-      return {
-        bmr,
-        tee,
-        macros
-      };
-    } catch (error) {
-      console.error('Error in calculation:', error);
-      return null;
+    // Validation
+    if (!weight || !height || !age) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha peso, altura e idade para continuar.",
+        variant: "destructive"
+      });
+      return;
     }
-  }, [calculateBasalMetabolicRate, calculateTotalEnergyExpenditure, calculateMacronutrients]);
 
-  // Helper function to update carbs percentage in the form
-  const setCarbs = useCallback((value: string, dispatch: any) => {
-    dispatch({ type: 'SET_CARBS_PERCENTAGE', payload: value });
-  }, []);
+    setIsCalculating(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // UI feedback
+
+      // Map profile to calculation type
+      const mappedProfile = mapProfileToCalculation(profile as any);
+      
+      // Use the legacy function with the correct signature (7 parameters)
+      const nutritionResults = calculateCompleteNutritionLegacy(
+        weight,
+        height,
+        age,
+        sex,
+        activityLevel as ActivityLevel,
+        objective as Objective,
+        mappedProfile
+      );
+
+      const calculationResults: CalculationResults = {
+        tmbValue: nutritionResults.tmb,
+        teeObject: {
+          tmb: nutritionResults.tmb,
+          get: nutritionResults.get,
+          vet: nutritionResults.vet,
+          adjustment: nutritionResults.vet - nutritionResults.get
+        },
+        macros: {
+          protein: nutritionResults.macros.protein,
+          carbs: nutritionResults.macros.carbs,
+          fat: nutritionResults.macros.fat,
+          proteinPerKg: nutritionResults.proteinPerKg
+        },
+        calorieSummary: {
+          totalCalories: nutritionResults.vet,
+          proteinCalories: nutritionResults.macros.protein.kcal,
+          carbsCalories: nutritionResults.macros.carbs.kcal,
+          fatCalories: nutritionResults.macros.fat.kcal
+        },
+        formulaUsed: nutritionResults.formulaUsed
+      };
+
+      setResults(calculationResults);
+      setShowResults(true);
+
+      toast({
+        title: "Cálculo realizado com sucesso",
+        description: `Utilizada fórmula: ${nutritionResults.formulaUsed}`,
+      });
+
+    } catch (error) {
+      console.error('Calculation error:', error);
+      toast({
+        title: "Erro no cálculo",
+        description: "Ocorreu um erro ao realizar os cálculos. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const resetResults = () => {
+    setResults(null);
+    setShowResults(false);
+  };
 
   return {
-    calculateBMR: calculateBasalMetabolicRate,
-    calculateTEE: calculateTotalEnergyExpenditure,
-    calculateMacros: calculateMacronutrients,
-    calculateResults,
-    setCarbs
+    results,
+    isCalculating,
+    showResults,
+    handleCalculate,
+    resetResults,
+    // Individual result accessors for compatibility
+    tmbValue: results?.tmbValue || null,
+    teeObject: results?.teeObject || null,
+    macros: results?.macros || null,
+    calorieSummary: results?.calorieSummary || null,
+    formulaUsed: results?.formulaUsed
   };
 };
-
-// For backward compatibility
-export default useCalculatorResults;
