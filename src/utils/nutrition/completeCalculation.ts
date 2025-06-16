@@ -35,6 +35,21 @@ export interface CompleteCalculationResults {
   proteinPerKg: number;
 }
 
+// Legacy interface for backward compatibility
+export interface CompleteNutritionResult {
+  tmb: number;
+  vet: number;
+  get: number;
+  formulaUsed: string;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+  };
+  proteinPerKg: number;
+  recommendations?: string[];
+}
+
 /**
  * Cálculo completo usando qualquer fórmula GER
  */
@@ -120,6 +135,51 @@ export function calculateComplete(inputs: CompleteCalculationInputs): CompleteCa
 }
 
 /**
+ * Legacy function for backward compatibility
+ */
+export function calculateCompleteNutrition(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F',
+  activityLevel: ActivityLevel,
+  objective: Objective,
+  profile: 'magro' | 'obeso' | 'atleta',
+  customMacroPercentages?: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  }
+): CompleteNutritionResult {
+  // Map legacy profile to new format
+  const mappedProfile: Profile = profile === 'magro' ? 'eutrofico' : 
+                                profile === 'obeso' ? 'sobrepeso_obesidade' : 'atleta';
+
+  const inputs: CompleteCalculationInputs = {
+    weight,
+    height,
+    age,
+    sex,
+    activityLevel,
+    objective,
+    profile: mappedProfile,
+    gerFormula: 'harris_benedict_revisada' // Default for legacy
+  };
+
+  const result = calculateComplete(inputs);
+
+  return {
+    tmb: result.ger,
+    vet: result.get,
+    get: result.get,
+    formulaUsed: result.gerFormulaName,
+    macros: result.macros,
+    proteinPerKg: result.proteinPerKg,
+    recommendations: []
+  };
+}
+
+/**
  * Validação completa incluindo requisitos específicos das fórmulas
  */
 export function validateCompleteInputs(inputs: CompleteCalculationInputs): {
@@ -156,5 +216,41 @@ export function validateCompleteInputs(inputs: CompleteCalculationInputs): {
     isValid: errors.length === 0,
     errors,
     warnings
+  };
+}
+
+/**
+ * Legacy validation function for backward compatibility
+ */
+export function validateAllParameters(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F',
+  activityLevel: ActivityLevel,
+  objective: Objective,
+  profile: 'magro' | 'obeso' | 'atleta'
+): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!weight || weight <= 0 || weight > 500) {
+    errors.push('Peso deve estar entre 1 e 500 kg');
+  }
+
+  if (!height || height <= 0 || height > 250) {
+    errors.push('Altura deve estar entre 1 e 250 cm');
+  }
+
+  if (!age || age <= 0 || age > 120) {
+    errors.push('Idade deve estar entre 1 e 120 anos');
+  }
+
+  if (!['M', 'F'].includes(sex)) {
+    errors.push('Sexo deve ser M ou F');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
   };
 }

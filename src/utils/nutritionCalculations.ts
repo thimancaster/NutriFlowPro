@@ -12,8 +12,8 @@ export * from './nutrition/cleanCalculations';
 export * from './nutrition/anthropometryCalculations';
 
 // Manter compatibilidade com sistema legado
-export { calculateCompleteNutrition } from './nutrition/completeCalculation';
-export { validateAllParameters } from './nutrition/completeCalculation';
+export { calculateComplete as calculateCompleteNutrition } from './nutrition/completeCalculation';
+export { validateCompleteInputs as validateAllParameters } from './nutrition/completeCalculation';
 
 // Re-exports organizados para compatibilidade
 export { calculateTMB } from './nutrition/tmbCalculations';
@@ -22,7 +22,7 @@ export { calculateVET } from './nutrition/vetCalculations';
 export { calculateMacros, mapProfileToCalculation } from './nutrition/macroCalculations';
 
 // Função principal recomendada (ENP)
-export { calculateENPNutrition, validateENPData } from './nutrition/cleanCalculations';
+export { calculateNutritionClean as calculateENPNutrition, validateCalculationInputs as validateENPData } from './nutrition/cleanCalculations';
 
 /**
  * @deprecated Use calculateENPNutrition para novos desenvolvimentos

@@ -87,6 +87,11 @@ export function calculateNutritionClean(inputs: CleanCalculationInputs): CleanCa
 }
 
 /**
+ * Alias for backward compatibility
+ */
+export const calculateENPNutrition = calculateNutritionClean;
+
+/**
  * Valida entrada de dados
  */
 export function validateCalculationInputs(inputs: CleanCalculationInputs): { 
@@ -116,3 +121,8 @@ export function validateCalculationInputs(inputs: CleanCalculationInputs): {
     errors
   };
 }
+
+/**
+ * Alias for backward compatibility
+ */
+export const validateENPData = validateCalculationInputs;
