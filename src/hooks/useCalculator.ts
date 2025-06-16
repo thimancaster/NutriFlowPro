@@ -55,7 +55,7 @@ export const useCalculator = () => {
           tmb: result.tmb,
           get: result.get,
           vet: result.vet,
-          adjustment: result.adjustment,
+          adjustment: result.vet - result.get, // Calculate adjustment from vet - get
           macros: {
             protein: {
               grams: result.macros.protein.grams,
@@ -72,7 +72,7 @@ export const useCalculator = () => {
               kcal: result.macros.fat.kcal,
               percentage: result.macros.fat.percentage
             },
-            proteinPerKg: result.macros.proteinPerKg
+            proteinPerKg: result.proteinPerKg // Use proteinPerKg from result
           }
         };
 

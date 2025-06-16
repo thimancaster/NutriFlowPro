@@ -111,7 +111,7 @@ const useCalculatorState = () => {
       // Map profile to calculation type
       const mappedProfile = mapProfileToCalculation(formData.profile);
       
-      // Remove await - calculateCompleteNutrition returns object directly, not Promise
+      // Use the legacy function with the correct signature
       const nutritionResults = calculateCompleteNutrition(
         formData.weight,
         formData.height,
@@ -134,7 +134,7 @@ const useCalculatorState = () => {
           protein: nutritionResults.macros.protein,
           carbs: nutritionResults.macros.carbs,
           fat: nutritionResults.macros.fat,
-          proteinPerKg: nutritionResults.macros.proteinPerKg
+          proteinPerKg: nutritionResults.proteinPerKg
         },
         calorieSummary: {
           totalCalories: nutritionResults.vet,
