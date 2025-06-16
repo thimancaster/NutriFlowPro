@@ -6,9 +6,10 @@
 
 import { ActivityLevel, Objective, Profile, PROTEIN_RATIOS } from '@/types/consultation';
 import { calculateTMB_ENP, calculateGEA_ENP, calculateGET_ENP } from './enp/core';
-import { calculateMacros_ENP, ENPMacroResult } from './enp/macros';
+import { calculateMacros_ENP } from './enp/macros';
+import type { ENPMacroResult } from './enp/macros';
 
-export { ENPMacroResult };
+export type { ENPMacroResult };
 
 export interface ENPInputs {
   weight: number;

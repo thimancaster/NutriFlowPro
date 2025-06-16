@@ -35,6 +35,21 @@ export interface CompleteCalculationResults {
   proteinPerKg: number;
 }
 
+// Legacy compatibility types and exports
+export interface CompleteNutritionResult {
+  tmb: number;
+  vet: number;
+  get: number;
+  formulaUsed: string;
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+  };
+  proteinPerKg: number;
+  recommendations?: string[];
+}
+
 /**
  * Cálculo completo usando qualquer fórmula GER
  */
@@ -120,6 +135,23 @@ export function calculateComplete(inputs: CompleteCalculationInputs): CompleteCa
 }
 
 /**
+ * Legacy function for backward compatibility
+ */
+export function calculateCompleteNutrition(inputs: CompleteCalculationInputs): CompleteNutritionResult {
+  const result = calculateComplete(inputs);
+  
+  return {
+    tmb: result.ger,
+    vet: result.get,
+    get: result.get,
+    formulaUsed: result.gerFormulaName,
+    macros: result.macros,
+    proteinPerKg: result.proteinPerKg,
+    recommendations: []
+  };
+}
+
+/**
  * Validação completa incluindo requisitos específicos das fórmulas
  */
 export function validateCompleteInputs(inputs: CompleteCalculationInputs): {
@@ -158,3 +190,6 @@ export function validateCompleteInputs(inputs: CompleteCalculationInputs): {
     warnings
   };
 }
+
+// Legacy alias
+export const validateAllParameters = validateCompleteInputs;
