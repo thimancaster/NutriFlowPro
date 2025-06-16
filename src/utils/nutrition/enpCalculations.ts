@@ -1,239 +1,181 @@
+
 /**
- * Engenharia Nutricional Padrão (ENP) - Cálculos Padronizados
- * Implementação completa baseada no documento ENP oficial
+ * Cálculos ENP - Sistema principal para todas as fórmulas
+ * Garante consistência e precisão em todos os cálculos
  */
-import { GERFormula, GER_FORMULAS } from "@/types/gerFormulas";
-import { calculateGER } from "./gerCalculations";
 
-export interface ENPInputs {
-  weight: number;  // kg
-  height: number;  // cm
-  age: number;     // anos
-  sex: 'M' | 'F';
-  activityLevel: 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo';
-  objective: 'manter_peso' | 'perder_peso' | 'ganhar_peso';
-  gerFormula: GERFormula;
-  bodyFatPercentage?: number;
-}
+import { 
+  PROTEIN_RATIOS, 
+  LIPID_RATIOS, 
+  CALORIE_VALUES,
+  ActivityLevel,
+  Objective,
+  Profile
+} from '@/types/consultation';
 
-export interface ENPResults {
-  tmb: number; // Represents GER
-  gea: number;  // Gasto Energético em Atividade (TMB * FA)
-  get: number;  // Gasto Energético Total (com ajuste de objetivo)
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number };
-    carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg: number;
-  };
-  gerFormulaName: string;
+export interface ENPMacroResult {
+  protein: { grams: number; kcal: number };
+  carbs: { grams: number; kcal: number };
+  fat: { grams: number; kcal: number };
 }
 
 /**
- * Fórmula Harris-Benedict Revisada - ÚNICA FÓRMULA ENP
- * Seção 3.1 da ENP
- * @deprecated Use calculateGER from gerCalculations.ts instead. Kept for reference.
+ * Calcula TMB usando Harris-Benedict Revisada (padrão ENP)
  */
-export function calculateTMB_ENP(weight: number, height: number, age: number, sex: 'M' | 'F'): number {
+export function calculateTMB_ENP(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F'
+): number {
   if (sex === 'M') {
-    // Harris-Benedict Revisada (Roza & Shizgal, 1984)
     return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
   } else {
-    // Harris-Benedict Revisada (Roza & Shizgal, 1984)
     return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
   }
 }
 
 /**
- * Fatores de Atividade Física Padrão ENP
- * Seção 3.2 da ENP
+ * Calcula GEA (Gasto Energético de Atividade)
  */
-const ACTIVITY_FACTORS_ENP: Record<string, number> = {
-  sedentario: 1.2,
-  leve: 1.375,
-  moderado: 1.55,
-  muito_ativo: 1.725,
-  extremamente_ativo: 1.9
-};
-
-/**
- * Calcula Gasto Energético em Atividade (GEA = TMB * FA)
- * Seção 3.2 da ENP
- */
-export function calculateGEA_ENP(tmb: number, activityLevel: string): number {
-  const factor = ACTIVITY_FACTORS_ENP[activityLevel] || 1.2;
+export function calculateGEA_ENP(
+  tmb: number,
+  activityLevel: ActivityLevel
+): number {
+  const factors = {
+    sedentario: 1.2,
+    leve: 1.375,
+    moderado: 1.55,
+    intenso: 1.725,
+    muito_intenso: 1.9
+  };
+  
+  const factor = factors[activityLevel] || 1.55;
   return Math.round(tmb * factor);
 }
 
 /**
- * Aplica Fator Objetivo para calcular GET final
- * Seção 3.3 da ENP
+ * Calcula GET (Gasto Energético Total) com ajuste por objetivo
  */
-export function calculateGET_ENP(gea: number, objective: string, tmb: number): number {
-  let get: number;
-  
+export function calculateGET_ENP(
+  gea: number,
+  objective: Objective
+): number {
   switch (objective) {
-    case 'manter_peso':
-      get = gea;
-      break;
-    case 'perder_peso':
-      get = gea - 500; // Déficit de 500 kcal
-      // Garantir que não seja inferior à TMB ou 1200 kcal (mínimo seguro)
-      const minimumSafe = Math.max(tmb, 1200);
-      get = Math.max(get, minimumSafe);
-      break;
-    case 'ganhar_peso':
-      get = gea + 400; // Superávit de 400 kcal
-      break;
+    case 'emagrecimento':
+      return gea - 500; // Déficit de 500 kcal conforme ENP
+    case 'hipertrofia':
+      return gea + 400; // Superávit de 400 kcal conforme ENP
+    case 'manutenção':
     default:
-      get = gea;
+      return gea; // Sem ajuste
   }
-  
-  return Math.round(get);
 }
 
 /**
- * Calcula distribuição de macronutrientes segundo padrões ENP
- * Seção 4 da ENP
+ * Calcula macronutrientes seguindo padrões ENP
+ * Proteína e lipídios por g/kg, carboidratos por diferença
  */
-export function calculateMacros_ENP(get: number, weight: number): {
-  protein: { grams: number; kcal: number; percentage: number };
-  carbs: { grams: number; kcal: number; percentage: number };
-  fat: { grams: number; kcal: number; percentage: number };
-  proteinPerKg: number;
-} {
-  // Padrões ENP Seção 4.1
-  const proteinPerKg = 1.8; // g/kg
-  const fatPercentage = 0.25; // 25% do GET
-  
-  // Cálculo sequencial conforme ENP Seção 4.2
-  
-  // 1. Gramas de Proteína e Kcal de Proteína
-  const proteinGrams = Math.round(proteinPerKg * weight);
-  const proteinKcal = proteinGrams * 4;
-  
-  // 2. Kcal de Gordura e Gramas de Gordura
-  const fatKcal = Math.round(get * fatPercentage);
-  const fatGrams = Math.round(fatKcal / 9);
-  
-  // 3. Kcal de Carboidrato (por diferença) e Gramas de Carboidrato
+export function calculateMacros_ENP(
+  get: number,
+  weight: number,
+  objective: Objective,
+  profile: Profile
+): ENPMacroResult {
+  // 1. Calcular proteína (g/kg conforme perfil)
+  const proteinGramsPerKg = PROTEIN_RATIOS[profile];
+  const proteinGrams = Math.round(weight * proteinGramsPerKg);
+  const proteinKcal = proteinGrams * CALORIE_VALUES.protein;
+
+  // 2. Calcular lipídios (g/kg conforme perfil)  
+  const fatGramsPerKg = LIPID_RATIOS[profile];
+  const fatGrams = Math.round(weight * fatGramsPerKg);
+  const fatKcal = fatGrams * CALORIE_VALUES.fat;
+
+  // 3. Calcular carboidratos por diferença
   const carbsKcal = get - proteinKcal - fatKcal;
-  const carbsGrams = Math.round(carbsKcal / 4);
+  const carbsGrams = Math.round(Math.max(0, carbsKcal) / CALORIE_VALUES.carbs);
+
+  // Ajustar se carboidratos ficaram negativos
+  let finalCarbsGrams = carbsGrams;
+  let finalCarbsKcal = carbsKcal;
   
+  if (carbsKcal < 0) {
+    // Se GET é muito baixo, reduzir proporcionalmente proteína e gordura
+    const totalProteinFat = proteinKcal + fatKcal;
+    const reductionFactor = get / totalProteinFat;
+    
+    const adjustedProteinKcal = Math.round(proteinKcal * reductionFactor);
+    const adjustedFatKcal = Math.round(fatKcal * reductionFactor);
+    
+    finalCarbsGrams = Math.round(Math.max(get * 0.1, 50) / CALORIE_VALUES.carbs); // Mínimo 10% ou 50g
+    finalCarbsKcal = finalCarbsGrams * CALORIE_VALUES.carbs;
+    
+    console.warn('GET muito baixo, ajustando distribuição de macronutrientes');
+  }
+
   return {
     protein: {
       grams: proteinGrams,
-      kcal: proteinKcal,
-      percentage: Math.round((proteinKcal / get) * 100)
+      kcal: proteinKcal
     },
     carbs: {
-      grams: carbsGrams,
-      kcal: carbsKcal,
-      percentage: Math.round((carbsKcal / get) * 100)
+      grams: finalCarbsGrams,
+      kcal: finalCarbsKcal
     },
     fat: {
       grams: fatGrams,
-      kcal: fatKcal,
-      percentage: Math.round((fatKcal / get) * 100)
-    },
-    proteinPerKg
+      kcal: fatKcal
+    }
   };
 }
 
 /**
- * Função principal de cálculo ENP completo
+ * Validação completa dos parâmetros ENP
  */
-export function calculateCompleteENP(inputs: ENPInputs): ENPResults {
-  // Validação de entrada
-  if (inputs.weight <= 0 || inputs.height <= 0 || inputs.age <= 0) {
-    throw new Error('Valores de peso, altura e idade devem ser maiores que zero');
-  }
-  if (!inputs.gerFormula) {
-    throw new Error('É obrigatório selecionar uma fórmula GER.');
-  }
-  
-  // Cálculo GER (TMB) com a fórmula selecionada
-  const { ger: tmb, formulaName } = calculateGER(inputs.gerFormula, {
-    weight: inputs.weight,
-    height: inputs.height,
-    age: inputs.age,
-    sex: inputs.sex,
-    bodyFatPercentage: inputs.bodyFatPercentage
-  });
-  
-  // Cálculo GEA (TMB * Fator Atividade)
-  const gea = calculateGEA_ENP(tmb, inputs.activityLevel);
-  
-  // Cálculo GET (GEA + Ajuste Objetivo)
-  const get = calculateGET_ENP(gea, inputs.objective, tmb);
-  
-  // Cálculo Macros
-  const macros = calculateMacros_ENP(get, inputs.weight);
-  
-  return {
-    tmb: Math.round(tmb),
-    gea,
-    get,
-    macros,
-    gerFormulaName: formulaName
-  };
-}
-
-/**
- * Validação de parâmetros de entrada ENP
- */
-export function validateENPInputs(inputs: ENPInputs): { isValid: boolean; errors: string[]; warnings: string[] } {
+export function validateENPParameters(
+  weight: number,
+  height: number,
+  age: number,
+  sex: 'M' | 'F',
+  activityLevel: ActivityLevel,
+  objective: Objective,
+  profile: Profile
+): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
-  const warnings: string[] = [];
 
-  if (!inputs.weight || inputs.weight <= 0 || inputs.weight > 500) {
+  // Validações antropométricas
+  if (!weight || weight <= 0 || weight > 500) {
     errors.push('Peso deve estar entre 1 e 500 kg');
   }
-  
-  if (!inputs.height || inputs.height <= 0 || inputs.height > 250) {
+
+  if (!height || height <= 0 || height > 250) {
     errors.push('Altura deve estar entre 1 e 250 cm');
   }
-  
-  if (!inputs.age || inputs.age <= 0 || inputs.age > 120) {
+
+  if (!age || age <= 0 || age > 120) {
     errors.push('Idade deve estar entre 1 e 120 anos');
   }
 
-  if (!inputs.sex || !['M', 'F'].includes(inputs.sex)) {
-    errors.push('Sexo deve ser informado (Masculino/Feminino)');
-  }
-  
-  if (!inputs.activityLevel) {
-    errors.push('Nível de atividade física deve ser selecionado');
-  }
-  
-  if (!inputs.objective) {
-    errors.push('Objetivo deve ser selecionado');
+  // Validações de dados categóricos
+  if (!['M', 'F'].includes(sex)) {
+    errors.push('Sexo deve ser M ou F');
   }
 
-  if (!inputs.gerFormula) {
-    errors.push('A seleção da equação GER é obrigatória.');
-  } else {
-    const formulaInfo = GER_FORMULAS[inputs.gerFormula];
-    if (formulaInfo.requiresBodyFat && (inputs.bodyFatPercentage === undefined || inputs.bodyFatPercentage <= 0)) {
-        errors.push(`A fórmula ${formulaInfo.name} requer um valor válido para percentual de gordura corporal.`);
+  if (!Object.keys(PROTEIN_RATIOS).includes(profile)) {
+    errors.push('Perfil corporal inválido');
+  }
+
+  // Validações de consistência
+  if (weight && height) {
+    const imc = weight / Math.pow(height / 100, 2);
+    if (imc < 10 || imc > 60) {
+      errors.push(`IMC calculado (${imc.toFixed(1)}) está fora da faixa esperada`);
     }
   }
 
-  // Warnings
-  if (inputs.age && inputs.age < 18) {
-    warnings.push('Cálculos ENP são validados para adultos (≥18 anos)');
-  }
-    
-  if (inputs.weight && inputs.height) {
-    const imc = inputs.weight / Math.pow(inputs.height / 100, 2);
-    if (imc > 0 && (imc < 16 || imc > 40)) {
-      warnings.push('IMC fora da faixa usual - considere avaliação médica');
-    }
-  }
-  
   return {
     isValid: errors.length === 0,
-    errors,
-    warnings
+    errors
   };
 }

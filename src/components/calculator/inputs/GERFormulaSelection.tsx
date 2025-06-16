@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Calculator } from 'lucide-react';
+import { Info, Calculator, AlertTriangle } from 'lucide-react';
 import { GERFormula, GER_FORMULAS } from '@/types/gerFormulas';
 import { recommendGERFormula } from '@/utils/nutrition/gerCalculations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -33,6 +33,40 @@ const GERFormulaSelection: React.FC<GERFormulaSelectionProps> = ({
   required = true,
 }) => {
   const recommendedFormula = profile ? recommendGERFormula(profile, hasBodyFat, age, weight, height) : null;
+  
+  // Calcular IMC para validações adicionais
+  const imc = weight && height ? weight / Math.pow(height / 100, 2) : null;
+  
+  // Verificar se a fórmula selecionada tem algum problema
+  const getFormulaWarnings = (formula: GERFormula): string[] => {
+    const warnings: string[] = [];
+    const formulaInfo = GER_FORMULAS[formula];
+    
+    if (formulaInfo.requiresBodyFat && !hasBodyFat) {
+      warnings.push(`Requer percentual de gordura corporal para máxima precisão`);
+    }
+    
+    if (imc) {
+      switch (formula) {
+        case 'harris_benedict_revisada':
+          if (imc > 30) warnings.push('Pode superestimar o gasto em pacientes obesos');
+          break;
+        case 'mifflin_st_jeor':
+          if (age && (age < 18 || age > 65)) warnings.push('Menos precisa fora da faixa etária de 18-65 anos');
+          break;
+        case 'owen':
+          if (imc < 25) warnings.push('Mais indicada para pacientes com sobrepeso/obesidade');
+          break;
+        case 'cunningham':
+          if (profile !== 'atleta') warnings.push('Desenvolvida especificamente para atletas de elite');
+          break;
+      }
+    }
+    
+    return warnings;
+  };
+
+  const selectedFormulaWarnings = selectedFormula ? getFormulaWarnings(selectedFormula) : [];
 
   return (
     <TooltipProvider>
@@ -51,6 +85,11 @@ const GERFormulaSelection: React.FC<GERFormulaSelectionProps> = ({
               <AlertDescription className="text-blue-700">
                 <strong>Recomendação:</strong> Com base nos dados informados, 
                 sugerimos a fórmula <strong>{GER_FORMULAS[recommendedFormula].name}</strong>.
+                {imc && imc > 30 && recommendedFormula === 'owen' && (
+                  <span className="block mt-1 text-sm">
+                    (Recomendada devido ao IMC elevado: {imc.toFixed(1)} kg/m²)
+                  </span>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -59,7 +98,10 @@ const GERFormulaSelection: React.FC<GERFormulaSelectionProps> = ({
             <Label htmlFor="ger-formula">
               Equação para Gasto Energético de Repouso (GER) {required && <span className="text-red-500">*</span>}
             </Label>
-            <Select value={selectedFormula} onValueChange={(value) => onFormulaChange(value as GERFormula)}>
+            <Select 
+              value={selectedFormula} 
+              onValueChange={(value) => onFormulaChange(value as GERFormula)}
+            >
               <SelectTrigger id="ger-formula" className="mt-2">
                 <SelectValue placeholder="Selecione a equação GER" />
               </SelectTrigger>
@@ -76,20 +118,44 @@ const GERFormulaSelection: React.FC<GERFormulaSelectionProps> = ({
             </Select>
             
             {selectedFormula && (
-              <p className="text-xs text-gray-600 mt-2">
-                {GER_FORMULAS[selectedFormula].description}
-              </p>
+              <div className="mt-2 space-y-2">
+                <p className="text-xs text-gray-600">
+                  {GER_FORMULAS[selectedFormula].description}
+                </p>
+                
+                {selectedFormulaWarnings.length > 0 && (
+                  <Alert className="border-amber-200 bg-amber-50">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertDescription className="text-amber-700">
+                      <div className="font-medium mb-1">Atenção:</div>
+                      <ul className="text-sm space-y-1">
+                        {selectedFormulaWarnings.map((warning, index) => (
+                          <li key={index}>• {warning}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             )}
           </div>
           
-          {selectedFormula && GER_FORMULAS[selectedFormula].requiresBodyFat && !hasBodyFat && (
-            <Alert className="border-amber-200 bg-amber-50">
-              <Info className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-700">
-                A fórmula <strong>{GER_FORMULAS[selectedFormula].name}</strong> requer o percentual de gordura corporal. 
-                Os resultados podem ser imprecisos sem esta informação.
-              </AlertDescription>
-            </Alert>
+          {/* Informações adicionais sobre precisão */}
+          {selectedFormula && age && weight && height && (
+            <div className="bg-gray-50 p-3 rounded-md border text-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-700">Informações do Paciente</span>
+              </div>
+              <div className="text-gray-600 space-y-1">
+                <div>IMC: {imc ? `${imc.toFixed(1)} kg/m²` : 'Não calculado'}</div>
+                <div>Idade: {age} anos</div>
+                {hasBodyFat && <div>% Gordura: Informado</div>}
+                <div className="mt-2 text-xs">
+                  Fórmula selecionada: <strong>{GER_FORMULAS[selectedFormula].name}</strong>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
