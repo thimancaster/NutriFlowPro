@@ -1,81 +1,81 @@
 
-/* Melhorias de base e sobrescritas de estilo para modo escuro */
+/* Melhorias de base e sobrescritas de estilo para modo escuro - Grafite Sofisticado */
 @layer base {
   /* Dark mode base improvements */
   .dark html {
-    @apply bg-dark-bg-primary;
+    @apply bg-[#18181b]; /* Grafite escuro */
   }
 
   .dark body {
-    @apply bg-dark-bg-primary text-dark-text-primary;
-    background-image: radial-gradient(circle at 50% 50%, rgba(34, 211, 170, 0.02) 0%, transparent 50%);
+    @apply bg-[#18181b] text-[#fafafa]; /* Grafite com texto suave */
+    background-image: radial-gradient(circle at 50% 50%, rgba(34, 211, 170, 0.03) 0%, transparent 50%);
   }
 
-  /* Melhorias específicas para texto no modo escuro */
+  /* Melhorias específicas para texto no modo escuro - tons mais suaves */
   .dark .text-gray-600 {
-    @apply text-dark-text-muted;
+    @apply text-[#a1a1aa]; /* Cinza suave */
   }
 
   .dark .text-gray-700 {
-    @apply text-dark-text-subtle;
+    @apply text-[#d4d4d8]; /* Cinza claro */
   }
 
   .dark .text-gray-800 {
-    @apply text-dark-text-secondary;
+    @apply text-[#e4e4e7]; /* Cinza muito claro */
   }
 
   .dark .text-gray-900 {
-    @apply text-dark-text-primary;
+    @apply text-[#fafafa]; /* Branco suave */
   }
 
-  /* Fundos com hierarquia visual clara */
+  /* Fundos com hierarquia visual grafite */
   .dark .bg-white {
-    @apply bg-dark-bg-card;
+    @apply bg-[#27272a]; /* Cinza carvão */
   }
 
   .dark .bg-gray-50 {
-    @apply bg-dark-bg-secondary;
+    @apply bg-[#2f2f33]; /* Grafite médio */
   }
 
   .dark .bg-gray-100 {
-    @apply bg-dark-bg-elevated;
+    @apply bg-[#3f3f46]; /* Grafite elevado */
   }
 
   .dark .bg-blue-50 {
-    @apply bg-dark-bg-surface/50;
+    @apply bg-[#38383e]/50; /* Cinza neutro translúcido */
   }
 
-  /* Bordas com melhor definição */
+  /* Bordas com melhor definição - tons grafite */
   .dark .border-gray-200 {
-    @apply border-dark-border-primary;
+    @apply border-[#52525b]; /* Cinza neutro */
   }
 
   .dark .border-gray-300 {
-    @apply border-dark-border-secondary;
+    @apply border-[#71717a]; /* Cinza médio */
   }
 
-  /* Scrollbar personalizada para modo escuro */
+  /* Scrollbar personalizada para modo escuro grafite */
   .dark ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   .dark ::-webkit-scrollbar-track {
-    @apply bg-dark-bg-secondary rounded-full;
+    @apply bg-[#2f2f33] rounded-full; /* Grafite médio */
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    @apply bg-dark-border-accent rounded-full;
+    @apply bg-[#52525b] rounded-full; /* Cinza neutro */
     transition: background-color 0.2s ease;
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    @apply bg-dark-accent-green/30;
+    @apply bg-[#22d3aa]/30; /* Verde accent suave */
   }
 
   /* Seleção de texto melhorada */
   .dark ::selection {
-    @apply bg-dark-accent-green/20 text-dark-text-primary;
+    @apply bg-[#22d3aa]/20 text-[#fafafa]; /* Verde suave com texto claro */
   }
 }
 
