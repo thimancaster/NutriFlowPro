@@ -1,21 +1,22 @@
 
 import { Profile } from '@/types/consultation';
 
-// Função para converter string para Profile com mapeamento unificado
+// Valores padronizados para perfil (apenas os novos)
+export const STANDARD_PROFILES = ['eutrofico', 'sobrepeso_obesidade', 'atleta'] as const;
+
+// Função para converter qualquer string para Profile padronizado
 export const stringToProfile = (value: string): Profile => {
-  const validProfiles: Profile[] = ['eutrofico', 'sobrepeso_obesidade', 'atleta'];
-  
-  // Mapeamento completo e consistente
+  // Mapeamento completo de valores antigos para novos
   const profileMapping: Record<string, Profile> = {
-    // Valores novos (mantidos)
+    // Valores padrão (mantidos)
     'eutrofico': 'eutrofico',
-    'sobrepeso_obesidade': 'sobrepeso_obesidade',
+    'sobrepeso_obesidade': 'sobrepeso_obesidade', 
     'atleta': 'atleta',
     
-    // Valores antigos (mapeados)
+    // Valores legacy (convertidos)
     'magro': 'eutrofico',
-    'obeso': 'sobrepeso_obesidade',
     'normal': 'eutrofico',
+    'obeso': 'sobrepeso_obesidade',
     'sobrepeso': 'sobrepeso_obesidade',
     
     // Valores por extenso
@@ -24,7 +25,7 @@ export const stringToProfile = (value: string): Profile => {
     'eutrofico (normal)': 'eutrofico',
     'sobrepeso/obesidade': 'sobrepeso_obesidade',
     
-    // Mapeamento por nível de atividade (fallback)
+    // Valores de atividade física (fallback)
     'sedentário': 'eutrofico',
     'sedentario': 'eutrofico',
     'leve': 'eutrofico',
@@ -36,7 +37,8 @@ export const stringToProfile = (value: string): Profile => {
   const normalizedValue = value.toLowerCase().trim();
   const mappedProfile = profileMapping[normalizedValue];
   
-  if (mappedProfile && validProfiles.includes(mappedProfile)) {
+  if (mappedProfile && STANDARD_PROFILES.includes(mappedProfile)) {
+    console.log(`Profile mapped: "${value}" -> "${mappedProfile}"`);
     return mappedProfile;
   }
   
@@ -44,21 +46,23 @@ export const stringToProfile = (value: string): Profile => {
   return 'eutrofico';
 };
 
-// Função para converter Profile para valores legacy quando necessário
+// Função para converter Profile para valores legacy (apenas quando necessário para cálculos)
 export const profileToLegacy = (profile: Profile): 'magro' | 'obeso' | 'atleta' => {
   const legacyMapping: Record<Profile, 'magro' | 'obeso' | 'atleta'> = {
     'eutrofico': 'magro',
-    'sobrepeso_obesidade': 'obeso',
+    'sobrepeso_obesidade': 'obeso', 
     'atleta': 'atleta'
   };
   
-  return legacyMapping[profile] || 'magro';
+  const legacyValue = legacyMapping[profile] || 'magro';
+  console.log(`Profile to legacy: "${profile}" -> "${legacyValue}"`);
+  return legacyValue;
 };
 
 // Função para obter o label do perfil
 export const getProfileLabel = (profile: Profile): string => {
   const labels: Record<Profile, string> = {
-    'eutrofico': 'Eutrófico (Normal)',
+    'eutrofico': 'Eutrófico',
     'sobrepeso_obesidade': 'Sobrepeso/Obesidade',
     'atleta': 'Atleta'
   };
@@ -66,9 +70,14 @@ export const getProfileLabel = (profile: Profile): string => {
   return labels[profile] || profile;
 };
 
-// Opções para o select de perfil
+// Opções padronizadas para o select de perfil
 export const PROFILE_OPTIONS = [
-  { value: 'eutrofico', label: 'Eutrófico (Normal)' },
+  { value: 'eutrofico', label: 'Eutrófico' },
   { value: 'sobrepeso_obesidade', label: 'Sobrepeso/Obesidade' },
   { value: 'atleta', label: 'Atleta' }
 ] as const;
+
+// Função para validar se um valor é um Profile válido
+export const isValidProfile = (value: string): value is Profile => {
+  return STANDARD_PROFILES.includes(value as Profile);
+};

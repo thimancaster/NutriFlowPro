@@ -1,8 +1,98 @@
 
-/*
-  Este arquivo foi refatorado para modularidade.
-  - As variáveis do tema escuro estão em 'dark-theme-variables.css'.
-  - As sobrescritas de estilo e correções do tema claro estão em 'dark-theme-styles.css'.
-*/
-@import './dark-theme-variables.css';
-@import './dark-theme-styles.css';
+/* Tema Escuro Consolidado - Slate Profissional */
+@layer base {
+  .dark {
+    /* Fundo principal - Ardósia escura elegante */
+    --background: 222 84% 5%; /* #0f172a - ardósia escura */
+    --foreground: 213 27% 84%; /* #cbd5e1 - cinza-azulado claro */
+
+    /* Cards com hierarquia visual clara - tons de azul-ardósia */
+    --card: 217 33% 17%; /* #1e293b - azul-acinzentado */
+    --card-foreground: 213 27% 84%; /* #cbd5e1 */
+
+    /* Popovers e dropdowns - azul-ardósia médio */
+    --popover: 215 25% 27%; /* #334155 - azul-ardósia */
+    --popover-foreground: 213 27% 84%; /* #cbd5e1 */
+
+    /* Cores primárias - verde vibrante mantido */
+    --primary: 166 76% 46%; /* Verde mantido #22d3aa */
+    --primary-foreground: 222 84% 5%; /* #0f172a */
+
+    /* Elementos secundários - azul-ardósia claro */
+    --secondary: 215 20% 35%; /* #475569 - azul-cinza */
+    --secondary-foreground: 210 40% 98%; /* #f8fafc */
+
+    /* Elementos mutados - cinza-azulado neutro */
+    --muted: 215 25% 27%; /* #334155 - azul-ardósia */
+    --muted-foreground: 215 16% 65%; /* #94a3b8 - cinza-azulado */
+
+    /* Acentos - azul-ardósia elevado */
+    --accent: 215 20% 35%; /* #475569 - azul-cinza */
+    --accent-foreground: 210 40% 98%; /* #f8fafc */
+
+    /* Cores destrutivas mais harmoniosas */
+    --destructive: 0 72% 51%; /* #dc2626 - vermelho suave */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
+
+    /* Bordas e inputs - azul-cinza visível */
+    --border: 215 20% 35%; /* #475569 - azul-cinza */
+    --input: 215 25% 27%; /* #334155 - input azul-ardósia */
+    --ring: 166 76% 46%; /* #22d3aa - verde para focus */
+
+    /* Sidebar com tema azul-ardósia refinado */
+    --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
+    --sidebar-foreground: 213 27% 84%; /* #cbd5e1 */
+    --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
+    --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
+    --sidebar-accent: 166 76% 46%; /* #22d3aa - verde accent */
+    --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
+    --sidebar-border: 215 20% 35%; /* #475569 - borda sutil */
+    --sidebar-ring: 166 76% 46%; /* #22d3aa */
+  }
+
+  /* Aplicação das variáveis CSS no modo escuro */
+  .dark html {
+    background-color: hsl(var(--background));
+  }
+
+  .dark body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Melhorias específicas para dropdowns e overlays */
+  .dark [data-radix-select-content],
+  .dark [data-radix-dropdown-menu-content],
+  .dark [data-radix-popover-content] {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+    z-index: 50;
+  }
+
+  /* Tabs específicos */
+  .dark [data-state="active"] {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .dark [role="tablist"] {
+    background-color: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .dark [role="tab"] {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .dark [role="tab"]:hover {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--accent) / 0.5);
+  }
+
+  .dark [role="tab"][data-state="active"] {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+}

@@ -1,12 +1,7 @@
 
-/**
- * Calculator actions and business logic
- */
-
 import { useToast } from '@/hooks/use-toast';
 import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
-import { profileToLegacy } from '@/components/calculator/utils/profileUtils';
-import { stringToProfile } from '@/components/calculator/utils/profileUtils';
+import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 export interface CalculationParams {
@@ -23,6 +18,9 @@ export const useCalculatorActions = () => {
   const { toast } = useToast();
 
   const validateAndCalculate = async (params: CalculationParams) => {
+    console.log('=== INICIANDO VALIDAÇÃO E CÁLCULO ===');
+    console.log('Parâmetros recebidos:', params);
+
     // Validation
     if (!params.weight || !params.height || !params.age) {
       toast({
@@ -36,15 +34,16 @@ export const useCalculatorActions = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // UI feedback
 
-      // Normalizar o profile usando a função de mapeamento
+      // Normalizar o profile usando a função de mapeamento padronizada
       const normalizedProfile = stringToProfile(params.profile);
-      const legacyProfile = profileToLegacy(normalizedProfile);
-      
-      console.log('Profile conversion:', {
+      console.log('Profile normalizado:', {
         original: params.profile,
-        normalized: normalizedProfile,
-        legacy: legacyProfile
+        normalized: normalizedProfile
       });
+      
+      // Converter para formato legacy apenas para os cálculos
+      const legacyProfile = profileToLegacy(normalizedProfile);
+      console.log('Profile para cálculo legacy:', legacyProfile);
       
       // Validar parâmetros com valores legacy
       const validation = validateLegacyParameters(
@@ -58,7 +57,7 @@ export const useCalculatorActions = () => {
       );
       
       if (!validation.isValid) {
-        console.error('Validation failed:', validation.errors);
+        console.error('Validação falhou:', validation.errors);
         toast({
           title: "Parâmetros inválidos",
           description: validation.errors.join(', '),
@@ -78,6 +77,8 @@ export const useCalculatorActions = () => {
         legacyProfile
       );
 
+      console.log('Resultados do cálculo:', nutritionResults);
+
       toast({
         title: "Cálculo realizado com sucesso",
         description: `Utilizada fórmula: ${nutritionResults.formulaUsed}`,
@@ -86,7 +87,7 @@ export const useCalculatorActions = () => {
       return nutritionResults;
 
     } catch (error) {
-      console.error('Calculation error:', error);
+      console.error('Erro no cálculo:', error);
       toast({
         title: "Erro no cálculo",
         description: "Ocorreu um erro ao realizar os cálculos. Tente novamente.",
