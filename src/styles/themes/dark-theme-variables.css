@@ -1,52 +1,52 @@
 
-/* Tema escuro - Variáveis CSS - Grafite Sofisticado */
+/* Tema escuro - Variáveis CSS - Slate Profissional */
 @layer base {
   .dark {
-    /* Fundo principal - Grafite escuro elegante */
-    --background: 220 13% 9%; /* #18181b - grafite escuro */
-    --foreground: 0 0% 98%; /* #fafafa - branco suave */
+    /* Fundo principal - Ardósia escura elegante */
+    --background: 222 84% 5%; /* #0f172a - ardósia escura */
+    --foreground: 213 27% 84%; /* #cbd5e1 - cinza-azulado claro */
 
-    /* Cards com hierarquia visual clara - tons de grafite */
-    --card: 220 13% 15%; /* #27272a - cinza carvão */
-    --card-foreground: 0 0% 95%; /* #f2f2f2 */
+    /* Cards com hierarquia visual clara - tons de azul-ardósia */
+    --card: 217 33% 17%; /* #1e293b - azul-acinzentado */
+    --card-foreground: 213 27% 84%; /* #cbd5e1 */
 
-    /* Popovers e dropdowns - grafite médio */
-    --popover: 220 13% 18%; /* #2f2f33 - grafite médio */
-    --popover-foreground: 0 0% 98%; /* #fafafa */
+    /* Popovers e dropdowns - azul-ardósia médio */
+    --popover: 215 25% 27%; /* #334155 - azul-ardósia */
+    --popover-foreground: 213 27% 84%; /* #cbd5e1 */
 
     /* Cores primárias - verde vibrante mantido */
     --primary: 166 76% 46%; /* Verde mantido #22d3aa */
-    --primary-foreground: 220 13% 9%; /* #18181b */
+    --primary-foreground: 222 84% 5%; /* #0f172a */
 
-    /* Elementos secundários - grafite claro */
-    --secondary: 220 9% 20%; /* #34343a - grafite claro */
-    --secondary-foreground: 0 0% 89%; /* #e4e4e7 */
+    /* Elementos secundários - azul-ardósia claro */
+    --secondary: 215 20% 35%; /* #475569 - azul-cinza */
+    --secondary-foreground: 210 40% 98%; /* #f8fafc */
 
-    /* Elementos mutados - cinza neutro */
-    --muted: 220 13% 22%; /* #38383e - cinza neutro escuro */
-    --muted-foreground: 220 9% 65%; /* #a1a1aa - cinza suave */
+    /* Elementos mutados - cinza-azulado neutro */
+    --muted: 215 25% 27%; /* #334155 - azul-ardósia */
+    --muted-foreground: 215 16% 65%; /* #94a3b8 - cinza-azulado */
 
-    /* Acentos - grafite elevado */
-    --accent: 220 13% 25%; /* #3f3f46 - grafite elevado */
-    --accent-foreground: 0 0% 98%; /* #fafafa */
+    /* Acentos - azul-ardósia elevado */
+    --accent: 215 20% 35%; /* #475569 - azul-cinza */
+    --accent-foreground: 210 40% 98%; /* #f8fafc */
 
     /* Cores destrutivas mais harmoniosas */
-    --destructive: 0 62% 56%; /* #e53e3e - vermelho suave */
-    --destructive-foreground: 0 0% 98%; /* #fafafa */
+    --destructive: 0 72% 51%; /* #dc2626 - vermelho suave */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
 
-    /* Bordas e inputs - cinza neutro visível */
-    --border: 220 13% 32%; /* #52525b - cinza neutro */
-    --input: 220 13% 28%; /* #474750 - input cinza */
+    /* Bordas e inputs - azul-cinza visível */
+    --border: 215 20% 35%; /* #475569 - azul-cinza */
+    --input: 215 25% 27%; /* #334155 - input azul-ardósia */
     --ring: 166 76% 46%; /* #22d3aa - verde para focus */
 
-    /* Sidebar com tema grafite refinado */
-    --sidebar-background: 220 13% 11%; /* #1e1e22 - grafite mais escuro */
-    --sidebar-foreground: 0 0% 98%; /* #fafafa */
-    --sidebar-primary: 220 13% 25%; /* #3f3f46 - grafite elevado */
-    --sidebar-primary-foreground: 0 0% 98%; /* #fafafa */
+    /* Sidebar com tema azul-ardósia refinado */
+    --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
+    --sidebar-foreground: 213 27% 84%; /* #cbd5e1 */
+    --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
+    --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
     --sidebar-accent: 166 76% 46%; /* #22d3aa - verde accent */
-    --sidebar-accent-foreground: 220 13% 9%; /* #18181b */
-    --sidebar-border: 220 13% 32%; /* #52525b - borda sutil */
+    --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
+    --sidebar-border: 215 20% 35%; /* #475569 - borda sutil */
     --sidebar-ring: 166 76% 46%; /* #22d3aa */
 
     /* Configurações específicas do tema escuro */

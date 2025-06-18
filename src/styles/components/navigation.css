@@ -1,5 +1,5 @@
 
-/* Componentes de navegação */
+/* Componentes de navegação - Slate Profissional */
 @layer components {
   /* Avatar melhorado */
   .avatar-enhanced {
@@ -8,20 +8,48 @@
   }
 
   .dark .avatar-enhanced {
-    @apply hover:ring-dark-accent-green/30 hover:shadow-dark-glow;
+    @apply hover:ring-emerald-400/30 hover:shadow-lg;
+    box-shadow: 0 0 20px rgba(34, 211, 170, 0.2);
   }
 
   /* Navegação aprimorada */
   .dark-nav-item {
-    @apply text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-bg-elevated/60 
+    @apply text-slate-400 hover:text-slate-100 hover:bg-slate-700/60 
            rounded-md transition-all duration-200 backdrop-blur-sm;
   }
 
   .dark-nav-item.active {
-    @apply text-dark-accent-green bg-dark-accent-green/10 shadow-inner;
+    @apply text-emerald-400 bg-emerald-400/10 shadow-inner;
   }
 
   .dark-nav-item:hover {
     @apply shadow-sm;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+  }
+
+  /* Melhorias para Navbar */
+  .dark .navbar-brand {
+    @apply text-slate-100;
+  }
+
+  .dark .navbar-link {
+    @apply text-slate-300 hover:text-slate-100 hover:bg-slate-700/50 transition-all duration-200;
+  }
+
+  .dark .navbar-link.active {
+    @apply text-emerald-400 bg-emerald-400/10;
+  }
+
+  /* Mobile menu melhorado */
+  .dark .mobile-menu {
+    @apply bg-slate-800/95 backdrop-blur-md border-slate-600;
+  }
+
+  .dark .mobile-menu-item {
+    @apply text-slate-300 hover:text-slate-100 hover:bg-slate-700/60 rounded-md transition-all duration-200;
+  }
+
+  .dark .mobile-menu-item.active {
+    @apply text-emerald-400 bg-emerald-400/10;
   }
 }

@@ -1,81 +1,98 @@
 
-/* Melhorias de base e sobrescritas de estilo para modo escuro - Grafite Sofisticado */
+/* Melhorias de base e sobrescritas de estilo para modo escuro - Slate Profissional */
 @layer base {
   /* Dark mode base improvements */
   .dark html {
-    @apply bg-[#18181b]; /* Grafite escuro */
+    @apply bg-slate-900; /* Ardósia escura */
   }
 
   .dark body {
-    @apply bg-[#18181b] text-[#fafafa]; /* Grafite com texto suave */
-    background-image: radial-gradient(circle at 50% 50%, rgba(34, 211, 170, 0.03) 0%, transparent 50%);
+    @apply bg-slate-900 text-slate-300; /* Ardósia com texto suave */
+    background-image: radial-gradient(circle at 50% 50%, rgba(34, 211, 170, 0.03) 0%, rgba(59, 130, 246, 0.02) 50%, transparent 100%);
   }
 
   /* Melhorias específicas para texto no modo escuro - tons mais suaves */
   .dark .text-gray-600 {
-    @apply text-[#a1a1aa]; /* Cinza suave */
+    @apply text-slate-400; /* Cinza-azulado suave */
   }
 
   .dark .text-gray-700 {
-    @apply text-[#d4d4d8]; /* Cinza claro */
+    @apply text-slate-300; /* Cinza-azulado claro */
   }
 
   .dark .text-gray-800 {
-    @apply text-[#e4e4e7]; /* Cinza muito claro */
+    @apply text-slate-200; /* Cinza-azulado muito claro */
   }
 
   .dark .text-gray-900 {
-    @apply text-[#fafafa]; /* Branco suave */
+    @apply text-slate-100; /* Branco-azulado suave */
   }
 
-  /* Fundos com hierarquia visual grafite */
+  /* Fundos com hierarquia visual azul-ardósia */
   .dark .bg-white {
-    @apply bg-[#27272a]; /* Cinza carvão */
+    @apply bg-slate-800; /* Azul-acinzentado */
   }
 
   .dark .bg-gray-50 {
-    @apply bg-[#2f2f33]; /* Grafite médio */
+    @apply bg-slate-700; /* Azul-ardósia médio */
   }
 
   .dark .bg-gray-100 {
-    @apply bg-[#3f3f46]; /* Grafite elevado */
+    @apply bg-slate-600; /* Azul-ardósia claro */
   }
 
   .dark .bg-blue-50 {
-    @apply bg-[#38383e]/50; /* Cinza neutro translúcido */
+    @apply bg-slate-800/50; /* Azul-acinzentado translúcido */
   }
 
-  /* Bordas com melhor definição - tons grafite */
+  /* Bordas com melhor definição - tons azul-ardósia */
   .dark .border-gray-200 {
-    @apply border-[#52525b]; /* Cinza neutro */
+    @apply border-slate-600; /* Azul-cinza */
   }
 
   .dark .border-gray-300 {
-    @apply border-[#71717a]; /* Cinza médio */
+    @apply border-slate-500; /* Azul-cinza claro */
   }
 
-  /* Scrollbar personalizada para modo escuro grafite */
+  /* Scrollbar personalizada para modo escuro azul-ardósia */
   .dark ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   .dark ::-webkit-scrollbar-track {
-    @apply bg-[#2f2f33] rounded-full; /* Grafite médio */
+    @apply bg-slate-700 rounded-full; /* Azul-ardósia médio */
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    @apply bg-[#52525b] rounded-full; /* Cinza neutro */
+    @apply bg-slate-500 rounded-full; /* Azul-cinza */
     transition: background-color 0.2s ease;
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    @apply bg-[#22d3aa]/30; /* Verde accent suave */
+    @apply bg-emerald-400/30; /* Verde accent suave */
   }
 
   /* Seleção de texto melhorada */
   .dark ::selection {
-    @apply bg-[#22d3aa]/20 text-[#fafafa]; /* Verde suave com texto claro */
+    @apply bg-emerald-400/20 text-slate-100; /* Verde suave com texto claro */
+  }
+
+  /* Melhorias para Tabs específicas */
+  .dark [data-state="active"] {
+    @apply bg-slate-700 text-slate-100 shadow-sm;
+  }
+
+  .dark [role="tablist"] {
+    @apply bg-slate-800 border-slate-600;
+  }
+
+  .dark [role="tab"] {
+    @apply text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 transition-all duration-200;
+  }
+
+  .dark [role="tab"][data-state="active"] {
+    @apply bg-slate-700 text-slate-100 shadow-md;
   }
 }
 
