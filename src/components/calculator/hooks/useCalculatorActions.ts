@@ -5,7 +5,8 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
-import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
+import { profileToLegacy } from '@/components/calculator/utils/profileUtils';
+import { stringToProfile } from '@/components/calculator/utils/profileUtils';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 export interface CalculationParams {
@@ -35,8 +36,36 @@ export const useCalculatorActions = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // UI feedback
 
-      // Map profile to calculation type
-      const mappedProfile = mapProfileToCalculation(params.profile as any);
+      // Normalizar o profile usando a função de mapeamento
+      const normalizedProfile = stringToProfile(params.profile);
+      const legacyProfile = profileToLegacy(normalizedProfile);
+      
+      console.log('Profile conversion:', {
+        original: params.profile,
+        normalized: normalizedProfile,
+        legacy: legacyProfile
+      });
+      
+      // Validar parâmetros com valores legacy
+      const validation = validateLegacyParameters(
+        params.weight,
+        params.height,
+        params.age,
+        params.sex,
+        params.activityLevel as ActivityLevel,
+        params.objective as Objective,
+        legacyProfile
+      );
+      
+      if (!validation.isValid) {
+        console.error('Validation failed:', validation.errors);
+        toast({
+          title: "Parâmetros inválidos",
+          description: validation.errors.join(', '),
+          variant: "destructive"
+        });
+        return null;
+      }
       
       // Use the legacy function with the correct signature (7 parameters)
       const nutritionResults = calculateCompleteNutritionLegacy(
@@ -46,7 +75,7 @@ export const useCalculatorActions = () => {
         params.sex,
         params.activityLevel as ActivityLevel,
         params.objective as Objective,
-        mappedProfile
+        legacyProfile
       );
 
       toast({

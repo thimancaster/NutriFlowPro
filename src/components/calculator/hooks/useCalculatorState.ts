@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { Patient } from '@/types';
 import { useCalculatorForm } from './useCalculatorForm';
@@ -44,6 +44,17 @@ const useCalculatorState = () => {
   const { syncPatientData } = useCalculatorSync();
 
   const handleCalculateWrapper = async () => {
+    console.log('=== INICIANDO CÁLCULO ===');
+    console.log('Dados do formulário:', {
+      weight: Number(weight),
+      height: Number(height),
+      age: Number(age),
+      sex,
+      activityLevel,
+      objective,
+      profile
+    });
+
     setIsCalculating(true);
 
     const calculationParams = {
@@ -59,6 +70,8 @@ const useCalculatorState = () => {
     const nutritionResults = await validateAndCalculate(calculationParams);
     
     if (nutritionResults) {
+      console.log('Resultados do cálculo:', nutritionResults);
+      
       const calculationResults = {
         tmbValue: nutritionResults.tmb,
         teeObject: {
@@ -85,18 +98,23 @@ const useCalculatorState = () => {
       setResults(calculationResults);
       setShowResults(true);
       setActiveTab('results');
+      console.log('=== CÁLCULO CONCLUÍDO COM SUCESSO ===');
+    } else {
+      console.error('=== FALHA NO CÁLCULO ===');
     }
 
     setIsCalculating(false);
   };
 
   const handleReset = () => {
+    console.log('=== RESETANDO CALCULADORA ===');
     resetForm();
     resetResults();
     setActiveTab('tmb');
   };
 
   const handleSyncPatientData = (patient: Patient) => {
+    console.log('=== SINCRONIZANDO DADOS DO PACIENTE ===', patient);
     const currentData = { patientName, weight, height, age, sex };
     syncPatientData(patient, currentData, handleInputChange);
   };
@@ -105,6 +123,11 @@ const useCalculatorState = () => {
   const setSex = (sex: 'M' | 'F') => handleInputChange('sex', sex);
   const setActivityLevel = (level: string) => handleInputChange('activityLevel', level);
   const setObjective = (objective: string) => handleInputChange('objective', objective);
+
+  // Debug effect para monitorar mudanças no profile
+  useEffect(() => {
+    console.log('Profile changed:', profile);
+  }, [profile]);
 
   return {
     // Form data

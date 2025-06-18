@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { calculateCompleteNutritionLegacy, LegacyCalculationResult, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
+import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
 export interface NutritionCalculationState {
@@ -23,7 +24,7 @@ export const useNutritionCalculation = () => {
     sex: 'M' | 'F',
     activityLevel: ActivityLevel,
     objective: Objective,
-    profile: 'magro' | 'obeso' | 'atleta',
+    profile: 'magro' | 'obeso' | 'atleta' | 'eutrofico' | 'sobrepeso_obesidade',
     customMacroPercentages?: {
       protein: number;
       carbs: number;
@@ -33,8 +34,20 @@ export const useNutritionCalculation = () => {
     setState(prev => ({ ...prev, isCalculating: true, error: null }));
 
     try {
+      // Normalizar profile se necessário
+      let normalizedProfile: 'magro' | 'obeso' | 'atleta';
+      
+      if (profile === 'eutrofico' || profile === 'sobrepeso_obesidade') {
+        const profileType = stringToProfile(profile);
+        normalizedProfile = profileToLegacy(profileType);
+      } else {
+        normalizedProfile = profile as 'magro' | 'obeso' | 'atleta';
+      }
+
+      console.log('Profile normalization:', { original: profile, normalized: normalizedProfile });
+
       // Validar parâmetros using legacy function
-      const validation = validateLegacyParameters(weight, height, age, sex, activityLevel, objective, profile);
+      const validation = validateLegacyParameters(weight, height, age, sex, activityLevel, objective, normalizedProfile);
       
       if (!validation.isValid) {
         throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
@@ -48,7 +61,7 @@ export const useNutritionCalculation = () => {
         sex,
         activityLevel,
         objective,
-        profile
+        normalizedProfile
       );
 
       setState({
@@ -61,7 +74,7 @@ export const useNutritionCalculation = () => {
         formulaUsed: results.formulaUsed,
         tmb: results.tmb,
         vet: results.vet,
-        profile,
+        profile: normalizedProfile,
         recommendations: results.recommendations
       });
 

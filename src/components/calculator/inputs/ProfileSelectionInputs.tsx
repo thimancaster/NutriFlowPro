@@ -28,7 +28,7 @@ const ProfileSelectionInputs: React.FC<ProfileSelectionInputsProps> = ({
     <>
       {/* Profile and Activity Level */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Patient Profile */}
+        {/* Patient Profile - Valores padronizados */}
         {setProfile && (
           <div className="space-y-2">
             <Label htmlFor="profile">Perfil</Label>
@@ -38,8 +38,8 @@ const ProfileSelectionInputs: React.FC<ProfileSelectionInputsProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="magro">Eutrófico</SelectItem>
-                  <SelectItem value="obeso">Sobrepeso/Obesidade</SelectItem>
+                  <SelectItem value="eutrofico">Eutrófico</SelectItem>
+                  <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade</SelectItem>
                   <SelectItem value="atleta">Atleta</SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -78,6 +78,8 @@ const ProfileSelectionInputs: React.FC<ProfileSelectionInputsProps> = ({
                 <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
                 <SelectItem value="manutenção">Manutenção</SelectItem>
                 <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                <SelectItem value="saúde">Saúde</SelectItem>
+                <SelectItem value="desempenho">Desempenho</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

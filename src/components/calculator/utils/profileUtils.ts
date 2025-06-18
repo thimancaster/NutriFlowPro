@@ -1,23 +1,36 @@
 
 import { Profile } from '@/types/consultation';
 
-// Função para converter string para Profile
+// Função para converter string para Profile com mapeamento unificado
 export const stringToProfile = (value: string): Profile => {
   const validProfiles: Profile[] = ['eutrofico', 'sobrepeso_obesidade', 'atleta'];
   
-  // Mapeamento para compatibilidade com valores antigos
+  // Mapeamento completo e consistente
   const profileMapping: Record<string, Profile> = {
-    'magro': 'eutrofico',
+    // Valores novos (mantidos)
     'eutrofico': 'eutrofico',
-    'normal': 'eutrofico',
-    'obeso': 'sobrepeso_obesidade',
     'sobrepeso_obesidade': 'sobrepeso_obesidade',
-    'sobrepeso': 'sobrepeso_obesidade',
     'atleta': 'atleta',
+    
+    // Valores antigos (mapeados)
+    'magro': 'eutrofico',
+    'obeso': 'sobrepeso_obesidade',
+    'normal': 'eutrofico',
+    'sobrepeso': 'sobrepeso_obesidade',
+    
+    // Valores por extenso
+    'eutrópico': 'eutrofico',
+    'eutrófico': 'eutrofico',
+    'eutrofico (normal)': 'eutrofico',
+    'sobrepeso/obesidade': 'sobrepeso_obesidade',
+    
+    // Mapeamento por nível de atividade (fallback)
     'sedentário': 'eutrofico',
+    'sedentario': 'eutrofico',
+    'leve': 'eutrofico',
     'moderado': 'eutrofico',
-    'ativo': 'sobrepeso_obesidade',
-    'muito ativo': 'atleta'
+    'intenso': 'sobrepeso_obesidade',
+    'muito_intenso': 'atleta'
   };
   
   const normalizedValue = value.toLowerCase().trim();
@@ -29,6 +42,17 @@ export const stringToProfile = (value: string): Profile => {
   
   console.warn(`Profile value "${value}" not recognized, defaulting to 'eutrofico'`);
   return 'eutrofico';
+};
+
+// Função para converter Profile para valores legacy quando necessário
+export const profileToLegacy = (profile: Profile): 'magro' | 'obeso' | 'atleta' => {
+  const legacyMapping: Record<Profile, 'magro' | 'obeso' | 'atleta'> = {
+    'eutrofico': 'magro',
+    'sobrepeso_obesidade': 'obeso',
+    'atleta': 'atleta'
+  };
+  
+  return legacyMapping[profile] || 'magro';
 };
 
 // Função para obter o label do perfil

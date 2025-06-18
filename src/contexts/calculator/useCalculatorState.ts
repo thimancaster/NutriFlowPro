@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
-import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
+import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
 
 const initialState: CalculatorState = {
   weight: 0,
@@ -76,8 +77,15 @@ export const useCalculatorState = () => {
           return;
         }
         
-        // Map profile to calculation type before calling the function
-        const mappedProfile = mapProfileToCalculation(state.profile);
+        // Normalizar profile usando funções de conversão
+        const normalizedProfile = stringToProfile(state.profile);
+        const legacyProfile = profileToLegacy(normalizedProfile);
+        
+        console.log('Profile conversion in calculator:', {
+          original: state.profile,
+          normalized: normalizedProfile,
+          legacy: legacyProfile
+        });
         
         // Use the legacy function with correct signature (7 parameters)
         const results = calculateCompleteNutritionLegacy(
@@ -87,7 +95,7 @@ export const useCalculatorState = () => {
           state.sex,
           state.activityLevel as any,
           state.objective as any,
-          mappedProfile
+          legacyProfile
         );
         
         setState(prev => ({
