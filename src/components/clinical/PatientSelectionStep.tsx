@@ -11,15 +11,15 @@ import { Patient } from '@/types';
 
 const PatientSelectionStep: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { patients, isLoading } = usePatientOptions();
+  const { data: patients, isLoading } = usePatientOptions();
   const { startNewConsultation } = useClinical();
   const navigate = useNavigate();
   
   // Filter patients based on search query
-  const filteredPatients = patients.filter(patient => 
+  const filteredPatients = patients?.filter(patient => 
     patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (patient.email && patient.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  ) || [];
   
   const handleSelectPatient = async (patient: Patient) => {
     await startNewConsultation(patient);

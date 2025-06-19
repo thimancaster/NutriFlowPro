@@ -22,8 +22,8 @@ const PatientInfoStep: React.FC = () => {
   useEffect(() => {
     if (activePatient && activeConsultation) {
       setFormData({
-        weight: activeConsultation.weight?.toString() || activePatient.measurements?.weight?.toString() || '',
-        height: activeConsultation.height?.toString() || activePatient.measurements?.height?.toString() || '',
+        weight: activeConsultation.weight?.toString() || '',
+        height: activeConsultation.height?.toString() || '',
         age: activeConsultation.age?.toString() || activePatient.age?.toString() || '',
         gender: activeConsultation.gender || activePatient.gender || 'female',
         activityLevel: activeConsultation.activity_level || 'moderado',

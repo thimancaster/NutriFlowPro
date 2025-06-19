@@ -1,4 +1,5 @@
 
+
 import { User } from "./auth";
 
 export interface AddressDetails {
@@ -43,7 +44,7 @@ export interface Patient {
   phone?: string;
   secondaryPhone?: string;
   cpf?: string;
-  birth_date?: string;
+  birth_date?: string; // Made optional to match database schema
   gender?: 'male' | 'female' | 'other';
   address?: string | AddressDetails;
   city?: string;
