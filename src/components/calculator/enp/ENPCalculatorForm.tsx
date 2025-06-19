@@ -110,16 +110,13 @@ export const ENPCalculatorForm: React.FC = () => {
               weight={validatedData.weight}
               onExportResults={handleExportResults}
             />
+            <ENPCalculatorActions
+              results={results}
+              onExport={handleExportResults}
+              onGenerateMealPlan={handleGenerateMealPlan}
+              onReset={handleReset}
+            />
           </>
-        )}
-
-        {results && (
-          <ENPCalculatorActions
-            results={results}
-            onExport={handleExportResults}
-            onGenerateMealPlan={handleGenerateMealPlan}
-            onReset={handleReset}
-          />
         )}
       </TabsContent>
       
