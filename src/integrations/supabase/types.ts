@@ -23,6 +23,7 @@ export type Database = {
           id: string
           imc: number | null
           lean_mass_kg: number | null
+          muscle_mass_percentage: number | null
           patient_id: string
           rcq: number | null
           subscapular: number | null
@@ -31,6 +32,7 @@ export type Database = {
           triceps: number | null
           user_id: string
           waist: number | null
+          water_percentage: number | null
           weight: number | null
         }
         Insert: {
@@ -46,6 +48,7 @@ export type Database = {
           id?: string
           imc?: number | null
           lean_mass_kg?: number | null
+          muscle_mass_percentage?: number | null
           patient_id: string
           rcq?: number | null
           subscapular?: number | null
@@ -54,6 +57,7 @@ export type Database = {
           triceps?: number | null
           user_id: string
           waist?: number | null
+          water_percentage?: number | null
           weight?: number | null
         }
         Update: {
@@ -69,6 +73,7 @@ export type Database = {
           id?: string
           imc?: number | null
           lean_mass_kg?: number | null
+          muscle_mass_percentage?: number | null
           patient_id?: string
           rcq?: number | null
           subscapular?: number | null
@@ -77,6 +82,7 @@ export type Database = {
           triceps?: number | null
           user_id?: string
           waist?: number | null
+          water_percentage?: number | null
           weight?: number | null
         }
         Relationships: [
@@ -764,7 +770,6 @@ export type Database = {
           gender: string | null
           goals: Json | null
           id: string
-          measurements: Json | null
           name: string
           notes: string | null
           phone: string | null
@@ -782,7 +787,6 @@ export type Database = {
           gender?: string | null
           goals?: Json | null
           id?: string
-          measurements?: Json | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -800,7 +804,6 @@ export type Database = {
           gender?: string | null
           goals?: Json | null
           id?: string
-          measurements?: Json | null
           name?: string
           notes?: string | null
           phone?: string | null

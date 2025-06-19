@@ -28,6 +28,8 @@ export const getAnthropometryData = async (
         imc,
         body_fat_pct,
         lean_mass_kg,
+        muscle_mass_percentage,
+        water_percentage,
         created_at
       `)
       .eq('user_id', userId) // Usar o índice idx_anthropometry_user_id
@@ -70,4 +72,48 @@ export const getLatestAnthropometryByPatient = async (
   patientId: string
 ) => {
   return getAnthropometryData(userId, { patientId, limit: 1 });
+};
+
+export const getPatientAnthropometryHistory = async (
+  userId: string,
+  patientId: string
+) => {
+  try {
+    const { data, error } = await supabase
+      .from('anthropometry')
+      .select(`
+        id,
+        date,
+        weight,
+        height,
+        imc,
+        body_fat_pct,
+        lean_mass_kg,
+        muscle_mass_percentage,
+        water_percentage,
+        arm,
+        waist,
+        hip,
+        thigh,
+        calf,
+        chest,
+        abdominal,
+        subscapular,
+        suprailiac,
+        triceps
+      `)
+      .eq('user_id', userId)
+      .eq('patient_id', patientId)
+      .order('date', { ascending: true }); // Ascendente para gráficos
+
+    if (error) {
+      console.error('Error fetching patient anthropometry history:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    console.error('Error in getPatientAnthropometryHistory:', error);
+    return { success: false, error: error.message };
+  }
 };
