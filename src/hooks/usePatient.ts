@@ -1,102 +1,130 @@
 
 import { useState, useEffect } from 'react';
-import { Patient } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
+import { Patient } from '@/types/patient';
+import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
-import { differenceInYears } from 'date-fns';
-import { Json } from '@/integrations/supabase/types';
 
-// Function to calculate age from birth_date
-const calculateAge = (birthDate: string | undefined): number => {
-  if (!birthDate) return 0;
-  try {
-    return differenceInYears(new Date(), new Date(birthDate));
-  } catch (e) {
-    console.error("Error calculating age:", e);
-    return 0;
-  }
-};
-
-// Helper function to safely parse JSON fields
-const safeParseJson = (jsonField: Json | null, defaultValue: any = {}) => {
-  if (!jsonField) return defaultValue;
-  if (typeof jsonField === 'object') return jsonField;
-  try {
-    return JSON.parse(jsonField as string) || defaultValue;
-  } catch (e) {
-    console.error("Error parsing JSON:", e);
-    return defaultValue;
-  }
-};
-
-// Helper function to safely cast gender
-const safeGender = (gender: any): 'male' | 'female' | 'other' | undefined => {
-  if (gender === 'male' || gender === 'female' || gender === 'other') {
-    return gender;
-  }
-  return undefined;
-};
-
-export const usePatient = (patientId?: string) => {
+export const usePatient = (patientId: string | undefined) => {
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchPatient = async () => {
-      if (!patientId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('patients')
-          .select('*')
-          .eq('id', patientId)
-          .single();
-
-        if (error) throw error;
-
-        // Transform the data
-        const measurementsData = safeParseJson(data.measurements, {}) as any;
-        const goalsData = safeParseJson(data.goals, {}) as any;
-        
-        const enhancedPatient: Patient = {
-          ...data,
-          age: calculateAge(data.birth_date),
-          gender: safeGender(data.gender),
-          measurements: {
-            weight: measurementsData.weight || 0,
-            height: measurementsData.height || 0,
-          },
-          status: 'active', // Default value if not in database
-          goals: {
-            objective: goalsData.objective || '',
-            profile: goalsData.profile || '',
-          },
-          // Add optional fields with default values
-          secondaryPhone: '',
-          cpf: ''
-        };
-
-        setPatient(enhancedPatient);
-      } catch (err) {
-        console.error('Error fetching patient:', err);
-        setError(err as Error);
-        toast({
-          title: 'Error',
-          description: `Failed to load patient: ${(err as Error).message}`,
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
+  const transformPatientData = (rawPatient: any): Patient => {
+    return {
+      id: rawPatient.id,
+      name: rawPatient.name,
+      email: rawPatient.email || '',
+      phone: rawPatient.phone || '',
+      secondaryPhone: rawPatient.secondaryphone || '',
+      cpf: rawPatient.cpf || '',
+      birth_date: rawPatient.birth_date || '',
+      gender: rawPatient.gender as 'male' | 'female' | 'other' || 'other',
+      address: rawPatient.address || '',
+      notes: rawPatient.notes || '',
+      status: rawPatient.status as 'active' | 'inactive' || 'active',
+      goals: rawPatient.goals || {},
+      created_at: rawPatient.created_at,
+      updated_at: rawPatient.updated_at,
+      user_id: rawPatient.user_id,
+      age: rawPatient.birth_date ? calculateAge(rawPatient.birth_date) : undefined
     };
+  };
 
+  const fetchPatient = async () => {
+    if (!patientId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await PatientService.getPatient(patientId);
+      
+      if (result.success && result.data) {
+        const transformedPatient = transformPatientData(result.data);
+        setPatient(transformedPatient);
+      } else {
+        setError(result.error || 'Failed to fetch patient');
+        toast({
+          title: "Error",
+          description: result.error || 'Failed to fetch patient',
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePatient = async (patientData: Partial<Patient>) => {
+    if (!patientId) return { success: false, error: 'No patient ID provided' };
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await PatientService.updatePatient(patientId, patientData);
+      
+      if (result.success && result.data) {
+        const updatedPatient = transformPatientData(result.data);
+        setPatient(updatedPatient);
+        toast({
+          title: "Success",
+          description: "Patient updated successfully",
+        });
+        return { success: true, data: updatedPatient };
+      } else {
+        setError(result.error || 'Failed to update patient');
+        return { success: false, error: result.error };
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPatient();
-  }, [patientId, toast]);
+  }, [patientId]);
 
-  return { patient, loading, error };
+  return {
+    patient,
+    loading,
+    error,
+    refetch: fetchPatient,
+    updatePatient,
+    setPatient,
+    setLoading,
+    setError
+  };
+};
+
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
 };

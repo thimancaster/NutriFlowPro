@@ -1,185 +1,194 @@
 
-import { useState, useEffect } from 'react';
-import { Patient, PatientGoals, PatientMeasurements } from '@/types';
-import { storageUtils } from '@/utils/storageUtils';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
+import { Patient } from '@/types/patient';
+import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
 
 export const usePatientState = () => {
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load active patient from session storage on mount
-  useEffect(() => {
-    const storedPatient = storageUtils.getSessionItem('activePatient');
-    if (storedPatient) {
-      setActivePatient(storedPatient as Patient);
-    }
-
-    // Load recent patients from local storage
-    const storedRecentPatients = storageUtils.getLocalItem('recentPatients');
-    if (storedRecentPatients) {
-      setRecentPatients(storedRecentPatients as Patient[]);
-    }
-  }, []);
-
-  // Update session storage when active patient changes
-  useEffect(() => {
-    if (activePatient) {
-      storageUtils.setSessionItem('activePatient', activePatient);
-    } else {
-      storageUtils.removeSessionItem('activePatient');
-    }
-  }, [activePatient]);
-
-  // Helper function to safely parse JSON data
-  const safeParseJson = (data: any): any => {
-    if (!data) return null;
-    
-    if (typeof data === 'object') return data;
-    
-    if (typeof data === 'string') {
-      try {
-        return JSON.parse(data);
-      } catch (e) {
-        console.error('Failed to parse JSON data:', e);
-        return null;
-      }
-    }
-    
-    return null;
-  };
-
-  // Load patient by ID from the database
-  const loadPatientById = async (patientId: string) => {
-    if (!patientId) return;
-
-    setIsLoading(true);
+  const fetchPatients = useCallback(async (userId: string) => {
+    setLoading(true);
     setError(null);
-
+    
     try {
-      console.log('Loading patient by ID:', patientId);
+      const result = await PatientService.getPatients(userId);
       
-      const { data, error: supabaseError } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', patientId)
-        .single();
-
-      if (supabaseError) {
-        console.error('Supabase error:', supabaseError);
-        throw supabaseError;
-      }
-
-      if (data) {
-        console.log('Patient data loaded:', data);
+      if (result.success && result.data) {
+        // Transform the data to match Patient interface
+        const transformedPatients = result.data.map((patient: any) => ({
+          id: patient.id,
+          name: patient.name,
+          email: patient.email || '',
+          phone: patient.phone || '',
+          secondaryPhone: patient.secondaryphone || '',
+          cpf: patient.cpf || '',
+          birth_date: patient.birth_date || '',
+          gender: patient.gender as 'male' | 'female' | 'other' || 'other',
+          address: patient.address || '',
+          notes: patient.notes || '',
+          status: patient.status as 'active' | 'inactive' || 'active',
+          goals: patient.goals || {},
+          created_at: patient.created_at,
+          updated_at: patient.updated_at,
+          user_id: patient.user_id,
+          age: patient.birth_date ? calculateAge(patient.birth_date) : undefined
+        }));
         
-        // Parse the JSON fields
-        const goalsData = safeParseJson(data.goals) || {};
-        const measurementsData = safeParseJson(data.measurements) || {};
-        
-        // Handle address field
-        let addressData: any = data.address;
-        if (typeof addressData === 'string') {
-          try {
-            addressData = JSON.parse(addressData);
-          } catch (e) {
-            console.log('Address is a string and could not be parsed as JSON');
-          }
-        }
-
-        // Create a properly structured Patient object
-        const patient: Patient = {
-          ...data,
-          status: (data.status as 'active' | 'archived') || 'active',
-          gender: (data.gender as 'male' | 'female' | 'other') || undefined,
-          goals: {
-            objective: goalsData?.objective || undefined,
-            profile: goalsData?.profile || undefined,
-            targetWeight: goalsData?.targetWeight || undefined,
-            initialWeight: goalsData?.initialWeight || undefined,
-          } as PatientGoals,
-          address: addressData || undefined,
-          measurements: {
-            weight: measurementsData?.weight || undefined,
-            height: measurementsData?.height || undefined,
-            body_fat: measurementsData?.body_fat || undefined,
-            muscle_mass: measurementsData?.muscle_mass || undefined,
-          } as PatientMeasurements
-        };
-
-        setActivePatient(patient);
-        addRecentPatient(patient);
-        setSelectedPatientId(patientId);
+        setPatients(transformedPatients);
       } else {
-        setActivePatient(null);
-        throw new Error('Patient not found');
+        setError(result.error || 'Failed to fetch patients');
       }
     } catch (err) {
-      console.error('Error loading patient:', err);
-      setError(err instanceof Error ? err : new Error('Failed to load patient'));
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
       toast({
-        title: 'Error',
-        description: 'Failed to load patient data',
-        variant: 'destructive'
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Update selected patient ID
-  const handleSelectPatient = (patientId: string | null) => {
-    setSelectedPatientId(patientId);
-    if (patientId) {
-      loadPatientById(patientId);
+  const createPatient = useCallback(async (patientData: Omit<Patient, 'id' | 'created_at' | 'updated_at'>) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await PatientService.savePatient(patientData);
+      
+      if (result.success && result.data) {
+        const newPatient = {
+          ...result.data,
+          age: result.data.birth_date ? calculateAge(result.data.birth_date) : undefined
+        } as Patient;
+        
+        setPatients(prev => [...prev, newPatient]);
+        toast({
+          title: "Success",
+          description: "Patient created successfully",
+        });
+        return { success: true, data: newPatient };
+      } else {
+        setError(result.error || 'Failed to create patient');
+        return { success: false, error: result.error };
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Start a patient session
-  const startPatientSession = (patient: Patient) => {
-    setActivePatient(patient);
-    addRecentPatient(patient);
-    setSelectedPatientId(patient.id);
-  };
-
-  // End a patient session
-  const endPatientSession = () => {
-    setActivePatient(null);
-    setSelectedPatientId(null);
-    storageUtils.removeSessionItem('activePatient');
-  };
-
-  // Add a patient to the recent patients list
-  const addRecentPatient = (patient: Patient) => {
-    if (!patient) return;
-
-    // Remove the patient if it's already in the list to avoid duplicates
-    const filteredRecentPatients = recentPatients.filter(p => p.id !== patient.id);
+  const updatePatient = useCallback(async (patientId: string, patientData: Partial<Patient>) => {
+    setLoading(true);
+    setError(null);
     
-    // Add the patient to the beginning of the array
-    const updatedRecentPatients = [patient, ...filteredRecentPatients].slice(0, 5);
+    try {
+      const result = await PatientService.updatePatient(patientId, patientData);
+      
+      if (result.success && result.data) {
+        const updatedPatient = {
+          ...result.data,
+          age: result.data.birth_date ? calculateAge(result.data.birth_date) : undefined
+        } as Patient;
+        
+        setPatients(prev => 
+          prev.map(patient => 
+            patient.id === patientId ? updatedPatient : patient
+          )
+        );
+        toast({
+          title: "Success",
+          description: "Patient updated successfully",
+        });
+        return { success: true, data: updatedPatient };
+      } else {
+        setError(result.error || 'Failed to update patient');
+        return { success: false, error: result.error };
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const deletePatient = useCallback(async (patientId: string) => {
+    setLoading(true);
+    setError(null);
     
-    setRecentPatients(updatedRecentPatients);
-    storageUtils.setLocalItem('recentPatients', updatedRecentPatients);
-  };
+    try {
+      const result = await PatientService.deletePatient(patientId);
+      
+      if (result.success) {
+        setPatients(prev => prev.filter(patient => patient.id !== patientId));
+        toast({
+          title: "Success",
+          description: "Patient deleted successfully",
+        });
+        return { success: true };
+      } else {
+        setError(result.error || 'Failed to delete patient');
+        return { success: false, error: result.error };
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   return {
-    activePatient,
-    setActivePatient,
-    selectedPatientId,
-    handleSelectPatient,
-    recentPatients,
-    isPatientActive: !!activePatient,
-    startPatientSession,
-    endPatientSession,
-    loadPatientById,
-    addRecentPatient,
-    isLoading,
-    error
+    patients,
+    loading,
+    error,
+    fetchPatients,
+    createPatient,
+    updatePatient,
+    deletePatient,
+    setPatients,
+    setLoading,
+    setError
   };
+};
+
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
 };
