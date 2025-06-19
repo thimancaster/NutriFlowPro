@@ -27,7 +27,7 @@ export const usePatientFetching = ({ userId, enabled = true }: UsePatientFetchin
       gender: rawPatient.gender as 'male' | 'female' | 'other' || 'other',
       address: rawPatient.address || '',
       notes: rawPatient.notes || '',
-      status: rawPatient.status as 'active' | 'inactive' || 'active',
+      status: rawPatient.status === 'inactive' ? 'archived' : (rawPatient.status as 'active' | 'archived' || 'active'),
       goals: rawPatient.goals || {},
       created_at: rawPatient.created_at,
       updated_at: rawPatient.updated_at,

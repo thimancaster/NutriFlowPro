@@ -1,3 +1,4 @@
+
 import { User } from "./auth";
 
 export interface AddressDetails {
@@ -8,14 +9,6 @@ export interface AddressDetails {
   neighborhood?: string;
   city?: string;
   state?: string;
-}
-
-export interface PatientMeasurements {
-  weight?: number;
-  height?: number;
-  body_fat?: number;
-  muscle_mass?: number;
-  imc?: number;
 }
 
 export interface Goal {
@@ -61,7 +54,6 @@ export interface Patient {
   status?: 'active' | 'archived';
   photo_url?: string;
   user?: User;
-  measurements?: PatientMeasurements;
   goals?: PatientGoals;
   last_appointment?: string;
   age?: number;
@@ -91,7 +83,6 @@ export interface PatientOption {
   age?: number;
   birth_date?: string;
   gender?: string;
-  measurements?: PatientMeasurements;
 }
 
 export interface PatientResponse {

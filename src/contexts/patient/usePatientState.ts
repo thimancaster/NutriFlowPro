@@ -30,7 +30,7 @@ export const usePatientState = () => {
           gender: patient.gender as 'male' | 'female' | 'other' || 'other',
           address: patient.address || '',
           notes: patient.notes || '',
-          status: patient.status as 'active' | 'inactive' || 'active',
+          status: patient.status === 'inactive' ? 'archived' : (patient.status as 'active' | 'archived' || 'active'),
           goals: patient.goals || {},
           created_at: patient.created_at,
           updated_at: patient.updated_at,
