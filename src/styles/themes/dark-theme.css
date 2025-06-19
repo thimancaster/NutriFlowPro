@@ -1,53 +1,57 @@
 
-/* Tema Escuro Consolidado - Slate Profissional */
+/* Tema Escuro - Modern App Dashboard Color Palette */
 @layer base {
   .dark {
-    /* Fundo principal - Ardósia escura elegante */
-    --background: 222 84% 5%; /* #0f172a - ardósia escura */
-    --foreground: 213 27% 84%; /* #cbd5e1 - cinza-azulado claro */
+    /* Modern App Dashboard Color Palette */
+    /* Lead Dark #212121 - Fundo principal escuro */
+    --background: 0 0% 13%; /* #212121 */
+    --foreground: 185 20% 78%; /* #85c3cf - Light para texto principal */
 
-    /* Cards com hierarquia visual clara - tons de azul-ardósia */
-    --card: 217 33% 17%; /* #1e293b - azul-acinzentado */
-    --card-foreground: 213 27% 84%; /* #cbd5e1 */
+    /* Lead Accent #065464 - Elementos elevados */
+    --card: 190 88% 21%; /* #065464 - Lead Accent */
+    --card-foreground: 185 20% 78%; /* #85c3cf */
 
-    /* Popovers e dropdowns - azul-ardósia médio */
-    --popover: 215 25% 27%; /* #334155 - azul-ardósia */
-    --popover-foreground: 213 27% 84%; /* #cbd5e1 */
+    /* Popovers e dropdowns - Lead Accent */
+    --popover: 190 88% 21%; /* #065464 */
+    --popover-foreground: 185 20% 78%; /* #85c3cf */
 
-    /* Cores primárias - verde vibrante mantido */
-    --primary: 166 76% 46%; /* Verde mantido #22d3aa */
-    --primary-foreground: 222 84% 5%; /* #0f172a */
+    /* Primary #34acbc - Cor de destaque turquesa */
+    --primary: 185 57% 47%; /* #34acbc - Primary turquesa */
+    --primary-foreground: 0 0% 13%; /* #212121 - Contraste escuro */
 
-    /* Elementos secundários - azul-ardósia claro */
-    --secondary: 215 20% 35%; /* #475569 - azul-cinza */
-    --secondary-foreground: 210 40% 98%; /* #f8fafc */
+    /* Elementos secundários - mistura entre Lead Accent e Neutral */
+    --secondary: 190 60% 25%; /* Variação do Lead Accent mais clara */
+    --secondary-foreground: 185 20% 78%; /* #85c3cf */
 
-    /* Elementos mutados - cinza-azulado neutro */
-    --muted: 215 25% 27%; /* #334155 - azul-ardósia */
-    --muted-foreground: 215 16% 65%; /* #94a3b8 - cinza-azulado */
+    /* Elementos mutados - Neutral #7a7d84 */
+    --muted: 220 6% 27%; /* Variação do #065464 mais neutra */
+    --muted-foreground: 220 6% 52%; /* #7a7d84 - Neutral */
 
-    /* Acentos - azul-ardósia elevado */
-    --accent: 215 20% 35%; /* #475569 - azul-cinza */
-    --accent-foreground: 210 40% 98%; /* #f8fafc */
+    /* Acentos - Lead Accent com mais claridade */
+    --accent: 190 60% 25%; /* Variação do Lead Accent */
+    --accent-foreground: 185 20% 78%; /* #85c3cf */
 
-    /* Cores destrutivas mais harmoniosas */
-    --destructive: 0 72% 51%; /* #dc2626 - vermelho suave */
-    --destructive-foreground: 210 40% 98%; /* #f8fafc */
+    /* Cores destrutivas harmoniosas com a paleta */
+    --destructive: 0 70% 50%; /* Vermelho que harmoniza */
+    --destructive-foreground: 185 20% 78%; /* #85c3cf */
 
-    /* Bordas e inputs - azul-cinza visível */
-    --border: 215 20% 35%; /* #475569 - azul-cinza */
-    --input: 215 25% 27%; /* #334155 - input azul-ardósia */
-    --ring: 166 76% 46%; /* #22d3aa - verde para focus */
+    /* Bordas - Neutral com transparência */
+    --border: 220 6% 52%; /* #7a7d84 - Neutral para bordas sutis */
+    --input: 190 88% 21%; /* #065464 - Lead Accent para inputs */
+    --ring: 185 57% 47%; /* #34acbc - Primary para focus */
 
-    /* Sidebar com tema azul-ardósia refinado */
-    --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
-    --sidebar-foreground: 213 27% 84%; /* #cbd5e1 */
-    --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
-    --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
-    --sidebar-accent: 166 76% 46%; /* #22d3aa - verde accent */
-    --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
-    --sidebar-border: 215 20% 35%; /* #475569 - borda sutil */
-    --sidebar-ring: 166 76% 46%; /* #22d3aa */
+    /* Sidebar com tema Modern App Dashboard */
+    --sidebar-background: 0 0% 11%; /* Mais escuro que o Lead Dark */
+    --sidebar-foreground: 185 20% 78%; /* #85c3cf */
+    --sidebar-primary: 190 88% 21%; /* #065464 - Lead Accent */
+    --sidebar-primary-foreground: 185 20% 78%; /* #85c3cf */
+    --sidebar-accent: 185 57% 47%; /* #34acbc - Primary */
+    --sidebar-accent-foreground: 0 0% 13%; /* #212121 */
+    --sidebar-border: 220 6% 52%; /* #7a7d84 - Neutral */
+    --sidebar-ring: 185 57% 47%; /* #34acbc */
+
+    /* Configurações específicas do tema escuro */
+    color-scheme: dark;
   }
 
   /* Aplicação das variáveis CSS no modo escuro */
@@ -60,18 +64,18 @@
     color: hsl(var(--foreground));
   }
 
-  /* Melhorias específicas para dropdowns e overlays */
+  /* Melhorias específicas para dropdowns e overlays com nova paleta */
   .dark [data-radix-select-content],
   .dark [data-radix-dropdown-menu-content],
   .dark [data-radix-popover-content] {
     background-color: hsl(var(--popover));
     color: hsl(var(--popover-foreground));
     border: 1px solid hsl(var(--border));
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+    box-shadow: 0 10px 25px rgba(33, 33, 33, 0.6), 0 0 20px rgba(52, 172, 188, 0.1);
     z-index: 50;
   }
 
-  /* Tabs específicos */
+  /* Tabs específicos com Modern App Dashboard */
   .dark [data-state="active"] {
     background-color: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
@@ -94,5 +98,22 @@
   .dark [role="tab"][data-state="active"] {
     background-color: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
+  }
+
+  /* Efeitos de hover modernos com a nova paleta */
+  .dark .hover-modern {
+    transition: all 0.3s ease;
+  }
+
+  .dark .hover-modern:hover {
+    box-shadow: 0 8px 25px rgba(33, 33, 33, 0.4), 0 0 15px rgba(52, 172, 188, 0.2);
+    transform: translateY(-1px);
+  }
+
+  /* Cards premium com gradientes da nova paleta */
+  .dark .modern-card {
+    background: linear-gradient(135deg, #212121 0%, #065464 100%);
+    border: 1px solid #7a7d84;
+    box-shadow: 0 10px 30px rgba(33, 33, 33, 0.5), 0 0 20px rgba(52, 172, 188, 0.1);
   }
 }
