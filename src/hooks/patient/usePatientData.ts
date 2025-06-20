@@ -21,6 +21,16 @@ export const usePatientData = (patientId: string | undefined) => {
         const result = await PatientService.getPatient(patientId);
         
         if (result.success && result.data) {
+          // Map the database status to our interface status
+          let patientStatus: 'active' | 'archived' = 'active';
+          if (result.data.status === 'inactive') {
+            patientStatus = 'archived';
+          } else if (result.data.status === 'archived') {
+            patientStatus = 'archived';
+          } else {
+            patientStatus = 'active';
+          }
+
           // Transform the data to match Patient interface
           const transformedPatient: Patient = {
             id: result.data.id,
@@ -33,7 +43,7 @@ export const usePatientData = (patientId: string | undefined) => {
             gender: result.data.gender as 'male' | 'female' | 'other' || 'other',
             address: result.data.address || '',
             notes: result.data.notes || '',
-            status: (result.data.status === 'inactive' ? 'archived' : result.data.status || 'active') as 'active' | 'archived',
+            status: patientStatus,
             goals: result.data.goals || {},
             created_at: result.data.created_at,
             updated_at: result.data.updated_at,
