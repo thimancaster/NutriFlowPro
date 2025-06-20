@@ -27,7 +27,7 @@ export const usePatientModalActions = ({
     
     setIsArchiving(true);
     try {
-      const result = await updatePatientStatus(patient.id, 'archived');
+      const result = await updatePatientStatus(patient.id, 'archived', user.id);
       
       if (!result.success) {
         throw new Error(result.error);

@@ -16,7 +16,7 @@ export const useAppointments = () => {
     data: appointments = [], 
     isLoading: fetchLoading, 
     error: fetchError, 
-    refetch: fetchAppointments
+    refetch: fetchQuery
   } = useFetchAppointments();
   
   const { 
@@ -25,7 +25,7 @@ export const useAppointments = () => {
     addAppointment,
     updateAppointment,
     deleteAppointment
-  } = useAppointmentOperations(fetchAppointments);
+  } = useAppointmentOperations(() => fetchQuery());
   
   const { 
     types: appointmentTypes, 
@@ -39,9 +39,9 @@ export const useAppointments = () => {
   const error = fetchError || operationsError;
 
   // Add refetch function
-  const refetch = () => {
+  const refetch = async () => {
     if (user) {
-      fetchAppointments();
+      await fetchQuery();
     }
   };
 
@@ -53,7 +53,7 @@ export const useAppointments = () => {
 
   useEffect(() => {
     if (user) {
-      fetchAppointments();
+      fetchQuery();
     }
   }, [user]);
 
@@ -63,7 +63,7 @@ export const useAppointments = () => {
     loading,
     isLoading: loading, // Add alias for isLoading
     error,
-    fetchAppointments,
+    fetchAppointments: refetch,
     refetch, // Add the refetch function
     addAppointment,
     updateAppointment,
