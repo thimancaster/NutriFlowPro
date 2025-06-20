@@ -10,6 +10,8 @@ import Calculator from './pages/Calculator';
 import MealPlanGenerator from './pages/MealPlanGenerator';
 import Consultation from './pages/Consultation';
 import Clinical from './pages/Clinical';
+import AppointmentsPage from './pages/AppointmentsPage';
+import SettingsPage from './pages/SettingsPage';
 import { StrictMode } from 'react';
 import { ThemeProvider } from "./components/theme-provider"
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
@@ -81,6 +83,22 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Clinical />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/appointments" 
+                  element={
+                    <ProtectedRoute>
+                      <AppointmentsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
                     </ProtectedRoute>
                   } 
                 />
