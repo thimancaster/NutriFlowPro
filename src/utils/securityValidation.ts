@@ -1,3 +1,4 @@
+
 export interface ValidationResult {
   isValid: boolean;
   sanitizedTerm?: string;
@@ -142,6 +143,125 @@ export const validateSecureForm = {
     }
     if (patientData.birthDate) {
       sanitizedData.birthDate = patientData.birthDate;
+    }
+
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors,
+      sanitizedData
+    };
+  },
+
+  calculation: (calculationData: any): ValidationResult => {
+    const errors: Record<string, string> = {};
+    const sanitizedData: any = {};
+
+    // Validate weight
+    if (!calculationData.weight || calculationData.weight <= 0) {
+      errors.weight = 'Peso deve ser um número positivo';
+    } else if (calculationData.weight < 20 || calculationData.weight > 300) {
+      errors.weight = 'Peso deve estar entre 20kg e 300kg';
+    } else {
+      sanitizedData.weight = Number(calculationData.weight);
+    }
+
+    // Validate height
+    if (!calculationData.height || calculationData.height <= 0) {
+      errors.height = 'Altura deve ser um número positivo';
+    } else if (calculationData.height < 100 || calculationData.height > 250) {
+      errors.height = 'Altura deve estar entre 100cm e 250cm';
+    } else {
+      sanitizedData.height = Number(calculationData.height);
+    }
+
+    // Validate age
+    if (!calculationData.age || calculationData.age <= 0) {
+      errors.age = 'Idade deve ser um número positivo';
+    } else if (calculationData.age < 10 || calculationData.age > 100) {
+      errors.age = 'Idade deve estar entre 10 e 100 anos';
+    } else {
+      sanitizedData.age = Number(calculationData.age);
+    }
+
+    // Validate sex
+    if (!calculationData.sex || !['M', 'F'].includes(calculationData.sex)) {
+      errors.sex = 'Sexo deve ser M ou F';
+    } else {
+      sanitizedData.sex = calculationData.sex;
+    }
+
+    // Validate activity level
+    const validActivityLevels = ['sedentario', 'leve', 'moderado', 'intenso', 'muito_intenso'];
+    if (!calculationData.activityLevel || !validActivityLevels.includes(calculationData.activityLevel)) {
+      errors.activityLevel = 'Nível de atividade inválido';
+    } else {
+      sanitizedData.activityLevel = calculationData.activityLevel;
+    }
+
+    // Validate objective
+    const validObjectives = ['emagrecimento', 'manutenção', 'hipertrofia', 'personalizado'];
+    if (!calculationData.objective || !validObjectives.includes(calculationData.objective)) {
+      errors.objective = 'Objetivo inválido';
+    } else {
+      sanitizedData.objective = calculationData.objective;
+    }
+
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors,
+      sanitizedData
+    };
+  },
+
+  mealPlan: (mealPlanData: any): ValidationResult => {
+    const errors: Record<string, string> = {};
+    const sanitizedData: any = {};
+
+    // Validate total calories
+    if (!mealPlanData.totalCalories || mealPlanData.totalCalories <= 0) {
+      errors.totalCalories = 'Total de calorias deve ser positivo';
+    } else if (mealPlanData.totalCalories < 800 || mealPlanData.totalCalories > 5000) {
+      errors.totalCalories = 'Total de calorias deve estar entre 800 e 5000';
+    } else {
+      sanitizedData.totalCalories = Number(mealPlanData.totalCalories);
+    }
+
+    // Validate macronutrients
+    if (mealPlanData.totalProtein && (mealPlanData.totalProtein < 0 || mealPlanData.totalProtein > 500)) {
+      errors.totalProtein = 'Proteína deve estar entre 0 e 500g';
+    } else if (mealPlanData.totalProtein) {
+      sanitizedData.totalProtein = Number(mealPlanData.totalProtein);
+    }
+
+    if (mealPlanData.totalCarbs && (mealPlanData.totalCarbs < 0 || mealPlanData.totalCarbs > 800)) {
+      errors.totalCarbs = 'Carboidratos deve estar entre 0 e 800g';
+    } else if (mealPlanData.totalCarbs) {
+      sanitizedData.totalCarbs = Number(mealPlanData.totalCarbs);
+    }
+
+    if (mealPlanData.totalFats && (mealPlanData.totalFats < 0 || mealPlanData.totalFats > 200)) {
+      errors.totalFats = 'Gorduras deve estar entre 0 e 200g';
+    } else if (mealPlanData.totalFats) {
+      sanitizedData.totalFats = Number(mealPlanData.totalFats);
+    }
+
+    // Validate patient ID if provided
+    if (mealPlanData.patientId) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(mealPlanData.patientId)) {
+        errors.patientId = 'ID do paciente inválido';
+      } else {
+        sanitizedData.patientId = mealPlanData.patientId;
+      }
+    }
+
+    // Validate meals array
+    if (mealPlanData.meals && Array.isArray(mealPlanData.meals)) {
+      sanitizedData.meals = mealPlanData.meals.map((meal: any) => ({
+        ...meal,
+        name: meal.name ? meal.name.toString().trim().slice(0, 100) : '',
+        items: Array.isArray(meal.items) ? meal.items : []
+      }));
     }
 
     return {
