@@ -33,7 +33,7 @@ export const usePatientData = (patientId: string | undefined) => {
             gender: result.data.gender as 'male' | 'female' | 'other' || 'other',
             address: result.data.address || '',
             notes: result.data.notes || '',
-            status: result.data.status === 'inactive' ? 'archived' : (result.data.status as 'active' | 'archived' || 'active'),
+            status: result.data.status === 'inactive' ? 'archived' : (result.data.status as 'active' | 'archived') || 'active',
             goals: result.data.goals || {},
             created_at: result.data.created_at,
             updated_at: result.data.updated_at,

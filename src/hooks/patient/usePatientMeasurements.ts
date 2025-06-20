@@ -61,7 +61,7 @@ export const usePatientMeasurements = (patientId: string | undefined) => {
                 carbs: Math.round(get * 0.55 / 4), // 55% of calories from carbs
                 fat: Math.round(get * 0.30 / 9) // 30% of calories from fat
               },
-              notes: item.notes || `Medição realizada em ${new Date(item.date).toLocaleDateString('pt-BR')}`,
+              notes: `Medição realizada em ${new Date(item.date).toLocaleDateString('pt-BR')}`,
               tipo: index === 0 ? 'primeira_consulta' : 'retorno',
               status: 'completo' as const
             };
