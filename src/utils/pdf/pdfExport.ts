@@ -9,6 +9,16 @@ import { addMealsSection } from './mealsSection';
 import { addNotesSection } from './notesSection';
 import { addFooterSection } from './footerSection';
 
+// Extend jsPDF type to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable?: {
+      finalY: number;
+    };
+  }
+}
+
 export const generateMealPlanPDF = (options: MealPlanExportOptions): jsPDF => {
   // Initialize PDF document (A4 format)
   const doc = new jsPDF();
