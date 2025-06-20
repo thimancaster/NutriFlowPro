@@ -1,6 +1,6 @@
 
 // Main security validation module - refactored for better organization
-export { ValidationResult } from './validation/types';
+export type { ValidationResult } from './validation/types';
 export { rateLimiter } from './security/rateLimiter';
 export { csrfProtection } from './security/csrfProtection';
 
