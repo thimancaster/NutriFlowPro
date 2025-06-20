@@ -29,13 +29,13 @@ export const useUserSettings = () => {
       }
 
       if (data) {
-        // Type cast the JSON fields to the expected types
+        // Type cast the JSON fields to the expected types using unknown first
         const typedSettings: UserSettings = {
           ...data,
-          settings: data.settings as Record<string, any>,
-          notification_preferences: data.notification_preferences as NotificationPreferences,
-          business_settings: data.business_settings as BusinessSettings,
-          professional_settings: data.professional_settings as any,
+          settings: data.settings as unknown as Record<string, any>,
+          notification_preferences: data.notification_preferences as unknown as NotificationPreferences,
+          business_settings: data.business_settings as unknown as BusinessSettings,
+          professional_settings: data.professional_settings as unknown as any,
         };
         setSettings(typedSettings);
       } else {
@@ -86,10 +86,10 @@ export const useUserSettings = () => {
         
         const typedNewSettings: UserSettings = {
           ...newData,
-          settings: newData.settings as Record<string, any>,
-          notification_preferences: newData.notification_preferences as NotificationPreferences,
-          business_settings: newData.business_settings as BusinessSettings,
-          professional_settings: newData.professional_settings as any,
+          settings: newData.settings as unknown as Record<string, any>,
+          notification_preferences: newData.notification_preferences as unknown as NotificationPreferences,
+          business_settings: newData.business_settings as unknown as BusinessSettings,
+          professional_settings: newData.professional_settings as unknown as any,
         };
         setSettings(typedNewSettings);
       }
@@ -121,10 +121,10 @@ export const useUserSettings = () => {
 
       const typedData: UserSettings = {
         ...data,
-        settings: data.settings as Record<string, any>,
-        notification_preferences: data.notification_preferences as NotificationPreferences,
-        business_settings: data.business_settings as BusinessSettings,
-        professional_settings: data.professional_settings as any,
+        settings: data.settings as unknown as Record<string, any>,
+        notification_preferences: data.notification_preferences as unknown as NotificationPreferences,
+        business_settings: data.business_settings as unknown as BusinessSettings,
+        professional_settings: data.professional_settings as unknown as any,
       };
       setSettings(typedData);
       
@@ -162,10 +162,10 @@ export const useUserSettings = () => {
 
       const typedData: UserSettings = {
         ...data,
-        settings: data.settings as Record<string, any>,
-        notification_preferences: data.notification_preferences as NotificationPreferences,
-        business_settings: data.business_settings as BusinessSettings,
-        professional_settings: data.professional_settings as any,
+        settings: data.settings as unknown as Record<string, any>,
+        notification_preferences: data.notification_preferences as unknown as NotificationPreferences,
+        business_settings: data.business_settings as unknown as BusinessSettings,
+        professional_settings: data.professional_settings as unknown as any,
       };
       setSettings(typedData);
       
