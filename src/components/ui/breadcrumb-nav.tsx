@@ -4,11 +4,17 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface BreadcrumbItem {
+  name: string;
+  path: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
 const BreadcrumbNav: React.FC = () => {
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
 
-  const breadcrumbItems = [
+  const breadcrumbItems: BreadcrumbItem[] = [
     { name: 'Início', path: '/dashboard', icon: Home },
     ...pathSegments.map((segment, index) => ({
       name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
