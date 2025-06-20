@@ -30,7 +30,9 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/register">
                 <Button 
-                  className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 text-white font-medium px-8 py-6 text-lg w-full sm:w-auto"
+                  variant="subscription-green"
+                  animation="shimmer"
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold"
                 >
                   Começar Agora
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -38,8 +40,9 @@ const HeroSection = () => {
               </Link>
               <Link to="/login">
                 <Button 
-                  variant="outline" 
-                  className="border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white px-8 py-6 text-lg w-full sm:w-auto"
+                  variant="nutri-blue"
+                  animation="shimmer" 
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold"
                 >
                   Login
                 </Button>

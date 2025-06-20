@@ -197,7 +197,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
           <div className="space-y-4 pt-2">
             <Button 
               disabled={isSubmitting} 
-              className="w-full h-12 text-base font-semibold bg-white text-nutri-blue hover:bg-white/90 shadow-lg transition-all duration-200 hover:scale-[1.02]" 
+              variant="nutri-blue"
+              animation="shimmer"
+              className="w-full h-12 text-base font-semibold" 
               type="submit"
             >
               {isSubmitting ? (

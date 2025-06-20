@@ -34,12 +34,12 @@ const HotmartButton: React.FC<HotmartButtonProps> = ({
     };
   }, []);
   
-  const baseStyles = "hotmart-fb hotmart__button-checkout w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium py-3 px-6 transition-all duration-300 hover:shadow-md active:scale-[0.98] relative overflow-hidden";
+  const baseStyles = "hotmart-fb hotmart__button-checkout w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg active:scale-[0.98] relative overflow-hidden";
   
   const variantStyles = {
-    default: "bg-nutri-blue text-white hover:bg-white hover:text-nutri-blue border border-nutri-blue after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100",
-    primary: "bg-nutri-blue text-white hover:bg-white hover:text-nutri-blue border border-nutri-blue after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100",
-    gradient: "bg-gradient-to-r from-nutri-green-light to-nutri-green-dark text-white border border-green-400 hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100"
+    default: "bg-nutri-blue text-white hover:bg-nutri-blue-dark border border-nutri-blue after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100 dark:bg-nutri-blue dark:hover:bg-nutri-blue/90 dark:shadow-dark-glow-blue",
+    primary: "bg-nutri-blue text-white hover:bg-nutri-blue-dark border border-nutri-blue after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100 dark:bg-nutri-blue dark:hover:bg-nutri-blue/90 dark:shadow-dark-glow-blue",
+    gradient: "bg-gradient-to-r from-nutri-green-light to-nutri-green-dark text-white border border-nutri-green hover:shadow-lg hover:translate-y-[-2px] active:translate-y-0 active:shadow-md after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-shimmer after:bg-[length:200%_100%] after:opacity-0 hover:after:opacity-100 dark:from-dark-accent-green dark:to-emerald-500 dark:shadow-dark-glow"
   };
 
   const styles = `${baseStyles} ${variantStyles[variant]} ${className}`;

@@ -39,9 +39,9 @@ const Pricing = () => {
               ]}
               ctaButton={
                 <Button
-                  className="w-full"
-                  variant="nutri-outline"
+                  variant="subscription-green"
                   animation="shimmer"
+                  className="w-full font-semibold"
                   asChild
                 >
                   <Link to="/signup">
@@ -68,6 +68,7 @@ const Pricing = () => {
               ctaButton={
                 <HotmartButton
                   url="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d"
+                  variant="primary"
                 >
                   Assinar Pro Mensal
                 </HotmartButton>

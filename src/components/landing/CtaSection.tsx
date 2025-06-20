@@ -23,8 +23,9 @@ const CtaSection = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
               <Button 
-                className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 text-white font-medium px-8 py-6 text-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
+                variant="subscription-green"
                 animation="shimmer"
+                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto"
               >
                 Criar Conta Gratuita
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -32,9 +33,9 @@ const CtaSection = () => {
             </Link>
             <Link to="/login">
               <Button 
-                variant="outline" 
-                className="border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white px-8 py-6 text-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
+                variant="nutri-blue"
                 animation="shimmer"
+                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto"
               >
                 Fazer Login
               </Button>
