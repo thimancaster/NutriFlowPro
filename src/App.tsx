@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/auth/AuthContext';
@@ -10,9 +11,9 @@ import MealPlanGenerator from './pages/MealPlanGenerator';
 import Consultation from './pages/Consultation';
 import Clinical from './pages/Clinical';
 import { StrictMode } from 'react';
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "./components/theme-provider"
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "sonner"
 import AdvancedFeatures from '@/pages/AdvancedFeatures';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

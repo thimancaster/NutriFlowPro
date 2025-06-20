@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -5,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogOut, Menu, User, Zap } from 'lucide-react';
 
 const Navbar = () => {
-  const { signOut, user } = useAuth();
+  const { logout, user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await logout();
       toast({
         title: "Logout realizado",
         description: "Você foi deslogado com sucesso.",
