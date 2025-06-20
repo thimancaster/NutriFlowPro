@@ -22,10 +22,12 @@ export const usePatientData = (patientId: string | undefined) => {
         
         if (result.success && result.data) {
           // Map the database status to our interface status
+          const databaseStatus = result.data.status as string;
           let patientStatus: 'active' | 'archived' = 'active';
-          if (result.data.status === 'inactive') {
+          
+          if (databaseStatus === 'inactive') {
             patientStatus = 'archived';
-          } else if (result.data.status === 'archived') {
+          } else if (databaseStatus === 'archived') {
             patientStatus = 'archived';
           } else {
             patientStatus = 'active';
