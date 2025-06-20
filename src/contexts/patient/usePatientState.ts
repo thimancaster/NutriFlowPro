@@ -133,12 +133,12 @@ export const usePatientState = () => {
     }
   }, [toast]);
 
-  const deletePatient = useCallback(async (patientId: string) => {
+  const deletePatient = useCallback(async (patientId: string, userId: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      const result = await PatientService.deletePatient(patientId);
+      const result = await PatientService.deletePatient(patientId, userId);
       
       if (result.success) {
         setPatients(prev => prev.filter(patient => patient.id !== patientId));

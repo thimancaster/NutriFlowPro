@@ -25,7 +25,9 @@ export const useAppointments = () => {
     addAppointment,
     updateAppointment,
     deleteAppointment
-  } = useAppointmentOperations(() => fetchQuery());
+  } = useAppointmentOperations(async () => {
+    await fetchQuery();
+  });
   
   const { 
     types: appointmentTypes, 
@@ -55,7 +57,7 @@ export const useAppointments = () => {
     if (user) {
       fetchQuery();
     }
-  }, [user]);
+  }, [user, fetchQuery]);
 
   return {
     appointments,
