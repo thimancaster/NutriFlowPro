@@ -1,11 +1,9 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Dashboard from '@/components/Dashboard';
 import LandingPage from '@/components/LandingPage';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Loader2 } from 'lucide-react';
-import Navbar from '@/components/Navbar';
 import { Helmet } from 'react-helmet';
 
 const Index = () => {
