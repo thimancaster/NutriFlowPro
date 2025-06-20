@@ -139,7 +139,7 @@ const AnthropometryStep: React.FC = () => {
   
   const handleContinue = async () => {
     await handleSaveMeasurements();
-    setCurrentStep('results');
+    setCurrentStep('nutritional-evaluation');
   };
   
   const handleBack = () => {

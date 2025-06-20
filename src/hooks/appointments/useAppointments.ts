@@ -13,11 +13,10 @@ import { useAppointmentTypes } from './useAppointmentTypes';
 export const useAppointments = () => {
   const { user } = useAuth();
   const { 
-    appointments, 
-    loading: fetchLoading, 
+    data: appointments = [], 
+    isLoading: fetchLoading, 
     error: fetchError, 
-    fetchAppointments,
-    getPatientName
+    refetch: fetchAppointments
   } = useFetchAppointments();
   
   const { 
@@ -44,6 +43,12 @@ export const useAppointments = () => {
     if (user) {
       fetchAppointments();
     }
+  };
+
+  // Helper function to get patient name from appointments data
+  const getPatientName = (patientId: string) => {
+    const appointment = appointments.find(app => app.patient_id === patientId);
+    return appointment?.patient_name || 'Paciente não encontrado';
   };
 
   useEffect(() => {

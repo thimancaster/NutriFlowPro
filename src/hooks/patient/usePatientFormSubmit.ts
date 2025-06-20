@@ -135,7 +135,7 @@ export const usePatientFormSubmit = ({
 				"goals-notes": "Objetivos e Observações",
 			};
 
-			const errorTabName = tabNames[firstTabWithErrors as keyof typeof tabNames];
+			const errorTabName = tabNames[firstTabWithErrors as keyof tabNames];
 
 			toast({
 				title: "Formulário inválido",
@@ -202,7 +202,7 @@ export const usePatientFormSubmit = ({
 			let result;
 
 			if (editPatient) {
-				result = await PatientService.updatePatient(editPatient.id, userId, patientData);
+				result = await PatientService.updatePatient(editPatient.id, patientData);
 			} else {
 				result = await PatientService.savePatient(patientData);
 			}

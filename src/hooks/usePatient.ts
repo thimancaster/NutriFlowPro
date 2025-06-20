@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Patient } from '@/types/patient';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
