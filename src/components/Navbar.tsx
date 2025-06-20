@@ -1,106 +1,195 @@
-
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import NavbarBrand from './NavbarBrand';
-import NavbarMobileMenu from './NavbarMobileMenu';
-import NavbarDesktopMenu from './NavbarDesktopMenu';
-import { Button } from '@/components/ui/button';
-import { User, Menu, X, Home, Users, FileText, Calculator, Coffee, Settings, CalendarDays } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { LogOut, Menu, User, Zap } from 'lucide-react';
 
 const Navbar = () => {
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
+  const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, logout, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você foi deslogado com sucesso.",
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        title: "Erro ao deslogar",
+        description: "Ocorreu um erro ao tentar deslogar.",
+        variant: "destructive",
+      });
+    }
   };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-    closeMobileMenu();
-  };
-
-  const navigationItems = [
-    { name: 'Início', path: '/dashboard', icon: <Home className="h-5 w-5" /> },
-    { name: 'Pacientes', path: '/patients', icon: <Users className="h-5 w-5" /> },
-    { name: 'Agendamentos', path: '/appointments', icon: <CalendarDays className="h-5 w-5" /> },
-    { name: 'Consultas', path: '/clinical', icon: <FileText className="h-5 w-5" /> },
-    { name: 'Calculadora', path: '/calculator', icon: <Calculator className="h-5 w-5" /> },
-    { name: 'Planos Alimentares', path: '/meal-plans', icon: <Coffee className="h-5 w-5" /> },
-    { name: 'Configurações', path: '/settings', icon: <Settings className="h-5 w-5" /> }
-  ];
 
   return (
-    <nav className="bg-white shadow-sm dark:bg-slate-800 dark:border-b dark:border-slate-600 transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <NavbarBrand />
+    <nav className="bg-white shadow-sm border-b">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo Section */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
+              <span className="font-bold text-xl text-green-600">NutriFlow</span>
+            </Link>
           </div>
 
-          {/* Desktop nav menu */}
-          {isAuthenticated && (
-            <NavbarDesktopMenu 
-              navigationItems={navigationItems} 
-              onLogout={handleLogout}
-            />
-          )}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link 
+              to="/dashboard" 
+              className={`text-gray-700 hover:text-green-600 px-3 py-2 rounded-md transition-colors ${
+                location.pathname === '/dashboard' ? 'text-green-600 font-medium' : ''
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link 
+              to="/patients" 
+              className={`text-gray-700 hover:text-green-600 px-3 py-2 rounded-md transition-colors ${
+                location.pathname === '/patients' ? 'text-green-600 font-medium' : ''
+              }`}
+            >
+              Pacientes
+            </Link>
+            <Link 
+              to="/calculator" 
+              className={`text-gray-700 hover:text-green-600 px-3 py-2 rounded-md transition-colors ${
+                location.pathname === '/calculator' ? 'text-green-600 font-medium' : ''
+              }`}
+            >
+              Calculadora
+            </Link>
+            <Link 
+              to="/meal-plan-generator" 
+              className={`text-gray-700 hover:text-green-600 px-3 py-2 rounded-md transition-colors ${
+                location.pathname === '/meal-plan-generator' ? 'text-green-600 font-medium' : ''
+              }`}
+            >
+              Plano Alimentar
+            </Link>
+            <Link 
+              to="/advanced-features" 
+              className={`text-gray-700 hover:text-green-600 px-3 py-2 rounded-md transition-colors ${
+                location.pathname === '/advanced-features' ? 'text-green-600 font-medium' : ''
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                Avançado
+              </div>
+            </Link>
+          </div>
 
-          {/* Mobile menu button */}
-          {isAuthenticated && (
-            <div className="flex items-center md:hidden">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-slate-300 hover:text-nutri-blue dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-700/50 focus:outline-none transition-colors duration-200"
-                aria-controls="mobile-menu"
-                aria-expanded="false"
-                onClick={toggleMobileMenu}
+          {/* User Menu */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  className="flex items-center space-x-2 text-sm text-gray-700 hover:text-green-600"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                  <User className="h-5 w-5" />
+                  <span>{user.email}</span>
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="text-gray-700 hover:text-green-600">
+                Login
+              </Link>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden text-gray-700 focus:outline-none"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+              <Link
+                to="/dashboard"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  location.pathname === '/dashboard'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                <span className="sr-only">Open main menu</span>
-                {isMobileMenuOpen ? (
-                  <X className="block h-6 w-6" />
-                ) : (
-                  <Menu className="block h-6 w-6" />
-                )}
+                Dashboard
+              </Link>
+              <Link
+                to="/patients"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  location.pathname === '/patients'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Pacientes
+              </Link>
+              <Link
+                to="/calculator"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  location.pathname === '/calculator'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Calculadora
+              </Link>
+              <Link
+                to="/meal-plan-generator"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  location.pathname === '/meal-plan-generator'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Plano Alimentar
+              </Link>
+              <Link
+                to="/advanced-features"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  location.pathname === '/advanced-features'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Funcionalidades Avançadas
+                </div>
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50 transition-colors w-full text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </div>
               </button>
             </div>
-          )}
-
-          {/* Login / Register buttons for non-authenticated users */}
-          {!isAuthenticated && (
-            <div className="flex items-center">
-              <Link to="/login">
-                <Button variant="ghost" className="text-gray-700 dark:text-slate-300 hover:text-nutri-blue dark:hover:text-slate-100 mr-2 transition-colors duration-200">
-                  <User className="h-5 w-5 mr-1" />
-                  Login
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button className="bg-nutri-blue hover:bg-nutri-blue-dark text-white transition-colors duration-200">
-                  Cadastrar
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* Mobile menu */}
-      {isAuthenticated && (
-        <NavbarMobileMenu
-          isOpen={isMobileMenuOpen}
-          navigationItems={navigationItems}
-          onClose={closeMobileMenu}
-          onLogout={handleLogout}
-        />
-      )}
     </nav>
   );
 };
