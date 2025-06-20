@@ -29,7 +29,15 @@ export const useUserSettings = () => {
       }
 
       if (data) {
-        setSettings(data);
+        // Type cast the JSON fields to the expected types
+        const typedSettings: UserSettings = {
+          ...data,
+          settings: data.settings as Record<string, any>,
+          notification_preferences: data.notification_preferences as NotificationPreferences,
+          business_settings: data.business_settings as BusinessSettings,
+          professional_settings: data.professional_settings as any,
+        };
+        setSettings(typedSettings);
       } else {
         // Create default settings if none exist
         const defaultSettings = {
@@ -75,7 +83,15 @@ export const useUserSettings = () => {
           .single();
 
         if (insertError) throw insertError;
-        setSettings(newData);
+        
+        const typedNewSettings: UserSettings = {
+          ...newData,
+          settings: newData.settings as Record<string, any>,
+          notification_preferences: newData.notification_preferences as NotificationPreferences,
+          business_settings: newData.business_settings as BusinessSettings,
+          professional_settings: newData.professional_settings as any,
+        };
+        setSettings(typedNewSettings);
       }
 
       setError(null);
@@ -103,7 +119,15 @@ export const useUserSettings = () => {
 
       if (error) throw error;
 
-      setSettings(data);
+      const typedData: UserSettings = {
+        ...data,
+        settings: data.settings as Record<string, any>,
+        notification_preferences: data.notification_preferences as NotificationPreferences,
+        business_settings: data.business_settings as BusinessSettings,
+        professional_settings: data.professional_settings as any,
+      };
+      setSettings(typedData);
+      
       toast({
         title: 'Sucesso',
         description: 'Preferências de notificação atualizadas!'
@@ -136,7 +160,15 @@ export const useUserSettings = () => {
 
       if (error) throw error;
 
-      setSettings(data);
+      const typedData: UserSettings = {
+        ...data,
+        settings: data.settings as Record<string, any>,
+        notification_preferences: data.notification_preferences as NotificationPreferences,
+        business_settings: data.business_settings as BusinessSettings,
+        professional_settings: data.professional_settings as any,
+      };
+      setSettings(typedData);
+      
       toast({
         title: 'Sucesso',
         description: 'Configurações da clínica atualizadas!'

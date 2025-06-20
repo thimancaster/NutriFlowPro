@@ -52,12 +52,21 @@ export const useEnhancedAppointments = () => {
     if (!user?.id) return;
 
     try {
+      // Remove fields that shouldn't be sent to the database
+      const { patient_name, appointment_type, ...dbData } = appointmentData;
+      
+      const insertData = {
+        ...dbData,
+        user_id: user.id,
+        // Ensure required fields have default values
+        date: dbData.date || new Date().toISOString().split('T')[0],
+        type: dbData.type || 'Consulta',
+        status: dbData.status || 'scheduled' as const,
+      };
+
       const { data, error } = await supabase
         .from('appointments')
-        .insert([{
-          ...appointmentData,
-          user_id: user.id,
-        }])
+        .insert(insertData)
         .select()
         .single();
 
@@ -86,9 +95,12 @@ export const useEnhancedAppointments = () => {
     if (!user?.id) return;
 
     try {
+      // Remove fields that shouldn't be sent to the database
+      const { patient_name, appointment_type, ...dbUpdates } = updates;
+
       const { data, error } = await supabase
         .from('appointments')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
