@@ -17,7 +17,7 @@ interface ConsultationContextType {
   mealPlan: any;
 }
 
-const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
+export const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
 
 export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
