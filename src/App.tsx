@@ -17,6 +17,10 @@ import { ThemeProvider } from "./components/theme-provider"
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner"
 import AdvancedFeatures from '@/pages/AdvancedFeatures';
+import { PatientProvider } from '@/contexts/patient/PatientContext';
+import { MealPlanProvider } from '@/contexts/MealPlanContext';
+import { ConsultationProvider } from '@/contexts/ConsultationContext';
+import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -26,6 +30,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   return <>{children}</>;
+};
+
+// Wrapper para rotas protegidas com todos os providers necessários
+const ProtectedWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <ProtectedRoute>
+      <PatientProvider>
+        <MealPlanProvider>
+          <ConsultationDataProvider>
+            <ConsultationProvider>
+              {children}
+            </ConsultationProvider>
+          </ConsultationDataProvider>
+        </MealPlanProvider>
+      </PatientProvider>
+    </ProtectedRoute>
+  );
 };
 
 function App() {
@@ -41,76 +62,76 @@ function App() {
                 <Route 
                   path="/dashboard" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <Dashboard />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/patients" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <Patients />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/calculator" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <Calculator />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/meal-plan-generator" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <MealPlanGenerator />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/consultation/:id?" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <Consultation />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/clinical" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <Clinical />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/appointments" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <AppointmentsPage />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
                 <Route 
                   path="/settings" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <SettingsPage />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
-                <Route path="/" element={<Navigate to="/dashboard" />} />
                 <Route 
                   path="/advanced-features" 
                   element={
-                    <ProtectedRoute>
+                    <ProtectedWrapper>
                       <AdvancedFeatures />
-                    </ProtectedRoute>
+                    </ProtectedWrapper>
                   } 
                 />
+                <Route path="/" element={<Navigate to="/dashboard" />} />
               </Routes>
             </AuthProvider>
             <Toaster />
