@@ -64,7 +64,7 @@ export const usePatient = (patientId: string | undefined) => {
     }
   };
 
-  const updatePatient = async (patientData: Partial<Patient>) => {
+  const updatePatient = useCallback(async (patientData: Partial<Patient>) => {
     if (!patientId) return { success: false, error: 'No patient ID provided' };
     
     setLoading(true);
@@ -97,7 +97,7 @@ export const usePatient = (patientId: string | undefined) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId, toast]);
 
   useEffect(() => {
     fetchPatient();

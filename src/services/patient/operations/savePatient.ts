@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, AddressDetails } from '@/types/patient';
 
@@ -44,7 +43,6 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       // Convert complex objects to JSON strings for storage
       address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address || null,
       goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals || null,
-      measurements: typeof patient.measurements === 'object' ? JSON.stringify(patient.measurements) : patient.measurements || null,
     };
 
     // Only add user_id if it exists and is not undefined
@@ -187,10 +185,11 @@ const processPatientData = (data: any): Patient => {
     status: (data.status as 'active' | 'archived') || 'active',
     gender: safeGender(data.gender),
     goals: (data.goals as Record<string, any>) || {},
-    measurements: (data.measurements as Record<string, any>) || {},
     address: addressData,
     // Handle database column name mapping
-    secondaryPhone: data.secondaryphone
+    secondaryPhone: data.secondaryphone,
+    // Ensure birth_date is always present (required in Patient interface)
+    birth_date: data.birth_date || ''
   };
 
   return patient;

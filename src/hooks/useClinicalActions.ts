@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import { ClinicalWorkflowStep } from '@/types/clinical';
+import { saveMeasurement } from '@/services/anthropometryService';
 
 export const useClinicalActions = () => {
   const [isSaving, setIsSaving] = useState(false);
@@ -38,14 +39,14 @@ export const useClinicalActions = () => {
       patient_id: patient.id,
       user_id: user.id,
       date: new Date().toISOString(),
-      weight: patient.measurements?.weight || 0,
-      height: patient.measurements?.height || 0,
+      weight: 0, // Will be set in the form
+      height: 0, // Will be set in the form
       age: patient.age || 0,
       bmr: 0,
       protein: 0,
       carbs: 0,
       fats: 0,
-      totalCalories: 0, // ADDED
+      totalCalories: 0,
       gender: patient.gender || 'female',
       activity_level: 'moderado',
       objective: patient.goals?.objective || 'manutenção',
@@ -78,8 +79,8 @@ export const useClinicalActions = () => {
           protein: 0,
           carbs: 0,
           fats: 0,
-          weight: patient.measurements?.weight || 0,
-          height: patient.measurements?.height || 0,
+          weight: 0, // Will be updated when form is filled
+          height: 0, // Will be updated when form is filled
           age: patient.age || 0,
           gender: patient.gender || 'female',
           activity_level: 'moderado',
@@ -120,7 +121,7 @@ export const useClinicalActions = () => {
       
       setActiveConsultation(updatedConsultation);
       
-      // Save to database
+      // Save to calculations table
       const { error } = await supabase
         .from('calculations')
         .update({
@@ -137,6 +138,23 @@ export const useClinicalActions = () => {
           variant: "destructive"
         });
         return false;
+      }
+
+      // If weight and height are provided, also save to anthropometry table
+      if (data.weight && data.height && activeConsultation.patient_id) {
+        const measurementData = {
+          patient_id: activeConsultation.patient_id,
+          date: new Date().toISOString(),
+          weight: data.weight,
+          height: data.height,
+          imc: data.weight / Math.pow(data.height / 100, 2)
+        };
+
+        const measurementResult = await saveMeasurement(measurementData, user.id);
+        if (!measurementResult.success) {
+          console.error('Error saving measurement:', measurementResult.error);
+          // Don't fail the whole operation if measurement save fails
+        }
       }
       
       setLastSaved(new Date());

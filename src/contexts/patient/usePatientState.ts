@@ -92,7 +92,7 @@ export const usePatientState = () => {
     }
   }, [toast]);
 
-  const updatePatient = useCallback(async (pat‍ientId: string, patientData: Partial<Patient>) => {
+  const updatePatient = useCallback(async (patientId: string, patientData: Partial<Patient>) => {
     setLoading(true);
     setError(null);
     
