@@ -75,6 +75,7 @@ const PricingSection = () => {
                 <HotmartButton
                   url="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d"
                   variant="primary"
+                  className="w-full"
                 >
                   Assinar Pro Mensal
                 </HotmartButton>
@@ -101,7 +102,7 @@ const PricingSection = () => {
                 { icon: CheckCircle, text: "Controle ilimitado de pacientes" },
                 { icon: CheckCircle, text: "IA para criação de planos alimentares" },
                 { icon: Zap, text: "Economize até 10 horas por semana" },
-                { icon: BookBook, text: "Biblioteca ampliada (+5000 alimentos)" },
+                { icon: BookOpen, text: "Biblioteca ampliada (+5000 alimentos)" },
                 { icon: FileText, text: "Exportação de relatórios premium" },
                 { icon: Badge, text: "Selo de nutricionista premium" },
                 { icon: Clock, text: "Acesso antecipado a novas funcionalidades" }
@@ -110,6 +111,7 @@ const PricingSection = () => {
                 <HotmartButton
                   url="https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf"
                   variant="gradient"
+                  className="w-full"
                 >
                   <span className="flex flex-col items-center">
                     Assinar Pro Anual 
