@@ -1,4 +1,3 @@
-
 import React from "react";
 import {Link, useLocation} from "react-router-dom";
 import {useAuth} from "@/contexts/auth/AuthContext";
@@ -67,10 +66,10 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 					<div className="container mx-auto px-4 flex justify-between items-center h-16">
 						<div className="flex items-center">
 							<Link to="/dashboard" className="flex items-center group">
-								<span className="text-primary transition-colors duration-200 group-hover:text-primary/80 font-bold text-xl">
+								<span className="text-nutri-green dark:text-nutri-green transition-colors duration-200 group-hover:text-nutri-green/80 font-bold text-xl">
 									Nutri
 								</span>
-								<span className="text-blue-600 dark:text-blue-400 transition-colors duration-200 group-hover:text-blue-500 font-bold text-xl">
+								<span className="text-nutri-blue dark:text-nutri-blue transition-colors duration-200 group-hover:text-nutri-blue/80 font-bold text-xl">
 									Flow
 								</span>
 								<span className="text-muted-foreground ml-1 text-sm">

@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 import { Helmet } from 'react-helmet';
 import Navbar from '@/components/Navbar';
 import DashboardComponent from '@/components/Dashboard';
+import DashboardHero from '@/components/DashboardHero';
 import UserInfoHeader from '@/components/UserInfoHeader';
 import ConsultationHeader from '@/components/ConsultationHeader';
 import UsageLimits from '@/components/UsageLimits';
@@ -24,10 +25,20 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-nutri-blue dark:text-nutri-blue-light">Dashboard</h1>
         
+        {/* Hero Section - Bem-vindo ao NutriFlow Pro */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
+          className="mb-8"
+        >
+          <DashboardHero />
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
         >
           <UserInfoHeader />
         </motion.div>
@@ -37,7 +48,7 @@ const Dashboard = () => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
             >
               <ConsultationHeader currentStep="dashboard" />
             </motion.div>
@@ -47,13 +58,19 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
             className="mb-6"
           >
             <UsageLimits />
           </motion.div>
           
-          <DashboardComponent />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+            <DashboardComponent />
+          </motion.div>
         </div>
       </div>
     </div>
