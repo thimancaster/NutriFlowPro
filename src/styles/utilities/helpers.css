@@ -70,13 +70,13 @@
     @apply contrast-125;
   }
 
-  /* Indicadores de foco melhorados */
+  /* Focus indicators disabled to prevent unwanted outlines */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+    @apply focus:outline-none;
   }
 
   .dark .focus-ring {
-    @apply focus:ring-dark-accent-green focus:ring-offset-dark-bg-primary;
+    @apply focus:outline-none;
   }
 
   /* Gradientes de fundo para modo escuro */
