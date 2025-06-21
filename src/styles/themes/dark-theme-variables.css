@@ -1,68 +1,68 @@
 
-/* Tema escuro - Variáveis CSS - Slate Profissional */
+/* Tema escuro - Paleta Modern App Dashboard */
 @layer base {
   .dark {
-    /* Fundo principal - Ardósia escura elegante */
-    --background: 222 84% 5%; /* #0f172a - ardósia escura */
-    --foreground: 213 27% 90%; /* Clareado para melhor contraste */
+    /* Fundo principal - Lead Dark mais suave */
+    --background: 0 0% 13%; /* #212121 - Lead Dark */
+    --foreground: 196 35% 66%; /* #85c3cf - Light (texto principal) */
 
-    /* Cards com hierarquia visual clara - tons de azul-ardósia */
-    --card: 217 33% 17%; /* #1e293b - azul-acinzentado */
-    --card-foreground: 213 27% 90%; /* Clareado */
+    /* Cards com hierarquia visual clara - Lead Accent */
+    --card: 194 88% 20%; /* #065464 - Lead Accent */
+    --card-foreground: 196 35% 66%; /* #85c3cf - Light */
 
-    /* Popovers e dropdowns - azul-ardósia médio */
-    --popover: 215 25% 27%; /* #334155 - azul-ardósia */
-    --popover-foreground: 213 27% 90%; /* Clareado */
+    /* Popovers e dropdowns - Lead Accent */
+    --popover: 194 88% 20%; /* #065464 - Lead Accent */
+    --popover-foreground: 196 35% 66%; /* #85c3cf - Light */
 
-    /* Cores primárias - verde vibrante mantido */
-    --primary: 166 76% 46%; /* Verde mantido #22d3aa */
-    --primary-foreground: 222 84% 5%; /* #0f172a */
+    /* Cores primárias - Primary harmonizado */
+    --primary: 188 57% 43%; /* #34acbc - Primary */
+    --primary-foreground: 0 0% 98%; /* #FAFAFA - branco suave */
 
-    /* Elementos secundários - azul-ardósia claro */
-    --secondary: 215 20% 35%; /* #475569 - azul-cinza */
-    --secondary-foreground: 210 40% 98%; /* #f8fafc */
+    /* Elementos secundários - Neutral equilibrado */
+    --secondary: 210 8% 63%; /* #7a7d84 - Neutral */
+    --secondary-foreground: 0 0% 98%; /* #FAFAFA */
 
-    /* Elementos mutados - cinza-azulado neutro */
-    --muted: 215 25% 27%; /* #334155 - azul-ardósia */
-    --muted-foreground: 215 16% 75%; /* Clareado para melhor contraste */
+    /* Elementos mutados - Neutral harmonizado */
+    --muted: 210 8% 63%; /* #7a7d84 - Neutral */
+    --muted-foreground: 196 35% 66%; /* #85c3cf - Light */
 
-    /* Acentos - azul-ardósia elevado */
-    --accent: 215 20% 35%; /* #475569 - azul-cinza */
-    --accent-foreground: 210 40% 98%; /* #f8fafc */
+    /* Acentos - Lead Accent para hover/destaque */
+    --accent: 194 88% 20%; /* #065464 - Lead Accent */
+    --accent-foreground: 196 35% 66%; /* #85c3cf - Light */
 
-    /* Cores destrutivas mais harmoniosas */
-    --destructive: 0 72% 51%; /* #dc2626 - vermelho suave */
-    --destructive-foreground: 210 40% 98%; /* #f8fafc */
+    /* Cores destrutivas harmoniosas */
+    --destructive: 0 72% 51%; /* #dc2626 - vermelho mantido */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
 
-    /* Bordas e inputs - azul-cinza mais contrastado */
-    --border: 215 20% 45%; /* Clareado para melhor visibilidade */
-    --input: 215 25% 27%; /* #334155 - input azul-ardósia */
-    --ring: 166 76% 46%; /* #22d3aa - verde para focus */
+    /* Bordas e inputs - Neutral suavizado */
+    --border: 210 8% 63%; /* #7a7d84 - Neutral */
+    --input: 210 8% 63%; /* #7a7d84 - Neutral */
+    --ring: 188 57% 43%; /* #34acbc - Primary para focus */
 
-    /* Cores específicas do NutriFlow para modo escuro */
-    --nutri-green: 166 76% 50%; /* Verde mais vibrante */
+    /* Cores específicas do NutriFlow para modo escuro harmonizado */
+    --nutri-green: 166 76% 50%; /* Verde mantido mas ajustado */
     --nutri-green-light: 166 66% 60%;
     --nutri-green-dark: 166 86% 40%;
-    --nutri-blue: 217 91% 65%; /* Azul mais claro para contraste */
-    --nutri-blue-light: 217 81% 75%;
-    --nutri-blue-dark: 217 91% 55%;
+    --nutri-blue: 188 57% 43%; /* Alinhado com primary */
+    --nutri-blue-light: 188 47% 53%;
+    --nutri-blue-dark: 188 67% 33%;
 
-    /* Sidebar com tema azul-ardósia refinado */
-    --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
-    --sidebar-foreground: 213 27% 90%; /* Clareado */
-    --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
-    --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
-    --sidebar-accent: 166 76% 50%; /* Verde mais vibrante */
-    --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
-    --sidebar-border: 215 20% 45%; /* Borda mais contrastada */
-    --sidebar-ring: 166 76% 50%; /* Verde mais vibrante */
+    /* Sidebar com nova paleta harmonizada */
+    --sidebar-background: 0 0% 13%; /* #212121 - Lead Dark */
+    --sidebar-foreground: 196 35% 66%; /* #85c3cf - Light */
+    --sidebar-primary: 194 88% 20%; /* #065464 - Lead Accent */
+    --sidebar-primary-foreground: 0 0% 98%; /* #FAFAFA */
+    --sidebar-accent: 188 57% 43%; /* #34acbc - Primary */
+    --sidebar-accent-foreground: 0 0% 98%; /* #FAFAFA */
+    --sidebar-border: 210 8% 63%; /* #7a7d84 - Neutral */
+    --sidebar-ring: 188 57% 43%; /* #34acbc - Primary */
 
-    /* Variáveis específicas para melhor contraste de texto no modo escuro */
-    --text-primary: 213 27% 95%; /* Texto principal mais claro */
-    --text-secondary: 215 16% 80%; /* Texto secundário mais contrastado */
-    --text-muted: 215 16% 70%; /* Texto esmaecido mais legível */
+    /* Variáveis específicas para melhor hierarquia visual */
+    --text-primary: 196 35% 66%; /* #85c3cf - Light */
+    --text-secondary: 210 8% 63%; /* #7a7d84 - Neutral */
+    --text-muted: 210 8% 55%; /* Versão mais sutil do neutral */
 
-    /* Configurações específicas do tema escuro */
+    /* Configurações específicas do tema escuro harmonizado */
     color-scheme: dark;
   }
 }

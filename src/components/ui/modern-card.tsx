@@ -29,11 +29,11 @@ const ModernCard = React.forwardRef<HTMLDivElement, ModernCardProps>(
         className={cn(
           cardVariants[variant],
           interactiveStyles,
-          // Efeitos específicos para tema escuro
-          "dark:bg-dark-bg-card dark:border-dark-border-primary dark:shadow-dark-lg",
-          "hover:dark:shadow-dark-xl",
-          // Garantir que glassmorphism funcione corretamente
-          variant === "glass" && "backdrop-blur-md",
+          // Efeitos específicos para tema escuro harmonizado
+          "dark:bg-card dark:border-border dark:shadow-lg",
+          "hover:dark:shadow-xl",
+          // Garantir que glassmorphism funcione corretamente com nova paleta
+          variant === "glass" && "backdrop-blur-md dark:bg-card/80",
           className
         )}
         {...props}
@@ -65,6 +65,7 @@ const ModernCardTitle = React.forwardRef<
     ref={ref}
     className={cn(
       "text-2xl font-semibold leading-none tracking-tight text-glow-hover transition-all duration-300",
+      "dark:text-foreground",
       className
     )}
     {...props}
@@ -78,7 +79,10 @@ const ModernCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground", className)}
+    className={cn(
+      "text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground",
+      className
+    )}
     {...props}
   />
 ))
