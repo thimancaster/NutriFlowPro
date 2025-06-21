@@ -43,6 +43,14 @@ const CalculatorResults: React.FC<CalculatorResultsProps> = ({
     );
   }
 
+  // Create a simple calorie summary
+  const summary = {
+    targetCalories: tee.vet,
+    actualCalories: (macros.protein.kcal || 0) + (macros.fat.kcal || 0) + (macros.carbs.kcal || 0),
+    difference: 0,
+    percentageDifference: 0
+  };
+
   // Check if user is premium (simplified mock check)
   const isUserPremium = user?.is_premium || false;
 

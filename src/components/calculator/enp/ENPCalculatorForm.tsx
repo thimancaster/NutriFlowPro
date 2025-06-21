@@ -98,30 +98,25 @@ export const ENPCalculatorForm: React.FC = () => {
           </div>
         )}
         
-        {/* Renderiza apenas UMA instância dos resultados ENP */}
         {results && transformedResults && (
-          <div className="space-y-6">
+          <>
             {results.gerFormulaName && (
               <div className="text-sm text-center text-gray-700 bg-gray-50 p-3 rounded-md border">
                 Cálculo de TMB realizado com a fórmula: <strong>{results.gerFormulaName}</strong>
               </div>
             )}
-            
-            {/* Única seção de resultados ENP */}
             <ENPResultsPanel
               results={transformedResults}
               weight={validatedData.weight}
               onExportResults={handleExportResults}
             />
-            
-            {/* Botões de ação adicionais */}
             <ENPCalculatorActions
               results={results}
               onExport={handleExportResults}
               onGenerateMealPlan={handleGenerateMealPlan}
               onReset={handleReset}
             />
-          </div>
+          </>
         )}
       </TabsContent>
       
