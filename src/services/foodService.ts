@@ -30,6 +30,7 @@ export interface FoodSearchFilters {
 	limit?: number;
 	page?: number;
 	pageSize?: number;
+	forceLoad?: boolean;
 }
 
 export interface FoodSearchResult {
@@ -44,7 +45,7 @@ export class FoodService {
 	/**
 	 * Map user-friendly category values to database food_group values
 	 */
-	private static mapCategoryToFoodGroup(category: string): string {
+	public static mapCategoryToFoodGroup(category: string): string {
 		const categoryMapping: Record<string, string> = {
 			proteinas: "Proteínas",
 			frutas: "Frutas",
@@ -63,6 +64,120 @@ export class FoodService {
 	}
 
 	/**
+	 * Helper function to build the Supabase query with filters
+	 */
+	private static buildQuery(filters: FoodSearchFilters) {
+		let query = supabase.from("foods").select("*");
+		console.log("🔨 Building query with filters:", filters);
+
+		// Filtro por nome
+		if (filters.query) {
+			console.log("🔍 Adding name filter:", filters.query);
+			query = query.ilike("name", `%${filters.query}%`);
+		}
+
+		// Filtro por grupo alimentar
+		if (filters.food_group) {
+			const mappedFoodGroup = this.mapCategoryToFoodGroup(filters.food_group);
+			console.log("🏷️ Category mapping:", {
+				original: filters.food_group,
+				mapped: mappedFoodGroup,
+			});
+			query = query.eq("food_group", mappedFoodGroup);
+		}
+
+		// Filtro por horário de refeição
+		if (filters.meal_time) {
+			console.log("⏰ Adding meal time filter:", filters.meal_time);
+			query = query.contains("meal_time", [filters.meal_time]);
+		}
+
+		// Filtro por orgânico
+		if (filters.is_organic !== undefined) {
+			console.log("🌱 Adding organic filter:", filters.is_organic);
+			query = query.eq("is_organic", filters.is_organic);
+		}
+
+		// Filtro por alérgenos (excluir alimentos com alérgenos específicos)
+		if (filters.allergens && filters.allergens.length > 0) {
+			console.log("🚫 Adding allergen filters:", filters.allergens);
+			for (const allergen of filters.allergens) {
+				query = query.not("allergens", "cs", `{${allergen}}`);
+			}
+		}
+
+		console.log("✅ Query built successfully");
+		return query;
+	}
+
+	/**
+	 * Helper function to apply pagination and ordering to query
+	 */
+	private static applyPaginationAndOrdering(
+		query: any,
+		filters: FoodSearchFilters,
+		pageSize: number,
+		offset: number
+	) {
+		console.log("📄 Applying pagination:", {pageSize, offset, forceLoad: filters.forceLoad});
+
+		// Apply pagination unless limit is explicitly set (for backward compatibility)
+		if (filters.limit) {
+			console.log("🔢 Using explicit limit:", filters.limit);
+			query = query.limit(filters.limit);
+		} else {
+			// For category-only searches or forceLoad, get more results initially
+			const isSimpleCategorySearch =
+				filters.food_group && !filters.query && !filters.meal_time;
+			const effectivePageSize = filters.forceLoad || isSimpleCategorySearch ? 100 : pageSize;
+			console.log("📊 Using range:", {
+				start: offset,
+				end: offset + effectivePageSize - 1,
+				effectivePageSize,
+				isSimpleCategorySearch,
+			});
+			query = query.range(offset, offset + effectivePageSize - 1);
+		}
+
+		// Ordenar por nome
+		console.log("🔤 Adding order by name");
+		return query.order("name");
+	}
+
+	/**
+	 * Helper function to calculate pagination metadata
+	 */
+	private static calculatePaginationMetadata(
+		filters: FoodSearchFilters,
+		actualCount: number,
+		pageSize: number,
+		hasFilters: boolean
+	) {
+		const isSimpleCategorySearch = filters.food_group && !filters.query && !filters.meal_time;
+		const effectivePageSize = filters.forceLoad || isSimpleCategorySearch ? 100 : pageSize;
+
+		// Calculate estimated total count
+		let estimatedTotalCount: number;
+		if (filters.forceLoad) {
+			estimatedTotalCount = 3500;
+		} else if (hasFilters) {
+			// For category searches, estimate based on actual results
+			if (isSimpleCategorySearch && actualCount === effectivePageSize) {
+				estimatedTotalCount = actualCount * 2; // More conservative estimate for larger page sizes
+			} else {
+				estimatedTotalCount = actualCount * 2;
+			}
+		} else {
+			estimatedTotalCount = actualCount;
+		}
+
+		const totalPages = Math.ceil(estimatedTotalCount / effectivePageSize);
+		const hasMore = actualCount === effectivePageSize; // If we got a full page, assume there might be more
+
+		return {totalPages, hasMore, estimatedTotalCount};
+	}
+
+	/**
 	 * Buscar alimentos com filtros e paginação
 	 */
 	static async searchFoods(filters: FoodSearchFilters = {}): Promise<FoodSearchResult> {
@@ -71,68 +186,92 @@ export class FoodService {
 		const offset = (page - 1) * pageSize;
 
 		try {
-			let query = supabase.from("foods").select("*", {count: "exact"});
+			// Check if we have any meaningful filters
+			const hasFilters = !!(
+				filters.query ||
+				filters.food_group ||
+				filters.meal_time ||
+				filters.is_organic !== undefined ||
+				(filters.allergens && filters.allergens.length > 0)
+			);
 
-			// Filtro por nome
-			if (filters.query) {
-				query = query.ilike("name", `%${filters.query}%`);
+			// If no filters are provided and not forced, return empty results
+			if (!hasFilters && !filters.forceLoad) {
+				console.log("No filters provided, returning empty results");
+				return {
+					data: [],
+					count: 0,
+					hasMore: false,
+					currentPage: page,
+					totalPages: 0,
+				};
 			}
 
-			// Filtro por grupo alimentar
-			if (filters.food_group) {
-				const mappedFoodGroup = this.mapCategoryToFoodGroup(filters.food_group);
-				query = query.eq("food_group", mappedFoodGroup);
-			}
+			console.log("Starting food search with:", {
+				hasFilters,
+				forceLoad: filters.forceLoad,
+				page,
+				pageSize,
+			});
 
-			// Filtro por horário de refeição
-			if (filters.meal_time) {
-				query = query.contains("meal_time", [filters.meal_time]);
-			}
+			// Build and execute query using helper functions
+			const query = this.buildQuery(filters);
+			const finalQuery = this.applyPaginationAndOrdering(query, filters, pageSize, offset);
 
-			// Filtro por orgânico
-			if (filters.is_organic !== undefined) {
-				query = query.eq("is_organic", filters.is_organic);
-			}
+			console.log("Executing Supabase query...");
 
-			// Filtro por alérgenos (excluir alimentos com alérgenos específicos)
-			if (filters.allergens && filters.allergens.length > 0) {
-				for (const allergen of filters.allergens) {
-					query = query.not("allergens", "cs", `{${allergen}}`);
-				}
-			}
+			// Execute query with timeout wrapper - simplified approach
+			let timeoutId: ReturnType<typeof setTimeout>;
+			const timeoutPromise = new Promise<never>((_, reject) => {
+				timeoutId = setTimeout(() => {
+					console.error("Supabase query timed out after 8 seconds");
+					reject(new Error("Database query timeout - please try again"));
+				}, 8000);
+			});
 
-			// Apply pagination unless limit is explicitly set (for backward compatibility)
-			if (filters.limit) {
-				query = query.limit(filters.limit);
-			} else {
-				query = query.range(offset, offset + pageSize - 1);
-			}
+			const {data, error} = await Promise.race([finalQuery, timeoutPromise]).finally(() => {
+				if (timeoutId) clearTimeout(timeoutId);
+			});
 
-			// Ordenar por nome
-			query = query.order("name");
-
-			const {data, error, count} = await query;
+			console.log("Supabase query completed:", {
+				dataLength: data?.length,
+				error: error?.message,
+				hasError: !!error,
+			});
 
 			if (error) {
+				console.error("Supabase error:", error);
 				throw error;
 			}
 
-			return {
-				data: data || [],
-				count: count || 0,
-				hasMore: (count || 0) > offset + pageSize,
+			// Calculate pagination metadata using helper function
+			const actualCount = data?.length ?? 0;
+			const {totalPages, hasMore} = this.calculatePaginationMetadata(
+				filters,
+				actualCount,
+				pageSize,
+				hasFilters
+			);
+
+			const results = {
+				data: data ?? [],
+				count: actualCount,
+				hasMore,
 				currentPage: page,
-				totalPages: Math.ceil((count || 0) / pageSize),
+				totalPages,
 			};
+
+			console.log("Search completed:", {
+				resultsCount: results.data.length,
+				currentPage: results.currentPage,
+				totalPages: results.totalPages,
+				hasMore: results.hasMore,
+			});
+
+			return results;
 		} catch (error) {
-			console.error("Erro ao buscar alimentos:", error);
-			return {
-				data: [],
-				count: 0,
-				hasMore: false,
-				currentPage: 1,
-				totalPages: 0,
-			};
+			console.error("Food search error:", error);
+			throw error; // Re-throw the error instead of returning empty results
 		}
 	}
 

@@ -94,7 +94,7 @@ export const useConsultationForm = (
       }
 
       // Calculate TDEE based on activity level
-      let activityFactor = getActivityFactor(formData.activityLevel);
+      const activityFactor = getActivityFactor(formData.activityLevel);
       const get = bmr * activityFactor;
       
       // Apply objective adjustment to get VET

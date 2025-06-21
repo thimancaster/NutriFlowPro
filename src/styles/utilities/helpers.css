@@ -1,16 +1,15 @@
-
 /* Classes utilitárias e helpers */
 @layer utilities {
+
   /* Link animado melhorado */
   .text-link {
     @apply relative inline-block text-primary transition-colors duration-200;
   }
-  
+
   .text-link::after {
-    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary 
-           transition-all duration-300 ease-out;
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 ease-out;
   }
-  
+
   .text-link:hover::after {
     @apply w-full;
   }
@@ -22,7 +21,7 @@
   .dark .text-link::after {
     @apply bg-dark-accent-green;
   }
-  
+
   /* Efeitos de card melhorados */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
@@ -31,16 +30,16 @@
   .dark .card-hover {
     @apply hover:shadow-dark-xl;
   }
-  
+
   /* Gradientes de texto */
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r;
   }
-  
+
   .text-gradient-blue {
     @apply text-gradient from-nutri-blue to-nutri-blue-light;
   }
-  
+
   .text-gradient-green {
     @apply text-gradient from-nutri-green to-nutri-green-light;
   }
@@ -121,7 +120,8 @@
   }
 
   .dark .glow-on-hover:hover {
-    @apply shadow-dark-glow;
+    /* Use filter instead of box-shadow to respect border-radius */
+    filter: drop-shadow(0 0 20px rgba(34, 211, 170, 0.4));
   }
 
   /* Backdrop blur para overlays */
