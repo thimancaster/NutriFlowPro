@@ -67,13 +67,13 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 					<div className="container mx-auto px-4 flex justify-between items-center h-16">
 						<div className="flex items-center">
 							<Link to="/dashboard" className="flex items-center group">
-								<span className="text-primary transition-colors duration-200 group-hover:text-primary/80 font-bold text-xl">
+								<span className="text-green-500 transition-colors duration-200 group-hover:text-green-400 font-bold text-xl">
 									Nutri
 								</span>
-								<span className="text-blue-600 dark:text-blue-400 transition-colors duration-200 group-hover:text-blue-500 font-bold text-xl">
+								<span className="text-blue-500 transition-colors duration-200 group-hover:text-blue-400 font-bold text-xl">
 									Flow
 								</span>
-								<span className="text-muted-foreground ml-1 text-sm">
+								<span className="text-blue-500 transition-colors duration-200 group-hover:text-blue-400 font-bold text-xl ml-1">
 									Pro
 								</span>
 							</Link>
