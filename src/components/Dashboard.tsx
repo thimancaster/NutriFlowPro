@@ -12,15 +12,15 @@ import { useSafeConsultation } from '@/hooks/useSafeConsultation';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
-// Loading fallback harmonizado
+// Loading fallback com design refinado
 const LoadingFallback = () => (
-  <div className="w-full p-6 bg-card rounded-xl border border-border shadow-sm backdrop-blur-sm">
-    <Skeleton className="h-6 w-1/3 mb-4 bg-muted" />
-    <Skeleton className="h-32 w-full bg-muted" />
+  <div className="w-full p-6 bg-card rounded-xl border shadow-sm backdrop-blur-sm dark:bg-dark-bg-card dark:border-dark-border-primary dark:shadow-dark-md">
+    <Skeleton className="h-6 w-1/3 mb-4 bg-gray-200 dark:bg-dark-bg-surface" />
+    <Skeleton className="h-32 w-full bg-gray-200 dark:bg-dark-bg-surface" />
   </div>
 );
 
-// Animações refinadas
+// Animações de entrada refinadas
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -54,35 +54,46 @@ const Dashboard = () => {
   const { isConsultationActive } = useSafeConsultation();
   const { user } = useAuth();
   
+  // Use the dashboard data hook with user ID
   const { 
     isLoading, 
     error,
     dashboardData
   } = useDashboardData(user?.id);
   
+  // Compute derived values to match the expected props for DashboardSummaryCards
   const totalPatients = dashboardData?.patientCount || 0;
   const appointmentsToday = dashboardData?.todayAppointments?.length || 0;
   const activePlans = dashboardData?.activePlans || 0;
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-dark-bg-primary">
       <motion.div 
         className="space-y-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
+        {/* Cabeçalho de consulta com animação suave */}
         {isConsultationActive && (
           <motion.div variants={itemVariants}>
             <ConsultationHeader currentStep="dashboard" />
           </motion.div>
         )}
         
-        <motion.div variants={itemVariants}>
+        {/* Hero section com efeito de brilho - corrigindo o fundo */}
+        <motion.div 
+          variants={itemVariants}
+          className="glow-on-hover"
+        >
           <DashboardHero />
         </motion.div>
         
-        <motion.div variants={itemVariants}>
+        {/* Cards de resumo com loading aprimorado */}
+        <motion.div 
+          variants={itemVariants}
+          className="hover-lift"
+        >
           <Suspense fallback={<LoadingFallback />}>
             <DashboardSummaryCards 
               totalPatients={totalPatients}
@@ -93,20 +104,38 @@ const Dashboard = () => {
           </Suspense>
         </motion.div>
         
-        <motion.div variants={itemVariants}>
+        {/* Pacientes recentes com animação de entrada */}
+        <motion.div 
+          variants={itemVariants}
+          className="hover-lift"
+        >
           <Suspense fallback={<LoadingFallback />}>
             <DashboardRecentPatients />
           </Suspense>
         </motion.div>
         
-        <motion.div variants={itemVariants}>
+        {/* Ações rápidas com efeito hover */}
+        <motion.div 
+          variants={itemVariants}
+          className="hover-scale"
+        >
           <DashboardQuickActions />
         </motion.div>
         
-        <motion.div variants={itemVariants}>
+        {/* Depoimentos com design refinado */}
+        <motion.div 
+          variants={itemVariants}
+          className="hover-lift"
+        >
           <DashboardTestimonials />
         </motion.div>
       </motion.div>
+      
+      {/* Efeito de gradiente sutil no fundo - só no modo escuro */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden dark:block hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-dark-accent-green/5 rounded-full blur-3xl animate-pulse-soft" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-nutri-blue/5 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
+      </div>
     </div>
   );
 };

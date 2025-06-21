@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
+// Define a more specific type for the Patient to optimize data fetching
 interface Patient {
   id: string;
   name: string;
@@ -23,11 +23,13 @@ const DashboardRecentPatients: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Use React Query with optimized data fetching and better caching
   const { data: recentPatients, isLoading } = useQuery({
     queryKey: ['recentPatients', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
+      // Only select fields we actually need instead of fetching all data
       const { data, error } = await supabase
         .from('patients')
         .select('id, name, created_at, goals')
@@ -44,6 +46,7 @@ const DashboardRecentPatients: React.FC = () => {
         throw error;
       }
         
+      // Transform the data to ensure type compatibility
       const typedPatients: Patient[] = data?.map(patient => ({
         id: patient.id,
         name: patient.name,
@@ -56,10 +59,11 @@ const DashboardRecentPatients: React.FC = () => {
       return typedPatients;
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes to reduce unnecessary API calls
+    retry: 1, // Only retry once to prevent excessive API calls on failure
   });
 
+  // Format date with error handling
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), 'dd/MM/yyyy');
@@ -68,6 +72,7 @@ const DashboardRecentPatients: React.FC = () => {
     }
   };
   
+  // Get patient status based on creation date and goals
   const getPatientStatus = (patient: Patient) => {
     const createdDate = new Date(patient.created_at);
     const daysDiff = Math.floor((new Date().getTime() - createdDate.getTime()) / (1000 * 3600 * 24));
@@ -81,53 +86,52 @@ const DashboardRecentPatients: React.FC = () => {
     }
   };
 
+  // Handle clicking on "Ver detalhes" - correctly handle patient details by ID
   const handleViewPatientDetails = (patientId: string) => {
     navigate(`/patients/${patientId}`);
   };
   
   return (
-    <Card className="bg-card border-border">
+    <Card className="nutri-card border-none shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-foreground">Pacientes Recentes</CardTitle>
+          <CardTitle>Pacientes Recentes</CardTitle>
           <Link to="/patients">
-            <Button variant="nutri-green">
+            <Button className="bg-nutri-green hover:bg-white hover:text-nutri-green border border-nutri-green transition-colors duration-200">
               <Plus className="h-4 w-4 mr-2" /> Novo Paciente
             </Button>
           </Link>
         </div>
-        <CardDescription className="text-muted-foreground">
-          Gerencie seus pacientes recentes e consultados recentemente
-        </CardDescription>
+        <CardDescription>Gerencie seus pacientes recentes e consultados recentemente</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center items-center py-6">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="ml-2 text-primary">Carregando pacientes...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-nutri-blue" />
+            <span className="ml-2 text-nutri-blue">Carregando pacientes...</span>
           </div>
         ) : recentPatients && recentPatients.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="text-left border-b border-border">
-                  <th className="pb-2 pt-4 px-4 text-foreground">Nome</th>
-                  <th className="pb-2 pt-4 px-4 text-foreground">Data</th>
-                  <th className="pb-2 pt-4 px-4 text-foreground">Status</th>
-                  <th className="pb-2 pt-4 px-4 text-foreground">Ações</th>
+                <tr className="text-left border-b">
+                  <th className="pb-2 pt-4 px-4">Nome</th>
+                  <th className="pb-2 pt-4 px-4">Data</th>
+                  <th className="pb-2 pt-4 px-4">Status</th>
+                  <th className="pb-2 pt-4 px-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {recentPatients.map((patient) => (
-                  <tr key={patient.id} className="border-b border-border last:border-b-0">
-                    <td className="py-3 px-4 text-foreground">{patient.name}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{formatDate(patient.created_at)}</td>
+                  <tr key={patient.id} className="border-b last:border-b-0">
+                    <td className="py-3 px-4">{patient.name}</td>
+                    <td className="py-3 px-4">{formatDate(patient.created_at)}</td>
                     <td className="py-3 px-4">
                       <span 
                         className={`px-2 py-1 text-xs rounded-full ${
-                          getPatientStatus(patient) === 'Novo' ? 'bg-nutri-blue text-white' : 
-                          getPatientStatus(patient) === 'Em andamento' ? 'bg-nutri-green text-white' : 
-                          'bg-muted text-muted-foreground'
+                          getPatientStatus(patient) === 'Novo' ? 'bg-nutri-blue-light text-white' : 
+                          getPatientStatus(patient) === 'Em andamento' ? 'bg-nutri-green-light text-white' : 
+                          'bg-nutri-gray-light text-nutri-gray-dark'
                         }`}
                       >
                         {getPatientStatus(patient)}
@@ -136,7 +140,7 @@ const DashboardRecentPatients: React.FC = () => {
                     <td className="py-3 px-4">
                       <Button 
                         variant="ghost" 
-                        className="h-8 px-2 text-primary hover:text-primary hover:bg-accent"
+                        className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-nutri-gray-light"
                         onClick={() => handleViewPatientDetails(patient.id)}
                       >
                         Ver detalhes
@@ -149,12 +153,11 @@ const DashboardRecentPatients: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-4">
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               Você ainda não tem pacientes cadastrados
             </p>
             <Button
-              className="mt-3"
-              variant="nutri-blue"
+              className="mt-3 bg-nutri-blue hover:bg-nutri-blue-dark"
               onClick={() => navigate('/patients')}
             >
               <Plus className="h-4 w-4 mr-2" /> Adicionar Paciente
@@ -164,9 +167,7 @@ const DashboardRecentPatients: React.FC = () => {
       </CardContent>
       <CardFooter className="pt-0">
         <Link to="/patients" className="w-full">
-          <Button variant="outline" className="w-full">
-            Ver todos os pacientes
-          </Button>
+          <Button variant="outline" className="w-full hover:bg-nutri-blue hover:text-white transition-colors duration-200">Ver todos os pacientes</Button>
         </Link>
       </CardFooter>
     </Card>

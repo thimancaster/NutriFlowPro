@@ -31,23 +31,23 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
   ctaButton
 }) => {
   return (
-    <Card className={`relative transition-all duration-300 hover:shadow-lg ${highlighted ? 'border-primary shadow-md' : 'border-border'} flex flex-col h-full bg-card`}>
+    <Card className={`relative glass-card smooth-lift ${highlighted ? 'border-nutri-blue border-2 gradient-bright-hover' : 'border-gray-200'} flex flex-col h-full transition-all duration-300 hover:shadow-xl magnetic-hover`}>
       {badge && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <Badge className="bg-primary text-primary-foreground px-3 py-1 font-medium">
+          <Badge className="bg-nutri-green text-white px-4 py-1 font-semibold animate-pulse-soft">
             {badge}
           </Badge>
         </div>
       )}
       
       <CardHeader className="text-center pb-4">
-        <CardTitle className="text-xl font-bold text-foreground">{title}</CardTitle>
+        <CardTitle className="text-xl font-bold text-glow-hover">{title}</CardTitle>
         <div className="mt-4">
-          <span className="text-4xl font-bold text-primary">{price}</span>
-          {priceDetail && <span className="text-muted-foreground font-medium">{priceDetail}</span>}
+          <span className="text-4xl font-bold text-nutri-green dark:text-dark-accent-green">{price}</span>
+          {priceDetail && <span className="text-gray-600 dark:text-gray-400">{priceDetail}</span>}
         </div>
         {description && (
-          <CardDescription className="text-sm text-muted-foreground mt-2">
+          <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
             {description}
           </CardDescription>
         )}
@@ -56,9 +56,9 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
       <CardContent className="flex-grow">
         <ul className="space-y-3">
           {features.map((feature, index) => (
-            <li key={index} className="flex items-start gap-3">
-              <feature.icon className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-foreground leading-relaxed">{feature.text}</span>
+            <li key={index} className="flex items-start gap-3 animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+              <feature.icon className="h-5 w-5 text-nutri-green dark:text-dark-accent-green mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-gray-700 dark:text-gray-300">{feature.text}</span>
             </li>
           ))}
         </ul>

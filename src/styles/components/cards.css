@@ -1,35 +1,69 @@
 
-/* Componentes de cards harmonizados */
+/* Componentes de cards - Modern App Dashboard */
 @layer components {
-  /* Cards com hierarquia visual clara */
+  /* Cards com hierarquia visual - Modern App Dashboard */
   .nutri-card {
-    @apply rounded-xl shadow-sm bg-card p-6 transition-all duration-300 hover:shadow-md border border-border backdrop-blur-sm;
+    @apply rounded-xl shadow-lg bg-card p-6 transition-all duration-300 hover:shadow-xl border backdrop-blur-sm;
   }
 
-  .nutri-card:hover {
-    @apply -translate-y-1;
+  .dark .nutri-card {
+    background: linear-gradient(135deg, #212121 0%, #065464 100%);
+    border-color: #7a7d84;
+    box-shadow: 0 10px 25px rgba(33, 33, 33, 0.5), 0 0 20px rgba(52, 172, 188, 0.08);
   }
 
-  /* Glass effect refinado */
-  .glass-card {
-    @apply bg-card/95 border border-border/50 backdrop-blur-md;
+  /* Cards premium com gradientes Modern App Dashboard */
+  .dark-premium-card {
+    background: linear-gradient(135deg, #065464 0%, #34acbc 100%);
+    border-color: #7a7d84;
+    box-shadow: 0 0 30px rgba(52, 172, 188, 0.15), 0 10px 25px rgba(33, 33, 33, 0.6);
   }
 
-  /* Hover states harmonizados */
-  .slide-card-hover {
-    @apply transition-all duration-300;
+  .dark-dashboard-hero {
+    background: linear-gradient(135deg, rgba(52, 172, 188, 0.08) 0%, rgba(6, 84, 100, 0.12) 100%);
+    border-color: #7a7d84;
+    backdrop-filter: blur(10px);
   }
 
-  .slide-card-hover:hover {
-    @apply -translate-y-1 shadow-lg;
+  /* Cards de depoimento com Modern App Dashboard */
+  .dark-testimonial-card {
+    background: linear-gradient(135deg, #212121 0%, #065464 100%);
+    border-color: #7a7d84;
+    box-shadow: 0 8px 20px rgba(33, 33, 33, 0.4);
   }
 
-  /* Efeitos de profundidade 3D */
-  .depth-3d {
-    @apply transform-gpu transition-transform duration-300;
+  /* Glass effect com nova paleta */
+  .glass-effect {
+    @apply backdrop-blur-md;
+    background: rgba(6, 84, 100, 0.8);
+    border: 1px solid rgba(122, 125, 132, 0.3);
   }
 
-  .depth-3d:hover {
-    @apply scale-105;
+  /* Hover states mais sofisticados */
+  .dark .nutri-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(33, 33, 33, 0.6), 0 0 25px rgba(52, 172, 188, 0.15);
+  }
+
+  /* Melhorias específicas para tabs com Modern App Dashboard */
+  .dark .tabs-list {
+    background-color: #065464;
+    border-color: #7a7d84;
+  }
+
+  .dark .tabs-trigger {
+    color: #7a7d84;
+    transition: all 0.2s ease;
+  }
+
+  .dark .tabs-trigger:hover {
+    color: #85c3cf;
+    background-color: rgba(52, 172, 188, 0.1);
+  }
+
+  .dark .tabs-trigger[data-state="active"] {
+    background-color: #34acbc;
+    color: #212121;
+    box-shadow: 0 2px 8px rgba(52, 172, 188, 0.3);
   }
 }

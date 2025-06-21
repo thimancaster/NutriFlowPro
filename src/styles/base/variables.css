@@ -1,67 +1,52 @@
 
-/* CSS Custom Properties - Variáveis base do sistema harmonizadas */
+/* CSS Custom Properties - Variáveis base do sistema */
 @layer base {
   :root {
-    /* Paleta "Clean Professional" refinada para harmonia perfeita */
-    --background: 250 250% 99%; /* #FEFEFE - Fundo principal (branco mais suave) */
-    --foreground: 215 25% 15%; /* #262B35 - Texto principal (cinza escuro elegante) */
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%; /* #FFFFFF - Cards e superfícies (branco puro) */
-    --card-foreground: 215 25% 15%; /* #262B35 - Texto em cards */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 0 0% 100%; /* #FFFFFF - Popovers */
-    --popover-foreground: 215 25% 15%; /* #262B35 - Texto em popovers */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 142 71% 45%; /* #22c55e - Verde NutriFlow principal */
-    --primary-foreground: 0 0% 100%; /* #FFFFFF - Texto sobre primary */
+    --primary: 142 70% 45%; /* Verde NutriFlow */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 25% 97%; /* #F7F9FB - Fundo secundário muito sutil */
-    --secondary-foreground: 215 25% 25%; /* #3D4651 - Texto sobre secundário */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 25% 96%; /* #F1F4F7 - Elementos mutados */
-    --muted-foreground: 215 20% 45%; /* #6B7280 - Texto sutil */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 25% 95%; /* #EDF1F5 - Elementos de destaque */
-    --accent-foreground: 215 25% 20%; /* #323943 - Texto sobre accent */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 72% 51%; /* #dc2626 - Vermelho para ações destrutivas */
-    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 215 25% 88%; /* #D1D9E0 - Bordas sutis mas visíveis */
-    --input: 215 25% 88%; /* #D1D9E0 - Bordas de input */
-    --ring: 142 71% 45%; /* #22c55e - Verde NutriFlow para focus */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 70% 45%; /* Verde NutriFlow para focus */
 
     --radius: 0.5rem;
 
-    /* Cores específicas do NutriFlow harmonizadas */
-    --nutri-green: 142 71% 45%; /* #22c55e - Verde principal */
-    --nutri-green-light: 142 69% 58%; /* Verde claro */
-    --nutri-green-dark: 142 84% 37%; /* Verde escuro */
-    --nutri-blue: 217 91% 58%; /* #3B82F6 - Azul harmonioso */
-    --nutri-blue-light: 217 91% 68%; /* Azul claro */
-    --nutri-blue-dark: 217 91% 48%; /* Azul escuro */
+    /* Cores específicas do NutriFlow */
+    --nutri-green: 142 70% 45%;
+    --nutri-green-light: 142 60% 55%;
+    --nutri-green-dark: 142 80% 35%;
+    --nutri-blue: 217 91% 60%;
+    --nutri-blue-light: 217 80% 70%;
+    --nutri-blue-dark: 217 91% 50%;
 
-    /* Sidebar harmonizada */
-    --sidebar-background: 0 0% 100%; /* #FFFFFF */
-    --sidebar-foreground: 215 25% 15%; /* #262B35 */
-    --sidebar-primary: 142 71% 45%; /* #22c55e */
-    --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
-    --sidebar-accent: 210 25% 95%; /* #EDF1F5 */
-    --sidebar-accent-foreground: 215 25% 20%; /* #323943 */
-    --sidebar-border: 215 25% 88%; /* #D1D9E0 */
-    --sidebar-ring: 142 71% 45%; /* #22c55e */
-
-    /* Variáveis para hierarquia visual aprimorada */
-    --text-primary: 215 25% 15%; /* #262B35 - Texto principal */
-    --text-secondary: 215 20% 35%; /* #566073 - Texto secundário */
-    --text-muted: 215 15% 55%; /* #6B7280 - Texto esmaecido */
-
-    /* Sombras refinadas */
-    --shadow-color: 215 25% 15%;
-    --shadow-sm: 0 1px 2px hsla(var(--shadow-color), 0.05);
-    --shadow-md: 0 4px 6px hsla(var(--shadow-color), 0.07), 0 2px 4px hsla(var(--shadow-color), 0.05);
-    --shadow-lg: 0 10px 15px hsla(var(--shadow-color), 0.1), 0 4px 6px hsla(var(--shadow-color), 0.05);
-
-    color-scheme: light;
+    --sidebar-background: 142 70% 45%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 210 40% 96.1%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 142 50% 40%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 142 60% 40%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
