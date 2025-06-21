@@ -3,22 +3,24 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 export interface ModernCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "hover-lift" | "magnetic" | "depth" | "glow";
+  variant?: "default" | "hover-lift" | "magnetic" | "depth" | "glow" | "glass" | "slide";
   interactive?: boolean;
 }
 
 const ModernCard = React.forwardRef<HTMLDivElement, ModernCardProps>(
   ({ className, variant = "default", interactive = false, children, ...props }, ref) => {
     const cardVariants = {
-      default: "rounded-lg border bg-card text-card-foreground shadow-sm",
+      default: "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300",
       "hover-lift": "rounded-lg border bg-card text-card-foreground shadow-sm smooth-lift magnetic-hover",
-      magnetic: "rounded-lg border bg-card text-card-foreground shadow-sm magnetic-hover gradient-shift",
+      magnetic: "rounded-lg border bg-card text-card-foreground shadow-sm magnetic-hover gradient-shift ripple-effect",
       depth: "rounded-lg border bg-card text-card-foreground shadow-sm depth-3d colored-shadow-lift",
-      glow: "rounded-lg border bg-card text-card-foreground shadow-sm soft-pulse animated-border"
+      glow: "rounded-lg border bg-card text-card-foreground shadow-sm soft-pulse animated-border text-glow-hover",
+      glass: "rounded-lg border-0 text-card-foreground shadow-sm glass-card smooth-lift",
+      slide: "rounded-lg border bg-card text-card-foreground shadow-sm slide-card-hover"
     };
 
     const interactiveStyles = interactive 
-      ? "cursor-pointer ripple-effect hover:scale-[1.02] transition-all duration-300"
+      ? "cursor-pointer ripple-effect hover:scale-[1.02] transition-all duration-300 magnetic-hover"
       : "";
 
     return (
@@ -30,6 +32,8 @@ const ModernCard = React.forwardRef<HTMLDivElement, ModernCardProps>(
           // Efeitos específicos para tema escuro
           "dark:bg-dark-bg-card dark:border-dark-border-primary dark:shadow-dark-lg",
           "hover:dark:shadow-dark-xl",
+          // Garantir que glassmorphism funcione corretamente
+          variant === "glass" && "backdrop-blur-md",
           className
         )}
         {...props}
@@ -47,7 +51,7 @@ const ModernCardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn("flex flex-col space-y-1.5 p-6 transition-all duration-300", className)}
     {...props}
   />
 ))
@@ -60,7 +64,7 @@ const ModernCardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight text-glow-hover",
+      "text-2xl font-semibold leading-none tracking-tight text-glow-hover transition-all duration-300",
       className
     )}
     {...props}
@@ -74,7 +78,7 @@ const ModernCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground transition-colors duration-300", className)}
+    className={cn("text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground", className)}
     {...props}
   />
 ))
@@ -84,7 +88,7 @@ const ModernCardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div ref={ref} className={cn("p-6 pt-0 transition-all duration-300", className)} {...props} />
 ))
 ModernCardContent.displayName = "ModernCardContent"
 
@@ -94,7 +98,7 @@ const ModernCardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
+    className={cn("flex items-center p-6 pt-0 transition-all duration-300", className)}
     {...props}
   />
 ))

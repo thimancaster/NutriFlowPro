@@ -130,6 +130,9 @@
   }
   
   /* Efeito de Expansão Lateral para Destaque */
+  .side-expand {
+    position: relative;
+  }
   .side-expand::before {
     content: '';
     position: absolute;
@@ -168,5 +171,153 @@
   }
   .gradient-shift:hover {
     background-position: right center;
+  }
+
+  /* --- Novos Efeitos Avançados --- */
+
+  /* Efeito de Cartão Deslizante */
+  .slide-card-hover {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .slide-card-hover .slide-top {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0);
+  }
+  
+  .slide-card-hover .slide-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .slide-card-hover:hover .slide-top {
+    transform: translateY(-50%);
+  }
+  
+  .slide-card-hover:hover .slide-bottom {
+    transform: translateY(0);
+  }
+
+  /* Glassmorphism Effects */
+  .glass-card {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .dark .glass-card {
+    background: rgba(34, 211, 170, 0.1);
+    border: 1px solid rgba(34, 211, 170, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+  
+  .dark .glass-card:hover {
+    background: rgba(34, 211, 170, 0.15);
+    border-color: rgba(34, 211, 170, 0.3);
+  }
+
+  .glass-overlay {
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .glass-overlay {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Gradiente Brilhante Animado */
+  .gradient-bright-hover {
+    position: relative;
+    background: linear-gradient(45deg, theme('colors.nutri.green'), theme('colors.nutri.blue'));
+    background-size: 400% 400%;
+    animation: gradient-shift 4s ease infinite;
+    transition: all 0.3s ease;
+  }
+  
+  .gradient-bright-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 0deg, 
+      theme('colors.nutri.green'), 
+      theme('colors.nutri.blue'), 
+      theme('colors.nutri.green-light'), 
+      theme('colors.nutri.green'));
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: rotate 3s linear infinite;
+  }
+  
+  .gradient-bright-hover:hover::before {
+    opacity: 0.8;
+  }
+  
+  .dark .gradient-bright-hover {
+    background: linear-gradient(45deg, theme('colors.dark.accent.green'), theme('colors.nutri.blue'));
+  }
+  
+  .dark .gradient-bright-hover::before {
+    background: conic-gradient(from 0deg, 
+      theme('colors.dark.accent.green'), 
+      theme('colors.nutri.blue'), 
+      #00ff88, 
+      theme('colors.dark.accent.green'));
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Smooth Lift Effect */
+  .smooth-lift {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  .smooth-lift:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .dark .smooth-lift:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 20px theme('colors.dark.accent.green' / 10%);
+  }
+
+  /* Efeito de Float Animation */
+  .float-hover:hover {
+    animation: float 2s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* Efeito de Scale Bounce */
+  .scale-bounce:hover {
+    animation: scale-bounce 0.6s ease;
+  }
+  
+  @keyframes scale-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
 }
