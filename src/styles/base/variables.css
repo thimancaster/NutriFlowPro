@@ -1,62 +1,67 @@
 
-/* CSS Custom Properties - Variáveis base do sistema */
+/* CSS Custom Properties - Variáveis base do sistema harmonizadas */
 @layer base {
   :root {
-    /* Paleta "Clean Professional" para modo claro harmonizado */
-    --background: 210 20% 98%; /* #F8FAFC - Fundo principal (cinza muito suave) */
-    --foreground: 222 84% 11%; /* #0F172A - Texto principal (cinza escuro profundo) */
+    /* Paleta "Clean Professional" refinada para harmonia perfeita */
+    --background: 250 250% 99%; /* #FEFEFE - Fundo principal (branco mais suave) */
+    --foreground: 215 25% 15%; /* #262B35 - Texto principal (cinza escuro elegante) */
 
     --card: 0 0% 100%; /* #FFFFFF - Cards e superfícies (branco puro) */
-    --card-foreground: 222 84% 11%; /* #0F172A - Texto em cards */
+    --card-foreground: 215 25% 15%; /* #262B35 - Texto em cards */
 
     --popover: 0 0% 100%; /* #FFFFFF - Popovers */
-    --popover-foreground: 222 84% 11%; /* #0F172A - Texto em popovers */
+    --popover-foreground: 215 25% 15%; /* #262B35 - Texto em popovers */
 
-    --primary: 142 71% 45%; /* #22c55e - Verde NutriFlow (mantido) */
+    --primary: 142 71% 45%; /* #22c55e - Verde NutriFlow principal */
     --primary-foreground: 0 0% 100%; /* #FFFFFF - Texto sobre primary */
 
-    --secondary: 210 20% 96%; /* #F1F5F9 - Fundo secundário (cinza claro) */
-    --secondary-foreground: 215 25% 27%; /* #475569 - Texto sobre secundário */
+    --secondary: 210 25% 97%; /* #F7F9FB - Fundo secundário muito sutil */
+    --secondary-foreground: 215 25% 25%; /* #3D4651 - Texto sobre secundário */
 
-    --muted: 210 20% 96%; /* #F1F5F9 - Elementos mutados (cinza claro) */
-    --muted-foreground: 215 25% 27%; /* #475569 - Texto sutil (cinza médio) */
+    --muted: 210 25% 96%; /* #F1F4F7 - Elementos mutados */
+    --muted-foreground: 215 20% 45%; /* #6B7280 - Texto sutil */
 
-    --accent: 210 20% 96%; /* #F1F5F9 - Elementos de destaque */
-    --accent-foreground: 222 84% 11%; /* #0F172A - Texto sobre accent */
+    --accent: 210 25% 95%; /* #EDF1F5 - Elementos de destaque */
+    --accent-foreground: 215 25% 20%; /* #323943 - Texto sobre accent */
 
-    --destructive: 0 84% 60%; /* Vermelho para estados destrutivos */
+    --destructive: 0 72% 51%; /* #dc2626 - Vermelho para ações destrutivas */
     --destructive-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --border: 213 27% 84%; /* #E2E8F0 - Bordas (cinza mais presente) */
-    --input: 213 27% 84%; /* #E2E8F0 - Bordas de input */
+    --border: 215 25% 88%; /* #D1D9E0 - Bordas sutis mas visíveis */
+    --input: 215 25% 88%; /* #D1D9E0 - Bordas de input */
     --ring: 142 71% 45%; /* #22c55e - Verde NutriFlow para focus */
 
     --radius: 0.5rem;
 
-    /* Cores específicas do NutriFlow para modo claro harmonizado */
+    /* Cores específicas do NutriFlow harmonizadas */
     --nutri-green: 142 71% 45%; /* #22c55e - Verde principal */
     --nutri-green-light: 142 69% 58%; /* Verde claro */
     --nutri-green-dark: 142 84% 37%; /* Verde escuro */
-    --nutri-blue: 217 91% 60%; /* Azul ajustado para melhor contraste */
-    --nutri-blue-light: 217 91% 70%; /* Azul claro */
-    --nutri-blue-dark: 217 91% 50%; /* Azul escuro */
+    --nutri-blue: 217 91% 58%; /* #3B82F6 - Azul harmonioso */
+    --nutri-blue-light: 217 91% 68%; /* Azul claro */
+    --nutri-blue-dark: 217 91% 48%; /* Azul escuro */
 
-    /* Sidebar harmonizada para modo claro */
-    --sidebar-background: 0 0% 100%; /* #FFFFFF - Fundo sidebar */
-    --sidebar-foreground: 222 84% 11%; /* #0F172A - Texto sidebar */
-    --sidebar-primary: 142 71% 45%; /* #22c55e - Primary sidebar */
+    /* Sidebar harmonizada */
+    --sidebar-background: 0 0% 100%; /* #FFFFFF */
+    --sidebar-foreground: 215 25% 15%; /* #262B35 */
+    --sidebar-primary: 142 71% 45%; /* #22c55e */
     --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
-    --sidebar-accent: 210 20% 96%; /* #F1F5F9 - Accent sidebar */
-    --sidebar-accent-foreground: 215 25% 27%; /* #475569 */
-    --sidebar-border: 213 27% 84%; /* #E2E8F0 - Bordas sidebar */
-    --sidebar-ring: 142 71% 45%; /* #22c55e - Focus ring sidebar */
+    --sidebar-accent: 210 25% 95%; /* #EDF1F5 */
+    --sidebar-accent-foreground: 215 25% 20%; /* #323943 */
+    --sidebar-border: 215 25% 88%; /* #D1D9E0 */
+    --sidebar-ring: 142 71% 45%; /* #22c55e */
 
-    /* Variáveis específicas para melhor hierarquia visual */
-    --text-primary: 222 84% 11%; /* #0F172A - Texto principal */
-    --text-secondary: 215 25% 27%; /* #475569 - Texto secundário */
-    --text-muted: 148 5% 46%; /* #6B7280 - Texto esmaecido */
+    /* Variáveis para hierarquia visual aprimorada */
+    --text-primary: 215 25% 15%; /* #262B35 - Texto principal */
+    --text-secondary: 215 20% 35%; /* #566073 - Texto secundário */
+    --text-muted: 215 15% 55%; /* #6B7280 - Texto esmaecido */
 
-    /* Configurações específicas do tema claro */
+    /* Sombras refinadas */
+    --shadow-color: 215 25% 15%;
+    --shadow-sm: 0 1px 2px hsla(var(--shadow-color), 0.05);
+    --shadow-md: 0 4px 6px hsla(var(--shadow-color), 0.07), 0 2px 4px hsla(var(--shadow-color), 0.05);
+    --shadow-lg: 0 10px 15px hsla(var(--shadow-color), 0.1), 0 4px 6px hsla(var(--shadow-color), 0.05);
+
     color-scheme: light;
   }
 }

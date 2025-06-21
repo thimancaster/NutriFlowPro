@@ -1,7 +1,6 @@
 
 import React, { Suspense } from 'react';
 import { Helmet } from 'react-helmet';
-import Navbar from '@/components/Navbar';
 import DashboardComponent from '@/components/Dashboard';
 import DashboardHero from '@/components/DashboardHero';
 import UserInfoHeader from '@/components/UserInfoHeader';
@@ -18,14 +17,13 @@ const Dashboard = () => {
   const { dashboardData } = useDashboardData(user?.id);
   
   return (
-    <div className="min-h-screen bg-background dark:bg-dark-bg-primary">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>Dashboard - NutriFlow Pro</title>
       </Helmet>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-nutri-blue dark:text-nutri-blue-light">Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6 text-foreground">Dashboard</h1>
         
-        {/* Hero Section - Bem-vindo ao NutriFlow Pro */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,7 +52,6 @@ const Dashboard = () => {
             </motion.div>
           )}
           
-          {/* Add usage limits card for free users */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

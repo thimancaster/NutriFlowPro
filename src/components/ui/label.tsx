@@ -6,7 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
 )
 
 const Label = React.forwardRef<
@@ -16,12 +16,7 @@ const Label = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}
-    className={cn(
-      labelVariants(),
-      // Cores harmonizadas para ambos os temas
-      "text-foreground",
-      className
-    )}
+    className={cn(labelVariants(), className)}
     {...props}
   />
 ))

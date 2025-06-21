@@ -32,10 +32,10 @@ const Patients = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-background min-h-screen">
       <PatientPageHeader />
       
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <PatientListHeader 
           totalItems={totalPatients}
           filters={filters}

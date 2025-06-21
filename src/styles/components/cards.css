@@ -1,120 +1,35 @@
 
-/* Componentes de cards - Clean Professional */
+/* Componentes de cards harmonizados */
 @layer components {
-  /* Cards com hierarquia visual harmonizada */
+  /* Cards com hierarquia visual clara */
   .nutri-card {
-    @apply rounded-xl shadow-sm bg-card p-6 transition-all duration-300 hover:shadow-md border backdrop-blur-sm;
-    border-color: hsl(var(--border));
-  }
-
-  /* Melhorias específicas para modo claro */
-  .nutri-card {
-    background: hsl(var(--card));
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+    @apply rounded-xl shadow-sm bg-card p-6 transition-all duration-300 hover:shadow-md border border-border backdrop-blur-sm;
   }
 
   .nutri-card:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
+    @apply -translate-y-1;
   }
 
-  /* Cards premium com gradientes harmonizados para modo claro */
-  .light-premium-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--secondary)) 100%);
-    border-color: hsl(var(--border));
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
-  }
-
-  .light-dashboard-hero {
-    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--card)) 100%);
-    border-color: hsl(var(--border));
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  }
-
-  /* Cards de depoimento harmonizados para modo claro */
-  .light-testimonial-card {
-    background: hsl(var(--card));
-    border-color: hsl(var(--border));
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  }
-
-  /* Glass effect para modo claro */
-  .glass-effect {
-    @apply backdrop-blur-md;
-    background: hsla(var(--card), 0.95);
-    border: 1px solid hsla(var(--border), 0.5);
-  }
-
-  /* Glass card melhorado para modo claro */
+  /* Glass effect refinado */
   .glass-card {
-    background: linear-gradient(135deg, 
-      hsla(var(--card), 0.95) 0%, 
-      hsla(var(--secondary), 0.8) 100%);
-    border: 1px solid hsla(var(--border), 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    @apply bg-card/95 border border-border/50 backdrop-blur-md;
   }
 
-  /* Hover states mais sofisticados para modo claro */
-  .nutri-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  /* Melhorias específicas para tabs no modo claro */
-  .tabs-list {
-    background-color: hsl(var(--muted));
-    border-color: hsl(var(--border));
-  }
-
-  .tabs-trigger {
-    color: hsl(var(--muted-foreground));
-    transition: all 0.2s ease;
-  }
-
-  .tabs-trigger:hover {
-    color: hsl(var(--foreground));
-    background-color: hsla(var(--accent), 0.1);
-  }
-
-  .tabs-trigger[data-state="active"] {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-bottom: 2px solid hsl(var(--primary));
-  }
-
-  /* Efeitos de slide harmonizados para modo claro */
+  /* Hover states harmonizados */
   .slide-card-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    @apply transition-all duration-300;
   }
 
   .slide-card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.08);
+    @apply -translate-y-1 shadow-lg;
   }
 
-  /* Efeitos de profundidade 3D melhorados para modo claro */
+  /* Efeitos de profundidade 3D */
   .depth-3d {
-    transform-style: preserve-3d;
-    transition: transform 0.3s ease;
+    @apply transform-gpu transition-transform duration-300;
   }
 
   .depth-3d:hover {
-    transform: perspective(1000px) rotateX(5deg) translateY(-5px);
-  }
-
-  /* Cards com melhor definição no modo claro */
-  .dark .nutri-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
-    border-color: hsl(var(--border));
-    box-shadow: 0 10px 25px rgba(33, 33, 33, 0.3), 0 0 20px rgba(52, 172, 188, 0.05);
-  }
-
-  .dark .nutri-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(33, 33, 33, 0.4), 0 0 25px rgba(52, 172, 188, 0.08);
+    @apply scale-105;
   }
 }

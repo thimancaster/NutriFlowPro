@@ -36,10 +36,10 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
     .filter(appointment => filterAppointmentsByDate(appointment, selectedDate));
 
   return (
-    <Card>
+    <Card className="bg-card border-border">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-2xl font-bold">Consultas</CardTitle>
-        <Button onClick={onAddNew} className="bg-nutri-green hover:bg-nutri-green-dark">
+        <CardTitle className="text-2xl font-bold text-foreground">Consultas</CardTitle>
+        <Button onClick={onAddNew} variant="nutri-green">
           <PlusCircle className="mr-2 h-4 w-4" /> Nova Consulta
         </Button>
       </CardHeader>
