@@ -4,15 +4,15 @@
   .dark {
     /* Fundo principal - Ardósia escura elegante */
     --background: 222 84% 5%; /* #0f172a - ardósia escura */
-    --foreground: 213 27% 84%; /* #cbd5e1 - cinza-azulado claro */
+    --foreground: 213 27% 90%; /* Clareado para melhor contraste */
 
     /* Cards com hierarquia visual clara - tons de azul-ardósia */
     --card: 217 33% 17%; /* #1e293b - azul-acinzentado */
-    --card-foreground: 213 27% 84%; /* #cbd5e1 */
+    --card-foreground: 213 27% 90%; /* Clareado */
 
     /* Popovers e dropdowns - azul-ardósia médio */
     --popover: 215 25% 27%; /* #334155 - azul-ardósia */
-    --popover-foreground: 213 27% 84%; /* #cbd5e1 */
+    --popover-foreground: 213 27% 90%; /* Clareado */
 
     /* Cores primárias - verde vibrante mantido */
     --primary: 166 76% 46%; /* Verde mantido #22d3aa */
@@ -24,7 +24,7 @@
 
     /* Elementos mutados - cinza-azulado neutro */
     --muted: 215 25% 27%; /* #334155 - azul-ardósia */
-    --muted-foreground: 215 16% 65%; /* #94a3b8 - cinza-azulado */
+    --muted-foreground: 215 16% 75%; /* Clareado para melhor contraste */
 
     /* Acentos - azul-ardósia elevado */
     --accent: 215 20% 35%; /* #475569 - azul-cinza */
@@ -34,28 +34,33 @@
     --destructive: 0 72% 51%; /* #dc2626 - vermelho suave */
     --destructive-foreground: 210 40% 98%; /* #f8fafc */
 
-    /* Bordas e inputs - azul-cinza visível */
-    --border: 215 20% 35%; /* #475569 - azul-cinza */
+    /* Bordas e inputs - azul-cinza mais contrastado */
+    --border: 215 20% 45%; /* Clareado para melhor visibilidade */
     --input: 215 25% 27%; /* #334155 - input azul-ardósia */
     --ring: 166 76% 46%; /* #22d3aa - verde para focus */
 
     /* Cores específicas do NutriFlow para modo escuro */
-    --nutri-green: 166 76% 46%; /* Verde vibrante */
-    --nutri-green-light: 166 66% 56%;
-    --nutri-green-dark: 166 86% 36%;
-    --nutri-blue: 217 91% 60%; /* Azul mantido */
-    --nutri-blue-light: 217 81% 70%;
-    --nutri-blue-dark: 217 91% 50%;
+    --nutri-green: 166 76% 50%; /* Verde mais vibrante */
+    --nutri-green-light: 166 66% 60%;
+    --nutri-green-dark: 166 86% 40%;
+    --nutri-blue: 217 91% 65%; /* Azul mais claro para contraste */
+    --nutri-blue-light: 217 81% 75%;
+    --nutri-blue-dark: 217 91% 55%;
 
     /* Sidebar com tema azul-ardósia refinado */
     --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
-    --sidebar-foreground: 213 27% 84%; /* #cbd5e1 */
+    --sidebar-foreground: 213 27% 90%; /* Clareado */
     --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
     --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
-    --sidebar-accent: 166 76% 46%; /* #22d3aa - verde accent */
+    --sidebar-accent: 166 76% 50%; /* Verde mais vibrante */
     --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
-    --sidebar-border: 215 20% 35%; /* #475569 - borda sutil */
-    --sidebar-ring: 166 76% 46%; /* #22d3aa */
+    --sidebar-border: 215 20% 45%; /* Borda mais contrastada */
+    --sidebar-ring: 166 76% 50%; /* Verde mais vibrante */
+
+    /* Variáveis específicas para melhor contraste de texto no modo escuro */
+    --text-primary: 213 27% 95%; /* Texto principal mais claro */
+    --text-secondary: 215 16% 80%; /* Texto secundário mais contrastado */
+    --text-muted: 215 16% 70%; /* Texto esmaecido mais legível */
 
     /* Configurações específicas do tema escuro */
     color-scheme: dark;

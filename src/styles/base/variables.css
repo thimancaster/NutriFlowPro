@@ -18,7 +18,7 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 40%; /* Escurecido para melhor contraste */
 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
@@ -26,19 +26,19 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
+    --border: 214.3 31.8% 85%; /* Escurecido para melhor definição */
     --input: 214.3 31.8% 91.4%;
     --ring: 142 70% 45%; /* Verde NutriFlow para focus */
 
     --radius: 0.5rem;
 
-    /* Cores específicas do NutriFlow */
+    /* Cores específicas do NutriFlow com melhor contraste */
     --nutri-green: 142 70% 45%;
     --nutri-green-light: 142 60% 55%;
     --nutri-green-dark: 142 80% 35%;
-    --nutri-blue: 217 91% 60%;
-    --nutri-blue-light: 217 80% 70%;
-    --nutri-blue-dark: 217 91% 50%;
+    --nutri-blue: 217 91% 55%; /* Escurecido para melhor contraste */
+    --nutri-blue-light: 217 80% 65%; /* Escurecido */
+    --nutri-blue-dark: 217 91% 45%; /* Escurecido */
 
     --sidebar-background: 142 70% 45%;
     --sidebar-foreground: 0 0% 100%;
@@ -48,5 +48,10 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 142 60% 40%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Variáveis específicas para melhor contraste de texto */
+    --text-primary: 222.2 84% 4.9%; /* Texto principal mais escuro */
+    --text-secondary: 215.4 16.3% 35%; /* Texto secundário mais contrastado */
+    --text-muted: 215.4 16.3% 40%; /* Texto esmaecido mais legível */
   }
 }
