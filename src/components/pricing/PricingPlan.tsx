@@ -1,9 +1,10 @@
 
-import React, { ReactNode } from 'react';
-import PricingFeatureItem from './PricingFeatureItem';
+import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
-export interface PricingFeature {
+interface FeatureItem {
   icon: LucideIcon;
   text: string;
 }
@@ -13,11 +14,10 @@ interface PricingPlanProps {
   price: string;
   priceDetail?: string;
   description?: string;
-  features: PricingFeature[];
   badge?: string;
   highlighted?: boolean;
-  ctaButton: ReactNode;
-  className?: string;
+  features: FeatureItem[];
+  ctaButton: React.ReactNode;
 }
 
 const PricingPlan: React.FC<PricingPlanProps> = ({
@@ -25,51 +25,49 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
   price,
   priceDetail,
   description,
-  features,
   badge,
   highlighted = false,
-  ctaButton,
-  className = ""
+  features,
+  ctaButton
 }) => {
   return (
-    <div 
-      className={`
-        ${highlighted ? 
-          'border-2 border-nutri-blue bg-gradient-to-br from-white to-blue-50 shadow-xl' : 
-          'border border-gray-200 bg-white shadow-md'
-        }
-        rounded-xl p-6 md:p-8 w-full flex flex-col relative ${className}
-      `}
-    >
+    <Card className={`relative glass-card smooth-lift ${highlighted ? 'border-nutri-blue border-2 gradient-bright-hover' : 'border-gray-200'} flex flex-col h-full transition-all duration-300 hover:shadow-xl magnetic-hover`}>
       {badge && (
-        <div className={`absolute -top-4 right-4 bg-nutri-green text-white text-xs px-3 py-1 rounded-full font-medium`}>
-          {badge}
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+          <Badge className="bg-nutri-green text-white px-4 py-1 font-semibold animate-pulse-soft">
+            {badge}
+          </Badge>
         </div>
       )}
-
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
-        <p className="text-nutri-blue text-2xl font-bold mt-4">
-          {price}
-          {priceDetail && <span className="text-base font-normal ml-1">{priceDetail}</span>}
-        </p>
-        {description && <p className="text-gray-500 mt-2">{description}</p>}
-      </div>
       
-      <ul className="space-y-3 mb-8 flex-grow">
-        {features.map((feature, index) => (
-          <PricingFeatureItem 
-            key={index}
-            icon={feature.icon}
-            text={feature.text}
-          />
-        ))}
-      </ul>
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="text-xl font-bold text-glow-hover">{title}</CardTitle>
+        <div className="mt-4">
+          <span className="text-4xl font-bold text-nutri-green dark:text-dark-accent-green">{price}</span>
+          {priceDetail && <span className="text-gray-600 dark:text-gray-400">{priceDetail}</span>}
+        </div>
+        {description && (
+          <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            {description}
+          </CardDescription>
+        )}
+      </CardHeader>
       
-      <div className="mt-auto">
+      <CardContent className="flex-grow">
+        <ul className="space-y-3">
+          {features.map((feature, index) => (
+            <li key={index} className="flex items-start gap-3 animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+              <feature.icon className="h-5 w-5 text-nutri-green dark:text-dark-accent-green mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-gray-700 dark:text-gray-300">{feature.text}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+      
+      <CardFooter className="pt-6">
         {ctaButton}
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 

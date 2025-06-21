@@ -208,37 +208,12 @@ const PatientProfile = () => {
           </CardContent>
         </Card>
 
-        {/* Medidas e Objetivos */}
+        {/* Objetivos */}
         <Card>
           <CardHeader>
-            <CardTitle>Medidas e Objetivos</CardTitle>
+            <CardTitle>Objetivos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {patient.measurements && typeof patient.measurements === 'object' && (
-              <>
-                {patient.measurements.weight && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Peso</label>
-                    <p className="text-sm">{patient.measurements.weight} kg</p>
-                  </div>
-                )}
-                
-                {patient.measurements.height && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Altura</label>
-                    <p className="text-sm">{patient.measurements.height} cm</p>
-                  </div>
-                )}
-                
-                {patient.measurements.imc && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">IMC</label>
-                    <p className="text-sm">{patient.measurements.imc}</p>
-                  </div>
-                )}
-              </>
-            )}
-            
             {patient.goals && typeof patient.goals === 'object' && (
               <>
                 {patient.goals.objective && (
@@ -255,6 +230,10 @@ const PatientProfile = () => {
                   </div>
                 )}
               </>
+            )}
+            
+            {(!patient.goals || Object.keys(patient.goals).length === 0) && (
+              <p className="text-sm text-gray-500">Nenhum objetivo definido</p>
             )}
           </CardContent>
         </Card>

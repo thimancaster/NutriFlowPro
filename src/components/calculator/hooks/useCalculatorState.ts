@@ -2,127 +2,77 @@
 import { useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { Patient } from '@/types';
-import { useToast } from '@/hooks/use-toast';
-import { calculateCompleteNutrition } from '@/utils/nutritionCalculations';
-import { mapProfileToCalculation } from '@/utils/nutrition/macroCalculations';
-import { stringToProfile } from '../utils/profileUtils';
-
-interface CalculatorFormData {
-  weight: number;
-  height: number;
-  age: number;
-  sex: 'M' | 'F';
-  activityLevel: string;
-  objective: string;
-  profile: Profile;
-  patientName?: string;
-}
-
-interface CalculationResults {
-  tmbValue: number;
-  teeObject: {
-    tmb: number;
-    get: number;
-    vet: number;
-    adjustment: number;
-  };
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number };
-    carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg: number;
-  };
-  calorieSummary: any;
-  formulaUsed: string;
-}
+import { useCalculatorForm } from './useCalculatorForm';
+import { useCalculatorResults } from './useCalculatorResults';
+import { useCalculatorActions } from './useCalculatorActions';
+import { useCalculatorSync } from './useCalculatorSync';
 
 const useCalculatorState = () => {
-  const [formData, setFormData] = useState<CalculatorFormData>({
-    weight: 65,
-    height: 160,
-    age: 49,
-    sex: 'F',
-    activityLevel: 'moderado',
-    objective: 'emagrecimento',
-    profile: 'eutrofico'
-  });
-
-  const [results, setResults] = useState<CalculationResults | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   const [activeTab, setActiveTab] = useState<'tmb' | 'activity' | 'results'>('tmb');
+  
+  const {
+    formData,
+    handleInputChange,
+    handleProfileChange,
+    resetForm,
+    weight,
+    height,
+    age,
+    sex,
+    activityLevel,
+    objective,
+    profile,
+    patientName
+  } = useCalculatorForm();
 
-  const { toast } = useToast();
+  const {
+    results,
+    isCalculating,
+    showResults,
+    setIsCalculating,
+    setResults,
+    setShowResults,
+    resetResults,
+    tmbValue,
+    teeObject,
+    macros,
+    calorieSummary,
+    formulaUsed
+  } = useCalculatorResults();
 
-  // Sync patient data when it changes
-  useEffect(() => {
-    const savedState = localStorage.getItem('calculatorState');
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        setFormData(prev => ({
-          ...prev,
-          ...parsed,
-          profile: stringToProfile(parsed.profile)
-        }));
-      } catch (error) {
-        console.error('Error loading saved state:', error);
-      }
-    }
-  }, []);
+  const { validateAndCalculate } = useCalculatorActions();
+  const { syncPatientData } = useCalculatorSync();
 
-  // Save state to localStorage
-  useEffect(() => {
-    localStorage.setItem('calculatorState', JSON.stringify(formData));
-  }, [formData]);
-
-  const handleInputChange = (field: keyof CalculatorFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    setShowResults(false);
-  };
-
-  const handleProfileChange = (profile: Profile) => {
-    setFormData(prev => ({
-      ...prev,
+  const handleCalculateWrapper = async () => {
+    console.log('=== INICIANDO CÁLCULO ===');
+    console.log('Dados do formulário:', {
+      weight: Number(weight),
+      height: Number(height),
+      age: Number(age),
+      sex,
+      activityLevel,
+      objective,
       profile
-    }));
-    setShowResults(false);
-  };
-
-  const handleCalculate = async () => {
-    // Validation
-    if (!formData.weight || !formData.height || !formData.age) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha peso, altura e idade para continuar.",
-        variant: "destructive"
-      });
-      return;
-    }
+    });
 
     setIsCalculating(true);
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // UI feedback
+    const calculationParams = {
+      weight: Number(weight),
+      height: Number(height),
+      age: Number(age),
+      sex,
+      activityLevel,
+      objective,
+      profile
+    };
 
-      // Map profile to calculation type
-      const mappedProfile = mapProfileToCalculation(formData.profile);
+    const nutritionResults = await validateAndCalculate(calculationParams);
+    
+    if (nutritionResults) {
+      console.log('Resultados do cálculo:', nutritionResults);
       
-      // Remove await - calculateCompleteNutrition returns object directly, not Promise
-      const nutritionResults = calculateCompleteNutrition(
-        formData.weight,
-        formData.height,
-        formData.age,
-        formData.sex,
-        formData.activityLevel as any,
-        formData.objective as any,
-        mappedProfile
-      );
-
-      const calculationResults: CalculationResults = {
+      const calculationResults = {
         tmbValue: nutritionResults.tmb,
         teeObject: {
           tmb: nutritionResults.tmb,
@@ -134,7 +84,7 @@ const useCalculatorState = () => {
           protein: nutritionResults.macros.protein,
           carbs: nutritionResults.macros.carbs,
           fat: nutritionResults.macros.fat,
-          proteinPerKg: nutritionResults.macros.proteinPerKg
+          proteinPerKg: nutritionResults.proteinPerKg
         },
         calorieSummary: {
           totalCalories: nutritionResults.vet,
@@ -142,75 +92,60 @@ const useCalculatorState = () => {
           carbsCalories: nutritionResults.macros.carbs.kcal,
           fatCalories: nutritionResults.macros.fat.kcal
         },
-        formulaUsed: nutritionResults.formulaUsed || 'Harris-Benedict Revisada'
+        formulaUsed: nutritionResults.formulaUsed
       };
 
       setResults(calculationResults);
       setShowResults(true);
       setActiveTab('results');
-
-      toast({
-        title: "Cálculo realizado com sucesso",
-        description: `Utilizada fórmula: ${nutritionResults.formulaUsed || 'Harris-Benedict Revisada'}`,
-      });
-
-    } catch (error) {
-      console.error('Calculation error:', error);
-      toast({
-        title: "Erro no cálculo",
-        description: "Ocorreu um erro ao realizar os cálculos. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCalculating(false);
+      console.log('=== CÁLCULO CONCLUÍDO COM SUCESSO ===');
+    } else {
+      console.error('=== FALHA NO CÁLCULO ===');
     }
+
+    setIsCalculating(false);
   };
 
   const handleReset = () => {
-    setFormData({
-      weight: 65,
-      height: 160,
-      age: 49,
-      sex: 'F',
-      activityLevel: 'moderado',
-      objective: 'emagrecimento',
-      profile: 'eutrofico'
-    });
-    setResults(null);
-    setShowResults(false);
+    console.log('=== RESETANDO CALCULADORA ===');
+    resetForm();
+    resetResults();
     setActiveTab('tmb');
-    localStorage.removeItem('calculatorState');
   };
 
-  const syncPatientData = (patient: Patient) => {
-    setFormData(prev => ({
-      ...prev,
-      patientName: patient.name,
-      weight: (patient as any).weight || prev.weight,
-      height: (patient as any).height || prev.height,
-      age: (patient as any).age || prev.age,
-      sex: (patient.gender === 'male' ? 'M' : 'F') as 'M' | 'F'
-    }));
+  const handleSyncPatientData = (patient: Patient) => {
+    console.log('=== SINCRONIZANDO DADOS DO PACIENTE ===', patient);
+    const currentData = { patientName, weight, height, age, sex };
+    syncPatientData(patient, currentData, handleInputChange);
   };
 
-  // Return all the values and functions
+  // Compatibility methods
+  const setSex = (sex: 'M' | 'F') => handleInputChange('sex', sex);
+  const setActivityLevel = (level: string) => handleInputChange('activityLevel', level);
+  const setObjective = (objective: string) => handleInputChange('objective', objective);
+
+  // Debug effect para monitorar mudanças no profile
+  useEffect(() => {
+    console.log('Profile changed:', profile);
+  }, [profile]);
+
   return {
     // Form data
-    weight: formData.weight,
-    height: formData.height,
-    age: formData.age,
-    sex: formData.sex,
-    activityLevel: formData.activityLevel,
-    objective: formData.objective,
-    profile: formData.profile,
-    patientName: formData.patientName,
+    weight,
+    height,
+    age,
+    sex,
+    activityLevel,
+    objective,
+    profile,
+    patientName,
     
     // Results
-    tmbValue: results?.tmbValue || null,
-    teeObject: results?.teeObject || null,
-    macros: results?.macros || null,
-    calorieSummary: results?.calorieSummary || null,
-    formulaUsed: results?.formulaUsed,
+    tmbValue,
+    teeObject,
+    macros,
+    calorieSummary,
+    formulaUsed,
     
     // UI State
     showResults,
@@ -220,15 +155,15 @@ const useCalculatorState = () => {
     // Actions
     handleInputChange,
     handleProfileChange,
-    handleCalculate,
+    handleCalculate: handleCalculateWrapper,
     handleReset,
     setActiveTab,
-    syncPatientData,
+    syncPatientData: handleSyncPatientData,
     
     // Compatibility methods
-    setSex: (sex: 'M' | 'F') => handleInputChange('sex', sex),
-    setActivityLevel: (level: string) => handleInputChange('activityLevel', level),
-    setObjective: (objective: string) => handleInputChange('objective', objective)
+    setSex,
+    setActivityLevel,
+    setObjective
   };
 };
 

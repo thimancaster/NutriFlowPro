@@ -7,72 +7,43 @@ import { ENPCalculationValidator } from '../validation/ENPCalculationValidator';
 import { ENPResultsPanel } from '../ENPResultsPanel';
 import ENPCalculatorActions from './ENPCalculatorActions';
 import CalculatorActions from '../CalculatorActions';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import GERFormulaSelection from '../inputs/GERFormulaSelection';
+import { useENPCalculator } from '@/contexts/calculator/ENPCalculatorContext';
+import { GERFormula } from '@/types/gerFormulas';
 
-interface ENPCalculatorFormProps {
-  // Form state
-  weight: string;
-  setWeight: (value: string) => void;
-  height: string;
-  setHeight: (value: string) => void;
-  age: string;
-  setAge: (value: string) => void;
-  sex: 'M' | 'F';
-  setSex: (value: 'M' | 'F') => void;
-  activityLevel: ActivityLevel;
-  setActivityLevel: (value: ActivityLevel) => void;
-  objective: Objective;
-  setObjective: (value: Objective) => void;
-  
-  // Validation and calculation
-  validatedData: {
-    weight: number;
-    height: number;
-    age: number;
-    sex: 'M' | 'F';
-    activityLevel: ActivityLevel;
-    objective: Objective;
-  };
-  isValid: boolean;
-  onCalculate: () => Promise<void>;
-  
-  // Calculator state
-  isCalculating: boolean;
-  error: string | null;
-  results: any;
-  onExportResults: () => void;
-}
+export const ENPCalculatorForm: React.FC = () => {
+  const {
+    // Estado e setters para ENPDataInputs
+    weight, setWeight, height, setHeight, age, setAge, sex, setSex,
+    activityLevel, setActivityLevel, objective, setObjective, profile, setProfile,
+    bodyFatPercentage, setBodyFatPercentage, gerFormula, setGERFormula,
+    
+    // Dados validados e de validação
+    validatedData, isValid, validationErrors, validationWarnings,
+    
+    // Ações e estado do cálculo
+    handleCalculate, isCalculating, error, results, handleExportResults, handleReset,
+  } = useENPCalculator();
 
-export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
-  weight,
-  setWeight,
-  height,
-  setHeight,
-  age,
-  setAge,
-  sex,
-  setSex,
-  activityLevel,
-  setActivityLevel,
-  objective,
-  setObjective,
-  validatedData,
-  isValid,
-  onCalculate,
-  isCalculating,
-  error,
-  results,
-  onExportResults
-}) => {
   const handleGenerateMealPlan = () => {
-    // This will be implemented by the parent component
     console.log('Generate meal plan clicked');
   };
+  
+  const transformedResults = results ? {
+    tmb: results.tmb,
+    get: results.gea,
+    vet: results.get,
+    adjustment: results.get - results.gea,
+    macros: {
+      protein: { grams: results.macros.protein.grams, kcal: results.macros.protein.kcal },
+      carbs: { grams: results.macros.carbs.grams, kcal: results.macros.carbs.kcal },
+      fat: { grams: results.macros.fat.grams, kcal: results.macros.fat.kcal },
+    },
+  } : null;
 
-  const handleReset = () => {
-    // This will be implemented by the parent component
-    console.log('Reset clicked');
-  };
+  // Transform validation errors and warnings to string arrays
+  const errorMessages = validationErrors.map(error => error.message);
+  const warningMessages = validationWarnings.map(warning => warning.message);
 
   return (
     <Tabs defaultValue="calculator" className="w-full">
@@ -82,7 +53,6 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
       </TabsList>
       
       <TabsContent value="calculator" className="space-y-6">
-        {/* Inputs de dados */}
         <ENPDataInputs
           weight={weight}
           setWeight={setWeight}
@@ -96,43 +66,57 @@ export const ENPCalculatorForm: React.FC<ENPCalculatorFormProps> = ({
           setActivityLevel={setActivityLevel}
           objective={objective}
           setObjective={setObjective}
+          profile={profile}
+          setProfile={setProfile}
+          bodyFatPercentage={bodyFatPercentage}
+          setBodyFatPercentage={setBodyFatPercentage}
         />
         
-        {/* Validação */}
-        <ENPValidation data={validatedData} />
+        <GERFormulaSelection
+          selectedFormula={gerFormula}
+          onFormulaChange={(value) => setGERFormula(value as GERFormula)}
+          profile={profile}
+          hasBodyFat={!!validatedData.bodyFatPercentage}
+          age={validatedData.age}
+          weight={validatedData.weight}
+          height={validatedData.height}
+        />
+
+        <ENPValidation errors={errorMessages} warnings={warningMessages} />
         
-        {/* Botão de cálculo - only show if no results yet */}
         {!results && (
           <CalculatorActions
             isCalculating={isCalculating}
-            calculateResults={onCalculate}
+            calculateResults={handleCalculate}
+            disabled={!isValid}
           />
         )}
         
-        {/* Show error if exists */}
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-600 text-sm font-medium">{error}</p>
           </div>
         )}
         
-        {/* Resultados ENP */}
-        {results && (
-          <ENPResultsPanel
-            results={results}
-            weight={validatedData.weight}
-            onExportResults={onExportResults}
-          />
-        )}
-
-        {/* ENP Calculator Actions - only show when we have results */}
-        {results && (
-          <ENPCalculatorActions
-            results={results}
-            onExport={onExportResults}
-            onGenerateMealPlan={handleGenerateMealPlan}
-            onReset={handleReset}
-          />
+        {results && transformedResults && (
+          <>
+            {results.gerFormulaName && (
+              <div className="text-sm text-center text-gray-700 bg-gray-50 p-3 rounded-md border">
+                Cálculo de TMB realizado com a fórmula: <strong>{results.gerFormulaName}</strong>
+              </div>
+            )}
+            <ENPResultsPanel
+              results={transformedResults}
+              weight={validatedData.weight}
+              onExportResults={handleExportResults}
+            />
+            <ENPCalculatorActions
+              results={results}
+              onExport={handleExportResults}
+              onGenerateMealPlan={handleGenerateMealPlan}
+              onReset={handleReset}
+            />
+          </>
         )}
       </TabsContent>
       

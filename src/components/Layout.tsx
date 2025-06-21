@@ -1,3 +1,4 @@
+
 import React from "react";
 import {Link, useLocation} from "react-router-dom";
 import {useAuth} from "@/contexts/auth/AuthContext";
@@ -58,38 +59,38 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 
 	return (
 		<ThemeProvider>
-			<div className="flex flex-col min-h-screen bg-background dark:bg-dark-bg-primary">
+			<div className="flex flex-col min-h-screen bg-background text-foreground">
 				<TourGuide />
 
-				{/* Header aprimorado com glass effect */}
-				<header className="border-b border-border bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80 dark:border-dark-border-primary sticky top-0 z-50">
+				{/* Header com backdrop blur */}
+				<header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
 					<div className="container mx-auto px-4 flex justify-between items-center h-16">
 						<div className="flex items-center">
-							<Link to="/dashboard" className="flex items-center nutri-brand group">
-								<span className="text-nutri-green nutri-text transition-colors duration-200 group-hover:text-nutri-green-light dark:text-dark-accent-green">
+							<Link to="/dashboard" className="flex items-center group">
+								<span className="text-green-500 transition-colors duration-200 group-hover:text-green-400 font-bold text-xl">
 									Nutri
 								</span>
-								<span className="text-nutri-blue flow-text transition-colors duration-200 group-hover:text-nutri-blue-light">
+								<span className="text-blue-500 transition-colors duration-200 group-hover:text-blue-400 font-bold text-xl">
 									Flow
 								</span>
-								<span className="text-muted-foreground pro-text ml-1 dark:text-dark-text-muted">
+								<span className="text-blue-500 transition-colors duration-200 group-hover:text-blue-400 font-bold text-xl ml-1">
 									Pro
 								</span>
 							</Link>
 						</div>
 
 						<div className="flex items-center gap-4">
-							{/* Navigation melhorada */}
+							{/* Navigation */}
 							<nav className="hidden md:flex space-x-2">
 								{navigation.map((item) => (
 									<Link
 										key={item.name}
 										to={item.href}
 										className={cn(
-											"text-sm font-medium transition-all duration-200 hover:text-primary px-3 py-2 rounded-md relative overflow-hidden",
+											"text-sm font-medium transition-all duration-200 px-3 py-2 rounded-md",
 											isActive(item.href, item.exact)
-												? "text-primary bg-primary/10 shadow-sm dark:bg-dark-accent-green/10 dark:text-dark-accent-green"
-												: "text-muted-foreground hover:bg-gray-100 dark:text-dark-text-muted dark:hover:bg-dark-bg-elevated/60",
+												? "text-primary bg-primary/10 shadow-sm"
+												: "text-muted-foreground hover:text-foreground hover:bg-accent",
 											item.className
 										)}>
 										<span className="relative z-10">{item.name}</span>
@@ -97,51 +98,51 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 								))}
 							</nav>
 
-							{/* User Menu aprimorado */}
+							{/* User Menu */}
 							{user && (
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<Button
 											variant="ghost"
-											className="relative h-8 w-8 rounded-full hover-scale">
-											<Avatar className="h-8 w-8 avatar-enhanced">
+											className="relative h-8 w-8 rounded-full transition-transform duration-200 hover:scale-110">
+											<Avatar className="h-8 w-8">
 												<AvatarImage
 													src={user.user_metadata?.avatar_url || ""}
 													alt={user.email || ""}
 												/>
-												<AvatarFallback className="bg-gradient-to-br from-nutri-green/20 to-nutri-blue/20 dark:bg-dark-bg-elevated dark:text-dark-text-primary">
+												<AvatarFallback className="bg-primary/20 text-primary">
 													{user.email?.charAt(0).toUpperCase()}
 												</AvatarFallback>
 											</Avatar>
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent
-										className="w-56 dropdown-content glass-effect"
+										className="w-56 bg-popover text-popover-foreground border border-border shadow-lg z-50"
 										align="end"
 										forceMount>
 										<DropdownMenuLabel className="font-normal">
 											<div className="flex flex-col space-y-1">
-												<p className="text-sm font-medium leading-none text-foreground dark:text-dark-text-primary">
+												<p className="text-sm font-medium leading-none text-foreground">
 													{user.user_metadata?.name || user.email}
 												</p>
-												<p className="text-xs leading-none text-muted-foreground dark:text-dark-text-muted">
+												<p className="text-xs leading-none text-muted-foreground">
 													{user.email}
 												</p>
 											</div>
 										</DropdownMenuLabel>
-										<DropdownMenuSeparator className="border-border dark:border-dark-border-primary" />
+										<DropdownMenuSeparator className="border-border" />
 										<DropdownMenuItem asChild>
 											<Link
 												to="/profile"
-												className="cursor-pointer text-foreground hover:bg-accent dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200">
+												className="cursor-pointer text-foreground hover:bg-accent transition-colors duration-200">
 												<User className="mr-2 h-4 w-4" />
 												<span>Perfil</span>
 											</Link>
 										</DropdownMenuItem>
-										<DropdownMenuSeparator className="border-border dark:border-dark-border-primary" />
+										<DropdownMenuSeparator className="border-border" />
 										<DropdownMenuItem
 											onClick={handleSignOut}
-											className="cursor-pointer text-foreground hover:bg-accent dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-colors duration-200">
+											className="cursor-pointer text-foreground hover:bg-accent transition-colors duration-200">
 											<LogOut className="mr-2 h-4 w-4" />
 											<span>Sair</span>
 										</DropdownMenuItem>
@@ -149,11 +150,11 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 								</DropdownMenu>
 							)}
 
-							{/* Mobile menu button aprimorado */}
+							{/* Mobile menu button */}
 							<Button
 								variant="ghost"
 								size="icon"
-								className="md:hidden text-foreground hover:bg-accent dark:text-dark-text-primary dark:hover:bg-dark-bg-elevated/60 transition-all duration-200 hover-scale"
+								className="md:hidden text-foreground hover:bg-accent transition-all duration-200 hover:scale-105"
 								onClick={toggleMobileMenu}>
 								{mobileMenuOpen ? (
 									<X className="h-6 w-6" />
@@ -162,24 +163,24 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 								)}
 							</Button>
 
-							{/* Theme toggle aprimorado */}
+							{/* Theme toggle */}
 							<ThemeToggle />
 						</div>
 					</div>
 
-					{/* Mobile Navigation aprimorada */}
+					{/* Mobile Navigation */}
 					{mobileMenuOpen && (
-						<div className="md:hidden py-4 px-4 border-t border-border bg-background/95 backdrop-blur-md dark:bg-dark-bg-secondary/95 dark:border-dark-border-primary">
+						<div className="md:hidden py-4 px-4 border-t border-border bg-background/95 backdrop-blur-md">
 							<nav className="flex flex-col space-y-2">
 								{navigation.map((item) => (
 									<Link
 										key={item.name}
 										to={item.href}
 										className={cn(
-											"text-sm font-medium transition-all duration-200 hover:text-primary p-3 rounded-md",
+											"text-sm font-medium transition-all duration-200 p-3 rounded-md",
 											isActive(item.href, item.exact)
-												? "bg-primary/10 text-primary dark:bg-dark-accent-green/10 dark:text-dark-accent-green"
-												: "text-muted-foreground hover:bg-gray-100 dark:text-dark-text-muted dark:hover:bg-dark-bg-elevated/60",
+												? "bg-primary/10 text-primary"
+												: "text-muted-foreground hover:text-foreground hover:bg-accent",
 											item.className
 										)}
 										onClick={() => setMobileMenuOpen(false)}>
@@ -191,18 +192,18 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 					)}
 				</header>
 
-				{/* Main content com gradiente sutil */}
-				<main className="flex-1 bg-background dark:bg-dark-bg-primary">
+				{/* Main content */}
+				<main className="flex-1 bg-background">
 					<div className="container mx-auto px-4 py-6">
 						<BreadcrumbNav />
 						{children}
 					</div>
 				</main>
 
-				{/* Footer refinado */}
-				<footer className="border-t border-border py-6 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-md dark:bg-dark-bg-primary/80 dark:border-dark-border-primary">
+				{/* Footer */}
+				<footer className="border-t border-border py-6 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-md">
 					<div className="container mx-auto px-4">
-						<p className="text-muted-foreground dark:text-dark-text-muted">
+						<p className="text-muted-foreground">
 							© {new Date().getFullYear()} NutriFlow Pro. Todos os direitos
 							reservados.
 						</p>

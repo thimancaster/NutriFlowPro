@@ -1,31 +1,69 @@
 
-/* Componentes de cards e elementos visuais */
+/* Componentes de cards - Modern App Dashboard */
 @layer components {
-  /* Cards com hierarquia visual refinada */
+  /* Cards com hierarquia visual - Modern App Dashboard */
   .nutri-card {
     @apply rounded-xl shadow-lg bg-card p-6 transition-all duration-300 hover:shadow-xl border backdrop-blur-sm;
   }
 
   .dark .nutri-card {
-    @apply bg-dark-bg-card border-dark-border-primary shadow-dark-lg hover:shadow-dark-xl;
-    background: linear-gradient(135deg, theme('colors.dark.bg.card') 0%, theme('colors.dark.bg.elevated') 100%);
+    background: linear-gradient(135deg, #212121 0%, #065464 100%);
+    border-color: #7a7d84;
+    box-shadow: 0 10px 25px rgba(33, 33, 33, 0.5), 0 0 20px rgba(52, 172, 188, 0.08);
   }
 
-  /* Cards premium com gradientes */
+  /* Cards premium com gradientes Modern App Dashboard */
   .dark-premium-card {
-    @apply border-dark-border-accent;
-    background: linear-gradient(135deg, theme('colors.dark.bg.elevated') 0%, theme('colors.dark.bg.surface') 100%);
-    box-shadow: 0 0 30px rgba(34, 211, 170, 0.1);
+    background: linear-gradient(135deg, #065464 0%, #34acbc 100%);
+    border-color: #7a7d84;
+    box-shadow: 0 0 30px rgba(52, 172, 188, 0.15), 0 10px 25px rgba(33, 33, 33, 0.6);
   }
 
   .dark-dashboard-hero {
-    @apply border-dark-border-accent;
-    background: linear-gradient(135deg, rgba(34, 211, 170, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(52, 172, 188, 0.08) 0%, rgba(6, 84, 100, 0.12) 100%);
+    border-color: #7a7d84;
+    backdrop-filter: blur(10px);
   }
 
-  /* Cards de depoimento */
+  /* Cards de depoimento com Modern App Dashboard */
   .dark-testimonial-card {
-    @apply bg-dark-bg-card border-dark-border-subtle shadow-dark-lg backdrop-blur-sm;
-    background: linear-gradient(135deg, theme('colors.dark.bg.card') 0%, theme('colors.dark.bg.elevated') 100%);
+    background: linear-gradient(135deg, #212121 0%, #065464 100%);
+    border-color: #7a7d84;
+    box-shadow: 0 8px 20px rgba(33, 33, 33, 0.4);
+  }
+
+  /* Glass effect com nova paleta */
+  .glass-effect {
+    @apply backdrop-blur-md;
+    background: rgba(6, 84, 100, 0.8);
+    border: 1px solid rgba(122, 125, 132, 0.3);
+  }
+
+  /* Hover states mais sofisticados */
+  .dark .nutri-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(33, 33, 33, 0.6), 0 0 25px rgba(52, 172, 188, 0.15);
+  }
+
+  /* Melhorias específicas para tabs com Modern App Dashboard */
+  .dark .tabs-list {
+    background-color: #065464;
+    border-color: #7a7d84;
+  }
+
+  .dark .tabs-trigger {
+    color: #7a7d84;
+    transition: all 0.2s ease;
+  }
+
+  .dark .tabs-trigger:hover {
+    color: #85c3cf;
+    background-color: rgba(52, 172, 188, 0.1);
+  }
+
+  .dark .tabs-trigger[data-state="active"] {
+    background-color: #34acbc;
+    color: #212121;
+    box-shadow: 0 2px 8px rgba(52, 172, 188, 0.3);
   }
 }

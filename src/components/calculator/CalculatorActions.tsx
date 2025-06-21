@@ -6,16 +6,17 @@ import { Calculator, Loader2 } from 'lucide-react';
 interface CalculatorActionsProps {
   isCalculating: boolean;
   calculateResults: () => void;
+  disabled?: boolean;
 }
 
-const CalculatorActions = ({ isCalculating, calculateResults }: CalculatorActionsProps) => {
+const CalculatorActions = ({ isCalculating, calculateResults, disabled }: CalculatorActionsProps) => {
   return (
     <div className="flex justify-center">
       <Button 
         onClick={calculateResults} 
         variant="primary"
         animation="shimmer"
-        disabled={isCalculating}
+        disabled={isCalculating || disabled}
         className="flex items-center gap-2 w-full max-w-md"
         size="lg"
       >

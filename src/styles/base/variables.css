@@ -11,7 +11,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 142 70% 45%;
+    --primary: 142 70% 45%; /* Verde NutriFlow */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 20% 96%;
@@ -28,9 +28,17 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 142 70% 45%;
+    --ring: 142 70% 45%; /* Verde NutriFlow para focus */
 
     --radius: 0.5rem;
+
+    /* Cores específicas do NutriFlow */
+    --nutri-green: 142 70% 45%;
+    --nutri-green-light: 142 60% 55%;
+    --nutri-green-dark: 142 80% 35%;
+    --nutri-blue: 217 91% 60%;
+    --nutri-blue-light: 217 80% 70%;
+    --nutri-blue-dark: 217 91% 50%;
 
     --sidebar-background: 142 70% 45%;
     --sidebar-foreground: 0 0% 100%;

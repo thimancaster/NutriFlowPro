@@ -14,10 +14,10 @@ interface ConsultationContextType {
   setCurrentStep: (step: ConsultationStep) => void;
   isConsultationActive: boolean;
   clearConsultation: () => void;
-  mealPlan: any; // Add this property
+  mealPlan: any;
 }
 
-const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
+export const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
 
 export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
@@ -43,7 +43,7 @@ export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({
         setCurrentStep,
         isConsultationActive: !!activePatient,
         clearConsultation,
-        mealPlan: null // Add this property
+        mealPlan: null
       }}
     >
       {children}

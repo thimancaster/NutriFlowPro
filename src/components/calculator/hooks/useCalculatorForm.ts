@@ -1,100 +1,96 @@
 
-import { useState } from 'react';
-import { CalculatorState } from '../types';
-import { getInitialCalculatorState } from '../utils/initialState';
-
 /**
- * Hook to manage calculator form state - always starts with empty fields
+ * Form state management for calculator
  */
-export const useCalculatorForm = () => {
-  // Always start with empty initial state
-  const [calculatorState, setCalculatorState] = useState<CalculatorState>(getInitialCalculatorState);
-  
-  // Destructure state values for easier access
-  const {
-    patientName,
-    gender,
-    age,
-    weight,
-    height,
-    objective,
-    activityLevel,
-    consultationType,
-    profile,
-    carbsPercentage,
-    proteinPercentage,
-    fatPercentage
-  } = calculatorState;
-  
-  // Setter functions for each state property
-  const setPatientName = (value: string) => setCalculatorState(prev => ({ ...prev, patientName: value }));
-  const setGender = (value: "male" | "female") => setCalculatorState(prev => ({ ...prev, gender: value }));
-  const setAge = (value: string) => setCalculatorState(prev => ({ ...prev, age: value }));
-  const setWeight = (value: string) => setCalculatorState(prev => ({ ...prev, weight: value }));
-  const setHeight = (value: string) => setCalculatorState(prev => ({ ...prev, height: value }));
-  const setObjective = (value: string) => setCalculatorState(prev => ({ ...prev, objective: value }));
-  const setActivityLevel = (value: string) => setCalculatorState(prev => ({ ...prev, activityLevel: value }));
-  const setCarbsPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, carbsPercentage: value }));
-  const setProteinPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, proteinPercentage: value }));
-  const setFatPercentage = (value: string) => setCalculatorState(prev => ({ ...prev, fatPercentage: value }));
-  const setProfile = (value: string) => setCalculatorState(prev => ({ ...prev, profile: value }));
-  const setConsultationType = (value: 'primeira_consulta' | 'retorno') => 
-    setCalculatorState(prev => ({ ...prev, consultationType: value }));
 
-  // Reset function to clear all fields
-  const resetForm = () => {
-    setCalculatorState(getInitialCalculatorState());
-    // Clear all localStorage entries related to calculator
-    localStorage.removeItem('calculatorState');
-    localStorage.removeItem('calculatorFormState');
-    localStorage.removeItem('calculatorResults');
+import { useState, useEffect } from 'react';
+import { Profile } from '@/types/consultation';
+import { stringToProfile } from '../utils/profileUtils';
+
+export interface CalculatorFormData {
+  weight: number;
+  height: number;
+  age: number;
+  sex: 'M' | 'F';
+  activityLevel: string;
+  objective: string;
+  profile: Profile;
+  patientName?: string;
+}
+
+export const useCalculatorForm = () => {
+  const [formData, setFormData] = useState<CalculatorFormData>({
+    weight: 65,
+    height: 160,
+    age: 49,
+    sex: 'F',
+    activityLevel: 'moderado',
+    objective: 'emagrecimento',
+    profile: 'eutrofico'
+  });
+
+  // Load saved state
+  useEffect(() => {
+    const savedState = localStorage.getItem('calculatorState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        setFormData(prev => ({
+          ...prev,
+          ...parsed,
+          profile: stringToProfile(parsed.profile)
+        }));
+      } catch (error) {
+        console.error('Error loading saved state:', error);
+      }
+    }
+  }, []);
+
+  // Save state to localStorage
+  useEffect(() => {
+    localStorage.setItem('calculatorState', JSON.stringify(formData));
+  }, [formData]);
+
+  const handleInputChange = (field: keyof CalculatorFormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  // Optional function to populate from patient data (manual action)
-  const populateFromPatient = (patientData: any) => {
-    if (patientData) {
-      setCalculatorState(prev => ({
-        ...prev,
-        patientName: patientData.name || '',
-        weight: patientData.weight?.toString() || '',
-        height: patientData.height?.toString() || '',
-        age: patientData.age?.toString() || '',
-        gender: patientData.gender === 'male' ? 'male' : 'female'
-      }));
-    }
+  const handleProfileChange = (profile: Profile) => {
+    setFormData(prev => ({
+      ...prev,
+      profile
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      weight: 65,
+      height: 160,
+      age: 49,
+      sex: 'F',
+      activityLevel: 'moderado',
+      objective: 'emagrecimento',
+      profile: 'eutrofico'
+    });
+    localStorage.removeItem('calculatorState');
   };
 
   return {
-    // State values
-    patientName,
-    gender,
-    age,
-    weight,
-    height,
-    objective,
-    activityLevel,
-    consultationType,
-    profile,
-    carbsPercentage,
-    proteinPercentage,
-    fatPercentage,
-    
-    // Setters
-    setPatientName,
-    setGender,
-    setAge,
-    setWeight,
-    setHeight,
-    setObjective,
-    setActivityLevel,
-    setCarbsPercentage,
-    setProteinPercentage,
-    setFatPercentage,
-    setProfile,
-    setConsultationType,
-    
-    // Actions
+    formData,
+    handleInputChange,
+    handleProfileChange,
     resetForm,
-    populateFromPatient
+    // Individual field accessors for compatibility
+    weight: formData.weight,
+    height: formData.height,
+    age: formData.age,
+    sex: formData.sex,
+    activityLevel: formData.activityLevel,
+    objective: formData.objective,
+    profile: formData.profile,
+    patientName: formData.patientName
   };
 };

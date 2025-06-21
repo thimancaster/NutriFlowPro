@@ -2,9 +2,51 @@
 import React from 'react';
 import { ENPCalculatorHeader } from './enp/ENPCalculatorHeader';
 import { ENPCalculatorForm } from './enp/ENPCalculatorForm';
-import { useENPCalculatorLogic } from './enp/ENPCalculatorLogic';
 import PatientHistoryLoader from './components/PatientHistoryLoader';
 import { usePatient } from '@/contexts/patient/PatientContext';
+import { ENPCalculatorProvider, useENPCalculator } from '@/contexts/calculator/ENPCalculatorContext';
+import { ActivityLevel, Objective } from '@/types/consultation';
+
+/**
+ * Um componente intermediário para carregar dados do histórico do paciente 
+ * e preencher o estado do formulário através do contexto.
+ */
+const PatientDataLoader = () => {
+  const { 
+    setWeight, 
+    setHeight, 
+    setAge, 
+    setSex, 
+    setActivityLevel, 
+    setObjective 
+  } = useENPCalculator();
+  const { activePatient } = usePatient();
+
+  const handlePatientDataLoaded = (data: {
+    weight: string;
+    height: string;
+    age: string;
+    gender: 'male' | 'female';
+    activityLevel: string;
+    objective: string;
+  }) => {
+    setWeight(data.weight);
+    setHeight(data.height);
+    setAge(data.age);
+    setSex(data.gender === 'male' ? 'M' : 'F');
+    setActivityLevel(data.activityLevel as ActivityLevel);
+    setObjective(data.objective as Objective);
+  };
+
+  if (!activePatient) return null;
+
+  return (
+    <PatientHistoryLoader
+      patientId={activePatient.id}
+      onDataLoaded={handlePatientDataLoaded}
+    />
+  );
+};
 
 interface ENPCalculatorInterfaceProps {
   onCalculationComplete?: (results: any) => void;
@@ -13,50 +55,15 @@ interface ENPCalculatorInterfaceProps {
 }
 
 export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
-  onCalculationComplete,
-  onGenerateMealPlan,
-  onExportResults
+  onExportResults,
 }) => {
-  const { activePatient } = usePatient();
-  const calculatorLogic = useENPCalculatorLogic();
-  
-  const handlePatientDataLoaded = (data: {
-    weight: string;
-    height: string;
-    age: string;
-    gender: 'male' | 'female';
-    activityLevel: string;
-    objective: string;
-    consultationType: 'primeira_consulta' | 'retorno';
-  }) => {
-    // Carregar dados da última consulta nos campos do formulário
-    calculatorLogic.setWeight(data.weight);
-    calculatorLogic.setHeight(data.height);
-    calculatorLogic.setAge(data.age);
-    calculatorLogic.setSex(data.gender === 'male' ? 'M' : 'F');
-    calculatorLogic.setActivityLevel(data.activityLevel as any);
-    calculatorLogic.setObjective(data.objective as any);
-  };
-  
   return (
-    <div className="space-y-6">
-      {/* Carregador de histórico do paciente */}
-      {activePatient && (
-        <PatientHistoryLoader
-          patientId={activePatient.id}
-          onDataLoaded={handlePatientDataLoaded}
-        />
-      )}
-      
-      {/* Informações sobre ENP */}
-      <ENPCalculatorHeader />
-      
-      {/* Formulário principal */}
-      <ENPCalculatorForm
-        {...calculatorLogic}
-        onCalculate={calculatorLogic.handleCalculate}
-        onExportResults={onExportResults || calculatorLogic.handleExportResults}
-      />
-    </div>
+    <ENPCalculatorProvider onExportResults={onExportResults}>
+      <div className="space-y-6">
+        <PatientDataLoader />
+        <ENPCalculatorHeader />
+        <ENPCalculatorForm />
+      </div>
+    </ENPCalculatorProvider>
   );
 };

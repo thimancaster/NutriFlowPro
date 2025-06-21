@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
-import { calculateCompleteNutrition, mapProfileToCalculation } from '@/utils/nutritionCalculations';
+import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
+import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
 
 const initialState: CalculatorState = {
   weight: 0,
@@ -76,17 +77,25 @@ export const useCalculatorState = () => {
           return;
         }
         
-        // Map profile to calculation type before calling the function
-        const mappedProfile = mapProfileToCalculation(state.profile);
+        // Normalizar profile usando funções de conversão
+        const normalizedProfile = stringToProfile(state.profile);
+        const legacyProfile = profileToLegacy(normalizedProfile);
         
-        const results = calculateCompleteNutrition(
+        console.log('Profile conversion in calculator:', {
+          original: state.profile,
+          normalized: normalizedProfile,
+          legacy: legacyProfile
+        });
+        
+        // Use the legacy function with correct signature (7 parameters)
+        const results = calculateCompleteNutritionLegacy(
           state.weight,
           state.height,
           state.age,
           state.sex,
           state.activityLevel as any,
           state.objective as any,
-          mappedProfile
+          legacyProfile
         );
         
         setState(prev => ({
@@ -103,7 +112,7 @@ export const useCalculatorState = () => {
         
         toast({
           title: "Cálculo Realizado",
-          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed || 'Harris-Benedict Revisada'}`,
+          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed}`,
         });
         
       } catch (error) {

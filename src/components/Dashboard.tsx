@@ -8,7 +8,7 @@ import DashboardTestimonials from './DashboardTestimonials';
 import ConsultationHeader from './ConsultationHeader';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useConsultation } from '@/contexts/ConsultationContext';
+import { useSafeConsultation } from '@/hooks/useSafeConsultation';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -51,7 +51,7 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
-  const { isConsultationActive } = useConsultation();
+  const { isConsultationActive } = useSafeConsultation();
   const { user } = useAuth();
   
   // Use the dashboard data hook with user ID

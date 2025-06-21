@@ -43,9 +43,11 @@
     --accent-foreground: 0 0% 100%;
     /* #ffffff */
 
-    /* Cores destrutivas mais suaves */
-    --destructive: 0 65% 51%;
-    --destructive-foreground: 0 0% 100%;
+    /* Cores destrutivas harmoniosas com a paleta */
+    --destructive: 0 70% 50%;
+    /* Vermelho que harmoniza */
+    --destructive-foreground: 185 20% 78%;
+    /* #85c3cf */
 
     /* Bordas com melhor definição */
     --border: 0 0% 18%;
@@ -77,7 +79,7 @@
     color-scheme: dark;
   }
 
-  /* Dark mode base improvements */
+  /* Aplicação das variáveis CSS no modo escuro */
   .dark html {
     background-color: hsl(var(--background));
   }

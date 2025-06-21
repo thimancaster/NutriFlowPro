@@ -13,11 +13,10 @@ import { useAppointmentTypes } from './useAppointmentTypes';
 export const useAppointments = () => {
   const { user } = useAuth();
   const { 
-    appointments, 
-    loading: fetchLoading, 
+    data: appointments = [], 
+    isLoading: fetchLoading, 
     error: fetchError, 
-    fetchAppointments,
-    getPatientName
+    refetch: fetchQuery
   } = useFetchAppointments();
   
   const { 
@@ -26,7 +25,9 @@ export const useAppointments = () => {
     addAppointment,
     updateAppointment,
     deleteAppointment
-  } = useAppointmentOperations(fetchAppointments);
+  } = useAppointmentOperations(async () => {
+    await fetchQuery();
+  });
   
   const { 
     types: appointmentTypes, 
@@ -40,17 +41,23 @@ export const useAppointments = () => {
   const error = fetchError || operationsError;
 
   // Add refetch function
-  const refetch = () => {
+  const refetch = async () => {
     if (user) {
-      fetchAppointments();
+      await fetchQuery();
     }
+  };
+
+  // Helper function to get patient name from appointments data
+  const getPatientName = (patientId: string) => {
+    const appointment = appointments.find(app => app.patient_id === patientId);
+    return appointment?.patient_name || 'Paciente não encontrado';
   };
 
   useEffect(() => {
     if (user) {
-      fetchAppointments();
+      fetchQuery();
     }
-  }, [user]);
+  }, [user, fetchQuery]);
 
   return {
     appointments,
@@ -58,7 +65,7 @@ export const useAppointments = () => {
     loading,
     isLoading: loading, // Add alias for isLoading
     error,
-    fetchAppointments,
+    fetchAppointments: refetch,
     refetch, // Add the refetch function
     addAppointment,
     updateAppointment,

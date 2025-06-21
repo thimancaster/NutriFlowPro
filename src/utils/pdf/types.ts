@@ -1,30 +1,26 @@
 
 import { jsPDF } from 'jspdf';
 
-// Extend the jsPDF type definition to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable?: {
-      finalY: number;
-    };
-  }
-}
-
 export interface MealPlanExportOptions {
-  mealPlan?: any;
-  patientName: string;
-  patientAge?: number;
-  patientGender?: string;
-  nutritionistName?: string;
-  clinicName?: string;
-  clinicLogo?: string;
-  date?: Date;
-  meals: any[];
+  meals: Array<{
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    percent: number;
+    suggestions?: string[];
+  }>;
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
   totalFats: number;
+  patientName: string;
+  patientAge?: number;
+  patientGender?: 'male' | 'female';
+  clinicName?: string;
+  nutritionistName?: string;
+  date?: Date;
   notes?: string;
   settings?: {
     patientName?: string;
@@ -32,4 +28,19 @@ export interface MealPlanExportOptions {
     patientAge?: number;
     patientGender?: string;
   };
+}
+
+export interface ReportTemplate {
+  id: string;
+  name: string;
+  description: string;
+  sections: ReportSection[];
+}
+
+export interface ReportSection {
+  id: string;
+  title: string;
+  type: 'header' | 'patient-info' | 'nutritional-summary' | 'meals' | 'notes' | 'footer';
+  enabled: boolean;
+  options?: Record<string, any>;
 }

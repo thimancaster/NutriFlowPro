@@ -10,13 +10,11 @@ interface UpdatePatientResult {
 
 export const updatePatient = async (
   patientId: string,
-  userId: string,
   patientData: Partial<Patient>
 ): Promise<UpdatePatientResult> => {
   try {
     // Input validation
     if (!patientId) return { success: false, error: 'Patient ID is required' };
-    if (!userId) return { success: false, error: 'User ID is required' };
     
     // Process complex objects for DB storage
     const processedData = {
@@ -25,8 +23,6 @@ export const updatePatient = async (
         JSON.stringify(patientData.address) : patientData.address,
       goals: typeof patientData.goals === 'object' ? 
         JSON.stringify(patientData.goals) : patientData.goals,
-      measurements: typeof patientData.measurements === 'object' ? 
-        JSON.stringify(patientData.measurements) : patientData.measurements,
       updated_at: new Date().toISOString()
     };
     
@@ -35,7 +31,6 @@ export const updatePatient = async (
       .from('patients')
       .update(processedData)
       .eq('id', patientId)
-      .eq('user_id', userId)
       .select('*')
       .single();
       
@@ -46,7 +41,8 @@ export const updatePatient = async (
       ...data,
       address: typeof data.address === 'string' ? JSON.parse(data.address) : data.address || {},
       goals: typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals || {},
-      measurements: typeof data.measurements === 'string' ? JSON.parse(data.measurements) : data.measurements || {}
+      // Ensure birth_date is always present (required in Patient interface)
+      birth_date: data.birth_date || ''
     } as Patient;
     
     return {

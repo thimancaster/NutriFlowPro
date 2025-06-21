@@ -4,7 +4,7 @@ import { Patient } from '@/types/patient';
 import { ModernCard, ModernCardContent } from '@/components/ui/modern-card';
 import { Badge } from '@/components/ui';
 import { formatDate } from '@/utils/dateUtils';
-import { calculateAge, calculateBMI } from '@/utils/patient';
+import { calculateAge } from '@/utils/patient';
 
 interface PatientCardProps {
   patient: Patient;
@@ -29,11 +29,6 @@ const PatientCard: React.FC<PatientCardProps> = ({
     
     return <Badge variant="success" className="magnetic-hover">Ativo</Badge>;
   };
-  
-  // Calculate BMI if there's enough data
-  const bmi = patient.measurements?.weight && patient.measurements?.height 
-    ? calculateBMI(patient.measurements.weight, patient.measurements.height)
-    : null;
   
   // Compact variant for list items
   if (variant === 'compact') {
@@ -62,22 +57,6 @@ const PatientCard: React.FC<PatientCardProps> = ({
             <h3 className="font-medium text-glow-hover">{patient.name}</h3>
             {getStatusIndicator()}
           </div>
-          
-          {patient.measurements && (
-            <div className="mb-2 space-y-1">
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
-                <span className="text-gray-500 dark:text-dark-text-muted">Peso:</span> {patient.measurements.weight} kg
-              </p>
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
-                <span className="text-gray-500 dark:text-dark-text-muted">Altura:</span> {patient.measurements.height} cm
-              </p>
-              {bmi && (
-                <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
-                  <span className="text-gray-500 dark:text-dark-text-muted">IMC:</span> {bmi}
-                </p>
-              )}
-            </div>
-          )}
           
           {patient.goals && (
             <div className="mb-2">
@@ -117,17 +96,6 @@ const PatientCard: React.FC<PatientCardProps> = ({
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          {patient.measurements && (
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium mb-1 text-glow-hover">Medidas</h3>
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">Peso: {patient.measurements.weight} kg</p>
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">Altura: {patient.measurements.height} cm</p>
-              {bmi && (
-                <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">IMC: {bmi}</p>
-              )}
-            </div>
-          )}
-          
           {patient.goals && (
             <div className="space-y-1">
               <h3 className="text-sm font-medium mb-1 text-glow-hover">Objetivos</h3>

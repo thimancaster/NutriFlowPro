@@ -17,6 +17,27 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
   const [isPrinting, setIsPrinting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   
+  // Helper function to convert gender type
+  const getValidGender = (gender?: string): 'male' | 'female' | undefined => {
+    if (gender === 'male' || gender === 'female') {
+      return gender;
+    }
+    return undefined;
+  };
+
+  // Helper function to convert meals to PDF format
+  const convertMealsForPdf = (meals: any[]) => {
+    return meals.map((meal, index) => ({
+      name: meal.name || `Refeição ${index + 1}`,
+      calories: meal.calories || meal.total_calories || 0,
+      protein: meal.protein || meal.total_protein || 0,
+      carbs: meal.carbs || meal.total_carbs || 0,
+      fat: meal.fat || meal.total_fats || 0,
+      percent: meal.percent || meal.percentage || Math.round(100 / meals.length), // Default equal distribution
+      suggestions: meal.suggestions || meal.foodSuggestions || []
+    }));
+  };
+  
   const handlePrint = () => {
     if (!mealPlan?.meals || !activePatient) {
       toast({
@@ -37,8 +58,8 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
       const doc = generateMealPlanPDF({
         patientName: activePatient.name,
         patientAge,
-        patientGender: activePatient.gender || undefined,
-        meals: mealPlan.meals,
+        patientGender: getValidGender(activePatient.gender),
+        meals: convertMealsForPdf(mealPlan.meals),
         totalCalories: mealPlan.total_calories || 0,
         totalProtein: mealPlan.total_protein || 0,
         totalCarbs: mealPlan.total_carbs || 0,
@@ -84,8 +105,8 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
       const doc = generateMealPlanPDF({
         patientName: activePatient.name,
         patientAge,
-        patientGender: activePatient.gender || undefined,
-        meals: mealPlan.meals,
+        patientGender: getValidGender(activePatient.gender),
+        meals: convertMealsForPdf(mealPlan.meals),
         totalCalories: mealPlan.total_calories || 0,
         totalProtein: mealPlan.total_protein || 0,
         totalCarbs: mealPlan.total_carbs || 0,

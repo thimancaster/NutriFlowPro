@@ -1,100 +1,51 @@
 
-import { useCallback } from 'react';
-import { 
-  calculateBMR, 
-  calculateMacros, 
-  calculateTEE, 
-} from '../utils/calculations';
+/**
+ * Results management for calculator
+ */
 
-// Export as named export to match the import in useCalculatorState
+import { useState } from 'react';
+
+export interface CalculationResults {
+  tmbValue: number;
+  teeObject: {
+    tmb: number;
+    get: number;
+    vet: number;
+    adjustment: number;
+  };
+  macros: {
+    protein: { grams: number; kcal: number; percentage: number };
+    carbs: { grams: number; kcal: number; percentage: number };
+    fat: { grams: number; kcal: number; percentage: number };
+    proteinPerKg: number;
+  };
+  calorieSummary: any;
+  formulaUsed: string;
+}
+
 export const useCalculatorResults = () => {
-  // Calculate BMR
-  const calculateBasalMetabolicRate = useCallback((
-    gender: string,
-    weight: string,
-    height: string,
-    age: string
-  ) => {
-    return calculateBMR(gender, weight, height, age);
-  }, []);
+  const [results, setResults] = useState<CalculationResults | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
-  // Calculate Total Energy Expenditure
-  const calculateTotalEnergyExpenditure = useCallback((
-    bmr: number,
-    activityLevel: string,
-    objective: string
-  ) => {
-    return calculateTEE(bmr, activityLevel, objective);
-  }, []);
-
-  // Calculate macronutrients
-  const calculateMacronutrients = useCallback((
-    tee: number,
-    proteinPercentage: string,
-    carbsPercentage: string,
-    fatPercentage: string,
-    weight: number
-  ) => {
-    return calculateMacros(
-      tee,
-      carbsPercentage,
-      proteinPercentage,
-      fatPercentage,
-      weight
-    );
-  }, []);
-
-  // Calculate everything at once
-  const calculateResults = useCallback((state: any) => {
-    try {
-      // Step 1: Calculate BMR
-      const bmr = calculateBasalMetabolicRate(
-        state.gender,
-        state.weight,
-        state.height,
-        state.age
-      );
-
-      // Step 2: Calculate TEE
-      const tee = calculateTotalEnergyExpenditure(
-        bmr,
-        state.activityLevel,
-        state.objective
-      );
-
-      // Step 3: Calculate macros
-      const macros = calculateMacronutrients(
-        tee.vet,
-        state.proteinPercentage,
-        state.carbsPercentage,
-        state.fatPercentage,
-        parseFloat(state.weight)
-      );
-
-      return {
-        bmr,
-        tee,
-        macros
-      };
-    } catch (error) {
-      console.error('Error in calculation:', error);
-      return null;
-    }
-  }, [calculateBasalMetabolicRate, calculateTotalEnergyExpenditure, calculateMacronutrients]);
-
-  // Helper function to update carbs percentage in the form
-  const setCarbs = useCallback((value: string, dispatch: any) => {
-    dispatch({ type: 'SET_CARBS_PERCENTAGE', payload: value });
-  }, []);
+  const resetResults = () => {
+    setResults(null);
+    setShowResults(false);
+  };
 
   return {
-    calculateBMR: calculateBasalMetabolicRate,
-    calculateTEE: calculateTotalEnergyExpenditure,
-    calculateMacros: calculateMacronutrients,
-    calculateResults,
-    setCarbs
+    results,
+    isCalculating,
+    showResults,
+    setIsCalculating,
+    setResults,
+    setShowResults,
+    resetResults,
+    // Individual result accessors for compatibility
+    tmbValue: results?.tmbValue || null,
+    teeObject: results?.teeObject || null,
+    macros: results?.macros || null,
+    calorieSummary: results?.calorieSummary || null,
+    formulaUsed: results?.formulaUsed
   };
 };
-
-// For backward compatibility
-export default useCalculatorResults;

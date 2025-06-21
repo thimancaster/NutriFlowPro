@@ -27,7 +27,7 @@ export const usePatientModalActions = ({
     
     setIsArchiving(true);
     try {
-      const result = await updatePatientStatus(patient.id, user.id, 'archived');
+      const result = await updatePatientStatus(patient.id, user.id, 'archived' as 'active' | 'archived');
       
       if (!result.success) {
         throw new Error(result.error);
@@ -52,12 +52,12 @@ export const usePatientModalActions = ({
     }
   };
   
-  // Update patient
+  //  Update patient
   const handleUpdatePatient = async (updatedData: Partial<Patient>) => {
     if (!user) return;
     
     try {
-      const result = await updatePatient(patient.id, user.id, updatedData);
+      const result = await updatePatient(patient.id, updatedData);
       
       if (!result.success) {
         throw new Error(result.error);

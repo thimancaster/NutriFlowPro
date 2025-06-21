@@ -1,3 +1,4 @@
+
 import {useState} from "react";
 import {useToast} from "@/hooks/use-toast";
 import {PatientService} from "@/services/patient";
@@ -129,13 +130,13 @@ export const usePatientFormSubmit = ({
 			setActiveTab(firstTabWithErrors);
 
 			// Create a more helpful error message based on which tab has errors
-			const tabNames = {
+			const tabNames: Record<string, string> = {
 				"basic-info": "Informações Básicas",
 				address: "Endereço",
 				"goals-notes": "Objetivos e Observações",
 			};
 
-			const errorTabName = tabNames[firstTabWithErrors as keyof typeof tabNames];
+			const errorTabName = tabNames[firstTabWithErrors];
 
 			toast({
 				title: "Formulário inválido",
@@ -202,7 +203,7 @@ export const usePatientFormSubmit = ({
 			let result;
 
 			if (editPatient) {
-				result = await PatientService.updatePatient(editPatient.id, userId, patientData);
+				result = await PatientService.updatePatient(editPatient.id, patientData);
 			} else {
 				result = await PatientService.savePatient(patientData);
 			}

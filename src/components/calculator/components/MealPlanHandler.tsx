@@ -47,9 +47,9 @@ export const useMealPlanHandler = ({
     }
 
     try {
-      // Get weight and height from measurements or use defaults
-      const weight = patientData.measurements?.weight || 0;
-      const height = patientData.measurements?.height || 0;
+      // Use default values since measurements were removed from Patient type
+      const weight = 0;
+      const height = 0;
       
       // Primeiro, salvar o cálculo no banco de dados
       const calculationData = {

@@ -1,0 +1,63 @@
+
+/* Tema escuro - Variáveis CSS - Slate Profissional */
+@layer base {
+  .dark {
+    /* Fundo principal - Ardósia escura elegante */
+    --background: 222 84% 5%; /* #0f172a - ardósia escura */
+    --foreground: 213 27% 84%; /* #cbd5e1 - cinza-azulado claro */
+
+    /* Cards com hierarquia visual clara - tons de azul-ardósia */
+    --card: 217 33% 17%; /* #1e293b - azul-acinzentado */
+    --card-foreground: 213 27% 84%; /* #cbd5e1 */
+
+    /* Popovers e dropdowns - azul-ardósia médio */
+    --popover: 215 25% 27%; /* #334155 - azul-ardósia */
+    --popover-foreground: 213 27% 84%; /* #cbd5e1 */
+
+    /* Cores primárias - verde vibrante mantido */
+    --primary: 166 76% 46%; /* Verde mantido #22d3aa */
+    --primary-foreground: 222 84% 5%; /* #0f172a */
+
+    /* Elementos secundários - azul-ardósia claro */
+    --secondary: 215 20% 35%; /* #475569 - azul-cinza */
+    --secondary-foreground: 210 40% 98%; /* #f8fafc */
+
+    /* Elementos mutados - cinza-azulado neutro */
+    --muted: 215 25% 27%; /* #334155 - azul-ardósia */
+    --muted-foreground: 215 16% 65%; /* #94a3b8 - cinza-azulado */
+
+    /* Acentos - azul-ardósia elevado */
+    --accent: 215 20% 35%; /* #475569 - azul-cinza */
+    --accent-foreground: 210 40% 98%; /* #f8fafc */
+
+    /* Cores destrutivas mais harmoniosas */
+    --destructive: 0 72% 51%; /* #dc2626 - vermelho suave */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
+
+    /* Bordas e inputs - azul-cinza visível */
+    --border: 215 20% 35%; /* #475569 - azul-cinza */
+    --input: 215 25% 27%; /* #334155 - input azul-ardósia */
+    --ring: 166 76% 46%; /* #22d3aa - verde para focus */
+
+    /* Cores específicas do NutriFlow para modo escuro */
+    --nutri-green: 166 76% 46%; /* Verde vibrante */
+    --nutri-green-light: 166 66% 56%;
+    --nutri-green-dark: 166 86% 36%;
+    --nutri-blue: 217 91% 60%; /* Azul mantido */
+    --nutri-blue-light: 217 81% 70%;
+    --nutri-blue-dark: 217 91% 50%;
+
+    /* Sidebar com tema azul-ardósia refinado */
+    --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
+    --sidebar-foreground: 213 27% 84%; /* #cbd5e1 */
+    --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
+    --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
+    --sidebar-accent: 166 76% 46%; /* #22d3aa - verde accent */
+    --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
+    --sidebar-border: 215 20% 35%; /* #475569 - borda sutil */
+    --sidebar-ring: 166 76% 46%; /* #22d3aa */
+
+    /* Configurações específicas do tema escuro */
+    color-scheme: dark;
+  }
+}

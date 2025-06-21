@@ -30,16 +30,19 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/register">
                 <Button 
-                  className="bg-gradient-to-r from-nutri-green to-nutri-green-dark hover:opacity-90 text-white font-medium px-8 py-6 text-lg w-full sm:w-auto"
+                  variant="subscription-green"
+                  animation="shimmer"
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift"
                 >
                   Começar Agora
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
               <Link to="/login">
                 <Button 
-                  variant="outline" 
-                  className="border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white px-8 py-6 text-lg w-full sm:w-auto"
+                  variant="nutri-blue"
+                  animation="shimmer" 
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift"
                 >
                   Login
                 </Button>
@@ -55,7 +58,7 @@ const HeroSection = () => {
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
               alt="Nutricionista trabalhando"
-              className="rounded-xl shadow-2xl w-full"
+              className="rounded-xl shadow-2xl w-full smooth-lift"
               fallbackSrc="/placeholder.svg"
             />
           </motion.div>

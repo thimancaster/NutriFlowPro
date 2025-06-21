@@ -15,7 +15,7 @@ interface PatientSelectProps {
 }
 
 const PatientSelect = ({ value, onChange }: PatientSelectProps) => {
-  const { patients, isLoading } = usePatientOptions();
+  const { data: patients, isLoading } = usePatientOptions();
   
   return (
     <div className="grid grid-cols-4 items-center gap-4">
@@ -33,7 +33,7 @@ const PatientSelect = ({ value, onChange }: PatientSelectProps) => {
             <SelectValue placeholder="Selecione um paciente" />
           </SelectTrigger>
           <SelectContent>
-            {patients.map(patient => (
+            {patients?.map(patient => (
               <SelectItem key={patient.id} value={patient.id}>
                 {patient.name}
               </SelectItem>

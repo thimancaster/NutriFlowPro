@@ -1,18 +1,18 @@
 
-/* Componentes de overlay e modais */
+/* Componentes de overlay e modais - Slate Profissional */
 @layer components {
   /* Dropdown com backdrop blur */
   .dropdown-content {
-    @apply bg-white dark:bg-dark-bg-elevated border border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary shadow-xl backdrop-blur-md z-50;
+    @apply bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100 shadow-xl backdrop-blur-md z-50;
   }
 
   /* Modal com efeitos aprimorados */
   .modal-overlay {
-    @apply bg-black/60 backdrop-blur-sm;
+    @apply bg-slate-900/60 backdrop-blur-sm;
   }
 
   .modal-content {
-    @apply bg-white dark:bg-dark-bg-elevated border border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary shadow-xl backdrop-blur-md;
+    @apply bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100 shadow-xl backdrop-blur-md;
   }
 
   /* Toast melhorado */
@@ -22,51 +22,56 @@
 
   /* Popover específicos */
   .popover-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Alert dialogs */
   .alert-dialog-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Dialog específicos */
   .dialog-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Hover cards */
   .hover-card-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Tooltip específicos */
   .tooltip-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Select dropdowns */
   .select-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Command palettes */
   .command-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Context menus */
   .context-menu-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Dropdown menus */
   .dropdown-menu-content {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
   }
 
   /* Calendar popovers */
   .calendar-popover {
-    @apply bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary;
+    @apply bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-slate-100;
+  }
+
+  /* Tabs específicos */
+  .dark .tabs-content {
+    @apply bg-slate-800/50 border-slate-600;
   }
 }

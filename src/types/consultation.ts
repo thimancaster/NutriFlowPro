@@ -1,4 +1,6 @@
 
+import { GERFormula } from './gerFormulas';
+
 // Sex types
 export type Sex = 'M' | 'F';
 
@@ -54,7 +56,7 @@ export const CALORIE_VALUES = {
   fat: 9       // kcal/g
 };
 
-// Form state interface
+// Form state interface - UPDATED to include GER formula
 export interface ConsultationFormState {
   weight: string;
   height: string;
@@ -65,6 +67,8 @@ export interface ConsultationFormState {
   activityLevel: ActivityLevel;
   consultationType: ConsultationType;
   consultationStatus: ConsultationStatus;
+  gerFormula?: GERFormula; // NEW: Selected GER formula
+  bodyFatPercentage?: string; // NEW: For formulas that require body fat
 }
 
 // Results interface
@@ -79,7 +83,7 @@ export interface ConsultationResults {
   };
 }
 
-// Main consultation data interface - CORRIGIDO
+// Main consultation data interface - UPDATED to include GER formula
 export interface ConsultationData {
   id?: string;
   patient_id?: string;
@@ -104,6 +108,9 @@ export interface ConsultationData {
   date?: string;
   appointment_id?: string;
   recommendations?: string;
+  gerFormula?: GERFormula; // NEW: Selected GER formula
+  gerFormulaName?: string; // NEW: Name of the formula used
+  bodyFatPercentage?: number; // NEW: For formulas that require body fat
   results?: {
     bmr: number;
     get: number;
@@ -114,6 +121,8 @@ export interface ConsultationData {
       carbs: number;
       fat: number;
     };
+    gerFormula?: GERFormula; // NEW: Formula used in calculation
+    gerFormulaName?: string; // NEW: Name of the formula used
   };
 }
 

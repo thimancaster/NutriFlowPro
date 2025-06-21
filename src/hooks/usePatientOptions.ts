@@ -1,74 +1,60 @@
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { PatientOption } from '@/types/patient';
-import { Json } from '@/integrations/supabase/types';
+
+export interface PatientOption {
+  id: string;
+  name: string;
+  email?: string;
+  birth_date?: string;
+  age?: number;
+}
 
 export const usePatientOptions = () => {
-  const [patients, setPatients] = useState<PatientOption[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      if (!user) {
-        setPatients([]);
-        setIsLoading(false);
-        return;
+  return useQuery({
+    queryKey: ['patient-options', user?.id],
+    queryFn: async (): Promise<PatientOption[]> => {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
       }
 
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('patients')
-          .select('id, name, email, birth_date, gender, measurements')
-          .eq('user_id', user.id)
-          .order('name', { ascending: true });
-        
-        if (error) throw error;
-        
-        // Process data to add computed fields
-        const processedPatients = data?.map(patient => {
-          // Calculate age if birth_date exists
-          let age;
-          if (patient.birth_date) {
-            const birthDate = new Date(patient.birth_date);
-            const today = new Date();
-            age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-              age--;
-            }
-          }
-          
-          // Process measurements to ensure it matches the required type
-          const measurementsObj = typeof patient.measurements === 'string' 
-            ? JSON.parse(patient.measurements) 
-            : patient.measurements;
-          
-          return {
-            id: patient.id,
-            name: patient.name,
-            email: patient.email,
-            birth_date: patient.birth_date,
-            gender: patient.gender,
-            age,
-            measurements: measurementsObj as PatientOption['measurements']
-          };
-        }) || [];
-        
-        setPatients(processedPatients);
-      } catch (error) {
-        console.error('Error fetching patients:', error);
-        setPatients([]);
-      } finally {
-        setIsLoading(false);
+      const { data, error } = await supabase
+        .from('patients')
+        .select('id, name, email, birth_date')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) {
+        throw error;
       }
-    };
 
-    fetchPatients();
-  }, [user]);
+      return (data || []).map(patient => ({
+        id: patient.id,
+        name: patient.name,
+        email: patient.email || undefined,
+        birth_date: patient.birth_date || undefined,
+        age: patient.birth_date ? calculateAge(patient.birth_date) : undefined
+      }));
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
 
-  return { patients, isLoading };
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
 };

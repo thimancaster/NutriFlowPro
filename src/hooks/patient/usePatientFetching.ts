@@ -1,163 +1,121 @@
 
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { Patient } from '@/types/patient';
+import { PatientService } from '@/services/patient';
+import { useToast } from '@/hooks/use-toast';
 
-export const usePatientQuery = (patientId: string | undefined) => {
-  return useQuery({
-    queryKey: ['patient', patientId],
-    queryFn: async () => {
-      if (!patientId) throw new Error('Patient ID is required');
-      
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', patientId)
-        .single();
+interface UsePatientFetchingProps {
+  userId: string;
+  enabled?: boolean;
+}
 
-      if (error) throw error;
-      
-      // Transform database field to match Patient interface
-      const patient: Patient = {
-        ...data,
-        secondaryPhone: data.secondaryphone,
-        gender: data.gender as 'male' | 'female' | 'other' | undefined,
-        status: data.status as 'active' | 'archived',
-        measurements: typeof data.measurements === 'string' 
-          ? JSON.parse(data.measurements) 
-          : data.measurements || {},
-        goals: typeof data.goals === 'string' 
-          ? JSON.parse(data.goals) 
-          : data.goals || {},
-        address: typeof data.address === 'string' && data.address.startsWith('{')
-          ? JSON.parse(data.address)
-          : data.address,
-      };
-      
-      return patient;
-    },
-    enabled: !!patientId,
-  });
-};
+export const usePatientFetching = ({ userId, enabled = true }: UsePatientFetchingProps) => {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-export const usePatientsQuery = (userId: string | undefined, filters?: {
-  search?: string;
-  status?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}) => {
-  return useQuery({
-    queryKey: ['patients', userId, filters],
-    queryFn: async () => {
-      if (!userId) throw new Error('User ID is required');
-      
-      let query = supabase
-        .from('patients')
-        .select('*')
-        .eq('user_id', userId);
-
-      // Apply filters
-      if (filters?.search) {
-        query = query.ilike('name', `%${filters.search}%`);
-      }
-
-      if (filters?.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-
-      // Apply sorting
-      if (filters?.sortBy) {
-        query = query.order(filters.sortBy, { 
-          ascending: filters.sortOrder === 'asc' 
-        });
-      } else {
-        query = query.order('created_at', { ascending: false });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      
-      // Transform database fields to match Patient interface
-      const patients: Patient[] = (data || []).map(patient => ({
-        ...patient,
-        secondaryPhone: patient.secondaryphone,
-        gender: patient.gender as 'male' | 'female' | 'other' | undefined,
-        status: patient.status as 'active' | 'archived',
-        measurements: typeof patient.measurements === 'string' 
-          ? JSON.parse(patient.measurements) 
-          : patient.measurements || {},
-        goals: typeof patient.goals === 'string' 
-          ? JSON.parse(patient.goals) 
-          : patient.goals || {},
-        address: typeof patient.address === 'string' && patient.address && patient.address.startsWith('{')
-          ? JSON.parse(patient.address)
-          : patient.address,
-      }));
-      
-      return patients;
-    },
-    enabled: !!userId,
-  });
-};
-
-export const usePatientCalculationsQuery = (patientId: string | undefined) => {
-  return useQuery({
-    queryKey: ['patient-calculations', patientId],
-    queryFn: async () => {
-      if (!patientId) throw new Error('Patient ID is required');
-      
-      const { data, error } = await supabase
-        .from('calculation_history')
-        .select('*')
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!patientId,
-  });
-};
-
-export const usePatientMealPlansQuery = (patientId: string | undefined) => {
-  return useQuery({
-    queryKey: ['patient-meal-plans', patientId],
-    queryFn: async () => {
-      if (!patientId) throw new Error('Patient ID is required');
-      
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!patientId,
-  });
-};
-
-// Hook principal que utiliza os serviços de paciente
-export const usePatientFetching = (userId?: string) => {
-  const { data: patients = [], isLoading, error, refetch } = usePatientsQuery(userId);
-  
-  const fetchPatients = async (filters?: any) => {
-    await refetch();
+  const transformPatientData = (rawPatient: any): Patient => {
     return {
-      patients,
-      total: patients.length,
-      page: 1,
-      totalPages: 1,
-      limit: 10
+      id: rawPatient.id,
+      name: rawPatient.name,
+      email: rawPatient.email || '',
+      phone: rawPatient.phone || '',
+      secondaryPhone: rawPatient.secondaryphone || '',
+      cpf: rawPatient.cpf || '',
+      birth_date: rawPatient.birth_date || '',
+      gender: rawPatient.gender as 'male' | 'female' | 'other' || 'other',
+      address: rawPatient.address || '',
+      notes: rawPatient.notes || '',
+      status: rawPatient.status === 'inactive' ? 'archived' : (rawPatient.status as 'active' | 'archived' || 'active'),
+      goals: rawPatient.goals || {},
+      created_at: rawPatient.created_at,
+      updated_at: rawPatient.updated_at,
+      user_id: rawPatient.user_id,
+      age: rawPatient.birth_date ? calculateAge(rawPatient.birth_date) : undefined
     };
   };
 
+  const fetchPatients = async () => {
+    if (!enabled || !userId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await PatientService.getPatients(userId);
+      
+      if (result.success && result.data) {
+        const transformedPatients = result.data.map(transformPatientData);
+        setPatients(transformedPatients);
+      } else {
+        setError(result.error || 'Failed to fetch patients');
+        toast({
+          title: "Error",
+          description: result.error || 'Failed to fetch patients',
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refetchPatients = () => {
+    fetchPatients();
+  };
+
+  const fetchPatientById = async (patientId: string): Promise<Patient | null> => {
+    try {
+      const result = await PatientService.getPatient(patientId);
+      
+      if (result.success && result.data) {
+        return transformPatientData(result.data);
+      } else {
+        setError(result.error || 'Failed to fetch patient');
+        return null;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, [userId, enabled]);
+
   return {
     patients,
-    isLoading,
-    error: error?.message,
-    fetchPatients
+    loading,
+    error,
+    refetchPatients,
+    fetchPatientById,
+    setPatients,
+    setLoading,
+    setError
   };
+};
+
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
 };

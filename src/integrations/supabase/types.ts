@@ -23,6 +23,7 @@ export type Database = {
           id: string
           imc: number | null
           lean_mass_kg: number | null
+          muscle_mass_percentage: number | null
           patient_id: string
           rcq: number | null
           subscapular: number | null
@@ -31,6 +32,7 @@ export type Database = {
           triceps: number | null
           user_id: string
           waist: number | null
+          water_percentage: number | null
           weight: number | null
         }
         Insert: {
@@ -46,6 +48,7 @@ export type Database = {
           id?: string
           imc?: number | null
           lean_mass_kg?: number | null
+          muscle_mass_percentage?: number | null
           patient_id: string
           rcq?: number | null
           subscapular?: number | null
@@ -54,6 +57,7 @@ export type Database = {
           triceps?: number | null
           user_id: string
           waist?: number | null
+          water_percentage?: number | null
           weight?: number | null
         }
         Update: {
@@ -69,6 +73,7 @@ export type Database = {
           id?: string
           imc?: number | null
           lean_mass_kg?: number | null
+          muscle_mass_percentage?: number | null
           patient_id?: string
           rcq?: number | null
           subscapular?: number | null
@@ -77,6 +82,7 @@ export type Database = {
           triceps?: number | null
           user_id?: string
           waist?: number | null
+          water_percentage?: number | null
           weight?: number | null
         }
         Relationships: [
@@ -89,17 +95,56 @@ export type Database = {
           },
         ]
       }
+      appointment_types: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           appointment_type_id: string | null
           created_at: string | null
           date: string
+          duration_minutes: number | null
           end_time: string | null
           id: string
           measurements: Json | null
           notes: string | null
           patient_id: string | null
+          patient_notes: string | null
+          payment_amount: number | null
+          payment_status: string | null
+          private_notes: string | null
           recommendations: string | null
+          reminder_sent: boolean | null
           start_time: string | null
           status: string
           title: string | null
@@ -111,12 +156,18 @@ export type Database = {
           appointment_type_id?: string | null
           created_at?: string | null
           date: string
+          duration_minutes?: number | null
           end_time?: string | null
           id?: string
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
+          patient_notes?: string | null
+          payment_amount?: number | null
+          payment_status?: string | null
+          private_notes?: string | null
           recommendations?: string | null
+          reminder_sent?: boolean | null
           start_time?: string | null
           status?: string
           title?: string | null
@@ -128,12 +179,18 @@ export type Database = {
           appointment_type_id?: string | null
           created_at?: string | null
           date?: string
+          duration_minutes?: number | null
           end_time?: string | null
           id?: string
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
+          patient_notes?: string | null
+          payment_amount?: number | null
+          payment_status?: string | null
+          private_notes?: string | null
           recommendations?: string | null
+          reminder_sent?: boolean | null
           start_time?: string | null
           status?: string
           title?: string | null
@@ -764,7 +821,6 @@ export type Database = {
           gender: string | null
           goals: Json | null
           id: string
-          measurements: Json | null
           name: string
           notes: string | null
           phone: string | null
@@ -782,7 +838,6 @@ export type Database = {
           gender?: string | null
           goals?: Json | null
           id?: string
-          measurements?: Json | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -800,7 +855,6 @@ export type Database = {
           gender?: string | null
           goals?: Json | null
           id?: string
-          measurements?: Json | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -924,24 +978,30 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          business_settings: Json | null
           created_at: string | null
           id: string
+          notification_preferences: Json | null
           professional_settings: Json | null
           settings: Json
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          business_settings?: Json | null
           created_at?: string | null
           id?: string
+          notification_preferences?: Json | null
           professional_settings?: Json | null
           settings?: Json
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          business_settings?: Json | null
           created_at?: string | null
           id?: string
+          notification_preferences?: Json | null
           professional_settings?: Json | null
           settings?: Json
           updated_at?: string | null
