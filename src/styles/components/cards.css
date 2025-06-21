@@ -1,94 +1,102 @@
 
-/* Componentes de cards - Modern App Dashboard */
+/* Componentes de cards - Clean Professional */
 @layer components {
   /* Cards com hierarquia visual harmonizada */
   .nutri-card {
-    @apply rounded-xl shadow-lg bg-card p-6 transition-all duration-300 hover:shadow-xl border backdrop-blur-sm;
-  }
-
-  .dark .nutri-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
+    @apply rounded-xl shadow-sm bg-card p-6 transition-all duration-300 hover:shadow-md border backdrop-blur-sm;
     border-color: hsl(var(--border));
-    box-shadow: 0 10px 25px rgba(33, 33, 33, 0.3), 0 0 20px rgba(52, 172, 188, 0.05);
   }
 
-  /* Cards premium com gradientes harmonizados */
-  .dark-premium-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--primary)) 100%);
+  /* Melhorias específicas para modo claro */
+  .nutri-card {
+    background: hsl(var(--card));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .nutri-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+  }
+
+  /* Cards premium com gradientes harmonizados para modo claro */
+  .light-premium-card {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--secondary)) 100%);
     border-color: hsl(var(--border));
-    box-shadow: 0 0 30px rgba(52, 172, 188, 0.1), 0 10px 25px rgba(33, 33, 33, 0.4);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
-  .dark-dashboard-hero {
-    background: linear-gradient(135deg, rgba(52, 172, 188, 0.05) 0%, rgba(6, 84, 100, 0.08) 100%);
+  .light-dashboard-hero {
+    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--card)) 100%);
     border-color: hsl(var(--border));
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   }
 
-  /* Cards de depoimento harmonizados */
-  .dark-testimonial-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
+  /* Cards de depoimento harmonizados para modo claro */
+  .light-testimonial-card {
+    background: hsl(var(--card));
     border-color: hsl(var(--border));
-    box-shadow: 0 8px 20px rgba(33, 33, 33, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
-  /* Glass effect com nova paleta harmonizada */
+  /* Glass effect para modo claro */
   .glass-effect {
     @apply backdrop-blur-md;
-    background: hsla(var(--card), 0.8);
-    border: 1px solid hsla(var(--border), 0.3);
+    background: hsla(var(--card), 0.95);
+    border: 1px solid hsla(var(--border), 0.5);
   }
 
-  /* Glass card melhorado */
+  /* Glass card melhorado para modo claro */
   .glass-card {
     background: linear-gradient(135deg, 
-      hsla(var(--card), 0.8) 0%, 
-      hsla(var(--background), 0.9) 100%);
-    border: 1px solid hsla(var(--border), 0.2);
+      hsla(var(--card), 0.95) 0%, 
+      hsla(var(--secondary), 0.8) 100%);
+    border: 1px solid hsla(var(--border), 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
   }
 
-  /* Hover states mais sofisticados e harmonizados */
-  .dark .nutri-card:hover {
+  /* Hover states mais sofisticados para modo claro */
+  .nutri-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(33, 33, 33, 0.4), 0 0 25px rgba(52, 172, 188, 0.08);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
   }
 
-  /* Melhorias específicas para tabs com nova paleta */
-  .dark .tabs-list {
-    background-color: hsl(var(--card));
+  /* Melhorias específicas para tabs no modo claro */
+  .tabs-list {
+    background-color: hsl(var(--muted));
     border-color: hsl(var(--border));
   }
 
-  .dark .tabs-trigger {
+  .tabs-trigger {
     color: hsl(var(--muted-foreground));
     transition: all 0.2s ease;
   }
 
-  .dark .tabs-trigger:hover {
+  .tabs-trigger:hover {
     color: hsl(var(--foreground));
     background-color: hsla(var(--accent), 0.1);
   }
 
-  .dark .tabs-trigger[data-state="active"] {
+  .tabs-trigger[data-state="active"] {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    box-shadow: 0 2px 8px rgba(52, 172, 188, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border-bottom: 2px solid hsl(var(--primary));
   }
 
-  /* Efeitos de slide harmonizados */
+  /* Efeitos de slide harmonizados para modo claro */
   .slide-card-hover {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .slide-card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(33, 33, 33, 0.3), 0 0 30px rgba(52, 172, 188, 0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.08);
   }
 
-  /* Efeitos de profundidade 3D melhorados */
+  /* Efeitos de profundidade 3D melhorados para modo claro */
   .depth-3d {
     transform-style: preserve-3d;
     transition: transform 0.3s ease;
@@ -96,5 +104,17 @@
 
   .depth-3d:hover {
     transform: perspective(1000px) rotateX(5deg) translateY(-5px);
+  }
+
+  /* Cards com melhor definição no modo claro */
+  .dark .nutri-card {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
+    border-color: hsl(var(--border));
+    box-shadow: 0 10px 25px rgba(33, 33, 33, 0.3), 0 0 20px rgba(52, 172, 188, 0.05);
+  }
+
+  .dark .nutri-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(33, 33, 33, 0.4), 0 0 25px rgba(52, 172, 188, 0.08);
   }
 }

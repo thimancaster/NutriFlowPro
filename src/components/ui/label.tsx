@@ -6,7 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 )
 
 const Label = React.forwardRef<
@@ -17,9 +17,9 @@ const Label = React.forwardRef<
   <LabelPrimitive.Root
     ref={ref}
     className={cn(
-      labelVariants(), 
-      // Garantir contraste no tema claro
-      ":root:not(.dark) & { color: rgb(17 24 39); }",
+      labelVariants(),
+      // Cores harmonizadas para ambos os temas
+      "text-foreground",
       className
     )}
     {...props}
