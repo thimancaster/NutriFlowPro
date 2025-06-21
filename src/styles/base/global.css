@@ -1,4 +1,3 @@
-
 /* Estilos globais base e reset */
 @layer base {
   * {
@@ -17,10 +16,7 @@
     scroll-behavior: smooth;
   }
 
-  /* Focus styles aprimorados para modo escuro */
-  :focus {
-    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
-  }
+  /* Focus styles removed to prevent unwanted green outlines */
 
   /* Scrollbar personalizada */
   ::-webkit-scrollbar {
@@ -47,7 +43,11 @@
   }
 
   /* Animações suaves para elementos interativos */
-  button, a, input, select, textarea {
+  button,
+  a,
+  input,
+  select,
+  textarea {
     transition: all 0.2s ease;
   }
 
