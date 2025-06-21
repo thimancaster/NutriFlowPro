@@ -40,12 +40,12 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 		<Card
 			className={`relative ${
 				highlighted
-					? "bg-gradient-to-br from-nutri-green/20 to-nutri-blue/20 dark:from-nutri-green/30 dark:to-nutri-blue/30 border-nutri-blue border-2"
+					? "bg-gradient-to-br from-nutri-green/25 to-nutri-blue/25 dark:from-nutri-green/40 dark:to-nutri-blue/40 border-2 border-nutri-green/50 dark:border-nutri-green/60 shadow-xl shadow-nutri-green/20 dark:shadow-nutri-green/30 scale-105 z-10"
 					: "bg-white dark:bg-card border-gray-200 dark:border-gray-700"
 			} flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
 			{badge && (
-				<div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-					<Badge className="bg-nutri-green text-white px-4 py-1 font-semibold">
+				<div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
+					<Badge className="bg-gradient-to-r from-nutri-green to-nutri-blue text-white px-6 py-2 font-bold text-sm shadow-lg animate-pulse">
 						{badge}
 					</Badge>
 				</div>
