@@ -8,6 +8,9 @@ export interface SecurityEvent {
   event_type: string;
   details: Record<string, any>;
   timestamp: string;
+  created_at: string;
+  event_data?: Record<string, any>;
+  ip_address?: string;
 }
 
 export const useSecurityAudit = () => {
