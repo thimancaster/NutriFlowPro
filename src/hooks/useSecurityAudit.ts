@@ -1,8 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { isCurrentUserAdmin } from '@/utils/securityUtils';
-import { auditLogService, SecurityEvent } from '@/services/auditLogService';
+
+export interface SecurityEvent {
+  id: string;
+  user_id: string | null;
+  event_type: string;
+  details: Record<string, any>;
+  timestamp: string;
+}
 
 export const useSecurityAudit = () => {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
@@ -11,23 +17,18 @@ export const useSecurityAudit = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        const adminStatus = await isCurrentUserAdmin();
-        setIsAdmin(adminStatus);
-      }
-    };
-    
-    checkAdminStatus();
+    // For now, assume non-admin users
+    // This would be replaced with actual admin check when admin system is implemented
+    setIsAdmin(false);
   }, [user]);
 
   const fetchSecurityEvents = async (limit: number = 50) => {
-    if (!isAdmin) return;
-    
+    // Placeholder - would fetch from actual security_audit_log table when implemented
     setIsLoading(true);
     try {
-      const securityEvents = await auditLogService.getSecurityEvents(limit);
-      setEvents(securityEvents);
+      console.log(`Fetching ${limit} security events...`);
+      // Simulate empty results for now
+      setEvents([]);
     } catch (error) {
       console.error('Error fetching security events:', error);
     } finally {
@@ -36,12 +37,11 @@ export const useSecurityAudit = () => {
   };
 
   const fetchUserEvents = async (userId: string, limit: number = 50) => {
-    if (!isAdmin) return;
-    
+    // Placeholder - would fetch user-specific events when implemented
     setIsLoading(true);
     try {
-      const userEvents = await auditLogService.getUserEvents(userId, limit);
-      setEvents(userEvents);
+      console.log(`Fetching ${limit} events for user ${userId}...`);
+      setEvents([]);
     } catch (error) {
       console.error('Error fetching user events:', error);
     } finally {

@@ -62,10 +62,9 @@ export const validatePremiumAccess = async (feature: string): Promise<boolean> =
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
 
-    // Server-side premium check
-    const { data, error } = await supabase.rpc('check_premium_access', {
-      user_id: user.user.id,
-      feature_name: feature
+    // Use existing premium check function
+    const { data, error } = await supabase.rpc('check_user_premium_status', {
+      user_id: user.user.id
     });
 
     if (error) {
@@ -73,7 +72,10 @@ export const validatePremiumAccess = async (feature: string): Promise<boolean> =
       return false;
     }
 
-    return data || false;
+    // Log the premium access attempt
+    console.log(`Premium access check for feature: ${feature}`, { granted: !!data });
+    
+    return !!data;
   } catch (error) {
     console.error('Premium access validation failed:', error);
     return false;
@@ -104,7 +106,7 @@ export const checkRateLimit = (
   return true;
 };
 
-// Security event logging
+// Security event logging - simplified version using console for now
 export const logSecurityEvent = async (
   event: string, 
   details: Record<string, any> = {}
@@ -112,14 +114,15 @@ export const logSecurityEvent = async (
   try {
     const { data: user } = await supabase.auth.getUser();
     
-    await supabase.from('security_audit_log').insert({
+    // For now, log to console until security_audit_log table is created
+    console.log('Security Event:', {
       user_id: user.user?.id || null,
       event_type: event,
       details: details,
-      ip_address: await getClientIP(),
       user_agent: navigator.userAgent,
       timestamp: new Date().toISOString()
     });
+    
   } catch (error) {
     console.error('Failed to log security event:', error);
   }

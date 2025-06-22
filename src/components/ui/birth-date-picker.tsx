@@ -19,7 +19,7 @@ interface BirthDatePickerProps {
   placeholder?: string;
   error?: string;
   onBlur?: () => void;
-  label?: string; // Added the label prop
+  label?: string;
 }
 
 export function BirthDatePicker({ 
@@ -119,7 +119,7 @@ export function BirthDatePicker({
               error && "border-red-500",
               className
             )}
-            onBlur={onBlur} // Add onBlur event handler
+            onBlur={onBlur}
           />
           <PopoverTrigger asChild>
             <Button
@@ -144,12 +144,11 @@ export function BirthDatePicker({
             initialFocus
             fromYear={1900}
             toYear={new Date().getFullYear()}
-            captionLayout="dropdown-buttons"
             className="p-3 pointer-events-auto"
             defaultMonth={value || subYears(new Date(), 30)}
             footer={
               <div className="px-4 pb-3 pt-0 text-xs text-muted-foreground">
-                Use o dropdown acima para navegar por diferentes anos e meses
+                Use os controles acima para navegar por diferentes anos e meses
               </div>
             }
           />

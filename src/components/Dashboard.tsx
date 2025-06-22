@@ -20,7 +20,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Animações de entrada refinadas
+// Animações de entrada refinadas - Fixed type issues
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -43,9 +43,8 @@ const itemVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 20
+      duration: 0.3,
+      ease: "easeOut"
     }
   }
 };
