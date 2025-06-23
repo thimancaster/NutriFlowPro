@@ -25,11 +25,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0, 0, 0.58, 1] // easeOut
-      }
+      y: 0
     }
   };
 
@@ -52,7 +48,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           transition={{
             duration: 6,
             repeat: Infinity,
-            ease: [0.42, 0, 0.58, 1] // easeInOut
+            ease: [0.42, 0, 0.58, 1]
           }}
         />
         <motion.div 
@@ -65,7 +61,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           transition={{
             duration: 8,
             repeat: Infinity,
-            ease: [0.42, 0, 0.58, 1] // easeInOut
+            ease: [0.42, 0, 0.58, 1]
           }}
         />
         <motion.div 
@@ -78,7 +74,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           transition={{
             duration: 4,
             repeat: Infinity,
-            ease: [0.42, 0, 0.58, 1] // easeInOut
+            ease: [0.42, 0, 0.58, 1]
           }}
         />
       </div>
@@ -87,6 +83,10 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         <motion.h2 
           className="text-2xl md:text-3xl font-bold mb-4"
           variants={itemVariants}
+          transition={{
+            duration: 0.5,
+            ease: [0, 0, 0.58, 1]
+          }}
         >
           Bem-vindo ao NutriFlow Pro
         </motion.h2>
@@ -94,6 +94,11 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         <motion.p 
           className="text-lg opacity-90 mb-6 max-w-2xl mx-auto"
           variants={itemVariants}
+          transition={{
+            duration: 0.5,
+            delay: 0.1,
+            ease: [0, 0, 0.58, 1]
+          }}
         >
           O sistema completo para nutricionistas que desejam otimizar seus processos e
           entregar resultados excepcionais para seus pacientes.
@@ -102,6 +107,11 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         <motion.div 
           className="flex flex-col sm:flex-row gap-3 justify-center"
           variants={itemVariants}
+          transition={{
+            duration: 0.5,
+            delay: 0.2,
+            ease: [0, 0, 0.58, 1]
+          }}
         >
           <AnimatedButton
             onClick={() => navigate("/calculator")}

@@ -32,30 +32,12 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     },
     hover: { 
       scale: 1.05,
-      boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-      transition: {
-        duration: 0.2,
-        ease: [0.42, 0, 0.58, 1] // easeInOut
-      }
+      boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
     },
     tap: { 
-      scale: 0.95,
-      transition: {
-        duration: 0.1
-      }
+      scale: 0.95
     }
   };
-
-  const pulseVariants = loading ? {
-    pulse: {
-      scale: [1, 1.05, 1],
-      transition: {
-        duration: 1,
-        repeat: Infinity,
-        ease: [0.42, 0, 0.58, 1] // easeInOut
-      }
-    }
-  } : {};
 
   return (
     <motion.div
@@ -64,7 +46,13 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       whileHover={!disabled && !loading ? "hover" : "rest"}
       whileTap={!disabled && !loading ? "tap" : "rest"}
       animate={loading ? "pulse" : "rest"}
-      {...pulseVariants}
+      transition={{
+        duration: 0.2,
+        ease: [0.42, 0, 0.58, 1]
+      }}
+      whileTapTransition={{
+        duration: 0.1
+      }}
     >
       <Button
         variant={variant}
@@ -87,7 +75,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
             transition={{
               duration: 1.5,
               repeat: Infinity,
-              ease: [0, 0, 1, 1] // linear
+              ease: [0, 0, 1, 1]
             }}
           />
         )}

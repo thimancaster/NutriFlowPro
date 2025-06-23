@@ -29,12 +29,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        duration,
-        delay,
-        ease: [0, 0, 0.58, 1] // easeOut
-      }
+      scale: 1
     }
   };
 
@@ -42,11 +37,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
     hover: {
       y: -5,
       scale: 1.02,
-      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-      transition: {
-        duration: 0.2,
-        ease: [0.42, 0, 0.58, 1] // easeInOut
-      }
+      boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
     }
   } : {};
 
@@ -56,6 +47,15 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
       initial="hidden"
       animate="visible"
       whileHover={hover ? "hover" : undefined}
+      transition={{
+        duration,
+        delay,
+        ease: [0, 0, 0.58, 1]
+      }}
+      whileHoverTransition={{
+        duration: 0.2,
+        ease: [0.42, 0, 0.58, 1]
+      }}
       className={cn(
         "bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm cursor-pointer",
         className

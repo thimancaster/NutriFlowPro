@@ -48,7 +48,7 @@ export const AnimatedProgress: React.FC<AnimatedProgressProps> = ({
           animate={{ width: `${percentage}%` }}
           transition={{
             duration: 1,
-            ease: [0, 0, 0.58, 1] // easeOut
+            ease: [0, 0, 0.58, 1]
           }}
         />
       </div>
