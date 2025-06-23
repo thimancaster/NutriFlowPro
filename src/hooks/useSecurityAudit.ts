@@ -1,17 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { auditLogService } from '@/services/auditLogService';
-
-export interface SecurityEvent {
-  id: string;
-  user_id: string | null;
-  event_type: string;
-  event_data: Record<string, any>;
-  timestamp: string;
-  created_at: string;
-  ip_address?: string;
-}
+import { auditLogService, SecurityEvent } from '@/services/auditLogService';
 
 export const useSecurityAudit = () => {
   const [events, setEvents] = useState<SecurityEvent[]>([]);

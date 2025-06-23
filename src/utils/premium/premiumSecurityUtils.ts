@@ -41,7 +41,10 @@ export const validatePremiumAccess = async (
       };
     }
 
-    const hasAccess = data?.has_access || false;
+    // Type guard for the response data
+    const hasAccess = data && typeof data === 'object' && 'has_access' in data 
+      ? Boolean(data.has_access) 
+      : false;
 
     // Get current usage quotas
     const quotas = await getCurrentUsageQuotas(userId, hasAccess);
