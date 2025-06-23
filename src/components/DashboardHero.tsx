@@ -28,7 +28,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: "easeOut"
+        ease: [0, 0, 0.58, 1] // easeOut
       }
     }
   };
@@ -52,7 +52,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           transition={{
             duration: 6,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: [0.42, 0, 0.58, 1] // easeInOut
           }}
         />
         <motion.div 
@@ -65,7 +65,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           transition={{
             duration: 8,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: [0.42, 0, 0.58, 1] // easeInOut
           }}
         />
         <motion.div 
@@ -78,7 +78,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           transition={{
             duration: 4,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: [0.42, 0, 0.58, 1] // easeInOut
           }}
         />
       </div>

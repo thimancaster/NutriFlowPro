@@ -20,7 +20,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Animações de entrada refinadas - Fixed type issues
+// Animações de entrada refinadas
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -65,7 +65,7 @@ const Dashboard = () => {
   const activePlans = dashboardData?.activePlans || 0;
   
   return (
-    <div className="min-h-screen bg-background dark:bg-dark-bg-primary">
+    <div className="min-h-screen bg-background">
       <motion.div 
         className="space-y-8"
         variants={containerVariants}
@@ -79,7 +79,7 @@ const Dashboard = () => {
           </motion.div>
         )}
         
-        {/* Hero section com efeito de brilho - corrigindo o fundo */}
+        {/* Hero section com efeito de brilho */}
         <motion.div 
           variants={itemVariants}
           className="glow-on-hover"

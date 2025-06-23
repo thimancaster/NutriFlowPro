@@ -33,7 +33,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
       transition: {
         duration,
         delay,
-        ease: "easeOut"
+        ease: [0, 0, 0.58, 1] // easeOut
       }
     }
   };
@@ -45,7 +45,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
       boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
       transition: {
         duration: 0.2,
-        ease: "easeInOut"
+        ease: [0.42, 0, 0.58, 1] // easeInOut
       }
     }
   } : {};

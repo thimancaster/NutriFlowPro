@@ -35,7 +35,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
       transition: {
         duration: 0.2,
-        ease: "easeInOut"
+        ease: [0.42, 0, 0.58, 1] // easeInOut
       }
     },
     tap: { 
@@ -52,7 +52,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       transition: {
         duration: 1,
         repeat: Infinity,
-        ease: "easeInOut"
+        ease: [0.42, 0, 0.58, 1] // easeInOut
       }
     }
   } : {};
@@ -87,7 +87,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
             transition={{
               duration: 1.5,
               repeat: Infinity,
-              ease: "linear"
+              ease: [0, 0, 1, 1] // linear
             }}
           />
         )}
