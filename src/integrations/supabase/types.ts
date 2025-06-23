@@ -865,6 +865,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       stripe_events: {
         Row: {
           created_at: string
@@ -1058,6 +1091,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_premium_access_secure: {
+        Args: { feature_name: string }
+        Returns: Json
+      }
       check_premium_quota: {
         Args: { p_user_id: string; p_feature: string; p_action?: string }
         Returns: Json
@@ -1146,9 +1183,37 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_security_event_safe: {
+        Args: {
+          p_user_id: string
+          p_event_type: string
+          p_event_data?: Json
+          p_ip_address?: string
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
+      }
+      search_foods_secure: {
+        Args: {
+          search_query: string
+          search_category?: string
+          search_limit?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          category: string
+          calories_per_100g: number
+          protein_per_100g: number
+          carbs_per_100g: number
+          fat_per_100g: number
+          portion_size: number
+          portion_unit: string
+        }[]
       }
       upsert_subscriber: {
         Args: {

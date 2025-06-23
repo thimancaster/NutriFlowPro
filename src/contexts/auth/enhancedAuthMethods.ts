@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { generateSessionFingerprint, logSecurityEvent, checkRateLimit } from "@/utils/security/advancedSecurityUtils";
+import { auditLogService } from "@/services/auditLogService";
 
 // Enhanced login with security features
 export const enhancedLogin = async (email: string, password: string) => {
@@ -9,7 +10,11 @@ export const enhancedLogin = async (email: string, password: string) => {
   
   // Rate limiting for login attempts
   if (!checkRateLimit(`login_${email}`, 5, 300000)) { // 5 attempts per 5 minutes
-    await logSecurityEvent('login_rate_limit', { email, ip: clientIP });
+    await auditLogService.logEvent({
+      user_id: 'anonymous',
+      event_type: 'login_rate_limit',
+      event_data: { email, ip: clientIP }
+    });
     throw new Error('Muitas tentativas de login. Tente novamente em 5 minutos.');
   }
 
@@ -20,12 +25,7 @@ export const enhancedLogin = async (email: string, password: string) => {
     });
 
     if (error) {
-      await logSecurityEvent('login_failed', { 
-        email, 
-        error: error.message,
-        ip: clientIP,
-        fingerprint 
-      });
+      await auditLogService.logLoginAttempt('anonymous', email, false, error.message);
       
       // Check for suspicious activity
       if (error.message.includes('Invalid login credentials')) {
@@ -35,22 +35,24 @@ export const enhancedLogin = async (email: string, password: string) => {
       throw error;
     }
 
-    // Store session fingerprint
-    localStorage.setItem('session_fingerprint', fingerprint);
-    localStorage.setItem('login_timestamp', Date.now().toString());
+    if (data.user) {
+      // Store session fingerprint
+      localStorage.setItem('session_fingerprint', fingerprint);
+      localStorage.setItem('login_timestamp', Date.now().toString());
 
-    await logSecurityEvent('login_success', { 
-      email,
-      ip: clientIP,
-      fingerprint 
-    });
+      await auditLogService.logLoginAttempt(data.user.id, email, true);
+    }
 
     return data;
   } catch (error) {
-    await logSecurityEvent('login_exception', { 
-      email,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      ip: clientIP 
+    await auditLogService.logEvent({
+      user_id: 'anonymous',
+      event_type: 'login_exception',
+      event_data: {
+        email,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        ip: clientIP
+      }
     });
     throw error;
   }
@@ -62,7 +64,11 @@ export const validateSession = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
-      await logSecurityEvent('session_validation_error', { error: error.message });
+      await auditLogService.logEvent({
+        user_id: 'anonymous',
+        event_type: 'session_validation_error',
+        event_data: { error: error.message }
+      });
       return null;
     }
 
@@ -75,8 +81,10 @@ export const validateSession = async () => {
     const currentFingerprint = generateSessionFingerprint();
     
     if (storedFingerprint && storedFingerprint !== currentFingerprint) {
-      await logSecurityEvent('session_fingerprint_mismatch', { 
-        user_id: session.user.id 
+      await auditLogService.logEvent({
+        user_id: session.user.id,
+        event_type: 'session_fingerprint_mismatch',
+        event_data: {}
       });
       
       // Force logout on fingerprint mismatch
@@ -92,7 +100,11 @@ export const validateSession = async () => {
     if (loginTimestamp) {
       const sessionAge = Date.now() - parseInt(loginTimestamp);
       if (sessionAge > 24 * 60 * 60 * 1000) { // 24 hours
-        await logSecurityEvent('session_expired', { user_id: session.user.id });
+        await auditLogService.logEvent({
+          user_id: session.user.id,
+          event_type: 'session_expired',
+          event_data: {}
+        });
         await supabase.auth.signOut();
         localStorage.removeItem('session_fingerprint');
         localStorage.removeItem('login_timestamp');
@@ -102,8 +114,12 @@ export const validateSession = async () => {
 
     return session;
   } catch (error) {
-    await logSecurityEvent('session_validation_exception', { 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    await auditLogService.logEvent({
+      user_id: 'anonymous',
+      event_type: 'session_validation_exception',
+      event_data: {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     });
     throw error;
   }
@@ -112,11 +128,13 @@ export const validateSession = async () => {
 // Check for suspicious login activity
 const checkSuspiciousActivity = async (email: string) => {
   try {
-    // This would typically query a database of failed login attempts
-    // For now, we'll just log the suspicious activity
-    await logSecurityEvent('suspicious_login_activity', { 
-      email,
-      action: 'multiple_failed_attempts' 
+    await auditLogService.logEvent({
+      user_id: 'anonymous',
+      event_type: 'suspicious_login_activity',
+      event_data: {
+        email,
+        action: 'multiple_failed_attempts'
+      }
     });
   } catch (error) {
     console.error('Failed to check suspicious activity:', error);
@@ -139,9 +157,13 @@ export const enhancedLogout = async () => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
-    await logSecurityEvent('logout', { 
-      user_id: user.user?.id 
-    });
+    if (user.user) {
+      await auditLogService.logEvent({
+        user_id: user.user.id,
+        event_type: 'logout',
+        event_data: {}
+      });
+    }
 
     // Clear security-related data
     localStorage.removeItem('session_fingerprint');
@@ -155,8 +177,12 @@ export const enhancedLogout = async () => {
     if (error) throw error;
 
   } catch (error) {
-    await logSecurityEvent('logout_error', { 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    await auditLogService.logEvent({
+      user_id: 'anonymous',
+      event_type: 'logout_error',
+      event_data: {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     });
     throw error;
   }

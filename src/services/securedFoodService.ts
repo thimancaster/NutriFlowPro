@@ -8,7 +8,19 @@ export interface SecureFoodSearch {
   limit?: number;
 }
 
-export const searchFoodsSecurely = async (params: SecureFoodSearch) => {
+export interface FoodResult {
+  id: string;
+  name: string;
+  category: string;
+  calories_per_100g: number;
+  protein_per_100g: number;
+  carbs_per_100g: number;
+  fat_per_100g: number;
+  portion_size: number;
+  portion_unit: string;
+}
+
+export const searchFoodsSecurely = async (params: SecureFoodSearch): Promise<FoodResult[]> => {
   const userFingerprint = localStorage.getItem('session_fingerprint') || 'anonymous';
   
   // Rate limiting check
@@ -19,26 +31,20 @@ export const searchFoodsSecurely = async (params: SecureFoodSearch) => {
 
   // Input sanitization
   const sanitizedQuery = sanitizeSearchQuery(params.query);
-  const sanitizedCategory = params.category ? sanitizeSearchQuery(params.category) : undefined;
-  const limit = Math.min(Math.max(params.limit || 20, 1), 100); // Limit between 1-100
+  const sanitizedCategory = params.category ? sanitizeSearchQuery(params.category) : null;
+  const limit = Math.min(Math.max(params.limit || 20, 1), 100);
 
   if (!sanitizedQuery || sanitizedQuery.length < 2) {
     throw new Error('Consulta deve ter pelo menos 2 caracteres válidos');
   }
 
   try {
-    // Use parameterized query to prevent SQL injection
-    let queryBuilder = supabase
-      .from('foods')
-      .select('*')
-      .ilike('name', `%${sanitizedQuery}%`)
-      .limit(limit);
-
-    if (sanitizedCategory) {
-      queryBuilder = queryBuilder.eq('category', sanitizedCategory);
-    }
-
-    const { data, error } = await queryBuilder;
+    // Use the new secure RPC function instead of direct table access
+    const { data, error } = await supabase.rpc('search_foods_secure', {
+      search_query: sanitizedQuery,
+      search_category: sanitizedCategory,
+      search_limit: limit
+    });
 
     if (error) {
       await logSecurityEvent('food_search_error', { 
@@ -47,12 +53,6 @@ export const searchFoodsSecurely = async (params: SecureFoodSearch) => {
       });
       throw error;
     }
-
-    // Log successful search for monitoring
-    await logSecurityEvent('food_search_success', { 
-      query: sanitizedQuery,
-      results_count: data?.length || 0 
-    });
 
     return data || [];
   } catch (error) {
@@ -74,8 +74,8 @@ export const getFoodDetailsSecurely = async (foodId: string) => {
     throw new Error('Muitas consultas. Tente novamente em alguns minutos.');
   }
 
-  // Validate food ID format (should be UUID or number)
-  if (!/^[a-f\d-]{36}$|^\d+$/.test(foodId)) {
+  // Validate food ID format (should be UUID)
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(foodId)) {
     await logSecurityEvent('invalid_food_id', { food_id: foodId });
     throw new Error('ID do alimento inválido');
   }

@@ -1,15 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { auditLogService } from '@/services/auditLogService';
 
 export interface SecurityEvent {
   id: string;
   user_id: string | null;
   event_type: string;
-  details: Record<string, any>;
+  event_data: Record<string, any>;
   timestamp: string;
   created_at: string;
-  event_data?: Record<string, any>;
   ip_address?: string;
 }
 
@@ -20,33 +20,41 @@ export const useSecurityAudit = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // For now, assume non-admin users
-    // This would be replaced with actual admin check when admin system is implemented
-    setIsAdmin(false);
+    // Check if user is admin
+    const checkAdminStatus = () => {
+      const adminEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+      setIsAdmin(!!user?.email && adminEmails.includes(user.email));
+    };
+
+    checkAdminStatus();
   }, [user]);
 
   const fetchSecurityEvents = async (limit: number = 50) => {
-    // Placeholder - would fetch from actual security_audit_log table when implemented
+    if (!isAdmin) {
+      console.warn('Access denied: Admin privileges required');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      console.log(`Fetching ${limit} security events...`);
-      // Simulate empty results for now
-      setEvents([]);
+      const fetchedEvents = await auditLogService.getSecurityEvents(limit);
+      setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching security events:', error);
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchUserEvents = async (userId: string, limit: number = 50) => {
-    // Placeholder - would fetch user-specific events when implemented
     setIsLoading(true);
     try {
-      console.log(`Fetching ${limit} events for user ${userId}...`);
-      setEvents([]);
+      const fetchedEvents = await auditLogService.getUserEvents(userId, limit);
+      setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching user events:', error);
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
