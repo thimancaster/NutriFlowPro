@@ -50,9 +50,6 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
         duration: 0.2,
         ease: [0.42, 0, 0.58, 1]
       }}
-      whileTapTransition={{
-        duration: 0.1
-      }}
     >
       <Button
         variant={variant}

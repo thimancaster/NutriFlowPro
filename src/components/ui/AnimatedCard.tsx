@@ -52,10 +52,6 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({
         delay,
         ease: [0, 0, 0.58, 1]
       }}
-      whileHoverTransition={{
-        duration: 0.2,
-        ease: [0.42, 0, 0.58, 1]
-      }}
       className={cn(
         "bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm cursor-pointer",
         className
