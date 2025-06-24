@@ -1,11 +1,25 @@
 
-import { sanitizeInput } from "@/utils/security/advancedSecurityUtils";
+/**
+ * Enhanced validation utilities with security focus
+ */
 
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
   sanitizedData?: any;
 }
+
+// Basic input sanitization function
+const sanitizeInput = (input: string): string => {
+  if (!input) return '';
+  
+  return input
+    .replace(/[<>]/g, '') // Remove HTML brackets
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .trim()
+    .substring(0, 1000); // Limit length
+};
 
 // Enhanced patient data validation
 export const validatePatientData = (data: any): ValidationResult => {

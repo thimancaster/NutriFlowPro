@@ -25,7 +25,7 @@ export const generateSessionFingerprint = (): string => {
       new Date().getTimezoneOffset().toString(),
       canvas.toDataURL(),
       navigator.hardwareConcurrency?.toString() || '0',
-      navigator.deviceMemory?.toString() || '0',
+      (navigator as any).deviceMemory?.toString() || '0', // Type assertion for optional property
       navigator.platform,
       navigator.cookieEnabled.toString()
     ];
@@ -130,7 +130,9 @@ export const validatePremiumAccess = async (feature: string): Promise<boolean> =
       return false;
     }
     
-    const hasAccess = data?.has_access === true;
+    // Type-safe access to the response
+    const response = data as { has_access?: boolean } | null;
+    const hasAccess = response?.has_access === true;
     
     await logSecurityEvent('premium_check_completed', {
       feature,
@@ -218,6 +220,28 @@ export const logSecurityEvent = async (eventType: string, eventData: any = {}) =
   } catch (error) {
     console.error('Failed to log security event:', error);
   }
+};
+
+// Input sanitization functions
+export const sanitizeInput = (input: string): string => {
+  if (!input) return '';
+  
+  return input
+    .replace(/[<>]/g, '') // Remove HTML brackets
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .trim()
+    .substring(0, 1000); // Limit length
+};
+
+export const sanitizeSearchQuery = (query: string): string => {
+  if (!query) return '';
+  
+  return query
+    .replace(/[<>\"'%;()&+]/g, '') // Remove potentially dangerous characters
+    .replace(/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER)\b)/gi, '') // Remove SQL keywords
+    .trim()
+    .substring(0, 100); // Limit search query length
 };
 
 // Content Security Policy headers (for reference)
