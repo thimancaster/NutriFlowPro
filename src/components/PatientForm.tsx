@@ -1,119 +1,110 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { useSecureOperations } from '@/hooks/useSecureOperations';
+import { validatePatientData } from '@/utils/validation/enhancedValidation';
+import { BasicInfoFields } from '@/components/patient/BasicInfoFields';
+import { AddressFields } from '@/components/patient/AddressFields';
+import { NotesFields } from '@/components/patient/NotesFields';
 
-import BasicInfoFields from './patient/BasicInfoFields';
-import GoalsFields from './patient/GoalsFields';
-import AddressFields from './patient/AddressFields';
-import NotesFields from './patient/NotesFields';
-import FormActions from './patient/FormActions';
-import { usePatientForm } from '@/hooks/usePatientForm';
+const patientSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  phone: z.string().optional(),
+  cpf: z.string().optional(),
+  birth_date: z.string().optional(),
+  gender: z.enum(['M', 'F']).optional(),
+  address: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type PatientFormData = z.infer<typeof patientSchema>;
 
 interface PatientFormProps {
   onSuccess?: () => void;
-  editPatient?: any;
-  onCancel?: () => void;
-  initialData?: any;
+  initialData?: Partial<PatientFormData>;
+  mode?: 'create' | 'edit';
 }
 
-const PatientForm = ({ onSuccess, editPatient, onCancel, initialData }: PatientFormProps) => {
-  const { user } = useAuth();
-  const userId = user?.id || '';
+export const PatientForm: React.FC<PatientFormProps> = ({
+  onSuccess,
+  initialData,
+  mode = 'create'
+}) => {
+  const { toast } = useToast();
+  const { secureCreatePatient, isLoading } = useSecureOperations();
   
-  const {
-    isLoading,
-    birthDate,
-    setBirthDate,
-    activeTab,
-    setActiveTab,
-    errors,
-    formData,
-    address,
-    notes,
-    handleChange,
-    handleSelectChange,
-    handleAddressChange,
-    handleNotesChange,
-    handleValidateField,
-    handleSubmit,
-  } = usePatientForm({
-    editPatient,
-    initialData,
-    onSuccess,
-    userId
+  const form = useForm<PatientFormData>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || '',
+      cpf: initialData?.cpf || '',
+      birth_date: initialData?.birth_date || '',
+      gender: initialData?.gender || undefined,
+      address: initialData?.address || '',
+      notes: initialData?.notes || '',
+    },
   });
 
-  console.log('PatientForm rendered with errors:', errors);
-  console.log('PatientForm formData:', formData);
+  const onSubmit = async (data: PatientFormData) => {
+    try {
+      // Validate data with enhanced security validation
+      const validation = validatePatientData(data);
+      
+      if (!validation.isValid) {
+        toast({
+          title: 'Dados inválidos',
+          description: validation.errors.join(', '),
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Use secure operation for creating patient
+      await secureCreatePatient(validation.sanitizedData);
+      
+      // Reset form and call success callback
+      form.reset();
+      onSuccess?.();
+      
+    } catch (error: any) {
+      console.error('Error creating patient:', error);
+      // Error is already handled by useSecureOperations hook
+    }
+  };
 
   return (
-    <Card className="nutri-card w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>{editPatient ? "Editar Paciente" : "Cadastro de Paciente"}</CardTitle>
-        <CardDescription>
-          Preencha os dados para {editPatient ? "atualizar" : "cadastrar"} um {editPatient ? "" : "novo"} paciente
-        </CardDescription>
+        <CardTitle>
+          {mode === 'create' ? 'Novo Paciente' : 'Editar Paciente'}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-6">
-              <TabsTrigger value="basic-info">Informações Básicas</TabsTrigger>
-              <TabsTrigger value="address">Endereço</TabsTrigger>
-              <TabsTrigger value="goals-notes">Objetivos e Observações</TabsTrigger>
-            </TabsList>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <BasicInfoFields form={form} />
+            <AddressFields form={form} />
+            <NotesFields form={form} />
             
-            <TabsContent value="basic-info" className="space-y-4">
-              <BasicInfoFields 
-                formData={formData}
-                birthDate={birthDate}
-                setBirthDate={setBirthDate}
-                handleChange={handleChange}
-                handleSelectChange={handleSelectChange}
-                errors={errors}
-                validateField={handleValidateField}
-              />
-            </TabsContent>
-            
-            <TabsContent value="address" className="space-y-4">
-              <AddressFields 
-                address={address}
-                onChange={handleAddressChange}
-                errors={errors}
-                validateField={handleValidateField}
-              />
-            </TabsContent>
-            
-            <TabsContent value="goals-notes" className="space-y-4">
-              <GoalsFields 
-                formData={{ objective: formData.objective, profile: formData.profile }}
-                handleSelectChange={handleSelectChange}
-                errors={errors}
-                validateField={handleValidateField}
-              />
-              
-              <NotesFields 
-                notes={notes}
-                onChange={handleNotesChange}
-                errors={errors}
-                validateField={handleValidateField}
-              />
-            </TabsContent>
-          </Tabs>
-          
-          <CardFooter className="px-0 pt-2 pb-0">
-            <FormActions 
-              isLoading={isLoading}
-              onCancel={onCancel}
-              isEditMode={!!editPatient}
-            />
-          </CardFooter>
-        </form>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? 'Salvando...' : mode === 'create' ? 'Criar Paciente' : 'Atualizar Paciente'}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );
 };
-
-export default PatientForm;

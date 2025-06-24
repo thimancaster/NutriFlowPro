@@ -1,26 +1,89 @@
 
-import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import { AuthProvider } from './contexts/auth/AuthContext';
-import { StrictMode } from 'react';
-import { ThemeProvider } from "./components/theme-provider"
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { Toaster } from "sonner"
-import AppRoutes from './routes';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/auth/AuthContext";
+import { SecurityProvider } from "@/components/security/SecurityProvider";
+import Index from "@/pages/Index";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
+import Dashboard from "@/pages/Dashboard";
+import Calculator from "@/pages/Calculator";
+import Patients from "@/pages/Patients";
+import MealPlanGenerator from "@/pages/MealPlanGenerator";
+import Settings from "@/pages/Settings";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import AuthHandler from "@/components/auth/AuthHandler";
+import "./App.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+    },
+  },
+});
 
 function App() {
   return (
-    <QueryClientProvider client={new QueryClient()}>
-      <Router>
-        <StrictMode>
-          <ThemeProvider defaultTheme="system" storageKey="vite-react-theme">
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
-            <Toaster />
-          </ThemeProvider>
-        </StrictMode>
-      </Router>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="nutriflow-theme">
+        <BrowserRouter>
+          <AuthProvider>
+            <SecurityProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/auth" element={<AuthHandler />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/calculator"
+                  element={
+                    <ProtectedRoute>
+                      <Calculator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/patients/*"
+                  element={
+                    <ProtectedRoute>
+                      <Patients />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/meal-plan-generator"
+                  element={
+                    <ProtectedRoute>
+                      <MealPlanGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+              <Toaster />
+            </SecurityProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
