@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -8,7 +7,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import PatientForm from '@/components/PatientForm';
+import { PatientForm } from '@/components/PatientForm';
 
 const PatientEdit = () => {
   const navigate = useNavigate();

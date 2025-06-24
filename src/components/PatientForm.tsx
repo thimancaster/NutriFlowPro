@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useSecureOperations } from '@/hooks/useSecureOperations';
 import { validatePatientData } from '@/utils/validation/enhancedValidation';
-import { BasicInfoFields } from '@/components/patient/BasicInfoFields';
-import { AddressFields } from '@/components/patient/AddressFields';
-import { NotesFields } from '@/components/patient/NotesFields';
+import BasicInfoFields from '@/components/patient/BasicInfoFields';
+import AddressFields from '@/components/patient/AddressFields';
+import NotesFields from '@/components/patient/NotesFields';
 
 const patientSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),

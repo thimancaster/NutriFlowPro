@@ -18,8 +18,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await login(email, password, remember, toast);
       
-      if (result.success && result.session) {
-        await updateAuthState(result.session, remember);
+      if (result.success && result.data) {
+        await updateAuthState(result.data.session, remember);
       }
       
       return result;

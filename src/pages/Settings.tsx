@@ -1,13 +1,13 @@
+
 import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProfileSettings from '@/components/Settings/ProfileSettings';
 import SubscriptionSettings from '@/components/Settings/SubscriptionSettings';
 import UserInfoHeader from '@/components/UserInfoHeader';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, CreditCard, Shield } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { BackButton } from '@/components/ui/back-button';
-import { Layout } from '@/components/ui/layout';
 import { SecurityDashboard } from '@/components/security/SecurityDashboard';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -29,7 +29,7 @@ const Settings = () => {
   }, []);
   
   return (
-    <Layout>
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
       <div className="container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center mb-6 space-x-4">
           <BackButton to="/" label="Voltar para o Dashboard" />
@@ -87,7 +87,7 @@ const Settings = () => {
           </Card>
         )}
       </div>
-    </Layout>
+    </div>
   );
 };
 

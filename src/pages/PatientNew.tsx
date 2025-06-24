@@ -1,7 +1,8 @@
+
 import React, {useEffect} from "react";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import {useToast} from "@/hooks/use-toast";
-import PatientForm from "@/components/PatientForm";
+import { PatientForm } from "@/components/PatientForm";
 import {useQuery} from "@tanstack/react-query";
 import {PatientService} from "@/services/patient";
 import {useAuth} from "@/contexts/auth/AuthContext";
