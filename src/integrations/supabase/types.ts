@@ -1099,6 +1099,14 @@ export type Database = {
         Args: { p_user_id: string; p_feature: string; p_action?: string }
         Returns: Json
       }
+      check_rate_limit_secure: {
+        Args: {
+          identifier: string
+          max_requests?: number
+          window_seconds?: number
+        }
+        Returns: boolean
+      }
       check_user_premium_status: {
         Args: { user_id: string }
         Returns: boolean
@@ -1250,6 +1258,10 @@ export type Database = {
           p_phone?: string
           p_cpf?: string
         }
+        Returns: Json
+      }
+      validate_premium_access_secure: {
+        Args: { feature_name: string; action_type?: string }
         Returns: Json
       }
     }
