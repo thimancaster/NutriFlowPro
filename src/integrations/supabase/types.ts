@@ -1092,12 +1092,14 @@ export type Database = {
     }
     Functions: {
       check_premium_access_secure: {
-        Args: { feature_name: string }
-        Returns: Json
+        Args: Record<PropertyKey, never> | { feature_name: string }
+        Returns: undefined
       }
       check_premium_quota: {
-        Args: { p_user_id: string; p_feature: string; p_action?: string }
-        Returns: Json
+        Args:
+          | Record<PropertyKey, never>
+          | { p_user_id: string; p_feature: string; p_action?: string }
+        Returns: undefined
       }
       check_rate_limit_secure: {
         Args: {
@@ -1182,23 +1184,27 @@ export type Database = {
         Returns: boolean
       }
       log_security_event: {
-        Args: {
-          p_user_id: string
-          p_event_type: string
-          p_event_data?: Json
-          p_ip_address?: string
-          p_user_agent?: string
-        }
+        Args:
+          | Record<PropertyKey, never>
+          | {
+              p_user_id: string
+              p_event_type: string
+              p_event_data?: Json
+              p_ip_address?: string
+              p_user_agent?: string
+            }
         Returns: undefined
       }
       log_security_event_safe: {
-        Args: {
-          p_user_id: string
-          p_event_type: string
-          p_event_data?: Json
-          p_ip_address?: string
-          p_user_agent?: string
-        }
+        Args:
+          | Record<PropertyKey, never>
+          | {
+              p_user_id: string
+              p_event_type: string
+              p_event_data?: Json
+              p_ip_address?: string
+              p_user_agent?: string
+            }
         Returns: undefined
       }
       recalculate_meal_plan_totals: {
@@ -1252,17 +1258,21 @@ export type Database = {
         Returns: undefined
       }
       validate_patient_data: {
-        Args: {
-          p_name: string
-          p_email?: string
-          p_phone?: string
-          p_cpf?: string
-        }
-        Returns: Json
+        Args:
+          | Record<PropertyKey, never>
+          | {
+              p_name: string
+              p_email?: string
+              p_phone?: string
+              p_cpf?: string
+            }
+        Returns: undefined
       }
       validate_premium_access_secure: {
-        Args: { feature_name: string; action_type?: string }
-        Returns: Json
+        Args:
+          | Record<PropertyKey, never>
+          | { feature_name: string; action_type?: string }
+        Returns: undefined
       }
     }
     Enums: {
