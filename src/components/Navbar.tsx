@@ -66,8 +66,10 @@ const Navbar = () => {
           {/* Logo and Desktop Navigation */}
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/dashboard" className="text-2xl font-bold text-primary">
-                NutriFlow Pro
+              <Link to="/dashboard" className="flex items-center">
+                <span className="text-nutri-green font-bold text-2xl">Nutri</span>
+                <span className="text-nutri-blue font-bold text-2xl">Flow</span>
+                <span className="text-nutri-blue font-bold text-2xl ml-1">Pro</span>
               </Link>
             </div>
             
@@ -84,8 +86,8 @@ const Navbar = () => {
                     to={item.href}
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
                       isActive
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                        ? 'border-nutri-green text-nutri-green'
+                        : 'border-transparent text-gray-500 hover:text-nutri-blue hover:border-nutri-blue dark:text-gray-400 dark:hover:text-nutri-blue'
                     }`}
                   >
                     <Icon className="h-4 w-4 mr-2" />
@@ -106,7 +108,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.user_metadata?.avatar_url || ''} alt="Profile" />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-nutri-green text-white">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
@@ -178,8 +180,8 @@ const Navbar = () => {
                   to={item.href}
                   className={`flex items-center px-3 py-2 text-base font-medium transition-colors duration-200 ${
                     isActive
-                      ? 'text-primary bg-primary/10 border-r-4 border-primary'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800'
+                      ? 'text-nutri-green bg-nutri-green/10 border-r-4 border-nutri-green'
+                      : 'text-gray-600 hover:text-nutri-blue hover:bg-nutri-blue/10 dark:text-gray-400 dark:hover:text-nutri-blue dark:hover:bg-nutri-blue/10'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

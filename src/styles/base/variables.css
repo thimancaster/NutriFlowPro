@@ -50,3 +50,86 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+/* Classes utilitárias para cores do NutriFlow */
+@layer utilities {
+  .text-nutri-green {
+    color: hsl(var(--nutri-green));
+  }
+  
+  .text-nutri-green-light {
+    color: hsl(var(--nutri-green-light));
+  }
+  
+  .text-nutri-green-dark {
+    color: hsl(var(--nutri-green-dark));
+  }
+  
+  .text-nutri-blue {
+    color: hsl(var(--nutri-blue));
+  }
+  
+  .text-nutri-blue-light {
+    color: hsl(var(--nutri-blue-light));
+  }
+  
+  .text-nutri-blue-dark {
+    color: hsl(var(--nutri-blue-dark));
+  }
+  
+  .bg-nutri-green {
+    background-color: hsl(var(--nutri-green));
+  }
+  
+  .bg-nutri-green-light {
+    background-color: hsl(var(--nutri-green-light));
+  }
+  
+  .bg-nutri-green-dark {
+    background-color: hsl(var(--nutri-green-dark));
+  }
+  
+  .bg-nutri-blue {
+    background-color: hsl(var(--nutri-blue));
+  }
+  
+  .bg-nutri-blue-light {
+    background-color: hsl(var(--nutri-blue-light));
+  }
+  
+  .bg-nutri-blue-dark {
+    background-color: hsl(var(--nutri-blue-dark));
+  }
+  
+  .border-nutri-green {
+    border-color: hsl(var(--nutri-green));
+  }
+  
+  .border-nutri-blue {
+    border-color: hsl(var(--nutri-blue));
+  }
+  
+  .hover\:bg-nutri-green:hover {
+    background-color: hsl(var(--nutri-green));
+  }
+  
+  .hover\:bg-nutri-blue:hover {
+    background-color: hsl(var(--nutri-blue));
+  }
+  
+  .hover\:text-nutri-green:hover {
+    color: hsl(var(--nutri-green));
+  }
+  
+  .hover\:text-nutri-blue:hover {
+    color: hsl(var(--nutri-blue));
+  }
+  
+  .hover\:border-nutri-green:hover {
+    border-color: hsl(var(--nutri-green));
+  }
+  
+  .hover\:border-nutri-blue:hover {
+    border-color: hsl(var(--nutri-blue));
+  }
+}

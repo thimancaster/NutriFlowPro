@@ -15,7 +15,7 @@
     --popover-foreground: 213 27% 84%; /* #cbd5e1 */
 
     /* Cores primárias - verde vibrante mantido */
-    --primary: 166 76% 46%; /* Verde mantido #22d3aa */
+    --primary: 142 70% 45%; /* Verde NutriFlow */
     --primary-foreground: 222 84% 5%; /* #0f172a */
 
     /* Elementos secundários - azul-ardósia claro */
@@ -37,25 +37,25 @@
     /* Bordas e inputs - azul-cinza visível */
     --border: 215 20% 35%; /* #475569 - azul-cinza */
     --input: 215 25% 27%; /* #334155 - input azul-ardósia */
-    --ring: 166 76% 46%; /* #22d3aa - verde para focus */
+    --ring: 142 70% 45%; /* Verde NutriFlow para focus */
 
-    /* Cores específicas do NutriFlow para modo escuro */
-    --nutri-green: 166 76% 46%; /* Verde vibrante */
-    --nutri-green-light: 166 66% 56%;
-    --nutri-green-dark: 166 86% 36%;
-    --nutri-blue: 217 91% 60%; /* Azul mantido */
-    --nutri-blue-light: 217 81% 70%;
-    --nutri-blue-dark: 217 91% 50%;
+    /* Cores específicas do NutriFlow para modo escuro - mantendo a identidade visual */
+    --nutri-green: 142 70% 50%; /* Verde mais vibrante no escuro */
+    --nutri-green-light: 142 60% 60%;
+    --nutri-green-dark: 142 80% 40%;
+    --nutri-blue: 217 91% 65%; /* Azul mais vibrante no escuro */
+    --nutri-blue-light: 217 81% 75%;
+    --nutri-blue-dark: 217 91% 55%;
 
     /* Sidebar com tema azul-ardósia refinado */
     --sidebar-background: 220 33% 13%; /* #1a202c - azul-ardósia mais escuro */
     --sidebar-foreground: 213 27% 84%; /* #cbd5e1 */
     --sidebar-primary: 215 25% 27%; /* #334155 - azul-ardósia */
     --sidebar-primary-foreground: 210 40% 98%; /* #f8fafc */
-    --sidebar-accent: 166 76% 46%; /* #22d3aa - verde accent */
+    --sidebar-accent: 142 70% 50%; /* Verde accent mais vibrante */
     --sidebar-accent-foreground: 222 84% 5%; /* #0f172a */
     --sidebar-border: 215 20% 35%; /* #475569 - borda sutil */
-    --sidebar-ring: 166 76% 46%; /* #22d3aa */
+    --sidebar-ring: 142 70% 50%; /* Verde para focus */
 
     /* Configurações específicas do tema escuro */
     color-scheme: dark;
