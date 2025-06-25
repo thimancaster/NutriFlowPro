@@ -12,13 +12,9 @@ export const useCalculatorSync = () => {
       handleInputChange('patientName', patient.name);
     }
     
-    if (patient.weight && patient.weight !== Number(currentData.weight)) {
-      handleInputChange('weight', patient.weight.toString());
-    }
-    
-    if (patient.height && patient.height !== Number(currentData.height)) {
-      handleInputChange('height', patient.height.toString());
-    }
+    // Note: Patient type doesn't have weight/height/sex properties
+    // These would need to come from measurements or anthropometry data
+    // For now, we'll skip these fields to avoid build errors
     
     if (patient.birth_date) {
       const age = calculateAgeFromBirthDate(patient.birth_date);
@@ -27,8 +23,10 @@ export const useCalculatorSync = () => {
       }
     }
     
-    if (patient.sex && patient.sex !== currentData.sex) {
-      handleInputChange('sex', patient.sex);
+    if (patient.gender && patient.gender !== currentData.sex) {
+      // Map gender to sex format expected by calculator
+      const sex = patient.gender.toLowerCase() === 'masculino' ? 'M' : 'F';
+      handleInputChange('sex', sex);
     }
   };
 
