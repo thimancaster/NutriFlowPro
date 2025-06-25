@@ -41,9 +41,9 @@ export const validatePremiumAccess = async (
       };
     }
 
-    // Type guard for the response data
-    const hasAccess = data && typeof data === 'object' && 'has_access' in data 
-      ? Boolean(data.has_access) 
+    // Improved type checking for the response data
+    const hasAccess = data && typeof data === 'object' && data !== null && 'has_access' in data 
+      ? Boolean((data as any).has_access) 
       : false;
 
     // Get current usage quotas

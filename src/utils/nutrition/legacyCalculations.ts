@@ -20,6 +20,9 @@ export interface LegacyCalculationResult {
   };
   proteinPerKg: number;
   recommendations?: string[];
+  // Cache properties
+  fromCache?: boolean;
+  cacheAge?: number;
 }
 
 /**

@@ -57,15 +57,21 @@ export const useNutritionCalculation = () => {
           fromCache: true
         });
 
+        const resultWithCache: LegacyCalculationResult = {
+          ...cachedResult,
+          fromCache: true,
+          cacheAge: cachedResult.cacheAge
+        };
+
         setState({
-          results: cachedResult,
+          results: resultWithCache,
           isCalculating: false,
           error: null,
           fromCache: true,
           cacheAge: cachedResult.cacheAge
         });
 
-        return cachedResult;
+        return resultWithCache;
       }
 
       // Normalizar profile se necessário
@@ -98,11 +104,17 @@ export const useNutritionCalculation = () => {
         normalizedProfile
       );
 
+      // Add cache properties
+      const resultsWithCache: LegacyCalculationResult = {
+        ...results,
+        fromCache: false
+      };
+
       // Cache the results for future use
-      CalculationCache.set(cacheInputs, results, 30 * 60 * 1000); // 30 minutes TTL
+      CalculationCache.set(cacheInputs, resultsWithCache, 30 * 60 * 1000); // 30 minutes TTL
 
       setState({
-        results,
+        results: resultsWithCache,
         isCalculating: false,
         error: null,
         fromCache: false
@@ -117,7 +129,7 @@ export const useNutritionCalculation = () => {
         cached: true
       });
 
-      return results;
+      return resultsWithCache;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
       
