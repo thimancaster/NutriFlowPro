@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
-import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { Button } from "@/components/ui/button";
 
 interface DashboardHeroProps {}
 
@@ -113,22 +113,23 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
             ease: [0, 0, 0.58, 1]
           }}
         >
-          <AnimatedButton
+          <Button
+            variant="default"
             onClick={() => navigate("/calculator")}
-            className="bg-white text-nutri-green hover:bg-gray-50 font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2"
+            className="bg-white text-nutri-green hover:bg-gray-50 font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <Calculator className="h-4 w-4" />
             Iniciar Agora
-          </AnimatedButton>
+          </Button>
           
-          <AnimatedButton
-            onClick={() => navigate("/recursos")}
+          <Button
             variant="outline"
-            className="border-white text-white hover:bg-white/10 font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2"
+            onClick={() => navigate("/recursos")}
+            className="border-white text-white hover:bg-white/10 font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <ArrowRight className="h-4 w-4" />
             Conhecer Recursos
-          </AnimatedButton>
+          </Button>
         </motion.div>
       </div>
     </motion.div>

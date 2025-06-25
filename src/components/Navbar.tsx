@@ -98,17 +98,17 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right side - Theme toggle and User menu */}
-          <div className="flex items-center space-x-4">
+          {/* Right side - Theme toggle and User menu with proper alignment */}
+          <div className="flex items-center space-x-3">
             <ThemeToggle />
             
-            {/* User Menu */}
+            {/* User Menu with consistent spacing */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.user_metadata?.avatar_url || ''} alt="Profile" />
-                    <AvatarFallback className="bg-nutri-green text-white">
+                    <AvatarFallback className="bg-nutri-green text-white text-sm">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
@@ -146,18 +146,18 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile menu button */}
+            {/* Mobile menu button with consistent sizing */}
             <div className="md:hidden">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2"
+                className="inline-flex items-center justify-center p-2 h-9 w-9"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5" />
                 ) : (
-                  <Menu className="h-6 w-6" />
+                  <Menu className="h-5 w-5" />
                 )}
               </Button>
             </div>
