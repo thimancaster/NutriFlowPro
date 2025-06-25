@@ -7,13 +7,13 @@ import UserInfoHeader from '@/components/UserInfoHeader';
 import ConsultationHeader from '@/components/ConsultationHeader';
 import UsageLimits from '@/components/UsageLimits';
 import { motion } from 'framer-motion';
-import { useConsultation } from '@/contexts/ConsultationContext';
+import { useSafeConsultation } from '@/hooks/useSafeConsultation';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { isConsultationActive } = useConsultation();
+  const { isConsultationActive } = useSafeConsultation();
   const { dashboardData } = useDashboardData(user?.id);
   
   return (

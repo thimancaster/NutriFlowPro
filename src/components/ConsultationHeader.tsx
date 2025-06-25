@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import StepIndicator from '@/components/StepWizard/StepIndicator';
-import { useConsultation } from '@/contexts/ConsultationContext';
+import { useSafeConsultation } from '@/hooks/useSafeConsultation';
 
 interface ConsultationHeaderProps {
   currentStep?: string; // Making currentStep optional
@@ -11,7 +11,7 @@ interface ConsultationHeaderProps {
 
 const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderProps) => {
   const navigate = useNavigate();
-  const { activePatient } = useConsultation();
+  const { activePatient } = useSafeConsultation();
 
   // Define the steps in the consultation process
   const STEPS = [

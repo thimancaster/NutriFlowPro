@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/auth/AuthContext";
 import { SecurityProvider } from "@/components/security/SecurityProvider";
+import { ConsultationProvider } from "@/contexts/ConsultationContext";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
@@ -42,7 +43,9 @@ function App() {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <ConsultationProvider>
+                        <Dashboard />
+                      </ConsultationProvider>
                     </ProtectedRoute>
                   }
                 />
@@ -50,7 +53,9 @@ function App() {
                   path="/calculator"
                   element={
                     <ProtectedRoute>
-                      <Calculator />
+                      <ConsultationProvider>
+                        <Calculator />
+                      </ConsultationProvider>
                     </ProtectedRoute>
                   }
                 />
@@ -58,7 +63,9 @@ function App() {
                   path="/patients/*"
                   element={
                     <ProtectedRoute>
-                      <Patients />
+                      <ConsultationProvider>
+                        <Patients />
+                      </ConsultationProvider>
                     </ProtectedRoute>
                   }
                 />
@@ -66,7 +73,9 @@ function App() {
                   path="/meal-plan-generator"
                   element={
                     <ProtectedRoute>
-                      <MealPlanGenerator />
+                      <ConsultationProvider>
+                        <MealPlanGenerator />
+                      </ConsultationProvider>
                     </ProtectedRoute>
                   }
                 />
