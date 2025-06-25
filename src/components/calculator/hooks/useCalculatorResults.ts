@@ -1,11 +1,7 @@
 
-/**
- * Results management for calculator
- */
-
 import { useState } from 'react';
 
-export interface CalculationResults {
+interface CalculationResults {
   tmbValue: number;
   teeObject: {
     tmb: number;
@@ -19,7 +15,12 @@ export interface CalculationResults {
     fat: { grams: number; kcal: number; percentage: number };
     proteinPerKg: number;
   };
-  calorieSummary: any;
+  calorieSummary: {
+    totalCalories: number;
+    proteinCalories: number;
+    carbsCalories: number;
+    fatCalories: number;
+  };
   formulaUsed: string;
 }
 
@@ -31,6 +32,7 @@ export const useCalculatorResults = () => {
   const resetResults = () => {
     setResults(null);
     setShowResults(false);
+    setIsCalculating(false);
   };
 
   return {
@@ -41,11 +43,11 @@ export const useCalculatorResults = () => {
     setResults,
     setShowResults,
     resetResults,
-    // Individual result accessors for compatibility
+    // Individual getters for backward compatibility
     tmbValue: results?.tmbValue || null,
     teeObject: results?.teeObject || null,
     macros: results?.macros || null,
     calorieSummary: results?.calorieSummary || null,
-    formulaUsed: results?.formulaUsed
+    formulaUsed: results?.formulaUsed || null
   };
 };

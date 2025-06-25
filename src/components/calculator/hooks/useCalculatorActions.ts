@@ -1,10 +1,7 @@
 
-import { useToast } from '@/hooks/use-toast';
-import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
-import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { useNutritionCalculation } from '@/hooks/useNutritionCalculation';
 
-export interface CalculationParams {
+interface CalculationParams {
   weight: number;
   height: number;
   age: number;
@@ -15,89 +12,48 @@ export interface CalculationParams {
 }
 
 export const useCalculatorActions = () => {
-  const { toast } = useToast();
+  const nutritionCalculation = useNutritionCalculation();
+
+  const validateInputs = (params: CalculationParams): boolean => {
+    const { weight, height, age } = params;
+    
+    if (!weight || !height || !age) {
+      return false;
+    }
+    
+    if (weight <= 0 || weight > 500) return false;
+    if (height <= 0 || height > 250) return false;
+    if (age <= 0 || age > 120) return false;
+    
+    return true;
+  };
 
   const validateAndCalculate = async (params: CalculationParams) => {
-    console.log('=== INICIANDO VALIDAÇÃO E CÁLCULO ===');
-    console.log('Parâmetros recebidos:', params);
-
-    // Validation
-    if (!params.weight || !params.height || !params.age) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha peso, altura e idade para continuar.",
-        variant: "destructive"
-      });
+    if (!validateInputs(params)) {
+      console.error('Validation failed:', params);
       return null;
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // UI feedback
-
-      // Normalizar o profile usando a função de mapeamento padronizada
-      const normalizedProfile = stringToProfile(params.profile);
-      console.log('Profile normalizado:', {
-        original: params.profile,
-        normalized: normalizedProfile
-      });
-      
-      // Converter para formato legacy apenas para os cálculos
-      const legacyProfile = profileToLegacy(normalizedProfile);
-      console.log('Profile para cálculo legacy:', legacyProfile);
-      
-      // Validar parâmetros com valores legacy
-      const validation = validateLegacyParameters(
+      const result = await nutritionCalculation.calculate(
         params.weight,
         params.height,
         params.age,
         params.sex,
-        params.activityLevel as ActivityLevel,
-        params.objective as Objective,
-        legacyProfile
-      );
-      
-      if (!validation.isValid) {
-        console.error('Validação falhou:', validation.errors);
-        toast({
-          title: "Parâmetros inválidos",
-          description: validation.errors.join(', '),
-          variant: "destructive"
-        });
-        return null;
-      }
-      
-      // Use the legacy function with the correct signature (7 parameters)
-      const nutritionResults = calculateCompleteNutritionLegacy(
-        params.weight,
-        params.height,
-        params.age,
-        params.sex,
-        params.activityLevel as ActivityLevel,
-        params.objective as Objective,
-        legacyProfile
+        params.activityLevel as any,
+        params.objective as any,
+        params.profile as any
       );
 
-      console.log('Resultados do cálculo:', nutritionResults);
-
-      toast({
-        title: "Cálculo realizado com sucesso",
-        description: `Utilizada fórmula: ${nutritionResults.formulaUsed}`,
-      });
-
-      return nutritionResults;
-
+      return result;
     } catch (error) {
-      console.error('Erro no cálculo:', error);
-      toast({
-        title: "Erro no cálculo",
-        description: "Ocorreu um erro ao realizar os cálculos. Tente novamente.",
-        variant: "destructive"
-      });
+      console.error('Calculation error:', error);
       return null;
     }
   };
 
   return {
-    validateAndCalculate
+    validateAndCalculate,
+    validateInputs
   };
 };

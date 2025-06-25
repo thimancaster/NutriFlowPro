@@ -1,64 +1,29 @@
 
-/**
- * Form state management for calculator
- */
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { stringToProfile } from '../utils/profileUtils';
 
-export interface CalculatorFormData {
-  weight: number;
-  height: number;
-  age: number;
-  sex: 'M' | 'F';
-  activityLevel: string;
-  objective: string;
-  profile: Profile;
-  patientName?: string;
-}
-
 export const useCalculatorForm = () => {
-  const [formData, setFormData] = useState<CalculatorFormData>({
-    weight: 65,
-    height: 160,
-    age: 49,
-    sex: 'F',
+  const [formData, setFormData] = useState({
+    weight: '',
+    height: '',
+    age: '',
+    sex: 'F' as 'M' | 'F',
     activityLevel: 'moderado',
-    objective: 'emagrecimento',
-    profile: 'eutrofico'
+    objective: 'manutenção',
+    profile: 'eutrofico' as Profile,
+    patientName: ''
   });
 
-  // Load saved state
-  useEffect(() => {
-    const savedState = localStorage.getItem('calculatorState');
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        setFormData(prev => ({
-          ...prev,
-          ...parsed,
-          profile: stringToProfile(parsed.profile)
-        }));
-      } catch (error) {
-        console.error('Error loading saved state:', error);
-      }
-    }
-  }, []);
-
-  // Save state to localStorage
-  useEffect(() => {
-    localStorage.setItem('calculatorState', JSON.stringify(formData));
-  }, [formData]);
-
-  const handleInputChange = (field: keyof CalculatorFormData, value: any) => {
+  const handleInputChange = (name: string, value: any) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
   };
 
-  const handleProfileChange = (profile: Profile) => {
+  const handleProfileChange = (value: string) => {
+    const profile = stringToProfile(value);
     setFormData(prev => ({
       ...prev,
       profile
@@ -67,15 +32,15 @@ export const useCalculatorForm = () => {
 
   const resetForm = () => {
     setFormData({
-      weight: 65,
-      height: 160,
-      age: 49,
+      weight: '',
+      height: '',
+      age: '',
       sex: 'F',
       activityLevel: 'moderado',
-      objective: 'emagrecimento',
-      profile: 'eutrofico'
+      objective: 'manutenção',
+      profile: 'eutrofico',
+      patientName: ''
     });
-    localStorage.removeItem('calculatorState');
   };
 
   return {
@@ -83,7 +48,7 @@ export const useCalculatorForm = () => {
     handleInputChange,
     handleProfileChange,
     resetForm,
-    // Individual field accessors for compatibility
+    // Individual getters for backward compatibility
     weight: formData.weight,
     height: formData.height,
     age: formData.age,
