@@ -25,7 +25,7 @@ export const useCalculatorSync = () => {
     
     if (patient.gender && patient.gender !== currentData.sex) {
       // Map gender to sex format expected by calculator
-      const sex = patient.gender.toLowerCase() === 'masculino' ? 'M' : 'F';
+      const sex = patient.gender.toLowerCase() === 'male' ? 'M' : 'F';
       handleInputChange('sex', sex);
     }
   };
