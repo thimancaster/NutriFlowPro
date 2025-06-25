@@ -3,11 +3,14 @@ import { useState } from 'react';
 import { calculateCompleteNutritionLegacy, LegacyCalculationResult, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
 import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
 import { ActivityLevel, Objective } from '@/types/consultation';
+import { CalculationCache } from '@/utils/performance/calculationCache';
 
 export interface NutritionCalculationState {
   results: LegacyCalculationResult | null;
   isCalculating: boolean;
   error: string | null;
+  fromCache?: boolean;
+  cacheAge?: number;
 }
 
 export const useNutritionCalculation = () => {
@@ -34,6 +37,37 @@ export const useNutritionCalculation = () => {
     setState(prev => ({ ...prev, isCalculating: true, error: null }));
 
     try {
+      // Create cache key from calculation inputs
+      const cacheInputs = {
+        weight,
+        height,
+        age,
+        sex,
+        activityLevel,
+        objective,
+        profile,
+        customMacroPercentages
+      };
+
+      // Check cache first
+      const cachedResult = CalculationCache.get(cacheInputs);
+      if (cachedResult) {
+        console.log('Using cached nutrition calculation result', {
+          cacheAge: cachedResult.cacheAge,
+          fromCache: true
+        });
+
+        setState({
+          results: cachedResult,
+          isCalculating: false,
+          error: null,
+          fromCache: true,
+          cacheAge: cachedResult.cacheAge
+        });
+
+        return cachedResult;
+      }
+
       // Normalizar profile se necessário
       let normalizedProfile: 'magro' | 'obeso' | 'atleta';
       
@@ -64,10 +98,14 @@ export const useNutritionCalculation = () => {
         normalizedProfile
       );
 
+      // Cache the results for future use
+      CalculationCache.set(cacheInputs, results, 30 * 60 * 1000); // 30 minutes TTL
+
       setState({
         results,
         isCalculating: false,
-        error: null
+        error: null,
+        fromCache: false
       });
 
       console.log('Cálculo nutricional concluído:', {
@@ -75,7 +113,8 @@ export const useNutritionCalculation = () => {
         tmb: results.tmb,
         vet: results.vet,
         profile: normalizedProfile,
-        recommendations: results.recommendations
+        recommendations: results.recommendations,
+        cached: true
       });
 
       return results;

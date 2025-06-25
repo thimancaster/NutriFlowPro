@@ -6,9 +6,11 @@ import { useCalculatorForm } from './useCalculatorForm';
 import { useCalculatorResults } from './useCalculatorResults';
 import { useCalculatorActions } from './useCalculatorActions';
 import { useCalculatorSync } from './useCalculatorSync';
+import { useToast } from '@/hooks/use-toast';
 
 const useCalculatorState = () => {
   const [activeTab, setActiveTab] = useState<'tmb' | 'activity' | 'results'>('tmb');
+  const { toast } = useToast();
   
   const {
     formData,
@@ -43,6 +45,14 @@ const useCalculatorState = () => {
   const { validateAndCalculate } = useCalculatorActions();
   const { syncPatientData } = useCalculatorSync();
 
+  // State for cache information
+  const [cacheInfo, setCacheInfo] = useState<{
+    fromCache: boolean;
+    cacheAge?: number;
+  }>({
+    fromCache: false
+  });
+
   const handleCalculateWrapper = async () => {
     console.log('=== INICIANDO CÁLCULO ===');
     console.log('Dados do formulário:', {
@@ -56,6 +66,7 @@ const useCalculatorState = () => {
     });
 
     setIsCalculating(true);
+    setCacheInfo({ fromCache: false });
 
     const calculationParams = {
       weight: Number(weight),
@@ -71,6 +82,28 @@ const useCalculatorState = () => {
     
     if (nutritionResults) {
       console.log('Resultados do cálculo:', nutritionResults);
+      
+      // Check if result came from cache
+      const fromCache = nutritionResults.fromCache || false;
+      const cacheAge = nutritionResults.cacheAge;
+
+      setCacheInfo({ 
+        fromCache, 
+        cacheAge 
+      });
+
+      // Show toast with cache information
+      if (fromCache) {
+        toast({
+          title: "Resultado do Cache",
+          description: `Cálculo recuperado do cache (${cacheAge ? Math.floor(cacheAge / 1000) + 's' : 'recente'})`,
+        });
+      } else {
+        toast({
+          title: "Cálculo Realizado",
+          description: `Novos resultados calculados e salvos no cache`,
+        });
+      }
       
       const calculationResults = {
         tmbValue: nutritionResults.tmb,
@@ -101,6 +134,11 @@ const useCalculatorState = () => {
       console.log('=== CÁLCULO CONCLUÍDO COM SUCESSO ===');
     } else {
       console.error('=== FALHA NO CÁLCULO ===');
+      toast({
+        title: "Erro no Cálculo",
+        description: "Não foi possível realizar o cálculo. Verifique os dados inseridos.",
+        variant: "destructive"
+      });
     }
 
     setIsCalculating(false);
@@ -110,6 +148,7 @@ const useCalculatorState = () => {
     console.log('=== RESETANDO CALCULADORA ===');
     resetForm();
     resetResults();
+    setCacheInfo({ fromCache: false });
     setActiveTab('tmb');
   };
 
@@ -146,6 +185,10 @@ const useCalculatorState = () => {
     macros,
     calorieSummary,
     formulaUsed,
+    
+    // Cache info
+    fromCache: cacheInfo.fromCache,
+    cacheAge: cacheInfo.cacheAge,
     
     // UI State
     showResults,
