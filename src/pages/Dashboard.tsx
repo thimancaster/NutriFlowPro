@@ -1,7 +1,6 @@
 
 import React, { Suspense } from 'react';
 import { Helmet } from 'react-helmet';
-import Navbar from '@/components/Navbar';
 import DashboardComponent from '@/components/Dashboard';
 import UserInfoHeader from '@/components/UserInfoHeader';
 import ConsultationHeader from '@/components/ConsultationHeader';
