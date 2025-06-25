@@ -11,6 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-nutri-green text-white hover:bg-nutri-green-dark",
+        primary: "bg-nutri-green text-white hover:bg-nutri-green-dark",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -21,6 +22,9 @@ const buttonVariants = cva(
         link: "text-nutri-blue underline-offset-4 hover:underline",
         "nutri-green": "bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg",
         "nutri-blue": "bg-nutri-blue text-white hover:bg-nutri-blue-dark shadow-lg",
+        "nutri": "bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg",
+        "nutri-outline": "border border-nutri-green text-nutri-green bg-transparent hover:bg-nutri-green hover:text-white",
+        "subscription": "bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg transform hover:scale-105 transition-all duration-200",
         "subscription-green": "bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg transform hover:scale-105 transition-all duration-200"
       },
       size: {
