@@ -48,15 +48,14 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
       {/* Title Field */}
       <div className="space-y-2">
         <Label htmlFor="title" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
-          Título da Consulta *
+          Título da Consulta
         </Label>
         <Input
           id="title"
           name="title"
           value={formData.title || ''}
           onChange={handleChange}
-          placeholder="Ex: Consulta inicial, Retorno nutricional..."
-          required
+          placeholder="Título será preenchido automaticamente baseado no tipo"
           className="h-12 text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green"
         />
       </div>
