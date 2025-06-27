@@ -31,7 +31,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
 
   return (
     <motion.div
-      className="glass-card rounded-2xl p-8 text-white shadow-xl relative overflow-hidden backdrop-blur-md bg-gradient-to-br from-nutri-green/20 via-nutri-blue/15 to-nutri-green/10 border border-white/20"
+      className="glass-card rounded-2xl p-8 shadow-xl relative overflow-hidden backdrop-blur-md bg-gradient-to-br from-white/10 via-white/5 to-white/10 border border-white/20"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -39,7 +39,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
       {/* Background decorative elements with enhanced transparency */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div 
-          className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl"
+          className="absolute top-0 left-0 w-64 h-64 bg-nutri-green/10 rounded-full blur-2xl"
           style={{ x: '-50%', y: '-50%' }}
           animate={{
             y: ['-50%', '-45%', '-50%'],
@@ -80,22 +80,23 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
       </div>
 
       {/* Subtle overlay for better text contrast */}
-      <div className="absolute inset-0 bg-gradient-to-br from-nutri-green/10 to-nutri-blue/5 rounded-2xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl" />
 
       <div className="relative z-10">
         <motion.h2 
-          className="text-2xl md:text-3xl font-bold mb-4 text-shadow-lg"
+          className="text-2xl md:text-3xl font-bold mb-4 text-gray-800"
           variants={itemVariants}
           transition={{
             duration: 0.5,
             ease: [0, 0, 0.58, 1]
           }}
         >
-          Bem-vindo ao NutriFlow Pro
+          <span className="text-nutri-green">Nutri</span>
+          <span className="text-nutri-blue">Flow Pro</span>
         </motion.h2>
         
         <motion.p 
-          className="text-lg opacity-90 mb-6 max-w-2xl mx-auto text-shadow-sm"
+          className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto"
           variants={itemVariants}
           transition={{
             duration: 0.5,
@@ -120,7 +121,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
             variant="subscription-green"
             animation="shimmer"
             onClick={() => navigate("/calculator")}
-            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold backdrop-blur-sm bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30"
+            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"
           >
             <Calculator className="h-5 w-5 mr-2" />
             Iniciar Agora
@@ -130,7 +131,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
             variant="nutri-blue"
             animation="shimmer"
             onClick={() => navigate("/recursos")}
-            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold backdrop-blur-sm bg-white/5 border border-white/20 hover:bg-white/15 hover:border-white/30"
+            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"
           >
             <ArrowRight className="h-5 w-5 mr-2" />
             Conhecer Recursos
