@@ -105,7 +105,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         </motion.p>
 
         <motion.div 
-          className="flex flex-col sm:flex-row gap-3 justify-center"
+          className="flex flex-col sm:flex-row gap-4 justify-center"
           variants={itemVariants}
           transition={{
             duration: 0.5,
@@ -114,20 +114,22 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           }}
         >
           <Button
-            variant="default"
+            variant="subscription-green"
+            animation="shimmer"
             onClick={() => navigate("/calculator")}
-            className="bg-white text-nutri-green hover:bg-gray-50 font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"
           >
-            <Calculator className="h-4 w-4" />
+            <Calculator className="h-5 w-5 mr-2" />
             Iniciar Agora
           </Button>
           
           <Button
             variant="nutri-blue"
+            animation="shimmer"
             onClick={() => navigate("/recursos")}
-            className="font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-5 w-5 mr-2" />
             Conhecer Recursos
           </Button>
         </motion.div>

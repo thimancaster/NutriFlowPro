@@ -98,11 +98,13 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right side - Theme toggle and User menu with proper alignment */}
-          <div className="flex items-center space-x-3">
-            <ThemeToggle />
+          {/* Right side - Theme toggle and User menu with improved alignment */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center h-9">
+              <ThemeToggle />
+            </div>
             
-            {/* User Menu with consistent spacing */}
+            {/* User Menu with consistent sizing */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
