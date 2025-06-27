@@ -1,0 +1,75 @@
+
+/* Efeitos específicos para componentes hero */
+@layer components {
+  /* Custom Hero Card Effects */
+  .hero-card {
+    backdrop-filter: blur(12px);
+    background-image: linear-gradient(135deg, var(--nutri-green), var(--nutri-blue));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 32px rgba(34, 211, 170, 0.15);
+    position: relative;
+    isolation: isolate;
+  }
+
+  .hero-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(34, 211, 170, 0.25);
+  }
+
+  .dark .hero-card {
+    background-image: linear-gradient(135deg, var(--nutri-green), var(--nutri-blue));
+    background-color: rgba(34, 211, 170, 0.1);
+    background-blend-mode: overlay;
+    border: 1px solid rgba(34, 211, 170, 0.3);
+    box-shadow: 0 8px 32px rgba(34, 211, 170, 0.15);
+    background-clip: padding-box;
+  }
+
+  .dark .hero-card:hover {
+    background-color: rgba(34, 211, 170, 0.15);
+    border-color: rgba(34, 211, 170, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(34, 211, 170, 0.25);
+  }
+
+  /* Custom Hero Buttons */
+  .hero-button {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+  }
+
+  .hero-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  }
+
+  /* Dark mode adjustments for hero buttons */
+  .dark .hero-button {
+    background: rgba(34, 211, 170, 0.15);
+    border: 1px solid rgba(34, 211, 170, 0.3);
+    backdrop-filter: blur(8px);
+  }
+
+  .dark .hero-button:hover {
+    background: rgba(34, 211, 170, 0.25);
+    border-color: rgba(34, 211, 170, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(34, 211, 170, 0.3);
+  }
+
+  .dark .hero-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(34, 211, 170, 0.2);
+  }
+}

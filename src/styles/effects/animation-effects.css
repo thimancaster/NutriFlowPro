@@ -1,0 +1,54 @@
+
+/* Efeitos de animação */
+@layer components {
+  /* Efeito shimmer melhorado */
+  .shimmer-effect {
+    @apply bg-gradient-to-r from-transparent via-white/10 to-transparent bg-[length:200%_100%] animate-shimmer;
+  }
+
+  .dark .shimmer-effect {
+    @apply via-dark-accent-green/10;
+  }
+
+  /* Animações suaves */
+  .subtle-pulse {
+    @apply animate-pulse-soft;
+  }
+
+  .float-animation {
+    @apply animate-float;
+  }
+
+  /* Efeito de Float Animation */
+  .float-hover:hover {
+    animation: float 2s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  /* Efeito de Scale Bounce */
+  .scale-bounce:hover {
+    animation: scale-bounce 0.6s ease;
+  }
+
+  @keyframes scale-bounce {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Efeito de Pulso Suave */
+  .soft-pulse:hover {
+    animation: pulse-soft 1.5s infinite ease-in-out;
+  }
+}

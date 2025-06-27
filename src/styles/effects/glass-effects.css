@@ -1,0 +1,43 @@
+
+/* Efeitos de vidro e glassmorphism */
+@layer components {
+  /* Glassmorphism Effects */
+  .glass-card {
+    backdrop-filter: blur(12px);
+    background: rgba(34, 211, 170, 0.06);
+    border: 1px solid rgba(34, 211, 170, 0.12);
+    box-shadow: 0 8px 32px rgba(34, 211, 170, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .dark .glass-card {
+    background: rgba(34, 211, 170, 0.08);
+    border: 1px solid rgba(34, 211, 170, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-card:hover {
+    background: rgba(34, 211, 170, 0.10);
+    border-color: rgba(34, 211, 170, 0.20);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(34, 211, 170, 0.12);
+  }
+
+  .dark .glass-card:hover {
+    background: rgba(34, 211, 170, 0.12);
+    border-color: rgba(34, 211, 170, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(34, 211, 170, 0.15);
+  }
+
+  .glass-overlay {
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass-overlay {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

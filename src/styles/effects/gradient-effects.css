@@ -1,0 +1,65 @@
+
+/* Efeitos de gradiente */
+@layer components {
+  /* Gradiente Brilhante Animado */
+  .gradient-bright-hover {
+    position: relative;
+    background: linear-gradient(45deg, theme('colors.nutri.green'), theme('colors.nutri.blue'));
+    background-size: 400% 400%;
+    animation: gradient-shift 4s ease infinite;
+    transition: all 0.3s ease;
+  }
+
+  .gradient-bright-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 0deg,
+        theme('colors.nutri.green'),
+        theme('colors.nutri.blue'),
+        theme('colors.nutri.green-light'),
+        theme('colors.nutri.green'));
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: rotate 3s linear infinite;
+  }
+
+  .gradient-bright-hover:hover::before {
+    opacity: 0.8;
+  }
+
+  .dark .gradient-bright-hover {
+    background: linear-gradient(45deg, theme('colors.dark.accent.green'), theme('colors.nutri.blue'));
+  }
+
+  .dark .gradient-bright-hover::before {
+    background: conic-gradient(from 0deg,
+        theme('colors.dark.accent.green'),
+        theme('colors.nutri.blue'),
+        #00ff88,
+        theme('colors.dark.accent.green'));
+  }
+
+  /* Efeito de Gradiente que se Move */
+  .gradient-shift {
+    background-size: 200% auto;
+    transition: background-position 0.5s ease;
+  }
+
+  .gradient-shift:hover {
+    background-position: right center;
+  }
+
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+}

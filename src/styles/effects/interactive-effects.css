@@ -1,0 +1,80 @@
+
+/* Efeitos interativos e micro-interações */
+@layer components {
+  /* Efeito Magnético: Atrai o elemento para o cursor */
+  .magnetic-hover {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Efeito Ripple: Onda ao clicar */
+  .ripple-effect {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple-effect::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+    transition: none;
+  }
+
+  .dark .ripple-effect::after {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .ripple-effect:active::after {
+    transform: scale(300, 300) translate(-50%);
+    opacity: 1;
+    transition: transform 0.8s, opacity 1s;
+  }
+
+  /* Efeito de Borda Animada */
+  .animated-border {
+    position: relative;
+  }
+
+  .animated-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from var(--angle, 0deg), transparent, theme('colors.nutri.green'), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rotate 4s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .dark .animated-border::before {
+    background: conic-gradient(from var(--angle, 0deg), transparent, theme('colors.dark.accent.green'), transparent);
+  }
+
+  .animated-border:hover::before {
+    opacity: 1;
+  }
+
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes rotate {
+    to {
+      --angle: 360deg;
+    }
+  }
+}
