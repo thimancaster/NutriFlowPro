@@ -123,9 +123,9 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           </Button>
           
           <Button
-            variant="outline"
+            variant="nutri-blue"
             onClick={() => navigate("/recursos")}
-            className="border-white text-white hover:bg-white/10 font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="font-medium px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <ArrowRight className="h-4 w-4" />
             Conhecer Recursos
