@@ -31,15 +31,15 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
 
   return (
     <motion.div
-      className="hero-card bg-gradient-to-br from-nutri-green to-nutri-blue rounded-2xl p-8 text-white shadow-xl relative overflow-hidden"
+      className="glass-card rounded-2xl p-8 text-white shadow-xl relative overflow-hidden backdrop-blur-md bg-gradient-to-br from-nutri-green/20 via-nutri-blue/15 to-nutri-green/10 border border-white/20"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      {/* Background decorative elements */}
+      {/* Background decorative elements with enhanced transparency */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div 
-          className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-xl"
+          className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl"
           style={{ x: '-50%', y: '-50%' }}
           animate={{
             y: ['-50%', '-45%', '-50%'],
@@ -52,7 +52,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           }}
         />
         <motion.div 
-          className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-xl"
+          className="absolute bottom-0 right-0 w-96 h-96 bg-nutri-blue/10 rounded-full blur-2xl"
           style={{ x: '50%', y: '50%' }}
           animate={{
             y: ['50%', '45%', '50%'],
@@ -65,11 +65,11 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           }}
         />
         <motion.div 
-          className="absolute top-1/2 left-1/2 w-32 h-32 bg-white/10 rounded-full blur-2xl"
+          className="absolute top-1/2 left-1/2 w-32 h-32 bg-nutri-green/15 rounded-full blur-3xl"
           style={{ x: '-50%', y: '-50%' }}
           animate={{
             scale: [1, 1.1, 1],
-            opacity: [0.5, 0.8, 0.5]
+            opacity: [0.3, 0.6, 0.3]
           }}
           transition={{
             duration: 4,
@@ -79,9 +79,12 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         />
       </div>
 
+      {/* Subtle overlay for better text contrast */}
+      <div className="absolute inset-0 bg-gradient-to-br from-nutri-green/10 to-nutri-blue/5 rounded-2xl" />
+
       <div className="relative z-10">
         <motion.h2 
-          className="text-2xl md:text-3xl font-bold mb-4"
+          className="text-2xl md:text-3xl font-bold mb-4 text-shadow-lg"
           variants={itemVariants}
           transition={{
             duration: 0.5,
@@ -92,7 +95,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         </motion.h2>
         
         <motion.p 
-          className="text-lg opacity-90 mb-6 max-w-2xl mx-auto"
+          className="text-lg opacity-90 mb-6 max-w-2xl mx-auto text-shadow-sm"
           variants={itemVariants}
           transition={{
             duration: 0.5,
@@ -117,7 +120,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
             variant="subscription-green"
             animation="shimmer"
             onClick={() => navigate("/calculator")}
-            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"
+            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold backdrop-blur-sm bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30"
           >
             <Calculator className="h-5 w-5 mr-2" />
             Iniciar Agora
@@ -127,7 +130,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
             variant="nutri-blue"
             animation="shimmer"
             onClick={() => navigate("/recursos")}
-            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"
+            className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold backdrop-blur-sm bg-white/5 border border-white/20 hover:bg-white/15 hover:border-white/30"
           >
             <ArrowRight className="h-5 w-5 mr-2" />
             Conhecer Recursos
