@@ -12,11 +12,13 @@ interface SavePatientResult {
  */
 export const savePatient = async (patient: Partial<Patient>): Promise<SavePatientResult> => {
   try {
+    console.log('savePatient called with:', patient);
+    
     // Ensure name is required
-    if (!patient.name) {
+    if (!patient.name || patient.name.trim().length < 2) {
       return { 
         success: false,
-        error: 'Patient name is required'
+        error: 'Nome do paciente é obrigatório e deve ter pelo menos 2 caracteres'
       };
     }
     
@@ -24,13 +26,13 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
     if (patient.gender && !['male', 'female', 'other'].includes(patient.gender)) {
       return {
         success: false,
-        error: `Invalid gender value: ${patient.gender}. Must be 'male', 'female', or 'other'.`
+        error: `Valor de gênero inválido: ${patient.gender}. Deve ser 'male', 'female', ou 'other'.`
       };
     }
     
     // Prepare the data for insertion/update - only include fields that exist in the database
     const patientData: any = {
-      name: patient.name,
+      name: patient.name.trim(),
       email: patient.email || null,
       phone: patient.phone || null,
       cpf: patient.cpf || null,
@@ -41,14 +43,16 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       // Handle secondaryPhone -> secondaryphone (database column name)
       secondaryphone: patient.secondaryPhone || null,
       // Convert complex objects to JSON strings for storage
-      address: typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address || null,
-      goals: typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals || null,
+      address: patient.address ? (typeof patient.address === 'object' ? JSON.stringify(patient.address) : patient.address) : null,
+      goals: patient.goals ? (typeof patient.goals === 'object' ? JSON.stringify(patient.goals) : patient.goals) : null,
     };
 
-    // Only add user_id if it exists and is not undefined
+    // Only add user_id if it exists
     if (patient.user_id) {
       patientData.user_id = patient.user_id;
     }
+
+    console.log('Prepared patient data for database:', patientData);
 
     let data, error;
 
@@ -69,7 +73,7 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
       if (!patient.user_id) {
         return {
           success: false,
-          error: 'User ID is required for new patients'
+          error: 'ID do usuário é obrigatório para novos pacientes'
         };
       }
       
@@ -89,12 +93,36 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
 
     if (error) {
       console.error('Supabase error:', error);
-      throw error;
+      
+      // Handle specific Supabase errors
+      if (error.code === '23505') {
+        return {
+          success: false,
+          error: 'Já existe um paciente com estes dados. Verifique se não há duplicatas.'
+        };
+      }
+      
+      if (error.message?.includes('violates check constraint')) {
+        return {
+          success: false,
+          error: 'Dados inválidos. Verifique os campos preenchidos.'
+        };
+      }
+      
+      return {
+        success: false,
+        error: error.message || 'Erro desconhecido ao salvar paciente'
+      };
     }
 
     if (!data) {
-      throw new Error('Failed to save patient');
+      return {
+        success: false,
+        error: 'Nenhum dado retornado após salvar paciente'
+      };
     }
+
+    console.log('Patient successfully saved:', data);
 
     // Convert the saved patient back to our application's format
     const savedPatient: Patient = processPatientData(data);
@@ -105,15 +133,17 @@ export const savePatient = async (patient: Partial<Patient>): Promise<SavePatien
     };
     
   } catch (error: any) {
-    console.error('Error saving patient:', error);
+    console.error('Error in savePatient:', error);
     
     // Provide more specific error messages for common issues
-    let errorMessage = error.message || 'Failed to save patient';
+    let errorMessage = error.message || 'Erro desconhecido ao salvar paciente';
     
-    if (error.message && error.message.includes('check_gender')) {
+    if (error.message?.includes('check_gender')) {
       errorMessage = 'Valor de gênero inválido. Por favor, selecione Masculino, Feminino ou Outro.';
-    } else if (error.message && error.message.includes('violates')) {
+    } else if (error.message?.includes('violates')) {
       errorMessage = 'Dados inválidos. Verifique se todos os campos obrigatórios foram preenchidos corretamente.';
+    } else if (error.message?.includes('network')) {
+      errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
     }
     
     return {
@@ -131,7 +161,7 @@ export const updatePatientStatus = async (
   status: 'active' | 'archived'
 ): Promise<void> => {
   if (!patientId) {
-    throw new Error('Patient ID is required');
+    throw new Error('ID do paciente é obrigatório');
   }
 
   try {
@@ -171,6 +201,21 @@ const processPatientData = (data: any): Patient => {
     }
   }
 
+  // Process goals data properly
+  let goalsData: any = {};
+  if (data.goals) {
+    if (typeof data.goals === 'string') {
+      try {
+        goalsData = JSON.parse(data.goals);
+      } catch (e) {
+        console.warn('Failed to parse goals JSON:', e);
+        goalsData = {};
+      }
+    } else if (typeof data.goals === 'object') {
+      goalsData = data.goals;
+    }
+  }
+
   // Safely cast gender with fallback
   const safeGender = (gender: any): 'male' | 'female' | 'other' | undefined => {
     if (gender === 'male' || gender === 'female' || gender === 'other') {
@@ -181,16 +226,38 @@ const processPatientData = (data: any): Patient => {
 
   // Process database data into our Patient type
   const patient: Patient = {
-    ...data,
-    status: (data.status as 'active' | 'archived') || 'active',
+    id: data.id,
+    name: data.name,
+    email: data.email || '',
+    phone: data.phone || '',
+    secondaryPhone: data.secondaryphone || '',
+    cpf: data.cpf || '',
+    birth_date: data.birth_date || '',
     gender: safeGender(data.gender),
-    goals: (data.goals as Record<string, any>) || {},
     address: addressData,
-    // Handle database column name mapping
-    secondaryPhone: data.secondaryphone,
-    // Ensure birth_date is always present (required in Patient interface)
-    birth_date: data.birth_date || ''
+    notes: data.notes || '',
+    status: (data.status as 'active' | 'archived') || 'active',
+    goals: goalsData,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    user_id: data.user_id,
+    // Calculate age if birth_date is available
+    age: data.birth_date ? calculateAge(data.birth_date) : undefined
   };
 
   return patient;
+};
+
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return Math.max(0, age); // Ensure age is never negative
 };

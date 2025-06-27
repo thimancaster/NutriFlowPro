@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useSecureOperations } from '@/hooks/useSecureOperations';
-import { validatePatientData } from '@/utils/validation/enhancedValidation';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { Patient } from '@/types';
 import BasicInfoFields from '@/components/patient/BasicInfoFields';
 import AddressFields from '@/components/patient/AddressFields';
 import NotesFields from '@/components/patient/NotesFields';
@@ -17,10 +18,11 @@ const patientSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   phone: z.string().optional(),
+  secondaryPhone: z.string().optional(),
   cpf: z.string().optional(),
-  birth_date: z.string().optional(),
-  gender: z.enum(['M', 'F']).optional(),
-  address: z.string().optional(),
+  sex: z.enum(['M', 'F', 'O']).optional(),
+  objective: z.string().optional(),
+  profile: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -30,7 +32,7 @@ interface PatientFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   initialData?: Partial<PatientFormData>;
-  editPatient?: any;
+  editPatient?: Patient;
   mode?: 'create' | 'edit';
 }
 
@@ -42,37 +44,23 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   mode = 'create'
 }) => {
   const { toast } = useToast();
-  const { secureCreatePatient, isLoading } = useSecureOperations();
+  const { user } = useAuth();
+  const { savePatient, isLoading } = usePatient();
   
-  // Use editPatient data if available, otherwise use initialData
-  const defaultValues = editPatient || initialData || {};
-  
-  const form = useForm<PatientFormData>({
-    resolver: zodResolver(patientSchema),
-    defaultValues: {
-      name: defaultValues?.name || '',
-      email: defaultValues?.email || '',
-      phone: defaultValues?.phone || '',
-      cpf: defaultValues?.cpf || '',
-      birth_date: defaultValues?.birth_date || '',
-      gender: defaultValues?.gender || undefined,
-      address: defaultValues?.address || '',
-      notes: defaultValues?.notes || '',
-    },
-  });
-
-  // State for managing form data in the expected format for field components
+  // Form state
   const [formData, setFormData] = useState({
-    name: defaultValues?.name || '',
-    email: defaultValues?.email || '',
-    phone: defaultValues?.phone || '',
-    secondaryPhone: '',
-    cpf: defaultValues?.cpf || '',
-    sex: defaultValues?.gender || '',
+    name: editPatient?.name || initialData?.name || '',
+    email: editPatient?.email || initialData?.email || '',
+    phone: editPatient?.phone || initialData?.phone || '',
+    secondaryPhone: editPatient?.secondaryPhone || initialData?.secondaryPhone || '',
+    cpf: editPatient?.cpf || initialData?.cpf || '',
+    sex: editPatient?.gender === 'male' ? 'M' : editPatient?.gender === 'female' ? 'F' : editPatient?.gender === 'other' ? 'O' : initialData?.sex || '',
+    objective: (editPatient?.goals as any)?.objective || initialData?.objective || '',
+    profile: (editPatient?.goals as any)?.profile || initialData?.profile || '',
   });
 
   const [birthDate, setBirthDate] = useState<Date | undefined>(
-    defaultValues?.birth_date ? new Date(defaultValues.birth_date) : undefined
+    editPatient?.birth_date ? new Date(editPatient.birth_date) : undefined
   );
 
   const [address, setAddress] = useState({
@@ -85,16 +73,43 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     state: '',
   });
 
-  const [notes, setNotes] = useState(defaultValues?.notes || '');
+  const [notes, setNotes] = useState(editPatient?.notes || initialData?.notes || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const form = useForm<PatientFormData>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: formData,
+  });
+
+  // Load address data if editing
+  useEffect(() => {
+    if (editPatient?.address && typeof editPatient.address === 'object') {
+      setAddress(editPatient.address as any);
+    }
+  }, [editPatient]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleAddressChange = (newAddress: any) => {
@@ -106,9 +121,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   };
 
   const validateField = (field: string, value: any) => {
-    // Basic validation - you can expand this
+    // Basic validation
     if (field === 'name' && (!value || value.length < 2)) {
       setErrors(prev => ({ ...prev, [field]: 'Nome deve ter pelo menos 2 caracteres' }));
+    } else if (field === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setErrors(prev => ({ ...prev, [field]: 'Email inválido' }));
     } else {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -120,37 +137,75 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   const onSubmit = async (data: PatientFormData) => {
     try {
-      // Combine all form data
-      const combinedData = {
-        ...formData,
-        birth_date: birthDate?.toISOString().split('T')[0],
-        address: address,
-        notes: notes,
-        gender: formData.sex,
-      };
-
-      // Validate data with enhanced security validation
-      const validation = validatePatientData(combinedData);
-      
-      if (!validation.isValid) {
+      if (!user?.id) {
         toast({
-          title: 'Dados inválidos',
-          description: validation.errors.join(', '),
+          title: 'Erro',
+          description: 'Usuário não autenticado',
           variant: 'destructive'
         });
         return;
       }
 
-      // Use secure operation for creating patient
-      await secureCreatePatient(validation.sanitizedData);
+      // Validate required fields
+      if (!formData.name || formData.name.length < 2) {
+        setErrors({ name: 'Nome é obrigatório e deve ter pelo menos 2 caracteres' });
+        return;
+      }
+
+      // Prepare patient data
+      const patientData: Partial<Patient> = {
+        name: formData.name,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        secondaryPhone: formData.secondaryPhone || null,
+        cpf: formData.cpf || null,
+        birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null,
+        gender: formData.sex === 'M' ? 'male' : formData.sex === 'F' ? 'female' : formData.sex === 'O' ? 'other' : undefined,
+        address: Object.values(address).some(v => v) ? address : null,
+        notes: notes || null,
+        goals: {
+          objective: formData.objective || '',
+          profile: formData.profile || '',
+        },
+        status: 'active',
+        user_id: user.id,
+      };
+
+      // If editing, include the ID
+      if (editPatient?.id) {
+        patientData.id = editPatient.id;
+      }
+
+      console.log('Submitting patient data:', patientData);
+
+      const result = await savePatient(patientData);
       
-      // Reset form and call success callback
-      form.reset();
-      onSuccess?.();
+      if (result.success) {
+        // Reset form on success
+        form.reset();
+        setFormData({
+          name: '', email: '', phone: '', secondaryPhone: '', 
+          cpf: '', sex: '', objective: '', profile: ''
+        });
+        setBirthDate(undefined);
+        setAddress({
+          cep: '', street: '', number: '', complement: '', 
+          neighborhood: '', city: '', state: ''
+        });
+        setNotes('');
+        setErrors({});
+        
+        // Call success callback
+        onSuccess?.();
+      }
       
     } catch (error: any) {
-      console.error('Error creating patient:', error);
-      // Error is already handled by useSecureOperations hook
+      console.error('Error in form submission:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro inesperado ao salvar paciente',
+        variant: 'destructive'
+      });
     }
   };
 

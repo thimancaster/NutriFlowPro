@@ -1,6 +1,8 @@
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Patient } from '@/types';
+import { PatientService } from '@/services/patient';
+import { useToast } from '@/hooks/use-toast';
 
 interface PatientContextState {
   activePatient: Patient | null;
@@ -9,6 +11,11 @@ interface PatientContextState {
   recentPatients: Patient[];
   isLoading: boolean;
   error: Error | null;
+  sessionData: {
+    consultationActive: boolean;
+    currentStep: string;
+    lastActivity: Date | null;
+  };
 }
 
 interface PatientContextActions {
@@ -17,52 +24,211 @@ interface PatientContextActions {
   endPatientSession: () => void;
   loadPatientById: (patientId: string) => Promise<void>;
   addRecentPatient: (patient: Patient) => void;
+  updateSessionData: (data: Partial<PatientContextState['sessionData']>) => void;
+  savePatient: (patientData: Partial<Patient>) => Promise<{ success: boolean; data?: Patient; error?: string }>;
 }
 
 interface PatientContextType extends PatientContextState, PatientContextActions {}
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
+// Session storage keys
+const SESSION_KEYS = {
+  ACTIVE_PATIENT: 'nutriflow_active_patient',
+  SESSION_DATA: 'nutriflow_session_data',
+  RECENT_PATIENTS: 'nutriflow_recent_patients'
+};
+
 export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  const [activePatient, setActivePatientState] = useState<Patient | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [sessionData, setSessionData] = useState({
+    consultationActive: false,
+    currentStep: 'patient-selection',
+    lastActivity: null as Date | null
+  });
+
+  const { toast } = useToast();
+
+  // Load session data on mount
+  useEffect(() => {
+    try {
+      const savedPatient = localStorage.getItem(SESSION_KEYS.ACTIVE_PATIENT);
+      const savedSession = localStorage.getItem(SESSION_KEYS.SESSION_DATA);
+      const savedRecent = localStorage.getItem(SESSION_KEYS.RECENT_PATIENTS);
+
+      if (savedPatient) {
+        const patient = JSON.parse(savedPatient);
+        setActivePatientState(patient);
+        setSelectedPatientId(patient.id);
+      }
+
+      if (savedSession) {
+        const session = JSON.parse(savedSession);
+        setSessionData({
+          ...session,
+          lastActivity: session.lastActivity ? new Date(session.lastActivity) : null
+        });
+      }
+
+      if (savedRecent) {
+        setRecentPatients(JSON.parse(savedRecent));
+      }
+    } catch (error) {
+      console.error('Error loading session data:', error);
+    }
+  }, []);
+
+  // Persist session data when it changes
+  useEffect(() => {
+    if (activePatient) {
+      localStorage.setItem(SESSION_KEYS.ACTIVE_PATIENT, JSON.stringify(activePatient));
+    } else {
+      localStorage.removeItem(SESSION_KEYS.ACTIVE_PATIENT);
+    }
+  }, [activePatient]);
+
+  useEffect(() => {
+    localStorage.setItem(SESSION_KEYS.SESSION_DATA, JSON.stringify({
+      ...sessionData,
+      lastActivity: sessionData.lastActivity?.toISOString()
+    }));
+  }, [sessionData]);
+
+  useEffect(() => {
+    localStorage.setItem(SESSION_KEYS.RECENT_PATIENTS, JSON.stringify(recentPatients));
+  }, [recentPatients]);
 
   const isPatientActive = activePatient !== null;
 
+  const setActivePatient = useCallback((patient: Patient | null) => {
+    setActivePatientState(patient);
+    setSelectedPatientId(patient?.id || null);
+    
+    if (patient) {
+      updateSessionData({ 
+        lastActivity: new Date(),
+        consultationActive: true 
+      });
+    } else {
+      updateSessionData({ 
+        consultationActive: false,
+        currentStep: 'patient-selection'
+      });
+    }
+  }, []);
+
   const startPatientSession = useCallback((patient: Patient) => {
     setActivePatient(patient);
-    setSelectedPatientId(patient.id);
     addRecentPatient(patient);
-  }, []);
+    updateSessionData({
+      consultationActive: true,
+      currentStep: 'patient-info',
+      lastActivity: new Date()
+    });
+    
+    toast({
+      title: "Sessão iniciada",
+      description: `Atendimento de ${patient.name} iniciado com sucesso.`
+    });
+  }, [setActivePatient, toast]);
 
   const endPatientSession = useCallback(() => {
     setActivePatient(null);
-    setSelectedPatientId(null);
-  }, []);
+    updateSessionData({
+      consultationActive: false,
+      currentStep: 'patient-selection',
+      lastActivity: new Date()
+    });
+    
+    toast({
+      title: "Sessão encerrada",
+      description: "Atendimento finalizado com sucesso."
+    });
+  }, [setActivePatient, toast]);
 
   const loadPatientById = useCallback(async (patientId: string) => {
     setIsLoading(true);
     setError(null);
+    
     try {
-      // This would typically fetch the patient from an API or service
-      // For now, we'll just set the selected ID
-      setSelectedPatientId(patientId);
+      const result = await PatientService.getPatient(patientId);
+      
+      if (result.success && result.data) {
+        setActivePatient(result.data);
+        return;
+      }
+      
+      throw new Error(result.error || 'Failed to load patient');
     } catch (err) {
-      setError(err as Error);
+      const error = err as Error;
+      setError(error);
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setActivePatient, toast]);
 
   const addRecentPatient = useCallback((patient: Patient) => {
     setRecentPatients(prev => {
       const filtered = prev.filter(p => p.id !== patient.id);
-      return [patient, ...filtered].slice(0, 5); // Keep only 5 recent patients
+      return [patient, ...filtered].slice(0, 5);
     });
   }, []);
+
+  const updateSessionData = useCallback((data: Partial<PatientContextState['sessionData']>) => {
+    setSessionData(prev => ({ ...prev, ...data }));
+  }, []);
+
+  const savePatient = useCallback(async (patientData: Partial<Patient>) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Saving patient data:', patientData);
+      
+      const result = await PatientService.savePatient(patientData);
+      
+      if (result.success && result.data) {
+        // Update active patient if this is the same patient
+        if (activePatient && activePatient.id === result.data.id) {
+          setActivePatient(result.data);
+        }
+        
+        // Add to recent patients
+        addRecentPatient(result.data);
+        
+        toast({
+          title: "Sucesso",
+          description: `Paciente ${result.data.name} salvo com sucesso.`
+        });
+        
+        return result;
+      }
+      
+      throw new Error(result.error || 'Falha ao salvar paciente');
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive"
+      });
+      
+      return { success: false, error: error.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activePatient, setActivePatient, addRecentPatient, toast]);
 
   const contextValue: PatientContextType = {
     // State
@@ -72,12 +238,15 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     recentPatients,
     isLoading,
     error,
+    sessionData,
     // Actions
     setActivePatient,
     startPatientSession,
     endPatientSession,
     loadPatientById,
     addRecentPatient,
+    updateSessionData,
+    savePatient,
   };
 
   return (

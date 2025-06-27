@@ -1,6 +1,7 @@
 
 import React from "react";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { usePatient } from "@/contexts/patient/PatientContext";
 import Navbar from "@/components/Navbar";
 
 // Import our components
@@ -10,6 +11,7 @@ import { TourGuide } from "@/components/tour-guide/TourGuide";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { activePatient, sessionData } = usePatient();
 
   return (
     <ThemeProvider>
@@ -18,6 +20,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         {/* Header with Navbar */}
         <Navbar />
+
+        {/* Active Patient Indicator */}
+        {activePatient && sessionData.consultationActive && (
+          <div className="bg-nutri-green text-white px-4 py-2 text-sm">
+            <div className="container mx-auto flex items-center justify-between">
+              <span>
+                🩺 Atendimento ativo: <strong>{activePatient.name}</strong>
+              </span>
+              <span className="text-xs opacity-75">
+                Etapa: {sessionData.currentStep}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Main content */}
         <main className="flex-1 bg-background">
