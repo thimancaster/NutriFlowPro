@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,6 +35,14 @@ interface PatientFormProps {
   mode?: 'create' | 'edit';
 }
 
+// Helper function to convert gender to sex format
+const convertGenderToSex = (gender?: string): "M" | "F" | "O" | undefined => {
+  if (gender === 'male') return 'M';
+  if (gender === 'female') return 'F';
+  if (gender === 'other') return 'O';
+  return undefined;
+};
+
 export const PatientForm: React.FC<PatientFormProps> = ({
   onSuccess,
   onCancel,
@@ -47,14 +54,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   const { user } = useAuth();
   const { savePatient, isLoading } = usePatient();
   
-  // Form state
+  // Form state with proper typing
   const [formData, setFormData] = useState({
     name: editPatient?.name || initialData?.name || '',
     email: editPatient?.email || initialData?.email || '',
     phone: editPatient?.phone || initialData?.phone || '',
     secondaryPhone: editPatient?.secondaryPhone || initialData?.secondaryPhone || '',
     cpf: editPatient?.cpf || initialData?.cpf || '',
-    sex: editPatient?.gender === 'male' ? 'M' : editPatient?.gender === 'female' ? 'F' : editPatient?.gender === 'other' ? 'O' : initialData?.sex || '',
+    sex: convertGenderToSex(editPatient?.gender) || initialData?.sex || undefined,
     objective: (editPatient?.goals as any)?.objective || initialData?.objective || '',
     profile: (editPatient?.goals as any)?.profile || initialData?.profile || '',
   });
@@ -78,7 +85,17 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
-    defaultValues: formData,
+    defaultValues: {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      secondaryPhone: formData.secondaryPhone,
+      cpf: formData.cpf,
+      sex: formData.sex,
+      objective: formData.objective,
+      profile: formData.profile,
+      notes: notes,
+    },
   });
 
   // Load address data if editing
@@ -102,7 +119,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'sex' ? (value as "M" | "F" | "O") : value 
+    }));
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -185,7 +205,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         form.reset();
         setFormData({
           name: '', email: '', phone: '', secondaryPhone: '', 
-          cpf: '', sex: '', objective: '', profile: ''
+          cpf: '', sex: undefined, objective: '', profile: ''
         });
         setBirthDate(undefined);
         setAddress({
@@ -226,21 +246,34 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               handleChange={handleChange}
               handleSelectChange={handleSelectChange}
               errors={errors}
-              validateField={validateField}
+              validateField={(field: string, value: any) => {
+                // Basic validation
+                if (field === 'name' && (!value || value.length < 2)) {
+                  setErrors(prev => ({ ...prev, [field]: 'Nome deve ter pelo menos 2 caracteres' }));
+                } else if (field === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                  setErrors(prev => ({ ...prev, [field]: 'Email inválido' }));
+                } else {
+                  setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors[field];
+                    return newErrors;
+                  });
+                }
+              }}
             />
             
             <AddressFields 
               address={address}
-              onChange={handleAddressChange}
+              onChange={setAddress}
               errors={errors}
-              validateField={validateField}
+              validateField={() => {}}
             />
             
             <NotesFields 
               notes={notes}
-              onChange={handleNotesChange}
+              onChange={(e) => setNotes(e.target.value)}
               errors={errors}
-              validateField={validateField}
+              validateField={() => {}}
             />
             
             <div className="flex gap-4">
