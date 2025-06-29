@@ -6,7 +6,8 @@ import { useAppointmentQuery } from '@/hooks/appointments/useAppointmentQuery';
 import { useToast } from '@/hooks/use-toast';
 import { appointmentService } from '@/services';
 import AppointmentList from '@/components/appointment/AppointmentList';
-import AppointmentFormDialog from '@/components/appointment/AppointmentFormDialog';
+import AppointmentFormWrapper from '@/components/appointment/form/AppointmentFormWrapper';
+import AppointmentErrorBoundary from '@/components/appointment/AppointmentErrorBoundary';
 import { useAppointmentActions } from '@/hooks/appointments/useAppointmentActions';
 
 const Appointments = () => {
@@ -29,23 +30,23 @@ const Appointments = () => {
       
       if (result.success) {
         toast({
-          title: 'Appointment created',
-          description: 'The appointment has been successfully created.',
+          title: 'Sucesso',
+          description: 'Agendamento criado com sucesso!',
         });
         setIsFormOpen(false);
         refetch();
       } else {
         toast({
-          title: 'Error',
-          description: `Failed to create appointment: ${result.message}`,
+          title: 'Erro',
+          description: `Falha ao criar agendamento: ${result.message}`,
           variant: 'destructive',
         });
       }
     } catch (err) {
       console.error('Error creating appointment:', err);
       toast({
-        title: 'Error',
-        description: `An unexpected error occurred: ${(err as Error).message}`,
+        title: 'Erro',
+        description: `Erro inesperado: ${(err as Error).message}`,
         variant: 'destructive',
       });
     }
@@ -62,24 +63,24 @@ const Appointments = () => {
       
       if (result.success) {
         toast({
-          title: 'Appointment updated',
-          description: 'The appointment has been successfully updated.',
+          title: 'Sucesso',
+          description: 'Agendamento atualizado com sucesso!',
         });
         setIsFormOpen(false);
         setSelectedAppointment(null);
         refetch();
       } else {
         toast({
-          title: 'Error',
-          description: `Failed to update appointment: ${result.message}`,
+          title: 'Erro',
+          description: `Falha ao atualizar agendamento: ${result.message}`,
           variant: 'destructive',
         });
       }
     } catch (err) {
       console.error('Error updating appointment:', err);
       toast({
-        title: 'Error',
-        description: `An unexpected error occurred: ${(err as Error).message}`,
+        title: 'Erro',
+        description: `Erro inesperado: ${(err as Error).message}`,
         variant: 'destructive',
       });
     }
@@ -91,22 +92,22 @@ const Appointments = () => {
       
       if (result.success) {
         toast({
-          title: 'Appointment deleted',
-          description: 'The appointment has been successfully deleted.',
+          title: 'Sucesso',
+          description: 'Agendamento excluído com sucesso!',
         });
         refetch();
       } else {
         toast({
-          title: 'Error',
-          description: `Failed to delete appointment: ${result.message}`,
+          title: 'Erro',
+          description: `Falha ao excluir agendamento: ${result.message}`,
           variant: 'destructive',
         });
       }
     } catch (err) {
       console.error('Error deleting appointment:', err);
       toast({
-        title: 'Error',
-        description: `An unexpected error occurred: ${(err as Error).message}`,
+        title: 'Erro',
+        description: `Erro inesperado: ${(err as Error).message}`,
         variant: 'destructive',
       });
     }
@@ -131,23 +132,25 @@ const Appointments = () => {
   };
   
   return (
-    <div className="container mx-auto p-6">
-      <AppointmentList 
-        appointments={appointments || []}
-        isLoading={isLoading}
-        error={error ? error : null}
-        onAddNew={() => setIsFormOpen(true)}
-        onEdit={handleEditAppointment}
-        onDelete={handleDeleteAppointment}
-      />
-      
-      <AppointmentFormDialog
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-        appointment={selectedAppointment}
-        onSubmit={handleSubmit}
-      />
-    </div>
+    <AppointmentErrorBoundary>
+      <div className="container mx-auto p-6">
+        <AppointmentList 
+          appointments={appointments || []}
+          isLoading={isLoading}
+          error={error ? error : null}
+          onAddNew={() => setIsFormOpen(true)}
+          onEdit={handleEditAppointment}
+          onDelete={handleDeleteAppointment}
+        />
+        
+        <AppointmentFormWrapper
+          isOpen={isFormOpen}
+          onClose={handleCloseForm}
+          appointment={selectedAppointment}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </AppointmentErrorBoundary>
   );
 };
 

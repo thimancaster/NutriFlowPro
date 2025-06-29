@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppointmentType } from '@/types/appointments';
 
 /**
- * Hook to fetch and provide appointment types
+ * Hook to fetch and provide appointment types with dynamic fallback
  */
 export const useAppointmentTypes = () => {
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([]);
@@ -35,57 +35,70 @@ export const useAppointmentTypes = () => {
       let types: AppointmentType[] = [];
       
       if (dbTypes && dbTypes.length > 0) {
-        types = dbTypes.map(type => ({
-          id: type.id,
-          name: type.name,
-          duration_minutes: type.duration_minutes || 60,
-          description: type.description || '',
-          color: type.color || '#4B83F0'
-        }));
+        types = dbTypes;
       } else {
-        // Fallback to hardcoded default types
+        // Fallback to hardcoded default types with complete AppointmentType structure
+        const now = new Date().toISOString();
         types = [
           { 
             id: 'initial', 
             name: 'Consulta Inicial', 
             duration_minutes: 60, 
             description: 'Primeira consulta com o paciente', 
-            color: '#4B83F0' 
+            color: '#4B83F0',
+            is_active: true,
+            created_at: now,
+            updated_at: now
           },
           { 
             id: 'followup', 
             name: 'Retorno', 
             duration_minutes: 45, 
             description: 'Consulta de acompanhamento', 
-            color: '#4CAF50' 
+            color: '#4CAF50',
+            is_active: true,
+            created_at: now,
+            updated_at: now
           },
           { 
             id: 'evaluation', 
             name: 'Avaliação', 
             duration_minutes: 50, 
             description: 'Consulta de avaliação nutricional', 
-            color: '#FF9800' 
+            color: '#FF9800',
+            is_active: true,
+            created_at: now,
+            updated_at: now
           },
           { 
             id: 'nutritional_assessment', 
             name: 'Avaliação Nutricional', 
             duration_minutes: 60, 
             description: 'Avaliação nutricional completa', 
-            color: '#9C27B0' 
+            color: '#9C27B0',
+            is_active: true,
+            created_at: now,
+            updated_at: now
           },
           { 
             id: 'meal_planning', 
             name: 'Planejamento Alimentar', 
             duration_minutes: 45, 
             description: 'Consulta para planejamento de refeições', 
-            color: '#E91E63' 
+            color: '#E91E63',
+            is_active: true,
+            created_at: now,
+            updated_at: now
           },
           { 
             id: 'consultation', 
             name: 'Consulta Geral', 
             duration_minutes: 30, 
             description: 'Consulta geral', 
-            color: '#607D8B' 
+            color: '#607D8B',
+            is_active: true,
+            created_at: now,
+            updated_at: now
           }
         ];
       }
@@ -95,11 +108,39 @@ export const useAppointmentTypes = () => {
       console.error('Error fetching appointment types:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch appointment types'));
       
-      // Use default types on error
+      // Use minimal default types on error
+      const now = new Date().toISOString();
       const defaultTypes: AppointmentType[] = [
-        { id: 'initial', name: 'Consulta Inicial', duration_minutes: 60, description: 'Primeira consulta', color: '#4B83F0' },
-        { id: 'followup', name: 'Retorno', duration_minutes: 45, description: 'Consulta de retorno', color: '#4CAF50' },
-        { id: 'evaluation', name: 'Avaliação', duration_minutes: 50, description: 'Avaliação nutricional', color: '#FF9800' },
+        { 
+          id: 'initial', 
+          name: 'Consulta Inicial', 
+          duration_minutes: 60, 
+          description: 'Primeira consulta', 
+          color: '#4B83F0',
+          is_active: true,
+          created_at: now,
+          updated_at: now
+        },
+        { 
+          id: 'followup', 
+          name: 'Retorno', 
+          duration_minutes: 45, 
+          description: 'Consulta de retorno', 
+          color: '#4CAF50',
+          is_active: true,
+          created_at: now,
+          updated_at: now
+        },
+        { 
+          id: 'evaluation', 
+          name: 'Avaliação', 
+          duration_minutes: 50, 
+          description: 'Avaliação nutricional', 
+          color: '#FF9800',
+          is_active: true,
+          created_at: now,
+          updated_at: now
+        },
       ];
       setAppointmentTypes(defaultTypes);
     } finally {

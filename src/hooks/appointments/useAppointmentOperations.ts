@@ -1,163 +1,145 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Appointment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { appointmentService } from '@/services/appointmentService';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { getStatusLabel } from './utils/statusUtils';
+import { Appointment } from '@/types/appointment';
+import { useAppointmentValidation } from './useAppointmentValidation';
 
-export const useAppointmentOperations = (fetchAppointments: () => Promise<void>) => {
+export const useAppointmentOperations = (onSuccess?: () => Promise<void>) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { validateAppointment, validateStatus } = useAppointmentValidation();
 
-  const addAppointment = async (newAppointment: Omit<Appointment, 'id'>) => {
-    if (!user) return null;
-    
+  const addAppointment = async (appointmentData: Partial<Appointment>) => {
+    if (!user?.id) {
+      throw new Error('Usuário não autenticado');
+    }
+
     setLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert([{ ...newAppointment, user_id: user.id }])
-        .select()
-        .single();
+      // Validate and normalize data
+      const validatedData = validateAppointment({
+        ...appointmentData,
+        status: validateStatus(appointmentData.status || 'scheduled'),
+        user_id: user.id
+      });
 
-      if (error) {
-        setError(error.message);
-        toast({
-          title: 'Error adding appointment',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return null;
-      } else {
-        // Fetch the new appointment to ensure patient data is included
-        const { data: newAppointmentData, error: fetchError } = await supabase
-          .from('appointments')
-          .select(`*, patient:patients(*)`)
-          .eq('id', data.id)
-          .single();
+      const result = await appointmentService.createAppointment({
+        ...validatedData,
+        user_id: user.id
+      });
 
-        if (fetchError) {
-          setError(fetchError.message);
-          toast({
-            title: 'Error fetching new appointment',
-            description: fetchError.message,
-            variant: 'destructive',
-          });
-          return null;
-        } else {
-          const typedAppointment = {
-            ...newAppointmentData,
-            patient: newAppointmentData.patient,
-            status: getStatusLabel(newAppointmentData.status)
-          };
-          
-          await fetchAppointments();
-          
-          toast({
-            title: 'Appointment added',
-            description: 'Appointment added successfully.',
-          });
-          
-          return typedAppointment;
-        }
+      if (!result.success) {
+        throw new Error(result.message || 'Erro ao criar agendamento');
       }
+
+      toast({
+        title: 'Sucesso',
+        description: 'Agendamento criado com sucesso!',
+      });
+
+      if (onSuccess) {
+        await onSuccess();
+      }
+
+      return result.data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      setError(new Error(errorMessage));
+      
+      toast({
+        title: 'Erro',
+        description: `Não foi possível criar o agendamento: ${errorMessage}`,
+        variant: 'destructive',
+      });
+      
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
-    if (!user) return null;
-    
+  const updateAppointment = async (id: string, appointmentData: Partial<Appointment>) => {
     setLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        setError(error.message);
-        toast({
-          title: 'Error updating appointment',
-          description: error.message,
-          variant: 'destructive',
+      // Validate data if provided
+      if (Object.keys(appointmentData).length > 0) {
+        const validatedData = validateAppointment({
+          ...appointmentData,
+          status: validateStatus(appointmentData.status || 'scheduled')
         });
-        return null;
-      } else {
-        // Fetch the updated appointment to ensure patient data is included
-        const { data: updatedAppointmentData, error: fetchError } = await supabase
-          .from('appointments')
-          .select(`*, patient:patients(*)`)
-          .eq('id', data.id)
-          .single();
-
-        if (fetchError) {
-          setError(fetchError.message);
-          toast({
-            title: 'Error fetching updated appointment',
-            description: fetchError.message,
-            variant: 'destructive',
-          });
-          return null;
-        } else {
-          if (updatedAppointmentData) {
-            const typedAppointment = {
-              ...updatedAppointmentData,
-              patient: updatedAppointmentData.patient,
-              status: getStatusLabel(updatedAppointmentData.status)
-            };
-            
-            await fetchAppointments();
-            
-            toast({
-              title: 'Appointment updated',
-              description: 'Appointment updated successfully.',
-            });
-            
-            return typedAppointment;
-          }
-        }
+        appointmentData = validatedData;
       }
-      return null;
+
+      const result = await appointmentService.updateAppointment(id, appointmentData);
+
+      if (!result.success) {
+        throw new Error(result.message || 'Erro ao atualizar agendamento');
+      }
+
+      toast({
+        title: 'Sucesso',
+        description: 'Agendamento atualizado com sucesso!',
+      });
+
+      if (onSuccess) {
+        await onSuccess();
+      }
+
+      return result.data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      setError(new Error(errorMessage));
+      
+      toast({
+        title: 'Erro',
+        description: `Não foi possível atualizar o agendamento: ${errorMessage}`,
+        variant: 'destructive',
+      });
+      
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const deleteAppointment = async (id: string) => {
-    if (!user) return false;
-    
     setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', id);
+    setError(null);
 
-      if (error) {
-        setError(error.message);
-        toast({
-          title: 'Error deleting appointment',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return false;
-      } else {
-        await fetchAppointments();
-        
-        toast({
-          title: 'Appointment deleted',
-          description: 'Appointment deleted successfully.',
-        });
-        
-        return true;
+    try {
+      const result = await appointmentService.deleteAppointment(id);
+
+      if (!result.success) {
+        throw new Error(result.message || 'Erro ao excluir agendamento');
       }
+
+      toast({
+        title: 'Sucesso',
+        description: 'Agendamento excluído com sucesso!',
+      });
+
+      if (onSuccess) {
+        await onSuccess();
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      setError(new Error(errorMessage));
+      
+      toast({
+        title: 'Erro',
+        description: `Não foi possível excluir o agendamento: ${errorMessage}`,
+        variant: 'destructive',
+      });
+      
+      throw err;
     } finally {
       setLoading(false);
     }

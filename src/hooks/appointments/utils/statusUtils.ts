@@ -1,18 +1,30 @@
 
-import { AppointmentStatus } from '@/types';
+import { AppointmentStatus } from '@/types/appointment';
 
-/**
- * Normalizes different status strings to the standard AppointmentStatus type
- */
-export const getStatusLabel = (status: string): AppointmentStatus => {
-  switch (status) {
-    case 'scheduled': return 'scheduled';
-    case 'completed': return 'completed';
-    case 'canceled': 
-    case 'cancelled': return 'cancelled';
-    case 'no-show': 
-    case 'noshow': return 'noshow';
-    case 'rescheduled': return 'rescheduled';
-    default: return 'scheduled';
-  }
+export const getStatusLabel = (status: AppointmentStatus): string => {
+  const statusLabels: Record<AppointmentStatus, string> = {
+    scheduled: 'Agendado',
+    completed: 'Concluído',
+    cancelled: 'Cancelado',
+    no_show: 'Faltou',
+    rescheduled: 'Reagendado'
+  };
+  
+  return statusLabels[status] || status;
+};
+
+export const getStatusColor = (status: AppointmentStatus): string => {
+  const statusColors: Record<AppointmentStatus, string> = {
+    scheduled: 'bg-blue-100 text-blue-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+    no_show: 'bg-gray-100 text-gray-800',
+    rescheduled: 'bg-yellow-100 text-yellow-800'
+  };
+  
+  return statusColors[status] || 'bg-gray-100 text-gray-800';
+};
+
+export const isValidStatus = (status: string): status is AppointmentStatus => {
+  return ['scheduled', 'completed', 'cancelled', 'no_show', 'rescheduled'].includes(status);
 };

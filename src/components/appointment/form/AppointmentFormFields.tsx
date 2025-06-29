@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import PatientSelect from './PatientSelect';
 import AppointmentTypeSelect from './AppointmentTypeSelect';
 import StatusSelect from './StatusSelect';
+import AppointmentConflictChecker from '../AppointmentConflictChecker';
 import { Appointment } from '@/types';
 
 interface AppointmentFormFieldsProps {
@@ -21,6 +22,21 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
   handleSelectChange,
   isEditing
 }) => {
+  const [hasConflict, setHasConflict] = useState(false);
+
+  const extractDateAndTime = (dateTimeString?: string) => {
+    if (!dateTimeString) return { date: '', time: '' };
+    
+    try {
+      const [date, time] = dateTimeString.split('T');
+      return { date: date || '', time: time?.substring(0, 5) || '' };
+    } catch {
+      return { date: '', time: '' };
+    }
+  };
+
+  const { date, time } = extractDateAndTime(formData.start_time);
+
   return (
     <div className="space-y-6 py-4">
       {/* Patient Selection */}
@@ -72,8 +88,20 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
           value={typeof formData.start_time === 'string' ? formData.start_time : ''}
           onChange={handleChange}
           required
-          className="h-12 text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green"
+          className={`h-12 text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green ${
+            hasConflict ? 'border-red-500 focus:border-red-500' : ''
+          }`}
         />
+        
+        {/* Conflict Checker */}
+        {date && time && (
+          <AppointmentConflictChecker
+            selectedDate={date}
+            selectedTime={time}
+            excludeId={isEditing ? formData.id : undefined}
+            onConflictChange={setHasConflict}
+          />
+        )}
       </div>
 
       {/* Notes Field */}
@@ -91,6 +119,24 @@ const AppointmentFormFields: React.FC<AppointmentFormFieldsProps> = ({
           className="text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green resize-none"
         />
       </div>
+
+      {/* Recommendations Field (for editing) */}
+      {isEditing && (
+        <div className="space-y-2">
+          <Label htmlFor="recommendations" className="text-base font-semibold text-gray-900 dark:text-dark-text-primary">
+            Recomendações
+          </Label>
+          <Textarea
+            id="recommendations"
+            name="recommendations"
+            value={formData.recommendations || ''}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Recomendações da consulta..."
+            className="text-base bg-white dark:bg-dark-bg-elevated border-gray-300 dark:border-dark-border-secondary text-gray-900 dark:text-dark-text-primary placeholder:text-gray-500 dark:placeholder:text-dark-text-placeholder focus:border-nutri-green focus:ring-nutri-green/20 dark:focus:border-dark-accent-green resize-none"
+          />
+        </div>
+      )}
 
       {/* Status Field (only for editing) */}
       {isEditing && (
