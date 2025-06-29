@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Appointment } from '@/types/appointment';
+import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { useAppointmentQuery } from '@/hooks/appointments/useAppointmentQuery';
 import { useToast } from '@/hooks/use-toast';
 import { appointmentService } from '@/services/appointmentService';
@@ -22,6 +22,15 @@ const Appointments = () => {
   // Notification system
   const { scheduleNotification } = useAppointmentNotifications();
   
+  // Type-safe appointment mapping
+  const normalizeAppointment = (rawAppointment: any): Appointment => {
+    return {
+      ...rawAppointment,
+      status: rawAppointment.status as AppointmentStatus,
+      patientName: rawAppointment.patientName || rawAppointment.patient_name || 'Paciente não encontrado'
+    };
+  };
+  
   const handleCreateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
     try {
       if (!user) return;
@@ -38,10 +47,11 @@ const Appointments = () => {
         });
         
         // Schedule notification for the new appointment
-        await scheduleNotification(result.data);
+        const normalizedAppointment = normalizeAppointment(result.data);
+        await scheduleNotification(normalizedAppointment);
         
         setIsFormOpen(false);
-        refetch();
+        await refetch();
       } else {
         toast({
           title: 'Erro',
@@ -75,7 +85,7 @@ const Appointments = () => {
         });
         setIsFormOpen(false);
         setSelectedAppointment(null);
-        refetch();
+        await refetch();
       } else {
         toast({
           title: 'Erro',
@@ -102,7 +112,7 @@ const Appointments = () => {
           title: 'Sucesso',
           description: 'Agendamento excluído com sucesso!',
         });
-        refetch();
+        await refetch();
       } else {
         toast({
           title: 'Erro',
@@ -137,18 +147,25 @@ const Appointments = () => {
       await handleCreateAppointment(data);
     }
   };
+
+  const handleRefresh = async (): Promise<void> => {
+    await refetch();
+  };
+  
+  // Normalize appointments for type safety
+  const normalizedAppointments = (appointments || []).map(normalizeAppointment);
   
   return (
     <AppointmentErrorBoundary>
       <div className="container mx-auto p-6">
         <EnhancedAppointmentList 
-          appointments={appointments || []}
+          appointments={normalizedAppointments}
           isLoading={isLoading}
           error={error ? error : null}
           onAddNew={() => setIsFormOpen(true)}
           onEdit={handleEditAppointment}
           onDelete={handleDeleteAppointment}
-          onRefresh={refetch}
+          onRefresh={handleRefresh}
         />
         
         <AppointmentFormWrapper

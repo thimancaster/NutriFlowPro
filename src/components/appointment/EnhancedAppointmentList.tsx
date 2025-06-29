@@ -6,12 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Search, Filter, Calendar, Grid, List } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PlusCircle, Search, Filter, Calendar, Grid, List, BarChart3, Grip } from 'lucide-react';
 import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { useBulkAppointmentOperations } from '@/hooks/appointments/useBulkAppointmentOperations';
 import AppointmentCalendarView from './AppointmentCalendarView';
+import DragDropAppointmentCalendar from './DragDropAppointmentCalendar';
+import AppointmentAnalyticsDashboard from './analytics/AppointmentAnalyticsDashboard';
 import BulkOperationsToolbar from './BulkOperationsToolbar';
-import AppointmentStatusBadge from './AppointmentStatusBadge';
+import QuickActionsMenu from './QuickActionsMenu';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -34,7 +37,7 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
   onDelete,
   onRefresh
 }) => {
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'dragdrop' | 'analytics'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -59,6 +62,11 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
 
   const handleAppointmentClick = (appointment: Appointment) => {
     onEdit(appointment);
+  };
+
+  const handleAppointmentUpdate = (updatedAppointment: Appointment) => {
+    // Update the appointment in the local state
+    onRefresh();
   };
 
   if (isLoading) {
@@ -93,8 +101,8 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <CardTitle className="text-2xl font-bold">Agendamentos</CardTitle>
-            <div className="flex items-center gap-2">
+            <CardTitle className="text-2xl font-bold">Sistema de Agendamentos</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"
@@ -111,6 +119,22 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
                 <Calendar className="h-4 w-4 mr-2" />
                 Calendário
               </Button>
+              <Button
+                variant={viewMode === 'dragdrop' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('dragdrop')}
+              >
+                <Grip className="h-4 w-4 mr-2" />
+                Interativo
+              </Button>
+              <Button
+                variant={viewMode === 'analytics' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('analytics')}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Analytics
+              </Button>
               <Button onClick={onAddNew} className="bg-nutri-green hover:bg-nutri-green-dark">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Nova Consulta
@@ -118,45 +142,57 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por paciente, tipo ou notas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          {/* Filters - Only show for list view */}
+          {viewMode === 'list' && (
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por paciente, tipo ou notas..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="scheduled">Agendado</SelectItem>
+                  <SelectItem value="completed">Concluído</SelectItem>
+                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                  <SelectItem value="no_show">Faltou</SelectItem>
+                  <SelectItem value="rescheduled">Reagendado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Status</SelectItem>
-                <SelectItem value="scheduled">Agendado</SelectItem>
-                <SelectItem value="completed">Concluído</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-                <SelectItem value="no_show">Faltou</SelectItem>
-                <SelectItem value="rescheduled">Reagendado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          )}
         </CardHeader>
       </Card>
 
-      {/* Bulk Operations Toolbar */}
-      <BulkOperationsToolbar
-        selectedAppointments={selectedAppointments}
-        appointments={filteredAppointments}
-        onClearSelection={clearSelection}
-        onRefresh={onRefresh}
-      />
+      {/* Bulk Operations Toolbar - Only show for list view */}
+      {viewMode === 'list' && (
+        <BulkOperationsToolbar
+          selectedAppointments={selectedAppointments}
+          appointments={filteredAppointments}
+          onClearSelection={clearSelection}
+          onRefresh={onRefresh}
+        />
+      )}
 
       {/* Content based on view mode */}
-      {viewMode === 'calendar' ? (
+      {viewMode === 'analytics' ? (
+        <AppointmentAnalyticsDashboard />
+      ) : viewMode === 'dragdrop' ? (
+        <DragDropAppointmentCalendar
+          appointments={filteredAppointments}
+          onAppointmentUpdate={handleAppointmentUpdate}
+          onAppointmentClick={handleAppointmentClick}
+        />
+      ) : viewMode === 'calendar' ? (
         <AppointmentCalendarView
           appointments={filteredAppointments}
           onDateSelect={setSelectedDate}
@@ -218,10 +254,9 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
                           <h3 className="font-medium">{appointment.patientName || 'Paciente não encontrado'}</h3>
                           <p className="text-sm text-muted-foreground">{appointment.type}</p>
                         </div>
-                        <AppointmentStatusBadge status={appointment.status} />
                       </div>
                       
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                         <span>
                           {format(parseISO(appointment.date), "dd/MM/yyyy", { locale: ptBR })}
                         </span>
@@ -233,36 +268,18 @@ const EnhancedAppointmentList: React.FC<EnhancedAppointmentListProps> = ({
                       </div>
                       
                       {appointment.notes && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
                           {appointment.notes}
                         </p>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(appointment);
-                        }}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
-                            onDelete(appointment.id);
-                          }
-                        }}
-                      >
-                        Excluir
-                      </Button>
-                    </div>
+                    {/* Quick Actions */}
+                    <QuickActionsMenu
+                      appointment={appointment}
+                      onUpdate={handleAppointmentUpdate}
+                      onDelete={onDelete}
+                    />
                   </div>
                 ))}
               </div>
