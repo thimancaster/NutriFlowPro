@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Appointment } from '@/types';
+import { Appointment } from '@/types/appointment';
 import { useAppointmentQuery } from '@/hooks/appointments/useAppointmentQuery';
 import { useToast } from '@/hooks/use-toast';
-import { appointmentService } from '@/services';
-import AppointmentList from '@/components/appointment/AppointmentList';
+import { appointmentService } from '@/services/appointmentService';
 import AppointmentFormWrapper from '@/components/appointment/form/AppointmentFormWrapper';
 import AppointmentErrorBoundary from '@/components/appointment/AppointmentErrorBoundary';
-import { useAppointmentActions } from '@/hooks/appointments/useAppointmentActions';
+import EnhancedAppointmentList from '@/components/appointment/EnhancedAppointmentList';
+import { useAppointmentNotifications } from '@/hooks/appointments/useAppointmentNotifications';
 
 const Appointments = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -19,6 +19,9 @@ const Appointments = () => {
   // Fetch appointments with the improved query hook
   const { data: appointments, isLoading, error, refetch } = useAppointmentQuery();
   
+  // Notification system
+  const { scheduleNotification } = useAppointmentNotifications();
+  
   const handleCreateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
     try {
       if (!user) return;
@@ -28,11 +31,15 @@ const Appointments = () => {
         user_id: user.id
       });
       
-      if (result.success) {
+      if (result.success && result.data) {
         toast({
           title: 'Sucesso',
           description: 'Agendamento criado com sucesso!',
         });
+        
+        // Schedule notification for the new appointment
+        await scheduleNotification(result.data);
+        
         setIsFormOpen(false);
         refetch();
       } else {
@@ -134,13 +141,14 @@ const Appointments = () => {
   return (
     <AppointmentErrorBoundary>
       <div className="container mx-auto p-6">
-        <AppointmentList 
+        <EnhancedAppointmentList 
           appointments={appointments || []}
           isLoading={isLoading}
           error={error ? error : null}
           onAddNew={() => setIsFormOpen(true)}
           onEdit={handleEditAppointment}
           onDelete={handleDeleteAppointment}
+          onRefresh={refetch}
         />
         
         <AppointmentFormWrapper
