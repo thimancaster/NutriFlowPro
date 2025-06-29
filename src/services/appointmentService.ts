@@ -24,8 +24,12 @@ export const getAppointments = async (
         user_id,
         patient_id,
         date,
+        start_time,
+        end_time,
         type,
+        appointment_type_id,
         status,
+        title,
         notes,
         recommendations,
         created_at,
@@ -92,9 +96,25 @@ export const getUpcomingAppointments = async (
 
 export const createAppointment = async (appointmentData: any) => {
   try {
+    // Normalize and validate data before insertion
+    const normalizedData = {
+      ...appointmentData,
+      // Ensure required fields are present
+      date: appointmentData.date || appointmentData.start_time || new Date().toISOString(),
+      type: appointmentData.type || 'Consulta', // Always ensure type is set
+      status: appointmentData.status || 'scheduled',
+      title: appointmentData.title || appointmentData.type || 'Consulta',
+      appointment_type_id: appointmentData.appointment_type_id || 'initial',
+      // Remove any undefined values
+      notes: appointmentData.notes || null,
+      recommendations: appointmentData.recommendations || null,
+    };
+
+    console.log('Creating appointment with normalized data:', normalizedData);
+
     const { data, error } = await supabase
       .from('appointments')
-      .insert([appointmentData])
+      .insert([normalizedData])
       .select()
       .single();
 
@@ -112,9 +132,21 @@ export const createAppointment = async (appointmentData: any) => {
 
 export const updateAppointment = async (id: string, appointmentData: any) => {
   try {
+    // Normalize data for update
+    const normalizedData = {
+      ...appointmentData,
+      // Ensure type consistency if appointment_type_id is being updated
+      ...(appointmentData.appointment_type_id && {
+        type: appointmentData.type || 'Consulta'
+      }),
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log('Updating appointment with normalized data:', normalizedData);
+
     const { data, error } = await supabase
       .from('appointments')
-      .update(appointmentData)
+      .update(normalizedData)
       .eq('id', id)
       .select()
       .single();
@@ -150,7 +182,7 @@ export const deleteAppointment = async (id: string) => {
   }
 };
 
-// Export as a service object
+// Export as a service object for backward compatibility
 export const appointmentService = {
   getAppointments,
   getAppointmentsByPatient,

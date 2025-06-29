@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Appointment, AppointmentStatus } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
+import { useAppointmentTypes } from './useAppointmentTypes';
 
 // Create schema for appointment
 const appointmentSchema = z.object({
@@ -25,16 +26,6 @@ interface UseAppointmentFormProps {
   onSubmit: (data: Partial<Appointment>) => Promise<void>;
 }
 
-// Mapeamento dos tipos de consulta
-const APPOINTMENT_TYPE_NAMES: Record<string, string> = {
-  'initial': 'Consulta Inicial',
-  'followup': 'Retorno',
-  'evaluation': 'Avaliação',
-  'nutritional_assessment': 'Avaliação Nutricional',
-  'meal_planning': 'Planejamento Alimentar',
-  'consultation': 'Consulta',
-};
-
 export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [defaultDate, setDefaultDate] = useState<Date | undefined>(undefined);
@@ -47,6 +38,9 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
     notes: '',
     recommendations: '',
   });
+  
+  // Use dynamic appointment types
+  const { types: appointmentTypes, getTypeNameById, getTypeMapping } = useAppointmentTypes();
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -119,7 +113,7 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
       
       // Se estamos mudando o tipo de consulta, atualizar o título automaticamente
       if (name === 'appointment_type_id') {
-        const typeName = APPOINTMENT_TYPE_NAMES[value] || 'Consulta';
+        const typeName = getTypeNameById(value);
         newData.title = typeName;
         form.setValue('title', typeName);
       }
@@ -137,19 +131,20 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
     setIsSubmitting(true);
     try {
       // Garantir que o campo type seja sempre preenchido baseado no appointment_type_id
-      const typeName = APPOINTMENT_TYPE_NAMES[values.appointment_type_id] || 'Consulta';
+      const typeName = getTypeNameById(values.appointment_type_id);
       
       // For Appointment status, ensure it's a valid AppointmentStatus type
       const status = values.status as AppointmentStatus;
       
-      // Map start_time to date for backend compatibility e garantir que type seja preenchido
+      // Normalizar dados para submissão
       const submissionData = {
         ...values,
-        date: values.start_time,
+        date: values.start_time, // Map start_time to date for backend compatibility
         type: typeName, // Sempre preencher o campo type
         status,
-        // Se não há título, usar o nome do tipo
-        title: values.title || typeName
+        title: values.title || typeName, // Se não há título, usar o nome do tipo
+        // Garantir que appointment_type_id seja consistente
+        appointment_type_id: values.appointment_type_id,
       };
       
       console.log('Submitting appointment data:', submissionData);
@@ -168,6 +163,7 @@ export const useAppointmentForm = ({ appointment, onSubmit }: UseAppointmentForm
     formData,
     isSubmitting,
     defaultDate,
+    appointmentTypes, // Expose types for components
     handleChange,
     handleSelectChange,
     handleSubmit: form.handleSubmit(handleSubmitForm),

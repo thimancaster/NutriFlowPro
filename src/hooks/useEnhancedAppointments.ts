@@ -5,13 +5,13 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { EnhancedAppointment } from '@/types/appointments';
 import { usePatientOptions } from '@/hooks/usePatientOptions';
-import { useAppointmentTypes } from '@/hooks/useAppointmentTypes';
+import { useAppointmentTypes } from '@/hooks/appointments/useAppointmentTypes';
 
 export const useEnhancedAppointments = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: patients } = usePatientOptions();
-  const { types: appointmentTypes } = useAppointmentTypes();
+  const { types: appointmentTypes, getTypeById } = useAppointmentTypes();
   
   const [appointments, setAppointments] = useState<EnhancedAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,11 +32,18 @@ export const useEnhancedAppointments = () => {
       if (error) throw error;
 
       // Enrich appointments with patient and type information
-      const enrichedAppointments = (data || []).map(appointment => ({
-        ...appointment,
-        patient_name: patients?.find(p => p.id === appointment.patient_id)?.name || 'Paciente não encontrado',
-        appointment_type: appointmentTypes.find(t => t.id === appointment.appointment_type_id)
-      })) as EnhancedAppointment[];
+      const enrichedAppointments = (data || []).map(appointment => {
+        const patient = patients?.find(p => p.id === appointment.patient_id);
+        const appointmentType = getTypeById(appointment.appointment_type_id || '');
+        
+        return {
+          ...appointment,
+          patient_name: patient?.name || 'Paciente não encontrado',
+          appointment_type: appointmentType,
+          // Normalize type field - use database type or map from appointment_type_id
+          type: appointment.type || appointmentType?.name || 'Consulta'
+        } as EnhancedAppointment;
+      });
 
       setAppointments(enrichedAppointments);
       setError(null);
@@ -55,14 +62,22 @@ export const useEnhancedAppointments = () => {
       // Remove fields that shouldn't be sent to the database
       const { patient_name, appointment_type, ...dbData } = appointmentData;
       
+      // Normalize and validate data before insertion
+      const appointmentType = getTypeById(dbData.appointment_type_id || '');
+      const typeName = appointmentType?.name || 'Consulta';
+      
       const insertData = {
         ...dbData,
         user_id: user.id,
-        // Ensure required fields have default values
-        date: dbData.date || new Date().toISOString().split('T')[0],
-        type: dbData.type || 'Consulta',
+        // Ensure required fields have proper values
+        date: dbData.date || dbData.start_time || new Date().toISOString(),
+        type: typeName, // Always set type based on appointment_type_id
         status: dbData.status || 'scheduled' as const,
+        title: dbData.title || typeName, // Use title or type name as fallback
+        appointment_type_id: dbData.appointment_type_id || 'initial', // Ensure we have a type ID
       };
+
+      console.log('Creating appointment with data:', insertData);
 
       const { data, error } = await supabase
         .from('appointments')
@@ -97,6 +112,17 @@ export const useEnhancedAppointments = () => {
     try {
       // Remove fields that shouldn't be sent to the database
       const { patient_name, appointment_type, ...dbUpdates } = updates;
+
+      // Normalize type if appointment_type_id is being updated
+      if (dbUpdates.appointment_type_id) {
+        const appointmentType = getTypeById(dbUpdates.appointment_type_id);
+        if (appointmentType) {
+          dbUpdates.type = appointmentType.name;
+          dbUpdates.title = dbUpdates.title || appointmentType.name;
+        }
+      }
+
+      console.log('Updating appointment with data:', dbUpdates);
 
       const { data, error } = await supabase
         .from('appointments')
@@ -169,10 +195,10 @@ export const useEnhancedAppointments = () => {
   };
 
   useEffect(() => {
-    if (user?.id && patients && appointmentTypes.length > 0) {
+    if (user?.id && appointmentTypes.length > 0) {
       fetchAppointments();
     }
-  }, [user?.id, patients, appointmentTypes]);
+  }, [user?.id, appointmentTypes]);
 
   return {
     appointments,

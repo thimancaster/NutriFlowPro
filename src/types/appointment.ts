@@ -1,5 +1,5 @@
 
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'noshow' | 'rescheduled';
+export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
 
 export interface Appointment {
   id: string;
@@ -7,16 +7,17 @@ export interface Appointment {
   date: string;
   start_time?: string;
   end_time?: string;
-  type: string;
-  appointment_type_id?: string;
+  type: string; // Required field - always populated
+  appointment_type_id?: string; // Optional reference to appointment_types table
   status: AppointmentStatus;
-  notes: string;
-  recommendations: string;
+  notes?: string;
+  recommendations?: string;
+  title?: string;
   created_at?: string;
   updated_at?: string;
   user_id?: string;
+  // Additional computed fields
   patient?: any;
-  title?: string;
   patientName?: string;
 }
 
@@ -26,4 +27,10 @@ export interface AppointmentType {
   color: string;
   description?: string;
   duration_minutes?: number;
+}
+
+// Enhanced appointment with additional computed fields
+export interface EnhancedAppointment extends Appointment {
+  patient_name?: string;
+  appointment_type?: AppointmentType;
 }
