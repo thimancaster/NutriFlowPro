@@ -1,36 +1,8 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
-
-interface PatientContextState {
-  activePatient: Patient | null;
-  isPatientActive: boolean;
-  selectedPatientId: string | null;
-  recentPatients: Patient[];
-  isLoading: boolean;
-  error: Error | null;
-  sessionData: {
-    consultationActive: boolean;
-    currentStep: string;
-    lastActivity: Date | null;
-  };
-}
-
-interface PatientContextActions {
-  setActivePatient: (patient: Patient | null) => void;
-  startPatientSession: (patient: Patient) => void;
-  endPatientSession: () => void;
-  loadPatientById: (patientId: string) => Promise<void>;
-  addRecentPatient: (patient: Patient) => void;
-  updateSessionData: (data: Partial<PatientContextState['sessionData']>) => void;
-  savePatient: (patientData: Partial<Patient>) => Promise<{ success: boolean; data?: Patient; error?: string }>;
-}
-
-interface PatientContextType extends PatientContextState, PatientContextActions {}
-
-const PatientContext = createContext<PatientContextType | undefined>(undefined);
+import { PatientContextType } from './types';
 
 // Session storage keys
 const SESSION_KEYS = {
@@ -43,6 +15,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activePatient, setActivePatientState] = useState<Patient | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [totalPatients, setTotalPatients] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [sessionData, setSessionData] = useState({
@@ -52,6 +26,29 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
 
   const { toast } = useToast();
+
+  // Função para carregar todos os pacientes
+  const refreshPatients = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await PatientService.getPatients();
+      
+      if (result.success && result.data) {
+        setPatients(result.data.patients || []);
+        setTotalPatients(result.data.total || 0);
+      } else {
+        throw new Error(result.error || 'Failed to load patients');
+      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      console.error('Error loading patients:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Load session data on mount
   useEffect(() => {
@@ -81,6 +78,11 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error('Error loading session data:', error);
     }
   }, []);
+
+  // Load patients on mount
+  useEffect(() => {
+    refreshPatients();
+  }, [refreshPatients]);
 
   // Persist session data when it changes
   useEffect(() => {
@@ -205,6 +207,9 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Add to recent patients
         addRecentPatient(result.data);
         
+        // Refresh patients list
+        await refreshPatients();
+        
         toast({
           title: "Sucesso",
           description: `Paciente ${result.data.name} salvo com sucesso.`
@@ -228,7 +233,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setIsLoading(false);
     }
-  }, [activePatient, setActivePatient, addRecentPatient, toast]);
+  }, [activePatient, setActivePatient, addRecentPatient, refreshPatients, toast]);
 
   const contextValue: PatientContextType = {
     // State
@@ -236,6 +241,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isPatientActive,
     selectedPatientId,
     recentPatients,
+    patients,
+    totalPatients,
     isLoading,
     error,
     sessionData,
@@ -247,6 +254,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addRecentPatient,
     updateSessionData,
     savePatient,
+    refreshPatients,
   };
 
   return (

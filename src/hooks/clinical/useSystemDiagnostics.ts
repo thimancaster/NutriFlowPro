@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +18,13 @@ interface SystemHealth {
   results: DiagnosticResult[];
   recommendations: string[];
 }
+
+// Lista manual de tabelas conhecidas (evita queries information_schema)
+const REQUIRED_TABLES = ['patients', 'calculations', 'appointments', 'users'];
+const KNOWN_TABLES = [
+  'patients', 'calculations', 'appointments', 'users', 'measurements',
+  'meal_plans', 'meal_plan_items', 'foods', 'subscribers', 'user_settings'
+];
 
 export const useSystemDiagnostics = () => {
   const [diagnostics, setDiagnostics] = useState<SystemHealth | null>(null);
@@ -130,40 +137,48 @@ export const useSystemDiagnostics = () => {
         }
       }
 
-      // 5. Schema Validation
+      // 5. Schema Validation (usando lista manual)
       try {
-        const { data: tables } = await supabase
-          .from('information_schema.tables')
-          .select('table_name')
-          .eq('table_schema', 'public');
+        // Testar acesso às tabelas conhecidas
+        const tableTests = await Promise.allSettled(
+          REQUIRED_TABLES.map(async (table) => {
+            const { error } = await supabase.from(table).select('count').limit(1);
+            return { table, accessible: !error };
+          })
+        );
 
-        const requiredTables = ['patients', 'calculations', 'appointments', 'users'];
-        const existingTables = tables?.map(t => t.table_name) || [];
-        const missingTables = requiredTables.filter(table => !existingTables.includes(table));
+        const inaccessibleTables = tableTests
+          .map((result, index) => {
+            if (result.status === 'fulfilled' && !result.value.accessible) {
+              return REQUIRED_TABLES[index];
+            }
+            return null;
+          })
+          .filter(Boolean);
 
-        if (missingTables.length > 0) {
+        if (inaccessibleTables.length > 0) {
           results.push({
             category: 'Schema',
             status: 'critical',
-            message: 'Missing required tables',
-            details: `Missing: ${missingTables.join(', ')}`,
-            action: 'Run database migrations'
+            message: 'Required tables not accessible',
+            details: `Inaccessible: ${inaccessibleTables.join(', ')}`,
+            action: 'Check RLS policies and table permissions'
           });
-          recommendations.push('Create missing database tables');
+          recommendations.push('Verify database permissions and RLS policies');
         } else {
           results.push({
             category: 'Schema',
             status: 'pass',
-            message: 'All required tables present',
-            details: 'Database schema is complete'
+            message: 'All required tables accessible',
+            details: 'Database schema and permissions are working'
           });
         }
       } catch (error) {
         results.push({
           category: 'Schema',
           status: 'warning',
-          message: 'Could not verify schema',
-          details: 'Schema check requires elevated permissions'
+          message: 'Could not verify schema completely',
+          details: 'Schema check had partial access'
         });
       }
 
