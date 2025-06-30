@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
-import { PatientContextType } from './types';
+import { PatientContextType, PatientContextState } from './types';
 
 // Session storage keys
 const SESSION_KEYS = {
@@ -10,6 +11,9 @@ const SESSION_KEYS = {
   SESSION_DATA: 'nutriflow_session_data',
   RECENT_PATIENTS: 'nutriflow_recent_patients'
 };
+
+// Create the context
+const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
 export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activePatient, setActivePatientState] = useState<Patient | null>(null);
@@ -36,8 +40,17 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const result = await PatientService.getPatients();
       
       if (result.success && result.data) {
-        setPatients(result.data.patients || []);
-        setTotalPatients(result.data.total || 0);
+        // Ensure data is an array or has patients property
+        if (Array.isArray(result.data)) {
+          setPatients(result.data);
+          setTotalPatients(result.data.length);
+        } else if (result.data.patients) {
+          setPatients(result.data.patients);
+          setTotalPatients(result.data.total || result.data.patients.length);
+        } else {
+          setPatients([]);
+          setTotalPatients(0);
+        }
       } else {
         throw new Error(result.error || 'Failed to load patients');
       }

@@ -1,135 +1,76 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { Patient, PatientFilters, PatientListResponse } from '@/types';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { getPatients } from '@/services/patient/operations/getPatients';
+import { useState, useCallback } from 'react';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { Patient } from '@/types';
 
-interface PaginationInfo {
-  currentPage: number;
-  totalPages: number;
-  total: number;
-  pageSize: number;
+interface UsePatientListOptions {
+  pageSize?: number;
+  initialPage?: number;
+  searchFilter?: string;
 }
 
-interface UsePatientListReturn {
-  patients: Patient[];
-  isLoading: boolean;
-  error: string | null;
-  filters: PatientFilters;
-  pagination: PaginationInfo;
-  totalPatients: number;
-  handleFilterChange: (newFilters: Partial<PatientFilters>) => void;
-  handlePageChange: (page: number) => void;
-  handleStatusChange: (status: 'active' | 'archived' | '') => void;
-  refetch: () => Promise<void>;
-}
+export const usePatientList = (options: UsePatientListOptions = {}) => {
+  const { 
+    patients, 
+    totalPatients, 
+    isLoading, 
+    error, 
+    refreshPatients 
+  } = usePatient();
+  
+  const { pageSize = 10, initialPage = 1, searchFilter = '' } = options;
+  
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [searchTerm, setSearchTerm] = useState(searchFilter);
 
-const defaultFilters: PatientFilters = {
-  status: '',
-  search: '',
-  sortBy: 'name',
-  sortOrder: 'asc',
-  page: 1,
-  limit: 10
-};
+  // Filter patients based on search term
+  const filteredPatients = patients.filter(patient => 
+    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.cpf?.includes(searchTerm)
+  );
 
-export const usePatientList = (): UsePatientListReturn => {
-  const { user } = useAuth();
-  const [filters, setFilters] = useState<PatientFilters>(defaultFilters);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    currentPage: 1,
-    totalPages: 1,
-    total: 0,
-    pageSize: 10
-  });
+  // Paginate filtered patients
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedPatients = filteredPatients.slice(startIndex, endIndex);
+  
+  const totalPages = Math.ceil(filteredPatients.length / pageSize);
 
-  const fetchPatients = useCallback(async () => {
-    if (!user?.id) {
-      setPatients([]);
-      setError(null);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      console.log('Fetching patients with filters:', filters);
-      
-      const response = await getPatients(
-        user.id,
-        {
-          search: filters.search,
-          status: filters.status === '' ? 'all' : (filters.status as 'active' | 'archived' | 'all'),
-          sortBy: filters.sortBy,
-          sortOrder: filters.sortOrder
-        },
-        filters.page || 1,
-        filters.limit || 10
-      );
-
-      if (response.success && response.data) {
-        setPatients(response.data);
-        const total = response.total || 0;
-        const pageSize = filters.limit || 10;
-        
-        setPagination({
-          currentPage: filters.page || 1,
-          totalPages: Math.ceil(total / pageSize),
-          total,
-          pageSize
-        });
-      } else {
-        setError(response.error || 'Erro ao carregar pacientes');
-        setPatients([]);
-      }
-    } catch (err) {
-      console.error('Error fetching patients:', err);
-      setError('Erro ao carregar pacientes');
-      setPatients([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id, filters]);
-
-  // Fetch data when user or filters change
-  useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
-
-  const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters,
-      page: newFilters.page !== undefined ? newFilters.page : 1
-    }));
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page when searching
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
-    setFilters(prev => ({ ...prev, page }));
-  }, []);
-
-  const handleStatusChange = useCallback((status: 'active' | 'archived' | '') => {
-    setFilters(prev => ({ ...prev, status, page: 1 }));
+    setCurrentPage(page);
   }, []);
 
   const refetch = useCallback(async () => {
-    await fetchPatients();
-  }, [fetchPatients]);
+    await refreshPatients();
+  }, [refreshPatients]);
 
   return {
-    patients,
+    // Data
+    patients: paginatedPatients,
+    allPatients: patients,
+    filteredPatients,
+    totalPatients: filteredPatients.length,
+    totalAllPatients: totalPatients,
+    
+    // State
     isLoading,
     error,
-    filters,
-    pagination,
-    totalPatients: pagination.total,
-    handleFilterChange,
+    currentPage,
+    totalPages,
+    pageSize,
+    searchTerm,
+    
+    // Actions
+    handleSearch,
     handlePageChange,
-    handleStatusChange,
-    refetch
+    refetch,
+    setCurrentPage,
+    setSearchTerm,
   };
 };

@@ -19,18 +19,32 @@ interface SystemHealth {
   recommendations: string[];
 }
 
-// Lista manual de tabelas conhecidas (evita queries information_schema)
-const REQUIRED_TABLES = ['patients', 'calculations', 'appointments', 'users'];
+// Lista manual de tabelas conhecidas - usando tipos explícitos
+const REQUIRED_TABLES = ['patients', 'calculations', 'appointments', 'users'] as const;
 const KNOWN_TABLES = [
   'patients', 'calculations', 'appointments', 'users', 'measurements',
   'meal_plans', 'meal_plan_items', 'foods', 'subscribers', 'user_settings'
-];
+] as const;
+
+type KnownTable = typeof KNOWN_TABLES[number];
 
 export const useSystemDiagnostics = () => {
   const [diagnostics, setDiagnostics] = useState<SystemHealth | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const { user } = useAuth();
   const { patients, activePatient } = usePatient();
+
+  const testTableAccess = async (tableName: KnownTable): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .select('count')
+        .limit(1);
+      return !error;
+    } catch {
+      return false;
+    }
+  };
 
   const runFullDiagnostics = async () => {
     setIsRunning(true);
@@ -58,19 +72,18 @@ export const useSystemDiagnostics = () => {
 
       // 2. Database Connectivity
       try {
-        const { data, error } = await supabase
-          .from('patients')
-          .select('count')
-          .limit(1);
+        const isAccessible = await testTableAccess('patients');
         
-        if (error) throw error;
-        
-        results.push({
-          category: 'Database',
-          status: 'pass',
-          message: 'Supabase connection active',
-          details: 'Database queries executing successfully'
-        });
+        if (isAccessible) {
+          results.push({
+            category: 'Database',
+            status: 'pass',
+            message: 'Supabase connection active',
+            details: 'Database queries executing successfully'
+          });
+        } else {
+          throw new Error('Database connection test failed');
+        }
       } catch (error) {
         results.push({
           category: 'Database',
@@ -137,13 +150,12 @@ export const useSystemDiagnostics = () => {
         }
       }
 
-      // 5. Schema Validation (usando lista manual)
+      // 5. Schema Validation (usando lista manual com tipos explícitos)
       try {
-        // Testar acesso às tabelas conhecidas
         const tableTests = await Promise.allSettled(
           REQUIRED_TABLES.map(async (table) => {
-            const { error } = await supabase.from(table).select('count').limit(1);
-            return { table, accessible: !error };
+            const accessible = await testTableAccess(table);
+            return { table, accessible };
           })
         );
 
