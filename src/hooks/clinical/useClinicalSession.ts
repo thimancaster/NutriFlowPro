@@ -70,7 +70,7 @@ export const useClinicalSession = (patientId?: string, appointmentId?: string) =
           },
           status: calculation.status === 'completo' ? 'completed' : 'in_progress',
           created_at: calculation.created_at,
-          updated_at: calculation.updated_at || calculation.created_at
+          updated_at: calculation.created_at // Use created_at as fallback since updated_at might not exist
         };
         setSession(clinicalSession);
       } else {
@@ -217,7 +217,7 @@ export const useClinicalSession = (patientId?: string, appointmentId?: string) =
         .from('calculations')
         .update({
           status: 'completo',
-          updated_at: new Date().toISOString()
+          last_auto_save: new Date().toISOString()
         })
         .eq('id', session.id);
 

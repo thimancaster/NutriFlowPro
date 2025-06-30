@@ -123,7 +123,7 @@ const ClinicalFlowAuditPanel: React.FC<ClinicalFlowAuditPanelProps> = ({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium">{issue.issue}</span>
-                            <Badge variant={getSeverityColor(issue.severity) as any} size="sm">
+                            <Badge variant={getSeverityColor(issue.severity) as any}>
                               {issue.severity}
                             </Badge>
                           </div>
