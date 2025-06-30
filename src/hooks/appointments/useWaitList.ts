@@ -17,6 +17,42 @@ export interface WaitListEntry {
   notified: boolean;
 }
 
+// Type-safe conversion for JSON storage
+const convertWaitListToJson = (waitList: WaitListEntry[]): Record<string, any> => {
+  return waitList.reduce((acc, entry, index) => {
+    acc[`entry_${index}`] = {
+      id: entry.id,
+      patient_id: entry.patient_id,
+      patient_name: entry.patient_name,
+      preferred_date: entry.preferred_date,
+      preferred_time: entry.preferred_time,
+      appointment_type: entry.appointment_type,
+      priority: entry.priority,
+      notes: entry.notes,
+      created_at: entry.created_at,
+      notified: entry.notified
+    };
+    return acc;
+  }, {} as Record<string, any>);
+};
+
+const convertJsonToWaitList = (json: any): WaitListEntry[] => {
+  if (!json || typeof json !== 'object') return [];
+  
+  return Object.values(json).map((entry: any) => ({
+    id: entry.id || '',
+    patient_id: entry.patient_id || '',
+    patient_name: entry.patient_name || '',
+    preferred_date: entry.preferred_date,
+    preferred_time: entry.preferred_time,
+    appointment_type: entry.appointment_type || '',
+    priority: entry.priority || 'medium',
+    notes: entry.notes,
+    created_at: entry.created_at || new Date().toISOString(),
+    notified: entry.notified || false
+  }));
+};
+
 export const useWaitList = () => {
   const [waitList, setWaitList] = useState<WaitListEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,8 +63,6 @@ export const useWaitList = () => {
     if (!user?.id) return;
 
     try {
-      // For now, we'll store wait list entries in user_settings
-      // In a real implementation, you'd create a dedicated wait_list table
       const { data, error } = await supabase
         .from('user_settings')
         .select('settings')
@@ -37,7 +71,8 @@ export const useWaitList = () => {
 
       if (error && error.code !== 'PGRST116') throw error;
 
-      const waitListData = data?.settings?.wait_list || [];
+      const settingsData = data?.settings as any;
+      const waitListData = settingsData?.wait_list ? convertJsonToWaitList(settingsData.wait_list) : [];
       setWaitList(waitListData);
     } catch (error) {
       console.error('Error fetching wait list:', error);
@@ -58,12 +93,13 @@ export const useWaitList = () => {
       };
 
       const updatedWaitList = [...waitList, newEntry];
+      const waitListJson = convertWaitListToJson(updatedWaitList);
 
       await supabase
         .from('user_settings')
         .upsert({
           user_id: user.id,
-          settings: { wait_list: updatedWaitList }
+          settings: { wait_list: waitListJson }
         });
 
       setWaitList(updatedWaitList);
@@ -87,12 +123,13 @@ export const useWaitList = () => {
 
     try {
       const updatedWaitList = waitList.filter(entry => entry.id !== entryId);
+      const waitListJson = convertWaitListToJson(updatedWaitList);
 
       await supabase
         .from('user_settings')
         .upsert({
           user_id: user.id,
-          settings: { wait_list: updatedWaitList }
+          settings: { wait_list: waitListJson }
         });
 
       setWaitList(updatedWaitList);

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Appointment } from '@/types/appointment';
 
