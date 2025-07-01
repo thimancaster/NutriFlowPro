@@ -140,7 +140,7 @@ const Patients = () => {
             <PatientLoadingState />
           ) : error ? (
             <PatientErrorState 
-              errorMessage={error} 
+              errorMessage={error.message} 
               onRetry={() => refetch()} 
             />
           ) : (

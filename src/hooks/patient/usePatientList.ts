@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { usePatient } from '@/contexts/patient/PatientContext';
-import { Patient } from '@/types';
+import { Patient, PatientFilters } from '@/types';
 
 interface UsePatientListOptions {
   pageSize?: number;
@@ -22,13 +22,25 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
   
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchTerm, setSearchTerm] = useState(searchFilter);
+  const [filters, setFilters] = useState<PatientFilters>({
+    status: 'active',
+    search: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    page: 1,
+    limit: pageSize
+  });
 
-  // Filter patients based on search term
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.cpf?.includes(searchTerm)
-  );
+  // Filter patients based on search term and filters
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.cpf?.includes(searchTerm);
+    
+    const matchesStatus = !filters.status || filters.status === '' || patient.status === filters.status;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   // Paginate filtered patients
   const startIndex = (currentPage - 1) * pageSize;
@@ -46,9 +58,25 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     setCurrentPage(page);
   }, []);
 
+  const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setCurrentPage(1);
+  }, []);
+
+  const handleStatusChange = useCallback((status: 'active' | 'archived' | '') => {
+    handleFilterChange({ status });
+  }, [handleFilterChange]);
+
   const refetch = useCallback(async () => {
     await refreshPatients();
   }, [refreshPatients]);
+
+  const pagination = {
+    currentPage,
+    totalPages,
+    pageSize,
+    total: filteredPatients.length
+  };
 
   return {
     // Data
@@ -65,10 +93,14 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     totalPages,
     pageSize,
     searchTerm,
+    filters,
+    pagination,
     
     // Actions
     handleSearch,
     handlePageChange,
+    handleFilterChange,
+    handleStatusChange,
     refetch,
     setCurrentPage,
     setSearchTerm,

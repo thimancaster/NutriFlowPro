@@ -72,10 +72,10 @@ export const usePatientOperations = () => {
     try {
       console.log('Deleting patient:', patientId);
       
-      // For now, we'll implement soft delete by updating status
+      // Use 'archived' instead of 'inactive'
       const result = await savePatient({ 
         id: patientId, 
-        status: 'inactive' 
+        status: 'archived' 
       });
       
       if (result.success) {
@@ -126,7 +126,7 @@ export const usePatientOperations = () => {
     
     deactivate: useCallback(async (patientIds: string[]) => {
       const promises = patientIds.map(id => 
-        updatePatient(id, { status: 'inactive' })
+        updatePatient(id, { status: 'archived' })
       );
       return Promise.allSettled(promises);
     }, [updatePatient]),

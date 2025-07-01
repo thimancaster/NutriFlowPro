@@ -31,7 +31,7 @@ interface FixTask {
 }
 
 // Lista de tabelas conhecidas para validação
-const KNOWN_TABLES = ['patients', 'calculations', 'appointments', 'meal_plans', 'measurements'];
+const KNOWN_TABLES = ['patients', 'calculations', 'appointments', 'meal_plans', 'measurements'] as const;
 
 const EcosystemIntegrationFixer: React.FC = () => {
   const [fixTasks, setFixTasks] = useState<FixTask[]>([]);
@@ -180,11 +180,11 @@ const EcosystemIntegrationFixer: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 1200));
 
     try {
-      // Test table accessibility instead of querying information_schema
+      // Test table accessibility using known table names
       const tableTests = await Promise.allSettled(
-        KNOWN_TABLES.map(async (table) => {
-          const { error } = await supabase.from(table).select('count').limit(1);
-          return { table, accessible: !error };
+        KNOWN_TABLES.map(async (tableName) => {
+          const { error } = await supabase.from(tableName).select('count').limit(1);
+          return { table: tableName, accessible: !error };
         })
       );
 

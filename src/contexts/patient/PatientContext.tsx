@@ -37,20 +37,31 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setError(null);
     
     try {
+      console.log('Refreshing patients...');
       const result = await PatientService.getPatients();
       
       if (result.success && result.data) {
-        // Ensure data is an array or has patients property
+        console.log('PatientService result:', result.data);
+        
+        // Handle different response structures
         if (Array.isArray(result.data)) {
           setPatients(result.data);
           setTotalPatients(result.data.length);
-        } else if (result.data.patients) {
-          setPatients(result.data.patients);
-          setTotalPatients(result.data.total || result.data.patients.length);
+        } else if (result.data && typeof result.data === 'object') {
+          // Check if it has a patients property
+          if ('patients' in result.data && Array.isArray(result.data.patients)) {
+            setPatients(result.data.patients);
+            setTotalPatients(result.data.total || result.data.patients.length);
+          } else {
+            // Fallback: treat the object as a single patient or empty
+            setPatients([]);
+            setTotalPatients(0);
+          }
         } else {
           setPatients([]);
           setTotalPatients(0);
         }
+        console.log('Patients loaded successfully');
       } else {
         throw new Error(result.error || 'Failed to load patients');
       }
@@ -58,6 +69,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const error = err as Error;
       setError(error);
       console.error('Error loading patients:', error);
+      setPatients([]);
+      setTotalPatients(0);
     } finally {
       setIsLoading(false);
     }

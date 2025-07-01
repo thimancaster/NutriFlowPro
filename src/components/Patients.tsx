@@ -28,7 +28,7 @@ const Patients = () => {
   }
 
   if (error) {
-    return <PatientErrorState errorMessage={error} onRetry={refetch} />;
+    return <PatientErrorState errorMessage={error.message} onRetry={refetch} />;
   }
 
   return (
