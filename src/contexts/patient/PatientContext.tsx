@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
@@ -38,7 +37,11 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     try {
       console.log('Refreshing patients...');
-      const result = await PatientService.getPatients();
+      const result = await PatientService.getPatients({
+        page: 1,
+        limit: 100,
+        status: 'active'
+      });
       
       if (result.success && result.data) {
         console.log('PatientService result:', result.data);
@@ -149,61 +152,6 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
-  const startPatientSession = useCallback((patient: Patient) => {
-    setActivePatient(patient);
-    addRecentPatient(patient);
-    updateSessionData({
-      consultationActive: true,
-      currentStep: 'patient-info',
-      lastActivity: new Date()
-    });
-    
-    toast({
-      title: "Sessão iniciada",
-      description: `Atendimento de ${patient.name} iniciado com sucesso.`
-    });
-  }, [setActivePatient, toast]);
-
-  const endPatientSession = useCallback(() => {
-    setActivePatient(null);
-    updateSessionData({
-      consultationActive: false,
-      currentStep: 'patient-selection',
-      lastActivity: new Date()
-    });
-    
-    toast({
-      title: "Sessão encerrada",
-      description: "Atendimento finalizado com sucesso."
-    });
-  }, [setActivePatient, toast]);
-
-  const loadPatientById = useCallback(async (patientId: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const result = await PatientService.getPatient(patientId);
-      
-      if (result.success && result.data) {
-        setActivePatient(result.data);
-        return;
-      }
-      
-      throw new Error(result.error || 'Failed to load patient');
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setActivePatient, toast]);
-
   const addRecentPatient = useCallback((patient: Patient) => {
     setRecentPatients(prev => {
       const filtered = prev.filter(p => p.id !== patient.id);
@@ -214,52 +162,6 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateSessionData = useCallback((data: Partial<PatientContextState['sessionData']>) => {
     setSessionData(prev => ({ ...prev, ...data }));
   }, []);
-
-  const savePatient = useCallback(async (patientData: Partial<Patient>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log('Saving patient data:', patientData);
-      
-      const result = await PatientService.savePatient(patientData);
-      
-      if (result.success && result.data) {
-        // Update active patient if this is the same patient
-        if (activePatient && activePatient.id === result.data.id) {
-          setActivePatient(result.data);
-        }
-        
-        // Add to recent patients
-        addRecentPatient(result.data);
-        
-        // Refresh patients list
-        await refreshPatients();
-        
-        toast({
-          title: "Sucesso",
-          description: `Paciente ${result.data.name} salvo com sucesso.`
-        });
-        
-        return result;
-      }
-      
-      throw new Error(result.error || 'Falha ao salvar paciente');
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive"
-      });
-      
-      return { success: false, error: error.message };
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activePatient, setActivePatient, addRecentPatient, refreshPatients, toast]);
 
   const contextValue: PatientContextType = {
     // State
@@ -274,12 +176,105 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     sessionData,
     // Actions
     setActivePatient,
-    startPatientSession,
-    endPatientSession,
-    loadPatientById,
+    startPatientSession: useCallback((patient: Patient) => {
+      setActivePatient(patient);
+      addRecentPatient(patient);
+      updateSessionData({
+        consultationActive: true,
+        currentStep: 'patient-info',
+        lastActivity: new Date()
+      });
+      
+      toast({
+        title: "Sessão iniciada",
+        description: `Atendimento de ${patient.name} iniciado com sucesso.`
+      });
+    }, [setActivePatient, addRecentPatient, updateSessionData, toast]),
+    endPatientSession: useCallback(() => {
+      setActivePatient(null);
+      updateSessionData({
+        consultationActive: false,
+        currentStep: 'patient-selection',
+        lastActivity: new Date()
+      });
+      
+      toast({
+        title: "Sessão encerrada",
+        description: "Atendimento finalizado com sucesso."
+      });
+    }, [setActivePatient, updateSessionData, toast]),
+    loadPatientById: useCallback(async (patientId: string) => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const result = await PatientService.getPatient(patientId);
+        
+        if (result.success && result.data) {
+          setActivePatient(result.data);
+          return;
+        }
+        
+        throw new Error(result.error || 'Failed to load patient');
+      } catch (err) {
+        const error = err as Error;
+        setError(error);
+        toast({
+          title: "Erro",
+          description: error.message,
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }, [setActivePatient, toast]),
     addRecentPatient,
     updateSessionData,
-    savePatient,
+    savePatient: useCallback(async (patientData: Partial<Patient>) => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        console.log('Saving patient data:', patientData);
+        
+        const result = await PatientService.savePatient(patientData);
+        
+        if (result.success && result.data) {
+          // Update active patient if this is the same patient
+          if (activePatient && activePatient.id === result.data.id) {
+            setActivePatient(result.data);
+          }
+          
+          // Add to recent patients
+          addRecentPatient(result.data);
+          
+          // Refresh patients list
+          await refreshPatients();
+          
+          toast({
+            title: "Sucesso",
+            description: `Paciente ${result.data.name} salvo com sucesso.`
+          });
+          
+          return result;
+        }
+        
+        throw new Error(result.error || 'Falha ao salvar paciente');
+      } catch (err) {
+        const error = err as Error;
+        setError(error);
+        
+        toast({
+          title: "Erro ao salvar",
+          description: error.message,
+          variant: "destructive"
+        });
+        
+        return { success: false, error: error.message };
+      } finally {
+        setIsLoading(false);
+      }
+    }, [activePatient, setActivePatient, addRecentPatient, refreshPatients, toast]),
     refreshPatients,
   };
 
