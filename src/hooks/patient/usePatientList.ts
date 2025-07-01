@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { Patient, PatientFilters } from '@/types';
@@ -40,7 +41,8 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     const matchesStatus = !filters.status || 
       filters.status === 'all' || 
       filters.status === '' || 
-      patient.status === filters.status;
+      (filters.status === 'active' && patient.status === 'active') ||
+      (filters.status === 'archived' && patient.status === 'archived');
     
     return matchesSearch && matchesStatus;
   });
