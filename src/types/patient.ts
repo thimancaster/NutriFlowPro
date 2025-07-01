@@ -61,7 +61,7 @@ export interface Patient {
 }
 
 export interface PatientFilters {
-  status?: 'active' | 'archived' | '';
+  status?: 'active' | 'archived' | 'all' | '';
   search?: string;
   sortBy?: 'name' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';
