@@ -111,8 +111,7 @@ const Patients = () => {
 
   // Create a wrapper function to handle the status change signature mismatch
   const handleStatusChangeWrapper = (status: 'active' | 'archived' | 'all') => {
-    const mappedStatus = status === 'all' ? '' : status;
-    handleStatusChange(mappedStatus as 'active' | 'archived' | '');
+    handleStatusChange(status);
   };
 
   const handleSearchAction = () => {

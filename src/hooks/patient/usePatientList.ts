@@ -37,7 +37,10 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
       patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.cpf?.includes(searchTerm);
     
-    const matchesStatus = !filters.status || filters.status === 'all' || patient.status === filters.status;
+    const matchesStatus = !filters.status || 
+      filters.status === 'all' || 
+      filters.status === '' || 
+      patient.status === filters.status;
     
     return matchesSearch && matchesStatus;
   });
@@ -63,8 +66,8 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     setCurrentPage(1);
   }, []);
 
-  const handleStatusChange = useCallback((status: 'active' | 'archived' | 'all') => {
-    const mappedStatus = status === 'all' ? 'active' : status;
+  const handleStatusChange = useCallback((status: 'active' | 'archived' | 'all' | '') => {
+    const mappedStatus = status === 'all' ? '' : status;
     handleFilterChange({ status: mappedStatus });
   }, [handleFilterChange]);
 

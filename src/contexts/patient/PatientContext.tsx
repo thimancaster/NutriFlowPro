@@ -3,6 +3,7 @@ import { Patient } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
 import { PatientContextType, PatientContextState } from './types';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Session storage keys
 const SESSION_KEYS = {
@@ -15,6 +16,7 @@ const SESSION_KEYS = {
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
 export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [activePatient, setActivePatientState] = useState<Patient | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
@@ -32,38 +34,27 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Função para carregar todos os pacientes
   const refreshPatients = useCallback(async () => {
+    if (!user?.id) {
+      console.log('No user ID available for refreshing patients');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     
     try {
       console.log('Refreshing patients...');
-      const result = await PatientService.getPatients({
-        page: 1,
-        limit: 100,
-        status: 'active'
-      });
+      const result = await PatientService.getPatients(
+        user.id,
+        { status: 'active' },
+        1,
+        100
+      );
       
       if (result.success && result.data) {
         console.log('PatientService result:', result.data);
-        
-        // Handle different response structures
-        if (Array.isArray(result.data)) {
-          setPatients(result.data);
-          setTotalPatients(result.data.length);
-        } else if (result.data && typeof result.data === 'object') {
-          // Check if it has a patients property
-          if ('patients' in result.data && Array.isArray(result.data.patients)) {
-            setPatients(result.data.patients);
-            setTotalPatients(result.data.total || result.data.patients.length);
-          } else {
-            // Fallback: treat the object as a single patient or empty
-            setPatients([]);
-            setTotalPatients(0);
-          }
-        } else {
-          setPatients([]);
-          setTotalPatients(0);
-        }
+        setPatients(result.data);
+        setTotalPatients(result.total || result.data.length);
         console.log('Patients loaded successfully');
       } else {
         throw new Error(result.error || 'Failed to load patients');
@@ -77,7 +68,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   // Load session data on mount
   useEffect(() => {
@@ -110,8 +101,10 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Load patients on mount
   useEffect(() => {
-    refreshPatients();
-  }, [refreshPatients]);
+    if (user?.id) {
+      refreshPatients();
+    }
+  }, [refreshPatients, user?.id]);
 
   // Persist session data when it changes
   useEffect(() => {
@@ -204,6 +197,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
     }, [setActivePatient, updateSessionData, toast]),
     loadPatientById: useCallback(async (patientId: string) => {
+      if (!user?.id) return;
+      
       setIsLoading(true);
       setError(null);
       
@@ -227,7 +222,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       } finally {
         setIsLoading(false);
       }
-    }, [setActivePatient, toast]),
+    }, [setActivePatient, toast, user?.id]),
     addRecentPatient,
     updateSessionData,
     savePatient: useCallback(async (patientData: Partial<Patient>) => {
