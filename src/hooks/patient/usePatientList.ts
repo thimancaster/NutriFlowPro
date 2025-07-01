@@ -37,10 +37,12 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
       patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.cpf?.includes(searchTerm);
     
+    // Fix the status comparison logic
     const matchesStatus = !filters.status || 
       filters.status === 'all' || 
       filters.status === '' || 
-      patient.status === filters.status;
+      (filters.status === 'active' && patient.status === 'active') ||
+      (filters.status === 'archived' && patient.status === 'archived');
     
     return matchesSearch && matchesStatus;
   });
