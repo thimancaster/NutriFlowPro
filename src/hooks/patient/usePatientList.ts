@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { Patient, PatientFilters } from '@/types';
@@ -37,12 +36,11 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
       patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.cpf?.includes(searchTerm);
     
-    // Fix the status comparison logic - handle empty string and 'all' as "show all"
+    // Handle status filtering - show all patients if status is empty, 'all', or matches patient status
     const matchesStatus = !filters.status || 
       filters.status === 'all' || 
       filters.status === '' || 
-      (filters.status === 'active' && patient.status === 'active') ||
-      (filters.status === 'archived' && patient.status === 'archived');
+      patient.status === filters.status;
     
     return matchesSearch && matchesStatus;
   });
