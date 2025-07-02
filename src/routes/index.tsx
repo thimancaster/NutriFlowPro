@@ -38,12 +38,12 @@ const AppRoutes = () => {
         <Routes>
             {/* Public routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/recursos" element={<Recursos />} />
-            <Route path="/auth/callback" element={<AuthHandler />} /> {/* <--- ADICIONE ESTA LINHA */}
+            <Route path="login" element={<Login />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password" element={<ResetPassword />} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="recursos" element={<Recursos />} />
+            <Route path="auth/callback" element={<AuthHandler />} />
 
             {/* Replace old signup routes with unified version */}
             <Route path="/signup" element={<UnifiedSignup />} />
