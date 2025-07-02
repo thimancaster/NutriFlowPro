@@ -32,6 +32,7 @@ import Onboarding from "@/pages/Onboarding";
 import AddTestimonial from "@/pages/AddTestimonial";
 import Recursos from "@/pages/Recursos";
 import UnifiedSignup from "@/pages/UnifiedSignup";
+import SystemDebug from "@/pages/SystemDebug";
 
 const AppRoutes = () => {
     return (
@@ -74,6 +75,7 @@ const AppRoutes = () => {
                 <Route path="settings" element={<Settings />} />
                 <Route path="subscription" element={<Subscription />} />
                 <Route path="add-testimonial" element={<AddTestimonial />} />
+                <Route path="system-debug" element={<SystemDebug />} />
                 <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>
