@@ -38,11 +38,12 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
       patient.cpf?.includes(searchTerm);
     
     // Handle status filtering - show all patients if status is empty, 'all', or matches patient status
-    const matchesStatus = !filters.status || 
-      filters.status === 'all' || 
-      filters.status === '' || 
-      (filters.status === 'active' && patient.status === 'active') ||
-      (filters.status === 'archived' && patient.status === 'archived');
+    let matchesStatus = true;
+    if (filters.status && filters.status === 'active') {
+      matchesStatus = patient.status === 'active';
+    } else if (filters.status && filters.status === 'archived') {
+      matchesStatus = patient.status === 'archived';
+    }
     
     return matchesSearch && matchesStatus;
   });
