@@ -1,3 +1,4 @@
+
 import React, {useState, useEffect} from "react";
 import {useParams, useNavigate} from "react-router-dom";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -6,18 +7,23 @@ import {Badge} from "@/components/ui/badge";
 import {ArrowLeft, Loader2, Edit, Download, Calendar} from "lucide-react";
 import {useAuth} from "@/contexts/auth/AuthContext";
 import {MealPlanService} from "@/services/mealPlanService";
-import {DetailedMealPlan} from "@/types/mealPlan";
+import {DetailedMealPlan, MealPlanMeal} from "@/types/mealPlan";
 import {format} from "date-fns";
 import {ptBR} from "date-fns/locale";
+import {useToast} from "@/hooks/use-toast";
+import MealEditDialog from "@/components/meal-plan/MealEditDialog";
 
 const MealPlanViewPage: React.FC = () => {
 	const {id} = useParams<{id: string}>();
 	const navigate = useNavigate();
 	const {user} = useAuth();
+	const {toast} = useToast();
 
 	const [mealPlan, setMealPlan] = useState<DetailedMealPlan | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [editingMeal, setEditingMeal] = useState<MealPlanMeal | null>(null);
+	const [showEditDialog, setShowEditDialog] = useState(false);
 
 	useEffect(() => {
 		const fetchMealPlan = async () => {
@@ -46,6 +52,62 @@ const MealPlanViewPage: React.FC = () => {
 
 		fetchMealPlan();
 	}, [id]);
+
+	const handleEditMeal = (meal: MealPlanMeal) => {
+		setEditingMeal(meal);
+		setShowEditDialog(true);
+	};
+
+	const handleSaveMeal = async (updatedMeal: MealPlanMeal) => {
+		if (!mealPlan) return;
+
+		try {
+			// Atualizar a refeição no plano
+			const updatedMeals = mealPlan.meals?.map(meal => 
+				meal.id === updatedMeal.id ? updatedMeal : meal
+			) || [];
+
+			// Recalcular totais do plano
+			const planTotals = updatedMeals.reduce(
+				(totals, meal) => ({
+					calories: totals.calories + meal.total_calories,
+					protein: totals.protein + meal.total_protein,
+					carbs: totals.carbs + meal.total_carbs,
+					fats: totals.fats + meal.total_fats
+				}),
+				{ calories: 0, protein: 0, carbs: 0, fats: 0 }
+			);
+
+			const updatedPlan: DetailedMealPlan = {
+				...mealPlan,
+				meals: updatedMeals,
+				total_calories: planTotals.calories,
+				total_protein: planTotals.protein,
+				total_carbs: planTotals.carbs,
+				total_fats: planTotals.fats
+			};
+
+			// Salvar no backend
+			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedPlan);
+			
+			if (result.success && result.data) {
+				setMealPlan(result.data as DetailedMealPlan);
+				toast({
+					title: "Sucesso",
+					description: "Refeição atualizada com sucesso!",
+				});
+			} else {
+				throw new Error(result.error || "Erro ao salvar");
+			}
+		} catch (error: any) {
+			console.error("Erro ao salvar refeição:", error);
+			toast({
+				title: "Erro",
+				description: error.message || "Erro ao salvar a refeição",
+				variant: "destructive",
+			});
+		}
+	};
 
 	const handleBackToList = () => {
 		navigate("/meal-plans");
@@ -187,9 +249,19 @@ const MealPlanViewPage: React.FC = () => {
 						<CardHeader>
 							<div className="flex items-center justify-between">
 								<CardTitle className="text-lg">{meal.name}</CardTitle>
-								<Badge variant="outline">
-									{Math.round(meal.total_calories)} kcal
-								</Badge>
+								<div className="flex items-center gap-2">
+									<Badge variant="outline">
+										{Math.round(meal.total_calories)} kcal
+									</Badge>
+									<Button
+										size="sm"
+										variant="ghost"
+										onClick={() => handleEditMeal(meal)}
+										className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+									>
+										<Edit className="h-4 w-4" />
+									</Button>
+								</div>
 							</div>
 						</CardHeader>
 						<CardContent>
@@ -255,6 +327,14 @@ const MealPlanViewPage: React.FC = () => {
 					</Card>
 				))}
 			</div>
+
+			{/* Meal Edit Dialog */}
+			<MealEditDialog
+				open={showEditDialog}
+				onOpenChange={setShowEditDialog}
+				meal={editingMeal}
+				onSave={handleSaveMeal}
+			/>
 		</div>
 	);
 };
