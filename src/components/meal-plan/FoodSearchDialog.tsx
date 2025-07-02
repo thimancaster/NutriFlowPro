@@ -37,8 +37,14 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
 
     setIsSearching(true);
     try {
-      const results = await FoodService.searchFoods(searchTerm);
-      setSearchResults(results.slice(0, 20)); // Limitar a 20 resultados
+      // Usar o formato correto de filtros para o FoodService
+      const result = await FoodService.searchFoods({
+        query: searchTerm,
+        limit: 20
+      });
+      
+      // Acessar o array de dados corretamente
+      setSearchResults(result.data || []);
     } catch (error) {
       console.error('Erro na busca:', error);
       toast({
