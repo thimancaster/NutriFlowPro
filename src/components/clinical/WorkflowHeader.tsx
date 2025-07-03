@@ -79,26 +79,26 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Patient Info */}
           <div className="space-y-2">
-            <h3 className="font-medium text-sm text-gray-600">Paciente</h3>
+            <h3 className="font-medium text-sm text-muted-foreground">Paciente</h3>
             {activePatient ? (
               <div>
-                <p className="font-medium">{activePatient.name}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-foreground">{activePatient.name}</p>
+                <p className="text-sm text-muted-foreground">
                   {activePatient.age} anos • {activePatient.gender === 'male' ? 'Masculino' : 'Feminino'}
                 </p>
               </div>
             ) : (
-              <p className="text-gray-400">Nenhum paciente selecionado</p>
+              <p className="text-muted-foreground">Nenhum paciente selecionado</p>
             )}
           </div>
 
           {/* Consultation Date */}
           <div className="space-y-2">
-            <h3 className="font-medium text-sm text-gray-600 flex items-center gap-1">
+            <h3 className="font-medium text-sm text-muted-foreground flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               Data da Consulta
             </h3>
-            <p className="text-sm">
+            <p className="text-sm text-foreground">
               {formatDate(activeConsultation?.created_at)}
             </p>
             <Badge variant="outline" className="text-xs">
@@ -108,11 +108,11 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
 
           {/* Last Save */}
           <div className="space-y-2">
-            <h3 className="font-medium text-sm text-gray-600 flex items-center gap-1">
+            <h3 className="font-medium text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="h-4 w-4" />
               Último Salvamento
             </h3>
-            <p className="text-sm">
+            <p className="text-sm text-foreground">
               {formatDateTime(lastSaved?.toISOString())}
             </p>
             {isSaving && (
