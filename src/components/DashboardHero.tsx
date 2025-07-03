@@ -84,7 +84,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
 
       <div className="relative z-10">
         <motion.h2 
-          className="text-2xl md:text-3xl font-bold mb-4 text-gray-800"
+          className="text-2xl md:text-3xl font-bold mb-4 text-foreground"
           variants={itemVariants}
           transition={{
             duration: 0.5,
@@ -96,7 +96,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         </motion.h2>
         
         <motion.p 
-          className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto"
+          className="text-lg text-foreground opacity-90 mb-6 max-w-2xl mx-auto transition-all duration-300 hover:opacity-100"
           variants={itemVariants}
           transition={{
             duration: 0.5,
@@ -118,7 +118,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
           }}
         >
           <Button
-            variant="subscription-green"
+            variant="nutri-green"
             animation="shimmer"
             onClick={() => navigate("/calculator")}
             className="magnetic-hover ripple-effect smooth-lift px-8 py-6 text-lg font-semibold"

@@ -114,24 +114,28 @@ const DashboardRecentPatients: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="text-left border-b">
-                  <th className="pb-2 pt-4 px-4">Nome</th>
-                  <th className="pb-2 pt-4 px-4">Data</th>
-                  <th className="pb-2 pt-4 px-4">Status</th>
-                  <th className="pb-2 pt-4 px-4">Ações</th>
+                <tr className="text-left border-b border-border">
+                  <th className="pb-2 pt-4 px-4 text-muted-foreground font-medium">Nome</th>
+                  <th className="pb-2 pt-4 px-4 text-muted-foreground font-medium">Data</th>
+                  <th className="pb-2 pt-4 px-4 text-muted-foreground font-medium">Status</th>
+                  <th className="pb-2 pt-4 px-4 text-muted-foreground font-medium">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {recentPatients.map((patient) => (
-                  <tr key={patient.id} className="border-b last:border-b-0">
-                    <td className="py-3 px-4">{patient.name}</td>
-                    <td className="py-3 px-4">{formatDate(patient.created_at)}</td>
+                  <tr key={patient.id} className="border-b border-border last:border-b-0 group hover:bg-muted/30 transition-colors duration-200">
+                    <td className="py-3 px-4 text-foreground group-hover:text-primary transition-colors duration-200">
+                      <Link to={`/patients/${patient.id}`} className="hover:underline">
+                        {patient.name}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">{formatDate(patient.created_at)}</td>
                     <td className="py-3 px-4">
                       <span 
                         className={`px-2 py-1 text-xs rounded-full ${
                           getPatientStatus(patient) === 'Novo' ? 'bg-nutri-blue-light text-white' : 
                           getPatientStatus(patient) === 'Em andamento' ? 'bg-nutri-green-light text-white' : 
-                          'bg-nutri-gray-light text-nutri-gray-dark'
+                          'bg-muted text-muted-foreground'
                         }`}
                       >
                         {getPatientStatus(patient)}
@@ -140,7 +144,7 @@ const DashboardRecentPatients: React.FC = () => {
                     <td className="py-3 px-4">
                       <Button 
                         variant="ghost" 
-                        className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-nutri-gray-light"
+                        className="h-8 px-2 text-nutri-blue hover:text-nutri-blue-dark hover:bg-muted"
                         onClick={() => handleViewPatientDetails(patient.id)}
                       >
                         Ver detalhes

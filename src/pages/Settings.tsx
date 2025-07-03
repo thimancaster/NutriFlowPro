@@ -6,9 +6,7 @@ import SubscriptionSettings from '@/components/Settings/SubscriptionSettings';
 import UserInfoHeader from '@/components/UserInfoHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, CreditCard, Shield } from 'lucide-react';
-// Removed unused import
 import { BackButton } from '@/components/ui/back-button';
-import { SecurityDashboard } from '@/components/security/SecurityDashboard';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 const Settings = () => {
@@ -30,17 +28,17 @@ const Settings = () => {
   }, []);
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center mb-6 space-x-4">
-          <BackButton to="/" label="Voltar para o Dashboard" />
-          <h1 className="text-2xl font-bold text-gray-900">Configurações</h1>
+          <BackButton to="/dashboard" label="Voltar para o Dashboard" />
+          <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
         </div>
         
         <UserInfoHeader />
         
         <div className="max-w-4xl mx-auto mt-8">
-          <p className="text-gray-500 mb-6">Gerencie seu perfil e assinatura</p>
+          <p className="text-muted-foreground mb-6">Gerencie seu perfil e assinatura</p>
           
           <Card className={`p-6 ${isPremium ? 'border-t-4 border-amber-400' : ''}`}>
             {isPremium && (
@@ -83,7 +81,12 @@ const Settings = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <SecurityDashboard />
+              <div className="text-center py-8">
+                <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  Dashboard de segurança disponível em breve
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}
