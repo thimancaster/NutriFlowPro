@@ -30,22 +30,22 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
         "flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer transition-all",
         isActive 
           ? "bg-nutri-green/20 text-nutri-green border-l-4 border-nutri-green" 
-          : "hover:bg-gray-100",
+          : "hover:bg-muted",
         disabled ? "opacity-50 cursor-not-allowed" : "",
-        isCompleted ? "text-gray-500" : ""
+        isCompleted ? "text-muted-foreground" : ""
       )}
       onClick={() => !disabled && onClick()}
     >
       <div className={cn(
         "rounded-full p-1",
-        isActive ? "bg-nutri-green text-white" : "bg-gray-200 text-gray-600",
-        isCompleted ? "bg-gray-300" : ""
+        isActive ? "bg-nutri-green text-white" : "bg-muted text-muted-foreground",
+        isCompleted ? "bg-muted-foreground/20" : ""
       )}>
         {isCompleted ? <Check className="h-4 w-4" /> : icon}
       </div>
       <span className="text-sm font-medium">{label}</span>
       {isCompleted && (
-        <Check className="h-4 w-4 ml-auto text-gray-400" />
+        <Check className="h-4 w-4 ml-auto text-muted-foreground" />
       )}
     </div>
   );
@@ -83,15 +83,15 @@ const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
     return stepIndex <= currentStepIndex;
   };
   
-  // Set the current step
+  // Set the current step - placeholder for now, should be passed as prop
   const setCurrentStep = (step: ClinicalWorkflowStep) => {
-    // Implementation would typically involve context or state updates
     console.log("Changing step to:", step);
-    // This is a placeholder - the actual implementation would depend on how the workflow is managed
+    // This would be implemented through props or context
+    // For now, we just log the step change
   };
   
   return (
-    <div className="bg-white rounded-md border p-2 mb-6">
+    <div className="bg-card rounded-md border p-2 mb-6">
       <div className="space-y-1">
         {steps.map((step, index) => (
           <WorkflowStep

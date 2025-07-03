@@ -7,12 +7,15 @@ import { Search, Plus, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePatientOptions } from '@/hooks/usePatientOptions';
 import { useClinical } from '@/contexts/ClinicalContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { Patient } from '@/types';
 
 const PatientSelectionStep: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const { data: patients, isLoading } = usePatientOptions();
   const { startNewConsultation } = useClinical();
+  const { loadPatientById } = usePatient();
   const navigate = useNavigate();
   
   // Filter patients based on search query
@@ -21,8 +24,39 @@ const PatientSelectionStep: React.FC = () => {
     (patient.email && patient.email.toLowerCase().includes(searchQuery.toLowerCase()))
   ) || [];
   
-  const handleSelectPatient = async (patient: Patient) => {
-    await startNewConsultation(patient);
+  const handleSelectPatient = async (selectedPatient: any) => {
+    try {
+      console.log('Selecionando paciente:', selectedPatient);
+      setSelectedPatientId(selectedPatient.id);
+      
+      // First load the full patient data
+      await loadPatientById(selectedPatient.id);
+      
+      // Convert PatientOption to Patient format
+      const fullPatient: Patient = {
+        id: selectedPatient.id,
+        name: selectedPatient.name,
+        email: selectedPatient.email || '',
+        birth_date: selectedPatient.birth_date || null,
+        age: selectedPatient.age || 0,
+        gender: 'female', // Default, will be updated when full patient loads
+        phone: '',
+        address: '',
+        cpf: '',
+        notes: '',
+        goals: {},
+        status: 'active',
+        user_id: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('Iniciando consulta com paciente:', fullPatient);
+      await startNewConsultation(fullPatient);
+      
+    } catch (error) {
+      console.error('Erro ao selecionar paciente:', error);
+    }
   };
   
   return (
@@ -37,7 +71,7 @@ const PatientSelectionStep: React.FC = () => {
         <CardContent>
           <div className="flex gap-2 mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Buscar paciente por nome ou email..."
@@ -57,7 +91,7 @@ const PatientSelectionStep: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nutri-green"></div>
             </div>
           ) : filteredPatients.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 
                 "Nenhum paciente encontrado com esse termo. Tente outro termo ou cadastre um novo paciente." :
                 "Nenhum paciente cadastrado. Cadastre um novo paciente para começar."}
@@ -67,19 +101,29 @@ const PatientSelectionStep: React.FC = () => {
               {filteredPatients.map(patient => (
                 <div
                   key={patient.id}
-                  className="flex items-center justify-between p-3 rounded-md border hover:border-nutri-green hover:bg-nutri-green/5 transition-colors cursor-pointer"
-                  onClick={() => handleSelectPatient(patient as Patient)}
+                  className={`flex items-center justify-between p-3 rounded-md border transition-colors cursor-pointer ${
+                    selectedPatientId === patient.id 
+                      ? 'border-nutri-green bg-nutri-green/10 text-nutri-green' 
+                      : 'hover:border-nutri-green hover:bg-nutri-green/5'
+                  }`}
+                  onClick={() => handleSelectPatient(patient)}
                 >
                   <div>
-                    <h3 className="font-medium">{patient.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className={`font-medium ${selectedPatientId === patient.id ? 'text-nutri-green' : 'text-foreground'}`}>
+                      {patient.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
                       {patient.email || 'Email não cadastrado'} •
                       {patient.age ? ` ${patient.age} anos` : ' Idade não informada'}
                     </p>
                   </div>
-                  <Button size="sm" variant="ghost" className="text-nutri-green">
+                  <Button 
+                    size="sm" 
+                    variant={selectedPatientId === patient.id ? "default" : "ghost"} 
+                    className={selectedPatientId === patient.id ? 'bg-nutri-green hover:bg-nutri-green-dark text-white' : 'text-nutri-green'}
+                  >
                     <UserCheck className="h-4 w-4 mr-2" />
-                    Selecionar
+                    {selectedPatientId === patient.id ? 'Selecionado' : 'Selecionar'}
                   </Button>
                 </div>
               ))}

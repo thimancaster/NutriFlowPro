@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePatient } from '@/contexts/patient/PatientContext';
+import { useClinical } from '@/contexts/ClinicalContext';
 import { ConsultationData } from '@/types/consultation';
 import { ClinicalWorkflowStep } from '@/types/clinical';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,24 +18,55 @@ const ClinicalWorkflow: React.FC = () => {
   const { patientId, appointmentId } = useParams();
   const navigate = useNavigate();
   const { activePatient, loadPatientById } = usePatient();
+  const { 
+    activePatient: clinicalPatient, 
+    activeConsultation: clinicalConsultation,
+    currentStep: clinicalStep,
+    setCurrentStep: setClinicalStep,
+    isSaving: clinicalSaving,
+    lastSaved: clinicalLastSaved
+  } = useClinical();
   
-  const [currentStep, setCurrentStep] = useState<ClinicalWorkflowStep>('patient-selection');
-  const [consultation, setConsultation] = useState<ConsultationData | null>(null);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  // Use clinical context state or fallback to local state
+  const [currentStep, setCurrentStep] = useState<ClinicalWorkflowStep>(clinicalStep);
+  const [consultation, setConsultation] = useState<ConsultationData | null>(clinicalConsultation);
+  const [lastSaved, setLastSaved] = useState<Date | null>(clinicalLastSaved);
   
-  // Use the new clinical session hook
+  // Use the new clinical session hook when we have a patient
+  const effectivePatientId = patientId || activePatient?.id || clinicalPatient?.id;
   const { session, isLoading: isSessionLoading, isSaving, updateSession, completeSession } = useClinicalSession(
-    patientId || activePatient?.id, 
+    effectivePatientId, 
     appointmentId
   );
   
+  // Sync with clinical context
+  useEffect(() => {
+    if (clinicalPatient && clinicalPatient !== activePatient) {
+      console.log('Sincronizando paciente do contexto clínico:', clinicalPatient);
+    }
+    
+    if (clinicalConsultation) {
+      setConsultation(clinicalConsultation);
+    }
+    
+    if (clinicalStep !== currentStep) {
+      setCurrentStep(clinicalStep);
+    }
+    
+    if (clinicalLastSaved) {
+      setLastSaved(clinicalLastSaved);
+    }
+  }, [clinicalPatient, clinicalConsultation, clinicalStep, clinicalLastSaved]);
+
   // Load patient from URL params if needed
-  React.useEffect(() => {
-    if (patientId && !activePatient) {
+  useEffect(() => {
+    if (patientId && !activePatient && !clinicalPatient) {
+      console.log('Carregando paciente da URL:', patientId);
       loadPatientById(patientId);
       setCurrentStep('patient-info');
+      setClinicalStep('patient-info');
     }
-  }, [patientId, activePatient, loadPatientById]);
+  }, [patientId, activePatient, clinicalPatient, loadPatientById, setClinicalStep]);
   
   // Sync session data with consultation state
   React.useEffect(() => {
@@ -123,9 +155,9 @@ const ClinicalWorkflow: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <WorkflowHeader
-        activePatient={activePatient}
+        activePatient={clinicalPatient || activePatient}
         activeConsultation={consultation}
-        isSaving={isSaving}
+        isSaving={isSaving || clinicalSaving}
         lastSaved={lastSaved}
         onSave={handleSave}
         onComplete={handleComplete}
@@ -138,17 +170,31 @@ const ClinicalWorkflow: React.FC = () => {
         </TabsList>
         
         <TabsContent value="workflow" className="space-y-4">
-          <WorkflowSteps 
-            currentStep={currentStep}
-            patient={activePatient}
-            consultation={consultation}
-            setConsultation={updateConsultationData}
-          />
+          {currentStep === 'patient-selection' && <PatientSelectionStep />}
+          {currentStep !== 'patient-selection' && (
+            <WorkflowSteps 
+              currentStep={currentStep}
+              patient={clinicalPatient || activePatient}
+              consultation={consultation}
+              setConsultation={updateConsultationData}
+            />
+          )}
+          
+          {currentStep === 'patient-info' && (clinicalPatient || activePatient) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados do Paciente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PatientInfoStep />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="audit" className="space-y-4">
           <ClinicalFlowAuditPanel 
-            patientId={patientId || activePatient?.id}
+            patientId={effectivePatientId}
             appointmentId={appointmentId}
           />
         </TabsContent>
