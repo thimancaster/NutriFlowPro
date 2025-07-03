@@ -321,6 +321,7 @@ export type Database = {
           status: string
           tdee: number
           tipo: string
+          updated_at: string | null
           user_id: string
           weight: number
         }
@@ -344,6 +345,7 @@ export type Database = {
           status?: string
           tdee: number
           tipo?: string
+          updated_at?: string | null
           user_id: string
           weight: number
         }
@@ -367,6 +369,7 @@ export type Database = {
           status?: string
           tdee?: number
           tipo?: string
+          updated_at?: string | null
           user_id?: string
           weight?: number
         }

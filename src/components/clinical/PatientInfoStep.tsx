@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClinical } from '@/contexts/ClinicalContext';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowRight } from 'lucide-react';
 
 const PatientInfoStep: React.FC = () => {
   const { activePatient, activeConsultation, saveConsultationData, setCurrentStep } = useClinical();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     weight: '',
     height: '',
@@ -44,20 +46,43 @@ const PatientInfoStep: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate required fields
+    if (!formData.weight || !formData.height || !formData.age) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha peso, altura e idade.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Convert form data to appropriate types
     const updatedData = {
       weight: parseFloat(formData.weight) || 0,
       height: parseFloat(formData.height) || 0,
       age: parseInt(formData.age) || 0,
-      gender: formData.gender,
+      gender: formData.gender as 'male' | 'female',
       activity_level: formData.activityLevel,
       objective: formData.objective
     };
     
-    const success = await saveConsultationData(updatedData);
-    
-    if (success) {
-      setCurrentStep('anthropometry');
+    try {
+      const success = await saveConsultationData(updatedData);
+      
+      if (success) {
+        toast({
+          title: "Dados salvos",
+          description: "Informações do paciente salvas com sucesso.",
+        });
+        setCurrentStep('anthropometry');
+      }
+    } catch (error) {
+      console.error('Erro no handleSubmit:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar os dados da consulta.",
+        variant: "destructive"
+      });
     }
   };
   
