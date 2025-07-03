@@ -58,6 +58,8 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
+    // Also update the filters to trigger server-side search if needed
+    setFilters(prev => ({ ...prev, search: term }));
   }, []);
 
   const handlePageChange = useCallback((page: number) => {

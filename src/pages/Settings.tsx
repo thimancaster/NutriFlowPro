@@ -6,14 +6,15 @@ import SubscriptionSettings from '@/components/Settings/SubscriptionSettings';
 import UserInfoHeader from '@/components/UserInfoHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, CreditCard, Shield } from 'lucide-react';
-import { useAuthState } from '@/hooks/useAuthState';
+// Removed unused import
 import { BackButton } from '@/components/ui/back-button';
 import { SecurityDashboard } from '@/components/security/SecurityDashboard';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 const Settings = () => {
-  const { isPremium } = useAuthState();
   const { user } = useAuth();
+  // TODO: Implement premium status check via user context or separate hook
+  const isPremium = false; // Placeholder until premium logic is implemented
   
   // Check if user is admin
   const isAdmin = user?.email && ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(user.email);
