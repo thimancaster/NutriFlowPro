@@ -13,16 +13,13 @@ import { Patient } from '@/types';
 const PatientSelectionStep: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const { data: patients, isLoading } = usePatientOptions();
+  const { data: patients, isLoading } = usePatientOptions(searchQuery);
   const { startNewConsultation } = useClinical();
   const { loadPatientById } = usePatient();
   const navigate = useNavigate();
   
-  // Filter patients based on search query
-  const filteredPatients = patients?.filter(patient => 
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (patient.email && patient.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  ) || [];
+  // Patients are already filtered by the server-side query
+  const filteredPatients = patients || [];
   
   const handleSelectPatient = async (selectedPatient: any) => {
     try {

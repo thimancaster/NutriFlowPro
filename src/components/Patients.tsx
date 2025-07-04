@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { usePatientList } from '@/hooks/patient/usePatientList';
+import { useDebugPatients } from '@/hooks/useDebugPatients';
 import PatientPageHeader from './patients/PatientPageHeader';
 import PatientListHeader from './patients/PatientListHeader';
 import PatientTable from './patients/PatientTable';
@@ -10,6 +11,9 @@ import PatientEmptyState from './patients/PatientEmptyState';
 import PatientPagination from './patient/PatientPagination';
 
 const Patients = () => {
+  // Debug hook to trace patient data
+  useDebugPatients();
+  
   const {
     patients,
     isLoading,

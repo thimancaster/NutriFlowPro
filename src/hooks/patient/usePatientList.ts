@@ -1,7 +1,8 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { Patient, PatientFilters } from '@/types';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface UsePatientListOptions {
   pageSize?: number;
@@ -15,51 +16,44 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     totalPatients, 
     isLoading, 
     error, 
-    refreshPatients 
+    refreshPatients,
+    updateFilters,
+    currentFilters
   } = usePatient();
   
   const { pageSize = 10, initialPage = 1, searchFilter = '' } = options;
   
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchTerm, setSearchTerm] = useState(searchFilter);
-  const [filters, setFilters] = useState<PatientFilters>({
-    status: 'active',
-    search: '',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    page: 1,
-    limit: pageSize
-  });
+  // Use filters from context instead of local state
+  const filters = currentFilters;
 
-  // Filter patients based on search term and filters
-  const filteredPatients = patients.filter(patient => {
-    const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.cpf?.includes(searchTerm);
-    
-    // Handle status filtering - show all patients if status is empty, 'all', or matches patient status
-    let matchesStatus = true;
-    if (filters.status && filters.status === 'active') {
-      matchesStatus = patient.status === 'active';
-    } else if (filters.status && filters.status === 'archived') {
-      matchesStatus = patient.status === 'archived';
-    }
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Debounce search to avoid excessive API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Paginate filtered patients
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedPatients = filteredPatients.slice(startIndex, endIndex);
+  // Update filters when debounced search term changes
+  useEffect(() => {
+    updateFilters({ search: debouncedSearchTerm });
+    setCurrentPage(1); // Reset to first page on search
+  }, [debouncedSearchTerm, updateFilters]);
+
+  // Server-side filtering and pagination is now handled by the API
+  const filteredPatients = patients;
   
-  const totalPages = Math.ceil(filteredPatients.length / pageSize);
+  // For server-side pagination, we use all returned patients
+  const paginatedPatients = patients;
+  
+  const totalPages = Math.ceil(totalPatients / pageSize);
+
+  // Update server-side pagination when page changes
+  useEffect(() => {
+    updateFilters({ page: currentPage, limit: pageSize });
+  }, [currentPage, pageSize, updateFilters]);
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
-    // Also update the filters to trigger server-side search if needed
-    setFilters(prev => ({ ...prev, search: term }));
+    // debounced search will trigger the server-side search
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
@@ -67,9 +61,9 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
   }, []);
 
   const handleFilterChange = useCallback((newFilters: Partial<PatientFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    updateFilters(newFilters);
     setCurrentPage(1);
-  }, []);
+  }, [updateFilters]);
 
   const handleStatusChange = useCallback((status: 'active' | 'archived' | 'all' | '') => {
     const mappedStatus = status === 'all' ? '' : status;
@@ -84,7 +78,7 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     currentPage,
     totalPages,
     pageSize,
-    total: filteredPatients.length
+    total: totalPatients
   };
 
   return {
@@ -92,7 +86,7 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
     patients: paginatedPatients,
     allPatients: patients,
     filteredPatients,
-    totalPatients: filteredPatients.length,
+    totalPatients: totalPatients,
     totalAllPatients: totalPatients,
     
     // State

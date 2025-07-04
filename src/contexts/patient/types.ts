@@ -1,5 +1,5 @@
 
-import { Patient } from '@/types';
+import { Patient, PatientFilters } from '@/types';
 
 export interface PatientContextState {
   activePatient: Patient | null;
@@ -25,7 +25,9 @@ export interface PatientContextActions {
   addRecentPatient: (patient: Patient) => void;
   updateSessionData: (data: Partial<PatientContextState['sessionData']>) => void;
   savePatient: (patientData: Partial<Patient>) => Promise<{ success: boolean; data?: Patient; error?: string }>;
-  refreshPatients: () => Promise<void>;
+  refreshPatients: (filters?: PatientFilters) => Promise<void>;
+  updateFilters: (newFilters: Partial<PatientFilters>) => Promise<void>;
+  currentFilters: PatientFilters;
 }
 
 export interface PatientContextType extends PatientContextState, PatientContextActions {}

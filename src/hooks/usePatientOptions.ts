@@ -2,6 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useState, useMemo } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export interface PatientOption {
   id: string;
@@ -11,22 +13,29 @@ export interface PatientOption {
   age?: number;
 }
 
-export const usePatientOptions = () => {
+export const usePatientOptions = (searchQuery?: string) => {
   const { user } = useAuth();
+  const debouncedSearch = useDebounce(searchQuery || '', 300);
 
   return useQuery({
-    queryKey: ['patient-options', user?.id],
+    queryKey: ['patient-options', user?.id, debouncedSearch],
     queryFn: async (): Promise<PatientOption[]> => {
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('patients')
         .select('id, name, email, birth_date')
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('name');
+        .eq('status', 'active');
+
+      // Apply search filter if provided
+      if (debouncedSearch && debouncedSearch.trim()) {
+        query = query.or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) {
         throw error;
@@ -41,7 +50,7 @@ export const usePatientOptions = () => {
       }));
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter cache for search results
   });
 };
 

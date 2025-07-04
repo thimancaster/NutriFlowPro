@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Patient } from '@/types';
+import { Patient, PatientFilters } from '@/types';
 import { PatientService } from '@/services/patient';
 import { useToast } from '@/hooks/use-toast';
 import { PatientContextType, PatientContextState } from './types';
@@ -24,6 +24,14 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [totalPatients, setTotalPatients] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [currentFilters, setCurrentFilters] = useState<PatientFilters>({
+    status: 'active',
+    search: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    page: 1,
+    limit: 20
+  });
   const [sessionData, setSessionData] = useState({
     consultationActive: false,
     currentStep: 'patient-selection',
@@ -32,23 +40,29 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const { toast } = useToast();
 
-  // Função para carregar todos os pacientes
-  const refreshPatients = useCallback(async () => {
+  // Função para carregar pacientes com filtros
+  const refreshPatients = useCallback(async (filters?: PatientFilters) => {
     if (!user?.id) {
       console.log('No user ID available for refreshing patients');
       return;
     }
 
+    const filtersToUse = filters || currentFilters;
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log('Refreshing patients...');
+      console.log('Refreshing patients with filters:', filtersToUse);
       const result = await PatientService.getPatients(
         user.id,
-        { status: 'active' },
-        1,
-        100
+        {
+          status: filtersToUse.status || 'active',
+          search: filtersToUse.search || '',
+          sortBy: filtersToUse.sortBy || 'name',
+          sortOrder: filtersToUse.sortOrder || 'asc'
+        },
+        filtersToUse.page || 1,
+        filtersToUse.limit || 20
       );
       
       if (result.success && result.data) {
@@ -68,7 +82,14 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, currentFilters]);
+
+  // Função para atualizar filtros e recarregar
+  const updateFilters = useCallback(async (newFilters: Partial<PatientFilters>) => {
+    const updatedFilters = { ...currentFilters, ...newFilters };
+    setCurrentFilters(updatedFilters);
+    await refreshPatients(updatedFilters);
+  }, [currentFilters, refreshPatients]);
 
   // Load session data on mount
   useEffect(() => {
@@ -271,6 +292,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }, [activePatient, setActivePatient, addRecentPatient, refreshPatients, toast]),
     refreshPatients,
+    updateFilters,
+    currentFilters,
   };
 
   return (
