@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { ClinicalWorkflowStep } from '@/types/clinical';
-import { Check, User, Ruler, Calculator, Utensils, FileText, CalendarCheck } from 'lucide-react';
+import { Check, User, Ruler, Calculator, Utensils, FileText, CalendarCheck, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Patient } from '@/types';
 import { ConsultationData } from '@/types/consultation';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 
 interface WorkflowStepProps {
   step: ClinicalWorkflowStep;
@@ -14,6 +15,7 @@ interface WorkflowStepProps {
   isCompleted: boolean;
   onClick: () => void;
   disabled: boolean;
+  isOptional?: boolean;
 }
 
 const WorkflowStep: React.FC<WorkflowStepProps> = ({
@@ -22,7 +24,8 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
   isActive,
   isCompleted,
   onClick,
-  disabled
+  disabled,
+  isOptional = false
 }) => {
   return (
     <div
@@ -43,7 +46,14 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
       )}>
         {isCompleted ? <Check className="h-4 w-4" /> : icon}
       </div>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium flex items-center gap-1">
+        {label}
+        {isOptional && (
+          <span className="text-xs text-muted-foreground bg-muted px-1 rounded">
+            opcional
+          </span>
+        )}
+      </span>
       {isCompleted && (
         <Check className="h-4 w-4 ml-auto text-muted-foreground" />
       )}
@@ -64,10 +74,18 @@ const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
   consultation,
   setConsultation
 }) => {
-  const steps: { step: ClinicalWorkflowStep; label: string; icon: React.ReactNode; completable: boolean }[] = [
+  const { setCurrentStep } = useConsultationData();
+  
+  const steps: { 
+    step: ClinicalWorkflowStep; 
+    label: string; 
+    icon: React.ReactNode; 
+    completable: boolean;
+    optional?: boolean;
+  }[] = [
     { step: 'patient-selection', label: 'Seleção de Paciente', icon: <User className="h-4 w-4" />, completable: true },
     { step: 'patient-info', label: 'Dados do Paciente', icon: <User className="h-4 w-4" />, completable: true },
-    { step: 'anthropometry', label: 'Antropometria', icon: <Ruler className="h-4 w-4" />, completable: false },
+    { step: 'anthropometry', label: 'Antropometria', icon: <Activity className="h-4 w-4" />, completable: false, optional: true },
     { step: 'nutritional-evaluation', label: 'Avaliação Nutricional', icon: <Calculator className="h-4 w-4" />, completable: false },
     { step: 'meal-plan', label: 'Plano Alimentar', icon: <Utensils className="h-4 w-4" />, completable: false },
     { step: 'recommendations', label: 'Recomendações', icon: <FileText className="h-4 w-4" />, completable: false },
@@ -83,13 +101,6 @@ const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
     return stepIndex <= currentStepIndex;
   };
   
-  // Set the current step - placeholder for now, should be passed as prop
-  const setCurrentStep = (step: ClinicalWorkflowStep) => {
-    console.log("Changing step to:", step);
-    // This would be implemented through props or context
-    // For now, we just log the step change
-  };
-  
   return (
     <div className="bg-card rounded-md border p-2 mb-6">
       <div className="space-y-1">
@@ -103,6 +114,7 @@ const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
             isCompleted={index < currentStepIndex && step.completable}
             onClick={() => setCurrentStep(step.step)}
             disabled={!canClickStep(index)}
+            isOptional={step.optional}
           />
         ))}
       </div>

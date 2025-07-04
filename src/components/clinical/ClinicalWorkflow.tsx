@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PatientSelectionStep from './PatientSelectionStep';
 import PatientInfoStep from './PatientInfoStep';
+import AnthropometryStep from './AnthropometryStep';
 import WorkflowHeader from './WorkflowHeader';
 import WorkflowSteps from './WorkflowSteps';
 import ClinicalFlowAuditPanel from './ClinicalFlowAuditPanel';
@@ -112,6 +112,10 @@ const ClinicalWorkflow: React.FC = () => {
                 <PatientInfoStep />
               </CardContent>
             </Card>
+          )}
+
+          {currentStep === 'anthropometry' && selectedPatient && (
+            <AnthropometryStep />
           )}
         </TabsContent>
         

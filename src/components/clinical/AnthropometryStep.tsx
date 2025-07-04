@@ -4,14 +4,21 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useClinical } from '@/contexts/ClinicalContext';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { saveMeasurement } from '@/services/anthropometryService';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, SkipForward, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const AnthropometryStep: React.FC = () => {
-  const { activePatient, activeConsultation, saveConsultationData, setCurrentStep } = useClinical();
+  const { 
+    selectedPatient, 
+    patientHistoryData,
+    setCurrentStep,
+    updateConsultationData
+  } = useConsultationData();
+  
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -37,20 +44,38 @@ const AnthropometryStep: React.FC = () => {
   });
   
   const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   
+  // Pré-preenchimento com dados históricos
   useEffect(() => {
-    if (activeConsultation) {
+    if (patientHistoryData?.lastMeasurement) {
+      const lastMeasurement = patientHistoryData.lastMeasurement;
       setMeasurements(prev => ({
         ...prev,
-        weight: activeConsultation.weight?.toString() || '',
-        height: activeConsultation.height?.toString() || ''
+        weight: lastMeasurement.weight?.toString() || '',
+        height: lastMeasurement.height?.toString() || '',
+        waist: lastMeasurement.waist?.toString() || '',
+        hip: lastMeasurement.hip?.toString() || '',
+        arm: lastMeasurement.arm?.toString() || '',
+        thigh: lastMeasurement.thigh?.toString() || '',
+        calf: lastMeasurement.calf?.toString() || '',
+        chest: lastMeasurement.chest?.toString() || '',
+        triceps: lastMeasurement.triceps?.toString() || '',
+        subscapular: lastMeasurement.subscapular?.toString() || '',
+        suprailiac: lastMeasurement.suprailiac?.toString() || '',
+        abdominal: lastMeasurement.abdominal?.toString() || '',
+        body_fat_pct: lastMeasurement.body_fat_pct?.toString() || '',
+        lean_mass_kg: lastMeasurement.lean_mass_kg?.toString() || '',
+        muscle_mass_percentage: lastMeasurement.muscle_mass_percentage?.toString() || '',
+        water_percentage: lastMeasurement.water_percentage?.toString() || ''
       }));
     }
-  }, [activeConsultation]);
+  }, [patientHistoryData?.lastMeasurement]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setMeasurements(prev => ({ ...prev, [name]: value }));
+    setHasChanges(true);
   };
   
   const calculateIMC = () => {
@@ -72,7 +97,7 @@ const AnthropometryStep: React.FC = () => {
   };
   
   const handleSaveMeasurements = async () => {
-    if (!activePatient || !user) {
+    if (!selectedPatient || !user) {
       toast({
         title: "Erro",
         description: "Paciente ou usuário não encontrado.",
@@ -84,46 +109,50 @@ const AnthropometryStep: React.FC = () => {
     setIsSaving(true);
     
     try {
-      // Prepare measurement data
-      const measurementData = {
-        patient_id: activePatient.id,
+      // Preparar dados de medição apenas com campos preenchidos
+      const measurementData: any = {
+        patient_id: selectedPatient.id,
         date: new Date().toISOString(),
-        weight: parseFloat(measurements.weight) || undefined,
-        height: parseFloat(measurements.height) || undefined,
-        imc: calculateIMC() ? parseFloat(calculateIMC()) : undefined,
-        waist: parseFloat(measurements.waist) || undefined,
-        hip: parseFloat(measurements.hip) || undefined,
-        arm: parseFloat(measurements.arm) || undefined,
-        thigh: parseFloat(measurements.thigh) || undefined,
-        calf: parseFloat(measurements.calf) || undefined,
-        chest: parseFloat(measurements.chest) || undefined,
-        triceps: parseFloat(measurements.triceps) || undefined,
-        subscapular: parseFloat(measurements.subscapular) || undefined,
-        suprailiac: parseFloat(measurements.suprailiac) || undefined,
-        abdominal: parseFloat(measurements.abdominal) || undefined,
-        body_fat_pct: parseFloat(measurements.body_fat_pct) || undefined,
-        lean_mass_kg: parseFloat(measurements.lean_mass_kg) || undefined,
-        muscle_mass_percentage: parseFloat(measurements.muscle_mass_percentage) || undefined,
-        water_percentage: parseFloat(measurements.water_percentage) || undefined,
-        rcq: calculateRCQ() ? parseFloat(calculateRCQ()) : undefined
       };
       
-      // Save to anthropometry table
-      const result = await saveMeasurement(measurementData, user.id);
+      // Adicionar apenas campos com valores
+      Object.entries(measurements).forEach(([key, value]) => {
+        if (value && value.trim() !== '') {
+          const numValue = parseFloat(value);
+          if (!isNaN(numValue)) {
+            measurementData[key] = numValue;
+          }
+        }
+      });
       
-      if (result.success) {
-        // Also update consultation data
-        await saveConsultationData({
-          weight: parseFloat(measurements.weight) || 0,
-          height: parseFloat(measurements.height) || 0
-        });
+      // Calcular métricas se dados básicos estiverem disponíveis
+      if (measurementData.weight && measurementData.height) {
+        measurementData.imc = parseFloat(calculateIMC());
         
-        toast({
-          title: "Sucesso",
-          description: "Medições salvas com sucesso.",
+        // Atualizar dados da consulta com peso e altura
+        updateConsultationData({
+          weight: measurementData.weight,
+          height: measurementData.height
         });
-      } else {
-        throw new Error(result.error || 'Failed to save measurements');
+      }
+      
+      if (measurementData.waist && measurementData.hip) {
+        measurementData.rcq = parseFloat(calculateRCQ());
+      }
+      
+      // Salvar apenas se houver dados relevantes
+      if (Object.keys(measurementData).length > 2) {
+        const result = await saveMeasurement(measurementData, user.id);
+        
+        if (result.success) {
+          toast({
+            title: "Sucesso",
+            description: "Medições antropométricas salvas com sucesso.",
+          });
+          setHasChanges(false);
+        } else {
+          throw new Error(result.error || 'Failed to save measurements');
+        }
       }
     } catch (error) {
       console.error('Error saving measurements:', error);
@@ -138,7 +167,13 @@ const AnthropometryStep: React.FC = () => {
   };
   
   const handleContinue = async () => {
-    await handleSaveMeasurements();
+    if (hasChanges) {
+      await handleSaveMeasurements();
+    }
+    setCurrentStep('nutritional-evaluation');
+  };
+  
+  const handleSkip = () => {
     setCurrentStep('nutritional-evaluation');
   };
   
@@ -146,16 +181,41 @@ const AnthropometryStep: React.FC = () => {
     setCurrentStep('patient-info');
   };
   
-  if (!activePatient) return null;
+  if (!selectedPatient) return null;
+  
+  const hasHistoricalData = patientHistoryData?.anthropometryHistory && patientHistoryData.anthropometryHistory.length > 0;
+  const lastMeasurementDate = patientHistoryData?.lastMeasurement?.date 
+    ? new Date(patientHistoryData.lastMeasurement.date).toLocaleDateString('pt-BR')
+    : null;
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Antropometria</CardTitle>
-        <CardDescription>
-          Registre as medidas antropométricas do paciente
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Antropometria
+              <Badge variant="secondary" className="text-xs">Opcional</Badge>
+            </CardTitle>
+            <CardDescription>
+              {hasHistoricalData 
+                ? `Dados pré-preenchidos com última medição (${lastMeasurementDate}). Atualize conforme necessário.`
+                : "Registre as medidas antropométricas do paciente (opcional)."
+              }
+            </CardDescription>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleSkip}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <SkipForward className="mr-2 h-4 w-4" />
+            Pular Etapa
+          </Button>
+        </div>
       </CardHeader>
+      
       <CardContent className="space-y-6">
         {/* Medidas Básicas */}
         <div>
@@ -190,7 +250,7 @@ const AnthropometryStep: React.FC = () => {
             <div className="space-y-2">
               <Label>IMC</Label>
               <div className="flex items-center h-10 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-                <span className="text-sm">{calculateIMC() || '--'}</span>
+                <span className="text-sm text-muted-foreground">{calculateIMC() || '--'}</span>
               </div>
             </div>
           </div>
@@ -209,6 +269,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.waist}
                 onChange={handleInputChange}
+                placeholder="Ex: 80"
               />
             </div>
             
@@ -221,6 +282,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.hip}
                 onChange={handleInputChange}
+                placeholder="Ex: 95"
               />
             </div>
             
@@ -233,13 +295,14 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.arm}
                 onChange={handleInputChange}
+                placeholder="Ex: 25"
               />
             </div>
             
             <div className="space-y-2">
               <Label>RCQ</Label>
               <div className="flex items-center h-10 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-                <span className="text-sm">{calculateRCQ() || '--'}</span>
+                <span className="text-sm text-muted-foreground">{calculateRCQ() || '--'}</span>
               </div>
             </div>
             
@@ -252,6 +315,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.thigh}
                 onChange={handleInputChange}
+                placeholder="Ex: 45"
               />
             </div>
             
@@ -264,6 +328,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.calf}
                 onChange={handleInputChange}
+                placeholder="Ex: 35"
               />
             </div>
             
@@ -276,6 +341,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.chest}
                 onChange={handleInputChange}
+                placeholder="Ex: 90"
               />
             </div>
           </div>
@@ -294,6 +360,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.triceps}
                 onChange={handleInputChange}
+                placeholder="Ex: 15"
               />
             </div>
             
@@ -306,6 +373,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.subscapular}
                 onChange={handleInputChange}
+                placeholder="Ex: 12"
               />
             </div>
             
@@ -318,6 +386,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.suprailiac}
                 onChange={handleInputChange}
+                placeholder="Ex: 18"
               />
             </div>
             
@@ -330,6 +399,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.abdominal}
                 onChange={handleInputChange}
+                placeholder="Ex: 20"
               />
             </div>
           </div>
@@ -348,6 +418,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.body_fat_pct}
                 onChange={handleInputChange}
+                placeholder="Ex: 15.5"
               />
             </div>
             
@@ -360,6 +431,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.lean_mass_kg}
                 onChange={handleInputChange}
+                placeholder="Ex: 55.2"
               />
             </div>
             
@@ -372,6 +444,7 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.muscle_mass_percentage}
                 onChange={handleInputChange}
+                placeholder="Ex: 42.5"
               />
             </div>
             
@@ -384,10 +457,23 @@ const AnthropometryStep: React.FC = () => {
                 step="0.1"
                 value={measurements.water_percentage}
                 onChange={handleInputChange}
+                placeholder="Ex: 60.0"
               />
             </div>
           </div>
         </div>
+
+        {hasChanges && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-amber-800">
+              <Activity className="h-4 w-4" />
+              <span className="text-sm font-medium">Alterações não salvas</span>
+            </div>
+            <p className="text-sm text-amber-700 mt-1">
+              Você fez alterações nas medições. Clique em "Salvar" para preservar os dados.
+            </p>
+          </div>
+        )}
       </CardContent>
       
       <CardFooter className="flex justify-between">
@@ -397,17 +483,19 @@ const AnthropometryStep: React.FC = () => {
         </Button>
         
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleSaveMeasurements}
-            disabled={isSaving}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Salvando...' : 'Salvar Medições'}
-          </Button>
+          {hasChanges && (
+            <Button 
+              variant="outline" 
+              onClick={handleSaveMeasurements}
+              disabled={isSaving}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          )}
           
           <Button onClick={handleContinue} disabled={isSaving}>
-            Avançar
+            Continuar
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
