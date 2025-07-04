@@ -40,7 +40,10 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const { toast } = useToast();
 
-  // Função para carregar pacientes com filtros
+  // Cache de throttling fora da função
+  const throttlingCache = React.useRef<Record<string, boolean>>({});
+
+  // Função para carregar pacientes com filtros e cache inteligente
   const refreshPatients = useCallback(async (filters?: PatientFilters) => {
     if (!user?.id) {
       console.log('No user ID available for refreshing patients');
@@ -48,6 +51,15 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     const filtersToUse = filters || currentFilters;
+    
+    // Throttling: Evitar múltiplas chamadas simultâneas
+    const throttleKey = `refresh_${user.id}_${JSON.stringify(filtersToUse)}`;
+    if (throttlingCache.current[throttleKey]) {
+      return;
+    }
+    
+    throttlingCache.current[throttleKey] = true;
+    
     setIsLoading(true);
     setError(null);
     
@@ -81,6 +93,10 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTotalPatients(0);
     } finally {
       setIsLoading(false);
+      // Limpar throttling após 500ms
+      setTimeout(() => {
+        delete throttlingCache.current[throttleKey];
+      }, 500);
     }
   }, [user?.id, currentFilters]);
 

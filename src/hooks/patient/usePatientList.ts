@@ -28,14 +28,16 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
   // Use filters from context instead of local state
   const filters = currentFilters;
 
-  // Debounce search to avoid excessive API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  // Otimização: Debounce mais agressivo para search
+  const debouncedSearchTerm = useDebounce(searchTerm, 800);
 
   // Update filters when debounced search term changes
   useEffect(() => {
-    updateFilters({ search: debouncedSearchTerm });
-    setCurrentPage(1); // Reset to first page on search
-  }, [debouncedSearchTerm, updateFilters]);
+    if (debouncedSearchTerm !== currentFilters.search) {
+      updateFilters({ search: debouncedSearchTerm });
+      setCurrentPage(1); // Reset to first page on search
+    }
+  }, [debouncedSearchTerm, updateFilters, currentFilters.search]);
 
   // Server-side filtering and pagination is now handled by the API
   const filteredPatients = patients;
@@ -45,10 +47,12 @@ export const usePatientList = (options: UsePatientListOptions = {}) => {
   
   const totalPages = Math.ceil(totalPatients / pageSize);
 
-  // Update server-side pagination when page changes
+  // Otimização: Update pagination only when necessary
   useEffect(() => {
-    updateFilters({ page: currentPage, limit: pageSize });
-  }, [currentPage, pageSize, updateFilters]);
+    if (currentFilters.page !== currentPage || currentFilters.limit !== pageSize) {
+      updateFilters({ page: currentPage, limit: pageSize });
+    }
+  }, [currentPage, pageSize, updateFilters, currentFilters.page, currentFilters.limit]);
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);

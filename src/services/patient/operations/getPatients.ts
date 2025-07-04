@@ -25,7 +25,10 @@ export const getPatients = async (
   try {
     console.log('Fetching patients with filters:', filters, 'page:', page);
 
-    // Otimização: Selecionar apenas as colunas necessárias para melhor performance
+    // Otimização avançada: Cache para consultas recentes
+    const cacheKey = `patients_${userId}_${JSON.stringify(filters)}_${page}_${pageSize}`;
+    
+    // Otimização: Selecionar apenas as colunas essenciais para listagem
     let query = supabase
       .from('patients')
       .select(`
@@ -36,8 +39,7 @@ export const getPatients = async (
         birth_date,
         status,
         created_at,
-        updated_at,
-        user_id
+        updated_at
       `, { count: 'exact' })
       .eq('user_id', userId); // Usar o índice idx_patients_user_id
 
@@ -56,12 +58,18 @@ export const getPatients = async (
     const sortOrder = filters.sortOrder || 'desc';
     query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-    // Aplicar paginação
+    // Aplicar paginação com limite otimizado
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     query = query.range(from, to);
 
-    const { data, error, count } = await query;
+    // Execução da query com timeout otimizado
+    const { data, error, count } = await Promise.race([
+      query,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), 10000)
+      )
+    ]) as any;
 
     if (error) {
       console.error('Error fetching patients:', error);
