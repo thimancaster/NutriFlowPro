@@ -104,6 +104,7 @@ export interface MealPlanGenerationParams {
   patientId: string;
   targets: MacroTargets;
   date?: string;
+  mealTimeFoodMapping?: Record<string, string[]>;
 }
 
 // Distribuição de refeições em ordem cronológica

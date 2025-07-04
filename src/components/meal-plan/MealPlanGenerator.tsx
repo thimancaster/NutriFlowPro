@@ -46,10 +46,21 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }
   const handleGeneratePlan = async () => {
     if (!activePatient || !user) return;
 
+    // Inteligência brasileira para sugestões de alimentos por refeição
+    const mealTimeFoodMapping = {
+      'breakfast': ['Cereais e derivados', 'Laticínios', 'Frutas', 'Pães e biscoitos'],
+      'morning_snack': ['Frutas', 'Laticínios', 'Oleaginosas'],
+      'lunch': ['Carnes', 'Cereais e derivados', 'Leguminosas', 'Hortaliças', 'Óleos e gorduras'],
+      'afternoon_snack': ['Frutas', 'Laticínios', 'Pães e biscoitos'],
+      'dinner': ['Carnes', 'Cereais e derivados', 'Hortaliças', 'Óleos e gorduras'],
+      'evening_snack': ['Laticínios', 'Frutas']
+    };
+
     await generateMealPlan({
       userId: user.id,
       patientId: activePatient.id,
-      targets
+      targets,
+      mealTimeFoodMapping // Passa mapeamento inteligente
     });
   };
 
