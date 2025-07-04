@@ -15,6 +15,22 @@ export interface ClinicalWorkflowState {
   isCompleted: boolean;
 }
 
+export interface ClinicalContextType {
+  activePatient: any | null;
+  activeConsultation: any | null;
+  currentStep: ClinicalWorkflowStep;
+  setActivePatient: (patient: any | null) => void;
+  setActiveConsultation: (consultation: any | null) => void;
+  setCurrentStep: (step: ClinicalWorkflowStep) => void;
+  startNewConsultation: (patient: any) => Promise<void>;
+  saveConsultationData: (data: Partial<any>) => Promise<boolean>;
+  completeConsultation: () => Promise<boolean>;
+  resetWorkflow: () => void;
+  isConsultationActive: boolean;
+  isSaving: boolean;
+  lastSaved: Date | null;
+}
+
 export interface AnthropometryData {
   id?: string;
   patient_id: string;
