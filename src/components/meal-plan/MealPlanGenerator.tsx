@@ -6,7 +6,7 @@ import { Loader2, Utensils, Calendar, RefreshCw } from 'lucide-react';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
-import { NutritionalTargets } from '@/types/mealPlan';
+import { NutritionalTargets, BRAZILIAN_MEAL_FOOD_MAPPING } from '@/types/mealPlan';
 import MealPlanEditor from './MealPlanEditor';
 import NutritionalSummary from './NutritionalSummary';
 import PatientRequiredAlert from './PatientRequiredAlert';
@@ -46,21 +46,11 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }
   const handleGeneratePlan = async () => {
     if (!activePatient || !user) return;
 
-    // Inteligência brasileira para sugestões de alimentos por refeição
-    const mealTimeFoodMapping = {
-      'breakfast': ['Cereais e derivados', 'Laticínios', 'Frutas', 'Pães e biscoitos'],
-      'morning_snack': ['Frutas', 'Laticínios', 'Oleaginosas'],
-      'lunch': ['Carnes', 'Cereais e derivados', 'Leguminosas', 'Hortaliças', 'Óleos e gorduras'],
-      'afternoon_snack': ['Frutas', 'Laticínios', 'Pães e biscoitos'],
-      'dinner': ['Carnes', 'Cereais e derivados', 'Hortaliças', 'Óleos e gorduras'],
-      'evening_snack': ['Laticínios', 'Frutas']
-    };
-
     await generateMealPlan({
       userId: user.id,
       patientId: activePatient.id,
       targets,
-      mealTimeFoodMapping // Passa mapeamento inteligente
+      mealTimeFoodMapping: BRAZILIAN_MEAL_FOOD_MAPPING // Usa mapeamento cultural brasileiro
     });
   };
 
@@ -75,7 +65,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Utensils className="h-5 w-5" />
-              Gerador de Plano Alimentar
+              Gerador de Plano Alimentar com Inteligência Cultural
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -85,7 +75,8 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }
                   Paciente: {activePatient.name}
                 </h3>
                 <p className="text-gray-600">
-                  Gere automaticamente um plano alimentar personalizado baseado nos macros calculados
+                  Gere automaticamente um plano alimentar personalizado seguindo 
+                  os costumes alimentares brasileiros
                 </p>
               </div>
 
@@ -101,22 +92,27 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }
                   {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Gerando plano alimentar...
+                      Gerando plano inteligente...
                     </>
                   ) : (
                     <>
                       <Calendar className="mr-2 h-4 w-4" />
-                      Gerar Plano Alimentar Automático
+                      Gerar Plano Alimentar Brasileiro
                     </>
                   )}
                 </Button>
               </div>
 
-              <div className="mt-4 text-sm text-gray-500">
-                <p>
-                  O sistema irá criar automaticamente um cardápio balanceado 
-                  distribuindo os alimentos entre as refeições do dia.
-                </p>
+              <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="text-sm text-green-800">
+                  <p className="font-medium mb-2">🧠 Inteligência Cultural Brasileira:</p>
+                  <ul className="text-left space-y-1">
+                    <li>• Café da manhã: Pães, cereais, frutas e laticínios</li>
+                    <li>• Almoço: Arroz, feijão, carnes e verduras</li>
+                    <li>• Jantar: Refeições mais leves e saudáveis</li>
+                    <li>• Lanches: Frutas, iogurtes e oleaginosas</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -128,7 +124,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Plano Alimentar - {activePatient.name}</h2>
+        <h2 className="text-2xl font-bold">Plano Alimentar Brasileiro - {activePatient.name}</h2>
         <Button 
           onClick={handleGeneratePlan} 
           variant="outline"

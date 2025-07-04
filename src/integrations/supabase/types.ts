@@ -548,6 +548,36 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_cultural_rules: {
+        Row: {
+          created_at: string
+          cultural_score: number
+          food_category: string
+          id: string
+          is_forbidden: boolean
+          meal_type: string
+          reasoning: string | null
+        }
+        Insert: {
+          created_at?: string
+          cultural_score?: number
+          food_category: string
+          id?: string
+          is_forbidden?: boolean
+          meal_type: string
+          reasoning?: string | null
+        }
+        Update: {
+          created_at?: string
+          cultural_score?: number
+          food_category?: string
+          id?: string
+          is_forbidden?: boolean
+          meal_type?: string
+          reasoning?: string | null
+        }
+        Relationships: []
+      }
       meal_plan_items: {
         Row: {
           calories: number
@@ -1117,6 +1147,18 @@ export type Database = {
         Returns: boolean
       }
       generate_meal_plan: {
+        Args: {
+          p_user_id: string
+          p_patient_id: string
+          p_target_calories: number
+          p_target_protein: number
+          p_target_carbs: number
+          p_target_fats: number
+          p_date?: string
+        }
+        Returns: string
+      }
+      generate_meal_plan_with_cultural_rules: {
         Args: {
           p_user_id: string
           p_patient_id: string

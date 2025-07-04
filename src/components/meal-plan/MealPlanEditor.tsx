@@ -1,7 +1,8 @@
+
 import React, {useState, useEffect} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
-import {DetailedMealPlan, MealPlanItem} from "@/types/mealPlan";
+import {DetailedMealPlan, MealPlanItem, MEAL_ORDER, MEAL_NAMES, MEAL_TIMES} from "@/types/mealPlan";
 import MealTypeSection from "./MealTypeSection";
 import {format} from "date-fns";
 import {ptBR} from "date-fns/locale";
@@ -13,33 +14,17 @@ interface MealPlanEditorProps {
 	onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
 }
 
-type MealType =
-	| "breakfast"
-	| "morning_snack"
-	| "lunch"
-	| "afternoon_snack"
-	| "dinner"
-	| "evening_snack";
+type MealType = typeof MEAL_ORDER[number];
 
-// Configuração das refeições em ordem cronológica correta
+// Configuração das refeições em ordem cronológica brasileira
 const MEAL_TYPE_CONFIG: Record<MealType, {name: string; time: string; color: string}> = {
-	breakfast: {name: "Café da Manhã", time: "07:00", color: "bg-orange-100"},
-	morning_snack: {name: "Lanche da Manhã", time: "10:00", color: "bg-yellow-100"},
-	lunch: {name: "Almoço", time: "12:30", color: "bg-green-100"},
-	afternoon_snack: {name: "Lanche da Tarde", time: "15:30", color: "bg-blue-100"},
-	dinner: {name: "Jantar", time: "19:00", color: "bg-purple-100"},
-	evening_snack: {name: "Ceia", time: "21:30", color: "bg-pink-100"},
+	cafe_da_manha: {name: "Café da Manhã", time: "07:00", color: "bg-orange-100"},
+	lanche_manha: {name: "Lanche da Manhã", time: "10:00", color: "bg-yellow-100"},
+	almoco: {name: "Almoço", time: "12:30", color: "bg-green-100"},
+	lanche_tarde: {name: "Lanche da Tarde", time: "15:30", color: "bg-blue-100"},
+	jantar: {name: "Jantar", time: "19:00", color: "bg-purple-100"},
+	ceia: {name: "Ceia", time: "21:30", color: "bg-pink-100"},
 };
-
-// Ordem cronológica das refeições (atualizada)
-const MEAL_ORDER: MealType[] = [
-	"breakfast", // Café da Manhã - 07:00
-	"morning_snack", // Lanche da Manhã - 10:00
-	"lunch", // Almoço - 12:30
-	"afternoon_snack", // Lanche da Tarde - 15:30
-	"dinner", // Jantar - 19:00
-	"evening_snack", // Ceia - 21:30
-];
 
 const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpdate}) => {
 	const [items, setItems] = useState<MealPlanItem[]>(mealPlan.items || []);
@@ -88,7 +73,6 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpda
 			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedMealPlan);
 
 			if (result.success && result.data) {
-				// Toast is handled by the mutation hook in useMealPlanQuery
 				if (onMealPlanUpdate) {
 					onMealPlanUpdate(result.data as DetailedMealPlan);
 				}
@@ -149,8 +133,8 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpda
 			<Card>
 				<CardHeader>
 					<div className="flex items-center justify-between">
-						<CardTitle>
-							Plano Alimentar -{" "}
+						<CardTitle className="flex items-center gap-2">
+							🇧🇷 Plano Alimentar Brasileiro -{" "}
 							{format(new Date(mealPlan.date), "dd/MM/yyyy", {locale: ptBR})}
 						</CardTitle>
 						<div className="flex gap-2">

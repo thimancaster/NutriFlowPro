@@ -15,7 +15,7 @@ export interface MealPlanFood {
 
 export interface MealPlanMeal {
   id: string;
-  type: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
+  type: 'cafe_da_manha' | 'lanche_manha' | 'almoco' | 'lanche_tarde' | 'jantar' | 'ceia';
   name: string;
   foods: MealPlanFood[];
   total_calories: number;
@@ -107,51 +107,72 @@ export interface MealPlanGenerationParams {
   mealTimeFoodMapping?: Record<string, string[]>;
 }
 
-// Distribuição de refeições em ordem cronológica
+// Distribuição de refeições em ordem cronológica (ATUALIZADA PARA PADRÃO BRASILEIRO)
 export interface MealDistribution {
-  breakfast: number;      // Café da Manhã - 07:00
-  morning_snack: number;  // Lanche da Manhã - 10:00
-  lunch: number;          // Almoço - 12:30
-  afternoon_snack: number; // Lanche da Tarde - 15:30
-  dinner: number;         // Jantar - 19:00
-  evening_snack: number;  // Ceia - 21:30
+  cafe_da_manha: number;      // Café da Manhã - 07:00
+  lanche_manha: number;       // Lanche da Manhã - 10:00
+  almoco: number;             // Almoço - 12:30
+  lanche_tarde: number;       // Lanche da Tarde - 15:30
+  jantar: number;             // Jantar - 19:00
+  ceia: number;               // Ceia - 21:30
 }
 
 export const DEFAULT_MEAL_DISTRIBUTION: MealDistribution = {
-  breakfast: 0.25,        // 25% - Café da Manhã
-  morning_snack: 0.10,    // 10% - Lanche da Manhã
-  lunch: 0.30,            // 30% - Almoço
-  afternoon_snack: 0.10,  // 10% - Lanche da Tarde
-  dinner: 0.20,           // 20% - Jantar
-  evening_snack: 0.05     // 5% - Ceia
+  cafe_da_manha: 0.25,        // 25% - Café da Manhã
+  lanche_manha: 0.10,         // 10% - Lanche da Manhã
+  almoco: 0.30,               // 30% - Almoço
+  lanche_tarde: 0.10,         // 10% - Lanche da Tarde
+  jantar: 0.20,               // 20% - Jantar
+  ceia: 0.05                  // 5% - Ceia
 };
 
-// Ordem cronológica das refeições (importante para exibição)
+// Ordem cronológica das refeições (ATUALIZADA PARA PADRÃO BRASILEIRO)
 export const MEAL_ORDER = [
-  'breakfast',
-  'morning_snack', 
-  'lunch',
-  'afternoon_snack',
-  'dinner',
-  'evening_snack'
+  'cafe_da_manha',
+  'lanche_manha', 
+  'almoco',
+  'lanche_tarde',
+  'jantar',
+  'ceia'
 ] as const;
 
-// Nomes das refeições em português
+// Nomes das refeições em português (PADRONIZADO)
 export const MEAL_NAMES: Record<string, string> = {
-  breakfast: 'Café da Manhã',
-  morning_snack: 'Lanche da Manhã',
-  lunch: 'Almoço', 
-  afternoon_snack: 'Lanche da Tarde',
-  dinner: 'Jantar',
-  evening_snack: 'Ceia'
+  cafe_da_manha: 'Café da Manhã',
+  lanche_manha: 'Lanche da Manhã',
+  almoco: 'Almoço', 
+  lanche_tarde: 'Lanche da Tarde',
+  jantar: 'Jantar',
+  ceia: 'Ceia'
 };
 
 // Horários das refeições
 export const MEAL_TIMES: Record<string, string> = {
-  breakfast: '07:00',
-  morning_snack: '10:00', 
-  lunch: '12:30',
-  afternoon_snack: '15:30',
-  dinner: '19:00',
-  evening_snack: '21:30'
+  cafe_da_manha: '07:00',
+  lanche_manha: '10:00', 
+  almoco: '12:30',
+  lanche_tarde: '15:30',
+  jantar: '19:00',
+  ceia: '21:30'
+};
+
+// Interface para regras culturais
+export interface MealCulturalRule {
+  id: string;
+  meal_type: string;
+  food_category: string;
+  cultural_score: number;
+  is_forbidden: boolean;
+  reasoning?: string;
+  created_at: string;
+}
+
+// Mapeamento inteligente de categorias de alimentos por refeição
+export const BRAZILIAN_MEAL_FOOD_MAPPING: Record<string, string[]> = {
+  cafe_da_manha: ['Cereais e derivados', 'Laticínios', 'Frutas', 'Pães e biscoitos'],
+  lanche_manha: ['Frutas', 'Laticínios', 'Oleaginosas'],
+  almoco: ['Carnes', 'Cereais e derivados', 'Leguminosas', 'Hortaliças', 'Óleos e gorduras'],
+  lanche_tarde: ['Frutas', 'Laticínios', 'Pães e biscoitos'],
+  jantar: ['Carnes', 'Cereais e derivados', 'Hortaliças', 'Óleos e gorduras'],
+  ceia: ['Laticínios', 'Frutas']
 };
