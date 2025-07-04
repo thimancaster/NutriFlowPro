@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import StepIndicator from '@/components/StepWizard/StepIndicator';
-import { useSafeConsultation } from '@/hooks/useSafeConsultation';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 
 interface ConsultationHeaderProps {
   currentStep?: string; // Making currentStep optional
@@ -11,7 +11,16 @@ interface ConsultationHeaderProps {
 
 const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderProps) => {
   const navigate = useNavigate();
-  const { activePatient } = useSafeConsultation();
+  
+  // Use try-catch to handle contexts that might not be available
+  let selectedPatient = null;
+  try {
+    const context = useConsultationData();
+    selectedPatient = context.selectedPatient;
+  } catch {
+    // Context not available, use default values
+    selectedPatient = null;
+  }
 
   // Define the steps in the consultation process
   const STEPS = [
@@ -69,9 +78,9 @@ const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderPro
           onStepClick={handleStepClick}
         />
         
-        {activePatient && (
+        {selectedPatient && (
           <div className="mt-2 text-center text-sm text-gray-500">
-            Paciente atual: <span className="font-medium text-nutri-blue">{activePatient.name}</span>
+            Paciente atual: <span className="font-medium text-nutri-blue">{selectedPatient.name}</span>
           </div>
         )}
       </CardContent>

@@ -8,7 +8,7 @@ import DashboardTestimonials from './DashboardTestimonials';
 import ConsultationHeader from './ConsultationHeader';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSafeConsultation } from '@/hooks/useSafeConsultation';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -49,7 +49,16 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
-  const { isConsultationActive } = useSafeConsultation();
+  // Use try-catch to handle contexts that might not be available
+  let isConsultationActive = false;
+  try {
+    const context = useConsultationData();
+    isConsultationActive = context.isConsultationActive;
+  } catch {
+    // Context not available, use default values
+    isConsultationActive = false;
+  }
+  
   const { user } = useAuth();
   
   // Use the dashboard data hook with user ID

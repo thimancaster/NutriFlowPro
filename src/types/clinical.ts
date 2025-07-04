@@ -15,6 +15,8 @@ export interface ClinicalWorkflowState {
   isCompleted: boolean;
 }
 
+// Deprecated: Use ConsultationDataContext instead
+// This interface is kept for backwards compatibility during transition
 export interface ClinicalContextType {
   activePatient: any | null;
   activeConsultation: any | null;

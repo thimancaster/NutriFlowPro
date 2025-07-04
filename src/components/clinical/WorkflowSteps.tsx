@@ -65,14 +65,12 @@ interface WorkflowStepsProps {
   currentStep: ClinicalWorkflowStep;
   patient: Patient | null;
   consultation: ConsultationData | null;
-  setConsultation: (consultation: ConsultationData | null) => void;
 }
 
 const WorkflowSteps: React.FC<WorkflowStepsProps> = ({ 
   currentStep, 
   patient, 
-  consultation,
-  setConsultation
+  consultation
 }) => {
   const { setCurrentStep } = useConsultationData();
   

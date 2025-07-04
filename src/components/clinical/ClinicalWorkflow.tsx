@@ -28,7 +28,9 @@ const ClinicalWorkflow: React.FC = () => {
     isSaving,
     lastSaved,
     isLoading,
-    patientHistoryData
+    patientHistoryData,
+    autoSave,
+    completeConsultation
   } = useConsultationData();
   
   const { 
@@ -63,15 +65,13 @@ const ClinicalWorkflow: React.FC = () => {
     });
   }, [selectedPatient, isConsultationActive, currentStep, patientHistoryData, isLoading, dataLoading]);
   
-  // Simplified handlers using the integrated context
+  // Unified handlers using the integrated context
   const handleSave = async () => {
-    // Auto-save is handled by the context
-    console.log('Manual save triggered');
+    await autoSave();
   };
 
   const handleComplete = async () => {
-    // Completion is handled by the context
-    console.log('Consultation completion triggered');
+    await completeConsultation();
   };
 
   return (
@@ -99,7 +99,6 @@ const ClinicalWorkflow: React.FC = () => {
               currentStep={currentStep}
               patient={selectedPatient}
               consultation={consultationData}
-              setConsultation={() => {}} // Now handled by context
             />
           )}
           
