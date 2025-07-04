@@ -5,12 +5,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useClinical } from '@/contexts/ClinicalContext';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, History, TrendingUp } from 'lucide-react';
+import usePatientDataLoader from '@/hooks/usePatientDataLoader';
 
 const PatientInfoStep: React.FC = () => {
-  const { activePatient, activeConsultation, saveConsultationData, setCurrentStep } = useClinical();
+  const { 
+    selectedPatient, 
+    consultationData, 
+    updateConsultationData, 
+    setCurrentStep,
+    patientHistoryData 
+  } = useConsultationData();
+  
+  const { 
+    getFormPrefilledData, 
+    isLoading: dataLoading,
+    hasHistoricalData,
+    isFirstConsultation 
+  } = usePatientDataLoader({ 
+    patientId: selectedPatient?.id, 
+    enabled: !!selectedPatient?.id 
+  });
+  
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     weight: '',
@@ -22,17 +40,26 @@ const PatientInfoStep: React.FC = () => {
   });
   
   useEffect(() => {
-    if (activePatient && activeConsultation) {
+    if (selectedPatient && !dataLoading) {
+      const prefilledData = getFormPrefilledData();
+      
       setFormData({
-        weight: activeConsultation.weight?.toString() || '',
-        height: activeConsultation.height?.toString() || '',
-        age: activeConsultation.age?.toString() || activePatient.age?.toString() || '',
-        gender: activeConsultation.gender || activePatient.gender || 'female',
-        activityLevel: activeConsultation.activity_level || 'moderado',
-        objective: activeConsultation.objective || activePatient.goals?.objective || 'manutenção'
+        weight: consultationData?.weight?.toString() || prefilledData.weight?.toString() || '',
+        height: consultationData?.height?.toString() || prefilledData.height?.toString() || '',
+        age: consultationData?.age?.toString() || prefilledData.age?.toString() || '',
+        gender: consultationData?.gender || prefilledData.gender || 'female',
+        activityLevel: consultationData?.activity_level || prefilledData.activity_level || 'moderado',
+        objective: consultationData?.objective || prefilledData.objective || 'manutenção'
+      });
+      
+      console.log('Form pre-filled with:', {
+        fromConsultation: !!consultationData,
+        fromHistory: hasHistoricalData,
+        isFirstConsultation,
+        prefilledData
       });
     }
-  }, [activePatient, activeConsultation]);
+  }, [selectedPatient, consultationData, dataLoading, getFormPrefilledData, hasHistoricalData, isFirstConsultation]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -67,15 +94,16 @@ const PatientInfoStep: React.FC = () => {
     };
     
     try {
-      const success = await saveConsultationData(updatedData);
+      // Update consultation data with form values
+      updateConsultationData(updatedData);
       
-      if (success) {
-        toast({
-          title: "Dados salvos",
-          description: "Informações do paciente salvas com sucesso.",
-        });
-        setCurrentStep('anthropometry');
-      }
+      toast({
+        title: "Dados salvos",
+        description: "Informações do paciente salvas com sucesso.",
+      });
+      
+      setCurrentStep('anthropometry');
+      
     } catch (error) {
       console.error('Erro no handleSubmit:', error);
       toast({
@@ -86,14 +114,31 @@ const PatientInfoStep: React.FC = () => {
     }
   };
   
-  if (!activePatient) return null;
+  if (!selectedPatient) return null;
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informações Básicas</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          Informações Básicas
+          {hasHistoricalData && (
+            <div className="flex items-center gap-1 text-sm text-nutri-green">
+              <History className="h-4 w-4" />
+              Dados históricos carregados
+            </div>
+          )}
+        </CardTitle>
         <CardDescription>
-          Confirme ou atualize os dados básicos do paciente para esta consulta
+          {isFirstConsultation 
+            ? "Primeira consulta - preencha os dados básicos do paciente"
+            : "Dados pré-preenchidos com informações da última consulta - confirme ou atualize"
+          }
+          {patientHistoryData?.lastMeasurement && (
+            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-3 w-3" />
+              Última medição: {new Date(patientHistoryData.lastMeasurement.date).toLocaleDateString('pt-BR')}
+            </div>
+          )}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { ClinicalProvider } from '@/contexts/ClinicalContext';
+import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import ClinicalWorkflow from '@/components/clinical/ClinicalWorkflow';
 
 const Clinical = () => {
   return (
     <div className="min-h-screen bg-background">
-      <ClinicalProvider>
+      <ConsultationDataProvider>
         <ClinicalWorkflow />
-      </ClinicalProvider>
+      </ConsultationDataProvider>
     </div>
   );
 };
