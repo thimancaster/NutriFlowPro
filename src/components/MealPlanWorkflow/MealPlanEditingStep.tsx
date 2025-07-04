@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,8 @@ import { Save, Download, Edit } from 'lucide-react';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MealPlan } from '@/types/mealPlan';
+import { MealPlan, MealPlanMeal } from '@/types/mealPlan';
+import MealEditDialog from '@/components/meal-plan/MealEditDialog';
 
 interface MealPlanEditingStepProps {
   mealPlan: MealPlan;
@@ -21,15 +22,50 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
   onBack
 }) => {
   const { isSaving, setCurrentStep } = useMealPlanWorkflow();
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<MealPlanMeal | null>(null);
+  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan>(mealPlan);
 
   const handleSave = async () => {
-    await onSave({});
+    await onSave(currentMealPlan);
     setCurrentStep('completed');
   };
 
   const handleEdit = (mealId: string) => {
-    // TODO: Implementar edição de refeição específica
-    console.log('Edit meal:', mealId);
+    const meal = currentMealPlan.meals.find(m => m.id === mealId);
+    if (meal) {
+      setEditingMeal(meal);
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleSaveMeal = (updatedMeal: MealPlanMeal) => {
+    const updatedMeals = currentMealPlan.meals.map(meal =>
+      meal.id === updatedMeal.id ? updatedMeal : meal
+    );
+
+    // Recalcular totais do plano alimentar
+    const newTotals = updatedMeals.reduce(
+      (acc, meal) => ({
+        calories: acc.calories + meal.total_calories,
+        protein: acc.protein + meal.total_protein,
+        carbs: acc.carbs + meal.total_carbs,
+        fats: acc.fats + meal.total_fats,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
+
+    const updatedMealPlan: MealPlan = {
+      ...currentMealPlan,
+      meals: updatedMeals,
+      total_calories: newTotals.calories,
+      total_protein: newTotals.protein,
+      total_carbs: newTotals.carbs,
+      total_fats: newTotals.fats,
+    };
+
+    setCurrentMealPlan(updatedMealPlan);
+    setShowEditDialog(false);
   };
 
   return (
@@ -38,21 +74,21 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>
-              Plano Alimentar - {format(new Date(mealPlan.date), 'dd/MM/yyyy', { locale: ptBR })}
-            </CardTitle>
+          <CardTitle>
+            Plano Alimentar - {format(new Date(currentMealPlan.date), 'dd/MM/yyyy', { locale: ptBR })}
+          </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">
-                {Math.round(mealPlan.total_calories)} kcal
+                {Math.round(currentMealPlan.total_calories)} kcal
               </Badge>
               <Badge variant="outline">
-                P: {Math.round(mealPlan.total_protein)}g
+                P: {Math.round(currentMealPlan.total_protein)}g
               </Badge>
               <Badge variant="outline">
-                C: {Math.round(mealPlan.total_carbs)}g
+                C: {Math.round(currentMealPlan.total_carbs)}g
               </Badge>
               <Badge variant="outline">
-                G: {Math.round(mealPlan.total_fats)}g
+                G: {Math.round(currentMealPlan.total_fats)}g
               </Badge>
             </div>
           </div>
@@ -61,7 +97,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
       {/* Meals */}
       <div className="grid gap-4">
-        {mealPlan.meals.map((meal) => (
+        {currentMealPlan.meals.map((meal) => (
           <Card key={meal.id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -151,6 +187,14 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
           Exportar PDF
         </Button>
       </div>
+
+      {/* Meal Edit Dialog */}
+      <MealEditDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        meal={editingMeal}
+        onSave={handleSaveMeal}
+      />
     </div>
   );
 };
