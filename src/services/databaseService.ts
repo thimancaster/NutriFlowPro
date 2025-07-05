@@ -28,6 +28,7 @@ export const DatabaseService = {
   getPatientMealPlans: (patientId: string, userId: string) => 
     MealPlanService.getMealPlans(userId, { patient_id: patientId }),
   getMealPlan: async (planId: string) => {
-    return MealPlanService.getMealPlan(planId);
+    const result = await MealPlanService.getMealPlan(planId);
+    return result;
   }
 };

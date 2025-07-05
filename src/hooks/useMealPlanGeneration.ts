@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MealPlan, MealPlanGenerationParams } from '@/types/mealPlan';
 import { useToast } from '@/hooks/use-toast';
+import { MealPlanService } from '@/services/mealPlanService';
 
 export const useMealPlanGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -39,29 +40,19 @@ export const useMealPlanGeneration = () => {
 
       console.log('Generated meal plan ID:', mealPlanId);
 
-      // Buscar o plano gerado completo
-      const { data: mealPlan, error: fetchError } = await supabase
-        .from('meal_plans')
-        .select(`
-          *,
-          meal_plan_items:meal_plan_items(*)
-        `)
-        .eq('id', mealPlanId)
-        .single();
+      // Buscar o plano gerado completo usando o serviço
+      const result = await MealPlanService.getMealPlan(mealPlanId);
 
-      if (fetchError) {
-        console.error('Error fetching generated meal plan:', fetchError);
-        throw fetchError;
-      }
-
-      if (mealPlan) {
-        console.log('Fetched complete meal plan:', mealPlan);
-        setGeneratedPlan(mealPlan as MealPlan);
+      if (result.success && result.data) {
+        console.log('Fetched complete meal plan:', result.data);
+        setGeneratedPlan(result.data);
         
         toast({
           title: 'Sucesso! 🇧🇷',
           description: 'Plano alimentar brasileiro gerado com inteligência cultural!',
         });
+      } else {
+        throw new Error(result.error || 'Failed to fetch generated meal plan');
       }
 
     } catch (error: any) {

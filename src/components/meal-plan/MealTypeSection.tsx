@@ -11,7 +11,7 @@ import EditItemDialog from './EditItemDialog';
 import { getMealSuggestions } from '@/utils/brazilianFoodDatabase';
 
 interface MealTypeSectionProps {
-  mealType: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
+  mealType: 'cafe_da_manha' | 'lanche_manha' | 'almoco' | 'lanche_tarde' | 'jantar' | 'ceia';
   config: {
     name: string;
     time: string;
