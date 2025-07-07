@@ -29,12 +29,15 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
   const convertMealsForPdf = (meals: any[]) => {
     return meals.map((meal, index) => ({
       name: meal.name || `Refeição ${index + 1}`,
-      calories: meal.calories || meal.total_calories || 0,
-      protein: meal.protein || meal.total_protein || 0,
-      carbs: meal.carbs || meal.total_carbs || 0,
-      fat: meal.fat || meal.total_fats || 0,
-      percent: meal.percent || meal.percentage || Math.round(100 / meals.length), // Default equal distribution
-      suggestions: meal.suggestions || meal.foodSuggestions || []
+      calories: meal.total_calories || meal.calories || 0,
+      protein: meal.total_protein || meal.protein || 0,
+      carbs: meal.total_carbs || meal.carbs || 0,
+      fat: meal.total_fats || meal.fats || meal.fat || 0,
+      percent: Math.round((meal.total_calories || meal.calories || 0) / mealPlan.total_calories * 100) || Math.round(100 / meals.length),
+      suggestions: meal.foods?.map((food: any) => `${food.name || food.food_name} (${food.quantity}${food.unit})`) || 
+                   meal.suggestions || 
+                   meal.foodSuggestions || 
+                   []
     }));
   };
   

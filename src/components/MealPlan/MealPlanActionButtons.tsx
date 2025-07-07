@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Printer, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MealPlanSettings } from '@/utils/mealGeneratorUtils';
-import { generateMealPlanPDF } from '@/utils/pdf/pdfExport';
+import { generateMealPlanPDF } from '@/utils/pdfExport';
 
 interface MealPlanActionButtonsProps {
   mealPlan: any;
@@ -24,18 +24,22 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
       // Use setTimeout to prevent UI blocking
       setTimeout(() => {
         const doc = generateMealPlanPDF({ 
-          meals: mealPlan,
-          totalCalories: 0, // Calculate or provide these values
-          totalProtein: 0,
-          totalCarbs: 0,
-          totalFats: 0,
+          meals: mealPlan.map((meal: any) => ({
+            name: meal.name,
+            calories: meal.calories || 0,
+            protein: meal.protein || 0,
+            carbs: meal.carbs || 0,
+            fat: meal.fat || 0,
+            percent: meal.percent || 0,
+            suggestions: meal.suggestions || []
+          })),
+          totalCalories: mealPlan.reduce((sum: number, meal: any) => sum + (meal.calories || 0), 0),
+          totalProtein: mealPlan.reduce((sum: number, meal: any) => sum + (meal.protein || 0), 0),
+          totalCarbs: mealPlan.reduce((sum: number, meal: any) => sum + (meal.carbs || 0), 0),
+          totalFats: mealPlan.reduce((sum: number, meal: any) => sum + (meal.fat || 0), 0),
           patientName: settings.patientName || "Paciente",
-          settings: {
-            patientName: settings.patientName,
-            patientData: settings.patientData,
-            patientAge: settings.patientAge,
-            patientGender: settings.patientGender
-          }
+          patientAge: settings.patientAge,
+          patientGender: settings.patientGender as 'male' | 'female'
         });
         
         // Save PDF
@@ -66,18 +70,22 @@ const MealPlanActionButtons: React.FC<MealPlanActionButtonsProps> = ({ mealPlan,
       // Use setTimeout to prevent UI blocking
       setTimeout(() => {
         const doc = generateMealPlanPDF({ 
-          meals: mealPlan,
-          totalCalories: 0, // Calculate or provide these values
-          totalProtein: 0,
-          totalCarbs: 0,
-          totalFats: 0,
+          meals: mealPlan.map((meal: any) => ({
+            name: meal.name,
+            calories: meal.calories || 0,
+            protein: meal.protein || 0,
+            carbs: meal.carbs || 0,
+            fat: meal.fat || 0,
+            percent: meal.percent || 0,
+            suggestions: meal.suggestions || []
+          })),
+          totalCalories: mealPlan.reduce((sum: number, meal: any) => sum + (meal.calories || 0), 0),
+          totalProtein: mealPlan.reduce((sum: number, meal: any) => sum + (meal.protein || 0), 0),
+          totalCarbs: mealPlan.reduce((sum: number, meal: any) => sum + (meal.carbs || 0), 0),
+          totalFats: mealPlan.reduce((sum: number, meal: any) => sum + (meal.fat || 0), 0),
           patientName: settings.patientName || "Paciente",
-          settings: {
-            patientName: settings.patientName,
-            patientData: settings.patientData,
-            patientAge: settings.patientAge,
-            patientGender: settings.patientGender
-          }
+          patientAge: settings.patientAge,
+          patientGender: settings.patientGender as 'male' | 'female'
         });
         
         // Open PDF in a new tab for printing

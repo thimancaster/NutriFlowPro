@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { brazilianFoodDatabase } from './brazilianFoodDatabase';
+import { getMealSuggestions } from './brazilianFoodDatabase';
 
 /**
  * Interface para mapeamento entre dados brasileiros e padrão do sistema
@@ -50,8 +50,9 @@ export const syncBrazilianFoodData = async (): Promise<{
       existingFoods?.map(food => food.name.toLowerCase()) || []
     );
 
-    // Processar alimentos do banco brasileiro
-    for (const brazilianFood of brazilianFoodDatabase) {
+    // Processar alimentos simulados (implementação futura)
+    const mockFoods = [];
+    for (const brazilianFood of mockFoods) {
       try {
         // Pular categorias (que têm NaN nos valores nutricionais)
         if (isNaN(brazilianFood.calories)) {

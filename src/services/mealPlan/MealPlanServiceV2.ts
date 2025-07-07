@@ -135,14 +135,14 @@ export class MealPlanServiceV2 {
    * Group meal plan items by meal type in chronological order
    */
   private static groupItemsByMealType(items: MealPlanItem[]) {
-    // Define the chronological order of meals
+    // Define the chronological order of meals (Brazilian standard)
     const mealOrder = [
-      'breakfast',
-      'morning_snack', 
-      'lunch',
-      'afternoon_snack',
-      'dinner',
-      'evening_snack'
+      'cafe_da_manha',
+      'lanche_manha', 
+      'almoco',
+      'lanche_tarde',
+      'jantar',
+      'ceia'
     ];
 
     const grouped = items.reduce((acc, item) => {
@@ -169,7 +169,7 @@ export class MealPlanServiceV2 {
       .filter(mealType => grouped[mealType])
       .map(mealType => ({
         id: `${mealType}-meal`,
-        type: mealType as 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack',
+        type: mealType as 'cafe_da_manha' | 'lanche_manha' | 'almoco' | 'lanche_tarde' | 'jantar' | 'ceia',
         name: this.getMealTypeName(mealType),
         foods: grouped[mealType] || [],
         total_calories: (grouped[mealType] || []).reduce((sum, food) => sum + food.calories, 0),
@@ -211,12 +211,12 @@ export class MealPlanServiceV2 {
    */
   private static getMealTypeName(type: string): string {
     const names: Record<string, string> = {
-      breakfast: 'Café da Manhã',
-      morning_snack: 'Lanche da Manhã',
-      lunch: 'Almoço',
-      afternoon_snack: 'Lanche da Tarde',
-      dinner: 'Jantar',
-      evening_snack: 'Ceia'
+      cafe_da_manha: 'Café da Manhã',
+      lanche_manha: 'Lanche da Manhã',
+      almoco: 'Almoço',
+      lanche_tarde: 'Lanche da Tarde',
+      jantar: 'Jantar',
+      ceia: 'Ceia'
     };
     return names[type] || type;
   }
