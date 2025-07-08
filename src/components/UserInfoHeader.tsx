@@ -91,8 +91,8 @@ const UserInfoHeader = () => {
           )}
         </Avatar>
         <div>
-          <span className="font-bold text-foreground">Nutricionista:</span> 
-          <span className="text-muted-foreground"> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}</span>
+          <span className="font-bold text-foreground dark:text-gray-800">Nutricionista:</span> 
+          <span className="text-muted-foreground dark:text-gray-700"> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}</span>
           {userProfile?.crn && (
             <Badge 
               variant="secondary" 
@@ -126,8 +126,8 @@ const UserInfoHeader = () => {
         )}
 
         {isPremium && (
-          <div className="text-sm text-amber-700 flex items-center">
-            <Shield className="h-4 w-4 mr-1 text-amber-500" />
+          <div className="text-sm text-amber-700 dark:text-gray-800 flex items-center">
+            <Shield className="h-4 w-4 mr-1 text-amber-500 dark:text-amber-600" />
             Benefícios Premium Ativos
           </div>
         )}

@@ -160,15 +160,15 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 											<p
 												className={`italic mb-4 ${
 													index === activeIndex
-														? "text-gray-800"
-														: "text-gray-600"
+														? "text-gray-800 dark:text-foreground"
+														: "text-gray-600 dark:text-muted-foreground"
 												}`}>
 												&quot;{testimonial.content}&quot;
 											</p>
-											<p className="font-medium text-nutri-blue">
+											<p className="font-medium text-nutri-blue dark:text-primary">
 												{testimonial.name}
 											</p>
-											<p className="text-sm text-gray-500">
+											<p className="text-sm text-gray-500 dark:text-muted-foreground">
 												{testimonial.role}
 											</p>
 										</div>
@@ -179,7 +179,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 					</div>
 				) : (
 					<div className="text-center py-8">
-						<p className="text-gray-500">Nenhum depoimento encontrado</p>
+						<p className="text-gray-500 dark:text-muted-foreground">Nenhum depoimento encontrado</p>
 						<div className="mt-4">
 							<Button variant="outline" onClick={handleAddTestimonial}>
 								Seja o primeiro a deixar um depoimento
