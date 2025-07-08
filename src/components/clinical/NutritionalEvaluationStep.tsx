@@ -258,21 +258,21 @@ const NutritionalEvaluationStep: React.FC = () => {
               <div className="space-y-3">
                 <h4 className="font-medium">Distribuição de Macronutrientes</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                     <span className="font-medium">Proteínas</span>
-                    <Badge variant="outline" className="bg-blue-100 dark:bg-blue-800">
+                    <Badge variant="outline" className="bg-blue-100">
                       {results.macros.protein.grams}g
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                     <span className="font-medium">Carboidratos</span>
-                    <Badge variant="outline" className="bg-green-100 dark:bg-green-800">
+                    <Badge variant="outline" className="bg-green-100">
                       {results.macros.carbs.grams}g
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                     <span className="font-medium">Gorduras</span>
-                    <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-800">
+                    <Badge variant="outline" className="bg-yellow-100">
                       {results.macros.fat.grams}g
                     </Badge>
                   </div>
