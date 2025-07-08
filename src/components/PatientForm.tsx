@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -155,7 +156,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     }
   };
 
-  const onSubmit = async (data: PatientFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('Form submission started', { formData, user });
+    
     try {
       if (!user?.id) {
         toast({
@@ -169,6 +174,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
       // Validate required fields
       if (!formData.name || formData.name.length < 2) {
         setErrors({ name: 'Nome é obrigatório e deve ter pelo menos 2 caracteres' });
+        toast({
+          title: 'Erro de Validação',
+          description: 'Nome é obrigatório e deve ter pelo menos 2 caracteres',
+          variant: 'destructive'
+        });
         return;
       }
 
@@ -200,7 +210,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
       const result = await savePatient(patientData);
       
+      console.log('Save result:', result);
+      
       if (result.success) {
+        toast({
+          title: 'Sucesso!',
+          description: `Paciente ${formData.name} ${mode === 'create' ? 'criado' : 'atualizado'} com sucesso.`,
+        });
+        
         // Reset form on success
         form.reset();
         setFormData({
@@ -216,14 +233,22 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         setErrors({});
         
         // Call success callback
-        onSuccess?.();
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        toast({
+          title: 'Erro ao salvar',
+          description: result.error || 'Erro desconhecido ao salvar paciente',
+          variant: 'destructive'
+        });
       }
       
     } catch (error: any) {
       console.error('Error in form submission:', error);
       toast({
         title: 'Erro',
-        description: 'Erro inesperado ao salvar paciente',
+        description: error.message || 'Erro inesperado ao salvar paciente',
         variant: 'destructive'
       });
     }
@@ -237,67 +262,52 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <BasicInfoFields 
-              formData={formData}
-              birthDate={birthDate}
-              setBirthDate={setBirthDate}
-              handleChange={handleChange}
-              handleSelectChange={handleSelectChange}
-              errors={errors}
-              validateField={(field: string, value: any) => {
-                // Basic validation
-                if (field === 'name' && (!value || value.length < 2)) {
-                  setErrors(prev => ({ ...prev, [field]: 'Nome deve ter pelo menos 2 caracteres' }));
-                } else if (field === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                  setErrors(prev => ({ ...prev, [field]: 'Email inválido' }));
-                } else {
-                  setErrors(prev => {
-                    const newErrors = { ...prev };
-                    delete newErrors[field];
-                    return newErrors;
-                  });
-                }
-              }}
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <BasicInfoFields 
+            formData={formData}
+            birthDate={birthDate}
+            setBirthDate={setBirthDate}
+            handleChange={handleChange}
+            handleSelectChange={handleSelectChange}
+            errors={errors}
+            validateField={validateField}
+          />
+          
+          <AddressFields 
+            address={address}
+            onChange={setAddress}
+            errors={errors}
+            validateField={() => {}}
+          />
+          
+          <NotesFields 
+            notes={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            errors={errors}
+            validateField={() => {}}
+          />
+          
+          <div className="flex gap-4">
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {isLoading ? 'Salvando...' : mode === 'create' ? 'Criar Paciente' : 'Atualizar Paciente'}
+            </Button>
             
-            <AddressFields 
-              address={address}
-              onChange={setAddress}
-              errors={errors}
-              validateField={() => {}}
-            />
-            
-            <NotesFields 
-              notes={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              errors={errors}
-              validateField={() => {}}
-            />
-            
-            <div className="flex gap-4">
+            {onCancel && (
               <Button 
-                type="submit" 
+                type="button" 
+                variant="outline"
+                onClick={onCancel}
                 disabled={isLoading}
-                className="flex-1"
               >
-                {isLoading ? 'Salvando...' : mode === 'create' ? 'Criar Paciente' : 'Atualizar Paciente'}
+                Cancelar
               </Button>
-              
-              {onCancel && (
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={isLoading}
-                >
-                  Cancelar
-                </Button>
-              )}
-            </div>
-          </form>
-        </Form>
+            )}
+          </div>
+        </form>
       </CardContent>
     </Card>
   );
