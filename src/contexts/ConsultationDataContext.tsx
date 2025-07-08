@@ -316,6 +316,8 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
       fats: 0,
       bmr: 0,
       
+      recommendations: '',
+      
       created_at: new Date().toISOString(),
       date: new Date().toISOString().split('T')[0]
     };

@@ -10,6 +10,9 @@ import PatientSelectionStep from './PatientSelectionStep';
 import PatientInfoStep from './PatientInfoStep';
 import AnthropometryStep from './AnthropometryStep';
 import NutritionalEvaluationStep from './NutritionalEvaluationStep';
+import MealPlanStep from './MealPlanStep';
+import RecommendationsStep from './RecommendationsStep';
+import AppointmentStep from './AppointmentStep';
 import WorkflowHeader from './WorkflowHeader';
 import WorkflowSteps from './WorkflowSteps';
 import ClinicalFlowAuditPanel from './ClinicalFlowAuditPanel';
@@ -103,57 +106,13 @@ const ClinicalWorkflow: React.FC = () => {
         return selectedPatient ? <NutritionalEvaluationStep /> : null;
       
       case 'meal-plan':
-        return selectedPatient ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Plano Alimentar</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  Funcionalidade de plano alimentar será implementada em breve.
-                </p>
-                {consultationData?.results && (
-                  <div className="text-sm text-nutri-green">
-                    ✓ Avaliação nutricional concluída - {consultationData.results.get} kcal/dia
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ) : null;
+        return selectedPatient ? <MealPlanStep /> : null;
       
       case 'recommendations':
-        return selectedPatient ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Recomendações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  Funcionalidade de recomendações será implementada em breve.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null;
+        return selectedPatient ? <RecommendationsStep /> : null;
       
       case 'follow-up':
-        return selectedPatient ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Agendamento de Retorno</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  Funcionalidade de agendamento será implementada em breve.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null;
+        return selectedPatient ? <AppointmentStep /> : null;
       
       default:
         return <PatientSelectionStep />;
