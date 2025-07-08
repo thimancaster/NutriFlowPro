@@ -74,7 +74,7 @@ const UserInfoHeader = () => {
 
   return (
     <div className={`p-4 flex justify-between items-center transition-all duration-300 border-b border-border ${isPremium 
-      ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200' 
+      ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200 dark:from-amber-900/20 dark:to-amber-800/20 dark:border-amber-700/30' 
       : 'bg-muted/30'}`}>
       <div className="flex items-center space-x-4">
         <Avatar className="h-10 w-10 border-2 border-background shadow-lg ring-2 ring-primary/20 transition-all duration-300 hover:scale-110 hover:shadow-xl">
@@ -91,8 +91,8 @@ const UserInfoHeader = () => {
           )}
         </Avatar>
         <div>
-          <span className="font-bold text-foreground dark:text-gray-800">Nutricionista:</span> 
-          <span className="text-muted-foreground dark:text-gray-700"> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}</span>
+          <span className="font-bold text-foreground dark:text-gray-900">Nutricionista:</span> 
+          <span className="text-muted-foreground dark:text-gray-800"> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}</span>
           {userProfile?.crn && (
             <Badge 
               variant="secondary" 
@@ -105,7 +105,7 @@ const UserInfoHeader = () => {
           {isPremium && (
             <Badge 
               variant="outline" 
-              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm hover-scale"
+              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm hover-scale dark:from-amber-800/50 dark:to-yellow-800/50 dark:text-yellow-900 dark:border-yellow-600"
             >
               <Crown className="h-3 w-3 text-amber-500 fill-yellow-400" />
               Premium
@@ -126,7 +126,7 @@ const UserInfoHeader = () => {
         )}
 
         {isPremium && (
-          <div className="text-sm text-amber-700 dark:text-gray-800 flex items-center">
+          <div className="text-sm text-amber-700 dark:text-gray-900 flex items-center">
             <Shield className="h-4 w-4 mr-1 text-amber-500 dark:text-amber-600" />
             Benefícios Premium Ativos
           </div>

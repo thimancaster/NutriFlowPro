@@ -1,3 +1,4 @@
+
 import React, {useEffect, useState} from "react";
 import {Card, CardHeader, CardTitle, CardDescription, CardContent} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
@@ -116,7 +117,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 	}
 
 	return (
-		<Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
+		<Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50 dark:from-card dark:to-card dark:bg-card">
 			{showTitle && (
 				<CardHeader>
 					<CardTitle className="flex items-center justify-between">
@@ -139,8 +140,8 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 				{testimonials && testimonials.length > 0 ? (
 					<div className="relative">
 						{/* Gradient masks for fade effect on sides */}
-						<div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-green-50 to-transparent z-20 pointer-events-none"></div>
-						<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-blue-50 to-transparent z-20 pointer-events-none"></div>
+						<div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-green-50 to-transparent dark:from-card dark:to-transparent z-20 pointer-events-none"></div>
+						<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-blue-50 to-transparent dark:from-card dark:to-transparent z-20 pointer-events-none"></div>
 
 						<div className="overflow-hidden" ref={emblaRef}>
 							<div className="flex py-6 px-2">
@@ -149,7 +150,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 										key={testimonial.id || index}
 										className="min-w-0 flex-[0_0_90%] md:flex-[0_0_45%] mx-2">
 										<div
-											className={`p-6 rounded-lg bg-white transition-all duration-500 ${
+											className={`p-6 rounded-lg bg-white dark:bg-card transition-all duration-500 ${
 												index === activeIndex
 													? "scale-105 shadow-xl"
 													: "scale-95 opacity-70"
