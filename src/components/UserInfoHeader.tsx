@@ -91,8 +91,8 @@ const UserInfoHeader = () => {
           )}
         </Avatar>
         <div>
-          <span className="font-bold text-foreground dark:text-gray-900">Nutricionista:</span> 
-          <span className="text-muted-foreground dark:text-gray-800"> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}</span>
+          <span className="font-bold text-foreground dark:text-foreground">Nutricionista:</span> 
+          <span className="text-muted-foreground dark:text-muted-foreground"> {userProfile?.name || user?.email?.split('@')[0] || 'Usuário'}</span>
           {userProfile?.crn && (
             <Badge 
               variant="secondary" 
@@ -105,7 +105,7 @@ const UserInfoHeader = () => {
           {isPremium && (
             <Badge 
               variant="outline" 
-              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm hover-scale dark:from-amber-800/50 dark:to-yellow-800/50 dark:text-yellow-900 dark:border-yellow-600"
+              className="ml-2 bg-gradient-to-r from-amber-100 to-yellow-200 text-yellow-800 border-yellow-300 flex items-center gap-1 shadow-sm hover-scale dark:from-amber-800/30 dark:to-yellow-800/30 dark:text-amber-200 dark:border-amber-600/50"
             >
               <Crown className="h-3 w-3 text-amber-500 fill-yellow-400" />
               Premium
@@ -126,8 +126,8 @@ const UserInfoHeader = () => {
         )}
 
         {isPremium && (
-          <div className="text-sm text-amber-700 dark:text-gray-900 flex items-center">
-            <Shield className="h-4 w-4 mr-1 text-amber-500 dark:text-amber-600" />
+          <div className="text-sm text-amber-700 dark:text-amber-200 flex items-center">
+            <Shield className="h-4 w-4 mr-1 text-amber-500 dark:text-amber-400" />
             Benefícios Premium Ativos
           </div>
         )}

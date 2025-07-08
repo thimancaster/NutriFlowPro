@@ -70,7 +70,7 @@ const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderPro
   };
 
   return (
-    <Card className="mb-6 shadow-sm border border-gray-200">
+    <Card className="mb-6 shadow-sm border border-border">
       <CardContent className="pt-4">
         <StepIndicator 
           steps={STEPS} 
@@ -79,7 +79,7 @@ const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderPro
         />
         
         {selectedPatient && (
-          <div className="mt-2 text-center text-sm text-gray-500">
+          <div className="mt-2 text-center text-sm text-muted-foreground">
             Paciente atual: <span className="font-medium text-nutri-blue">{selectedPatient.name}</span>
           </div>
         )}

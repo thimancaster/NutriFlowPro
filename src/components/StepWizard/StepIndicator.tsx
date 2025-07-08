@@ -23,7 +23,7 @@ const StepIndicator = ({ steps, currentStep, onStepClick }: StepIndicatorProps) 
                   ? "bg-nutri-green border-nutri-green text-white" 
                   : index === currentStep 
                     ? "border-nutri-blue bg-white text-nutri-blue"
-                    : "border-gray-300 bg-white text-gray-400"
+                    : "border-border bg-white text-muted-foreground"
               )}
               onClick={() => onStepClick && index < currentStep && onStepClick(index)}
               style={{ cursor: onStepClick && index < currentStep ? 'pointer' : 'default' }}
@@ -38,7 +38,7 @@ const StepIndicator = ({ steps, currentStep, onStepClick }: StepIndicatorProps) 
               <span 
                 className={cn(
                   "absolute -bottom-7 whitespace-nowrap text-xs font-medium",
-                  index === currentStep ? "text-nutri-blue" : "text-gray-500"
+                  index === currentStep ? "text-nutri-blue" : "text-muted-foreground"
                 )}
               >
                 {step}
@@ -50,7 +50,7 @@ const StepIndicator = ({ steps, currentStep, onStepClick }: StepIndicatorProps) 
               <div 
                 className={cn(
                   "w-12 h-0.5 mx-1", 
-                  index < currentStep ? "bg-nutri-green" : "bg-gray-300"
+                  index < currentStep ? "bg-nutri-green" : "bg-border"
                 )}
               />
             )}

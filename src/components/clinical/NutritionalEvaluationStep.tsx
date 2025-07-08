@@ -66,7 +66,7 @@ const NutritionalEvaluationStep: React.FC = () => {
     );
 
     if (result) {
-      // Update consultation data with calculated results
+      // Update consultation data with calculated results - extracting grams from macro objects
       updateConsultationData({
         weight,
         height,
@@ -75,18 +75,18 @@ const NutritionalEvaluationStep: React.FC = () => {
         activity_level: formData.activityLevel,
         objective: formData.objective,
         totalCalories: result.vet,
-        protein: result.macros.protein,
-        carbs: result.macros.carbs,
-        fats: result.macros.fat,
+        protein: result.macros.protein.grams,
+        carbs: result.macros.carbs.grams,
+        fats: result.macros.fat.grams,
         results: {
           bmr: result.tmb,
           get: result.vet,
           vet: result.vet,
           adjustment: 0,
           macros: {
-            protein: result.macros.protein,
-            carbs: result.macros.carbs,
-            fat: result.macros.fat
+            protein: result.macros.protein.grams,
+            carbs: result.macros.carbs.grams,
+            fat: result.macros.fat.grams
           }
         }
       });
@@ -261,19 +261,19 @@ const NutritionalEvaluationStep: React.FC = () => {
                   <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <span className="font-medium">Proteínas</span>
                     <Badge variant="outline" className="bg-blue-100 dark:bg-blue-800">
-                      {results.macros.protein}g
+                      {results.macros.protein.grams}g
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <span className="font-medium">Carboidratos</span>
                     <Badge variant="outline" className="bg-green-100 dark:bg-green-800">
-                      {results.macros.carbs}g
+                      {results.macros.carbs.grams}g
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                     <span className="font-medium">Gorduras</span>
                     <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-800">
-                      {results.macros.fat}g
+                      {results.macros.fat.grams}g
                     </Badge>
                   </div>
                 </div>
