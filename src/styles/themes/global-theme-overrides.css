@@ -1,146 +1,113 @@
 /* Global Theme Overrides - Padronização de Componentes UI */
-@layer base {
-  /* Garantir que todos os elementos principais usem as variáveis de tema */
-  
-  /* Containers principais */
-  .min-h-screen {
-    @apply bg-background text-foreground;
-  }
 
-  /* Overrides para componentes que podem ter cores hardcoded */
-  .text-gray-500 {
-    @apply text-muted-foreground;
-  }
-  
-  .text-gray-600 {
-    @apply text-muted-foreground;
-  }
-  
-  .text-gray-700 {
-    @apply text-foreground/80;
-  }
-  
-  .text-gray-800 {
-    @apply text-foreground;
-  }
-  
-  .text-gray-900 {
-    @apply text-foreground;
-  }
+/* Garantir que todos os elementos principais usem as variáveis de tema */
 
-  .bg-gray-50 {
-    @apply bg-muted;
-  }
-  
-  .bg-gray-100 {
-    @apply bg-muted;
-  }
-  
-  .bg-gray-200 {
-    @apply bg-muted;
-  }
-
-  .bg-white {
-    @apply bg-background;
-  }
-
-  .border-gray-200 {
-    @apply border-border;
-  }
-  
-  .border-gray-300 {
-    @apply border-border;
-  }
-
-  /* Garantir que cards sempre usem as variáveis corretas */
-  .card {
-    @apply bg-card text-card-foreground border-border;
-  }
-
-  /* Tables consistency */
-  table {
-    @apply bg-card text-card-foreground;
-  }
-  
-  th {
-    @apply text-muted-foreground border-border;
-  }
-  
-  td {
-    @apply text-card-foreground border-border;
-  }
-
-  /* Inputs consistency */
-  input, textarea, select {
-    @apply bg-background text-foreground border-border;
-  }
-  
-  input:disabled {
-    @apply bg-muted text-muted-foreground;
-  }
-
-  /* Buttons base */
-  .btn {
-    @apply text-foreground;
-  }
-
-  /* Ensure proper contrast for all text elements */
-  h1, h2, h3, h4, h5, h6 {
-    @apply text-foreground;
-  }
-  
-  p {
-    @apply text-foreground;
-  }
-  
-  span {
-    @apply text-foreground;
-  }
-  
-  /* Exceptions for specific UI states */
-  .text-white {
-    color: white !important;
-  }
-  
-  .bg-nutri-green {
-    background-color: hsl(var(--nutri-green)) !important;
-  }
-  
-  .bg-nutri-blue {
-    background-color: hsl(var(--nutri-blue)) !important;
-  }
-  
-  .text-nutri-green {
-    color: hsl(var(--nutri-green)) !important;
-  }
-  
-  .text-nutri-blue {
-    color: hsl(var(--nutri-blue)) !important;
-  }
+/* Overrides para componentes que podem ter cores hardcoded */
+.text-gray-500 {
+  color: hsl(var(--muted-foreground));
 }
 
-/* Overrides específicos para modo escuro */
-@layer base {
-  .dark {
-    /* Guarantee consistent text colors in dark mode */
-    .text-foreground {
-      color: hsl(var(--foreground));
-    }
-    
-    .text-muted-foreground {
-      color: hsl(var(--muted-foreground));
-    }
-    
-    .bg-background {
-      background-color: hsl(var(--background));
-    }
-    
-    .bg-card {
-      background-color: hsl(var(--card));
-    }
-    
-    .border-border {
-      border-color: hsl(var(--border));
-    }
-  }
+.text-gray-600 {
+  color: hsl(var(--muted-foreground));
+}
+
+.text-gray-700 {
+  color: hsl(var(--foreground) / 0.8);
+}
+
+.text-gray-800 {
+  color: hsl(var(--foreground));
+}
+
+.text-gray-900 {
+  color: hsl(var(--foreground));
+}
+
+.bg-gray-50 {
+  background-color: hsl(var(--muted));
+}
+
+.bg-gray-100 {
+  background-color: hsl(var(--muted));
+}
+
+.bg-gray-200 {
+  background-color: hsl(var(--muted));
+}
+
+.border-gray-200 {
+  border-color: hsl(var(--border));
+}
+
+.border-gray-300 {
+  border-color: hsl(var(--border));
+}
+
+/* Garantir que cards sempre usem as variáveis corretas */
+.card {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Tables consistency */
+table {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+
+th {
+  color: hsl(var(--muted-foreground));
+  border-color: hsl(var(--border));
+}
+
+td {
+  color: hsl(var(--card-foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Inputs consistency */
+input, textarea, select {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+input:disabled {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+/* Ensure proper contrast for all text elements */
+h1, h2, h3, h4, h5, h6 {
+  color: hsl(var(--foreground));
+}
+
+p {
+  color: hsl(var(--foreground));
+}
+
+span {
+  color: hsl(var(--foreground));
+}
+
+/* Exceptions for specific UI states */
+.text-white {
+  color: white !important;
+}
+
+.bg-nutri-green {
+  background-color: hsl(var(--nutri-green)) !important;
+}
+
+.bg-nutri-blue {
+  background-color: hsl(var(--nutri-blue)) !important;
+}
+
+.text-nutri-green {
+  color: hsl(var(--nutri-green)) !important;
+}
+
+.text-nutri-blue {
+  color: hsl(var(--nutri-blue)) !important;
 }
