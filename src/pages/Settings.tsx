@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, CreditCard, Shield } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import SystemHealthMonitor from '@/components/system/SystemHealthMonitor';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -91,6 +92,9 @@ const Settings = () => {
           </Card>
         )}
       </div>
+      
+      {/* System Health Monitor - Only visible in Settings page */}
+      <SystemHealthMonitor />
     </div>
   );
 };

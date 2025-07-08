@@ -1,3 +1,4 @@
+
 import React from "react";
 import {LucideIcon} from "lucide-react";
 import {
@@ -40,8 +41,8 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 		<Card
 			className={`relative ${
 				highlighted
-					? "bg-gradient-to-br from-nutri-green/25 to-nutri-blue/25 dark:from-nutri-green/40 dark:to-nutri-blue/40 border-2 border-nutri-green/50 dark:border-nutri-green/60 shadow-xl shadow-nutri-green/20 dark:shadow-nutri-green/30 scale-105 z-10"
-					: "bg-white dark:bg-card border-gray-200 dark:border-gray-700"
+					? "bg-gradient-to-br from-green-50 to-blue-50 border-2 border-nutri-green shadow-xl shadow-nutri-green/20 scale-105 z-10"
+					: "bg-white border-gray-200"
 			} flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
 			{badge && (
 				<div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
@@ -52,17 +53,17 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 			)}
 
 			<CardHeader className="text-center pb-4">
-				<CardTitle className="text-xl font-bold">{title}</CardTitle>
+				<CardTitle className="text-xl font-bold text-gray-900">{title}</CardTitle>
 				<div className="mt-4">
-					<span className="text-4xl font-bold text-nutri-green dark:text-dark-accent-green">
+					<span className="text-4xl font-bold text-nutri-green">
 						{price}
 					</span>
 					{priceDetail && (
-						<span className="text-gray-600 dark:text-gray-400">{priceDetail}</span>
+						<span className="text-gray-600">{priceDetail}</span>
 					)}
 				</div>
 				{description && (
-					<CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+					<CardDescription className="text-sm text-gray-600 mt-2">
 						{description}
 					</CardDescription>
 				)}
@@ -75,8 +76,8 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 							key={`${feature.text}-${index}`}
 							className="flex items-start gap-3 animate-fade-in"
 							style={{animationDelay: `${index * 0.1}s`}}>
-							<feature.icon className="h-5 w-5 text-nutri-green dark:text-dark-accent-green mt-0.5 flex-shrink-0" />
-							<span className="text-sm text-gray-700 dark:text-gray-300">
+							<feature.icon className="h-5 w-5 text-nutri-green mt-0.5 flex-shrink-0" />
+							<span className="text-sm text-gray-700">
 								{feature.text}
 							</span>
 						</li>

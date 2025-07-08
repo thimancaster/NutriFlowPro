@@ -108,30 +108,31 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 
 	if (isLoading && fallbackTestimonials.length === 0) {
 		return (
-			<Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
+			<Card className="nutri-card shadow-lg border-none bg-white">
 				<CardHeader>
-					<CardTitle>Carregando depoimentos...</CardTitle>
+					<CardTitle className="text-gray-900">Carregando depoimentos...</CardTitle>
 				</CardHeader>
 			</Card>
 		);
 	}
 
 	return (
-		<Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
+		<Card className="nutri-card shadow-lg border-none bg-white">
 			{showTitle && (
 				<CardHeader>
 					<CardTitle className="flex items-center justify-between">
 						<div className="flex items-center">
-							<Heart className="h-5 w-5 text-red-500 mr-2" /> Depoimentos de Usuários
+							<Heart className="h-5 w-5 text-red-500 mr-2" /> 
+							<span className="text-gray-900">Depoimentos de Usuários</span>
 						</div>
 						<Button
 							variant="outline"
-							className="text-nutri-blue hover:bg-nutri-blue hover:text-white transition-colors"
+							className="text-nutri-blue hover:bg-nutri-blue hover:text-white transition-colors border-nutri-blue"
 							onClick={handleAddTestimonial}>
 							Adicionar Depoimento
 						</Button>
 					</CardTitle>
-					<CardDescription>
+					<CardDescription className="text-gray-600">
 						O que os nutricionistas estão dizendo sobre o NutriFlow Pro
 					</CardDescription>
 				</CardHeader>
@@ -140,8 +141,8 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 				{testimonials && testimonials.length > 0 ? (
 					<div className="relative">
 						{/* Gradient masks for fade effect on sides */}
-						<div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-green-50 to-transparent z-20 pointer-events-none"></div>
-						<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-blue-50 to-transparent z-20 pointer-events-none"></div>
+						<div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-20 pointer-events-none"></div>
+						<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-20 pointer-events-none"></div>
 
 						<div className="overflow-hidden" ref={emblaRef}>
 							<div className="flex py-6 px-2">
@@ -150,7 +151,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 										key={testimonial.id || index}
 										className="min-w-0 flex-[0_0_90%] md:flex-[0_0_45%] mx-2">
 										<div
-											className={`p-6 rounded-lg bg-white transition-all duration-500 ${
+											className={`p-6 rounded-lg bg-white border border-gray-200 transition-all duration-500 ${
 												index === activeIndex
 													? "scale-105 shadow-xl"
 													: "scale-95 opacity-70"
@@ -182,7 +183,10 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 					<div className="text-center py-8">
 						<p className="text-gray-500">Nenhum depoimento encontrado</p>
 						<div className="mt-4">
-							<Button variant="outline" onClick={handleAddTestimonial}>
+							<Button 
+								variant="outline" 
+								onClick={handleAddTestimonial}
+								className="border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white">
 								Seja o primeiro a deixar um depoimento
 							</Button>
 						</div>
@@ -194,14 +198,14 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 						<Button
 							size="icon"
 							variant="outline"
-							className="rounded-full h-8 w-8 border-nutri-blue text-nutri-blue"
+							className="rounded-full h-8 w-8 border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white"
 							onClick={() => emblaApi?.scrollPrev()}>
 							<span className="sr-only">Anterior</span>←
 						</Button>
 						<Button
 							size="icon"
 							variant="outline"
-							className="rounded-full h-8 w-8 border-nutri-blue text-nutri-blue"
+							className="rounded-full h-8 w-8 border-nutri-blue text-nutri-blue hover:bg-nutri-blue hover:text-white"
 							onClick={() => emblaApi?.scrollNext()}>
 							<span className="sr-only">Próximo</span>→
 						</Button>

@@ -8,7 +8,6 @@ import { PatientProvider } from "./contexts/patient/PatientContext";
 import { ConsultationProvider } from "./contexts/ConsultationContext";
 import { MealPlanWorkflowProvider } from "./contexts/MealPlanWorkflowContext";
 import { ThemeProvider } from "./components/theme-provider";
-import SystemHealthMonitor from "./components/system/SystemHealthMonitor";
 import AppRoutes from "./routes";
 
 const queryClient = new QueryClient();
@@ -24,7 +23,6 @@ const App = () => (
               <ConsultationProvider>
                 <MealPlanWorkflowProvider>
                   <AppRoutes />
-                  <SystemHealthMonitor />
                 </MealPlanWorkflowProvider>
               </ConsultationProvider>
             </PatientProvider>
