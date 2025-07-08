@@ -68,7 +68,7 @@ const SubscriptionSettings = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="bg-card p-6 rounded-lg shadow border border-border">
       <SubscriptionHeader isPremium={isPremium} />
       
       {isPremium ? (
@@ -88,10 +88,10 @@ const SubscriptionSettings = () => {
 
 // Skeleton loader for subscription data
 const SubscriptionSkeleton = () => (
-  <div className="bg-white p-6 rounded-lg shadow animate-pulse">
-    <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-    <div className="h-24 bg-gray-100 rounded mb-4"></div>
-    <div className="h-10 bg-gray-200 rounded"></div>
+  <div className="bg-card p-6 rounded-lg shadow border border-border animate-pulse">
+    <div className="h-6 bg-muted rounded w-1/3 mb-4"></div>
+    <div className="h-24 bg-muted/50 rounded mb-4"></div>
+    <div className="h-10 bg-muted rounded"></div>
   </div>
 );
 

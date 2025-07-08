@@ -157,9 +157,9 @@ const ProfileSettings: React.FC = () => {
               id="email"
               value={user?.email || ''}
               disabled
-              className="bg-gray-50"
+              className="bg-muted"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               O e-mail não pode ser alterado por motivos de segurança
             </p>
           </div>

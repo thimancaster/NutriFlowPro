@@ -42,8 +42,8 @@ const CalculatorPage = () => {
       
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Calculadora Nutricional</h1>
-          <p className="text-gray-500">Calcule as necessidades energéticas e macronutrientes</p>
+          <h1 className="text-2xl font-bold text-foreground">Calculadora Nutricional</h1>
+          <p className="text-muted-foreground">Calcule as necessidades energéticas e macronutrientes</p>
         </div>
         
         <div className="flex space-x-2">

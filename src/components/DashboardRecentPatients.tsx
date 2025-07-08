@@ -125,7 +125,7 @@ const DashboardRecentPatients: React.FC = () => {
                 {recentPatients.map((patient) => (
                   <tr key={patient.id} className="border-b border-border last:border-b-0 group hover:bg-muted/30 transition-colors duration-200">
                     <td className="py-3 px-4 text-foreground group-hover:text-primary transition-colors duration-200">
-                      <Link to={`/patients/${patient.id}`} className="hover:underline">
+                      <Link to={`/patients/${patient.id}`} className="hover:underline hover:text-primary transition-colors duration-200">
                         {patient.name}
                       </Link>
                     </td>

@@ -1,53 +1,63 @@
 
-/* CSS Custom Properties - Variáveis base do sistema */
+/* CSS Custom Properties - Variáveis base do sistema - Tema Claro Clean Professional */
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Background & Text - Clean Professional */
+    --background: 210 40% 98%; /* #f8fafc - Branco azulado suave */
+    --foreground: 222.2 84% 4.9%; /* #0f172a - Grafite escuro */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Cards & Surfaces */
+    --card: 0 0% 100%; /* #ffffff - Branco puro */
+    --card-foreground: 222.2 84% 4.9%; /* #0f172a */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Popovers & Dropdowns */
+    --popover: 0 0% 100%; /* #ffffff */
+    --popover-foreground: 222.2 84% 4.9%; /* #0f172a */
 
-    --primary: 142 70% 45%; /* Verde NutriFlow */
-    --primary-foreground: 210 40% 98%;
+    /* Primary Colors - Verde NutriFlow */
+    --primary: 142 70% 45%; /* #22c55e - Verde NutriFlow */
+    --primary-foreground: 210 40% 98%; /* #f8fafc */
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary Elements */
+    --secondary: 210 20% 96%; /* #f1f5f9 - Azul muito claro */
+    --secondary-foreground: 222.2 47.4% 11.2%; /* #1e293b */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted Elements */
+    --muted: 210 40% 96.1%; /* #f1f5f9 */
+    --muted-foreground: 215.4 16.3% 46.9%; /* #64748b */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent Elements */
+    --accent: 210 40% 96.1%; /* #f1f5f9 */
+    --accent-foreground: 222.2 47.4% 11.2%; /* #1e293b */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive Elements */
+    --destructive: 0 84.2% 60.2%; /* #ef4444 */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    /* Borders & Inputs */
+    --border: 214.3 31.8% 91.4%; /* #e2e8f0 */
+    --input: 214.3 31.8% 91.4%; /* #e2e8f0 */
     --ring: 142 70% 45%; /* Verde NutriFlow para focus */
 
     --radius: 0.5rem;
 
-    /* Cores específicas do NutriFlow */
-    --nutri-green: 142 70% 45%;
-    --nutri-green-light: 142 60% 55%;
-    --nutri-green-dark: 142 80% 35%;
-    --nutri-blue: 217 91% 60%;
-    --nutri-blue-light: 217 80% 70%;
-    --nutri-blue-dark: 217 91% 50%;
+    /* Cores específicas do NutriFlow - Tema Claro */
+    --nutri-green: 142 70% 45%; /* #22c55e */
+    --nutri-green-light: 142 60% 55%; /* #4ade80 */
+    --nutri-green-dark: 142 80% 35%; /* #16a34a */
+    --nutri-blue: 217 91% 60%; /* #3b82f6 */
+    --nutri-blue-light: 217 80% 70%; /* #60a5fa */
+    --nutri-blue-dark: 217 91% 50%; /* #2563eb */
 
-    --sidebar-background: 142 70% 45%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 210 40% 96.1%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 142 50% 40%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 142 60% 40%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar - Tema Claro */
+    --sidebar-background: 142 70% 45%; /* Verde NutriFlow */
+    --sidebar-foreground: 0 0% 100%; /* Branco */
+    --sidebar-primary: 210 40% 96.1%; /* Azul claro */
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%; /* Grafite */
+    --sidebar-accent: 142 50% 40%; /* Verde accent */
+    --sidebar-accent-foreground: 0 0% 100%; /* Branco */
+    --sidebar-border: 142 60% 40%; /* Verde borda */
+    --sidebar-ring: 217.2 91.2% 59.8%; /* Azul anel */
   }
 }
 

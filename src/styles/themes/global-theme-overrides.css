@@ -1,0 +1,146 @@
+/* Global Theme Overrides - Padronização de Componentes UI */
+@layer base {
+  /* Garantir que todos os elementos principais usem as variáveis de tema */
+  
+  /* Containers principais */
+  .min-h-screen {
+    @apply bg-background text-foreground;
+  }
+
+  /* Overrides para componentes que podem ter cores hardcoded */
+  .text-gray-500 {
+    @apply text-muted-foreground;
+  }
+  
+  .text-gray-600 {
+    @apply text-muted-foreground;
+  }
+  
+  .text-gray-700 {
+    @apply text-foreground/80;
+  }
+  
+  .text-gray-800 {
+    @apply text-foreground;
+  }
+  
+  .text-gray-900 {
+    @apply text-foreground;
+  }
+
+  .bg-gray-50 {
+    @apply bg-muted;
+  }
+  
+  .bg-gray-100 {
+    @apply bg-muted;
+  }
+  
+  .bg-gray-200 {
+    @apply bg-muted;
+  }
+
+  .bg-white {
+    @apply bg-background;
+  }
+
+  .border-gray-200 {
+    @apply border-border;
+  }
+  
+  .border-gray-300 {
+    @apply border-border;
+  }
+
+  /* Garantir que cards sempre usem as variáveis corretas */
+  .card {
+    @apply bg-card text-card-foreground border-border;
+  }
+
+  /* Tables consistency */
+  table {
+    @apply bg-card text-card-foreground;
+  }
+  
+  th {
+    @apply text-muted-foreground border-border;
+  }
+  
+  td {
+    @apply text-card-foreground border-border;
+  }
+
+  /* Inputs consistency */
+  input, textarea, select {
+    @apply bg-background text-foreground border-border;
+  }
+  
+  input:disabled {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* Buttons base */
+  .btn {
+    @apply text-foreground;
+  }
+
+  /* Ensure proper contrast for all text elements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+  }
+  
+  p {
+    @apply text-foreground;
+  }
+  
+  span {
+    @apply text-foreground;
+  }
+  
+  /* Exceptions for specific UI states */
+  .text-white {
+    color: white !important;
+  }
+  
+  .bg-nutri-green {
+    background-color: hsl(var(--nutri-green)) !important;
+  }
+  
+  .bg-nutri-blue {
+    background-color: hsl(var(--nutri-blue)) !important;
+  }
+  
+  .text-nutri-green {
+    color: hsl(var(--nutri-green)) !important;
+  }
+  
+  .text-nutri-blue {
+    color: hsl(var(--nutri-blue)) !important;
+  }
+}
+
+/* Overrides específicos para modo escuro */
+@layer base {
+  .dark {
+    /* Guarantee consistent text colors in dark mode */
+    .text-foreground {
+      color: hsl(var(--foreground));
+    }
+    
+    .text-muted-foreground {
+      color: hsl(var(--muted-foreground));
+    }
+    
+    .bg-background {
+      background-color: hsl(var(--background));
+    }
+    
+    .bg-card {
+      background-color: hsl(var(--card));
+    }
+    
+    .border-border {
+      border-color: hsl(var(--border));
+    }
+  }
+}

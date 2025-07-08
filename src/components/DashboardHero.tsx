@@ -96,7 +96,7 @@ const DashboardHero: React.FC<DashboardHeroProps> = () => {
         </motion.h2>
         
         <motion.p 
-          className="text-lg text-foreground/90 mb-6 max-w-2xl mx-auto transition-all duration-300 hover:text-foreground dark:text-foreground/80 dark:hover:text-foreground"
+          className="text-lg text-foreground/95 mb-6 max-w-2xl mx-auto transition-all duration-300 hover:text-foreground"
           variants={itemVariants}
           transition={{
             duration: 0.5,
