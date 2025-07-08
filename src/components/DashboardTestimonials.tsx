@@ -117,7 +117,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 	}
 
 	return (
-		<Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50 dark:from-card dark:to-card dark:bg-card">
+		<Card className="nutri-card shadow-lg border-none bg-gradient-to-br from-green-50 to-blue-50">
 			{showTitle && (
 				<CardHeader>
 					<CardTitle className="flex items-center justify-between">
@@ -140,8 +140,8 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 				{testimonials && testimonials.length > 0 ? (
 					<div className="relative">
 						{/* Gradient masks for fade effect on sides */}
-						<div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-green-50 to-transparent dark:from-card dark:to-transparent z-20 pointer-events-none"></div>
-						<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-blue-50 to-transparent dark:from-card dark:to-transparent z-20 pointer-events-none"></div>
+						<div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-green-50 to-transparent z-20 pointer-events-none"></div>
+						<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-blue-50 to-transparent z-20 pointer-events-none"></div>
 
 						<div className="overflow-hidden" ref={emblaRef}>
 							<div className="flex py-6 px-2">
@@ -150,7 +150,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 										key={testimonial.id || index}
 										className="min-w-0 flex-[0_0_90%] md:flex-[0_0_45%] mx-2">
 										<div
-											className={`p-6 rounded-lg bg-white dark:bg-card transition-all duration-500 ${
+											className={`p-6 rounded-lg bg-white transition-all duration-500 ${
 												index === activeIndex
 													? "scale-105 shadow-xl"
 													: "scale-95 opacity-70"
@@ -161,15 +161,15 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 											<p
 												className={`italic mb-4 ${
 													index === activeIndex
-														? "text-gray-800 dark:text-foreground"
-														: "text-gray-600 dark:text-muted-foreground"
+														? "text-gray-800"
+														: "text-gray-600"
 												}`}>
 												&quot;{testimonial.content}&quot;
 											</p>
-											<p className="font-medium text-nutri-blue dark:text-primary">
+											<p className="font-medium text-nutri-blue">
 												{testimonial.name}
 											</p>
-											<p className="text-sm text-gray-500 dark:text-muted-foreground">
+											<p className="text-sm text-gray-500">
 												{testimonial.role}
 											</p>
 										</div>
@@ -180,7 +180,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 					</div>
 				) : (
 					<div className="text-center py-8">
-						<p className="text-gray-500 dark:text-muted-foreground">Nenhum depoimento encontrado</p>
+						<p className="text-gray-500">Nenhum depoimento encontrado</p>
 						<div className="mt-4">
 							<Button variant="outline" onClick={handleAddTestimonial}>
 								Seja o primeiro a deixar um depoimento
