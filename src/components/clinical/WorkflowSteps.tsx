@@ -28,36 +28,41 @@ const WorkflowStep: React.FC<WorkflowStepProps> = ({
   isOptional = false
 }) => {
   return (
-    <div
+    <button
       className={cn(
-        "flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer transition-all",
+        "w-full flex items-center gap-2 py-3 px-4 rounded-md transition-all duration-200 text-left",
+        "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20",
         isActive 
-          ? "bg-nutri-green/20 text-nutri-green border-l-4 border-nutri-green" 
+          ? "bg-nutri-green/20 text-nutri-green border-l-4 border-nutri-green shadow-sm" 
           : "hover:bg-muted",
-        disabled ? "opacity-50 cursor-not-allowed" : "",
-        isCompleted ? "text-muted-foreground" : ""
+        disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer",
+        isCompleted ? "text-muted-foreground bg-muted/30" : ""
       )}
-      onClick={() => !disabled && onClick()}
+      onClick={onClick}
+      disabled={disabled}
     >
       <div className={cn(
-        "rounded-full p-1",
-        isActive ? "bg-nutri-green text-white" : "bg-muted text-muted-foreground",
-        isCompleted ? "bg-muted-foreground/20" : ""
+        "rounded-full p-2 transition-all duration-200",
+        isActive ? "bg-nutri-green text-white shadow-md" : "bg-muted text-muted-foreground",
+        isCompleted ? "bg-green-500 text-white" : "",
+        !disabled && !isActive && "group-hover:bg-primary/10"
       )}>
         {isCompleted ? <Check className="h-4 w-4" /> : icon}
       </div>
-      <span className="text-sm font-medium flex items-center gap-1">
-        {label}
-        {isOptional && (
-          <span className="text-xs text-muted-foreground bg-muted px-1 rounded">
-            opcional
-          </span>
-        )}
-      </span>
+      <div className="flex-1">
+        <span className="text-sm font-medium flex items-center gap-2">
+          {label}
+          {isOptional && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+              opcional
+            </span>
+          )}
+        </span>
+      </div>
       {isCompleted && (
-        <Check className="h-4 w-4 ml-auto text-muted-foreground" />
+        <Check className="h-4 w-4 text-green-500" />
       )}
-    </div>
+    </button>
   );
 };
 
@@ -93,15 +98,49 @@ const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
   // Determine which steps are completed
   const currentStepIndex = steps.findIndex(s => s.step === currentStep);
   
-  // Determine which steps can be clicked (only previous steps and current step)
-  const canClickStep = (stepIndex: number) => {
-    if (!consultation) return stepIndex === 0;
-    return stepIndex <= currentStepIndex;
+  // Determine which steps can be clicked
+  const canClickStep = (stepIndex: number, step: ClinicalWorkflowStep) => {
+    // Always allow clicking on patient selection
+    if (step === 'patient-selection') return true;
+    
+    // For other steps, need a patient selected
+    if (!patient) return false;
+    
+    // Allow clicking on completed steps and current step
+    if (stepIndex <= currentStepIndex) return true;
+    
+    // Allow clicking on next step if current requirements are met
+    if (stepIndex === currentStepIndex + 1) {
+      switch (currentStep) {
+        case 'patient-selection':
+          return !!patient;
+        case 'patient-info':
+          return !!patient;
+        case 'anthropometry':
+          return true; // Optional step
+        case 'nutritional-evaluation':
+          return !!(consultation?.results);
+        case 'meal-plan':
+          return !!(consultation?.results);
+        case 'recommendations':
+          return true;
+        default:
+          return false;
+      }
+    }
+    
+    return false;
+  };
+  
+  const handleStepClick = (step: ClinicalWorkflowStep, stepIndex: number) => {
+    if (canClickStep(stepIndex, step)) {
+      setCurrentStep(step);
+    }
   };
   
   return (
-    <div className="bg-card rounded-md border p-2 mb-6">
-      <div className="space-y-1">
+    <div className="bg-card rounded-lg border shadow-sm p-4 mb-6">
+      <div className="space-y-2">
         {steps.map((step, index) => (
           <WorkflowStep
             key={step.step}
@@ -110,8 +149,8 @@ const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
             icon={step.icon}
             isActive={currentStep === step.step}
             isCompleted={index < currentStepIndex && step.completable}
-            onClick={() => setCurrentStep(step.step)}
-            disabled={!canClickStep(index)}
+            onClick={() => handleStepClick(step.step, index)}
+            disabled={!canClickStep(index, step.step)}
             isOptional={step.optional}
           />
         ))}
