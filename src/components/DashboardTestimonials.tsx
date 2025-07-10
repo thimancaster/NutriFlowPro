@@ -108,7 +108,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 
 	if (isLoading && fallbackTestimonials.length === 0) {
 		return (
-			<Card className="nutri-card shadow-lg border-none bg-white">
+			<Card className="bg-white shadow-lg border border-gray-200">
 				<CardHeader>
 					<CardTitle className="text-gray-900">Carregando depoimentos...</CardTitle>
 				</CardHeader>
@@ -117,7 +117,7 @@ const DashboardTestimonials: React.FC<DashboardTestimonialsProps> = ({showTitle 
 	}
 
 	return (
-		<Card className="nutri-card shadow-lg border-none bg-white">
+		<Card className="bg-white shadow-lg border border-gray-200">
 			{showTitle && (
 				<CardHeader>
 					<CardTitle className="flex items-center justify-between">

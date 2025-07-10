@@ -1,3 +1,4 @@
+
 /* Tema escuro - Variáveis e estilos específicos */
 @layer base {
   .dark {
@@ -34,8 +35,8 @@
     /* Elementos mutados com melhor legibilidade */
     --muted: 0 0% 12%;
     /* #1f1f23 */
-    --muted-foreground: 0 0% 67%;
-    /* #a1a1aa */
+    --muted-foreground: 0 0% 70%;
+    /* #b3b3b3 - Melhorado para melhor contraste */
 
     /* Acentos mais harmoniosos */
     --accent: 0 0% 16%;

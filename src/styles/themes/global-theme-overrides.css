@@ -1,3 +1,4 @@
+
 /* Global Theme Overrides - Padronização de Componentes UI */
 
 /* Garantir que todos os elementos principais usem as variáveis de tema */
@@ -110,4 +111,29 @@ span {
 
 .text-nutri-blue {
   color: hsl(var(--nutri-blue)) !important;
+}
+
+/* Landing page specific fixes - force light colors */
+.landing-page section {
+  background-color: #f8fafc;
+}
+
+.landing-page .bg-gray-50 {
+  background-color: #f8fafc !important;
+}
+
+.landing-page .bg-white {
+  background-color: #ffffff !important;
+}
+
+.landing-page .text-gray-900 {
+  color: #0f172a !important;
+}
+
+.landing-page .text-gray-600 {
+  color: #64748b !important;
+}
+
+.landing-page .text-muted-foreground {
+  color: #64748b !important;
 }
