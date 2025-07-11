@@ -35,7 +35,7 @@ const Recursos = () => {
           Recursos do <span className="text-nutri-green">Nutri</span><span className="text-nutri-blue">Flow Pro</span>
         </h1>
         
-        <p className="text-lg text-center mb-12 max-w-3xl mx-auto text-gray-600">
+        <p className="text-lg text-center mb-12 max-w-3xl mx-auto text-gray-700">
           Conheça todos os recursos disponíveis para otimizar seu trabalho como nutricionista e entregar resultados excepcionais para seus pacientes.
         </p>
         
@@ -45,14 +45,14 @@ const Recursos = () => {
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Plano Básico</h2>
               <p className="text-nutri-blue text-lg font-medium">Gratuito</p>
-              <p className="text-gray-500 mt-2">Ideal para começar</p>
+              <p className="text-gray-700 mt-2">Ideal para começar</p>
             </div>
             
             <ul className="space-y-3 mb-8">
               {featuresBasic.map((feature, index) => (
                 <li key={index} className="flex items-center">
                   <Check className="h-5 w-5 text-nutri-green mr-2" />
-                  <span className="text-gray-600">{feature}</span>
+                  <span className="text-gray-700">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -100,7 +100,7 @@ const Recursos = () => {
         
         {/* Seção de recursos destaque */}
         <div className="mt-16">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center text-gray-900">
             Recursos em destaque
           </h2>
           
@@ -114,8 +114,8 @@ const Recursos = () => {
                   fallbackSrc="/placeholder.svg"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Calculadora Nutricional</h3>
-              <p className="text-gray-600">Calcule com precisão as necessidades nutricionais de seus pacientes com nossa calculadora avançada.</p>
+              <h3 className="text-xl font-bold mb-2 text-gray-900">Calculadora Nutricional</h3>
+              <p className="text-gray-700">Calcule com precisão as necessidades nutricionais de seus pacientes com nossa calculadora avançada.</p>
             </div>
             
             <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
@@ -127,8 +127,8 @@ const Recursos = () => {
                   fallbackSrc="/placeholder.svg"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Planos Alimentares</h3>
-              <p className="text-gray-600">Crie planos alimentares personalizados com sugestões de alimentos e receitas baseadas em IA.</p>
+              <h3 className="text-xl font-bold mb-2 text-gray-900">Planos Alimentares</h3>
+              <p className="text-gray-700">Crie planos alimentares personalizados com sugestões de alimentos e receitas baseadas em IA.</p>
             </div>
             
             <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
@@ -140,8 +140,8 @@ const Recursos = () => {
                   fallbackSrc="/placeholder.svg"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Gestão de Pacientes</h3>
-              <p className="text-gray-600">Acompanhe a evolução de seus pacientes com gráficos e relatórios detalhados.</p>
+              <h3 className="text-xl font-bold mb-2 text-gray-900">Gestão de Pacientes</h3>
+              <p className="text-gray-700">Acompanhe a evolução de seus pacientes com gráficos e relatórios detalhados.</p>
             </div>
           </div>
         </div>
