@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ const HeroSection = () => {
               <span className="text-nutri-green">Nutri</span>
               <span className="text-nutri-blue">Flow Pro</span>
             </h1>
-            <h2 className="text-2xl md:text-3xl font-medium text-gray-700 mb-6">
+            <h2 className="text-2xl md:text-3xl font-medium text-gray-900 mb-6">
               Sistema completo de gestão para nutricionistas
             </h2>
             <p className="text-lg text-gray-600 mb-8">

@@ -42,12 +42,12 @@ const TestimonialsSection = () => {
                   <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 ))}
               </div>
-              <p className="text-gray-600 mb-4 italic">
+              <p className="text-gray-700 mb-4 italic">
                 "{testimonial.content}"
               </p>
               <div>
                 <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                <p className="text-sm text-gray-500">{testimonial.role}</p>
+                <p className="text-sm text-gray-600">{testimonial.role}</p>
               </div>
             </div>
           ))}
