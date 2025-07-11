@@ -1,7 +1,9 @@
+
 /* Import modular CSS files first */
 @import './styles/base/variables.css';
 @import './styles/base/global.css';
 @import './styles/themes/dark-theme.css';
+@import './styles/themes/global-theme-overrides.css';
 @import './styles/components/cards.css';
 @import './styles/components/forms.css';
 @import './styles/components/buttons.css';
@@ -16,3 +18,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Landing page specific wrapper */
+.landing-page {
+  /* Force light theme styles for landing page */
+  --background: 210 40% 98%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --muted-foreground: 215.4 16.3% 44%;
+}
