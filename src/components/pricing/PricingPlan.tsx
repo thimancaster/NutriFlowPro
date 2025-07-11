@@ -59,11 +59,11 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 						{price}
 					</span>
 					{priceDetail && (
-						<span className="text-gray-600">{priceDetail}</span>
+						<span className="text-gray-700">{priceDetail}</span>
 					)}
 				</div>
 				{description && (
-					<CardDescription className="text-sm text-gray-600 mt-2">
+					<CardDescription className="text-sm text-gray-700 mt-2">
 						{description}
 					</CardDescription>
 				)}
@@ -76,7 +76,7 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 							key={`${feature.text}-${index}`}
 							className="flex items-start gap-3">
 							<feature.icon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-							<span className="text-sm text-gray-700">
+							<span className="text-sm text-gray-800">
 								{feature.text}
 							</span>
 						</li>
