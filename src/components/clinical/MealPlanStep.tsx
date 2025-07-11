@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Utensils, Download, Edit, Plus } from 'lucide-react';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
+import { Utensils, Download, Edit, Plus, AlertCircle } from 'lucide-react';
+import { useUnifiedEcosystem } from '@/hooks/useUnifiedEcosystem';
 import { MealPlanService } from '@/services/mealPlanService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MealPlan } from '@/types/mealPlan';
 
 const MealPlanStep: React.FC = () => {
-  const { selectedPatient, consultationData, updateConsultationData } = useConsultationData();
+  const { 
+    activePatient,
+    user,
+    consultationData,
+    updateConsultationData,
+    validateForMealPlan,
+    isEcosystemHealthy,
+    areContextsSynced,
+    forceSyncContexts
+  } = useUnifiedEcosystem();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -20,30 +30,61 @@ const MealPlanStep: React.FC = () => {
   // Load existing meal plans for the patient
   useEffect(() => {
     const loadMealPlans = async () => {
-      if (!selectedPatient?.id) return;
+      // Ensure contexts are synchronized
+      if (!areContextsSynced) {
+        forceSyncContexts();
+        return;
+      }
+
+      // Validate required data before making API calls
+      if (!activePatient?.id || !user?.id) {
+        console.log('Missing required data for loading meal plans:', {
+          hasPatient: !!activePatient,
+          patientId: activePatient?.id,
+          hasUser: !!user,
+          userId: user?.id,
+          contextsSync: areContextsSynced
+        });
+        setIsLoading(false);
+        return;
+      }
       
       try {
         setIsLoading(true);
+        console.log('Loading meal plans for patient:', activePatient.id, 'user:', user.id);
+        
         const plans = await MealPlanService.getMealPlans(
-          selectedPatient.user_id || '', 
-          { patient_id: selectedPatient.id }
+          user.id, 
+          { patient_id: activePatient.id }
         );
         setExistingPlans(plans);
+        console.log('Loaded meal plans:', plans.length);
       } catch (error) {
         console.error('Error loading meal plans:', error);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar os planos alimentares existentes',
+          variant: 'destructive'
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadMealPlans();
-  }, [selectedPatient]);
+  }, [activePatient, user?.id, areContextsSynced, forceSyncContexts, toast]);
 
   const handleGenerateMealPlan = async () => {
-    if (!selectedPatient || !consultationData?.results) {
+    // Use unified ecosystem validation for comprehensive checks
+    const validation = validateForMealPlan();
+    
+    if (!validation.isValid) {
+      const errorMessage = validation.issues.join('. ');
+      console.error('Meal plan validation failed:', validation.issues);
+      
       toast({
-        title: 'Erro',
-        description: 'Dados insuficientes para gerar plano alimentar. Complete a avaliação nutricional primeiro.',
+        title: 'Erro de Validação',
+        description: errorMessage,
         variant: 'destructive'
       });
       return;
@@ -52,44 +93,53 @@ const MealPlanStep: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      const targets = {
-        calories: consultationData.results.vet,
-        protein: consultationData.results.macros.protein,
-        carbs: consultationData.results.macros.carbs,
-        fats: consultationData.results.macros.fat
-      };
+      console.log('Generating meal plan with validated data:', validation.data);
 
       const result = await MealPlanService.generateMealPlan(
-        selectedPatient.user_id || '',
-        selectedPatient.id,
-        targets
+        validation.data!.userId,
+        validation.data!.patientId,
+        validation.data!.targets
       );
 
       if (result.success && result.data) {
+        console.log('Meal plan generated successfully:', result.data.id);
+        
         // Update consultation data with notes about meal plan
         updateConsultationData({
           notes: `Plano alimentar gerado: ${result.data.id}`
         });
 
-        // Refresh the list of plans
+        // Refresh the list of plans using validated data
         const updatedPlans = await MealPlanService.getMealPlans(
-          selectedPatient.user_id || '', 
-          { patient_id: selectedPatient.id }
+          validation.data!.userId, 
+          { patient_id: validation.data!.patientId }
         );
         setExistingPlans(updatedPlans);
 
         toast({
-          title: 'Plano Alimentar Gerado',
+          title: 'Sucesso! 🇧🇷',
           description: 'Plano alimentar culturalmente inteligente criado com sucesso!'
         });
       } else {
         throw new Error(result.error || 'Falha ao gerar plano alimentar');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating meal plan:', error);
+      
+      // Enhanced error handling with specific messages
+      let errorMessage = 'Erro inesperado ao gerar plano alimentar';
+      
+      if (error.message?.includes('UUID')) {
+        errorMessage = 'Erro de identificação do usuário. Tente fazer logout e login novamente.';
+      } else if (error.message?.includes('calorias')) {
+        errorMessage = error.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: 'Erro',
-        description: 'Erro ao gerar plano alimentar. Tente novamente.',
+        title: 'Erro na Geração',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
@@ -106,20 +156,37 @@ const MealPlanStep: React.FC = () => {
   };
 
   const handleCreateManualPlan = () => {
-    if (!selectedPatient) return;
+    if (!activePatient || !user?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Dados necessários não disponíveis para criar plano manual',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     navigate('/meal-plan-generator', { 
       state: { 
-        patientId: selectedPatient.id,
+        patientId: activePatient.id,
+        userId: user.id,
         consultationData 
       } 
     });
   };
 
-  if (!selectedPatient) {
+  if (!activePatient) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
+        <CardContent className="p-6 text-center space-y-4">
           <p className="text-muted-foreground">Selecione um paciente para continuar</p>
+          {!areContextsSynced && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Contextos desincronizados. Selecione um paciente novamente.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     );
@@ -135,9 +202,19 @@ const MealPlanStep: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Ecosystem Health Indicator */}
+          {!isEcosystemHealthy && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Problema de integridade detectado no ecossistema. Alguns recursos podem não funcionar corretamente.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Patient and Consultation Summary */}
           <div className="bg-muted/30 p-4 rounded-lg">
-            <h3 className="font-medium mb-2">Paciente: {selectedPatient.name}</h3>
+            <h3 className="font-medium mb-2">Paciente: {activePatient.name}</h3>
             {consultationData?.results && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
