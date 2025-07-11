@@ -1,6 +1,6 @@
 
 import React from "react";
-import {CheckCircle, Zap, BookOpen, FileText, Badge, Clock, Award} from "lucide-react";
+import {CheckCircle, Zap, BookOpen, FileText, Badge, Clock} from "lucide-react";
 import {Link} from "react-router-dom";
 import {Button} from "@/components/ui/button";
 import {motion} from "framer-motion";
@@ -11,7 +11,7 @@ import PricingFooter from "@/components/pricing/PricingFooter";
 
 const PricingSection = () => {
 	return (
-		<section className="py-16 md:py-24 bg-gray-50">
+		<section className="py-16 md:py-24 bg-white">
 			<div className="container mx-auto px-4 md:px-8">
 				<PricingHeader
 					title="Planos para cada necessidade"
@@ -39,7 +39,7 @@ const PricingSection = () => {
 								<Button
 									variant="subscription-green"
 									animation="shimmer"
-									className="w-full font-semibold magnetic-hover ripple-effect smooth-lift colored-shadow-lift"
+									className="w-full font-semibold"
 									asChild>
 									<Link to="/signup">Comece Agora</Link>
 								</Button>
@@ -69,7 +69,7 @@ const PricingSection = () => {
 								<Button
 									variant="nutri-blue"
 									animation="shimmer"
-									className="w-full font-semibold magnetic-hover ripple-effect smooth-lift colored-shadow-lift"
+									className="w-full font-semibold"
 									onClick={() =>
 										window.open(
 											"https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d",
@@ -109,14 +109,14 @@ const PricingSection = () => {
 								<Button
 									variant="subscription-green"
 									animation="shimmer"
-									className="w-full font-semibold hover-lift"
+									className="w-full font-semibold"
 									onClick={() =>
 										window.open(
 											"https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf",
 											"_blank"
 										)
 									}>
-									<span className="flex flex-col items-center relative z-10">
+									<span className="flex flex-col items-center">
 										Assinar Pro Anual
 										<span className="text-xs opacity-90 mt-0.5">
 											(recomendado)

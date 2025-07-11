@@ -41,12 +41,12 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 		<Card
 			className={`relative ${
 				highlighted
-					? "bg-gradient-to-br from-green-50 to-blue-50 border-2 border-nutri-green shadow-xl shadow-nutri-green/20 scale-105 z-10"
-					: "bg-white border-gray-200"
+					? "bg-white border-2 border-green-500 shadow-lg"
+					: "bg-white border border-gray-200"
 			} flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
 			{badge && (
 				<div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
-					<Badge className="bg-gradient-to-r from-nutri-green to-nutri-blue text-white px-6 py-2 font-bold text-sm shadow-lg animate-pulse">
+					<Badge className="bg-green-600 text-white px-6 py-2 font-bold text-sm">
 						{badge}
 					</Badge>
 				</div>
@@ -55,7 +55,7 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 			<CardHeader className="text-center pb-4">
 				<CardTitle className="text-xl font-bold text-gray-900">{title}</CardTitle>
 				<div className="mt-4">
-					<span className="text-4xl font-bold text-nutri-green">
+					<span className="text-4xl font-bold text-green-600">
 						{price}
 					</span>
 					{priceDetail && (
@@ -74,9 +74,8 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 					{features.map((feature, index) => (
 						<li
 							key={`${feature.text}-${index}`}
-							className="flex items-start gap-3 animate-fade-in"
-							style={{animationDelay: `${index * 0.1}s`}}>
-							<feature.icon className="h-5 w-5 text-nutri-green mt-0.5 flex-shrink-0" />
+							className="flex items-start gap-3">
+							<feature.icon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
 							<span className="text-sm text-gray-700">
 								{feature.text}
 							</span>
