@@ -12,19 +12,19 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
           <motion.div 
-            className="md:w-1/2"
+            className="md:w-1/2 gradient-glass p-8 rounded-2xl backdrop-blur-sm"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="text-nutri-green">Nutri</span>
-              <span className="text-nutri-blue">Flow Pro</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-shadow-sm">
+              <span className="text-nutri-green text-glow-hover">Nutri</span>
+              <span className="text-nutri-blue text-glow-hover">Flow Pro</span>
             </h1>
-            <h2 className="text-2xl md:text-3xl font-medium text-gray-900 mb-6">
+            <h2 className="text-2xl md:text-3xl font-medium text-gray-900 mb-6 text-shadow-sm">
               Sistema completo de gestão para nutricionistas
             </h2>
-            <p className="text-lg text-gray-800 mb-8">
+            <p className="text-lg text-gray-800 mb-8 text-shadow-sm">
               Transforme sua prática nutricional com nossa plataforma completa. Gerencie pacientes, crie planos alimentares personalizados e acompanhe resultados em tempo real.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -32,7 +32,7 @@ const HeroSection = () => {
                 <Button 
                   variant="subscription-green"
                   animation="shimmer"
-                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift"
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift animated-border"
                 >
                   Começar Agora
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -55,12 +55,14 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <ImageWithFallback
-              src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
-              alt="Nutricionista trabalhando"
-              className="rounded-xl shadow-2xl w-full smooth-lift"
-              fallbackSrc="/placeholder.svg"
-            />
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <ImageWithFallback
+                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
+                alt="Nutricionista trabalhando"
+                className="w-full smooth-lift float-hover"
+                fallbackSrc="/placeholder.svg"
+              />
+            </div>
           </motion.div>
         </div>
       </div>

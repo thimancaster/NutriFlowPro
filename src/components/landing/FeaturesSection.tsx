@@ -8,7 +8,7 @@ const FeaturesSection = () => {
     <section className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4 md:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Transforme sua prática nutricional</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 text-glow-hover">Transforme sua prática nutricional</h2>
           <p className="text-lg text-gray-800 max-w-3xl mx-auto">
             Com ferramentas poderosas projetadas especificamente para profissionais de nutrição
           </p>
@@ -17,13 +17,13 @@ const FeaturesSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Feature 1 */}
           <motion.div 
-            className="bg-white rounded-xl p-8 shadow-sm border border-gray-100"
+            className="glass-overlay rounded-2xl p-8 backdrop-blur-sm border border-white/20 hover-lift transition-all duration-300"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
           >
-            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mb-6">
+            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mb-6 float-hover">
               <Users className="h-8 w-8 text-green-600" />
             </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Gerenciamento de Pacientes</h3>
@@ -48,13 +48,13 @@ const FeaturesSection = () => {
 
           {/* Feature 2 */}
           <motion.div 
-            className="bg-white rounded-xl p-8 shadow-sm border border-gray-100"
+            className="glass-overlay rounded-2xl p-8 backdrop-blur-sm border border-white/20 hover-lift transition-all duration-300"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mb-6">
+            <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mb-6 float-hover">
               <Calculator className="h-8 w-8 text-blue-600" />
             </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Calculadora Nutricional</h3>
@@ -79,13 +79,13 @@ const FeaturesSection = () => {
 
           {/* Feature 3 */}
           <motion.div 
-            className="bg-white rounded-xl p-8 shadow-sm border border-gray-100"
+            className="glass-overlay rounded-2xl p-8 backdrop-blur-sm border border-white/20 hover-lift transition-all duration-300"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
             viewport={{ once: true }}
           >
-            <div className="bg-amber-50 rounded-full w-16 h-16 flex items-center justify-center mb-6">
+            <div className="bg-amber-50 rounded-full w-16 h-16 flex items-center justify-center mb-6 float-hover">
               <FileText className="h-8 w-8 text-amber-600" />
             </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Planos Alimentares</h3>

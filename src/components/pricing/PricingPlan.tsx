@@ -41,18 +41,12 @@ const PricingPlan: React.FC<PricingPlanProps> = ({
 		<Card
 			className={`relative ${
 				highlighted
-					? "bg-white border-2 border-green-500 shadow-lg"
-					: "bg-white border border-gray-200"
-			} flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
-			{badge && (
-				<div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
-					<Badge className="bg-green-600 text-white px-6 py-2 font-bold text-sm">
-						{badge}
-					</Badge>
-				</div>
-			)}
+					? "bg-white/95 border-2 border-green-500 shadow-lg backdrop-blur-sm"
+					: "bg-white/90 border border-gray-200 backdrop-blur-sm"
+			} flex flex-col h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1 rounded-2xl`}>
+			{/* Badge removido daqui pois agora é renderizado no container pai */}
 
-			<CardHeader className="text-center pb-4">
+			<CardHeader className="text-center pb-4 pt-6">
 				<CardTitle className="text-xl font-bold text-gray-900">{title}</CardTitle>
 				<div className="mt-4">
 					<span className="text-4xl font-bold text-green-600">
