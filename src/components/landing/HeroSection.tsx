@@ -44,7 +44,7 @@ const HeroSection = () => {
           <div className="md:w-1/2">
             <div className="rounded-2xl overflow-hidden shadow-lg">
               <ImageWithFallback
-                src="/lovable-uploads/c6c24874-db8b-4e6d-bac4-d602a9a73841.png"
+                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
                 alt="Prato saudável com alimentos nutritivos"
                 className="w-full h-auto"
                 fallbackSrc="/placeholder.svg"
