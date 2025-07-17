@@ -11,14 +11,17 @@ import PricingFooter from "@/components/pricing/PricingFooter";
 
 const PricingSection = () => {
 	return (
-		<section className="py-16 md:py-24 bg-white">
-			<div className="container mx-auto px-4 md:px-8">
+		<section className="py-16 md:py-24 bg-gradient-to-b from-gray-50/50 to-white relative overflow-hidden">
+			{/* Background overlay */}
+			<div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-green-50/30 pointer-events-none" />
+			
+			<div className="container mx-auto px-4 md:px-8 relative z-10">
 				<PricingHeader
 					title="Planos para cada necessidade"
 					subtitle="Escolha o plano ideal para o seu perfil profissional"
 				/>
 
-				<div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+				<div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto pt-8">
 					{/* Plano Free */}
 					<motion.div
 						className="w-full md:w-[calc(33%-1rem)]"
@@ -39,7 +42,7 @@ const PricingSection = () => {
 								<Button
 									variant="subscription-green"
 									animation="shimmer"
-									className="w-full font-semibold"
+									className="w-full font-semibold smooth-lift colored-shadow-lift"
 									asChild>
 									<Link to="/signup">Comece Agora</Link>
 								</Button>
@@ -69,7 +72,7 @@ const PricingSection = () => {
 								<Button
 									variant="nutri-blue"
 									animation="shimmer"
-									className="w-full font-semibold"
+									className="w-full font-semibold smooth-lift colored-shadow-lift"
 									onClick={() =>
 										window.open(
 											"https://pay.hotmart.com/C99693448A?checkoutMode=2&off=ebyhyh4d",
@@ -109,7 +112,7 @@ const PricingSection = () => {
 								<Button
 									variant="subscription-green"
 									animation="shimmer"
-									className="w-full font-semibold"
+									className="w-full font-semibold smooth-lift colored-shadow-lift"
 									onClick={() =>
 										window.open(
 											"https://pay.hotmart.com/C99693448A?checkoutMode=2&off=1z0js5wf",

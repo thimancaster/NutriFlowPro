@@ -1,57 +1,114 @@
 
-/* Efeitos de gradiente */
+/* Efeitos de gradiente modernos */
 @layer components {
-  /* Gradiente Brilhante Animado */
-  .gradient-bright-hover {
+  /* Gradientes de fundo para seções */
+  .gradient-bg-primary {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 1) 0%, 
+      rgba(239, 246, 255, 0.5) 100%
+    );
+  }
+
+  .gradient-bg-secondary {
+    background: linear-gradient(135deg, 
+      rgba(249, 250, 251, 0.5) 0%, 
+      rgba(255, 255, 255, 1) 100%
+    );
+  }
+
+  .gradient-bg-accent {
+    background: linear-gradient(135deg, 
+      rgba(240, 253, 250, 0.3) 0%, 
+      rgba(239, 246, 255, 0.3) 100%
+    );
+  }
+
+  /* Gradientes para overlays */
+  .gradient-overlay-blue {
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.05) 0%, 
+      transparent 50%, 
+      rgba(34, 197, 94, 0.05) 100%
+    );
+  }
+
+  .gradient-overlay-green {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.05) 0%, 
+      transparent 50%, 
+      rgba(59, 130, 246, 0.05) 100%
+    );
+  }
+
+  /* Gradientes para botões */
+  .gradient-button-primary {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 1) 0%, 
+      rgba(21, 128, 61, 1) 100%
+    );
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+  }
+
+  .gradient-button-secondary {
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 1) 0%, 
+      rgba(37, 99, 235, 1) 100%
+    );
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Efeitos de borda gradiente */
+  .gradient-border {
     position: relative;
-    background: linear-gradient(45deg, theme('colors.nutri.green'), theme('colors.nutri.blue'));
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3)) border-box;
+    border: 2px solid transparent;
+  }
+
+  /* Gradientes para texto */
+  .gradient-text-primary {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 1) 0%, 
+      rgba(21, 128, 61, 1) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-secondary {
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 1) 0%, 
+      rgba(37, 99, 235, 1) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Efeitos de sombra gradiente */
+  .gradient-shadow-green {
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.15),
+                0 4px 10px rgba(34, 197, 94, 0.1);
+  }
+
+  .gradient-shadow-blue {
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15),
+                0 4px 10px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Animações de gradiente */
+  .animated-gradient {
+    background: linear-gradient(270deg, 
+      rgba(34, 197, 94, 0.1) 0%, 
+      rgba(59, 130, 246, 0.1) 50%, 
+      rgba(34, 197, 94, 0.1) 100%
+    );
     background-size: 400% 400%;
-    animation: gradient-shift 4s ease infinite;
-    transition: all 0.3s ease;
+    animation: gradientAnimation 8s ease infinite;
   }
 
-  .gradient-bright-hover::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: conic-gradient(from 0deg,
-        theme('colors.nutri.green'),
-        theme('colors.nutri.blue'),
-        theme('colors.nutri.green-light'),
-        theme('colors.nutri.green'));
-    border-radius: inherit;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    animation: rotate 3s linear infinite;
-  }
-
-  .gradient-bright-hover:hover::before {
-    opacity: 0.8;
-  }
-
-  .dark .gradient-bright-hover {
-    background: linear-gradient(45deg, theme('colors.dark.accent.green'), theme('colors.nutri.blue'));
-  }
-
-  .dark .gradient-bright-hover::before {
-    background: conic-gradient(from 0deg,
-        theme('colors.dark.accent.green'),
-        theme('colors.nutri.blue'),
-        #00ff88,
-        theme('colors.dark.accent.green'));
-  }
-
-  /* Efeito de Gradiente que se Move */
-  .gradient-shift {
-    background-size: 200% auto;
-    transition: background-position 0.5s ease;
-  }
-
-  .gradient-shift:hover {
-    background-position: right center;
-  }
-
-  @keyframes gradient-shift {
+  @keyframes gradientAnimation {
     0% {
       background-position: 0% 50%;
     }
