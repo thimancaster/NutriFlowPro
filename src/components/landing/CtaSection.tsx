@@ -10,7 +10,7 @@ const CtaSection = () => {
     <section className="py-16 md:py-24 bg-green-50">
       <div className="container mx-auto px-4 md:px-8 text-center">
         <motion.div
-          className="gradient-glass rounded-2xl p-8 backdrop-blur-sm"
+          className="hero-card rounded-2xl p-8 backdrop-blur-sm"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -26,7 +26,7 @@ const CtaSection = () => {
               <Button 
                 variant="subscription-green"
                 animation="shimmer"
-                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto magnetic-hover ripple-effect animated-border"
+                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto magnetic-hover ripple-effect animated-border shimmer-effect"
               >
                 Criar Conta Gratuita
                 <ArrowRight className="ml-2 h-5 w-5" />

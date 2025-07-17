@@ -12,7 +12,7 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
           <motion.div 
-            className="md:w-1/2 gradient-glass p-8 rounded-2xl backdrop-blur-sm"
+            className="md:w-1/2 hero-card rounded-2xl p-8 backdrop-blur-sm"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
@@ -32,7 +32,7 @@ const HeroSection = () => {
                 <Button 
                   variant="subscription-green"
                   animation="shimmer"
-                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift animated-border"
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift animated-border shimmer-effect"
                 >
                   Começar Agora
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -55,7 +55,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="glass-card rounded-2xl overflow-hidden">
+            <div className="glass-card rounded-2xl overflow-hidden backdrop-blur-sm border border-white/20">
               <ImageWithFallback
                 src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
                 alt="Nutricionista trabalhando"
