@@ -1,93 +1,94 @@
+
 /* Global Theme Overrides - Padronização de Componentes UI */
 
 /* Garantir que todos os elementos principais usem as variáveis de tema */
 
-/* Overrides para componentes que podem ter cores hardcoded */
-.text-gray-500 {
+/* Overrides para componentes específicos (não landing page) */
+.text-gray-500:not(.landing-page *) {
   color: hsl(var(--muted-foreground));
 }
 
-.text-gray-600 {
+.text-gray-600:not(.landing-page *) {
   color: hsl(var(--muted-foreground));
 }
 
-.text-gray-700 {
+.text-gray-700:not(.landing-page *) {
   color: hsl(var(--foreground) / 0.8);
 }
 
-.text-gray-800 {
+.text-gray-800:not(.landing-page *) {
   color: hsl(var(--foreground));
 }
 
-.text-gray-900 {
+.text-gray-900:not(.landing-page *) {
   color: hsl(var(--foreground));
 }
 
-.bg-gray-50 {
+.bg-gray-50:not(.landing-page *) {
   background-color: hsl(var(--muted));
 }
 
-.bg-gray-100 {
+.bg-gray-100:not(.landing-page *) {
   background-color: hsl(var(--muted));
 }
 
-.bg-gray-200 {
+.bg-gray-200:not(.landing-page *) {
   background-color: hsl(var(--muted));
 }
 
-.border-gray-200 {
+.border-gray-200:not(.landing-page *) {
   border-color: hsl(var(--border));
 }
 
-.border-gray-300 {
+.border-gray-300:not(.landing-page *) {
   border-color: hsl(var(--border));
 }
 
 /* Garantir que cards sempre usem as variáveis corretas */
-.card {
+.card:not(.landing-page *) {
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
   border-color: hsl(var(--border));
 }
 
 /* Tables consistency */
-table {
+table:not(.landing-page *) {
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
 }
 
-th {
+th:not(.landing-page *) {
   color: hsl(var(--muted-foreground));
   border-color: hsl(var(--border));
 }
 
-td {
+td:not(.landing-page *) {
   color: hsl(var(--card-foreground));
   border-color: hsl(var(--border));
 }
 
 /* Inputs consistency */
-input, textarea, select {
+input:not(.landing-page *), textarea:not(.landing-page *), select:not(.landing-page *) {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   border-color: hsl(var(--border));
 }
 
-input:disabled {
+input:disabled:not(.landing-page *) {
   background-color: hsl(var(--muted));
   color: hsl(var(--muted-foreground));
 }
 
-/* Ensure proper contrast for all text elements */
-h1, h2, h3, h4, h5, h6 {
+/* Ensure proper contrast for all text elements (excluding landing page) */
+h1:not(.landing-page *), h2:not(.landing-page *), h3:not(.landing-page *), h4:not(.landing-page *), h5:not(.landing-page *), h6:not(.landing-page *) {
   color: hsl(var(--foreground));
 }
 
-p {
+p:not(.landing-page *) {
   color: hsl(var(--foreground));
 }
 
-span {
+span:not(.landing-page *) {
   color: hsl(var(--foreground));
 }
 

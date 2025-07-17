@@ -9,7 +9,7 @@ const FeaturesSection = () => {
       <div className="container mx-auto px-4 md:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Transforme sua prática nutricional</h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-800 max-w-3xl mx-auto">
             Com ferramentas poderosas projetadas especificamente para profissionais de nutrição
           </p>
         </div>
@@ -27,21 +27,21 @@ const FeaturesSection = () => {
               <Users className="h-8 w-8 text-green-600" />
             </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Gerenciamento de Pacientes</h3>
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-800 mb-6">
               Cadastre pacientes, acompanhe seu progresso e mantenha todos os registros organizados em um só lugar.
             </p>
             <ul className="space-y-2">
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Fichas completas de pacientes</span>
+                <span className="text-gray-800">Fichas completas de pacientes</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Histórico de atendimentos</span>
+                <span className="text-gray-800">Histórico de atendimentos</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Acompanhamento antropométrico</span>
+                <span className="text-gray-800">Acompanhamento antropométrico</span>
               </li>
             </ul>
           </motion.div>
@@ -58,21 +58,21 @@ const FeaturesSection = () => {
               <Calculator className="h-8 w-8 text-blue-600" />
             </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Calculadora Nutricional</h3>
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-800 mb-6">
               Calcule com precisão as necessidades nutricionais dos seus pacientes com nossa calculadora avançada.
             </p>
             <ul className="space-y-2">
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">IMC, TMB, necessidade calórica</span>
+                <span className="text-gray-800">IMC, TMB, necessidade calórica</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Distribuição de macronutrientes</span>
+                <span className="text-gray-800">Distribuição de macronutrientes</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Cálculos personalizados</span>
+                <span className="text-gray-800">Cálculos personalizados</span>
               </li>
             </ul>
           </motion.div>
@@ -89,21 +89,21 @@ const FeaturesSection = () => {
               <FileText className="h-8 w-8 text-amber-600" />
             </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Planos Alimentares</h3>
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-800 mb-6">
               Crie planos alimentares personalizados de forma rápida e eficiente para cada paciente.
             </p>
             <ul className="space-y-2">
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Modelos personalizáveis</span>
+                <span className="text-gray-800">Modelos personalizáveis</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Gerador por IA (Premium)</span>
+                <span className="text-gray-800">Gerador por IA (Premium)</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Exportação em PDF</span>
+                <span className="text-gray-800">Exportação em PDF</span>
               </li>
             </ul>
           </motion.div>

@@ -16,7 +16,7 @@ const CtaSection = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">Pronto para transformar sua prática?</h2>
-          <p className="text-lg text-gray-700 max-w-3xl mx-auto mb-8">
+          <p className="text-lg text-gray-800 max-w-3xl mx-auto mb-8">
             Junte-se a milhares de nutricionistas que já estão usando o NutriFlow Pro para otimizar seu trabalho e melhorar os resultados dos pacientes.
           </p>
           

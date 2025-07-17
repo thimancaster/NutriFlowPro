@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const HeroSection = () => {
             <h2 className="text-2xl md:text-3xl font-medium text-gray-900 mb-6">
               Sistema completo de gestão para nutricionistas
             </h2>
-            <p className="text-lg text-gray-600 mb-8">
+            <p className="text-lg text-gray-800 mb-8">
               Transforme sua prática nutricional com nossa plataforma completa. Gerencie pacientes, crie planos alimentares personalizados e acompanhe resultados em tempo real.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
