@@ -29,7 +29,7 @@ const CtaSection = () => {
               <Button 
                 variant="subscription-green"
                 animation="shimmer"
-                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto magnetic-hover ripple-effect colored-shadow-lift group"
+                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto subtle-glow highlight-border group"
               >
                 Criar Conta Gratuita
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -39,7 +39,7 @@ const CtaSection = () => {
               <Button 
                 variant="nutri-blue"
                 animation="shimmer"
-                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto magnetic-hover ripple-effect colored-shadow-lift"
+                className="px-8 py-6 text-lg font-semibold w-full sm:w-auto subtle-glow"
               >
                 Fazer Login
               </Button>

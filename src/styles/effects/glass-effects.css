@@ -17,17 +17,19 @@
   }
 
   .glass-card:hover {
-    background: rgba(34, 211, 170, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(34, 211, 170, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: rgba(34, 211, 170, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px -4px theme('colors.nutri.green' / 10%), 
+                0 2px 8px -2px theme('colors.nutri.green' / 6%);
   }
 
   .dark .glass-card:hover {
-    background: rgba(34, 211, 170, 0.1);
-    border-color: rgba(34, 211, 170, 0.3);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(34, 211, 170, 0.2), 0 0 0 1px rgba(34, 211, 170, 0.15);
+    background: rgba(34, 211, 170, 0.06);
+    border-color: rgba(34, 211, 170, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px -4px theme('colors.dark.accent.green' / 15%), 
+                0 2px 8px -2px theme('colors.dark.accent.green' / 10%);
   }
 
   /* Enhanced glass overlay for modern transparency */

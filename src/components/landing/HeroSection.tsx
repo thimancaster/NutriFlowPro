@@ -35,7 +35,7 @@ const HeroSection = () => {
                 <Button 
                   variant="subscription-green"
                   animation="shimmer"
-                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift colored-shadow-lift group"
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold subtle-glow highlight-border group"
                 >
                   Começar Agora
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -45,7 +45,7 @@ const HeroSection = () => {
                 <Button 
                   variant="nutri-blue"
                   animation="shimmer" 
-                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold magnetic-hover ripple-effect smooth-lift colored-shadow-lift"
+                  className="px-8 py-6 text-lg w-full sm:w-auto font-semibold subtle-glow"
                 >
                   Login
                 </Button>
@@ -61,7 +61,7 @@ const HeroSection = () => {
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
               alt="Nutricionista trabalhando"
-              className="rounded-xl shadow-2xl w-full depth-3d float-animation"
+              className="rounded-xl shadow-2xl w-full elegant-depth highlight-border float-animation"
               fallbackSrc="/placeholder.svg"
             />
           </motion.div>
