@@ -14,37 +14,23 @@
     @apply hover:shadow-dark-xl;
   }
 
-  /* Efeito de Elevação com Sombra Colorida Refinada */
+  /* Efeito de Elevação Simples */
   .colored-shadow-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
   }
 
   .colored-shadow-lift:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px -2px theme('colors.nutri.green' / 8%), 
-                0 2px 6px -1px theme('colors.nutri.green' / 5%);
-  }
-
-  .dark .colored-shadow-lift:hover {
-    box-shadow: 0 4px 12px -2px theme('colors.dark.accent.green' / 12%), 
-                0 2px 6px -1px theme('colors.dark.accent.green' / 8%);
   }
 
   /* Efeito de Profundidade Elegante */
   .elegant-depth {
     position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
   }
 
   .elegant-depth:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px -1px theme('colors.nutri.blue' / 6%), 
-                0 4px 16px -2px theme('colors.nutri.blue' / 4%);
-  }
-
-  .dark .elegant-depth:hover {
-    box-shadow: 0 2px 8px -1px theme('colors.dark.accent.green' / 10%), 
-                0 4px 16px -2px theme('colors.dark.accent.green' / 6%);
   }
 
   /* Smooth Lift Effect Refinado */
@@ -54,29 +40,12 @@
 
   .smooth-lift:hover {
     transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 6px 18px -3px theme('colors.nutri.green' / 8%), 
-                0 3px 10px -2px theme('colors.nutri.green' / 5%);
   }
 
-  .dark .smooth-lift:hover {
-    box-shadow: 0 6px 18px -3px theme('colors.dark.accent.green' / 12%), 
-                0 3px 10px -2px theme('colors.dark.accent.green' / 8%);
-  }
-
-  /* Efeito de Glow Sutil */
+  /* Efeito sem Glow */
   .subtle-glow {
     transition: all 0.3s ease;
     position: relative;
-  }
-
-  .subtle-glow:hover {
-    box-shadow: 0 0 20px -8px theme('colors.nutri.green' / 15%), 
-                0 2px 8px -2px theme('colors.nutri.green' / 8%);
-  }
-
-  .dark .subtle-glow:hover {
-    box-shadow: 0 0 20px -8px theme('colors.dark.accent.green' / 20%), 
-                0 2px 8px -2px theme('colors.dark.accent.green' / 12%);
   }
 
   /* Efeito de Border Highlight */
