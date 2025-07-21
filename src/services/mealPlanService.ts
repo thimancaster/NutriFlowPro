@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { MealPlan, MealPlanMeal, MealPlanFilters, MacroTargets } from '@/types/mealPlan';
 import { Json } from '@/integrations/supabase/types';
@@ -10,7 +9,7 @@ const convertJsonToMeals = (meals: Json): MealPlanMeal[] => {
       return JSON.parse(meals) as MealPlanMeal[];
     }
     if (Array.isArray(meals)) {
-      return meals as MealPlanMeal[];
+      return meals as unknown as MealPlanMeal[];
     }
     return [];
   } catch (error) {
@@ -37,7 +36,7 @@ const convertDbToMealPlan = (dbRecord: any): MealPlan => {
 };
 
 export const MealPlanService = {
-  async getMealPlans(userId: string, filters: MealPlanFilters = {}): Promise<MealPlan[]> {
+  async getMealPlans(userId: string, filters: MealPlanFilters = {}): Promise<{ success: boolean; data?: MealPlan[]; error?: string }> {
     try {
       console.log('Fetching meal plans for user:', userId, 'with filters:', filters);
       
@@ -67,7 +66,7 @@ export const MealPlanService = {
 
       if (error) {
         console.error('Error fetching meal plans:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
 
       console.log('Raw meal plans data:', data);
@@ -76,14 +75,14 @@ export const MealPlanService = {
       const mealPlans = data?.map(convertDbToMealPlan) || [];
       
       console.log('Converted meal plans:', mealPlans);
-      return mealPlans;
-    } catch (error) {
+      return { success: true, data: mealPlans };
+    } catch (error: any) {
       console.error('Failed to fetch meal plans:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async getMealPlan(id: string): Promise<MealPlan | null> {
+  async getMealPlan(id: string): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
       console.log('Fetching meal plan by ID:', id);
       
@@ -95,25 +94,25 @@ export const MealPlanService = {
 
       if (error) {
         console.error('Error fetching meal plan:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
 
       if (!data) {
         console.log('No meal plan found with ID:', id);
-        return null;
+        return { success: false, error: 'Meal plan not found' };
       }
 
       const mealPlan = convertDbToMealPlan(data);
       console.log('Converted meal plan:', mealPlan);
-      return mealPlan;
-    } catch (error) {
+      return { success: true, data: mealPlan };
+    } catch (error: any) {
       console.error('Failed to fetch meal plan:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
   // Alias for backward compatibility
-  getMealPlanById(id: string): Promise<MealPlan | null> {
+  getMealPlanById(id: string): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     return this.getMealPlan(id);
   },
 
@@ -250,12 +249,8 @@ export const MealPlanService = {
       console.log('Generated meal plan ID:', mealPlanId);
 
       // Fetch the complete generated meal plan
-      const mealPlan = await this.getMealPlan(mealPlanId);
-      if (!mealPlan) {
-        return { success: false, error: 'Failed to fetch generated meal plan' };
-      }
-
-      return { success: true, data: mealPlan };
+      const result = await this.getMealPlan(mealPlanId);
+      return result;
     } catch (error: any) {
       console.error('Failed to generate meal plan:', error);
       return { success: false, error: error.message };

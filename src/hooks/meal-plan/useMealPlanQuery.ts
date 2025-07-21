@@ -12,7 +12,11 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
     queryKey: ['meal-plans', user?.id, filters],
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
-      return await MealPlanService.getMealPlans(user.id, filters);
+      const result = await MealPlanService.getMealPlans(user.id, filters);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch meal plans');
+      }
+      return result;
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -22,7 +26,13 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
 export const useMealPlan = (id: string) => {
   return useQuery({
     queryKey: ['meal-plan', id],
-    queryFn: () => MealPlanService.getMealPlan(id),
+    queryFn: async () => {
+      const result = await MealPlanService.getMealPlan(id);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch meal plan');
+      }
+      return result;
+    },
     enabled: !!id,
   });
 };
