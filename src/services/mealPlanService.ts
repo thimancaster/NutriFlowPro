@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanMeal } from '@/types/meal-plan';
+import { MealPlan, MealPlanMeal, MealPlanFilters, MacroTargets } from '@/types/mealPlan';
 import { Json } from '@/integrations/supabase/types';
 
 // Type conversion utilities
@@ -37,15 +37,33 @@ const convertDbToMealPlan = (dbRecord: any): MealPlan => {
 };
 
 export const MealPlanService = {
-  async getMealPlans(userId: string): Promise<MealPlan[]> {
+  async getMealPlans(userId: string, filters: MealPlanFilters = {}): Promise<MealPlan[]> {
     try {
-      console.log('Fetching meal plans for user:', userId);
+      console.log('Fetching meal plans for user:', userId, 'with filters:', filters);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('meal_plans')
         .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .eq('user_id', userId);
+
+      // Apply filters
+      if (filters.patient_id) {
+        query = query.eq('patient_id', filters.patient_id);
+      }
+      if (filters.date_from) {
+        query = query.gte('date', filters.date_from);
+      }
+      if (filters.date_to) {
+        query = query.lte('date', filters.date_to);
+      }
+      if (filters.is_template !== undefined) {
+        query = query.eq('is_template', filters.is_template);
+      }
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching meal plans:', error);
@@ -99,19 +117,19 @@ export const MealPlanService = {
     return this.getMealPlan(id);
   },
 
-  async createMealPlan(mealPlan: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<MealPlan> {
+  async createMealPlan(mealPlan: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
       console.log('Creating meal plan:', mealPlan);
       
       // Validate required fields
       if (!mealPlan.user_id) {
-        throw new Error('user_id is required');
+        return { success: false, error: 'user_id is required' };
       }
       if (!mealPlan.date) {
-        throw new Error('date is required');
+        return { success: false, error: 'date is required' };
       }
       if (!mealPlan.meals) {
-        throw new Error('meals is required');
+        return { success: false, error: 'meals is required' };
       }
 
       // Convert meals to JSON for database storage
@@ -128,30 +146,31 @@ export const MealPlanService = {
 
       if (error) {
         console.error('Error creating meal plan:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
 
       if (!data) {
-        throw new Error('No data returned from insert');
+        return { success: false, error: 'No data returned from insert' };
       }
 
       const createdMealPlan = convertDbToMealPlan(data);
       console.log('Created meal plan:', createdMealPlan);
-      return createdMealPlan;
-    } catch (error) {
+      return { success: true, data: createdMealPlan };
+    } catch (error: any) {
       console.error('Failed to create meal plan:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async updateMealPlan(id: string, updates: Partial<MealPlan>): Promise<MealPlan> {
+  async updateMealPlan(id: string, updates: Partial<MealPlan>): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
       console.log('Updating meal plan:', id, updates);
       
       // Convert meals to JSON if present in updates
-      const dbUpdates = updates.meals 
-        ? { ...updates, meals: convertMealsToJson(updates.meals) }
-        : updates;
+      const dbUpdates: any = { ...updates };
+      if (updates.meals) {
+        dbUpdates.meals = convertMealsToJson(updates.meals);
+      }
 
       const { data, error } = await supabase
         .from('meal_plans')
@@ -162,23 +181,23 @@ export const MealPlanService = {
 
       if (error) {
         console.error('Error updating meal plan:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
 
       if (!data) {
-        throw new Error('No data returned from update');
+        return { success: false, error: 'No data returned from update' };
       }
 
       const updatedMealPlan = convertDbToMealPlan(data);
       console.log('Updated meal plan:', updatedMealPlan);
-      return updatedMealPlan;
-    } catch (error) {
+      return { success: true, data: updatedMealPlan };
+    } catch (error: any) {
       console.error('Failed to update meal plan:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async deleteMealPlan(id: string): Promise<void> {
+  async deleteMealPlan(id: string): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('Deleting meal plan:', id);
       
@@ -189,48 +208,57 @@ export const MealPlanService = {
 
       if (error) {
         console.error('Error deleting meal plan:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
 
       console.log('Meal plan deleted successfully');
-    } catch (error) {
+      return { success: true };
+    } catch (error: any) {
       console.error('Failed to delete meal plan:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async generateMealPlan(params: {
-    userId: string;
-    patientId?: string;
-    targetCalories: number;
-    targetProtein: number;
-    targetCarbs: number;
-    targetFats: number;
-    date?: string;
-  }): Promise<string> {
+  async generateMealPlan(
+    userId: string,
+    patientId: string,
+    targets: MacroTargets,
+    date?: string
+  ): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
-      console.log('Generating meal plan with params:', params);
+      console.log('Generating meal plan with params:', { userId, patientId, targets, date });
       
-      const { data, error } = await supabase.rpc('generate_meal_plan', {
-        p_user_id: params.userId,
-        p_patient_id: params.patientId,
-        p_target_calories: params.targetCalories,
-        p_target_protein: params.targetProtein,
-        p_target_carbs: params.targetCarbs,
-        p_target_fats: params.targetFats,
-        p_date: params.date
+      const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan_with_cultural_rules', {
+        p_user_id: userId,
+        p_patient_id: patientId,
+        p_target_calories: targets.calories,
+        p_target_protein: targets.protein,
+        p_target_carbs: targets.carbs,
+        p_target_fats: targets.fats,
+        p_date: date || new Date().toISOString().split('T')[0]
       });
 
       if (error) {
         console.error('Error generating meal plan:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
 
-      console.log('Generated meal plan ID:', data);
-      return data;
-    } catch (error) {
+      if (!mealPlanId) {
+        return { success: false, error: 'No meal plan ID returned from generation' };
+      }
+
+      console.log('Generated meal plan ID:', mealPlanId);
+
+      // Fetch the complete generated meal plan
+      const mealPlan = await this.getMealPlan(mealPlanId);
+      if (!mealPlan) {
+        return { success: false, error: 'Failed to fetch generated meal plan' };
+      }
+
+      return { success: true, data: mealPlan };
+    } catch (error: any) {
       console.error('Failed to generate meal plan:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   }
 };
