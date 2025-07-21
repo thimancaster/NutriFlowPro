@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuthState } from './types';
 import useAuthStorage from '@/hooks/auth/useAuthStorage';
 import { usePremiumCheck } from '@/hooks/premium';
+import { useToast } from '@/hooks/use-toast';
 
 export const useAuthStateManager = () => {
   const [authState, setState] = useState<AuthState>({
@@ -29,6 +30,7 @@ export const useAuthStateManager = () => {
   
   const { storeSession, getStoredSession, clearStoredSession } = useAuthStorage();
   const { checkPremiumStatus } = usePremiumCheck();
+  const { toast } = useToast();
   
   // Convert Supabase user to our User type with proper typing
   const convertSupabaseUser = (supabaseUser: SupabaseUser) => ({
@@ -42,7 +44,7 @@ export const useAuthStateManager = () => {
     aud: supabaseUser.aud
   });
   
-  // Methods to update authentication state
+  // Set authentication state
   const setAuthenticated = (user: SupabaseUser | null, session: Session | null, isPremium: boolean = false) => {
     setState({
       isLoading: false,
@@ -69,7 +71,7 @@ export const useAuthStateManager = () => {
     setState(prev => ({ ...prev, isLoading, loading: isLoading }));
   };
   
-  // Update session with better error handling
+  // Update session with better error handling and cleanup
   const updateAuthState = async (newSession: Session | null, remember: boolean = false) => {
     try {
       if (!newSession) {
@@ -86,14 +88,23 @@ export const useAuthStateManager = () => {
       setAuthenticated(newSession.user, newSession, isPremium);
     } catch (error) {
       console.error('Error updating auth state:', error);
+      
+      // Clean up on error
       setAuthenticated(null, null);
       clearStoredSession();
+      
+      toast({
+        title: "Erro de Autenticação",
+        description: "Sessão inválida detectada. Por favor, faça login novamente.",
+        variant: "destructive"
+      });
     }
   };
   
   // Initialize auth state with improved error handling
   useEffect(() => {
     let mounted = true;
+    let subscription: any;
     
     const initialize = async () => {
       try {
@@ -101,30 +112,15 @@ export const useAuthStateManager = () => {
         
         setLoading(true);
         
-        // Check for existing session first
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Error getting session:', sessionError);
-          if (mounted) {
-            setAuthenticated(null, null);
-          }
-        } else if (sessionData.session && mounted) {
-          const storedSession = getStoredSession();
-          const remember = !!storedSession;
-          await updateAuthState(sessionData.session, remember);
-        } else if (mounted) {
-          setAuthenticated(null, null);
-        }
-        
-        // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        // Set up auth state change listener first
+        const { data } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (!mounted) return;
             
             console.log('Auth state changed:', event, !!session);
             
             try {
+              // Handle different auth events
               if (event === 'SIGNED_IN' && session) {
                 const storedSession = getStoredSession();
                 const remember = !!storedSession;
@@ -136,6 +132,17 @@ export const useAuthStateManager = () => {
                 const storedSession = getStoredSession();
                 const remember = !!storedSession;
                 await updateAuthState(session, remember);
+              } else if (event === 'TOKEN_REFRESHED' && !session) {
+                // Token refresh failed - clean up and sign out
+                console.warn('Token refresh failed, signing out user');
+                setAuthenticated(null, null);
+                clearStoredSession();
+                
+                toast({
+                  title: "Sessão Expirada",
+                  description: "Sua sessão expirou. Por favor, faça login novamente.",
+                  variant: "destructive"
+                });
               }
             } catch (error) {
               console.error('Error handling auth state change:', error);
@@ -147,14 +154,30 @@ export const useAuthStateManager = () => {
           }
         );
         
-        return () => {
-          mounted = false;
-          subscription.unsubscribe();
-        };
+        subscription = data.subscription;
+        
+        // Then check for existing session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          if (mounted) {
+            setAuthenticated(null, null);
+            clearStoredSession();
+          }
+        } else if (sessionData.session && mounted) {
+          const storedSession = getStoredSession();
+          const remember = !!storedSession;
+          await updateAuthState(sessionData.session, remember);
+        } else if (mounted) {
+          setAuthenticated(null, null);
+        }
+        
       } catch (error) {
         console.error('Error initializing authentication:', error);
         if (mounted) {
           setAuthenticated(null, null);
+          clearStoredSession();
         }
       } finally {
         if (mounted) {
@@ -163,11 +186,13 @@ export const useAuthStateManager = () => {
       }
     };
     
-    const cleanup = initialize();
+    initialize();
     
     return () => {
       mounted = false;
-      cleanup?.then(cleanupFn => cleanupFn?.());
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
   

@@ -21,7 +21,23 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Enhanced error handling for authentication
+// Enhanced error handling for authentication with cleanup
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
+  
+  // Clean up invalid tokens
+  if (event === 'TOKEN_REFRESHED' && !session) {
+    console.warn('Token refresh failed, clearing storage');
+    localStorage.removeItem('sb-lnyixnhsrovzdxybmjfa-auth-token');
+    sessionStorage.removeItem('sb-lnyixnhsrovzdxybmjfa-auth-token');
+  }
+  
+  // Handle expired sessions
+  if (event === 'SIGNED_OUT') {
+    localStorage.removeItem('sb-lnyixnhsrovzdxybmjfa-auth-token');
+    sessionStorage.removeItem('sb-lnyixnhsrovzdxybmjfa-auth-token');
+    localStorage.removeItem('session_fingerprint');
+    localStorage.removeItem('login_timestamp');
+    localStorage.removeItem('remember_me');
+  }
 });

@@ -1,6 +1,7 @@
-import {Routes, Route, Navigate} from "react-router-dom";
+
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedLayout from "@/components/layouts/ProtectedLayout";
-import AuthHandler from '@/components/auth/AuthHandler'; // <--- Adicione esta linha
+import AuthHandler from '@/components/auth/AuthHandler';
 
 // Pages
 import Index from "@/pages/Index";
@@ -47,7 +48,7 @@ const AppRoutes = () => {
             <Route path="/recursos" element={<Recursos />} />
             <Route path="/auth/callback" element={<AuthHandler />} />
 
-            {/* Replace old signup routes with unified version */}
+            {/* Unified signup routes - remove duplicates */}
             <Route path="/signup" element={<UnifiedSignup />} />
             <Route path="/register" element={<Navigate to="/signup" replace />} />
 
