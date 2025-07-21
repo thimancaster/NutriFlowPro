@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { mapSupabaseConsultation } from '@/types/consultations';
 
-export const useConsultationData = (consultationId?: string) => {
+export const useConsultationDataHook = (consultationId?: string) => {
   const [consultation, setConsultation] = useState<ConsultationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -81,7 +81,7 @@ export const useConsultationData = (consultationId?: string) => {
       protein: 0,
       carbs: 0,
       fats: 0,
-      totalCalories: 0, // ADDED
+      totalCalories: 0,
       gender: 'M',
       activity_level: 'moderado',
       patient: {

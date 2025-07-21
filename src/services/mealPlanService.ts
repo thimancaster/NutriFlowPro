@@ -1,6 +1,40 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanFilters, MacroTargets, MealPlanResponse, MealPlanListResponse } from '@/types/mealPlan';
+import { MealPlan, MealPlanFilters, MacroTargets, MealPlanResponse, MealPlanListResponse, MealPlanMeal } from '@/types/mealPlan';
+
+// Helper function to parse JSON meals safely
+const parseMeals = (meals: any): MealPlanMeal[] => {
+  if (Array.isArray(meals)) return meals;
+  if (typeof meals === 'string') {
+    try {
+      return JSON.parse(meals);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+// Helper function to convert database row to MealPlan
+const convertToMealPlan = (row: any): MealPlan => {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    patient_id: row.patient_id,
+    calculation_id: row.calculation_id,
+    date: row.date,
+    meals: parseMeals(row.meals),
+    total_calories: row.total_calories,
+    total_protein: row.total_protein,
+    total_carbs: row.total_carbs,
+    total_fats: row.total_fats,
+    notes: row.notes,
+    is_template: row.is_template,
+    day_of_week: row.day_of_week,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+};
 
 export class MealPlanService {
   static async getMealPlans(userId: string, filters: MealPlanFilters = {}): Promise<MealPlan[]> {
@@ -41,7 +75,7 @@ export class MealPlanService {
       }
 
       console.log('Fetched meal plans:', data?.length || 0);
-      return data || [];
+      return data ? data.map(convertToMealPlan) : [];
     } catch (error) {
       console.error('Error in getMealPlans:', error);
       throw error;
@@ -68,11 +102,17 @@ export class MealPlanService {
       }
 
       console.log('Fetched meal plan:', data.id);
-      return { success: true, data };
+      return { success: true, data: convertToMealPlan(data) };
     } catch (error: any) {
       console.error('Error in getMealPlan:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  // Alias for compatibility
+  static async getMealPlanById(id: string): Promise<MealPlan | null> {
+    const result = await this.getMealPlan(id);
+    return result.success ? result.data! : null;
   }
 
   static async generateMealPlan(
@@ -143,9 +183,25 @@ export class MealPlanService {
     try {
       console.log('Creating meal plan:', data);
       
+      // Convert MealPlan to database format
+      const dbData = {
+        user_id: data.user_id,
+        patient_id: data.patient_id,
+        calculation_id: data.calculation_id,
+        date: data.date,
+        meals: JSON.stringify(data.meals),
+        total_calories: data.total_calories,
+        total_protein: data.total_protein,
+        total_carbs: data.total_carbs,
+        total_fats: data.total_fats,
+        notes: data.notes,
+        is_template: data.is_template,
+        day_of_week: data.day_of_week
+      };
+      
       const { data: createdPlan, error } = await supabase
         .from('meal_plans')
-        .insert(data)
+        .insert(dbData)
         .select()
         .single();
 
@@ -155,7 +211,7 @@ export class MealPlanService {
       }
 
       console.log('Created meal plan:', createdPlan.id);
-      return { success: true, data: createdPlan };
+      return { success: true, data: convertToMealPlan(createdPlan) };
     } catch (error: any) {
       console.error('Error in createMealPlan:', error);
       return { success: false, error: error.message };
@@ -166,12 +222,20 @@ export class MealPlanService {
     try {
       console.log('Updating meal plan:', id, updates);
       
+      // Convert updates to database format
+      const dbUpdates: any = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Convert meals array to JSON string if present
+      if (updates.meals) {
+        dbUpdates.meals = JSON.stringify(updates.meals);
+      }
+      
       const { data: updatedPlan, error } = await supabase
         .from('meal_plans')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -182,7 +246,7 @@ export class MealPlanService {
       }
 
       console.log('Updated meal plan:', updatedPlan.id);
-      return { success: true, data: updatedPlan };
+      return { success: true, data: convertToMealPlan(updatedPlan) };
     } catch (error: any) {
       console.error('Error in updateMealPlan:', error);
       return { success: false, error: error.message };

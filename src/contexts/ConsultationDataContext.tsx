@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Patient, ConsultationData } from '@/types';
 import { useAuth } from './auth/AuthContext';
+import { ClinicalWorkflowStep } from '@/types/clinical';
 
 interface ConsultationDataContextType {
   selectedPatient: Patient | null;
@@ -12,6 +13,17 @@ interface ConsultationDataContextType {
   clearConsultationData: () => void;
   startNewConsultation: (patient: Patient) => Promise<void>;
   isConsultationActive: boolean;
+  
+  // Clinical workflow properties
+  currentStep: ClinicalWorkflowStep;
+  setCurrentStep: (step: ClinicalWorkflowStep) => void;
+  isSaving: boolean;
+  lastSaved: Date | null;
+  isLoading: boolean;
+  patientHistoryData: any;
+  autoSave: () => Promise<void>;
+  completeConsultation: () => Promise<void>;
+  loadPatientHistory: (patientId: string) => Promise<void>;
 }
 
 const ConsultationDataContext = createContext<ConsultationDataContextType | undefined>(undefined);
@@ -32,12 +44,18 @@ export const ConsultationDataProvider: React.FC<ConsultationDataProviderProps> =
   const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
+  const [currentStep, setCurrentStep] = useState<ClinicalWorkflowStep>('patient-selection');
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [patientHistoryData, setPatientHistoryData] = useState<any>(null);
 
   // Clear consultation data when user logs out
   useEffect(() => {
     if (!user) {
       setSelectedPatient(null);
       setConsultationData(null);
+      setCurrentStep('patient-selection');
     }
   }, [user]);
 
@@ -51,6 +69,7 @@ export const ConsultationDataProvider: React.FC<ConsultationDataProviderProps> =
   const clearConsultationData = () => {
     setConsultationData(null);
     setSelectedPatient(null);
+    setCurrentStep('patient-selection');
   };
 
   const startNewConsultation = async (patient: Patient) => {
@@ -81,6 +100,49 @@ export const ConsultationDataProvider: React.FC<ConsultationDataProviderProps> =
     setConsultationData(newConsultationData);
   };
 
+  const autoSave = async () => {
+    if (!consultationData) return;
+    
+    setIsSaving(true);
+    try {
+      // Simulate auto-save
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const completeConsultation = async () => {
+    if (!consultationData) return;
+    
+    setIsSaving(true);
+    try {
+      // Implement consultation completion logic
+      await autoSave();
+      console.log('Consultation completed');
+    } catch (error) {
+      console.error('Failed to complete consultation:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadPatientHistory = async (patientId: string) => {
+    setIsLoading(true);
+    try {
+      // Simulate loading patient history
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setPatientHistoryData({ patientId, loaded: true });
+    } catch (error) {
+      console.error('Failed to load patient history:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isConsultationActive = selectedPatient !== null && consultationData !== null;
 
   const value: ConsultationDataContextType = {
@@ -91,7 +153,16 @@ export const ConsultationDataProvider: React.FC<ConsultationDataProviderProps> =
     updateConsultationData,
     clearConsultationData,
     startNewConsultation,
-    isConsultationActive
+    isConsultationActive,
+    currentStep,
+    setCurrentStep,
+    isSaving,
+    lastSaved,
+    isLoading,
+    patientHistoryData,
+    autoSave,
+    completeConsultation,
+    loadPatientHistory
   };
 
   return (
