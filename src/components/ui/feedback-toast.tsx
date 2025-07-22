@@ -9,7 +9,6 @@ interface FeedbackToastOptions {
   title: string;
   description?: string;
   type: FeedbackType;
-  duration?: number;
 }
 
 const getToastConfig = (type: FeedbackType) => {
@@ -42,7 +41,7 @@ const getToastConfig = (type: FeedbackType) => {
   }
 };
 
-export const showFeedbackToast = ({ title, description, type, duration = 5000 }: FeedbackToastOptions) => {
+export const showFeedbackToast = ({ title, description, type }: FeedbackToastOptions) => {
   const config = getToastConfig(type);
   const Icon = config.icon;
 
@@ -55,7 +54,6 @@ export const showFeedbackToast = ({ title, description, type, duration = 5000 }:
     ) as any,
     description,
     variant: config.variant,
-    duration,
   });
 };
 

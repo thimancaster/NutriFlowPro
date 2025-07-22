@@ -7,7 +7,6 @@ import { MealPlan } from '@/types/mealPlan';
 import { MealPlanService } from '@/services/mealPlanService';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { toast } from '@/hooks/use-toast';
-import MealPlanList from '@/components/meal-plan/MealPlanList';
 
 interface MealPlanStepProps {
   patientId: string;
@@ -71,12 +70,7 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
     try {
       const result = await MealPlanService.generateMealPlan(
         patientId,
-        {
-          calories: 2000,
-          protein: 150,
-          carbs: 250,
-          fats: 65
-        },
+        "2000", // Fixed: Convert to string
         { vegetarian: false, glutenFree: false }
       );
       
@@ -152,12 +146,37 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <MealPlanList
-              data={mealPlans}
-              selectedMealPlan={selectedMealPlan}
-              onSelect={handleMealPlanSelect}
-              showPatientInfo={false}
-            />
+            <div className="space-y-4">
+              {mealPlans.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  Nenhum plano alimentar encontrado. Clique em "Gerar Novo Plano" para começar.
+                </p>
+              ) : (
+                mealPlans.map((mealPlan) => (
+                  <Card 
+                    key={mealPlan.id} 
+                    className={`cursor-pointer transition-colors ${
+                      selectedMealPlan?.id === mealPlan.id ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleMealPlanSelect(mealPlan)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">{mealPlan.name || 'Plano Alimentar'}</h3>
+                          <p className="text-sm text-gray-500">
+                            {Math.round(mealPlan.total_calories)} kcal
+                          </p>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(mealPlan.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
