@@ -70,8 +70,9 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
     try {
       // Fix: Pass the correct parameters as expected by the service
       const result = await MealPlanService.generateMealPlan(
-        patientId,
-        "2000" // calories as string
+        "user-id", // userId - should come from auth context in real app
+        patientId, // patientId
+        { calories: 2000, protein: 150, carbs: 250, fats: 67 } // MacroTargets object
       );
       
       if (result.success && result.data) {
