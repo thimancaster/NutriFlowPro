@@ -8,7 +8,6 @@ import { MealPlanService } from '@/services/mealPlanService';
 import { useConsultation } from '@/contexts/ConsultationContext';
 import { toast } from '@/hooks/use-toast';
 import MealPlanList from '@/components/meal-plan/MealPlanList';
-import MealPlanActions from '@/components/MealPlanActions';
 
 interface MealPlanStepProps {
   patientId: string;
@@ -33,7 +32,7 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
     setLoading(true);
     try {
       const result = await MealPlanService.getMealPlans(patientId, { 
-        patientId,
+        patient_id: patientId,
         limit: 10 
       });
       
@@ -76,7 +75,7 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
           calories: 2000,
           protein: 150,
           carbs: 250,
-          fat: 65
+          fats: 65
         },
         { vegetarian: false, glutenFree: false }
       );
@@ -154,17 +153,11 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
             </div>
           ) : (
             <MealPlanList
-              mealPlans={mealPlans}
+              data={mealPlans}
               selectedMealPlan={selectedMealPlan}
               onSelect={handleMealPlanSelect}
               showPatientInfo={false}
             />
-          )}
-
-          {selectedMealPlan && (
-            <div className="mt-4">
-              <MealPlanActions />
-            </div>
           )}
         </CardContent>
       </Card>
