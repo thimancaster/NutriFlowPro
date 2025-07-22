@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, TrendingUp, Activity, Target, ArrowRight, Utensils } from 'lucide-react';
+import { Calculator, TrendingUp, Activity, Target, ArrowRight } from 'lucide-react';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useToast } from '@/hooks/use-toast';
 import { calculateNutritionalNeeds } from '@/utils/nutritionalCalculations';
@@ -44,7 +44,7 @@ const NutritionalEvaluationStep: React.FC = () => {
         weight: consultationData.weight || 0,
         height: consultationData.height || 0,
         age: consultationData.age || 0,
-        gender: (consultationData.gender === 'male' ? 'male' : 'female') as 'male' | 'female',
+        gender: consultationData.gender || 'female',
         activityLevel: consultationData.activity_level || 'moderado',
         objective: consultationData.objective || 'manutenção'
       });
