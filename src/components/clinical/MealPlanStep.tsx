@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Utensils, Download, Edit, Plus, AlertCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
+import { useUnifiedEcosystem } from '@/hooks/useUnifiedEcosystem';
 import { MealPlanService } from '@/services/mealPlanService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -13,9 +11,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MealPlan } from '@/types/mealPlan';
 
 const MealPlanStep: React.FC = () => {
-  const { user } = useAuth();
-  const { activePatient } = usePatient();
-  const { consultationData } = useConsultationData();
+  const { 
+    activePatient,
+    user,
+    consultationData,
+    updateConsultationData,
+    validateForMealPlan,
+    isEcosystemHealthy,
+    areContextsSynced,
+    forceSyncContexts
+  } = useUnifiedEcosystem();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -25,12 +30,20 @@ const MealPlanStep: React.FC = () => {
   // Load existing meal plans for the patient
   useEffect(() => {
     const loadMealPlans = async () => {
+      // Ensure contexts are synchronized
+      if (!areContextsSynced) {
+        forceSyncContexts();
+        return;
+      }
+
+      // Validate required data before making API calls
       if (!activePatient?.id || !user?.id) {
         console.log('Missing required data for loading meal plans:', {
           hasPatient: !!activePatient,
           patientId: activePatient?.id,
           hasUser: !!user,
-          userId: user?.id
+          userId: user?.id,
+          contextsSync: areContextsSynced
         });
         setIsLoading(false);
         return;
@@ -59,22 +72,19 @@ const MealPlanStep: React.FC = () => {
     };
 
     loadMealPlans();
-  }, [activePatient?.id, user?.id, toast]);
+  }, [activePatient, user?.id, areContextsSynced, forceSyncContexts, toast]);
 
   const handleGenerateMealPlan = async () => {
-    if (!user?.id || !activePatient?.id) {
+    // Use unified ecosystem validation for comprehensive checks
+    const validation = validateForMealPlan();
+    
+    if (!validation.isValid) {
+      const errorMessage = validation.issues.join('. ');
+      console.error('Meal plan validation failed:', validation.issues);
+      
       toast({
         title: 'Erro de Validação',
-        description: 'Usuário ou paciente não identificado',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!consultationData?.results) {
-      toast({
-        title: 'Dados Incompletos',
-        description: 'Complete a avaliação nutricional primeiro para gerar um plano alimentar',
+        description: errorMessage,
         variant: 'destructive'
       });
       return;
@@ -83,35 +93,26 @@ const MealPlanStep: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      console.log('Generating meal plan with data:', {
-        userId: user.id,
-        patientId: activePatient.id,
-        targets: {
-          calories: consultationData.results.vet,
-          protein: consultationData.results.macros.protein,
-          carbs: consultationData.results.macros.carbs,
-          fats: consultationData.results.macros.fat
-        }
-      });
+      console.log('Generating meal plan with validated data:', validation.data);
 
       const result = await MealPlanService.generateMealPlan(
-        user.id,
-        activePatient.id,
-        {
-          calories: consultationData.results.vet,
-          protein: consultationData.results.macros.protein,
-          carbs: consultationData.results.macros.carbs,
-          fats: consultationData.results.macros.fat
-        }
+        validation.data!.userId,
+        validation.data!.patientId,
+        validation.data!.targets
       );
 
       if (result.success && result.data) {
         console.log('Meal plan generated successfully:', result.data.id);
         
-        // Refresh the list of plans
+        // Update consultation data with notes about meal plan
+        updateConsultationData({
+          notes: `Plano alimentar gerado: ${result.data.id}`
+        });
+
+        // Refresh the list of plans using validated data
         const updatedPlans = await MealPlanService.getMealPlans(
-          user.id, 
-          { patient_id: activePatient.id }
+          validation.data!.userId, 
+          { patient_id: validation.data!.patientId }
         );
         setExistingPlans(updatedPlans);
 
@@ -125,6 +126,7 @@ const MealPlanStep: React.FC = () => {
     } catch (error: any) {
       console.error('Error generating meal plan:', error);
       
+      // Enhanced error handling with specific messages
       let errorMessage = 'Erro inesperado ao gerar plano alimentar';
       
       if (error.message?.includes('UUID')) {
@@ -163,10 +165,11 @@ const MealPlanStep: React.FC = () => {
       return;
     }
     
-    navigate('/meal-plan-workflow', { 
+    navigate('/meal-plan-generator', { 
       state: { 
-        patientData: activePatient,
-        calculationData: consultationData
+        patientId: activePatient.id,
+        userId: user.id,
+        consultationData 
       } 
     });
   };
@@ -175,11 +178,15 @@ const MealPlanStep: React.FC = () => {
     return (
       <Card>
         <CardContent className="p-6 text-center space-y-4">
-          <AlertCircle className="h-12 w-12 mx-auto text-gray-300" />
           <p className="text-muted-foreground">Selecione um paciente para continuar</p>
-          <Button onClick={() => navigate('/patients')}>
-            Selecionar Paciente
-          </Button>
+          {!areContextsSynced && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Contextos desincronizados. Selecione um paciente novamente.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     );
@@ -195,6 +202,16 @@ const MealPlanStep: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Ecosystem Health Indicator */}
+          {!isEcosystemHealthy && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Problema de integridade detectado no ecossistema. Alguns recursos podem não funcionar corretamente.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Patient and Consultation Summary */}
           <div className="bg-muted/30 p-4 rounded-lg">
             <h3 className="font-medium mb-2">Paciente: {activePatient.name}</h3>
@@ -247,12 +264,11 @@ const MealPlanStep: React.FC = () => {
           </div>
 
           {!consultationData?.results && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <p className="text-amber-800 dark:text-amber-200 text-sm">
                 <strong>Aviso:</strong> Complete a avaliação nutricional primeiro para gerar um plano alimentar automaticamente.
-              </AlertDescription>
-            </Alert>
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -276,11 +292,11 @@ const MealPlanStep: React.FC = () => {
                         Plano de {new Date(plan.date).toLocaleDateString('pt-BR')}
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        {Math.round(plan.total_calories)} kcal
+                        {plan.total_calories} kcal
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      P: {Math.round(plan.total_protein)}g | C: {Math.round(plan.total_carbs)}g | G: {Math.round(plan.total_fats)}g
+                      P: {plan.total_protein}g | C: {plan.total_carbs}g | G: {plan.total_fats}g
                     </p>
                   </div>
                   <div className="flex gap-2">
