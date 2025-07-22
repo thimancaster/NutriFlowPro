@@ -1,66 +1,58 @@
 
-import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import './styles/themes/global-theme-overrides.css';
 
-// Enhanced error boundary for startup issues
-class ErrorBoundary extends React.Component {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, error: null };
+// Importar o GlobalErrorBoundary
+import GlobalErrorBoundary from './components/error/GlobalErrorBoundary';
+
+// Import our new utility functions
+import { initSentry } from './utils/sentry';
+import { logger } from './utils/logger';
+
+// Initialize Sentry for error tracking
+initSentry();
+
+// Log application startup
+logger.info('Application starting', { 
+  context: 'Startup',
+  details: { 
+    environment: import.meta.env.MODE,
+    version: import.meta.env.VITE_APP_VERSION || '1.0.0'
   }
+});
 
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error('Application startup error:', error, errorInfo);
-  }
-
-  render() {
-    if ((this.state as any).hasError) {
-      return (
-        <div style={{ 
-          padding: '20px', 
-          textAlign: 'center', 
-          fontFamily: 'system-ui, sans-serif' 
-        }}>
-          <h1>Erro de Inicialização</h1>
-          <p>Ocorreu um erro ao carregar a aplicação. Tente recarregar a página.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#3B82F6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Recarregar
-          </button>
-        </div>
-      );
+// Add global error handler (estes listeners continuarão a capturar erros globais,
+// mas o ErrorBoundary React lida com erros na árvore de componentes React)
+window.addEventListener('error', (event) => {
+  logger.error('Uncaught error (from window.onerror)', {
+    context: 'Global',
+    details: {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      error: event.error
     }
+  });
+});
 
-    return (this.props as any).children;
-  }
-}
+window.addEventListener('unhandledrejection', (event) => {
+  logger.error('Unhandled promise rejection (from window.onunhandledrejection)', {
+    context: 'Global',
+    details: {
+      reason: event.reason
+    }
+  });
+});
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("Root element not found");
-}
-
-console.log('[Startup] Application starting');
-
-createRoot(rootElement).render(
-  <StrictMode>
-    <ErrorBoundary>
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    {/* Envolver o componente App com o GlobalErrorBoundary */}
+    <GlobalErrorBoundary>
       <App />
-    </ErrorBoundary>
-  </StrictMode>
+    </GlobalErrorBoundary>
+  </React.StrictMode>,
 );

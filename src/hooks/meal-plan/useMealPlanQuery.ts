@@ -11,12 +11,8 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
   return useQuery({
     queryKey: ['meal-plans', user?.id, filters],
     queryFn: async () => {
-      if (!user?.id) throw new Error('User not authenticated');
-      const result = await MealPlanService.getMealPlans(user.id, filters);
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch meal plans');
-      }
-      return result;
+      const data = await MealPlanService.getMealPlans(user!.id, filters);
+      return { success: true, data };
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -26,13 +22,7 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
 export const useMealPlan = (id: string) => {
   return useQuery({
     queryKey: ['meal-plan', id],
-    queryFn: async () => {
-      const result = await MealPlanService.getMealPlan(id);
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch meal plan');
-      }
-      return result;
-    },
+    queryFn: () => MealPlanService.getMealPlan(id),
     enabled: !!id,
   });
 };
@@ -111,10 +101,8 @@ export const useMealPlanMutations = () => {
       patientId: string; 
       targets: MacroTargets; 
       date?: string;
-    }) => {
-      if (!user?.id) throw new Error('User not authenticated');
-      return MealPlanService.generateMealPlan(user.id, patientId, targets, date);
-    },
+    }) => 
+      MealPlanService.generateMealPlan(user!.id, patientId, targets, date),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });

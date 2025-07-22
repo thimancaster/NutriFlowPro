@@ -1,33 +1,36 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requirePremium?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requirePremium = false 
+}) => {
+  const { user, loading, isPremium } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/', { replace: true });
-    }
-  }, [user, isLoading, navigate]);
-
-  if (isLoading) {
+  // Show loading while checking auth state
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
+  // Redirect to login if not authenticated
   if (!user) {
-    return null;
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to pricing if premium required but user is not premium
+  if (requirePremium && !isPremium) {
+    return <Navigate to="/pricing" replace />;
   }
 
   return <>{children}</>;

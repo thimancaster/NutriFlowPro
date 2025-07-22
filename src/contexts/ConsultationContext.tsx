@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { ConsultationData, Patient } from '@/types';
-import { MealPlan } from '@/types/mealPlan';
 
 // Define the consultation steps
 export type ConsultationStep = 'patient-selection' | 'evaluation' | 'meal-plan' | 'review';
@@ -15,8 +14,7 @@ interface ConsultationContextType {
   setCurrentStep: (step: ConsultationStep) => void;
   isConsultationActive: boolean;
   clearConsultation: () => void;
-  mealPlan: MealPlan | null;
-  setMealPlan: (mealPlan: MealPlan | null) => void;
+  mealPlan: any;
 }
 
 export const ConsultationContext = createContext<ConsultationContextType | undefined>(undefined);
@@ -27,13 +25,11 @@ export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [activePatient, setActivePatient] = useState<Patient | null>(null);
   const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
   const [currentStep, setCurrentStep] = useState<ConsultationStep>('patient-selection');
-  const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   
   const clearConsultation = () => {
     setActivePatient(null);
     setConsultationData(null);
     setCurrentStep('patient-selection');
-    setMealPlan(null);
   };
   
   return (
@@ -47,8 +43,7 @@ export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({
         setCurrentStep,
         isConsultationActive: !!activePatient,
         clearConsultation,
-        mealPlan,
-        setMealPlan
+        mealPlan: null
       }}
     >
       {children}
