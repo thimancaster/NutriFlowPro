@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import NavbarDesktopNavigation from './navbar/NavbarDesktopNavigation';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import NavbarUserMenu from './navbar/NavbarUserMenu';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout } = useAuth();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -16,6 +18,10 @@ const Navbar = () => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -36,7 +42,7 @@ const Navbar = () => {
           <NavbarDesktopNavigation />
 
           {/* User Menu */}
-          <NavbarUserMenu />
+          <NavbarUserMenu onLogout={handleLogout} />
 
           {/* Mobile menu button */}
           <div className="md:hidden">
