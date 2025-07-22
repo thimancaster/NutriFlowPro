@@ -68,10 +68,10 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
     
     setGenerating(true);
     try {
+      // Fix: Pass the correct parameters as expected by the service
       const result = await MealPlanService.generateMealPlan(
         patientId,
-        "2000", // Fixed: Convert to string
-        { vegetarian: false, glutenFree: false }
+        "2000" // calories as string
       );
       
       if (result.success && result.data) {
@@ -163,7 +163,9 @@ const MealPlanStep: React.FC<MealPlanStepProps> = ({ patientId, onNext, onPrev }
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h3 className="font-medium">{mealPlan.name || 'Plano Alimentar'}</h3>
+                          <h3 className="font-medium">
+                            {(mealPlan as any).name || 'Plano Alimentar'}
+                          </h3>
                           <p className="text-sm text-gray-500">
                             {Math.round(mealPlan.total_calories)} kcal
                           </p>

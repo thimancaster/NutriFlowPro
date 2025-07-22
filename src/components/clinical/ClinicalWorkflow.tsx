@@ -16,10 +16,10 @@ const ClinicalWorkflow: React.FC<ClinicalWorkflowProps> = ({ patientId: initialP
   const { currentStep, setCurrentStep, activePatient } = useConsultation();
 
   const steps = [
-    { id: 'patient-selection', label: 'Paciente', component: PatientSelectionStep },
-    { id: 'evaluation', label: 'Avaliação', component: EvaluationStep },
-    { id: 'meal-plan', label: 'Plano Alimentar', component: MealPlanStep },
-    { id: 'review', label: 'Revisão', component: ReviewStep },
+    { id: 'patient-selection', label: 'Paciente' },
+    { id: 'evaluation', label: 'Avaliação' },
+    { id: 'meal-plan', label: 'Plano Alimentar' },
+    { id: 'review', label: 'Revisão' },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -39,12 +39,6 @@ const ClinicalWorkflow: React.FC<ClinicalWorkflowProps> = ({ patientId: initialP
   };
 
   const renderStepContent = () => {
-    const currentStepData = steps[currentStepIndex];
-    if (!currentStepData) return null;
-
-    const StepComponent = currentStepData.component;
-    
-    // Provide required props based on the step
     const commonProps = {
       onNext: handleNext,
       onPrev: handlePrev,
@@ -52,17 +46,36 @@ const ClinicalWorkflow: React.FC<ClinicalWorkflowProps> = ({ patientId: initialP
 
     switch (currentStep) {
       case 'patient-selection':
-        return <StepComponent {...commonProps} initialPatientId={initialPatientId} />;
+        return (
+          <PatientSelectionStep 
+            {...commonProps} 
+            initialPatientId={initialPatientId} 
+          />
+        );
       case 'evaluation':
         return activePatient ? (
-          <StepComponent {...commonProps} patientId={activePatient.id} />
-        ) : null;
+          <EvaluationStep 
+            {...commonProps} 
+            patientId={activePatient.id} 
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Selecione um paciente primeiro</p>
+          </div>
+        );
       case 'meal-plan':
         return activePatient ? (
-          <StepComponent {...commonProps} patientId={activePatient.id} />
-        ) : null;
+          <MealPlanStep 
+            {...commonProps} 
+            patientId={activePatient.id} 
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Selecione um paciente primeiro</p>
+          </div>
+        );
       case 'review':
-        return <StepComponent {...commonProps} />;
+        return <ReviewStep {...commonProps} />;
       default:
         return null;
     }
