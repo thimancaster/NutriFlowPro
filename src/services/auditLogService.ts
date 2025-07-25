@@ -1,116 +1,101 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export interface SecurityEvent {
-  id: string;
-  user_id: string | null;
+interface AuditLogEntry {
+  user_id?: string;
   event_type: string;
-  event_data: any;
-  ip_address: string | null;
-  user_agent: string | null;
-  timestamp: string;
-  created_at: string;
-}
-
-export interface LoginAttempt {
-  user_id: string;
-  email: string;
-  success: boolean;
-  error_message?: string;
+  event_data?: any;
   ip_address?: string;
   user_agent?: string;
 }
 
-class AuditLogService {
+interface SecurityEvent {
+  user_id: string;
+  event_type: string;
+  event_data: any;
+  timestamp?: string;
+}
+
+/**
+ * Service for logging audit events and security activities
+ */
+export class AuditLogService {
   /**
-   * Log a security event
+   * Log a general audit event
    */
-  async logEvent(event: {
-    user_id: string;
-    event_type: string;
-    event_data?: any;
-    ip_address?: string;
-    user_agent?: string;
-  }): Promise<void> {
+  async logEvent(entry: AuditLogEntry): Promise<void> {
     try {
-      const { error } = await supabase.rpc('log_security_event_safe', {
-        p_user_id: event.user_id,
-        p_event_type: event.event_type,
-        p_event_data: event.event_data || {},
-        p_ip_address: event.ip_address,
-        p_user_agent: event.user_agent
-      });
+      const { error } = await supabase
+        .from('security_audit_log')
+        .insert({
+          user_id: entry.user_id,
+          event_type: entry.event_type,
+          event_data: entry.event_data || {},
+          ip_address: entry.ip_address,
+          user_agent: entry.user_agent || navigator.userAgent,
+          timestamp: new Date().toISOString()
+        });
 
       if (error) {
-        console.error('Error logging security event:', error);
+        console.error('Failed to log audit event:', error);
       }
+    } catch (error) {
+      console.error('Error logging audit event:', error);
+    }
+  }
+
+  /**
+   * Log a security-specific event
+   */
+  async logSecurityEvent(event: SecurityEvent): Promise<void> {
+    try {
+      await this.logEvent({
+        user_id: event.user_id,
+        event_type: event.event_type,
+        event_data: {
+          ...event.event_data,
+          timestamp: event.timestamp || new Date().toISOString(),
+          security_event: true
+        }
+      });
     } catch (error) {
       console.error('Error logging security event:', error);
     }
   }
 
   /**
-   * Log a login attempt
+   * Log rate limit events
    */
-  async logLoginAttempt(
-    userId: string,
-    email: string,
-    success: boolean,
-    errorMessage?: string
-  ): Promise<void> {
+  async logRateLimit(userId: string, action: string, allowed: boolean): Promise<void> {
     try {
       await this.logEvent({
         user_id: userId,
-        event_type: success ? 'login_success' : 'login_failed',
+        event_type: 'rate_limit',
         event_data: {
-          email,
-          success,
-          error: errorMessage,
+          action,
+          allowed,
           timestamp: new Date().toISOString()
         }
       });
     } catch (error) {
-      console.error('Error logging login attempt:', error);
+      console.error('Error logging rate limit event:', error);
     }
   }
 
   /**
-   * Get security events for admins
+   * Get user events for analysis
    */
-  async getSecurityEvents(limit: number = 50): Promise<SecurityEvent[]> {
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching security events:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching security events:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get security events for a specific user
-   */
-  async getUserEvents(userId: string, limit: number = 50): Promise<SecurityEvent[]> {
+  async getUserEvents(userId: string, limit: number = 50): Promise<any[]> {
     try {
       const { data, error } = await supabase
         .from('security_audit_log')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .order('timestamp', { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('Error fetching user events:', error);
+        console.error('Failed to fetch user events:', error);
         return [];
       }
 
@@ -122,30 +107,28 @@ class AuditLogService {
   }
 
   /**
-   * Get failed login attempts for monitoring
+   * Get recent security events
    */
-  async getFailedLoginAttempts(timeWindow: number = 24): Promise<SecurityEvent[]> {
+  async getRecentSecurityEvents(limit: number = 100): Promise<any[]> {
     try {
-      const timeLimit = new Date(Date.now() - timeWindow * 60 * 60 * 1000);
-      
       const { data, error } = await supabase
         .from('security_audit_log')
         .select('*')
-        .eq('event_type', 'login_failed')
-        .gte('created_at', timeLimit.toISOString())
-        .order('created_at', { ascending: false });
+        .order('timestamp', { ascending: false })
+        .limit(limit);
 
       if (error) {
-        console.error('Error fetching failed login attempts:', error);
+        console.error('Failed to fetch security events:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error fetching failed login attempts:', error);
+      console.error('Error fetching security events:', error);
       return [];
     }
   }
 }
 
+// Export singleton instance
 export const auditLogService = new AuditLogService();

@@ -1,8 +1,38 @@
 
 import { auditLogService } from '@/services/auditLogService';
+import { validatePremiumAccess as validatePremiumAccessUtil } from './premiumSecurityUtils';
 
 // Rate limiting map
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
+
+/**
+ * Sanitize search query to prevent injection attacks
+ */
+export const sanitizeSearchQuery = (query: string): string => {
+  if (!query || typeof query !== 'string') return '';
+  
+  // Remove SQL injection patterns
+  const sanitized = query
+    .replace(/['"`;\\]/g, '') // Remove quotes, semicolons, backslashes
+    .replace(/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi, '') // Remove SQL keywords
+    .replace(/[<>]/g, '') // Remove HTML tags
+    .trim();
+  
+  return sanitized.substring(0, 100); // Limit length
+};
+
+/**
+ * Validate premium access wrapper
+ */
+export const validatePremiumAccess = async (feature: string): Promise<boolean> => {
+  try {
+    const result = await validatePremiumAccessUtil('current_user', feature as any);
+    return result.canAccess;
+  } catch (error) {
+    console.error('Premium access validation failed:', error);
+    return false;
+  }
+};
 
 /**
  * Generate session fingerprint for security

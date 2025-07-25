@@ -3,7 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { enhancedLogin, validateSession, enhancedLogout } from './enhancedAuthMethods';
-import { validatePremiumAccess, generateSessionFingerprint, logSecurityEvent } from '@/utils/security/advancedSecurityUtils';
+import { generateSessionFingerprint, logSecurityEvent } from '@/utils/security/advancedSecurityUtils';
+import { validatePremiumAccess } from '@/utils/premium/premiumSecurityUtils';
 
 interface SecureAuthContextType {
   user: User | null;
@@ -119,7 +120,8 @@ export const SecureAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return false;
     
     try {
-      return await validatePremiumAccess(feature);
+      const result = await validatePremiumAccess(user.id, feature as any);
+      return result.canAccess;
     } catch (error) {
       console.error('Premium access check failed:', error);
       return false;
