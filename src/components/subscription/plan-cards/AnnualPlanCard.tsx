@@ -24,7 +24,7 @@ const AnnualPlanCard: React.FC<AnnualPlanCardProps> = ({
         <h2 className="text-2xl font-bold text-gray-800">Plano Anual</h2>
       </div>
       <p className="text-3xl font-bold text-nutri-blue">{SUBSCRIPTION_PRICES.ANNUAL.formatted}<span className="text-lg font-normal text-gray-500">/ano</span></p>
-      <p className="text-sm text-gray-500 mt-1">ou {SUBSCRIPTION_PRICES.ANNUAL.installments} no cartão</p>
+      <p className="text-sm text-gray-500 mt-1">(equivale a {SUBSCRIPTION_PRICES.ANNUAL.monthlyEquivalent}/mês)</p>
     </div>
     
     <ul className="space-y-4 mb-8">

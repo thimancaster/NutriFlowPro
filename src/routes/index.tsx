@@ -1,7 +1,6 @@
-
 import {Routes, Route, Navigate} from "react-router-dom";
 import ProtectedLayout from "@/components/layouts/ProtectedLayout";
-import AuthHandler from '@/components/auth/AuthHandler';
+import AuthHandler from '@/components/auth/AuthHandler'; // <--- Adicione esta linha
 
 // Pages
 import Index from "@/pages/Index";
@@ -20,6 +19,8 @@ import MealPlanWorkflowPage from "@/pages/MealPlanWorkflowPage";
 import MealPlanEditor from "@/pages/MealPlanEditor";
 import MealPlanView from "@/pages/MealPlanView";
 import Appointments from "@/pages/Appointments";
+import Clinical from "@/pages/Clinical";
+import ClinicalConsultation from "@/pages/ClinicalConsultation";
 import PatientHistory from "@/pages/PatientHistory";
 import PatientAnthropometry from "@/pages/PatientAnthropometry";
 import Consultation from "@/pages/Consultation";
@@ -65,18 +66,13 @@ const AppRoutes = () => {
                 <Route path="meal-plan-editor/:id" element={<MealPlanEditor />} />
                 <Route path="meal-plan/:id" element={<MealPlanView />} />
                 <Route path="appointments" element={<Appointments />} />
-                
-                {/* Unified Consultation route - contains the full clinical workflow */}
-                <Route path="consultation" element={<Consultation />} />
-                <Route path="consultation/:patientId" element={<Consultation />} />
-                
-                {/* Redirect old clinical routes to consultation */}
-                <Route path="clinical" element={<Navigate to="/consultation" replace />} />
-                <Route path="clinical/:patientId" element={<Navigate to="/consultation" replace />} />
-                <Route path="clinical/consultation/:patientId?" element={<Navigate to="/consultation" replace />} />
-                
+                <Route path="clinical" element={<Clinical />} />
+                <Route path="clinical/:patientId" element={<Clinical />} />
+                <Route path="clinical/consultation/:patientId?" element={<ClinicalConsultation />} />
                 <Route path="patient-history/:id" element={<PatientHistory />} />
                 <Route path="patient-anthropometry/:id" element={<PatientAnthropometry />} />
+                <Route path="consultation" element={<Consultation />} />
+                <Route path="consultation/:patientId" element={<Consultation />} />
                 <Route path="food-database" element={<FoodDatabase />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="subscription" element={<Subscription />} />

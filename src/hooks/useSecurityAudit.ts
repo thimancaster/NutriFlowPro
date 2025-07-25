@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { auditLogService, SecurityEvent, AuditLogEvent } from '@/services/auditLogService';
-import { supabase } from '@/integrations/supabase/client';
+import { auditLogService, SecurityEvent } from '@/services/auditLogService';
 
 export const useSecurityAudit = () => {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
@@ -11,25 +10,10 @@ export const useSecurityAudit = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Check if user is admin using database function
-    const checkAdminStatus = async () => {
-      if (!user?.id) {
-        setIsAdmin(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase.rpc('is_admin_user');
-        if (error) {
-          console.error('Error checking admin status:', error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data);
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      }
+    // Check if user is admin
+    const checkAdminStatus = () => {
+      const adminEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+      setIsAdmin(!!user?.email && adminEmails.includes(user.email));
     };
 
     checkAdminStatus();
@@ -57,12 +41,7 @@ export const useSecurityAudit = () => {
     setIsLoading(true);
     try {
       const fetchedEvents = await auditLogService.getUserEvents(userId, limit);
-      // Convert AuditLogEvent to SecurityEvent
-      const securityEvents: SecurityEvent[] = fetchedEvents.map(event => ({
-        ...event,
-        timestamp: event.created_at
-      }));
-      setEvents(securityEvents);
+      setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching user events:', error);
       setEvents([]);

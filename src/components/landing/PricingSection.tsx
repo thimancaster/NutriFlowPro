@@ -32,7 +32,7 @@ const PricingSection = () => {
 								price="Gratuito"
 								description="Acesso básico"
 								features={[
-									{icon: CheckCircle, text: "Cadastro de até 5 pacientes"},
+									{icon: CheckCircle, text: "Cadastro de até 10 pacientes"},
 									{icon: CheckCircle, text: "Calculadora nutricional básica"},
 									{icon: CheckCircle, text: "Histórico básico de consultas"},
 								]}
@@ -61,13 +61,12 @@ const PricingSection = () => {
 								title="Plano Mensal"
 								price={SUBSCRIPTION_PRICES.MONTHLY.formatted}
 								priceDetail="/mês"
-								description="Acesso completo ao Nutriflow Pro para nutricionistas"
 								features={[
 									{icon: CheckCircle, text: "Controle ilimitado de pacientes"},
-									{icon: CheckCircle, text: "Ferramentas inteligentes para planos alimentares"},
-									{icon: Zap, text: "Otimize seus atendimentos"},
-									{icon: BookOpen, text: "Biblioteca ampliada de alimentos"},
-									{icon: FileText, text: "Relatórios personalizados"},
+									{icon: CheckCircle, text: "IA para criação de planos alimentares"},
+									{icon: Zap, text: "Economize até 10 horas por semana"},
+									{icon: BookOpen, text: "Biblioteca ampliada (+5000 alimentos)"},
+									{icon: FileText, text: "Exportação de relatórios premium"},
 								]}
 								ctaButton={
 									<Button
@@ -106,16 +105,16 @@ const PricingSection = () => {
 								title="Plano Anual"
 								price={SUBSCRIPTION_PRICES.ANNUAL.formatted}
 								priceDetail="/ano"
-								description={`ou ${SUBSCRIPTION_PRICES.ANNUAL.installments} no cartão`}
+								description={`(equivale a ${SUBSCRIPTION_PRICES.ANNUAL.monthlyEquivalent}/mês)`}
 								highlighted={true}
 								features={[
-									{icon: CheckCircle, text: "Acesso completo ao Nutriflow Pro por 1 ano"},
-									{icon: CheckCircle, text: "Ferramentas profissionais para nutricionistas"},
-									{icon: Zap, text: "Organize atendimentos e acompanhe pacientes"},
-									{icon: BookOpen, text: "Crie planos alimentares personalizados"},
-									{icon: FileText, text: "Otimize resultados com relatórios avançados"},
-									{icon: Badge, text: "Desconto exclusivo no plano anual"},
-									{icon: Clock, text: "Economia de até 20% comparado ao mensal"},
+									{icon: CheckCircle, text: "Controle ilimitado de pacientes"},
+									{icon: CheckCircle, text: "IA para criação de planos alimentares"},
+									{icon: Zap, text: "Economize até 10 horas por semana"},
+									{icon: BookOpen, text: "Biblioteca ampliada (+5000 alimentos)"},
+									{icon: FileText, text: "Exportação de relatórios premium"},
+									{icon: Badge, text: "Selo de nutricionista premium"},
+									{icon: Clock, text: "Acesso antecipado a novas funcionalidades"},
 								]}
 								ctaButton={
 									<Button

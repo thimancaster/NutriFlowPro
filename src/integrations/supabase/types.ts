@@ -1131,7 +1131,7 @@ export type Database = {
     Functions: {
       check_premium_access_secure: {
         Args: Record<PropertyKey, never> | { feature_name: string }
-        Returns: Json
+        Returns: undefined
       }
       check_premium_quota: {
         Args:
@@ -1278,10 +1278,6 @@ export type Database = {
           portion_size: number
           portion_unit: string
         }[]
-      }
-      set_user_admin_role: {
-        Args: { target_user_id: string; is_admin: boolean }
-        Returns: undefined
       }
       upsert_subscriber: {
         Args: {

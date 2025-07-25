@@ -2,54 +2,87 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { enhancedLogin, enhancedSignup, enhancedLogout, validateSession } from './enhancedAuthMethods';
-import { useToast } from '@/components/ui/use-toast';
+import { enhancedLogin, validateSession, enhancedLogout } from './enhancedAuthMethods';
+import { validatePremiumAccess, generateSessionFingerprint, logSecurityEvent } from '@/utils/security/advancedSecurityUtils';
 
 interface SecureAuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: Error }>;
-  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: Error }>;
-  logout: () => Promise<{ success: boolean; error?: Error }>;
-  validateSessionIntegrity: () => Promise<boolean>;
+  login: (email: string, password: string) => Promise<any>;
+  logout: () => Promise<void>;
+  checkPremiumAccess: (feature: string) => Promise<boolean>;
+  isAuthenticated: boolean;
 }
 
 const SecureAuthContext = createContext<SecureAuthContextType | undefined>(undefined);
+
+export const useSecureAuth = () => {
+  const context = useContext(SecureAuthContext);
+  if (!context) {
+    throw new Error('useSecureAuth must be used within a SecureAuthProvider');
+  }
+  return context;
+};
 
 export const SecureAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
+    // Initialize session fingerprint
+    if (!localStorage.getItem('session_fingerprint')) {
+      localStorage.setItem('session_fingerprint', generateSessionFingerprint());
+    }
+
     // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting initial session:', error);
-        } else {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
+        const currentSession = await validateSession();
+        setSession(currentSession);
+        setUser(currentSession?.user || null);
       } catch (error) {
-        console.error('Error in getInitialSession:', error);
+        console.error('Session validation failed:', error);
+        setSession(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
-    // Listen for auth changes
+    // Listen for auth changes with enhanced security
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+      async (event, currentSession) => {
+        try {
+          if (event === 'SIGNED_IN' && currentSession) {
+            const validatedSession = await validateSession();
+            setSession(validatedSession);
+            setUser(validatedSession?.user || null);
+            
+            await logSecurityEvent('auth_state_change', { 
+              event: 'signed_in',
+              user_id: validatedSession?.user?.id 
+            });
+          } else if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setUser(null);
+            
+            await logSecurityEvent('auth_state_change', { 
+              event: 'signed_out' 
+            });
+          } else if (event === 'TOKEN_REFRESHED' && currentSession) {
+            const validatedSession = await validateSession();
+            setSession(validatedSession);
+            setUser(validatedSession?.user || null);
+          }
+        } catch (error) {
+          console.error('Auth state change error:', error);
+          setSession(null);
+          setUser(null);
+        }
       }
     );
 
@@ -59,22 +92,10 @@ export const SecureAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const result = await enhancedLogin(email, password, toast);
+      const result = await enhancedLogin(email, password);
       return result;
     } catch (error) {
-      return { success: false, error: error as Error };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signup = async (email: string, password: string, name: string) => {
-    setLoading(true);
-    try {
-      const result = await enhancedSignup(email, password, name, toast);
-      return result;
-    } catch (error) {
-      return { success: false, error: error as Error };
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -83,17 +104,26 @@ export const SecureAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const logout = async () => {
     setLoading(true);
     try {
-      const result = await enhancedLogout(toast);
-      return result;
+      await enhancedLogout();
+      setSession(null);
+      setUser(null);
     } catch (error) {
-      return { success: false, error: error as Error };
+      console.error('Logout error:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const validateSessionIntegrity = async () => {
-    return await validateSession();
+  const checkPremiumAccess = async (feature: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      return await validatePremiumAccess(feature);
+    } catch (error) {
+      console.error('Premium access check failed:', error);
+      return false;
+    }
   };
 
   const value = {
@@ -101,9 +131,9 @@ export const SecureAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     session,
     loading,
     login,
-    signup,
     logout,
-    validateSessionIntegrity
+    checkPremiumAccess,
+    isAuthenticated: !!user
   };
 
   return (
@@ -111,12 +141,4 @@ export const SecureAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       {children}
     </SecureAuthContext.Provider>
   );
-};
-
-export const useSecureAuth = () => {
-  const context = useContext(SecureAuthContext);
-  if (context === undefined) {
-    throw new Error('useSecureAuth must be used within a SecureAuthProvider');
-  }
-  return context;
 };

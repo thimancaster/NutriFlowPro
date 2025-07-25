@@ -1,55 +1,38 @@
 
-// Subscription-related constants
-export const SUBSCRIPTION_CONSTANTS = {
-  FREE_TIER: {
-    PATIENTS: 5,
-    MEAL_PLANS: 3,
-    CALCULATIONS: 10,
-  },
-  PREMIUM_TIER: {
-    PATIENTS: Infinity,
-    MEAL_PLANS: Infinity,
-    CALCULATIONS: Infinity,
-  },
-};
+// List of email addresses that have developer access (full system access)
+export const DEVELOPER_EMAILS = ['thimancaster@hotmail.com'];
 
-// Free tier limits for easier access
-export const FREE_TIER_LIMITS = {
-  PATIENTS: 5,
-  MEAL_PLANS: 3,
-  CALCULATIONS: 10,
-  patients: 5, // backward compatibility
-  mealPlans: 3, // backward compatibility
-  historyDays: 30
-};
+// List of email addresses that have premium access
+export const PREMIUM_EMAILS = ['thiago@nutriflowpro.com'];
 
-// Subscription pricing
+// Subscription pricing constants
 export const SUBSCRIPTION_PRICES = {
   MONTHLY: {
-    amount: 7790, // R$ 77,90 in cents
-    formatted: "R$ 77,90",
-    currency: "BRL"
+    price: 77.90,
+    currency: 'BRL',
+    formatted: 'R$ 77,90'
   },
   ANNUAL: {
-    amount: 55700, // R$ 557,00 in cents
-    formatted: "R$ 557,00",
-    currency: "BRL",
-    monthlyEquivalent: "R$ 46,42", // R$ 557,00 / 12 months
-    installments: "12x de R$ 57,61" // As specified
+    price: 557.00,
+    currency: 'BRL',
+    formatted: 'R$ 557,00',
+    monthlyEquivalent: 'R$ 57,61',
+    discount: '20%'
   }
 };
 
-// Query keys for React Query
-export const SUBSCRIPTION_QUERY_KEY = ['subscription'];
+// Subscription feature limits
+export const FREE_TIER_LIMITS = {
+  patients: 10,
+  mealPlans: 5,
+  historyDays: 30
+};
 
-// Developer emails for admin access
-export const DEVELOPER_EMAILS = [
-  'thimancaster@hotmail.com',
-  'thiago@nutriflowpro.com'
-];
+export const PREMIUM_TIER_BENEFITS = {
+  patients: 'Ilimitado',
+  mealPlans: 'Ilimitado',
+  historyDays: 'Ilimitado'
+};
 
-// Premium emails list
-export const PREMIUM_EMAILS = [
-  'thimancaster@hotmail.com',
-  'thiago@nutriflowpro.com'
-];
+// Subscription Query Key for React Query
+export const SUBSCRIPTION_QUERY_KEY = 'user-subscription';

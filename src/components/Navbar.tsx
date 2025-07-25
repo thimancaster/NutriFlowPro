@@ -1,66 +1,95 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Calculator, 
+  Utensils, 
+  Stethoscope, 
+  Activity,
+  Calendar,
+  Settings,
+  Menu,
+  X
+} from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import NavbarDesktop from './navbar/NavbarDesktop';
-import NavbarMobile from './navbar/NavbarMobile';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NavbarDesktopNavigation, NavbarUserMenu, NavbarMobileMenu } from './navbar';
 
-const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+const navigationItems = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Pacientes', href: '/patients', icon: Users },
+  { name: 'Agendamentos', href: '/appointments', icon: Calendar },
+  { name: 'Calculadora', href: '/calculator', icon: Calculator },
+  { name: 'Plano Alimentar', href: '/meal-plan-generator', icon: Utensils },
+  { name: 'Consulta', href: '/consultation', icon: Stethoscope },
+  { name: 'Clínico', href: '/clinical', icon: Activity },
+  { name: 'Configurações', href: '/settings', icon: Settings },
+];
+
+const Navbar = () => {
+  const { logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
-      toast({
-        title: 'Logout realizado com sucesso',
-        description: 'Você foi desconectado da sua conta.',
-      });
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      toast({
-        title: 'Erro ao fazer logout',
-        description: 'Ocorreu um erro ao tentar desconectar.',
-        variant: 'destructive',
-      });
+      console.error('Error logging out:', error);
     }
   };
 
   return (
-    <nav className="bg-nutri-green shadow-lg">
+    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0">
-              <span className="text-white font-bold text-xl">NutriFlow Pro</span>
-            </Link>
+        <div className="flex justify-between h-16">
+          {/* Logo and Desktop Navigation */}
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/dashboard" className="flex items-center">
+                <span className="text-nutri-green font-bold text-2xl">Nutri</span>
+                <span className="text-nutri-blue font-bold text-2xl">Flow</span>
+                <span className="text-nutri-blue font-bold text-2xl ml-1">Pro</span>
+              </Link>
+            </div>
+            
+            <NavbarDesktopNavigation navigationItems={navigationItems} />
           </div>
 
-          {isAuthenticated && (
-            <>
-              <NavbarDesktop onLogout={handleLogout} />
-              
-              <div className="md:hidden">
-                <button
-                  onClick={() => setIsOpen(!isOpen)}
-                  className="bg-nutri-green inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-nutri-green focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                >
-                  <Menu className="h-6 w-6" />
-                </button>
-              </div>
-            </>
-          )}
+          {/* Right side - Theme toggle and User menu with improved alignment */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center h-9">
+              <ThemeToggle />
+            </div>
+            
+            <NavbarUserMenu onLogout={handleLogout} />
+
+            {/* Mobile menu button with consistent sizing */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 h-9 w-9"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {isAuthenticated && (
-        <NavbarMobile isOpen={isOpen} onClose={() => setIsOpen(false)} />
-      )}
+      <NavbarMobileMenu 
+        navigationItems={navigationItems}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
     </nav>
   );
 };

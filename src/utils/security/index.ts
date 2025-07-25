@@ -1,10 +1,3 @@
 
-export { RateLimiter } from './rateLimiter';
-export { sanitizeSearchQuery, validatePremiumAccess } from './advancedSecurityUtils';
-export { 
-  secureLogin, 
-  secureSignup, 
-  secureLogout, 
-  validateSessionIntegrity, 
-  detectSuspiciousActivity 
-} from './secureAuth';
+export { RateLimiter, rateLimiter } from './rateLimiter';
+export { csrfProtection } from './csrfProtection';

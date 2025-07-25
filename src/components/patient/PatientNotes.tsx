@@ -19,9 +19,9 @@ const PatientNotes: React.FC<PatientNotesProps> = ({ patientId, content, onSave 
 
   const handleSave = async () => {
     // Rate limiting for notes saving
-    const isAllowed = rateLimiter.isAllowed(`notes_save_${patientId}`);
+    const rateCheck = rateLimiter.checkLimit(`notes_save_${patientId}`, 10, 60000); // 10 saves per minute
     
-    if (!isAllowed) {
+    if (!rateCheck.allowed) {
       toast({
         title: "Muitas tentativas",
         description: "Aguarde um momento antes de salvar novamente.",

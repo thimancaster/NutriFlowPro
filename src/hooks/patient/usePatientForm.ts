@@ -1,4 +1,3 @@
-
 import {Patient} from "@/types";
 import {usePatientFormState} from "./usePatientFormState";
 import {usePatientFormValidation} from "./usePatientFormValidation";
@@ -34,14 +33,21 @@ export const usePatientForm = ({
 	const {errors, setErrors, handleValidateField, validateAndSanitizeForm} =
 		usePatientFormValidation();
 
-	const {isSubmitting, handleSubmit} = usePatientFormSubmit({
+	const {isLoading, handleSubmit} = usePatientFormSubmit({
 		editPatient,
 		onSuccess,
-		onError: (error) => console.error('Patient form error:', error),
+		userId,
+		validateAndSanitizeForm,
+		setErrors,
+		formData,
+		birthDate,
+		address,
+		notes,
+		setActiveTab,
 	});
 
 	return {
-		isLoading: isSubmitting,
+		isLoading,
 		birthDate,
 		setBirthDate,
 		activeTab,

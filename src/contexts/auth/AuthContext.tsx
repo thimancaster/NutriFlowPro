@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading: authState.isLoading,
     loading: authState.loading,
     isPremium: authState.isPremium,
-    userTier: authState.userTier as 'free' | 'premium',
+    userTier: authState.userTier,
     usageQuota: authState.usageQuota,
     login: handleLogin,
     signup: handleSignup,

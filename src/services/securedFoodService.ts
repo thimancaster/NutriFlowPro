@@ -1,189 +1,106 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { validateFoodSearch } from '@/utils/validation';
-import { checkRateLimit, logSecurityEvent } from '@/utils/security/advancedSecurityUtils';
+import { supabase } from "@/integrations/supabase/client";
+import { sanitizeSearchQuery, checkRateLimit, logSecurityEvent } from "@/utils/security/advancedSecurityUtils";
 
-interface SearchResult {
+export interface SecureFoodSearch {
+  query: string;
+  category?: string;
+  limit?: number;
+}
+
+export interface FoodResult {
   id: string;
   name: string;
   category: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
+  calories_per_100g: number;
+  protein_per_100g: number;
+  carbs_per_100g: number;
+  fat_per_100g: number;
+  portion_size: number;
+  portion_unit: string;
 }
 
-interface SecurityContext {
-  userId: string;
-  sessionId: string;
-  ipAddress?: string;
-}
-
-class SecuredFoodService {
-  private static instance: SecuredFoodService;
+export const searchFoodsSecurely = async (params: SecureFoodSearch): Promise<FoodResult[]> => {
+  const userFingerprint = localStorage.getItem('session_fingerprint') || 'anonymous';
   
-  public static getInstance(): SecuredFoodService {
-    if (!SecuredFoodService.instance) {
-      SecuredFoodService.instance = new SecuredFoodService();
-    }
-    return SecuredFoodService.instance;
+  // Rate limiting check
+  if (!checkRateLimit(`food_search_${userFingerprint}`, 30, 60000)) {
+    await logSecurityEvent('rate_limit_exceeded', { action: 'food_search' });
+    throw new Error('Muitas consultas. Tente novamente em alguns minutos.');
   }
 
-  async searchFoods(
-    searchTerm: string, 
-    context: SecurityContext,
-    limit: number = 50
-  ): Promise<SearchResult[]> {
-    try {
-      // Rate limiting
-      const rateLimitCheck = await checkRateLimit(context.userId);
-      if (!rateLimitCheck) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'RATE_LIMIT_EXCEEDED',
-          event_data: { action: 'search_foods' }
-        });
-        throw new Error('Rate limit exceeded');
-      }
+  // Input sanitization
+  const sanitizedQuery = sanitizeSearchQuery(params.query);
+  const sanitizedCategory = params.category ? sanitizeSearchQuery(params.category) : null;
+  const limit = Math.min(Math.max(params.limit || 20, 1), 100);
 
-      // Validate search term
-      const validation = validateFoodSearch(searchTerm);
-      if (!validation.isValid) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'INVALID_SEARCH_TERM',
-          event_data: { searchTerm, error: validation.error }
-        });
-        throw new Error(validation.error || 'Invalid search term');
-      }
+  if (!sanitizedQuery || sanitizedQuery.length < 2) {
+    throw new Error('Consulta deve ter pelo menos 2 caracteres válidos');
+  }
 
-      // Rate limiting for search
-      const searchRateLimit = await checkRateLimit(context.userId);
-      if (!searchRateLimit) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'SEARCH_RATE_LIMIT_EXCEEDED',
-          event_data: { action: 'search_foods' }
-        });
-        throw new Error('Search rate limit exceeded');
-      }
+  try {
+    // Use the new secure RPC function instead of direct table access
+    const { data, error } = await supabase.rpc('search_foods_secure', {
+      search_query: sanitizedQuery,
+      search_category: sanitizedCategory,
+      search_limit: limit
+    });
 
-      const { data, error } = await supabase
-        .from('foods')
-        .select('id, name, category, calories, protein, carbs, fats')
-        .ilike('name', `%${validation.sanitizedTerm}%`)
-        .limit(limit);
-
-      if (error) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'DATABASE_ERROR',
-          event_data: { error: error.message, action: 'search_foods' }
-        });
-        throw error;
-      }
-
-      // Log successful search
-      await logSecurityEvent({
-        user_id: context.userId,
-        event_type: 'FOOD_SEARCH_SUCCESS',
-        event_data: { searchTerm: validation.sanitizedTerm, resultCount: data?.length || 0 }
-      });
-
-      return data || [];
-    } catch (error) {
-      await logSecurityEvent({
-        user_id: context.userId,
-        event_type: 'FOOD_SEARCH_ERROR',
-        event_data: { error: error instanceof Error ? error.message : 'Unknown error' }
+    if (error) {
+      await logSecurityEvent('food_search_error', { 
+        error: error.message,
+        query: sanitizedQuery 
       });
       throw error;
     }
+
+    return data || [];
+  } catch (error) {
+    await logSecurityEvent('food_search_exception', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      query: sanitizedQuery 
+    });
+    throw error;
+  }
+};
+
+// Secure food details fetch
+export const getFoodDetailsSecurely = async (foodId: string) => {
+  const userFingerprint = localStorage.getItem('session_fingerprint') || 'anonymous';
+  
+  // Rate limiting
+  if (!checkRateLimit(`food_details_${userFingerprint}`, 50, 60000)) {
+    await logSecurityEvent('rate_limit_exceeded', { action: 'food_details' });
+    throw new Error('Muitas consultas. Tente novamente em alguns minutos.');
   }
 
-  async getFoodById(
-    foodId: string, 
-    context: SecurityContext
-  ): Promise<SearchResult | null> {
-    try {
-      const rateLimitCheck = await checkRateLimit(context.userId);
-      if (!rateLimitCheck) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'RATE_LIMIT_EXCEEDED',
-          event_data: { action: 'get_food_by_id' }
-        });
-        throw new Error('Rate limit exceeded');
-      }
+  // Validate food ID format (should be UUID)
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(foodId)) {
+    await logSecurityEvent('invalid_food_id', { food_id: foodId });
+    throw new Error('ID do alimento inválido');
+  }
 
-      const { data, error } = await supabase
-        .from('foods')
-        .select('id, name, category, calories, protein, carbs, fats')
-        .eq('id', foodId)
-        .single();
+  try {
+    const { data, error } = await supabase
+      .from('foods')
+      .select('*')
+      .eq('id', foodId)
+      .single();
 
-      if (error) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'DATABASE_ERROR',
-          event_data: { error: error.message, action: 'get_food_by_id' }
-        });
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      await logSecurityEvent({
-        user_id: context.userId,
-        event_type: 'GET_FOOD_ERROR',
-        event_data: { error: error instanceof Error ? error.message : 'Unknown error' }
+    if (error) {
+      await logSecurityEvent('food_details_error', { 
+        error: error.message,
+        food_id: foodId 
       });
       throw error;
     }
+
+    return data;
+  } catch (error) {
+    await logSecurityEvent('food_details_exception', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      food_id: foodId 
+    });
+    throw error;
   }
-
-  async getFoodsByCategory(
-    category: string, 
-    context: SecurityContext,
-    limit: number = 100
-  ): Promise<SearchResult[]> {
-    try {
-      const rateLimitCheck = await checkRateLimit(context.userId);
-      if (!rateLimitCheck) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'RATE_LIMIT_EXCEEDED',
-          event_data: { action: 'get_foods_by_category' }
-        });
-        throw new Error('Rate limit exceeded');
-      }
-
-      const { data, error } = await supabase
-        .from('foods')
-        .select('id, name, category, calories, protein, carbs, fats')
-        .eq('category', category)
-        .limit(limit);
-
-      if (error) {
-        await logSecurityEvent({
-          user_id: context.userId,
-          event_type: 'DATABASE_ERROR',
-          event_data: { error: error.message, action: 'get_foods_by_category' }
-        });
-        throw error;
-      }
-
-      return data || [];
-    } catch (error) {
-      await logSecurityEvent({
-        user_id: context.userId,
-        event_type: 'GET_FOODS_BY_CATEGORY_ERROR',
-        event_data: { error: error instanceof Error ? error.message : 'Unknown error' }
-      });
-      throw error;
-    }
-  }
-}
-
-export const securedFoodService = SecuredFoodService.getInstance();
-export default securedFoodService;
+};
