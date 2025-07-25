@@ -111,5 +111,38 @@ export const validateSecureForm = {
         title: sanitizeInput(data.title || '')
       }
     };
+  },
+
+  notes: (content: string) => {
+    const errors: Record<string, string> = {};
+    
+    if (!content || typeof content !== 'string') {
+      errors.content = 'Conteúdo das notas é obrigatório';
+    }
+    
+    if (content && content.length > 10000) {
+      errors.content = 'Notas devem ter no máximo 10.000 caracteres';
+    }
+    
+    // Check for potentially dangerous content
+    const dangerousPatterns = [
+      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+      /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+      /javascript:/gi,
+      /on\w+\s*=/gi
+    ];
+    
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(content)) {
+        errors.content = 'Conteúdo contém elementos não permitidos';
+        break;
+      }
+    }
+    
+    return {
+      isValid: Object.keys(errors).length === 0,
+      error: errors.content,
+      sanitizedContent: content ? sanitizeInput(content) : ''
+    };
   }
 };
