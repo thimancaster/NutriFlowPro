@@ -1,122 +1,229 @@
-import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
-import { SUBSCRIPTION_QUERY_KEY } from '@/hooks/useUserSubscription';
-import { useCallback } from 'react';
-// Update the import from the correct location
-import { usePremiumCheck } from '@/hooks/premium';
-import { login, signInWithGoogle } from './methods/loginMethods';
-import { signup } from './methods/signupMethods';
-import { logout } from './methods/logoutMethod';
-import { resetPassword } from './methods/passwordMethods';
+import { supabase } from '@/integrations/supabase/client';
 import { auditLogService } from '@/services/auditLogService';
+import { isValidEmail } from '@/utils/securityUtils';
 
-export const useAuthMethods = (
-  updateAuthState: (session: any, remember?: boolean) => Promise<void>,
-  toast: ReturnType<typeof useToast>['toast'],
-  queryClient: ReturnType<typeof useQueryClient>
-) => {
-  const { checkPremiumStatus } = usePremiumCheck();
+export const login = async (email: string, password: string, toast: any) => {
+  if (!email || !isValidEmail(email)) {
+    toast({
+      title: "Erro de validação",
+      description: "Por favor, insira um email válido.",
+      variant: "destructive",
+    });
+    return { success: false, error: new Error('Invalid email') };
+  }
 
-  // We wrap the imported methods to provide them with the necessary context
-  const handleLogin = useCallback(async (email: string, password: string, remember: boolean = false) => {
-    const result = await login(email, password, remember, toast);
-    
-    // If login was successful, update auth state with the remember me preference
-    if (result.success && result.session) {
-      await updateAuthState(result.session, remember);
+  if (!password || password.length < 6) {
+    toast({
+      title: "Erro de validação",
+      description: "A senha deve ter pelo menos 6 caracteres.",
+      variant: "destructive",
+    });
+    return { success: false, error: new Error('Password too short') };
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      await auditLogService.logLoginAttempt(email, false, {
+        error: error.message
+      });
+      
+      toast({
+        title: "Erro no login",
+        description: error.message || "Credenciais inválidas.",
+        variant: "destructive",
+      });
+      
+      return { success: false, error: new Error(error.message) };
     }
+
+    await auditLogService.logLoginAttempt(email, true);
     
-    return result;
-  }, [toast, updateAuthState]);
+    toast({
+      title: "Login realizado com sucesso",
+      description: "Bem-vindo de volta!",
+    });
 
-  const handleSignup = useCallback(async (email: string, password: string, name: string) => {
-    return await signup(email, password, name, toast);
-  }, [toast]);
+    return { 
+      success: true, 
+      data: { session: data.session, user: data.user } 
+    };
 
-  const handleLogout = useCallback(async () => {
-    return await logout(toast, queryClient, updateAuthState);
-  }, [toast, queryClient, updateAuthState]);
-
-  const handleResetPassword = useCallback(async (email: string) => {
-    return await resetPassword(email, toast);
-  }, [toast]);
-
-  const handleSignInWithGoogle = useCallback(async () => {
-    return await signInWithGoogle(toast);
-  }, [toast]);
-
-  return {
-    checkPremiumStatus,
-    login: handleLogin,
-    signup: handleSignup,
-    logout: handleLogout,
-    resetPassword: handleResetPassword,
-    signInWithGoogle: handleSignInWithGoogle
-  };
+  } catch (err: any) {
+    await auditLogService.logLoginAttempt(email, false, {
+      error: err.message
+    });
+    
+    toast({
+      title: "Erro no login",
+      description: err.message || "Erro interno do servidor.",
+      variant: "destructive",
+    });
+    
+    return { success: false, error: new Error(err.message) };
+  }
 };
 
-export const enhanceAuthMethods = (existingMethods: any) => {
-  return {
-    ...existingMethods,
-    
-    // Override login to include audit logging
-    login: async (email: string, password: string) => {
-      try {
-        const result = await existingMethods.login(email, password);
-        
-        if (result.success && result.user) {
-          // Log successful login
-          await auditLogService.logLoginAttempt(
-            result.user.id,
-            email,
-            true
-          );
+export const signup = async (email: string, password: string, name: string, toast: any) => {
+  if (!email || !isValidEmail(email)) {
+    toast({
+      title: "Erro de validação",
+      description: "Por favor, insira um email válido.",
+      variant: "destructive",
+    });
+    return { success: false, error: new Error('Invalid email') };
+  }
+
+  if (!password || password.length < 6) {
+    toast({
+      title: "Erro de validação",
+      description: "A senha deve ter pelo menos 6 caracteres.",
+      variant: "destructive",
+    });
+    return { success: false, error: new Error('Password too short') };
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
         }
-        
-        return result;
-      } catch (error: any) {
-        // Log failed login attempt
-        await auditLogService.logLoginAttempt(
-          'unknown',
-          email,
-          false,
-          error.message
-        );
-        throw error;
       }
-    },
-    
-    // Override signup to include audit logging
-    signup: async (email: string, password: string, metadata?: any) => {
-      try {
-        const result = await existingMethods.signup(email, password, metadata);
-        
-        if (result.success && result.user) {
-          // Log successful signup
-          await auditLogService.logEvent({
-            user_id: result.user.id,
-            event_type: 'user_signup',
-            event_data: {
-              email,
-              timestamp: new Date().toISOString()
-            }
-          });
-        }
-        
-        return result;
-      } catch (error: any) {
-        // Log failed signup attempt
-        await auditLogService.logEvent({
-          user_id: 'unknown',
-          event_type: 'signup_failed',
-          event_data: {
-            email,
-            error: error.message,
-            timestamp: new Date().toISOString()
-          }
-        });
-        throw error;
-      }
+    });
+
+    if (error) {
+      await auditLogService.logLoginAttempt(email, false, {
+        error: error.message
+      });
+      
+      toast({
+        title: "Erro ao criar conta",
+        description: error.message || "Não foi possível criar a conta.",
+        variant: "destructive",
+      });
+      
+      return { success: false, error: new Error(error.message) };
     }
-  };
+
+    await auditLogService.logLoginAttempt(email, true);
+    
+    toast({
+      title: "Conta criada com sucesso",
+      description: "Bem-vindo!",
+    });
+
+    return { 
+      success: true, 
+      data: { session: data.session, user: data.user } 
+    };
+
+  } catch (err: any) {
+    await auditLogService.logLoginAttempt(email, false, {
+      error: err.message
+    });
+    
+    toast({
+      title: "Erro ao criar conta",
+      description: err.message || "Erro interno do servidor.",
+      variant: "destructive",
+    });
+    
+    return { success: false, error: new Error(err.message) };
+  }
+};
+
+export const logout = async (toast: any, queryClient: any, updateAuthState: any) => {
+  const result = await supabase.auth.signOut();
+  
+  if (result.error) {
+    toast({
+      title: "Erro ao fazer logout",
+      description: result.error.message || "Não foi possível desconectar.",
+      variant: "destructive",
+    });
+    return { success: false, error: new Error(result.error.message) };
+  }
+  
+  // Clear query cache
+  queryClient.clear();
+  
+  // Update auth state
+  await updateAuthState(null, false);
+  
+  toast({
+    title: "Logout realizado com sucesso",
+    description: "Você foi desconectado com segurança.",
+  });
+  
+  return { success: true };
+};
+
+export const resetPassword = async (email: string, toast: any) => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+
+    if (error) {
+      toast({
+        title: "Erro ao redefinir senha",
+        description: error.message || "Não foi possível redefinir a senha.",
+        variant: "destructive",
+      });
+      return { success: false, error: new Error(error.message) };
+    }
+
+    toast({
+      title: "Redefinição de senha solicitada",
+      description: "Enviamos um link para o seu email para redefinir sua senha.",
+    });
+    return { success: true };
+  } catch (err: any) {
+    toast({
+      title: "Erro ao redefinir senha",
+      description: err.message || "Erro interno do servidor.",
+      variant: "destructive",
+    });
+    return { success: false, error: new Error(err.message) };
+  }
+};
+
+export const signInWithGoogle = async (toast: any) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      }
+    });
+
+    if (error) {
+      toast({
+        title: "Erro no login com Google",
+        description: error.message || "Não foi possível fazer login com Google.",
+        variant: "destructive",
+      });
+      return { success: false, error: new Error(error.message) };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    toast({
+      title: "Erro no login com Google",
+      description: error.message || "Não foi possível fazer login com Google.",
+      variant: "destructive",
+    });
+
+    return {
+      success: false,
+      error: new Error(error.message)
+    };
+  }
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { auditLogService } from '@/services/auditLogService';
 import { isValidEmail } from '@/utils/securityUtils';
@@ -16,7 +15,7 @@ const loginRateLimiter = new RateLimiter({
   message: 'Too many login attempts, please try again after 1 minute'
 });
 
-export const secureLogin = async (email: string, password: string): Promise<AuthResult> => {
+export const login = async (email: string, password: string): Promise<AuthResult> => {
   if (!email || !isValidEmail(email)) {
     return {
       success: false,
@@ -74,7 +73,7 @@ export const secureLogin = async (email: string, password: string): Promise<Auth
   }
 };
 
-export const secureSignup = async (email: string, password: string, name: string): Promise<AuthResult> => {
+export const signup = async (email: string, password: string, name: string): Promise<AuthResult> => {
   if (!email || !isValidEmail(email)) {
     return {
       success: false,
@@ -126,6 +125,10 @@ export const secureSignup = async (email: string, password: string, name: string
     };
   }
 };
+
+// Legacy exports for backward compatibility
+export const secureLogin = login;
+export const secureSignup = signup;
 
 export const secureLogout = async (): Promise<AuthResult> => {
   try {
