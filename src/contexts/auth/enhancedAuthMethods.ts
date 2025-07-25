@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { auditLogService } from '@/services/auditLogService';
 import { checkRateLimit, logSecurityEvent } from '@/utils/security/advancedSecurityUtils';
@@ -5,7 +6,7 @@ import { isValidEmail } from '@/utils/securityUtils';
 
 export const enhancedLogin = async (email: string, password: string, toast: any) => {
   // Rate limiting check
-  if (!checkRateLimit(email, 5, 60000)) {
+  if (!checkRateLimit(email)) {
     toast({
       title: "Muitas tentativas",
       description: "Aguarde antes de tentar novamente.",
@@ -114,5 +115,45 @@ export const enhancedSignup = async (email: string, password: string, name: stri
       variant: "destructive",
     });
     return { success: false, error: new Error(err.message) };
+  }
+};
+
+export const enhancedLogout = async (toast: any) => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      toast({
+        title: "Erro ao sair",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { success: false, error: new Error(error.message) };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    toast({
+      title: "Erro ao sair",
+      description: err.message,
+      variant: "destructive",
+    });
+    return { success: false, error: new Error(err.message) };
+  }
+};
+
+export const validateSession = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Session validation error:', error);
+      return false;
+    }
+
+    return !!data.session;
+  } catch (error) {
+    console.error('Session validation error:', error);
+    return false;
   }
 };
