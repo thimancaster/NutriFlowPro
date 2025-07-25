@@ -10,7 +10,7 @@ interface SearchResult {
   calories: number;
   protein: number;
   carbs: number;
-  fat: number;
+  fats: number;
 }
 
 interface SecurityContext {
@@ -38,41 +38,65 @@ class SecuredFoodService {
       // Rate limiting
       const rateLimitCheck = await checkRateLimit(context.userId);
       if (!rateLimitCheck) {
-        await logSecurityEvent(context.userId, 'RATE_LIMIT_EXCEEDED');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'RATE_LIMIT_EXCEEDED',
+          event_data: { action: 'search_foods' }
+        });
         throw new Error('Rate limit exceeded');
       }
 
       // Validate search term
       const validation = validateFoodSearch(searchTerm);
       if (!validation.isValid) {
-        await logSecurityEvent(context.userId, 'INVALID_SEARCH_TERM');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'INVALID_SEARCH_TERM',
+          event_data: { searchTerm, error: validation.error }
+        });
         throw new Error(validation.error || 'Invalid search term');
       }
 
       // Rate limiting for search
       const searchRateLimit = await checkRateLimit(context.userId);
       if (!searchRateLimit) {
-        await logSecurityEvent(context.userId, 'SEARCH_RATE_LIMIT_EXCEEDED');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'SEARCH_RATE_LIMIT_EXCEEDED',
+          event_data: { action: 'search_foods' }
+        });
         throw new Error('Search rate limit exceeded');
       }
 
       const { data, error } = await supabase
         .from('foods')
-        .select('id, name, category, calories, protein, carbs, fat')
+        .select('id, name, category, calories, protein, carbs, fats')
         .ilike('name', `%${validation.sanitizedTerm}%`)
         .limit(limit);
 
       if (error) {
-        await logSecurityEvent(context.userId, 'DATABASE_ERROR');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'DATABASE_ERROR',
+          event_data: { error: error.message, action: 'search_foods' }
+        });
         throw error;
       }
 
       // Log successful search
-      await logSecurityEvent(context.userId, 'FOOD_SEARCH_SUCCESS');
+      await logSecurityEvent({
+        user_id: context.userId,
+        event_type: 'FOOD_SEARCH_SUCCESS',
+        event_data: { searchTerm: validation.sanitizedTerm, resultCount: data?.length || 0 }
+      });
 
       return data || [];
     } catch (error) {
-      await logSecurityEvent(context.userId, 'FOOD_SEARCH_ERROR');
+      await logSecurityEvent({
+        user_id: context.userId,
+        event_type: 'FOOD_SEARCH_ERROR',
+        event_data: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
       throw error;
     }
   }
@@ -84,24 +108,36 @@ class SecuredFoodService {
     try {
       const rateLimitCheck = await checkRateLimit(context.userId);
       if (!rateLimitCheck) {
-        await logSecurityEvent(context.userId, 'RATE_LIMIT_EXCEEDED');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'RATE_LIMIT_EXCEEDED',
+          event_data: { action: 'get_food_by_id' }
+        });
         throw new Error('Rate limit exceeded');
       }
 
       const { data, error } = await supabase
         .from('foods')
-        .select('id, name, category, calories, protein, carbs, fat')
+        .select('id, name, category, calories, protein, carbs, fats')
         .eq('id', foodId)
         .single();
 
       if (error) {
-        await logSecurityEvent(context.userId, 'DATABASE_ERROR');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'DATABASE_ERROR',
+          event_data: { error: error.message, action: 'get_food_by_id' }
+        });
         throw error;
       }
 
       return data;
     } catch (error) {
-      await logSecurityEvent(context.userId, 'GET_FOOD_ERROR');
+      await logSecurityEvent({
+        user_id: context.userId,
+        event_type: 'GET_FOOD_ERROR',
+        event_data: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
       throw error;
     }
   }
@@ -114,24 +150,36 @@ class SecuredFoodService {
     try {
       const rateLimitCheck = await checkRateLimit(context.userId);
       if (!rateLimitCheck) {
-        await logSecurityEvent(context.userId, 'RATE_LIMIT_EXCEEDED');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'RATE_LIMIT_EXCEEDED',
+          event_data: { action: 'get_foods_by_category' }
+        });
         throw new Error('Rate limit exceeded');
       }
 
       const { data, error } = await supabase
         .from('foods')
-        .select('id, name, category, calories, protein, carbs, fat')
+        .select('id, name, category, calories, protein, carbs, fats')
         .eq('category', category)
         .limit(limit);
 
       if (error) {
-        await logSecurityEvent(context.userId, 'DATABASE_ERROR');
+        await logSecurityEvent({
+          user_id: context.userId,
+          event_type: 'DATABASE_ERROR',
+          event_data: { error: error.message, action: 'get_foods_by_category' }
+        });
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      await logSecurityEvent(context.userId, 'GET_FOODS_BY_CATEGORY_ERROR');
+      await logSecurityEvent({
+        user_id: context.userId,
+        event_type: 'GET_FOODS_BY_CATEGORY_ERROR',
+        event_data: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
       throw error;
     }
   }
