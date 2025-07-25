@@ -5,36 +5,34 @@ import { ConsultationData } from '@/types/consultation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface RecommendationsStepProps {
+interface FollowUpStepProps {
   patient: Patient | null;
   consultation: ConsultationData | null;
-  onNext: () => void;
+  onComplete: () => void;
   onPrevious: () => void;
-  onSaved: (recommendationsData: any) => void;
 }
 
-const RecommendationsStep: React.FC<RecommendationsStepProps> = ({
+const FollowUpStep: React.FC<FollowUpStepProps> = ({
   patient,
   consultation,
-  onNext,
-  onPrevious,
-  onSaved
+  onComplete,
+  onPrevious
 }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recomendações</CardTitle>
+        <CardTitle>Acompanhamento</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p>Recomendações para: {patient?.name}</p>
+          <p>Finalize a consulta e defina o próximo acompanhamento.</p>
           
           <div className="flex justify-between">
             <Button variant="outline" onClick={onPrevious}>
               Anterior
             </Button>
-            <Button onClick={onNext}>
-              Próximo
+            <Button onClick={onComplete}>
+              Finalizar Consulta
             </Button>
           </div>
         </div>
@@ -43,4 +41,4 @@ const RecommendationsStep: React.FC<RecommendationsStepProps> = ({
   );
 };
 
-export default RecommendationsStep;
+export default FollowUpStep;

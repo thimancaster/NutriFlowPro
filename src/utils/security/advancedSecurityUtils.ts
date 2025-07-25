@@ -1,6 +1,5 @@
-
 import { auditLogService } from '@/services/auditLogService';
-import { validatePremiumAccess as validatePremiumAccessUtil } from './premiumSecurityUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 // Rate limiting map
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
@@ -26,8 +25,17 @@ export const sanitizeSearchQuery = (query: string): string => {
  */
 export const validatePremiumAccess = async (feature: string): Promise<boolean> => {
   try {
-    const result = await validatePremiumAccessUtil('current_user', feature as any);
-    return result.canAccess;
+    const { data, error } = await supabase.rpc('validate_premium_access_secure', {
+      feature_name: feature,
+      action_type: 'read'
+    });
+    
+    if (error) {
+      console.error('Premium access validation failed:', error);
+      return false;
+    }
+    
+    return data?.has_access || false;
   } catch (error) {
     console.error('Premium access validation failed:', error);
     return false;

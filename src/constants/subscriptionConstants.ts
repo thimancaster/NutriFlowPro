@@ -18,6 +18,9 @@ export const FREE_TIER_LIMITS = {
   PATIENTS: 5,
   MEAL_PLANS: 3,
   CALCULATIONS: 10,
+  patients: 5, // backward compatibility
+  mealPlans: 3, // backward compatibility
+  historyDays: 30
 };
 
 // Subscription pricing
@@ -30,7 +33,8 @@ export const SUBSCRIPTION_PRICES = {
   ANNUAL: {
     amount: 47040, // R$ 470.40 in cents (20% discount)
     formatted: "R$ 470,40",
-    currency: "BRL"
+    currency: "BRL",
+    monthlyEquivalent: "R$ 39,20"
   }
 };
 

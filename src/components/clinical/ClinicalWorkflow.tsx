@@ -134,7 +134,16 @@ const ClinicalWorkflow: React.FC<ClinicalWorkflowProps> = () => {
       case 'nutritional-evaluation':
         return (
           <NutritionalEvaluationStep
-            data={activeConsultation || {}}
+            data={{
+              activityLevel: 'moderate',
+              bodyType: 'normal',
+              tmb: 0,
+              get: 0,
+              vet: 0,
+              calories: 0,
+              protein: 0,
+              carbs: 0
+            }}
             onDataChange={handleConsultationDataChange}
             onNext={handleNextStep}
             onPrevious={handlePreviousStep}

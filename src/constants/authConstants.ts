@@ -1,4 +1,3 @@
-
 export const AUTH_CONSTANTS = {
   VERIFICATION_TIMEOUT: 30000, // 30 seconds
   MAX_VERIFICATION_ATTEMPTS: 5,
@@ -10,11 +9,12 @@ export const AUTH_CONSTANTS = {
 
 // Auth storage keys
 export const AUTH_STORAGE_KEYS = {
-  SESSION_TOKEN: 'session_token',
-  REFRESH_TOKEN: 'refresh_token',
-  USER_DATA: 'user_data',
-  LOGIN_ATTEMPTS: 'login_attempts',
-  LAST_LOGIN: 'last_login',
-  SESSION_FINGERPRINT: 'session_fingerprint',
-  RATE_LIMIT_DATA: 'rate_limit_data'
+  SESSION_TOKEN: 'sb-session-token',
+  REFRESH_TOKEN: 'sb-refresh-token',
+  USER_DATA: 'sb-user-data',
+  LOGIN_ATTEMPTS: 'sb-login-attempts',
+  LAST_LOGIN: 'sb-last-login',
+  SESSION_FINGERPRINT: 'sb-session-fingerprint',
+  RATE_LIMIT_DATA: 'sb-rate-limit',
+  LAST_AUTH_CHECK: 'sb-last-auth-check'
 };
