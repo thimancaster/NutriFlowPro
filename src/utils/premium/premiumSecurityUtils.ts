@@ -14,7 +14,7 @@ export interface PremiumValidationResult {
 }
 
 /**
- * Validate premium access using secure backend function
+ * Validate premium access with backend verification
  */
 export const validatePremiumAccess = async (
   userId: string,
@@ -22,98 +22,57 @@ export const validatePremiumAccess = async (
   action: 'create' | 'read' | 'update' | 'delete' = 'read'
 ): Promise<PremiumValidationResult> => {
   try {
-    // Use the secure RPC function
-    const { data, error } = await supabase.rpc('check_premium_access_secure', {
-      feature_name: feature
+    const { data, error } = await supabase.rpc('validate_premium_access_secure', {
+      feature_name: feature,
+      action_type: action
     });
 
     if (error) {
-      console.error('Premium validation error:', error);
+      console.error('Error validating premium access:', error);
       return {
         isPremium: false,
         quotas: {
-          patients: { current: 0, limit: 5 },
-          mealPlans: { current: 0, limit: 3 },
-          calculations: { current: 0, limit: 10 }
+          patients: { current: 0, limit: 0 },
+          mealPlans: { current: 0, limit: 0 },
+          calculations: { current: 0, limit: 0 }
         },
         canAccess: false,
         reason: 'Validation error'
       };
     }
 
-    // Improved type checking for the response data
-    const hasAccess = data && typeof data === 'object' && data !== null && 'has_access' in data 
-      ? Boolean((data as any).has_access) 
-      : false;
-
-    // Get current usage quotas
-    const quotas = await getCurrentUsageQuotas(userId, hasAccess);
-
+    const result = data as any;
+    
     return {
-      isPremium: hasAccess,
-      quotas,
-      canAccess: hasAccess || (action !== 'create'),
-      reason: hasAccess ? undefined : 'Premium subscription required'
+      isPremium: result.is_premium || false,
+      quotas: {
+        patients: { 
+          current: result.current_usage || 0, 
+          limit: result.is_premium ? Infinity : (result.limit || 5)
+        },
+        mealPlans: { 
+          current: result.current_usage || 0, 
+          limit: result.is_premium ? Infinity : (result.limit || 3)
+        },
+        calculations: { 
+          current: result.current_usage || 0, 
+          limit: result.is_premium ? Infinity : (result.limit || 10)
+        }
+      },
+      canAccess: result.has_access || false,
+      reason: result.reason
     };
   } catch (error) {
-    console.error('Premium access validation failed:', error);
+    console.error('Error validating premium access:', error);
     return {
       isPremium: false,
       quotas: {
-        patients: { current: 0, limit: 5 },
-        mealPlans: { current: 0, limit: 3 },
-        calculations: { current: 0, limit: 10 }
+        patients: { current: 0, limit: 0 },
+        mealPlans: { current: 0, limit: 0 },
+        calculations: { current: 0, limit: 0 }
       },
       canAccess: false,
-      reason: 'System error'
-    };
-  }
-};
-
-/**
- * Get current usage quotas for a user
- */
-const getCurrentUsageQuotas = async (userId: string, isPremium: boolean) => {
-  try {
-    // Get patient count
-    const { count: patientCount } = await supabase
-      .from('patients')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', 'active');
-
-    // Get meal plan count
-    const { count: mealPlanCount } = await supabase
-      .from('meal_plans')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    // Get calculation count
-    const { count: calculationCount } = await supabase
-      .from('calculations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    return {
-      patients: {
-        current: patientCount || 0,
-        limit: isPremium ? Infinity : 5
-      },
-      mealPlans: {
-        current: mealPlanCount || 0,
-        limit: isPremium ? Infinity : 3
-      },
-      calculations: {
-        current: calculationCount || 0,
-        limit: isPremium ? Infinity : 10
-      }
-    };
-  } catch (error) {
-    console.error('Error getting usage quotas:', error);
-    return {
-      patients: { current: 0, limit: isPremium ? Infinity : 5 },
-      mealPlans: { current: 0, limit: isPremium ? Infinity : 3 },
-      calculations: { current: 0, limit: isPremium ? Infinity : 10 }
+      reason: 'Network error'
     };
   }
 };
@@ -125,8 +84,22 @@ export const logPremiumAccessAttempt = async (
   userId: string,
   feature: string,
   action: string,
-  allowed: boolean,
+  granted: boolean,
   reason?: string
-) => {
-  await auditLogService.logPremiumAccess(userId, feature, action, allowed, reason);
+): Promise<void> => {
+  try {
+    await auditLogService.logEvent({
+      user_id: userId,
+      event_type: 'premium_access_attempt',
+      event_data: {
+        feature,
+        action,
+        granted,
+        reason,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error logging premium access attempt:', error);
+  }
 };

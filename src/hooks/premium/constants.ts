@@ -1,29 +1,21 @@
 
-/**
- * Constants for premium status checking
- */
+// Premium check constants
 export const PREMIUM_CHECK_CONSTANTS = {
-  // Cache prefix for premium status in localStorage
-  CACHE_PREFIX: 'premium_status_',
-  
-  // Cache name for in-memory storage
-  CACHE_NAME: 'premium_status_cache',
-  
-  // Cache TTL in milliseconds (5 minutes)
-  CACHE_TTL: 5 * 60 * 1000,
-  
-  // Time between premium status checks in milliseconds (10 minutes)
-  CHECK_INTERVAL: 10 * 60 * 1000,
-  
-  // Maximum number of retries for premium status checks
+  CACHE_TTL: 300000, // 5 minutes
   MAX_RETRIES: 3,
-  
-  // Delay between retries in milliseconds (exponential backoff)
-  RETRY_DELAY: 2000,
+  RETRY_DELAY: 1000, // 1 second
+  VERIFICATION_TIMEOUT: 30000, // 30 seconds
+  MAX_VERIFICATION_ATTEMPTS: 5,
 };
 
-// List of email addresses that have developer access (full system access)
-export const DEVELOPER_EMAILS = ['thimancaster@hotmail.com'];
+// Developer emails for admin access
+export const DEVELOPER_EMAILS = [
+  'thimancaster@hotmail.com',
+  'thiago@nutriflowpro.com'
+];
 
-// List of email addresses that have premium access
-export const PREMIUM_EMAILS = ['thiago@nutriflowpro.com'];
+// Premium emails list
+export const PREMIUM_EMAILS = [
+  'thimancaster@hotmail.com',
+  'thiago@nutriflowpro.com'
+];
