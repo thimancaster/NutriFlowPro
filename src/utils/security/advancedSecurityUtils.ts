@@ -1,53 +1,69 @@
-import { auditLogService } from '@/services/auditLogService';
+
 import { supabase } from '@/integrations/supabase/client';
+import { auditLogService } from '@/services/auditLogService';
 
-// Rate limiting map
-const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
-
-/**
- * Sanitize search query to prevent injection attacks
- */
 export const sanitizeSearchQuery = (query: string): string => {
-  if (!query || typeof query !== 'string') return '';
+  if (!query || typeof query !== 'string') {
+    return '';
+  }
   
-  // Remove SQL injection patterns
-  const sanitized = query
-    .replace(/['"`;\\]/g, '') // Remove quotes, semicolons, backslashes
-    .replace(/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi, '') // Remove SQL keywords
-    .replace(/[<>]/g, '') // Remove HTML tags
-    .trim();
-  
-  return sanitized.substring(0, 100); // Limit length
+  return query
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/['"]/g, '') // Remove quotes
+    .replace(/[;--]/g, '') // Remove SQL injection characters
+    .trim()
+    .substring(0, 100); // Limit length
 };
 
-/**
- * Validate premium access wrapper
- */
-export const validatePremiumAccess = async (feature: string): Promise<boolean> => {
+export const validatePremiumAccess = async (userId: string, feature: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('validate_premium_access_secure', {
-      feature_name: feature,
-      action_type: 'read'
-    });
-    
-    if (error) {
-      console.error('Premium access validation failed:', error);
+    // Check if user exists first
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      console.error('User not found:', userError);
       return false;
     }
-    
-    return data?.has_access || false;
+
+    // Check user subscription status
+    const { data: subscription, error } = await supabase
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single();
+
+    if (error) {
+      console.error('Error checking subscription:', error);
+      return false;
+    }
+
+    // Log access attempt
+    await auditLogService.logSecurityEvent({
+      user_id: userId,
+      event_type: 'premium_access_check',
+      event_data: {
+        feature,
+        hasAccess: !!subscription,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    return !!subscription;
   } catch (error) {
-    console.error('Premium access validation failed:', error);
+    console.error('Error validating premium access:', error);
     return false;
   }
 };
 
-/**
- * Generate session fingerprint for security
- */
 export const generateSessionFingerprint = (): string => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
+  
   if (ctx) {
     ctx.textBaseline = 'top';
     ctx.font = '14px Arial';
@@ -57,142 +73,40 @@ export const generateSessionFingerprint = (): string => {
   const fingerprint = [
     navigator.userAgent,
     navigator.language,
-    screen.width + 'x' + screen.height,
+    screen.width,
+    screen.height,
     new Date().getTimezoneOffset(),
     canvas.toDataURL()
   ].join('|');
   
-  return btoa(fingerprint).slice(0, 32);
+  return btoa(fingerprint).substring(0, 32);
 };
 
-/**
- * Check client-side rate limiting
- */
-export const checkRateLimit = (
-  identifier: string,
-  maxRequests: number,
-  windowMs: number
-): boolean => {
+export const validateSessionFingerprint = (storedFingerprint: string): boolean => {
+  const currentFingerprint = generateSessionFingerprint();
+  return storedFingerprint === currentFingerprint;
+};
+
+export const rateLimitCheck = (identifier: string, limit: number = 100, windowMs: number = 60000): boolean => {
+  const key = `rate_limit_${identifier}`;
   const now = Date.now();
-  const existing = rateLimitMap.get(identifier);
   
-  if (!existing || now - existing.timestamp > windowMs) {
-    rateLimitMap.set(identifier, { count: 1, timestamp: now });
-    return true;
-  }
-  
-  if (existing.count >= maxRequests) {
-    return false;
-  }
-  
-  existing.count++;
-  return true;
-};
-
-/**
- * Log security event with enhanced data
- */
-export const logSecurityEvent = async (
-  eventType: string,
-  eventData: any = {}
-): Promise<void> => {
   try {
-    const enhancedData = {
-      ...eventData,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-      fingerprint: generateSessionFingerprint()
-    };
-
-    await auditLogService.logEvent({
-      user_id: 'current_user', // This will be replaced with actual user ID
-      event_type: eventType,
-      event_data: enhancedData
-    });
+    const stored = localStorage.getItem(key);
+    const data = stored ? JSON.parse(stored) : { count: 0, resetTime: now + windowMs };
+    
+    if (now > data.resetTime) {
+      data.count = 1;
+      data.resetTime = now + windowMs;
+    } else {
+      data.count += 1;
+    }
+    
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    return data.count <= limit;
   } catch (error) {
-    console.error('Error logging security event:', error);
+    console.error('Rate limit check error:', error);
+    return true; // Allow on error
   }
-};
-
-/**
- * Validate session integrity
- */
-export const validateSessionIntegrity = async (): Promise<boolean> => {
-  try {
-    const storedFingerprint = localStorage.getItem('session_fingerprint');
-    const currentFingerprint = generateSessionFingerprint();
-    
-    if (!storedFingerprint) {
-      localStorage.setItem('session_fingerprint', currentFingerprint);
-      return true;
-    }
-    
-    if (storedFingerprint !== currentFingerprint) {
-      await logSecurityEvent('session_integrity_failure', {
-        stored: storedFingerprint,
-        current: currentFingerprint
-      });
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error validating session integrity:', error);
-    return false;
-  }
-};
-
-/**
- * Detect suspicious activity
- */
-export const detectSuspiciousActivity = async (userId: string): Promise<boolean> => {
-  try {
-    // Check for rapid login attempts
-    const recentEvents = await auditLogService.getUserEvents(userId, 20);
-    const loginAttempts = recentEvents.filter(e => 
-      e.event_type === 'login_failed' && 
-      new Date(e.created_at).getTime() > Date.now() - 5 * 60 * 1000 // Last 5 minutes
-    );
-    
-    if (loginAttempts.length > 3) {
-      await logSecurityEvent('suspicious_activity_detected', {
-        userId,
-        reason: 'Multiple failed login attempts',
-        count: loginAttempts.length
-      });
-      return true;
-    }
-    
-    // Check for unusual session patterns
-    const sessionFingerprint = localStorage.getItem('session_fingerprint');
-    const loginTimestamp = localStorage.getItem('login_timestamp');
-    
-    if (sessionFingerprint && loginTimestamp) {
-      const sessionAge = Date.now() - parseInt(loginTimestamp);
-      if (sessionAge > 24 * 60 * 60 * 1000) { // 24 hours
-        await logSecurityEvent('suspicious_activity_detected', {
-          userId,
-          reason: 'Session too old',
-          age: sessionAge
-        });
-        return true;
-      }
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Error detecting suspicious activity:', error);
-    return false;
-  }
-};
-
-/**
- * Clear security data on logout
- */
-export const clearSecurityData = (): void => {
-  localStorage.removeItem('session_fingerprint');
-  localStorage.removeItem('login_timestamp');
-  localStorage.removeItem('rate_limit_data');
-  rateLimitMap.clear();
 };

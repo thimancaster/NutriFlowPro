@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { auditLogService, SecurityEvent } from '@/services/auditLogService';
+import { auditLogService, SecurityEvent, AuditLogEvent } from '@/services/auditLogService';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useSecurityAudit = () => {
@@ -57,7 +57,12 @@ export const useSecurityAudit = () => {
     setIsLoading(true);
     try {
       const fetchedEvents = await auditLogService.getUserEvents(userId, limit);
-      setEvents(fetchedEvents);
+      // Convert AuditLogEvent to SecurityEvent
+      const securityEvents: SecurityEvent[] = fetchedEvents.map(event => ({
+        ...event,
+        timestamp: event.created_at
+      }));
+      setEvents(securityEvents);
     } catch (error) {
       console.error('Error fetching user events:', error);
       setEvents([]);

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AuditLogEvent {
@@ -15,13 +16,15 @@ export interface SecurityEvent {
   event_data: any;
   created_at: string;
   timestamp: string;
+  ip_address?: string;
 }
 
 export class AuditLogService {
   async logEvent(event: Omit<AuditLogEvent, 'id' | 'created_at'>): Promise<void> {
     try {
+      // Use security_audit_log table for security events
       const { error } = await supabase
-        .from('audit_log')
+        .from('security_audit_log')
         .insert([event]);
 
       if (error) {
@@ -35,7 +38,7 @@ export class AuditLogService {
   async getUserEvents(userId: string, limit: number = 50): Promise<AuditLogEvent[]> {
     try {
       const { data, error } = await supabase
-        .from('audit_log')
+        .from('security_audit_log')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -46,7 +49,13 @@ export class AuditLogService {
         return [];
       }
 
-      return data || [];
+      return data?.map(event => ({
+        id: event.id,
+        user_id: event.user_id,
+        event_type: event.event_type,
+        event_data: event.event_data,
+        created_at: event.created_at
+      })) || [];
     } catch (error) {
       console.error('Error fetching user events:', error);
       return [];
@@ -86,6 +95,25 @@ export class AuditLogService {
     }
   }
 
+  async logSecurityEvent(event: Omit<SecurityEvent, 'id' | 'created_at' | 'timestamp'>): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('security_audit_log')
+        .insert([{
+          user_id: event.user_id,
+          event_type: event.event_type,
+          event_data: event.event_data,
+          ip_address: event.ip_address
+        }]);
+
+      if (error) {
+        console.error('Error logging security event:', error);
+      }
+    } catch (error) {
+      console.error('Error logging security event:', error);
+    }
+  }
+
   async getSecurityEvents(limit: number = 50): Promise<SecurityEvent[]> {
     try {
       const { data, error } = await supabase
@@ -99,10 +127,15 @@ export class AuditLogService {
         return [];
       }
 
-      return data.map(event => ({
-        ...event,
-        timestamp: event.created_at
-      }));
+      return data?.map(event => ({
+        id: event.id,
+        user_id: event.user_id,
+        event_type: event.event_type,
+        event_data: event.event_data,
+        created_at: event.created_at,
+        timestamp: event.created_at,
+        ip_address: event.ip_address
+      })) || [];
     } catch (error) {
       console.error('Error fetching security events:', error);
       return [];

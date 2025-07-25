@@ -1,30 +1,42 @@
 
+interface RateLimiterOptions {
+  windowMs: number;
+  max: number;
+  message: string;
+}
+
 export class RateLimiter {
-  private requests = new Map<string, number[]>();
-  
-  checkLimit(key: string, maxRequests: number, windowMs: number) {
+  private windowMs: number;
+  private max: number;
+  private message: string;
+  private requests: Map<string, number[]> = new Map();
+
+  constructor(options: RateLimiterOptions) {
+    this.windowMs = options.windowMs;
+    this.max = options.max;
+    this.message = options.message;
+  }
+
+  isAllowed(identifier: string): boolean {
     const now = Date.now();
-    const windowStart = now - windowMs;
-    
-    if (!this.requests.has(key)) {
-      this.requests.set(key, []);
-    }
-    
-    const requests = this.requests.get(key)!;
+    const requests = this.requests.get(identifier) || [];
     
     // Remove old requests outside the window
-    const validRequests = requests.filter(time => time > windowStart);
+    const validRequests = requests.filter(time => now - time < this.windowMs);
     
-    if (validRequests.length >= maxRequests) {
-      return { allowed: false, retryAfter: Math.ceil((validRequests[0] + windowMs - now) / 1000) };
+    if (validRequests.length >= this.max) {
+      return false;
     }
     
     // Add current request
     validRequests.push(now);
-    this.requests.set(key, validRequests);
+    this.requests.set(identifier, validRequests);
     
-    return { allowed: true };
+    return true;
+  }
+
+  // Legacy method for backward compatibility
+  check(identifier: string): boolean {
+    return this.isAllowed(identifier);
   }
 }
-
-export const rateLimiter = new RateLimiter();
