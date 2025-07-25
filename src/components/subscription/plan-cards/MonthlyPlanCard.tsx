@@ -25,6 +25,7 @@ const MonthlyPlanCard: React.FC<MonthlyPlanCardProps> = ({
         <h2 className="text-2xl font-bold text-gray-800">Plano Mensal</h2>
       </div>
       <p className="text-3xl font-bold text-nutri-blue">{SUBSCRIPTION_PRICES.MONTHLY.formatted}<span className="text-lg font-normal text-gray-500">/mês</span></p>
+      <p className="text-sm text-gray-600 mt-1">Acesso completo ao Nutriflow Pro para nutricionistas</p>
       {isPremium && (
         <div className="mt-2 inline-block bg-amber-100 text-amber-800 px-2 py-1 rounded text-sm">
           Seu plano atual

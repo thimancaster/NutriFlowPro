@@ -1,17 +1,17 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { Check, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {SUBSCRIPTION_PRICES} from "@/constants/subscriptionConstants";
 
 const Recursos = () => {
   const navigate = useNavigate();
   
   const featuresBasic = [
     "Calculadora nutricional básica",
-    "Controle de 10 pacientes",
+    "Controle de 5 pacientes",
     "Criação de planos alimentares simples",
     "Histórico básico de consultas"
   ];
@@ -19,11 +19,11 @@ const Recursos = () => {
   const featuresPremium = [
     "Calculadora nutricional avançada",
     "Controle ilimitado de pacientes",
-    "IA para criação de planos alimentares",
+    "Ferramentas inteligentes para planos alimentares",
     "Histórico completo de consultas",
-    "Exportação de relatórios em PDF",
-    "Suporte premium 24/7",
-    "Integração com apps de pacientes",
+    "Relatórios personalizados",
+    "Organize atendimentos e acompanhe pacientes",
+    "Otimize resultados com ferramentas profissionais",
     "Análises e gráficos avançados"
   ];
 
@@ -72,7 +72,12 @@ const Recursos = () => {
                 <Star className="h-6 w-6 text-yellow-300 fill-current" />
                 <h2 className="text-2xl font-bold text-white ml-2">Plano Premium</h2>
               </div>
-              <p className="text-white text-lg font-medium">R$ 97,00 <span className="text-sm font-normal">/mês</span></p>
+              <p className="text-white text-lg font-medium">
+                {SUBSCRIPTION_PRICES.MONTHLY.formatted} <span className="text-sm font-normal">/mês</span>
+              </p>
+              <p className="text-white text-sm font-medium mt-1">
+                ou {SUBSCRIPTION_PRICES.ANNUAL.formatted} <span className="text-sm font-normal">/ano</span>
+              </p>
               <p className="text-blue-100 mt-2">Recursos completos</p>
             </div>
             
@@ -93,7 +98,7 @@ const Recursos = () => {
             </Button>
             
             <p className="text-center text-blue-100 text-sm mt-4">
-              7 dias de garantia de devolução do dinheiro
+              Pague no plano anual e economize até 20%
             </p>
           </div>
         </div>

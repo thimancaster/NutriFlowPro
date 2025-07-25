@@ -1,3 +1,4 @@
+
 import React from "react";
 import {Helmet} from "react-helmet";
 import Layout from "@/components/Layout";
@@ -32,7 +33,7 @@ const Pricing = () => {
 							price="Gratuito"
 							description="Acesso básico às funcionalidades"
 							features={[
-								{icon: Check, text: "Até 10 pacientes"},
+								{icon: Check, text: "Até 5 pacientes"},
 								{icon: Check, text: "Calculadora nutricional básica"},
 								{icon: Check, text: "Histórico básico de consultas"},
 							]}
@@ -54,12 +55,12 @@ const Pricing = () => {
 							title="Plano Mensal"
 							price={SUBSCRIPTION_PRICES.MONTHLY.formatted}
 							priceDetail="/mês"
-							description="Acesso a todas as funcionalidades"
+							description="Acesso completo ao Nutriflow Pro para nutricionistas"
 							features={[
 								{icon: Check, text: "Pacientes ilimitados"},
-								{icon: Check, text: "Gerador de planos alimentares"},
-								{icon: Zap, text: "Economize até 10 horas por semana"},
-								{icon: BookOpen, text: "Biblioteca ampliada (+5000 alimentos)"},
+								{icon: Check, text: "Ferramentas inteligentes para planos alimentares"},
+								{icon: Zap, text: "Otimize seus atendimentos"},
+								{icon: BookOpen, text: "Controle de pacientes e relatórios personalizados"},
 							]}
 							ctaButton={
 								<HotmartButton
@@ -77,15 +78,15 @@ const Pricing = () => {
 							title="Plano Anual"
 							price={SUBSCRIPTION_PRICES.ANNUAL.formatted}
 							priceDetail="/ano"
-							description={`(equivale a ${SUBSCRIPTION_PRICES.ANNUAL.monthlyEquivalent}/mês)`}
+							description={`ou ${SUBSCRIPTION_PRICES.ANNUAL.installments} no cartão`}
 							badge="ECONOMIA DE 20%"
 							highlighted={true}
 							features={[
-								{icon: Check, text: "Tudo do plano mensal"},
-								{icon: FileText, text: "Exportação de relatórios premium"},
-								{icon: Badge, text: "Selo de nutricionista premium"},
-								{icon: Clock, text: "Acesso antecipado a novas funcionalidades"},
-								{icon: Check, text: "Economia de 20% em relação ao plano mensal"},
+								{icon: Check, text: "Acesso completo ao Nutriflow Pro por 1 ano"},
+								{icon: FileText, text: "Ferramentas profissionais para nutricionistas"},
+								{icon: Badge, text: "Organize atendimentos e acompanhe pacientes"},
+								{icon: Clock, text: "Crie planos alimentares e otimize resultados"},
+								{icon: Check, text: "Desconto exclusivo de 20% no plano anual"},
 							]}
 							ctaButton={
 								<HotmartButton

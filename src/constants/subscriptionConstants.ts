@@ -26,15 +26,16 @@ export const FREE_TIER_LIMITS = {
 // Subscription pricing
 export const SUBSCRIPTION_PRICES = {
   MONTHLY: {
-    amount: 4900, // R$ 49.00 in cents
-    formatted: "R$ 49,00",
+    amount: 7790, // R$ 77,90 in cents
+    formatted: "R$ 77,90",
     currency: "BRL"
   },
   ANNUAL: {
-    amount: 47040, // R$ 470.40 in cents (20% discount)
-    formatted: "R$ 470,40",
+    amount: 55700, // R$ 557,00 in cents
+    formatted: "R$ 557,00",
     currency: "BRL",
-    monthlyEquivalent: "R$ 39,20"
+    monthlyEquivalent: "R$ 46,42", // R$ 557,00 / 12 months
+    installments: "12x de R$ 57,61" // As specified
   }
 };
 
