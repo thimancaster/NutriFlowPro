@@ -1,252 +1,171 @@
 
-import React, { useState } from 'react';
-import { DetailedMealPlan, MealPlanMeal } from '@/types/mealPlan';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Edit2, Save, Plus, Trash2 } from 'lucide-react';
+import React, {useState, useEffect} from "react";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Badge} from "@/components/ui/badge";
+import {DetailedMealPlan, MealPlanItem, MEAL_ORDER, MEAL_NAMES, MEAL_TIMES} from "@/types/mealPlan";
+import MealTypeSection from "./MealTypeSection";
+import {format} from "date-fns";
+import {ptBR} from "date-fns/locale";
+import {useToast} from "@/hooks/use-toast";
+import {MealPlanService} from "@/services/mealPlanService";
 
 interface MealPlanEditorProps {
-  mealPlan: DetailedMealPlan;
-  onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
+	mealPlan: DetailedMealPlan;
+	onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
 }
 
-const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan, onMealPlanUpdate }) => {
-  const [editingMealPlan, setEditingMealPlan] = useState<DetailedMealPlan>(mealPlan);
-  const [isEditing, setIsEditing] = useState(false);
+type MealType = typeof MEAL_ORDER[number];
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Call the callback if provided
-    if (onMealPlanUpdate) {
-      onMealPlanUpdate(editingMealPlan);
-    }
-    console.log('Saving meal plan:', editingMealPlan);
-  };
+// Configuração das refeições em ordem cronológica brasileira
+const MEAL_TYPE_CONFIG: Record<MealType, {name: string; time: string; color: string}> = {
+	cafe_da_manha: {name: "Café da Manhã", time: "07:00", color: "bg-orange-100"},
+	lanche_manha: {name: "Lanche da Manhã", time: "10:00", color: "bg-yellow-100"},
+	almoco: {name: "Almoço", time: "12:30", color: "bg-green-100"},
+	lanche_tarde: {name: "Lanche da Tarde", time: "15:30", color: "bg-blue-100"},
+	jantar: {name: "Jantar", time: "19:00", color: "bg-purple-100"},
+	ceia: {name: "Ceia", time: "21:30", color: "bg-pink-100"},
+};
 
-  const handleCancel = () => {
-    setEditingMealPlan(mealPlan);
-    setIsEditing(false);
-  };
+const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpdate}) => {
+	const [items, setItems] = useState<MealPlanItem[]>(mealPlan.items || []);
+	const [isLoading, setIsLoading] = useState(false);
+	const {toast} = useToast();
 
-  const calculateTotalNutrition = (meals: MealPlanMeal[]) => {
-    return meals.reduce(
-      (totals, meal) => ({
-        calories: totals.calories + (meal.total_calories || 0),
-        protein: totals.protein + (meal.total_protein || 0),
-        carbs: totals.carbs + (meal.total_carbs || 0),
-        fats: totals.fats + (meal.total_fats || 0),
-      }),
-      { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    );
-  };
+	useEffect(() => {
+		setItems(mealPlan.items || []);
+	}, [mealPlan.items]);
 
-  const addMeal = () => {
-    const newMeal: MealPlanMeal = {
-      id: Date.now().toString(),
-      name: 'Nova Refeição',
-      type: 'cafe_da_manha',
-      foods: [],
-      total_calories: 0,
-      total_protein: 0,
-      total_carbs: 0,
-      total_fats: 0,
-      notes: ''
-    };
+	// Agrupar itens por tipo de refeição
+	const groupedItems = items.reduce((acc, item) => {
+		if (!acc[item.meal_type]) {
+			acc[item.meal_type] = [];
+		}
+		acc[item.meal_type].push(item);
+		return acc;
+	}, {} as Record<string, MealPlanItem[]>);
 
-    setEditingMealPlan({
-      ...editingMealPlan,
-      meals: [...editingMealPlan.meals, newMeal]
-    });
-  };
+	const saveMealPlanChanges = async (updatedItems: MealPlanItem[]) => {
+		try {
+			setIsLoading(true);
 
-  const removeMeal = (mealId: string) => {
-    setEditingMealPlan({
-      ...editingMealPlan,
-      meals: editingMealPlan.meals.filter(meal => meal.id !== mealId)
-    });
-  };
+			// Calcular novos totais
+			const newTotals = updatedItems.reduce(
+				(acc, item) => {
+					acc.calories += item.calories;
+					acc.protein += item.protein;
+					acc.carbs += item.carbs;
+					acc.fats += item.fats;
+					return acc;
+				},
+				{calories: 0, protein: 0, carbs: 0, fats: 0}
+			);
 
-  const updateMeal = (mealId: string, updates: Partial<MealPlanMeal>) => {
-    setEditingMealPlan({
-      ...editingMealPlan,
-      meals: editingMealPlan.meals.map(meal => 
-        meal.id === mealId ? { ...meal, ...updates } : meal
-      )
-    });
-  };
+			// Atualizar o plano alimentar
+			const updatedMealPlan = {
+				...mealPlan,
+				total_calories: newTotals.calories,
+				total_protein: newTotals.protein,
+				total_carbs: newTotals.carbs,
+				total_fats: newTotals.fats,
+				items: updatedItems,
+			};
 
-  const totals = calculateTotalNutrition(editingMealPlan.meals);
+			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedMealPlan);
 
-  // Get patient name from meal plan or use default
-  const getPatientName = () => {
-    // Try to get from calculation or use a default
-    return 'Paciente';
-  };
+			if (result.success && result.data) {
+				if (onMealPlanUpdate) {
+					onMealPlanUpdate(result.data as DetailedMealPlan);
+				}
+			} else {
+				throw new Error(result.error || "Erro ao salvar alterações");
+			}
+		} catch (error: any) {
+			console.error("Erro ao salvar plano alimentar:", error);
+			toast({
+				title: "Erro",
+				description: error.message || "Erro ao salvar alterações no plano alimentar",
+				variant: "destructive",
+			});
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Edit2 className="h-5 w-5" />
-              Plano Alimentar - {getPatientName()}
-            </CardTitle>
-            <div className="flex gap-2">
-              {isEditing ? (
-                <>
-                  <Button variant="outline" onClick={handleCancel}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleSave}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar
-                  </Button>
-                </>
-              ) : (
-                <Button onClick={() => setIsEditing(true)}>
-                  <Edit2 className="mr-2 h-4 w-4" />
-                  Editar
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="title">Título do Plano</Label>
-              <Input
-                id="title"
-                value={editingMealPlan.notes || ''}
-                onChange={(e) => setEditingMealPlan({ ...editingMealPlan, notes: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
-            <div>
-              <Label htmlFor="created_at">Data de Criação</Label>
-              <Input
-                id="created_at"
-                value={new Date(editingMealPlan.created_at).toLocaleDateString('pt-BR')}
-                disabled
-              />
-            </div>
-          </div>
+	const handleItemUpdate = async (updatedItem: MealPlanItem) => {
+		console.log("Updating item:", updatedItem);
 
-          {/* Nutritional Summary */}
-          <div className="bg-muted/30 p-4 rounded-lg">
-            <h3 className="font-medium mb-2">Resumo Nutricional</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Calorias:</span> {totals.calories} kcal
-              </div>
-              <div>
-                <span className="font-medium">Proteínas:</span> {totals.protein}g
-              </div>
-              <div>
-                <span className="font-medium">Carboidratos:</span> {totals.carbs}g
-              </div>
-              <div>
-                <span className="font-medium">Gorduras:</span> {totals.fats}g
-              </div>
-            </div>
-          </div>
+		const updatedItems = items.map((item) => (item.id === updatedItem.id ? updatedItem : item));
 
-          {/* Meals */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Refeições</h3>
-              {isEditing && (
-                <Button onClick={addMeal} size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Adicionar Refeição
-                </Button>
-              )}
-            </div>
+		setItems(updatedItems);
+		await saveMealPlanChanges(updatedItems);
+	};
 
-            {editingMealPlan.meals.map((meal, index) => (
-              <Card key={meal.id || index}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <Input
-                      value={meal.name}
-                      onChange={(e) => updateMeal(meal.id, { name: e.target.value })}
-                      disabled={!isEditing}
-                      className="font-medium"
-                    />
-                    {isEditing && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMeal(meal.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+	const handleItemRemove = async (itemId: string) => {
+		console.log("Removing item:", itemId);
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <Label>Calorias</Label>
-                      <Input
-                        type="number"
-                        value={meal.total_calories || 0}
-                        onChange={(e) => updateMeal(meal.id, { total_calories: Number(e.target.value) })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div>
-                      <Label>Proteínas (g)</Label>
-                      <Input
-                        type="number"
-                        value={meal.total_protein || 0}
-                        onChange={(e) => updateMeal(meal.id, { total_protein: Number(e.target.value) })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div>
-                      <Label>Carboidratos (g)</Label>
-                      <Input
-                        type="number"
-                        value={meal.total_carbs || 0}
-                        onChange={(e) => updateMeal(meal.id, { total_carbs: Number(e.target.value) })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div>
-                      <Label>Gorduras (g)</Label>
-                      <Input
-                        type="number"
-                        value={meal.total_fats || 0}
-                        onChange={(e) => updateMeal(meal.id, { total_fats: Number(e.target.value) })}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
+		const updatedItems = items.filter((item) => item.id !== itemId);
+		setItems(updatedItems);
+		await saveMealPlanChanges(updatedItems);
+	};
 
-                  <div>
-                    <Label>Observações</Label>
-                    <Textarea
-                      value={meal.notes || ''}
-                      onChange={(e) => updateMeal(meal.id, { notes: e.target.value })}
-                      disabled={!isEditing}
-                      placeholder="Digite observações sobre esta refeição"
-                      rows={3}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+	const handleItemAdd = async (newItem: MealPlanItem) => {
+		console.log("Adding new item:", newItem);
+
+		const updatedItems = [...items, newItem];
+		setItems(updatedItems);
+		await saveMealPlanChanges(updatedItems);
+	};
+
+	// Recalcular totais baseados nos itens atuais
+	const currentTotals = items.reduce(
+		(acc, item) => {
+			acc.calories += item.calories;
+			acc.protein += item.protein;
+			acc.carbs += item.carbs;
+			acc.fats += item.fats;
+			return acc;
+		},
+		{calories: 0, protein: 0, carbs: 0, fats: 0}
+	);
+
+	return (
+		<div className="space-y-6">
+			<Card>
+				<CardHeader>
+					<div className="flex items-center justify-between">
+						<CardTitle className="flex items-center gap-2">
+							🇧🇷 Plano Alimentar Brasileiro -{" "}
+							{format(new Date(mealPlan.date), "dd/MM/yyyy", {locale: ptBR})}
+						</CardTitle>
+						<div className="flex gap-2">
+							<Badge variant="outline">
+								{currentTotals.calories.toFixed(0)} kcal
+							</Badge>
+							<Badge variant="outline">P: {currentTotals.protein.toFixed(0)}g</Badge>
+							<Badge variant="outline">C: {currentTotals.carbs.toFixed(0)}g</Badge>
+							<Badge variant="outline">G: {currentTotals.fats.toFixed(0)}g</Badge>
+						</div>
+					</div>
+				</CardHeader>
+			</Card>
+
+			<div className="grid gap-6">
+				{MEAL_ORDER.map((mealType) => (
+					<MealTypeSection
+						key={mealType}
+						mealType={mealType}
+						config={MEAL_TYPE_CONFIG[mealType]}
+						items={groupedItems[mealType] || []}
+						mealPlanId={mealPlan.id}
+						onItemUpdate={handleItemUpdate}
+						onItemRemove={handleItemRemove}
+						onItemAdd={handleItemAdd}
+						isLoading={isLoading}
+					/>
+				))}
+			</div>
+		</div>
+	);
 };
 
 export default MealPlanEditor;

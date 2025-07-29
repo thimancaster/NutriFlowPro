@@ -1,140 +1,155 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Utensils, Plus } from 'lucide-react';
-import { useUnifiedEcosystem } from '@/contexts/UnifiedEcosystemContext';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Utensils, Calendar, RefreshCw } from 'lucide-react';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
+import { NutritionalTargets, BRAZILIAN_MEAL_FOOD_MAPPING } from '@/types/mealPlan';
+import MealPlanEditor from './MealPlanEditor';
+import NutritionalSummary from './NutritionalSummary';
+import PatientRequiredAlert from './PatientRequiredAlert';
 
-const MealPlanGenerator: React.FC = () => {
-  const { 
-    state, 
-    generateMealPlan, 
-    validateForMealPlan,
-    setCurrentStep 
-  } = useUnifiedEcosystem();
-  
-  const { 
-    activePatient, 
-    consultationData, 
-    mealPlan, 
-    isLoading, 
-    error 
-  } = state;
-  
-  const validation = validateForMealPlan();
+interface MealPlanGeneratorProps {
+  calculationData?: {
+    tdee: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+}
+
+const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ calculationData }) => {
+  const { activePatient } = usePatient();
+  const { user } = useAuth();
+  const { isGenerating, generatedPlan, generateMealPlan } = useMealPlanGeneration();
+  const [targets, setTargets] = useState<NutritionalTargets>({
+    calories: 2000,
+    protein: 150,
+    carbs: 200,
+    fats: 67
+  });
+
+  // Atualizar targets quando dados de cálculo estiverem disponíveis
+  useEffect(() => {
+    if (calculationData) {
+      setTargets({
+        calories: calculationData.tdee,
+        protein: calculationData.protein,
+        carbs: calculationData.carbs,
+        fats: calculationData.fats
+      });
+    }
+  }, [calculationData]);
 
   const handleGeneratePlan = async () => {
-    await generateMealPlan();
+    if (!activePatient || !user) return;
+
+    await generateMealPlan({
+      userId: user.id,
+      patientId: activePatient.id,
+      targets,
+      mealTimeFoodMapping: BRAZILIAN_MEAL_FOOD_MAPPING // Usa mapeamento cultural brasileiro
+    });
   };
 
   if (!activePatient) {
+    return <PatientRequiredAlert />;
+  }
+
+  if (!generatedPlan) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center space-y-4">
-          <AlertCircle className="h-12 w-12 mx-auto text-amber-500" />
-          <p className="text-muted-foreground">Selecione um paciente para continuar</p>
-          <Button onClick={() => setCurrentStep('patient-selection')}>
-            Selecionar Paciente
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Utensils className="h-5 w-5" />
+              Gerador de Plano Alimentar com Inteligência Cultural
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">
+                  Paciente: {activePatient.name}
+                </h3>
+                <p className="text-gray-600">
+                  Gere automaticamente um plano alimentar personalizado seguindo 
+                  os costumes alimentares brasileiros
+                </p>
+              </div>
+
+              <NutritionalSummary targets={targets} />
+
+              <div className="mt-6">
+                <Button 
+                  onClick={handleGeneratePlan}
+                  disabled={isGenerating}
+                  size="lg"
+                  className="w-full max-w-md"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Gerando plano inteligente...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Gerar Plano Alimentar Brasileiro
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="text-sm text-green-800">
+                  <p className="font-medium mb-2">🧠 Inteligência Cultural Brasileira:</p>
+                  <ul className="text-left space-y-1">
+                    <li>• Café da manhã: Pães, cereais, frutas e laticínios</li>
+                    <li>• Almoço: Arroz, feijão, carnes e verduras</li>
+                    <li>• Jantar: Refeições mais leves e saudáveis</li>
+                    <li>• Lanches: Frutas, iogurtes e oleaginosas</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Gerador de Plano Alimentar</h1>
-        <p className="text-gray-600">Gere planos alimentares inteligentes baseados nos dados nutricionais</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Plano Alimentar Brasileiro - {activePatient.name}</h2>
+        <Button 
+          onClick={handleGeneratePlan} 
+          variant="outline"
+          disabled={isGenerating}
+        >
+          {isGenerating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
+          Gerar Novo Plano
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="h-5 w-5 text-nutri-green" />
-            Plano para {activePatient.name}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+      <NutritionalSummary 
+        targets={targets} 
+        current={{
+          calories: generatedPlan.total_calories,
+          protein: generatedPlan.total_protein,
+          carbs: generatedPlan.total_carbs,
+          fats: generatedPlan.total_fats
+        }}
+      />
 
-          {!validation.isValid && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Problemas encontrados: {validation.issues.join('. ')}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {consultationData?.results && (
-            <div className="bg-muted/30 p-4 rounded-lg">
-              <h3 className="font-medium mb-2">Dados Nutricionais</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">VET:</span> {consultationData.results.vet} kcal/dia
-                </div>
-                <div>
-                  <span className="font-medium">Proteínas:</span> {consultationData.results.macros.protein}g
-                </div>
-                <div>
-                  <span className="font-medium">Carboidratos:</span> {consultationData.results.macros.carbs}g
-                </div>
-                <div>
-                  <span className="font-medium">Gorduras:</span> {consultationData.results.macros.fat}g
-                </div>
-              </div>
-            </div>
-          )}
-
-          {mealPlan ? (
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <h4 className="font-medium text-green-800 mb-2">
-                ✅ Plano Alimentar Gerado
-              </h4>
-              <p className="text-sm text-green-600">
-                {mealPlan.total_calories} kcal distribuídas em {mealPlan.meals.length} refeições
-              </p>
-              <div className="mt-4">
-                {mealPlan.meals.map((meal, index) => (
-                  <div key={index} className="mb-2 p-2 bg-white rounded border">
-                    <div className="font-medium">{meal.name}</div>
-                    <div className="text-xs text-gray-600">
-                      {meal.total_calories} kcal | P: {meal.total_protein}g | C: {meal.total_carbs}g | G: {meal.total_fats}g
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                onClick={handleGeneratePlan}
-                disabled={isLoading || !validation.isValid}
-                className="flex-1 bg-nutri-green hover:bg-nutri-green-dark"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Gerando Plano...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Gerar Plano Alimentar
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <MealPlanEditor mealPlan={generatedPlan} />
     </div>
   );
 };

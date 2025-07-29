@@ -10,60 +10,60 @@ import { calculateMacros } from '../utils/nutrition/macroCalculations';
 
 describe('TMB Calculations for Eutrofico Profile', () => {
   it('calculates correctly for women', () => {
-    const result = calculateTMB(60, 165, 30, 'F');
-    expect(result).toBeCloseTo(1378.5, 0);
+    const result = calculateTMB(60, 165, 30, 'F', 'eutrofico');
+    expect(result.tmb).toBeCloseTo(1378.5, 0);
   });
 
   it('calculates correctly for men', () => {
-    const result = calculateTMB(70, 175, 30, 'M');
-    expect(result).toBeCloseTo(1697, 0);
+    const result = calculateTMB(70, 175, 30, 'M', 'eutrofico');
+    expect(result.tmb).toBeCloseTo(1697, 0);
   });
 });
 
 describe('TMB Calculations for Obeso Profile', () => {
   it('calculates correctly for women', () => {
-    const result = calculateTMB(80, 165, 30, 'F');
-    expect(result).toBeCloseTo(1281.25, 0);
+    const result = calculateTMB(80, 165, 30, 'F', 'sobrepeso_obesidade');
+    expect(result.tmb).toBeCloseTo(1281.25, 0);
   });
 
   it('calculates correctly for men', () => {
-    const result = calculateTMB(90, 175, 30, 'M');
-    expect(result).toBeCloseTo(1781.25, 0);
+    const result = calculateTMB(90, 175, 30, 'M', 'sobrepeso_obesidade');
+    expect(result.tmb).toBeCloseTo(1781.25, 0);
   });
 });
 
 describe('GET Calculations', () => {
-  it('calculates correctly with various activity factors', () => {
+  it('calculates correctly with various activity factors for eutrofico', () => {
     const tmb = 1500;
-    expect(calculateGET(tmb, 'leve')).toBeCloseTo(2062.5);
-    expect(calculateGET(tmb, 'moderado')).toBeCloseTo(2325);
-    expect(calculateGET(tmb, 'intenso')).toBeCloseTo(2587.5);
+    expect(calculateGET(tmb, 'leve', 'eutrofico')).toBeCloseTo(2062.5);
+    expect(calculateGET(tmb, 'moderado', 'eutrofico')).toBeCloseTo(2325);
+    expect(calculateGET(tmb, 'intenso', 'eutrofico')).toBeCloseTo(2587.5);
   });
 
-  it('handles factors correctly', () => {
+  it('handles factors for obeso correctly', () => {
     const tmb = 1500;
-    expect(calculateGET(tmb, 'leve')).toBeCloseTo(2062.5);
-    expect(calculateGET(tmb, 'moderado')).toBeCloseTo(2325);
+    expect(calculateGET(tmb, 'leve', 'sobrepeso_obesidade')).toBeCloseTo(2062.5);
+    expect(calculateGET(tmb, 'moderado', 'sobrepeso_obesidade')).toBeCloseTo(2325);
   });
 });
 
 describe('VET Calculations', () => {
   it('calculates VET correctly for weight loss', () => {
     const get = 2000;
-    const result = calculateVET(get, 'emagrecimento');
-    expect(result).toBeCloseTo(1500, 0);
+    const result = calculateVET(get, 'moderado', 'emagrecimento', 'eutrofico');
+    expect(result.vet).toBeCloseTo(1500, 0); // 500 kcal déficit conforme ENP
   });
 
   it('calculates VET correctly for muscle gain', () => {
     const get = 2000;
-    const result = calculateVET(get, 'hipertrofia');
-    expect(result).toBeCloseTo(2400, 0);
+    const result = calculateVET(get, 'moderado', 'hipertrofia', 'eutrofico');
+    expect(result.vet).toBeCloseTo(2400, 0); // 400 kcal superávit conforme ENP
   });
 
   it('calculates VET correctly for maintenance', () => {
     const get = 2000;
-    const result = calculateVET(get, 'manutenção');
-    expect(result).toBe(2000);
+    const result = calculateVET(get, 'moderado', 'manutenção', 'eutrofico');
+    expect(result.vet).toBe(2000);
   });
 });
 

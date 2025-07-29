@@ -12,21 +12,14 @@ export interface CreateMealPlanParams {
 
 export class MealPlanServiceV2 {
   /**
-   * Generate a meal plan based on nutritional targets using cultural intelligence
+   * Generate a meal plan based on nutritional targets
    */
   static async generateMealPlan(params: CreateMealPlanParams): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
       const { userId, patientId, calculationId, targets, date = new Date().toISOString().split('T')[0] } = params;
       
-      console.log('Generating meal plan with cultural intelligence:', {
-        userId,
-        patientId,
-        targets,
-        date
-      });
-      
-      // Call the culturally intelligent RPC function
-      const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan_with_cultural_rules', {
+      // Call the optimized RPC function
+      const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan', {
         p_user_id: userId,
         p_patient_id: patientId,
         p_target_calories: targets.calories,
@@ -37,15 +30,9 @@ export class MealPlanServiceV2 {
       });
 
       if (error) {
-        console.error('Error generating culturally intelligent meal plan:', error);
+        console.error('Error generating meal plan:', error);
         return { success: false, error: error.message };
       }
-
-      if (!mealPlanId) {
-        return { success: false, error: 'No meal plan ID returned from generation' };
-      }
-
-      console.log('Generated meal plan ID:', mealPlanId);
 
       // Fetch the complete meal plan
       return this.getMealPlan(mealPlanId);
@@ -56,7 +43,7 @@ export class MealPlanServiceV2 {
   }
 
   /**
-   * Get a meal plan by ID with complete structure
+   * Get a meal plan by ID with simplified query
    */
   static async getMealPlan(id: string): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
@@ -86,7 +73,6 @@ export class MealPlanServiceV2 {
         meals: this.groupItemsByMealType(itemsData || [])
       };
 
-      console.log('Retrieved meal plan:', mealPlan);
       return { success: true, data: mealPlan };
     } catch (error: any) {
       console.error('Error in getMealPlan:', error);
@@ -146,10 +132,10 @@ export class MealPlanServiceV2 {
   }
 
   /**
-   * Group meal plan items by meal type in Brazilian chronological order
+   * Group meal plan items by meal type in chronological order
    */
   private static groupItemsByMealType(items: MealPlanItem[]) {
-    // Brazilian meal order (chronological)
+    // Define the chronological order of meals (Brazilian standard)
     const mealOrder = [
       'cafe_da_manha',
       'lanche_manha', 

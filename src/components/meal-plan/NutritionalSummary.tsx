@@ -3,18 +3,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Target, TrendingUp } from 'lucide-react';
-
-interface MacroTargets {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-}
+import { NutritionalTargets } from '@/types/mealPlan';
 
 interface NutritionalSummaryProps {
-  targets: MacroTargets;
-  current?: MacroTargets;
+  targets: NutritionalTargets;
+  current?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
 }
 
 const NutritionalSummary: React.FC<NutritionalSummaryProps> = ({ targets, current }) => {
@@ -22,107 +20,82 @@ const NutritionalSummary: React.FC<NutritionalSummaryProps> = ({ targets, curren
     return Math.min((current / target) * 100, 100);
   };
 
-  const getStatusColor = (percentage: number) => {
-    if (percentage >= 95 && percentage <= 105) return 'text-green-600';
-    if (percentage >= 85 && percentage <= 115) return 'text-yellow-600';
-    return 'text-red-600';
+  const getProgressColor = (percentage: number) => {
+    if (percentage < 80) return 'bg-red-500';
+    if (percentage < 95) return 'bg-yellow-500';
+    if (percentage <= 110) return 'bg-green-500';
+    return 'bg-orange-500';
   };
-
-  const macros = [
-    {
-      name: 'Calorias',
-      target: targets.calories,
-      current: current?.calories || 0,
-      unit: 'kcal',
-      color: 'bg-nutri-green'
-    },
-    {
-      name: 'Proteínas',
-      target: targets.protein,
-      current: current?.protein || 0,
-      unit: 'g',
-      color: 'bg-blue-500'
-    },
-    {
-      name: 'Carboidratos',
-      target: targets.carbs,
-      current: current?.carbs || 0,
-      unit: 'g',
-      color: 'bg-orange-500'
-    },
-    {
-      name: 'Gorduras',
-      target: targets.fats,
-      current: current?.fats || 0,
-      unit: 'g',
-      color: 'bg-purple-500'
-    }
-  ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-nutri-green" />
-          Resumo Nutricional
-        </CardTitle>
+        <CardTitle>Resumo Nutricional</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {macros.map((macro) => {
-            const percentage = calculatePercentage(macro.current, macro.target);
-            const isComplete = current !== undefined;
-            
-            return (
-              <div key={macro.name} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{macro.name}</span>
-                  <div className="flex items-center gap-2">
-                    {isComplete ? (
-                      <Badge 
-                        variant="secondary" 
-                        className={getStatusColor(percentage)}
-                      >
-                        {macro.current} / {macro.target} {macro.unit}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">
-                        Meta: {macro.target} {macro.unit}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                
-                {isComplete && (
-                  <div className="space-y-1">
-                    <Progress 
-                      value={percentage} 
-                      className="h-2"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{percentage.toFixed(1)}% da meta</span>
-                      <span className={getStatusColor(percentage)}>
-                        {percentage >= 95 && percentage <= 105 ? '✓ Ideal' : 
-                         percentage >= 85 && percentage <= 115 ? '⚠ Aceitável' : 
-                         '✗ Ajustar'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">
+              {current ? Math.round(current.calories) : 0}
+            </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.calories)} kcal</div>
+            <div className="text-xs text-gray-500 mt-1">Calorias</div>
+            {current && (
+              <Progress 
+                value={calculatePercentage(current.calories, targets.calories)} 
+                className="mt-2 h-2"
+              />
+            )}
+          </div>
+          
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-red-600">
+              {current ? Math.round(current.protein) : 0}
+            </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.protein)}g</div>
+            <div className="text-xs text-gray-500 mt-1">Proteínas</div>
+            {current && (
+              <Progress 
+                value={calculatePercentage(current.protein, targets.protein)} 
+                className="mt-2 h-2"
+              />
+            )}
+          </div>
+          
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-yellow-600">
+              {current ? Math.round(current.carbs) : 0}
+            </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.carbs)}g</div>
+            <div className="text-xs text-gray-500 mt-1">Carboidratos</div>
+            {current && (
+              <Progress 
+                value={calculatePercentage(current.carbs, targets.carbs)} 
+                className="mt-2 h-2"
+              />
+            )}
+          </div>
+          
+          <div className="text-center p-4 border rounded-lg">
+            <div className="text-2xl font-bold text-green-600">
+              {current ? Math.round(current.fats) : 0}
+            </div>
+            <div className="text-sm text-gray-600">/ {Math.round(targets.fats)}g</div>
+            <div className="text-xs text-gray-500 mt-1">Gorduras</div>
+            {current && (
+              <Progress 
+                value={calculatePercentage(current.fats, targets.fats)} 
+                className="mt-2 h-2"
+              />
+            )}
+          </div>
         </div>
         
         {current && (
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-nutri-green" />
-              <span className="font-medium">Status Geral</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Plano alimentar balanceado seguindo padrões brasileiros de alimentação
-            </p>
+          <div className="flex justify-center gap-2 mt-4">
+            <Badge variant="outline">
+              {Math.round(calculatePercentage(current.calories, targets.calories))}% das metas
+            </Badge>
           </div>
         )}
       </CardContent>

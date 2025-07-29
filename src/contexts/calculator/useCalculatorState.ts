@@ -1,149 +1,140 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
-import { calculateENPNutrition } from '@/utils/nutritionCalculations';
-import { useUnifiedEcosystem } from '@/contexts/UnifiedEcosystemContext';
 import { useToast } from '@/hooks/use-toast';
+import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
+import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
+
+const initialState: CalculatorState = {
+  weight: 0,
+  height: 0,
+  age: 0,
+  sex: 'F',
+  activityLevel: 'moderado',
+  objective: 'manutenção',
+  profile: 'eutrofico',
+  bmr: null,
+  tdee: null,
+  protein: null,
+  carbs: null,
+  fats: null,
+  loading: false,
+  calculated: false,
+  activeTab: 'basic'
+};
 
 export const useCalculatorState = () => {
-  const { setCalculationData } = useUnifiedEcosystem();
+  const [state, setState] = useState<CalculatorState>(initialState);
   const { toast } = useToast();
   
-  const [state, setState] = useState<CalculatorState>({
-    weight: 70,
-    height: 170,
-    age: 30,
-    sex: 'M',
-    activityLevel: 'moderado',
-    objective: 'manutenção',
-    profile: 'eutrofico',
-    bmr: null,
-    tdee: null,
-    protein: null,
-    carbs: null,
-    fats: null,
-    loading: false,
-    calculated: false,
-    activeTab: 'basic',
-  });
-
-  const setWeight = useCallback((weight: number) => {
-    setState(prev => ({ ...prev, weight }));
-  }, []);
-
-  const setHeight = useCallback((height: number) => {
-    setState(prev => ({ ...prev, height }));
-  }, []);
-
-  const setAge = useCallback((age: number) => {
-    setState(prev => ({ ...prev, age }));
-  }, []);
-
-  const setSex = useCallback((sex: 'M' | 'F') => {
-    setState(prev => ({ ...prev, sex }));
-  }, []);
-
-  const setActivityLevel = useCallback((activityLevel: string) => {
-    setState(prev => ({ ...prev, activityLevel }));
-  }, []);
-
-  const setObjective = useCallback((objective: string) => {
-    setState(prev => ({ ...prev, objective }));
-  }, []);
-
-  const setProfile = useCallback((profile: Profile) => {
-    setState(prev => ({ ...prev, profile }));
-  }, []);
-
-  const setActiveTab = useCallback((activeTab: 'basic' | 'advanced' | 'results') => {
+  const setWeight = (weight: number) => {
+    setState(prev => ({ ...prev, weight, calculated: false }));
+  };
+  
+  const setHeight = (height: number) => {
+    setState(prev => ({ ...prev, height, calculated: false }));
+  };
+  
+  const setAge = (age: number) => {
+    setState(prev => ({ ...prev, age, calculated: false }));
+  };
+  
+  const setSex = (sex: 'M' | 'F') => {
+    setState(prev => ({ ...prev, sex, calculated: false }));
+  };
+  
+  const setActivityLevel = (activityLevel: string) => {
+    setState(prev => ({ ...prev, activityLevel, calculated: false }));
+  };
+  
+  const setObjective = (objective: string) => {
+    setState(prev => ({ ...prev, objective, calculated: false }));
+  };
+  
+  const setProfile = (profile: Profile) => {
+    setState(prev => ({ ...prev, profile, calculated: false }));
+  };
+  
+  const setActiveTab = (activeTab: 'basic' | 'advanced' | 'results') => {
     setState(prev => ({ ...prev, activeTab }));
-  }, []);
-
-  const calculateNutrition = useCallback(async () => {
+  };
+  
+  const calculateNutrition = () => {
     setState(prev => ({ ...prev, loading: true }));
     
-    try {
-      const results = await calculateENPNutrition({
-        weight: state.weight,
-        height: state.height,
-        age: state.age,
-        sex: state.sex,
-        activityLevel: state.activityLevel,
-        objective: state.objective,
-        profile: state.profile,
-      });
-
-      if (results) {
-        const newState = {
-          ...state,
-          bmr: results.bmr,
-          tdee: results.tdee,
-          protein: results.protein,
-          carbs: results.carbs,
-          fats: results.fats,
-          calculated: true,
+    // Simulating calculation delay for UI purposes
+    setTimeout(() => {
+      try {
+        // Basic validation
+        if (state.weight <= 0 || state.height <= 0 || state.age <= 0) {
+          toast({
+            title: "Dados Inválidos",
+            description: "Todos os valores devem ser maiores que zero",
+            variant: "destructive"
+          });
+          setState(prev => ({ ...prev, loading: false }));
+          return;
+        }
+        
+        // Normalizar profile usando funções de conversão
+        const normalizedProfile = stringToProfile(state.profile);
+        const legacyProfile = profileToLegacy(normalizedProfile);
+        
+        console.log('Profile conversion in calculator:', {
+          original: state.profile,
+          normalized: normalizedProfile,
+          legacy: legacyProfile
+        });
+        
+        // Use the legacy function with correct signature (7 parameters)
+        const results = calculateCompleteNutritionLegacy(
+          state.weight,
+          state.height,
+          state.age,
+          state.sex,
+          state.activityLevel as any,
+          state.objective as any,
+          legacyProfile
+        );
+        
+        setState(prev => ({
+          ...prev,
+          bmr: Math.round(results.tmb),
+          tdee: Math.round(results.vet),
+          protein: Math.round(results.macros.protein.grams),
+          carbs: Math.round(results.macros.carbs.grams),
+          fats: Math.round(results.macros.fat.grams),
           loading: false,
-          activeTab: 'results' as const,
-        };
-
-        setState(newState);
-
-        // Integrar com o ecossistema unificado
-        setCalculationData({
-          id: `calc-${Date.now()}`,
-          weight: state.weight,
-          height: state.height,
-          age: state.age,
-          sex: state.sex,
-          activityLevel: state.activityLevel,
-          objective: state.objective,
-          profile: state.profile,
-          bmr: results.bmr,
-          tdee: results.tdee,
-          protein: results.protein,
-          carbs: results.carbs,
-          fats: results.fats,
-          calculatedAt: new Date().toISOString(),
-        });
-
+          calculated: true,
+          activeTab: 'results'
+        }));
+        
         toast({
-          title: 'Cálculo Concluído',
-          description: 'Dados integrados ao fluxo clínico com sucesso!',
+          title: "Cálculo Realizado",
+          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed}`,
         });
+        
+      } catch (error) {
+        console.error('Calculation error:', error);
+        toast({
+          title: "Erro no Cálculo",
+          description: "Ocorreu um erro ao calcular os valores nutricionais",
+          variant: "destructive"
+        });
+        setState(prev => ({ ...prev, loading: false }));
       }
-    } catch (error) {
-      console.error('Erro no cálculo:', error);
-      setState(prev => ({ ...prev, loading: false }));
-      
-      toast({
-        title: 'Erro no Cálculo',
-        description: 'Erro ao calcular valores nutricionais',
-        variant: 'destructive',
-      });
-    }
-  }, [state, setCalculationData, toast]);
-
-  const resetCalculator = useCallback(() => {
-    setState({
-      weight: 70,
-      height: 170,
-      age: 30,
-      sex: 'M',
-      activityLevel: 'moderado',
-      objective: 'manutenção',
-      profile: 'eutrofico',
-      bmr: null,
-      tdee: null,
-      protein: null,
-      carbs: null,
-      fats: null,
-      loading: false,
-      calculated: false,
-      activeTab: 'basic',
-    });
-  }, []);
-
+    }, 800);
+  };
+  
+  const resetCalculator = () => {
+    setState(initialState);
+    // Clear localStorage
+    localStorage.removeItem('calculatorState');
+    localStorage.removeItem('calculatorFormState');
+    localStorage.removeItem('calculatorResults');
+  };
+  
   return {
     state,
     setWeight,
@@ -155,6 +146,6 @@ export const useCalculatorState = () => {
     setProfile,
     calculateNutrition,
     resetCalculator,
-    setActiveTab,
+    setActiveTab
   };
 };
