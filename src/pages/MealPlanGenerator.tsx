@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePatient } from '@/contexts/patient/PatientContext';
@@ -243,6 +244,12 @@ const MealPlanGenerator: React.FC = () => {
     age: activePatient.age
   };
 
+  // Convert array to Record format for the UI component
+  const mealDistributionRecord: Record<string, MealDistributionItem> = {};
+  mealDistribution.forEach((meal) => {
+    mealDistributionRecord[meal.id] = meal;
+  });
+
   return (
     <div className="space-y-4">
       {/* Indicador do sistema ENP se aplicável */}
@@ -259,7 +266,7 @@ const MealPlanGenerator: React.FC = () => {
       <MealPlanGeneratorUI
         activePatient={patientForUI}
         consultationData={consultationData}
-        mealDistribution={mealDistribution}
+        mealDistribution={mealDistributionRecord}
         totalMealPercent={totalMealPercent}
         isSaving={isSaving}
         handleMealPercentChange={handleMealPercentChange}

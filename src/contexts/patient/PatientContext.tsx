@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { ConsultationData, Patient, PatientFilters } from '@/types';
 import { PatientHistoryData } from '@/types/meal';
@@ -319,5 +320,3 @@ export const usePatient = () => {
   }
   return context;
 };
-
-export { PatientProvider };
