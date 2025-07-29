@@ -1,73 +1,252 @@
+import { useState, useEffect, useCallback } from 'react';
+import {
+  MealPlan,
+  MealDistributionItem,
+  MealAssemblyFood,
+  ConsultationData
+} from '@/types';
+import { useMealPlan } from '@/contexts/MealPlanContext';
+import { usePatient } from '@/contexts/patient/PatientContext';
 
-import { useState } from 'react';
-import { Patient, ConsultationData } from '@/types';
-import { MealPlan, MealDistributionItem } from '@/types/meal';
-import { useMealDistribution } from './meal-plan/useMealDistribution';
-import { useMealPlanActions } from './meal-plan/useMealPlanActions';
-
-type UseMealPlanStateProps = {
-  activePatient: Patient | null;
+interface UseMealPlanStateReturn {
+  patient: any;
   consultationData: ConsultationData | null;
   mealPlan: MealPlan | null;
-  setMealPlan: (mealPlan: MealPlan) => void;
-  saveConsultation: (data: any) => Promise<any>;
-  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
-};
+  setMealPlan: (mealPlan: MealPlan | null) => void;
+  mealDistribution: MealDistributionItem[];
+  setMealDistribution: (mealDistribution: MealDistributionItem[]) => void;
+  updateMealDistribution: (itemId: string, updates: Partial<MealDistributionItem>) => void;
+  addFoodToMeal: (mealId: string, food: MealAssemblyFood) => void;
+  removeFoodFromMeal: (mealId: string, foodId: string) => void;
+  updateFoodInMeal: (mealId: string, foodId: string, updates: Partial<MealAssemblyFood>) => void;
+  clearMealFoods: (mealId: string) => void;
+  resetMealPlan: () => void;
+}
 
-export const useMealPlanState = ({
-  activePatient,
-  consultationData,
-  mealPlan,
-  setMealPlan,
-  saveConsultation,
-  saveMealPlan
-}: UseMealPlanStateProps) => {
-  // Create a default meal distribution if none exists
-  const defaultMealDistribution: MealDistributionItem[] = [
-    { id: '1', name: 'Café da manhã', percent: 25, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '2', name: 'Lanche da manhã', percent: 10, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '3', name: 'Almoço', percent: 30, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '4', name: 'Lanche da tarde', percent: 10, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '5', name: 'Jantar', percent: 20, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '6', name: 'Ceia', percent: 5, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] }
-  ];
+const initialMealDistribution: MealDistributionItem[] = [
+  {
+    id: 'breakfast',
+    name: 'Café da Manhã',
+    time: '07:00 - 09:00',
+    percentage: 25,
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    foods: [],
+    totalCalories: 0,
+    totalProtein: 0,
+    totalCarbs: 0,
+    totalFats: 0,
+    proteinPercent: 0,
+    carbsPercent: 0,
+    fatPercent: 0
+  },
+  {
+    id: 'lunch',
+    name: 'Almoço',
+    time: '12:00 - 14:00',
+    percentage: 35,
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    foods: [],
+    totalCalories: 0,
+    totalProtein: 0,
+    totalCarbs: 0,
+    totalFats: 0,
+    proteinPercent: 0,
+    carbsPercent: 0,
+    fatPercent: 0
+  },
+  {
+    id: 'afternoonSnack',
+    name: 'Lanche da Tarde',
+    time: '16:00 - 18:00',
+    percentage: 15,
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    foods: [],
+    totalCalories: 0,
+    totalProtein: 0,
+    totalCarbs: 0,
+    totalFats: 0,
+    proteinPercent: 0,
+    carbsPercent: 0,
+    fatPercent: 0
+  },
+  {
+    id: 'dinner',
+    name: 'Jantar',
+    time: '19:00 - 21:00',
+    percentage: 25,
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    foods: [],
+    totalCalories: 0,
+    totalProtein: 0,
+    totalCarbs: 0,
+    totalFats: 0,
+    proteinPercent: 0,
+    carbsPercent: 0,
+    fatPercent: 0
+  }
+];
 
-  // Use the meal distribution hook with proper initialization
-  const {
-    mealDistribution,
-    totalDistributionPercentage,
-    handleMealPercentChange,
-    addMeal,
-    removeMeal
-  } = useMealDistribution(
-    defaultMealDistribution, 
-    consultationData
+export const useMealPlanState = (
+  patientId?: string
+): UseMealPlanStateReturn => {
+  const { activePatient: patient } = usePatient();
+  const { consultationData, setConsultationData, mealPlan, setMealPlan } = useMealPlan();
+  const [mealDistributionItems, setMealDistributionItems] = useState<Record<string, MealDistributionItem>>(
+    initialMealDistribution.reduce((acc, item) => {
+      acc[item.id] = item;
+      return acc;
+    }, {} as Record<string, MealDistributionItem>)
   );
 
-  // Use the meal plan actions hook with proper props
-  const {
-    generateMealPlan,
-    isGenerating,
-    isSaving,
-    handleSaveMealPlan
-  } = useMealPlanActions({
-    activePatient,
+  const setMealDistribution = useCallback((distribution: MealDistributionItem[]) => {
+    const newDistribution: Record<string, MealDistributionItem> = {};
+    distribution.forEach(item => {
+      newDistribution[item.id] = item;
+    });
+    setMealDistributionItems(newDistribution);
+  }, []);
+
+  const updateMealDistribution = useCallback((itemId: string, updates: Partial<MealDistributionItem>) => {
+    setMealDistributionItems(prev => {
+      const updatedItem = { ...prev[itemId], ...updates };
+      return { ...prev, [itemId]: updatedItem };
+    });
+  }, []);
+
+  const addFoodToMeal = useCallback((mealId: string, food: MealAssemblyFood) => {
+    setMealDistributionItems(prev => {
+      const meal = prev[mealId];
+      if (meal) {
+        const updatedFoods = [...meal.foods, food];
+        const totalCalories = updatedFoods.reduce((sum, food) => sum + food.calories, 0);
+        const totalProtein = updatedFoods.reduce((sum, food) => sum + food.protein, 0);
+        const totalCarbs = updatedFoods.reduce((sum, food) => sum + food.carbs, 0);
+        const totalFats = updatedFoods.reduce((sum, food) => sum + food.fat, 0);
+
+        const updatedMeal = {
+          ...meal,
+          foods: updatedFoods,
+          totalCalories,
+          totalProtein,
+          totalCarbs,
+          totalFats,
+        };
+        return { ...prev, [mealId]: updatedMeal };
+      }
+      return prev;
+    });
+  }, []);
+
+  const removeFoodFromMeal = useCallback((mealId: string, foodId: string) => {
+    setMealDistributionItems(prev => {
+      const meal = prev[mealId];
+      if (meal) {
+        const updatedFoods = meal.foods.filter((food: MealAssemblyFood) => food.id !== foodId);
+        const totalCalories = updatedFoods.reduce((sum, food) => sum + food.calories, 0);
+        const totalProtein = updatedFoods.reduce((sum, food) => sum + food.protein, 0);
+        const totalCarbs = updatedFoods.reduce((sum, food) => sum + food.carbs, 0);
+        const totalFats = updatedFoods.reduce((sum, food) => sum + food.fat, 0);
+
+        const updatedMeal = {
+          ...meal,
+          foods: updatedFoods,
+          totalCalories,
+          totalProtein,
+          totalCarbs,
+          totalFats,
+        };
+        return { ...prev, [mealId]: updatedMeal };
+      }
+      return prev;
+    });
+  }, []);
+
+  const updateFoodInMeal = useCallback((mealId: string, foodId: string, updates: Partial<MealAssemblyFood>) => {
+    setMealDistributionItems(prev => {
+      const meal = prev[mealId];
+      if (meal) {
+        const updatedFoods = meal.foods.map((food: MealAssemblyFood) =>
+          food.id === foodId ? { ...food, ...updates } : food
+        );
+
+        const totalCalories = updatedFoods.reduce((sum, food) => sum + food.calories, 0);
+        const totalProtein = updatedFoods.reduce((sum, food) => sum + food.protein, 0);
+        const totalCarbs = updatedFoods.reduce((sum, food) => sum + food.carbs, 0);
+        const totalFats = updatedFoods.reduce((sum, food) => sum + food.fat, 0);
+
+        const updatedMeal = {
+          ...meal,
+          foods: updatedFoods,
+          totalCalories,
+          totalProtein,
+          totalCarbs,
+          totalFats,
+        };
+        return { ...prev, [mealId]: updatedMeal };
+      }
+      return prev;
+    });
+  }, []);
+
+  const clearMealFoods = useCallback((mealId: string) => {
+    setMealDistributionItems(prev => {
+      const meal = prev[mealId];
+      if (meal) {
+        const updatedMeal = {
+          ...meal,
+          foods: [],
+          totalCalories: 0,
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFats: 0,
+        };
+        return { ...prev, [mealId]: updatedMeal };
+      }
+      return prev;
+    });
+  }, []);
+
+  const resetMealPlan = useCallback(() => {
+    setMealDistributionItems(
+      initialMealDistribution.reduce((acc, item) => {
+        acc[item.id] = { ...item };
+        return acc;
+      }, {} as Record<string, MealDistributionItem>)
+    );
+    setMealPlan(null);
+  }, [setMealPlan]);
+
+  useEffect(() => {
+    if (patientId && patient?.id !== patientId) {
+      // Reset meal plan when patient changes
+      resetMealPlan();
+    }
+  }, [patientId, patient, resetMealPlan]);
+
+  return {
+    patient,
     consultationData,
     mealPlan,
     setMealPlan,
-    mealDistribution,
-    saveMealPlan
-  });
-
-  return {
-    mealDistribution,
-    totalMealPercent: totalDistributionPercentage * 100,
-    generateMealPlan,
-    isGenerating,
-    isSaving,
-    handleMealPercentChange,
-    handleSaveMealPlan,
-    addMeal,
-    removeMeal
+    mealDistribution: Object.values(mealDistributionItems),
+    setMealDistribution,
+    updateMealDistribution,
+    addFoodToMeal,
+    removeFoodFromMeal,
+    updateFoodInMeal,
+    clearMealFoods,
+    resetMealPlan,
   };
 };

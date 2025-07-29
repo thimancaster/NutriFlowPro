@@ -1,11 +1,11 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { ConsultationData, Patient } from '@/types';
 import { PatientHistoryData } from '@/types/meal';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import { PatientContextType } from './patient/types';
+import { PatientContextType } from './types';
 
 interface ConsultationDataState {
   consultationData: ConsultationData | null;
@@ -36,196 +36,237 @@ interface ConsultationDataContextType {
   setConsultationData: (data: ConsultationData | null) => void;
 }
 
-const ConsultationDataContext = createContext<ConsultationDataContextType | undefined>(undefined);
+const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
-export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const { 
-    activePatient,
-    setActivePatient, 
-    startPatientSession,
-    patientHistory,
-    isLoading: patientLoading 
-  } = usePatient();
+  // Patient state
+  const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [patientHistory, setPatientHistory] = useState<any[]>([]);
   
-  const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
-  const [currentStep, setCurrentStep] = useState<string>('patient-selection');
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  // Session data
+  const [sessionData, setSessionData] = useState({
+    consultationActive: false,
+    currentStep: 'patient-selection',
+    lastActivity: null as Date | null,
+  });
 
-  const isConsultationActive = activePatient !== null && consultationData !== null;
+  // Current filters
+  const [currentFilters, setCurrentFilters] = useState({
+    search: '',
+    status: '',
+    page: 1,
+    limit: 10
+  });
 
-  // Transform patient history for backward compatibility
-  const patientHistoryData: PatientHistoryData = {
-    lastMeasurement: patientHistory.length > 0 ? {
-      date: patientHistory[0].created_at || new Date().toISOString(),
-      weight: patientHistory[0].weight || 0,
-      height: patientHistory[0].height || 0,
-    } : undefined,
-    anthropometryHistory: patientHistory.map(record => ({
-      date: record.created_at || new Date().toISOString(),
-      weight: record.weight || 0,
-      height: record.height || 0,
-      bmi: record.weight && record.height ? record.weight / Math.pow(record.height / 100, 2) : 0
-    }))
-  };
+  const startPatientSession = useCallback((patient: Patient) => {
+    setActivePatient(patient);
+    setSelectedPatientId(patient.id);
+    setSessionData(prev => ({
+      ...prev,
+      consultationActive: true,
+      lastActivity: new Date()
+    }));
+    addRecentPatient(patient);
+  }, []);
 
-  const autoSave = useCallback(async () => {
-    if (!consultationData || !activePatient || !user?.id) return;
-    
-    setIsSaving(true);
+  const endPatientSession = useCallback(() => {
+    setActivePatient(null);
+    setSelectedPatientId(null);
+    setSessionData(prev => ({
+      ...prev,
+      consultationActive: false,
+      lastActivity: new Date()
+    }));
+  }, []);
+
+  const loadPatientById = useCallback(async (patientId: string) => {
+    setIsLoading(true);
     try {
-      // Transform data to match Supabase schema exactly
-      const saveData = {
-        id: consultationData.id,
-        user_id: user.id,
-        patient_id: activePatient.id,
-        age: consultationData.age || activePatient.age || 0,
-        weight: consultationData.weight || 0,
-        height: consultationData.height || 0,
-        gender: consultationData.gender || 'male',
-        activity_level: consultationData.activity_level || 'moderado',
-        goal: consultationData.objective || consultationData.goal || 'manutenção',
-        bmr: consultationData.bmr || 0,
-        tdee: consultationData.results?.vet || consultationData.bmr || 0,
-        protein: consultationData.protein || 0,
-        carbs: consultationData.carbs || 0,
-        fats: consultationData.fats || 0,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-        .from('calculations')
-        .upsert(saveData);
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', patientId)
+        .single();
 
       if (error) throw error;
       
-      setLastSaved(new Date());
-      console.log('Auto-save completed');
-    } catch (error) {
-      console.error('Auto-save failed:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [consultationData, activePatient, user?.id]);
-
-  const updateConsultationData = useCallback((data: Partial<ConsultationData>) => {
-    setConsultationData(prev => prev ? { ...prev, ...data } : null);
-  }, []);
-
-  const startNewConsultation = useCallback(async (patient: Patient) => {
-    startPatientSession(patient);
-    
-    const newConsultation: ConsultationData = {
-      id: crypto.randomUUID(),
-      patient_id: patient.id,
-      weight: 0,
-      height: 0,
-      bmr: 0,
-      protein: 0,
-      carbs: 0,
-      fats: 0,
-      totalCalories: 0,
-      gender: 'male',
-      activity_level: 'moderado',
-      patient: {
-        name: patient.name,
-        id: patient.id
-      },
-      results: {
-        bmr: 0,
-        get: 0,
-        vet: 0,
-        adjustment: 0,
-        macros: {
-          protein: 0,
-          carbs: 0,
-          fat: 0
-        }
+      if (data) {
+        const patient = data as Patient;
+        setActivePatient(patient);
+        setSelectedPatientId(patient.id);
       }
-    };
-    
-    setConsultationData(newConsultation);
-    setCurrentStep('evaluation');
-  }, [startPatientSession]);
-
-  const completeConsultation = useCallback(async () => {
-    if (!consultationData || !activePatient) return;
-    
-    try {
-      await autoSave();
-      toast({
-        title: 'Consulta finalizada',
-        description: 'Dados salvos com sucesso!'
-      });
-      
-      setConsultationData(null);
-      setCurrentStep('patient-selection');
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Falha ao salvar consulta',
-        variant: 'destructive'
-      });
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [consultationData, activePatient, autoSave, toast]);
-
-  const reset = useCallback(() => {
-    setConsultationData(null);
-    setCurrentStep('patient-selection');
-    setLastSaved(null);
   }, []);
 
-  useEffect(() => {
-    if (!isConsultationActive) return;
-    
-    const interval = setInterval(() => {
-      autoSave();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [isConsultationActive, autoSave]);
+  const loadPatientHistory = useCallback(async (patientId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('anthropometry')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: false });
 
-  const contextValue: ConsultationDataContextType = {
-    state: {
-      consultationData,
-      isConsultationActive,
-      currentStep,
-      isSaving,
-      lastSaved
-    },
-    consultationData,
-    isConsultationActive,
-    currentStep,
-    isSaving,
-    lastSaved,
-    setCurrentStep,
-    updateConsultationData,
-    completeConsultation,
-    autoSave,
-    reset,
-    isLoading: patientLoading,
-    startNewConsultation,
-    // Legacy compatibility
-    selectedPatient: activePatient,
-    setSelectedPatient: setActivePatient,
-    patientHistoryData,
-    setConsultationData
+      if (error) throw error;
+      
+      setPatientHistory(data || []);
+    } catch (err) {
+      console.error('Error loading patient history:', err);
+    }
+  }, []);
+
+  const addRecentPatient = useCallback((patient: Patient) => {
+    setRecentPatients(prev => {
+      const filtered = prev.filter(p => p.id !== patient.id);
+      return [patient, ...filtered].slice(0, 5);
+    });
+  }, []);
+
+  const updateSessionData = useCallback((data: Partial<typeof sessionData>) => {
+    setSessionData(prev => ({ ...prev, ...data }));
+  }, []);
+
+  const savePatient = useCallback(async (patientData: Partial<Patient>) => {
+    if (!user?.id) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const dataToSave = {
+        ...patientData,
+        user_id: user.id,
+      };
+
+      const { data, error } = await supabase
+        .from('patients')
+        .upsert(dataToSave)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const savedPatient = data as Patient;
+      
+      // Update local state
+      if (patientData.id) {
+        setPatients(prev => prev.map(p => p.id === savedPatient.id ? savedPatient : p));
+      } else {
+        setPatients(prev => [savedPatient, ...prev]);
+        setTotalPatients(prev => prev + 1);
+      }
+
+      return { success: true, data: savedPatient };
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      return { success: false, error: error.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
+
+  const refreshPatients = useCallback(async (filters = currentFilters) => {
+    if (!user?.id) return;
+
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('patients')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
+
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+
+      const from = (filters.page - 1) * filters.limit;
+      const to = from + filters.limit - 1;
+      
+      query = query.range(from, to).order('created_at', { ascending: false });
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      setPatients(data || []);
+      setTotalPatients(count || 0);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id, currentFilters]);
+
+  const updateFilters = useCallback(async (newFilters: Partial<typeof currentFilters>) => {
+    const updatedFilters = { ...currentFilters, ...newFilters };
+    setCurrentFilters(updatedFilters);
+    await refreshPatients(updatedFilters);
+  }, [currentFilters, refreshPatients]);
+
+  // Load initial patients
+  useEffect(() => {
+    if (user?.id) {
+      refreshPatients();
+    }
+  }, [user?.id]);
+
+  const contextValue: PatientContextType = {
+    // State
+    activePatient,
+    isPatientActive: !!activePatient,
+    selectedPatientId,
+    recentPatients,
+    patients,
+    totalPatients,
+    isLoading,
+    error,
+    sessionData,
+    patientHistoryData: [],
+    patientHistory,
+    
+    // Actions
+    setActivePatient,
+    startPatientSession,
+    endPatientSession,
+    loadPatientById,
+    loadPatientHistory,
+    addRecentPatient,
+    updateSessionData,
+    savePatient,
+    refreshPatients,
+    updateFilters,
+    currentFilters
   };
 
   return (
-    <ConsultationDataContext.Provider value={contextValue}>
+    <PatientContext.Provider value={contextValue}>
       {children}
-    </ConsultationDataContext.Provider>
+    </PatientContext.Provider>
   );
 };
 
-export const useConsultationData = () => {
-  const context = useContext(ConsultationDataContext);
+export const usePatient = () => {
+  const context = useContext(PatientContext);
   if (!context) {
-    throw new Error('useConsultationData must be used within a ConsultationDataProvider');
+    throw new Error('usePatient must be used within a PatientProvider');
   }
   return context;
 };
