@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { ConsultationData, Patient } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +24,6 @@ interface ConsultationDataActions {
 
 interface ConsultationDataContextType {
   state: ConsultationDataState;
-  selectedPatient: Patient | null;
   consultationData: ConsultationData | null;
   isConsultationActive: boolean;
   currentStep: string;
@@ -36,6 +36,11 @@ interface ConsultationDataContextType {
   reset: () => void;
   isLoading: boolean;
   startNewConsultation: (patient: Patient) => Promise<void>;
+  // Legacy compatibility - use PatientContext instead
+  selectedPatient: Patient | null;
+  setSelectedPatient: (patient: Patient | null) => void;
+  patientHistoryData: any[];
+  setConsultationData: (data: ConsultationData | null) => void;
 }
 
 const ConsultationDataContext = createContext<ConsultationDataContextType | undefined>(undefined);
@@ -49,6 +54,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     activePatient,
     setActivePatient, 
     startPatientSession,
+    patientHistoryData,
     isLoading: patientLoading 
   } = usePatient();
   
@@ -65,15 +71,27 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     
     setIsSaving(true);
     try {
+      // Transform data to match Supabase schema
+      const saveData = {
+        id: consultationData.id,
+        user_id: user.id,
+        patient_id: activePatient.id,
+        age: consultationData.age || activePatient.age || 0,
+        weight: consultationData.weight || 0,
+        height: consultationData.height || 0,
+        gender: consultationData.gender || 'M',
+        activity_level: consultationData.activity_level || 'moderado',
+        goal: consultationData.objective || 'manutenção',
+        bmr: consultationData.bmr || 0,
+        protein: consultationData.protein || 0,
+        carbs: consultationData.carbs || 0,
+        fats: consultationData.fats || 0,
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from('calculations')
-        .upsert({
-          id: consultationData.id,
-          user_id: user.id,
-          patient_id: activePatient.id,
-          ...consultationData,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(saveData);
 
       if (error) throw error;
       
@@ -175,7 +193,6 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
       isSaving,
       lastSaved
     },
-    selectedPatient: activePatient,
     consultationData,
     isConsultationActive,
     currentStep,
@@ -187,7 +204,12 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     autoSave,
     reset,
     isLoading: patientLoading,
-    startNewConsultation
+    startNewConsultation,
+    // Legacy compatibility - delegate to PatientContext
+    selectedPatient: activePatient,
+    setSelectedPatient: setActivePatient,
+    patientHistoryData,
+    setConsultationData
   };
 
   return (

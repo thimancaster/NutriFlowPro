@@ -4,10 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { ConsultationData } from '@/types';
 import { MealPlan } from '@/types/meal';
 import { format } from 'date-fns';
-import { usePatient } from '@/contexts/patient/PatientContext'; // Import PatientContext
+import { usePatient } from '@/contexts/patient/PatientContext';
 
 interface MealPlanContextProps {
-  // Remove activePatient - use PatientContext instead
   consultationData: ConsultationData | null;
   setConsultationData: (data: ConsultationData | null) => void;
   mealPlan: MealPlan | null;
@@ -31,16 +30,31 @@ interface MealPlanProviderProps {
 }
 
 export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) => {
-  // Remove activePatient state - use PatientContext
   const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
 
   async function saveConsultation(data: any) {
     try {
-      // For calculation data instead of consultation_data
+      // Transform data to match Supabase schema
+      const saveData = {
+        id: data.id,
+        user_id: data.user_id,
+        patient_id: data.patient_id,
+        age: data.age || 0,
+        weight: data.weight || 0,
+        height: data.height || 0,
+        gender: data.gender || 'M',
+        activity_level: data.activity_level || 'moderado',
+        goal: data.objective || data.goal || 'manutenção',
+        bmr: data.bmr || 0,
+        protein: data.protein || 0,
+        carbs: data.carbs || 0,
+        fats: data.fats || 0
+      };
+
       const { data: updatedData, error } = await supabase
         .from('calculations')
-        .upsert(data)
+        .upsert(saveData)
         .select()
         .single();
 
@@ -66,12 +80,12 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
           patient_id: mealPlan.patient_id,
           calculation_id: consultationId,
           date: format(new Date(), 'yyyy-MM-dd'),
-          meals: mealPlan.meals || [],
+          meals: mealPlan.meals as any, // Cast to Json type
           total_calories: mealPlan.total_calories,
           total_protein: mealPlan.total_protein,
           total_carbs: mealPlan.total_carbs,
           total_fats: mealPlan.total_fats,
-          notes: mealPlan.notes,
+          notes: mealPlan.notes || '',
           updated_at: new Date().toISOString()
         })
         .select()
@@ -92,7 +106,6 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
   return (
     <MealPlanContext.Provider
       value={{
-        // Remove activePatient - components should use usePatient() hook
         consultationData,
         setConsultationData,
         mealPlan,

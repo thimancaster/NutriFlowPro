@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { usePatient } from '@/contexts/patient/PatientContext'; // Use PatientContext as single source
+import { usePatient } from '@/contexts/patient/PatientContext';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/types';
 
@@ -132,6 +132,15 @@ export const useUnifiedEcosystem = () => {
     };
   }, [isAuthenticated, user?.id, activePatient, consultationData]);
 
+  // Context sync status for legacy compatibility
+  const areContextsSynced = activePatient !== null;
+  const forceSyncContexts = useCallback(() => {
+    // Force refresh of patient data if needed
+    if (activePatient) {
+      setActivePatient(activePatient);
+    }
+  }, [activePatient, setActivePatient]);
+
   return {
     // Estado unificado - apenas PatientContext como fonte
     user,
@@ -149,6 +158,10 @@ export const useUnifiedEcosystem = () => {
     
     // Validações
     validateForMealPlan,
+    
+    // Legacy compatibility
+    areContextsSynced,
+    forceSyncContexts,
     
     // Estado de integridade simplificado
     isEcosystemHealthy: isAuthenticated && !!user?.id,
