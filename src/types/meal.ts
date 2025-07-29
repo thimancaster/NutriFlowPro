@@ -1,3 +1,4 @@
+
 export interface MealItem {
   id: string;
   name: string;
@@ -44,6 +45,9 @@ export interface MealAssemblyFood {
   proteinPercent: number;
   carbsPercent: number;
   fatPercent: number;
+  selected?: boolean;
+  percentage?: number;
+  portion?: string;
 }
 
 export interface MealFood {
@@ -76,6 +80,7 @@ export interface MealDistributionItem {
   name: string;
   time: string;
   percentage: number;
+  percent: number; // Legacy compatibility
   calories: number;
   protein: number;
   carbs: number;
@@ -88,4 +93,5 @@ export interface MealDistributionItem {
   proteinPercent: number;
   carbsPercent: number;
   fatPercent: number;
+  suggestions?: string[];
 }

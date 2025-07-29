@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { ConsultationData, Patient } from '@/types';
+import { ConsultationData, Patient, PatientFilters } from '@/types';
 import { PatientHistoryData } from '@/types/meal';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,10 +59,10 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     lastActivity: null as Date | null,
   });
 
-  // Current filters
-  const [currentFilters, setCurrentFilters] = useState({
+  // Current filters - fixed type
+  const [currentFilters, setCurrentFilters] = useState<PatientFilters>({
     search: '',
-    status: '',
+    status: 'all' as const,
     page: 1,
     limit: 10
   });
@@ -146,9 +146,23 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       setIsLoading(true);
       
+      // Transform data for Supabase
       const dataToSave = {
-        ...patientData,
         user_id: user.id,
+        name: patientData.name || '',
+        email: patientData.email || null,
+        phone: patientData.phone || null,
+        secondaryphone: patientData.secondaryPhone || null,
+        cpf: patientData.cpf || null,
+        birth_date: patientData.birth_date || null,
+        gender: patientData.gender || 'other',
+        address: typeof patientData.address === 'string' ? patientData.address : JSON.stringify(patientData.address) || null,
+        notes: patientData.notes || null,
+        status: patientData.status || 'active',
+        goals: patientData.goals || {},
+        ...(patientData.id && { id: patientData.id }),
+        ...(patientData.created_at && { created_at: patientData.created_at }),
+        ...(patientData.updated_at && { updated_at: patientData.updated_at })
       };
 
       const { data, error } = await supabase
@@ -159,7 +173,24 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (error) throw error;
 
-      const savedPatient = data as Patient;
+      // Transform back to Patient type
+      const savedPatient: Patient = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        secondaryPhone: data.secondaryphone,
+        cpf: data.cpf,
+        birth_date: data.birth_date,
+        gender: data.gender as 'male' | 'female' | 'other',
+        address: data.address,
+        notes: data.notes,
+        status: data.status as 'active' | 'archived',
+        goals: data.goals,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        user_id: data.user_id
+      };
       
       // Update local state
       if (patientData.id) {
@@ -179,7 +210,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [user?.id]);
 
-  const refreshPatients = useCallback(async (filters = currentFilters) => {
+  const refreshPatients = useCallback(async (filters: PatientFilters = currentFilters) => {
     if (!user?.id) return;
 
     setIsLoading(true);
@@ -206,7 +237,26 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (error) throw error;
 
-      setPatients(data || []);
+      // Transform data to Patient type
+      const transformedPatients: Patient[] = (data || []).map(d => ({
+        id: d.id,
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        secondaryPhone: d.secondaryphone,
+        cpf: d.cpf,
+        birth_date: d.birth_date,
+        gender: d.gender as 'male' | 'female' | 'other',
+        address: d.address,
+        notes: d.notes,
+        status: d.status as 'active' | 'archived',
+        goals: d.goals,
+        created_at: d.created_at,
+        updated_at: d.updated_at,
+        user_id: d.user_id
+      }));
+
+      setPatients(transformedPatients);
       setTotalPatients(count || 0);
     } catch (err) {
       setError(err as Error);
@@ -215,7 +265,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [user?.id, currentFilters]);
 
-  const updateFilters = useCallback(async (newFilters: Partial<typeof currentFilters>) => {
+  const updateFilters = useCallback(async (newFilters: Partial<PatientFilters>) => {
     const updatedFilters = { ...currentFilters, ...newFilters };
     setCurrentFilters(updatedFilters);
     await refreshPatients(updatedFilters);

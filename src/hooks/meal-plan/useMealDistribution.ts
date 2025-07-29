@@ -16,19 +16,29 @@ export const useMealDistribution = (
       
       initialDistribution.forEach((meal, index) => {
         const mealKey = `meal${index + 1}`;
-        const mealCalories = Math.round((meal.percent / 100) * consultationData.totalCalories);
-        const mealProtein = Math.round((meal.percent / 100) * consultationData.protein);
-        const mealCarbs = Math.round((meal.percent / 100) * consultationData.carbs);
-        const mealFat = Math.round((meal.percent / 100) * consultationData.fats);
+        const mealCalories = Math.round((meal.percentage / 100) * consultationData.totalCalories);
+        const mealProtein = Math.round((meal.percentage / 100) * consultationData.protein);
+        const mealCarbs = Math.round((meal.percentage / 100) * consultationData.carbs);
+        const mealFat = Math.round((meal.percentage / 100) * consultationData.fats);
 
         distributionMap[mealKey] = {
           id: meal.id || mealKey,
           name: meal.name,
-          percent: meal.percent,
+          time: meal.time,
+          percentage: meal.percentage,
+          percent: meal.percentage, // Legacy compatibility
           calories: mealCalories,
           protein: mealProtein,
           carbs: mealCarbs,
           fat: mealFat,
+          foods: [],
+          totalCalories: mealCalories,
+          totalProtein: mealProtein,
+          totalCarbs: mealCarbs,
+          totalFats: mealFat,
+          proteinPercent: 0,
+          carbsPercent: 0,
+          fatPercent: 0,
           suggestions: meal.suggestions || []
         };
       });
@@ -46,11 +56,16 @@ export const useMealDistribution = (
       ...prev,
       [mealKey]: {
         ...prev[mealKey],
-        percent: percentValue,
+        percentage: percentValue,
+        percent: percentValue, // Legacy compatibility
         calories: Math.round((percentValue / 100) * consultationData.totalCalories),
         protein: Math.round((percentValue / 100) * consultationData.protein),
         carbs: Math.round((percentValue / 100) * consultationData.carbs),
         fat: Math.round((percentValue / 100) * consultationData.fats),
+        totalCalories: Math.round((percentValue / 100) * consultationData.totalCalories),
+        totalProtein: Math.round((percentValue / 100) * consultationData.protein),
+        totalCarbs: Math.round((percentValue / 100) * consultationData.carbs),
+        totalFats: Math.round((percentValue / 100) * consultationData.fats),
         suggestions: prev[mealKey]?.suggestions || []
       }
     }));
@@ -66,11 +81,21 @@ export const useMealDistribution = (
       [mealKey]: {
         id: mealKey,
         name: `Refeição ${nextMealNumber}`,
+        time: '12:00',
+        percentage: 0,
         percent: 0,
         calories: 0,
         protein: 0,
         carbs: 0,
         fat: 0,
+        foods: [],
+        totalCalories: 0,
+        totalProtein: 0,
+        totalCarbs: 0,
+        totalFats: 0,
+        proteinPercent: 0,
+        carbsPercent: 0,
+        fatPercent: 0,
         suggestions: []
       }
     }));
@@ -85,7 +110,7 @@ export const useMealDistribution = (
   };
 
   const totalDistributionPercentage = Object.values(mealDistribution)
-    .reduce((total, meal) => total + meal.percent, 0) / 100;
+    .reduce((total, meal) => total + meal.percentage, 0) / 100;
 
   return {
     mealDistribution,

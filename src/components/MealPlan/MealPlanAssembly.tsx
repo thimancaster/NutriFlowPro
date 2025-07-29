@@ -83,8 +83,6 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
       // Clone the food item so we don't modify the original
       const newFood: MealAssemblyFood = { 
         ...food,
-        selected: true,
-        percentage: food.percentage || 0,
         // Generate a unique ID if one doesn't exist
         id: food.id || `food-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
@@ -115,19 +113,11 @@ const MealPlanAssembly: React.FC<MealPlanAssemblyProps> = ({
         id: `meal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: meal.name,
         time: meal.time,
-        foods: [],
-        totalCalories: meal.calories,
-        totalProtein: meal.protein,
-        totalCarbs: meal.carbs,
-        totalFats: meal.fat,
-        // Add properties for compatibility
-        calories: meal.calories,
-        protein: meal.protein,
-        carbs: meal.carbs,
-        fat: meal.fat,
-        proteinPercent: meal.proteinPercent,
-        carbsPercent: meal.carbsPercent,
-        fatPercent: meal.fatPercent
+        items: [], // MealItems array
+        total_calories: meal.calories,
+        total_protein: meal.protein,
+        total_carbs: meal.carbs,
+        total_fats: meal.fat
       }));
       
       const doc = generateMealAssemblyPDF({
