@@ -1,171 +1,118 @@
 
-import React, {useState, useEffect} from "react";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Badge} from "@/components/ui/badge";
-import {DetailedMealPlan, MealPlanItem, MEAL_ORDER, MEAL_NAMES, MEAL_TIMES} from "@/types/mealPlan";
-import MealTypeSection from "./MealTypeSection";
-import {format} from "date-fns";
-import {ptBR} from "date-fns/locale";
-import {useToast} from "@/hooks/use-toast";
-import {MealPlanService} from "@/services/mealPlanService";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { MealPlan } from '@/types/mealPlan';
+import { Utensils, Clock } from 'lucide-react';
 
 interface MealPlanEditorProps {
-	mealPlan: DetailedMealPlan;
-	onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
+  mealPlan: MealPlan;
 }
 
-type MealType = typeof MEAL_ORDER[number];
+const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
+  const getMealTypeIcon = (type: string) => {
+    switch (type) {
+      case 'cafe_da_manha':
+        return '🌅';
+      case 'lanche_manha':
+        return '🍎';
+      case 'almoco':
+        return '🍽️';
+      case 'lanche_tarde':
+        return '🥤';
+      case 'jantar':
+        return '🌙';
+      case 'ceia':
+        return '🥛';
+      default:
+        return '🍽️';
+    }
+  };
 
-// Configuração das refeições em ordem cronológica brasileira
-const MEAL_TYPE_CONFIG: Record<MealType, {name: string; time: string; color: string}> = {
-	cafe_da_manha: {name: "Café da Manhã", time: "07:00", color: "bg-orange-100"},
-	lanche_manha: {name: "Lanche da Manhã", time: "10:00", color: "bg-yellow-100"},
-	almoco: {name: "Almoço", time: "12:30", color: "bg-green-100"},
-	lanche_tarde: {name: "Lanche da Tarde", time: "15:30", color: "bg-blue-100"},
-	jantar: {name: "Jantar", time: "19:00", color: "bg-purple-100"},
-	ceia: {name: "Ceia", time: "21:30", color: "bg-pink-100"},
-};
+  const getMealTime = (type: string) => {
+    switch (type) {
+      case 'cafe_da_manha':
+        return '07:00 - 09:00';
+      case 'lanche_manha':
+        return '10:00 - 10:30';
+      case 'almoco':
+        return '12:00 - 13:00';
+      case 'lanche_tarde':
+        return '15:00 - 16:00';
+      case 'jantar':
+        return '19:00 - 20:00';
+      case 'ceia':
+        return '21:00 - 22:00';
+      default:
+        return '';
+    }
+  };
 
-const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpdate}) => {
-	const [items, setItems] = useState<MealPlanItem[]>(mealPlan.items || []);
-	const [isLoading, setIsLoading] = useState(false);
-	const {toast} = useToast();
+  return (
+    <div className="space-y-4">
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-semibold">Plano Alimentar Brasileiro</h3>
+        <p className="text-sm text-muted-foreground">
+          {mealPlan.total_calories} kcal distribuídas em {mealPlan.meals.length} refeições
+        </p>
+      </div>
 
-	useEffect(() => {
-		setItems(mealPlan.items || []);
-	}, [mealPlan.items]);
-
-	// Agrupar itens por tipo de refeição
-	const groupedItems = items.reduce((acc, item) => {
-		if (!acc[item.meal_type]) {
-			acc[item.meal_type] = [];
-		}
-		acc[item.meal_type].push(item);
-		return acc;
-	}, {} as Record<string, MealPlanItem[]>);
-
-	const saveMealPlanChanges = async (updatedItems: MealPlanItem[]) => {
-		try {
-			setIsLoading(true);
-
-			// Calcular novos totais
-			const newTotals = updatedItems.reduce(
-				(acc, item) => {
-					acc.calories += item.calories;
-					acc.protein += item.protein;
-					acc.carbs += item.carbs;
-					acc.fats += item.fats;
-					return acc;
-				},
-				{calories: 0, protein: 0, carbs: 0, fats: 0}
-			);
-
-			// Atualizar o plano alimentar
-			const updatedMealPlan = {
-				...mealPlan,
-				total_calories: newTotals.calories,
-				total_protein: newTotals.protein,
-				total_carbs: newTotals.carbs,
-				total_fats: newTotals.fats,
-				items: updatedItems,
-			};
-
-			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedMealPlan);
-
-			if (result.success && result.data) {
-				if (onMealPlanUpdate) {
-					onMealPlanUpdate(result.data as DetailedMealPlan);
-				}
-			} else {
-				throw new Error(result.error || "Erro ao salvar alterações");
-			}
-		} catch (error: any) {
-			console.error("Erro ao salvar plano alimentar:", error);
-			toast({
-				title: "Erro",
-				description: error.message || "Erro ao salvar alterações no plano alimentar",
-				variant: "destructive",
-			});
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const handleItemUpdate = async (updatedItem: MealPlanItem) => {
-		console.log("Updating item:", updatedItem);
-
-		const updatedItems = items.map((item) => (item.id === updatedItem.id ? updatedItem : item));
-
-		setItems(updatedItems);
-		await saveMealPlanChanges(updatedItems);
-	};
-
-	const handleItemRemove = async (itemId: string) => {
-		console.log("Removing item:", itemId);
-
-		const updatedItems = items.filter((item) => item.id !== itemId);
-		setItems(updatedItems);
-		await saveMealPlanChanges(updatedItems);
-	};
-
-	const handleItemAdd = async (newItem: MealPlanItem) => {
-		console.log("Adding new item:", newItem);
-
-		const updatedItems = [...items, newItem];
-		setItems(updatedItems);
-		await saveMealPlanChanges(updatedItems);
-	};
-
-	// Recalcular totais baseados nos itens atuais
-	const currentTotals = items.reduce(
-		(acc, item) => {
-			acc.calories += item.calories;
-			acc.protein += item.protein;
-			acc.carbs += item.carbs;
-			acc.fats += item.fats;
-			return acc;
-		},
-		{calories: 0, protein: 0, carbs: 0, fats: 0}
-	);
-
-	return (
-		<div className="space-y-6">
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<CardTitle className="flex items-center gap-2">
-							🇧🇷 Plano Alimentar Brasileiro -{" "}
-							{format(new Date(mealPlan.date), "dd/MM/yyyy", {locale: ptBR})}
-						</CardTitle>
-						<div className="flex gap-2">
-							<Badge variant="outline">
-								{currentTotals.calories.toFixed(0)} kcal
-							</Badge>
-							<Badge variant="outline">P: {currentTotals.protein.toFixed(0)}g</Badge>
-							<Badge variant="outline">C: {currentTotals.carbs.toFixed(0)}g</Badge>
-							<Badge variant="outline">G: {currentTotals.fats.toFixed(0)}g</Badge>
-						</div>
-					</div>
-				</CardHeader>
-			</Card>
-
-			<div className="grid gap-6">
-				{MEAL_ORDER.map((mealType) => (
-					<MealTypeSection
-						key={mealType}
-						mealType={mealType}
-						config={MEAL_TYPE_CONFIG[mealType]}
-						items={groupedItems[mealType] || []}
-						mealPlanId={mealPlan.id}
-						onItemUpdate={handleItemUpdate}
-						onItemRemove={handleItemRemove}
-						onItemAdd={handleItemAdd}
-						isLoading={isLoading}
-					/>
-				))}
-			</div>
-		</div>
-	);
+      {mealPlan.meals.map((meal) => (
+        <Card key={meal.id} className="border-l-4 border-nutri-green">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{getMealTypeIcon(meal.type)}</span>
+                <span>{meal.name}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {getMealTime(meal.type)}
+                </span>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {meal.foods.map((food, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded">
+                  <div className="flex-1">
+                    <p className="font-medium">{food.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {food.quantity} {food.unit}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{food.calories} kcal</p>
+                    <p className="text-xs text-muted-foreground">
+                      P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
+                    </p>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="border-t pt-3 mt-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total da refeição:</span>
+                  <div className="text-right">
+                    <p className="font-semibold text-nutri-green">
+                      {meal.total_calories} kcal
+                    </p>
+                    <div className="flex gap-2 text-xs">
+                      <Badge variant="secondary">P: {meal.total_protein}g</Badge>
+                      <Badge variant="secondary">C: {meal.total_carbs}g</Badge>
+                      <Badge variant="secondary">G: {meal.total_fats}g</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 };
 
 export default MealPlanEditor;

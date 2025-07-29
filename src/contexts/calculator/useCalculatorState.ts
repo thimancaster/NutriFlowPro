@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
-import { calculateNutrition } from '@/utils/nutritionCalculations';
+import { calculateENPNutrition } from '@/utils/nutritionCalculations';
 import { useUnifiedEcosystem } from '@/contexts/UnifiedEcosystemContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,7 +17,7 @@ export const useCalculatorState = () => {
     sex: 'M',
     activityLevel: 'moderado',
     objective: 'manutenção',
-    profile: 'eutrófico',
+    profile: 'eutrofico',
     bmr: null,
     tdee: null,
     protein: null,
@@ -64,7 +64,7 @@ export const useCalculatorState = () => {
     setState(prev => ({ ...prev, loading: true }));
     
     try {
-      const results = await calculateNutrition({
+      const results = await calculateENPNutrition({
         weight: state.weight,
         height: state.height,
         age: state.age,
@@ -74,39 +74,44 @@ export const useCalculatorState = () => {
         profile: state.profile,
       });
 
-      const newState = {
-        ...state,
-        ...results,
-        calculated: true,
-        loading: false,
-        activeTab: 'results' as const,
-      };
+      if (results) {
+        const newState = {
+          ...state,
+          bmr: results.bmr,
+          tdee: results.tdee,
+          protein: results.protein,
+          carbs: results.carbs,
+          fats: results.fats,
+          calculated: true,
+          loading: false,
+          activeTab: 'results' as const,
+        };
 
-      setState(newState);
+        setState(newState);
 
-      // Integrar com o ecossistema unificado
-      setCalculationData({
-        id: `calc-${Date.now()}`,
-        weight: state.weight,
-        height: state.height,
-        age: state.age,
-        sex: state.sex,
-        activityLevel: state.activityLevel,
-        objective: state.objective,
-        profile: state.profile,
-        bmr: results.bmr,
-        tdee: results.tdee,
-        protein: results.protein,
-        carbs: results.carbs,
-        fats: results.fats,
-        calculatedAt: new Date().toISOString(),
-      });
+        // Integrar com o ecossistema unificado
+        setCalculationData({
+          id: `calc-${Date.now()}`,
+          weight: state.weight,
+          height: state.height,
+          age: state.age,
+          sex: state.sex,
+          activityLevel: state.activityLevel,
+          objective: state.objective,
+          profile: state.profile,
+          bmr: results.bmr,
+          tdee: results.tdee,
+          protein: results.protein,
+          carbs: results.carbs,
+          fats: results.fats,
+          calculatedAt: new Date().toISOString(),
+        });
 
-      toast({
-        title: 'Cálculo Concluído',
-        description: 'Dados integrados ao fluxo clínico com sucesso!',
-      });
-
+        toast({
+          title: 'Cálculo Concluído',
+          description: 'Dados integrados ao fluxo clínico com sucesso!',
+        });
+      }
     } catch (error) {
       console.error('Erro no cálculo:', error);
       setState(prev => ({ ...prev, loading: false }));
@@ -127,7 +132,7 @@ export const useCalculatorState = () => {
       sex: 'M',
       activityLevel: 'moderado',
       objective: 'manutenção',
-      profile: 'eutrófico',
+      profile: 'eutrofico',
       bmr: null,
       tdee: null,
       protein: null,

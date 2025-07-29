@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { ConsultationData } from '@/types/consultation';
+import { useUnifiedEcosystem } from '@/contexts/UnifiedEcosystemContext';
 import { ClinicalWorkflowStep } from '@/types/clinical';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,103 +15,93 @@ import AppointmentStep from './AppointmentStep';
 import WorkflowHeader from './WorkflowHeader';
 import WorkflowSteps from './WorkflowSteps';
 import ClinicalFlowAuditPanel from './ClinicalFlowAuditPanel';
-import PatientHistoryPanel from '../patient/PatientHistoryPanel';
-import usePatientDataLoader from '@/hooks/usePatientDataLoader';
 
 const ClinicalWorkflow: React.FC = () => {
   const { patientId, appointmentId } = useParams();
   const navigate = useNavigate();
   
   const { 
-    selectedPatient,
-    consultationData,
-    currentStep,
+    state,
+    setActivePatient,
     setCurrentStep,
-    setSelectedPatient,
-    isConsultationActive,
-    isSaving,
-    lastSaved,
-    isLoading,
-    patientHistoryData,
-    autoSave,
-    completeConsultation
-  } = useConsultationData();
+    saveCurrentState,
+    resetEcosystem
+  } = useUnifiedEcosystem();
   
-  const { 
-    completeData, 
-    isLoading: dataLoading 
-  } = usePatientDataLoader({ 
-    patientId: selectedPatient?.id, 
-    enabled: !!selectedPatient?.id 
-  });
+  const {
+    activePatient,
+    currentStep,
+    consultationData,
+    isLoading,
+    lastSaved
+  } = state;
   
   // Load patient from URL params if needed
   useEffect(() => {
-    if (patientId && !selectedPatient) {
+    if (patientId && !activePatient) {
       console.log('Carregando paciente da URL para contexto integrado:', patientId);
-      // This would need to load patient data and set it
       // For now, redirect to patient selection if no patient is selected
-      if (currentStep !== 'patient-selection') {
-        setCurrentStep('patient-selection');
+      if (currentStep !== 'patient') {
+        setCurrentStep('patient');
       }
     }
-  }, [patientId, selectedPatient, currentStep, setCurrentStep]);
+  }, [patientId, activePatient, currentStep, setCurrentStep]);
   
   // Console log for debugging the integrated ecosystem
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('🔄 Clinical Workflow State:', {
-      selectedPatient: !!selectedPatient,
-      patientName: selectedPatient?.name,
-      consultationActive: isConsultationActive,
+      activePatient: !!activePatient,
+      patientName: activePatient?.name,
       currentStep,
-      hasHistoryData: !!patientHistoryData,
       hasConsultationData: !!consultationData,
-      hasResults: !!(consultationData?.results),
-      isLoading: isLoading || dataLoading
+      isLoading
     });
-  }, [selectedPatient, isConsultationActive, currentStep, patientHistoryData, consultationData, isLoading, dataLoading]);
+  }, [activePatient, currentStep, consultationData, isLoading]);
   
   // Unified handlers using the integrated context
   const handleSave = async () => {
-    await autoSave();
+    await saveCurrentState();
   };
 
   const handleComplete = async () => {
-    await completeConsultation();
+    await saveCurrentState();
+    navigate('/dashboard');
   };
 
   // Render the appropriate step content
   const renderStepContent = () => {
     switch (currentStep) {
-      case 'patient-selection':
+      case 'patient':
         return <PatientSelectionStep />;
       
-      case 'patient-info':
-        return selectedPatient ? (
+      case 'calculation':
+        return activePatient ? (
           <Card>
             <CardHeader>
-              <CardTitle>Dados do Paciente</CardTitle>
+              <CardTitle>Cálculo Nutricional</CardTitle>
             </CardHeader>
             <CardContent>
-              <PatientInfoStep />
+              <div className="text-center space-y-4">
+                <p>Complete o cálculo nutricional para continuar</p>
+                <button 
+                  onClick={() => navigate('/calculator')}
+                  className="bg-nutri-green text-white px-4 py-2 rounded hover:bg-nutri-green-dark"
+                >
+                  Ir para Calculadora
+                </button>
+              </div>
             </CardContent>
           </Card>
         ) : null;
       
-      case 'anthropometry':
-        return selectedPatient ? <AnthropometryStep /> : null;
+      case 'clinical':
+        return activePatient ? <AnthropometryStep /> : null;
       
-      case 'nutritional-evaluation':
-        return selectedPatient ? <NutritionalEvaluationStep /> : null;
+      case 'meal_plan':
+        return activePatient ? <MealPlanStep /> : null;
       
-      case 'meal-plan':
-        return selectedPatient ? <MealPlanStep /> : null;
-      
-      case 'recommendations':
-        return selectedPatient ? <RecommendationsStep /> : null;
-      
-      case 'follow-up':
-        return selectedPatient ? <AppointmentStep /> : null;
+      case 'completed':
+        return activePatient ? <RecommendationsStep /> : null;
       
       default:
         return <PatientSelectionStep />;
@@ -122,26 +111,25 @@ const ClinicalWorkflow: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <WorkflowHeader
-        activePatient={selectedPatient}
+        activePatient={activePatient}
         activeConsultation={consultationData}
-        isSaving={isSaving}
+        isSaving={isLoading}
         lastSaved={lastSaved}
         onSave={handleSave}
         onComplete={handleComplete}
       />
       
       <Tabs defaultValue="workflow" className="w-full mt-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="workflow">Fluxo Clínico</TabsTrigger>
-          <TabsTrigger value="history" disabled={!selectedPatient}>Histórico</TabsTrigger>
           <TabsTrigger value="audit">Auditoria Técnica</TabsTrigger>
         </TabsList>
         
         <TabsContent value="workflow" className="space-y-4">
-          {currentStep !== 'patient-selection' && (
+          {currentStep !== 'patient' && (
             <WorkflowSteps 
               currentStep={currentStep}
-              patient={selectedPatient}
+              patient={activePatient}
               consultation={consultationData}
             />
           )}
@@ -149,16 +137,9 @@ const ClinicalWorkflow: React.FC = () => {
           {renderStepContent()}
         </TabsContent>
         
-        <TabsContent value="history" className="space-y-4">
-          <PatientHistoryPanel 
-            completeData={completeData}
-            isLoading={dataLoading}
-          />
-        </TabsContent>
-        
         <TabsContent value="audit" className="space-y-4">
           <ClinicalFlowAuditPanel 
-            patientId={selectedPatient?.id}
+            patientId={activePatient?.id}
             appointmentId={appointmentId}
           />
         </TabsContent>
