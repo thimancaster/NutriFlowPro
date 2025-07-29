@@ -1,71 +1,153 @@
 
-import React, { Suspense } from 'react';
-import { Helmet } from 'react-helmet';
-import DashboardComponent from '@/components/Dashboard';
-import UserInfoHeader from '@/components/UserInfoHeader';
-import ConsultationHeader from '@/components/ConsultationHeader';
-import UsageLimits from '@/components/UsageLimits';
-import { motion } from 'framer-motion';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useDashboardData } from '@/hooks/useDashboardData';
+import React from 'react';
+import { UnifiedEcosystemProvider } from '@/contexts/UnifiedEcosystemContext';
+import EcosystemNavigation from '@/components/ecosystem/EcosystemNavigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, Users, Calendar, TrendingUp } from 'lucide-react';
 
-const Dashboard = () => {
-  const { user } = useAuth();
-  
-  // Use try-catch to handle contexts that might not be available
-  let isConsultationActive = false;
-  try {
-    const context = useConsultationData();
-    isConsultationActive = context.isConsultationActive;
-  } catch {
-    // Context not available, use default values
-    isConsultationActive = false;
-  }
-  
-  const { dashboardData } = useDashboardData(user?.id);
-  
+const Dashboard: React.FC = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Dashboard - NutriFlow Pro</title>
-      </Helmet>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-foreground">Dashboard</h1>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <UserInfoHeader />
-        </motion.div>
-        
-        <div className="space-y-6">
-          {isConsultationActive && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ConsultationHeader currentStep="dashboard" />
-            </motion.div>
-          )}
-          
-          {/* Add usage limits card for free users */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="mb-6"
-          >
-            <UsageLimits />
-          </motion.div>
-          
-          <DashboardComponent />
+    <UnifiedEcosystemProvider>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Gerencie seus atendimentos e acompanhe o progresso dos pacientes
+            </p>
+          </div>
+
+          <EcosystemNavigation />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Pacientes Ativos
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">0</div>
+                <p className="text-xs text-muted-foreground">
+                  Nenhum paciente cadastrado
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Consultas Hoje
+                </CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">0</div>
+                <p className="text-xs text-muted-foreground">
+                  Nenhuma consulta agendada
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Planos Gerados
+                </CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">0</div>
+                <p className="text-xs text-muted-foreground">
+                  Nenhum plano criado
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Taxa de Sucesso
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">--</div>
+                <p className="text-xs text-muted-foreground">
+                  Dados insuficientes
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Próximas Ações</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">Cadastrar primeiro paciente</p>
+                      <p className="text-sm text-muted-foreground">
+                        Comece cadastrando um paciente para usar o sistema
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">Realizar cálculo nutricional</p>
+                      <p className="text-sm text-muted-foreground">
+                        Use a calculadora para determinar necessidades calóricas
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">Gerar plano alimentar</p>
+                      <p className="text-sm text-muted-foreground">
+                        Crie planos personalizados com inteligência cultural
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recursos Disponíveis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span>Calculadora Nutricional</span>
+                    <span className="text-green-600">✓ Ativo</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Fluxo Clínico</span>
+                    <span className="text-green-600">✓ Ativo</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Gerador de Planos</span>
+                    <span className="text-green-600">✓ Ativo</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Inteligência Cultural</span>
+                    <span className="text-green-600">✓ Ativo</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </UnifiedEcosystemProvider>
   );
 };
 
