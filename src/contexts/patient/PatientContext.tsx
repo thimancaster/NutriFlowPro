@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Patient, PatientFilters } from '@/types';
 import { PatientService } from '@/services/patient';
@@ -5,11 +6,12 @@ import { useToast } from '@/hooks/use-toast';
 import { PatientContextType, PatientContextState } from './types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
-// Session storage keys
+// Unified session storage keys - single source of truth
 const SESSION_KEYS = {
   ACTIVE_PATIENT: 'nutriflow_active_patient',
   SESSION_DATA: 'nutriflow_session_data',
-  RECENT_PATIENTS: 'nutriflow_recent_patients'
+  RECENT_PATIENTS: 'nutriflow_recent_patients',
+  PATIENT_HISTORY: 'nutriflow_patient_history'
 };
 
 // Create the context
@@ -37,11 +39,28 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     currentStep: 'patient-selection',
     lastActivity: null as Date | null
   });
+  
+  // New: Patient history data for unified access
+  const [patientHistoryData, setPatientHistoryData] = useState<any[]>([]);
 
   const { toast } = useToast();
 
   // Cache de throttling fora da função
   const throttlingCache = React.useRef<Record<string, boolean>>({});
+
+  // Função para carregar histórico do paciente (centralizada)
+  const loadPatientHistory = useCallback(async (patientId: string) => {
+    if (!user?.id || !patientId) return;
+    
+    try {
+      // Carregar dados históricos aqui - implementar conforme necessário
+      console.log('Loading patient history for:', patientId);
+      // TODO: Implementar carregamento do histórico
+      setPatientHistoryData([]);
+    } catch (error) {
+      console.error('Error loading patient history:', error);
+    }
+  }, [user?.id]);
 
   // Função para carregar pacientes com filtros e cache inteligente
   const refreshPatients = useCallback(async (filters?: PatientFilters) => {
@@ -118,6 +137,8 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const patient = JSON.parse(savedPatient);
         setActivePatientState(patient);
         setSelectedPatientId(patient.id);
+        // Load history for the saved patient
+        loadPatientHistory(patient.id);
       }
 
       if (savedSession) {
@@ -134,7 +155,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (error) {
       console.error('Error loading session data:', error);
     }
-  }, []);
+  }, [loadPatientHistory]);
 
   // Load patients on mount
   useEffect(() => {
@@ -170,17 +191,20 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSelectedPatientId(patient?.id || null);
     
     if (patient) {
+      // Load history when patient is selected
+      loadPatientHistory(patient.id);
       updateSessionData({ 
         lastActivity: new Date(),
         consultationActive: true 
       });
     } else {
+      setPatientHistoryData([]);
       updateSessionData({ 
         consultationActive: false,
         currentStep: 'patient-selection'
       });
     }
-  }, []);
+  }, [loadPatientHistory]);
 
   const addRecentPatient = useCallback((patient: Patient) => {
     setRecentPatients(prev => {
@@ -204,8 +228,11 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isLoading,
     error,
     sessionData,
+    patientHistoryData, // New: Unified history data
+    
     // Actions
     setActivePatient,
+    loadPatientHistory, // New: Centralized history loading
     startPatientSession: useCallback((patient: Patient) => {
       setActivePatient(patient);
       addRecentPatient(patient);

@@ -15,6 +15,7 @@ export interface PatientContextState {
     currentStep: string;
     lastActivity: Date | null;
   };
+  patientHistoryData: any[]; // New: Centralized history data
 }
 
 export interface PatientContextActions {
@@ -22,6 +23,7 @@ export interface PatientContextActions {
   startPatientSession: (patient: Patient) => void;
   endPatientSession: () => void;
   loadPatientById: (patientId: string) => Promise<void>;
+  loadPatientHistory: (patientId: string) => Promise<void>; // New: Centralized history loading
   addRecentPatient: (patient: Patient) => void;
   updateSessionData: (data: Partial<PatientContextState['sessionData']>) => void;
   savePatient: (patientData: Partial<Patient>) => Promise<{ success: boolean; data?: Patient; error?: string }>;

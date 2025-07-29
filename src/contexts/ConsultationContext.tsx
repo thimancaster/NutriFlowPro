@@ -1,13 +1,14 @@
 
-import React, { createContext, useContext, useState } from 'react';
-import { ConsultationData, Patient } from '@/types';
+import React, { createContext, useContext } from 'react';
+import { ConsultationData } from '@/types';
+import { useActivePatient } from '@/hooks/useActivePatient';
 
 // Define the consultation steps
 export type ConsultationStep = 'patient-selection' | 'evaluation' | 'meal-plan' | 'review';
 
 interface ConsultationContextType {
-  activePatient: Patient | null;
-  setActivePatient: (patient: Patient | null) => void;
+  activePatient: ReturnType<typeof useActivePatient>['patient'];
+  setActivePatient: ReturnType<typeof useActivePatient>['setActivePatient'];
   consultationData: ConsultationData | null;
   setConsultationData: (data: ConsultationData | null) => void;
   currentStep: ConsultationStep;
@@ -22,14 +23,14 @@ export const ConsultationContext = createContext<ConsultationContextType | undef
 export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
 }) => {
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
-  const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
-  const [currentStep, setCurrentStep] = useState<ConsultationStep>('patient-selection');
+  // Use unified patient context instead of local state
+  const { patient: activePatient, setActivePatient } = useActivePatient();
+  
+  // This context is now deprecated - components should use useConsultationData instead
+  console.warn('ConsultationContext is deprecated. Use useConsultationData instead.');
   
   const clearConsultation = () => {
     setActivePatient(null);
-    setConsultationData(null);
-    setCurrentStep('patient-selection');
   };
   
   return (
@@ -37,10 +38,10 @@ export const ConsultationProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         activePatient,
         setActivePatient,
-        consultationData,
-        setConsultationData,
-        currentStep,
-        setCurrentStep,
+        consultationData: null, // Deprecated
+        setConsultationData: () => {}, // Deprecated
+        currentStep: 'patient-selection', // Deprecated
+        setCurrentStep: () => {}, // Deprecated
         isConsultationActive: !!activePatient,
         clearConsultation,
         mealPlan: null

@@ -1,13 +1,13 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ConsultationData, Patient } from '@/types';
+import { ConsultationData } from '@/types';
 import { MealPlan } from '@/types/meal';
 import { format } from 'date-fns';
+import { usePatient } from '@/contexts/patient/PatientContext'; // Import PatientContext
 
 interface MealPlanContextProps {
-  activePatient: Patient | null;
-  setActivePatient: (patient: Patient | null) => void;
+  // Remove activePatient - use PatientContext instead
   consultationData: ConsultationData | null;
   setConsultationData: (data: ConsultationData | null) => void;
   mealPlan: MealPlan | null;
@@ -31,7 +31,7 @@ interface MealPlanProviderProps {
 }
 
 export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) => {
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  // Remove activePatient state - use PatientContext
   const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
 
@@ -40,66 +40,67 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
       // For calculation data instead of consultation_data
       const { data: updatedData, error } = await supabase
         .from('calculations')
-        .upsert(data, { onConflict: 'id' })
+        .upsert(data)
         .select()
         .single();
 
       if (error) {
+        console.error('Error saving consultation:', error);
         throw error;
       }
 
-      return { success: true, data: updatedData };
-    } catch (error: any) {
-      console.error('Error saving consultation:', error);
-      return { success: false, error };
+      return updatedData;
+    } catch (error) {
+      console.error('Error in saveConsultation:', error);
+      throw error;
     }
   }
 
-  async function saveMealPlan(consultationId: string, mealPlanData: MealPlan) {
+  async function saveMealPlan(consultationId: string, mealPlan: MealPlan) {
     try {
-      // Format date for Supabase
-      const formattedData = {
-        id: mealPlanData.id,
-        user_id: mealPlanData.user_id,
-        patient_id: mealPlanData.patient_id,
-        date: typeof mealPlanData.date === 'string' 
-          ? mealPlanData.date 
-          : format(mealPlanData.date, 'yyyy-MM-dd'),
-        meals: JSON.stringify(mealPlanData.meals),
-        total_calories: Number(mealPlanData.total_calories),
-        total_protein: Number(mealPlanData.total_protein),
-        total_carbs: Number(mealPlanData.total_carbs), 
-        total_fats: Number(mealPlanData.total_fats),
-        consultation_id: consultationId
-      };
-      
       const { data, error } = await supabase
         .from('meal_plans')
-        .upsert(formattedData, { onConflict: 'id' })
+        .upsert({
+          id: mealPlan.id,
+          user_id: mealPlan.user_id,
+          patient_id: mealPlan.patient_id,
+          calculation_id: consultationId,
+          date: format(new Date(), 'yyyy-MM-dd'),
+          meals: mealPlan.meals || [],
+          total_calories: mealPlan.total_calories,
+          total_protein: mealPlan.total_protein,
+          total_carbs: mealPlan.total_carbs,
+          total_fats: mealPlan.total_fats,
+          notes: mealPlan.notes,
+          updated_at: new Date().toISOString()
+        })
         .select()
         .single();
-        
-      if (error) throw error;
-      return { success: true, data };
+
+      if (error) {
+        console.error('Error saving meal plan:', error);
+        throw error;
+      }
+
+      return data;
     } catch (error) {
-      console.error('Error saving meal plan:', error);
-      return { success: false, error };
+      console.error('Error in saveMealPlan:', error);
+      throw error;
     }
   }
 
-  const value: MealPlanContextProps = {
-    activePatient,
-    setActivePatient,
-    consultationData,
-    setConsultationData,
-    mealPlan,
-    setMealPlan,
-    saveConsultation,
-    saveMealPlan
-  };
-
   return (
-    <MealPlanContext.Provider value={value}>
+    <MealPlanContext.Provider
+      value={{
+        // Remove activePatient - components should use usePatient() hook
+        consultationData,
+        setConsultationData,
+        mealPlan,
+        setMealPlan,
+        saveConsultation,
+        saveMealPlan,
+      }}
+    >
       {children}
     </MealPlanContext.Provider>
   );

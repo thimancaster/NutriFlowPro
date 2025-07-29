@@ -1,64 +1,36 @@
+
 import { useCallback } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { useGlobalPatient } from '@/contexts/GlobalPatientProvider';
+import { usePatient } from '@/contexts/patient/PatientContext'; // Use PatientContext as single source
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/types';
 
 /**
  * Hook unificado para gerenciar todo o ecossistema da aplicação
- * Conecta autenticação, pacientes globais e consultas em uma interface única
+ * Usa PatientContext como única fonte de verdade para dados de pacientes
  */
 export const useUnifiedEcosystem = () => {
   const { user, isAuthenticated } = useAuth();
   const { 
-    selectedPatient: consultationPatient,
     consultationData,
-    setSelectedPatient: setConsultationPatient,
     updateConsultationData,
     startNewConsultation
   } = useConsultationData();
+  
+  // Single source of truth for patient data
   const {
-    activePatient: globalActivePatient,
+    activePatient,
     patients,
-    setActivePatient: setGlobalActivePatient,
-    ensurePatientIntegrity,
-    isEcosystemHealthy,
-    validateEcosystem
-  } = useGlobalPatient();
+    setActivePatient,
+    startPatientSession,
+    isLoading,
+    error
+  } = usePatient();
+  
   const { toast } = useToast();
 
-  // Sincronizar pacientes entre contextos
-  const syncPatientContexts = useCallback((patient: Patient | null) => {
-    try {
-      if (patient) {
-        const validatedPatient = ensurePatientIntegrity(patient);
-        
-        // Sincronizar ambos os contextos
-        setGlobalActivePatient(validatedPatient);
-        setConsultationPatient(validatedPatient);
-        
-        console.log('Patient contexts synchronized:', {
-          patientId: validatedPatient.id,
-          patientName: validatedPatient.name,
-          userId: validatedPatient.user_id
-        });
-      } else {
-        // Limpar ambos os contextos
-        setGlobalActivePatient(null);
-        setConsultationPatient(null);
-      }
-    } catch (error: any) {
-      console.error('Error synchronizing patient contexts:', error);
-      toast({
-        title: 'Erro de Sincronização',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  }, [ensurePatientIntegrity, setGlobalActivePatient, setConsultationPatient, toast]);
-
-  // Selecionar paciente de forma unificada
+  // Unified patient selection using PatientContext
   const selectPatient = useCallback(async (patient: Patient) => {
     if (!user?.id || !isAuthenticated) {
       toast({
@@ -70,17 +42,23 @@ export const useUnifiedEcosystem = () => {
     }
 
     try {
-      // Validar e sincronizar paciente
-      syncPatientContexts(patient);
+      // Use PatientContext to set active patient
+      startPatientSession(patient);
+      
+      console.log('Patient selected via unified ecosystem:', {
+        patientId: patient.id,
+        patientName: patient.name,
+        userId: patient.user_id
+      });
       
       return { success: true, patient };
     } catch (error: any) {
       console.error('Error selecting patient:', error);
       return { success: false, error: error.message };
     }
-  }, [user?.id, isAuthenticated, syncPatientContexts, toast]);
+  }, [user?.id, isAuthenticated, startPatientSession, toast]);
 
-  // Iniciar consulta de forma unificada
+  // Start consultation using unified patient data
   const startConsultation = useCallback(async (patient: Patient) => {
     const selectionResult = await selectPatient(patient);
     
@@ -110,7 +88,7 @@ export const useUnifiedEcosystem = () => {
     }
   }, [selectPatient, startNewConsultation, toast]);
 
-  // Validar dados para operações críticas
+  // Validate data for meal plan generation
   const validateForMealPlan = useCallback(() => {
     const issues: string[] = [];
 
@@ -118,15 +96,15 @@ export const useUnifiedEcosystem = () => {
       issues.push('Usuário não autenticado');
     }
 
-    if (!globalActivePatient) {
+    if (!activePatient) {
       issues.push('Nenhum paciente selecionado');
     }
 
-    if (globalActivePatient && !globalActivePatient.user_id) {
+    if (activePatient && !activePatient.user_id) {
       issues.push('Paciente sem user_id válido');
     }
 
-    if (globalActivePatient && globalActivePatient.user_id !== user?.id) {
+    if (activePatient && activePatient.user_id !== user?.id) {
       issues.push('Paciente não pertence ao usuário autenticado');
     }
 
@@ -138,16 +116,12 @@ export const useUnifiedEcosystem = () => {
       issues.push('Cálculo de VET inválido');
     }
 
-    if (!isEcosystemHealthy) {
-      issues.push('Problema de integridade do ecossistema detectado');
-    }
-
     return {
       isValid: issues.length === 0,
       issues,
       data: issues.length === 0 ? {
         userId: user!.id,
-        patientId: globalActivePatient!.id,
+        patientId: activePatient!.id,
         targets: {
           calories: consultationData!.results!.vet,
           protein: consultationData!.results!.macros.protein,
@@ -156,41 +130,17 @@ export const useUnifiedEcosystem = () => {
         }
       } : null
     };
-  }, [isAuthenticated, user?.id, globalActivePatient, consultationData, isEcosystemHealthy]);
-
-  // Obter paciente ativo (prioriza contexto de consulta)
-  const getActivePatient = useCallback((): Patient | null => {
-    return consultationPatient || globalActivePatient;
-  }, [consultationPatient, globalActivePatient]);
-
-  // Verificar se os contextos estão sincronizados
-  const areContextsSynced = useCallback((): boolean => {
-    if (!consultationPatient && !globalActivePatient) return true;
-    if (!consultationPatient || !globalActivePatient) return false;
-    return consultationPatient.id === globalActivePatient.id;
-  }, [consultationPatient, globalActivePatient]);
-
-  // Forçar sincronização dos contextos
-  const forceSyncContexts = useCallback(() => {
-    if (!areContextsSynced()) {
-      const activePatient = consultationPatient || globalActivePatient;
-      if (activePatient) {
-        syncPatientContexts(activePatient);
-      }
-    }
-  }, [areContextsSynced, consultationPatient, globalActivePatient, syncPatientContexts]);
+  }, [isAuthenticated, user?.id, activePatient, consultationData]);
 
   return {
-    // Estado unificado
+    // Estado unificado - apenas PatientContext como fonte
     user,
     isAuthenticated,
-    activePatient: getActivePatient(),
+    activePatient,
     consultationData,
     patients,
-    isEcosystemHealthy,
-    
-    // Estado de sincronização
-    areContextsSynced: areContextsSynced(),
+    isLoading,
+    error,
     
     // Ações unificadas
     selectPatient,
@@ -199,17 +149,15 @@ export const useUnifiedEcosystem = () => {
     
     // Validações
     validateForMealPlan,
-    validateEcosystem,
     
-    // Utilitários
-    syncPatientContexts,
-    forceSyncContexts,
+    // Estado de integridade simplificado
+    isEcosystemHealthy: isAuthenticated && !!user?.id,
     
     // Estado detalhado para debug
     debug: {
-      consultationPatient,
-      globalActivePatient,
-      isEcosystemHealthy
+      activePatient,
+      hasConsultationData: !!consultationData,
+      isAuthenticated
     }
   };
 };

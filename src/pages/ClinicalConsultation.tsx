@@ -1,66 +1,40 @@
+
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, Calculator, FileText } from 'lucide-react';
-import ConsultationFormWrapper from '@/components/Consultation/ConsultationFormWrapper';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useNavigate } from 'react-router-dom';
+import { useActivePatient } from '@/hooks/useActivePatient';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 
 const ClinicalConsultation: React.FC = () => {
-  const { patientId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthState();
-  const { 
-    selectedPatient, 
-    consultationData, 
-    updateConsultationData,
-    setCurrentStep,
-    isLoading 
-  } = useConsultationData();
-
-  // Redirect to clinical workflow if no patient is selected
-  React.useEffect(() => {
-    if (!selectedPatient && patientId) {
-      navigate('/clinical');
-    }
-  }, [selectedPatient, patientId, navigate]);
-
-  const handleBackToWorkflow = () => {
-    setCurrentStep('nutritional-evaluation');
-    navigate('/clinical');
-  };
-
-  const handleFormChange = (data: Partial<typeof consultationData>) => {
-    updateConsultationData(data);
-  };
+  const { patient: activePatient, isLoading } = useActivePatient(); // Use unified hook
+  const { consultationData, currentStep } = useConsultationData();
 
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nutri-blue mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Carregando consulta...</p>
+            <p>Carregando dados da consulta...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!selectedPatient) {
+  if (!activePatient) {
     return (
       <div className="container mx-auto py-8 px-4">
         <Card>
           <CardContent className="p-6 text-center">
-            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum Paciente Selecionado</h3>
-            <p className="text-muted-foreground mb-4">
-              Selecione um paciente no fluxo clínico para iniciar a consulta.
-            </p>
-            <Button onClick={() => navigate('/clinical')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar ao Fluxo Clínico
+            <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-4">Nenhum paciente selecionado para consulta</p>
+            <Button onClick={() => navigate('/patients')} className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Selecionar Paciente
             </Button>
           </CardContent>
         </Card>
@@ -70,72 +44,116 @@ const ClinicalConsultation: React.FC = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={handleBackToWorkflow}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar ao Fluxo
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Consulta Nutricional</h1>
-            <p className="text-muted-foreground">
-              Paciente: {selectedPatient.name}
-            </p>
-          </div>
+      <div className="mb-6 flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Consulta Clínica</h1>
+          <p className="text-gray-600">Paciente: {activePatient.name}</p>
         </div>
       </div>
 
-      {/* Integration Status */}
-      <div className="mb-6">
-        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-              <Calculator className="h-4 w-4" />
-              <span className="font-medium">Fluxo Integrado Ativo</span>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Informações do Paciente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Nome</label>
+                <p className="font-medium">{activePatient.name}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Email</label>
+                <p className="font-medium">{activePatient.email || 'Não informado'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Telefone</label>
+                <p className="font-medium">{activePatient.phone || 'Não informado'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Status</label>
+                <p className="font-medium capitalize">{activePatient.status}</p>
+              </div>
             </div>
-            <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              Esta consulta está integrada ao fluxo clínico. Dados serão sincronizados automaticamente.
-            </p>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Consultation Content */}
-      <div className="space-y-6">
-        {consultationData ? (
-          <ConsultationFormWrapper
-            consultation={consultationData}
-            onFormChange={handleFormChange}
-            patient={selectedPatient}
-            patients={[selectedPatient]} // Only current patient
-            autoSaveStatus="idle"
-          />
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Nova Consulta
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Inicie uma nova consulta para {selectedPatient.name} no fluxo clínico.
-              </p>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Status da Consulta
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Etapa Atual</label>
+                <p className="font-medium capitalize">{currentStep.replace('-', ' ')}</p>
+              </div>
+              
+              {consultationData && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Dados da Consulta</label>
+                  <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <span className="text-sm text-gray-500">Peso:</span>
+                      <p className="font-medium">{consultationData.weight || 'N/A'} kg</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Altura:</span>
+                      <p className="font-medium">{consultationData.height || 'N/A'} cm</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">TMB:</span>
+                      <p className="font-medium">{consultationData.bmr || 'N/A'} kcal</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Calorias Totais:</span>
+                      <p className="font-medium">{consultationData.totalCalories || 'N/A'} kcal</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Ações Disponíveis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
               <Button 
-                className="mt-4" 
-                onClick={handleBackToWorkflow}
+                onClick={() => navigate('/calculator')}
+                className="flex items-center gap-2"
               >
-                Iniciar Avaliação Nutricional
+                <Calculator className="h-4 w-4" />
+                Calculadora Nutricional
               </Button>
-            </CardContent>
-          </Card>
-        )}
+              
+              <Button 
+                onClick={() => navigate('/meal-plans')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Gerar Plano Alimentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
