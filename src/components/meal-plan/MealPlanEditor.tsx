@@ -1,116 +1,226 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { MealPlan } from '@/types/mealPlan';
-import { Utensils, Clock } from 'lucide-react';
+import { Plus, Minus, Save, Clock, Users } from 'lucide-react';
+import { DetailedMealPlan } from '@/types/mealPlan';
+import { useToast } from '@/hooks/use-toast';
 
-interface MealPlanEditorProps {
-  mealPlan: MealPlan;
+export interface MealPlanEditorProps {
+  mealPlan: DetailedMealPlan;
+  onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
 }
 
-const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
-  const getMealTypeIcon = (type: string) => {
-    switch (type) {
-      case 'cafe_da_manha':
-        return '🌅';
-      case 'lanche_manha':
-        return '🍎';
-      case 'almoco':
-        return '🍽️';
-      case 'lanche_tarde':
-        return '🥤';
-      case 'jantar':
-        return '🌙';
-      case 'ceia':
-        return '🥛';
-      default:
-        return '🍽️';
+const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ 
+  mealPlan, 
+  onMealPlanUpdate 
+}) => {
+  const [editedPlan, setEditedPlan] = useState<DetailedMealPlan>(mealPlan);
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    if (onMealPlanUpdate) {
+      onMealPlanUpdate(editedPlan);
     }
+    setIsEditing(false);
+    toast({
+      title: "Sucesso",
+      description: "Plano alimentar salvo com sucesso!",
+    });
   };
 
-  const getMealTime = (type: string) => {
-    switch (type) {
-      case 'cafe_da_manha':
-        return '07:00 - 09:00';
-      case 'lanche_manha':
-        return '10:00 - 10:30';
-      case 'almoco':
-        return '12:00 - 13:00';
-      case 'lanche_tarde':
-        return '15:00 - 16:00';
-      case 'jantar':
-        return '19:00 - 20:00';
-      case 'ceia':
-        return '21:00 - 22:00';
-      default:
-        return '';
+  const updateMealItem = (mealIndex: number, itemIndex: number, field: string, value: any) => {
+    const updatedPlan = { ...editedPlan };
+    if (updatedPlan.meals && updatedPlan.meals[mealIndex] && updatedPlan.meals[mealIndex].items) {
+      updatedPlan.meals[mealIndex].items[itemIndex] = {
+        ...updatedPlan.meals[mealIndex].items[itemIndex],
+        [field]: value
+      };
+      setEditedPlan(updatedPlan);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold">Plano Alimentar Brasileiro</h3>
-        <p className="text-sm text-muted-foreground">
-          {mealPlan.total_calories} kcal distribuídas em {mealPlan.meals.length} refeições
-        </p>
-      </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">
+            {editedPlan.name || 'Plano Alimentar'}
+          </CardTitle>
+          <div className="flex gap-2">
+            {isEditing ? (
+              <>
+                <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setIsEditing(true)}>
+                Editar
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-500" />
+              <span className="text-sm">
+                {editedPlan.duration_days || 7} dias
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-gray-500" />
+              <span className="text-sm">
+                {editedPlan.target_calories || 0} kcal/dia
+              </span>
+            </div>
+            <Badge variant="outline">
+              {editedPlan.difficulty || 'Intermediário'}
+            </Badge>
+          </div>
 
-      {mealPlan.meals.map((meal) => (
-        <Card key={meal.id} className="border-l-4 border-nutri-green">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{getMealTypeIcon(meal.type)}</span>
-                <span>{meal.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {getMealTime(meal.type)}
-                </span>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {meal.foods.map((food, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded">
-                  <div className="flex-1">
-                    <p className="font-medium">{food.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {food.quantity} {food.unit}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{food.calories} kcal</p>
-                    <p className="text-xs text-muted-foreground">
-                      P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
-                    </p>
-                  </div>
-                </div>
+          <Tabs defaultValue="meals" className="w-full">
+            <TabsList>
+              <TabsTrigger value="meals">Refeições</TabsTrigger>
+              <TabsTrigger value="nutrition">Informação Nutricional</TabsTrigger>
+              <TabsTrigger value="notes">Observações</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="meals" className="space-y-4">
+              {editedPlan.meals?.map((meal, mealIndex) => (
+                <Card key={mealIndex}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      {isEditing ? (
+                        <Input
+                          value={meal.name}
+                          onChange={(e) => {
+                            const updatedPlan = { ...editedPlan };
+                            updatedPlan.meals[mealIndex].name = e.target.value;
+                            setEditedPlan(updatedPlan);
+                          }}
+                        />
+                      ) : (
+                        meal.name
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {meal.items?.map((item, itemIndex) => (
+                        <div key={itemIndex} className="flex items-center gap-4 p-2 border rounded">
+                          <div className="flex-1">
+                            {isEditing ? (
+                              <Input
+                                value={item.food_name}
+                                onChange={(e) => updateMealItem(mealIndex, itemIndex, 'food_name', e.target.value)}
+                                placeholder="Nome do alimento"
+                              />
+                            ) : (
+                              <span className="font-medium">{item.food_name}</span>
+                            )}
+                          </div>
+                          <div className="w-20">
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateMealItem(mealIndex, itemIndex, 'quantity', parseFloat(e.target.value))}
+                                placeholder="Qtd"
+                              />
+                            ) : (
+                              <span>{item.quantity}</span>
+                            )}
+                          </div>
+                          <div className="w-16">
+                            <span className="text-sm text-gray-500">{item.unit || 'g'}</span>
+                          </div>
+                          <div className="w-20">
+                            <span className="text-sm">{Math.round(item.calories || 0)} kcal</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
-              
-              <div className="border-t pt-3 mt-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Total da refeição:</span>
-                  <div className="text-right">
-                    <p className="font-semibold text-nutri-green">
-                      {meal.total_calories} kcal
-                    </p>
-                    <div className="flex gap-2 text-xs">
-                      <Badge variant="secondary">P: {meal.total_protein}g</Badge>
-                      <Badge variant="secondary">C: {meal.total_carbs}g</Badge>
-                      <Badge variant="secondary">G: {meal.total_fats}g</Badge>
+            </TabsContent>
+            
+            <TabsContent value="nutrition">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumo Nutricional</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label>Calorias Totais</Label>
+                      <div className="text-2xl font-bold">
+                        {editedPlan.target_calories || 0} kcal
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Proteínas</Label>
+                      <div className="text-xl font-semibold text-blue-600">
+                        {editedPlan.total_protein || 0}g
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Carboidratos</Label>
+                      <div className="text-xl font-semibold text-green-600">
+                        {editedPlan.total_carbs || 0}g
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Gorduras</Label>
+                      <div className="text-xl font-semibold text-yellow-600">
+                        {editedPlan.total_fats || 0}g
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="notes">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Observações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isEditing ? (
+                    <Textarea
+                      value={editedPlan.description || ''}
+                      onChange={(e) => setEditedPlan({
+                        ...editedPlan,
+                        description: e.target.value
+                      })}
+                      placeholder="Adicione observações sobre o plano alimentar..."
+                      rows={5}
+                    />
+                  ) : (
+                    <p className="text-gray-600">
+                      {editedPlan.description || 'Nenhuma observação adicionada.'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

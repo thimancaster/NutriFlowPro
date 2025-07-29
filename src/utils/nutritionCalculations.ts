@@ -66,10 +66,10 @@ export const calculateENPNutrition = async (params: NutritionCalculationParams):
     case 'eutrofico':
       proteinPerKg = 1.2;
       break;
-    case 'sobrepeso':
+    case 'sobrepeso_obesidade':
       proteinPerKg = 1.4;
       break;
-    case 'obeso':
+    case 'atleta':
       proteinPerKg = 1.6;
       break;
     default:
@@ -100,6 +100,37 @@ export const calculateENPNutrition = async (params: NutritionCalculationParams):
     carbs,
     fats
   };
+};
+
+// Add missing anthropometric calculation functions
+export const calculateIMC = (weight: number, height: number): number => {
+  const heightM = height / 100;
+  return Math.round((weight / (heightM * heightM)) * 10) / 10;
+};
+
+export const calculateRCQ = (waist: number, hip: number): number => {
+  return Math.round((waist / hip) * 100) / 100;
+};
+
+export const calculateBodyFatJacksonPollock = (sum3Folds: number, age: number, sex: 'M' | 'F'): number => {
+  let bodyDensity: number;
+  
+  if (sex === 'M') {
+    // Jackson & Pollock 3-site formula for men (chest, abdomen, thigh)
+    bodyDensity = 1.10938 - (0.0008267 * sum3Folds) + (0.0000016 * sum3Folds * sum3Folds) - (0.0002574 * age);
+  } else {
+    // Jackson & Pollock 3-site formula for women (triceps, suprailiac, thigh)
+    bodyDensity = 1.0994921 - (0.0009929 * sum3Folds) + (0.0000023 * sum3Folds * sum3Folds) - (0.0001392 * age);
+  }
+  
+  // Convert body density to body fat percentage using Siri equation
+  const bodyFat = ((4.95 / bodyDensity) - 4.5) * 100;
+  return Math.round(bodyFat * 10) / 10;
+};
+
+export const calculateLeanMass = (weight: number, bodyFatPercentage: number): number => {
+  const leanMass = weight * (1 - bodyFatPercentage / 100);
+  return Math.round(leanMass * 10) / 10;
 };
 
 // Manter compatibilidade com outras funções existentes

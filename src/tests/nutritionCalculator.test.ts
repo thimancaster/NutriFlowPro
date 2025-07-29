@@ -9,26 +9,26 @@ import { calculateMacros } from '../utils/nutrition/macroCalculations';
 describe('Nutrition Calculator', () => {
   describe('TMB Calculation', () => {
     it('should calculate TMB correctly for male eutrofico', () => {
-      const result = calculateTMB(70, 175, 30, 'M', 'eutrofico');
-      expect(result.tmb).toBeCloseTo(1667.5, 1);
+      const result = calculateTMB(70, 175, 30, 'M');
+      expect(result).toBeCloseTo(1667.5, 1);
     });
 
     it('should calculate TMB correctly for female eutrofico', () => {
-      const result = calculateTMB(60, 165, 25, 'F', 'eutrofico');
-      expect(result.tmb).toBeCloseTo(1372.5, 1);
+      const result = calculateTMB(60, 165, 25, 'F');
+      expect(result).toBeCloseTo(1372.5, 1);
     });
   });
 
   describe('GET Calculation', () => {
     it('should calculate GET correctly for sedentary activity', () => {
       const tmb = 1667.5;
-      const get = calculateGET(tmb, 'sedentario', 'eutrofico');
+      const get = calculateGET(tmb, 'sedentario');
       expect(get).toBeCloseTo(2001, 0);
     });
 
     it('should calculate GET correctly for moderate activity', () => {
       const tmb = 1667.5;
-      const get = calculateGET(tmb, 'moderado', 'eutrofico');
+      const get = calculateGET(tmb, 'moderado');
       expect(get).toBeCloseTo(2584.6, 1);
     });
   });
@@ -36,20 +36,20 @@ describe('Nutrition Calculator', () => {
   describe('VET Calculation', () => {
     it('should calculate VET correctly for weight loss', () => {
       const get = 2000;
-      const result = calculateVET(get, 'moderado', 'emagrecimento', 'eutrofico');
-      expect(result.vet).toBeCloseTo(1500, 0); // 500 kcal déficit ENP
+      const result = calculateVET(get, 'emagrecimento');
+      expect(result).toBeCloseTo(1500, 0);
     });
 
     it('should calculate VET correctly for muscle gain', () => {
       const get = 2000;
-      const result = calculateVET(get, 'moderado', 'hipertrofia', 'eutrofico');
-      expect(result.vet).toBeCloseTo(2400, 0); // 400 kcal superávit ENP
+      const result = calculateVET(get, 'hipertrofia');
+      expect(result).toBeCloseTo(2400, 0);
     });
 
     it('should calculate VET correctly for maintenance', () => {
       const get = 2000;
-      const result = calculateVET(get, 'moderado', 'manutenção', 'eutrofico');
-      expect(result.vet).toBe(2000);
+      const result = calculateVET(get, 'manutenção');
+      expect(result).toBe(2000);
     });
   });
 
