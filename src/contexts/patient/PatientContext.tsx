@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { ConsultationData, Patient, PatientFilters } from '@/types';
 import { PatientHistoryData } from '@/types/meal';
@@ -146,7 +145,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       setIsLoading(true);
       
-      // Transform data for Supabase
+      // Transform data for Supabase with proper type handling
       const dataToSave = {
         user_id: user.id,
         name: patientData.name || '',
@@ -159,7 +158,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         address: typeof patientData.address === 'string' ? patientData.address : JSON.stringify(patientData.address) || null,
         notes: patientData.notes || null,
         status: patientData.status || 'active',
-        goals: patientData.goals || {},
+        goals: patientData.goals ? JSON.parse(JSON.stringify(patientData.goals)) : {},
         ...(patientData.id && { id: patientData.id }),
         ...(patientData.created_at && { created_at: patientData.created_at }),
         ...(patientData.updated_at && { updated_at: patientData.updated_at })
@@ -173,7 +172,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (error) throw error;
 
-      // Transform back to Patient type
+      // Transform back to Patient type with proper goals handling
       const savedPatient: Patient = {
         id: data.id,
         name: data.name,
@@ -186,7 +185,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         address: data.address,
         notes: data.notes,
         status: data.status as 'active' | 'archived',
-        goals: data.goals,
+        goals: typeof data.goals === 'object' && data.goals ? data.goals as any : {},
         created_at: data.created_at,
         updated_at: data.updated_at,
         user_id: data.user_id
@@ -224,12 +223,12 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
       }
 
-      if (filters.status && filters.status !== 'all') {
+      if (filters.status && filters.status !== 'all' && filters.status !== '') {
         query = query.eq('status', filters.status);
       }
 
-      const from = (filters.page - 1) * filters.limit;
-      const to = from + filters.limit - 1;
+      const from = ((filters.page || 1) - 1) * (filters.limit || 10);
+      const to = from + (filters.limit || 10) - 1;
       
       query = query.range(from, to).order('created_at', { ascending: false });
 
@@ -237,7 +236,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (error) throw error;
 
-      // Transform data to Patient type
+      // Transform data to Patient type with proper goals handling
       const transformedPatients: Patient[] = (data || []).map(d => ({
         id: d.id,
         name: d.name,
@@ -250,7 +249,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         address: d.address,
         notes: d.notes,
         status: d.status as 'active' | 'archived',
-        goals: d.goals,
+        goals: typeof d.goals === 'object' && d.goals ? d.goals as any : {},
         created_at: d.created_at,
         updated_at: d.updated_at,
         user_id: d.user_id
@@ -320,3 +319,5 @@ export const usePatient = () => {
   }
   return context;
 };
+
+export { PatientProvider };

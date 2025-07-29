@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { MealPlan, MealItem, MealDistributionItem } from '@/types/meal';
+import { MealPlan, Meal, MealItem } from '@/types/meal';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +12,7 @@ interface UseMealPlanActionsProps {
   consultationData: ConsultationData | null;
   mealPlan: MealPlan | null;
   setMealPlan: (mealPlan: MealPlan) => void;
-  mealDistribution: MealDistributionItem[];
+  mealDistribution: any[];
   saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
 }
 
@@ -49,31 +49,27 @@ export const useMealPlanActions = (props?: UseMealPlanActionsProps) => {
         { name: 'Ceia', time: '22:00', percentage: 0.05 }
       ];
 
-      const meals: MealItem[] = mealTypes.map((mealType, index) => ({
+      const meals: Meal[] = mealTypes.map((mealType, index) => ({
+        id: `meal-${index + 1}`,
         name: mealType.name,
         time: mealType.time,
-        percentage: mealType.percentage,
-        calories: Math.round(totalCalories * mealType.percentage),
-        protein: Math.round(macros.protein * mealType.percentage),
-        carbs: Math.round(macros.carbs * mealType.percentage),
-        fat: Math.round(macros.fat * mealType.percentage),
-        proteinPercent: 0.25, // 25% of calories from protein
-        carbsPercent: 0.45,   // 45% of calories from carbs
-        fatPercent: 0.30,     // 30% of calories from fat
-        foods: []
+        items: [],
+        total_calories: Math.round(totalCalories * mealType.percentage),
+        total_protein: Math.round(macros.protein * mealType.percentage),
+        total_carbs: Math.round(macros.carbs * mealType.percentage),
+        total_fats: Math.round(macros.fat * mealType.percentage)
       }));
 
       const mealPlan: MealPlan = {
         id: crypto.randomUUID(),
-        title: `Plano Alimentar - ${activePatient.name}`,
-        patient_id: activePatient.id,
         user_id: user.id,
+        patient_id: activePatient.id,
         date: new Date().toISOString(),
+        meals,
         total_calories: totalCalories,
         total_protein: macros.protein,
         total_carbs: macros.carbs,
         total_fats: macros.fat,
-        meals,
         notes: ''
       };
 
@@ -126,7 +122,7 @@ export const useMealPlanActions = (props?: UseMealPlanActionsProps) => {
 
     setIsSaving(true);
     try {
-      await props.saveMealPlan(props.consultationData.id, props.mealPlan);
+      await props.saveMealPlan(props.consultationData.id || '', props.mealPlan);
       toast({
         title: "Sucesso",
         description: "Plano alimentar salvo com sucesso!",

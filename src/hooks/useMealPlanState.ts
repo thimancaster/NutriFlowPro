@@ -7,6 +7,7 @@ import {
 } from '@/types';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
+import { useMealPlanActions } from '@/hooks/meal-plan/useMealPlanActions';
 
 interface UseMealPlanStateReturn {
   patient: any;
@@ -21,6 +22,13 @@ interface UseMealPlanStateReturn {
   updateFoodInMeal: (mealId: string, foodId: string, updates: Partial<MealAssemblyFood>) => void;
   clearMealFoods: (mealId: string) => void;
   resetMealPlan: () => void;
+  // Additional properties from meal plan actions
+  totalMealPercent: number;
+  isSaving: boolean;
+  handleMealPercentChange: (mealId: string, percent: number) => void;
+  handleSaveMealPlan: () => Promise<void>;
+  addMeal: () => void;
+  removeMeal: (mealId: string) => void;
 }
 
 const initialMealDistribution: MealDistributionItem[] = [
@@ -29,6 +37,7 @@ const initialMealDistribution: MealDistributionItem[] = [
     name: 'Café da Manhã',
     time: '07:00 - 09:00',
     percentage: 25,
+    percent: 25,
     calories: 0,
     protein: 0,
     carbs: 0,
@@ -40,13 +49,15 @@ const initialMealDistribution: MealDistributionItem[] = [
     totalFats: 0,
     proteinPercent: 0,
     carbsPercent: 0,
-    fatPercent: 0
+    fatPercent: 0,
+    suggestions: []
   },
   {
     id: 'lunch',
     name: 'Almoço',
     time: '12:00 - 14:00',
     percentage: 35,
+    percent: 35,
     calories: 0,
     protein: 0,
     carbs: 0,
@@ -58,13 +69,15 @@ const initialMealDistribution: MealDistributionItem[] = [
     totalFats: 0,
     proteinPercent: 0,
     carbsPercent: 0,
-    fatPercent: 0
+    fatPercent: 0,
+    suggestions: []
   },
   {
     id: 'afternoonSnack',
     name: 'Lanche da Tarde',
     time: '16:00 - 18:00',
     percentage: 15,
+    percent: 15,
     calories: 0,
     protein: 0,
     carbs: 0,
@@ -76,13 +89,15 @@ const initialMealDistribution: MealDistributionItem[] = [
     totalFats: 0,
     proteinPercent: 0,
     carbsPercent: 0,
-    fatPercent: 0
+    fatPercent: 0,
+    suggestions: []
   },
   {
     id: 'dinner',
     name: 'Jantar',
     time: '19:00 - 21:00',
     percentage: 25,
+    percent: 25,
     calories: 0,
     protein: 0,
     carbs: 0,
@@ -94,7 +109,8 @@ const initialMealDistribution: MealDistributionItem[] = [
     totalFats: 0,
     proteinPercent: 0,
     carbsPercent: 0,
-    fatPercent: 0
+    fatPercent: 0,
+    suggestions: []
   }
 ];
 
@@ -110,6 +126,9 @@ export const useMealPlanState = (
     }, {} as Record<string, MealDistributionItem>)
   );
 
+  // Get meal plan actions
+  const { isSaving, handleSaveMealPlan } = useMealPlanActions();
+
   const setMealDistribution = useCallback((distribution: MealDistributionItem[]) => {
     const newDistribution: Record<string, MealDistributionItem> = {};
     distribution.forEach(item => {
@@ -122,6 +141,44 @@ export const useMealPlanState = (
     setMealDistributionItems(prev => {
       const updatedItem = { ...prev[itemId], ...updates };
       return { ...prev, [itemId]: updatedItem };
+    });
+  }, []);
+
+  const handleMealPercentChange = useCallback((mealId: string, percent: number) => {
+    updateMealDistribution(mealId, { percentage: percent, percent });
+  }, [updateMealDistribution]);
+
+  const addMeal = useCallback(() => {
+    const keys = Object.keys(mealDistributionItems);
+    const newId = `meal-${keys.length + 1}`;
+    const newMeal: MealDistributionItem = {
+      id: newId,
+      name: `Refeição ${keys.length + 1}`,
+      time: '12:00',
+      percentage: 0,
+      percent: 0,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    };
+    setMealDistributionItems(prev => ({ ...prev, [newId]: newMeal }));
+  }, [mealDistributionItems]);
+
+  const removeMeal = useCallback((mealId: string) => {
+    setMealDistributionItems(prev => {
+      const newDistribution = { ...prev };
+      delete newDistribution[mealId];
+      return newDistribution;
     });
   }, []);
 
@@ -228,9 +285,12 @@ export const useMealPlanState = (
     setMealPlan(null);
   }, [setMealPlan]);
 
+  // Calculate total percentage
+  const totalMealPercent = Object.values(mealDistributionItems)
+    .reduce((total, meal) => total + (meal.percentage || 0), 0);
+
   useEffect(() => {
     if (patientId && patient?.id !== patientId) {
-      // Reset meal plan when patient changes
       resetMealPlan();
     }
   }, [patientId, patient, resetMealPlan]);
@@ -248,5 +308,11 @@ export const useMealPlanState = (
     updateFoodInMeal,
     clearMealFoods,
     resetMealPlan,
+    totalMealPercent,
+    isSaving,
+    handleMealPercentChange,
+    handleSaveMealPlan,
+    addMeal,
+    removeMeal
   };
 };
