@@ -1,224 +1,237 @@
 
 import React, { useState } from 'react';
+import { DetailedMealPlan } from '@/types/mealPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Minus, Save, Clock, Users } from 'lucide-react';
-import { DetailedMealPlan } from '@/types/mealPlan';
-import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Edit2, Save, Plus, Trash2 } from 'lucide-react';
 
-export interface MealPlanEditorProps {
+interface MealPlanEditorProps {
   mealPlan: DetailedMealPlan;
-  onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
 }
 
-const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ 
-  mealPlan, 
-  onMealPlanUpdate 
-}) => {
-  const [editedPlan, setEditedPlan] = useState<DetailedMealPlan>(mealPlan);
+const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
+  const [editingMealPlan, setEditingMealPlan] = useState<DetailedMealPlan>(mealPlan);
   const [isEditing, setIsEditing] = useState(false);
-  const { toast } = useToast();
 
   const handleSave = () => {
-    if (onMealPlanUpdate) {
-      onMealPlanUpdate(editedPlan);
-    }
     setIsEditing(false);
-    toast({
-      title: "Sucesso",
-      description: "Plano alimentar salvo com sucesso!",
+    // Here you would typically call an API to save the meal plan
+    console.log('Saving meal plan:', editingMealPlan);
+  };
+
+  const handleCancel = () => {
+    setEditingMealPlan(mealPlan);
+    setIsEditing(false);
+  };
+
+  const calculateTotalNutrition = (meals: any[]) => {
+    return meals.reduce(
+      (totals, meal) => ({
+        calories: totals.calories + (meal.calories || 0),
+        protein: totals.protein + (meal.protein || 0),
+        carbs: totals.carbs + (meal.carbs || 0),
+        fats: totals.fats + (meal.fats || 0),
+      }),
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
+  };
+
+  const addMeal = () => {
+    const newMeal = {
+      id: Date.now().toString(),
+      name: 'Nova Refeição',
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+      percent: 0,
+      suggestions: []
+    };
+
+    setEditingMealPlan({
+      ...editingMealPlan,
+      meals: [...editingMealPlan.meals, newMeal]
     });
   };
 
-  const updateMealItem = (mealIndex: number, itemIndex: number, field: string, value: any) => {
-    const updatedPlan = { ...editedPlan };
-    if (updatedPlan.meals && updatedPlan.meals[mealIndex] && updatedPlan.meals[mealIndex].foods) {
-      updatedPlan.meals[mealIndex].foods[itemIndex] = {
-        ...updatedPlan.meals[mealIndex].foods[itemIndex],
-        [field]: value
-      };
-      setEditedPlan(updatedPlan);
-    }
+  const removeMeal = (mealId: string) => {
+    setEditingMealPlan({
+      ...editingMealPlan,
+      meals: editingMealPlan.meals.filter(meal => meal.id !== mealId)
+    });
   };
+
+  const updateMeal = (mealId: string, updates: any) => {
+    setEditingMealPlan({
+      ...editingMealPlan,
+      meals: editingMealPlan.meals.map(meal => 
+        meal.id === mealId ? { ...meal, ...updates } : meal
+      )
+    });
+  };
+
+  const totals = calculateTotalNutrition(editingMealPlan.meals);
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">
-            {editedPlan.title || 'Plano Alimentar'}
-          </CardTitle>
-          <div className="flex gap-2">
-            {isEditing ? (
-              <>
-                <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Edit2 className="h-5 w-5" />
+              Plano Alimentar - {editingMealPlan.patient_name || 'Paciente'}
+            </CardTitle>
+            <div className="flex gap-2">
+              {isEditing ? (
+                <>
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSave}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setIsEditing(true)}>
+                  <Edit2 className="mr-2 h-4 w-4" />
+                  Editar
                 </Button>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancelar
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => setIsEditing(true)}>
-                Editar
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </CardHeader>
-        
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">
-                {editedPlan.duration || 7} dias
-              </span>
+        <CardContent className="space-y-6">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="patient_name">Nome do Paciente</Label>
+              <Input
+                id="patient_name"
+                value={editingMealPlan.patient_name || ''}
+                onChange={(e) => setEditingMealPlan({ ...editingMealPlan, patient_name: e.target.value })}
+                disabled={!isEditing}
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">
-                {editedPlan.total_calories || 0} kcal/dia
-              </span>
+            <div>
+              <Label htmlFor="created_at">Data de Criação</Label>
+              <Input
+                id="created_at"
+                value={new Date(editingMealPlan.created_at).toLocaleDateString('pt-BR')}
+                disabled
+              />
             </div>
-            <Badge variant="outline">
-              {editedPlan.type || 'Personalizado'}
-            </Badge>
           </div>
 
-          <Tabs defaultValue="meals" className="w-full">
-            <TabsList>
-              <TabsTrigger value="meals">Refeições</TabsTrigger>
-              <TabsTrigger value="nutrition">Informação Nutricional</TabsTrigger>
-              <TabsTrigger value="notes">Observações</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="meals" className="space-y-4">
-              {editedPlan.meals?.map((meal, mealIndex) => (
-                <Card key={mealIndex}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {isEditing ? (
-                        <Input
-                          value={meal.name}
-                          onChange={(e) => {
-                            const updatedPlan = { ...editedPlan };
-                            updatedPlan.meals[mealIndex].name = e.target.value;
-                            setEditedPlan(updatedPlan);
-                          }}
-                        />
-                      ) : (
-                        meal.name
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {meal.foods?.map((item, itemIndex) => (
-                        <div key={itemIndex} className="flex items-center gap-4 p-2 border rounded">
-                          <div className="flex-1">
-                            {isEditing ? (
-                              <Input
-                                value={item.name}
-                                onChange={(e) => updateMealItem(mealIndex, itemIndex, 'name', e.target.value)}
-                                placeholder="Nome do alimento"
-                              />
-                            ) : (
-                              <span className="font-medium">{item.name}</span>
-                            )}
-                          </div>
-                          <div className="w-20">
-                            {isEditing ? (
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateMealItem(mealIndex, itemIndex, 'quantity', parseFloat(e.target.value))}
-                                placeholder="Qtd"
-                              />
-                            ) : (
-                              <span>{item.quantity}</span>
-                            )}
-                          </div>
-                          <div className="w-16">
-                            <span className="text-sm text-gray-500">{item.unit || 'g'}</span>
-                          </div>
-                          <div className="w-20">
-                            <span className="text-sm">{Math.round(item.calories || 0)} kcal</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-            
-            <TabsContent value="nutrition">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumo Nutricional</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Nutritional Summary */}
+          <div className="bg-muted/30 p-4 rounded-lg">
+            <h3 className="font-medium mb-2">Resumo Nutricional</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="font-medium">Calorias:</span> {totals.calories} kcal
+              </div>
+              <div>
+                <span className="font-medium">Proteínas:</span> {totals.protein}g
+              </div>
+              <div>
+                <span className="font-medium">Carboidratos:</span> {totals.carbs}g
+              </div>
+              <div>
+                <span className="font-medium">Gorduras:</span> {totals.fats}g
+              </div>
+            </div>
+          </div>
+
+          {/* Meals */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Refeições</h3>
+              {isEditing && (
+                <Button onClick={addMeal} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar Refeição
+                </Button>
+              )}
+            </div>
+
+            {editingMealPlan.meals.map((meal, index) => (
+              <Card key={meal.id || index}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <Input
+                      value={meal.name}
+                      onChange={(e) => updateMeal(meal.id, { name: e.target.value })}
+                      disabled={!isEditing}
+                      className="font-medium"
+                    />
+                    {isEditing && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeMeal(meal.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                      <Label>Calorias Totais</Label>
-                      <div className="text-2xl font-bold">
-                        {editedPlan.total_calories || 0} kcal
-                      </div>
+                      <Label>Calorias</Label>
+                      <Input
+                        type="number"
+                        value={meal.calories || 0}
+                        onChange={(e) => updateMeal(meal.id, { calories: Number(e.target.value) })}
+                        disabled={!isEditing}
+                      />
                     </div>
                     <div>
-                      <Label>Proteínas</Label>
-                      <div className="text-xl font-semibold text-blue-600">
-                        {editedPlan.total_protein || 0}g
-                      </div>
+                      <Label>Proteínas (g)</Label>
+                      <Input
+                        type="number"
+                        value={meal.protein || 0}
+                        onChange={(e) => updateMeal(meal.id, { protein: Number(e.target.value) })}
+                        disabled={!isEditing}
+                      />
                     </div>
                     <div>
-                      <Label>Carboidratos</Label>
-                      <div className="text-xl font-semibold text-green-600">
-                        {editedPlan.total_carbs || 0}g
-                      </div>
+                      <Label>Carboidratos (g)</Label>
+                      <Input
+                        type="number"
+                        value={meal.carbs || 0}
+                        onChange={(e) => updateMeal(meal.id, { carbs: Number(e.target.value) })}
+                        disabled={!isEditing}
+                      />
                     </div>
                     <div>
-                      <Label>Gorduras</Label>
-                      <div className="text-xl font-semibold text-yellow-600">
-                        {editedPlan.total_fats || 0}g
-                      </div>
+                      <Label>Gorduras (g)</Label>
+                      <Input
+                        type="number"
+                        value={meal.fats || 0}
+                        onChange={(e) => updateMeal(meal.id, { fats: Number(e.target.value) })}
+                        disabled={!isEditing}
+                      />
                     </div>
+                  </div>
+
+                  <div>
+                    <Label>Sugestões de Alimentos</Label>
+                    <Textarea
+                      value={meal.suggestions?.join('\n') || ''}
+                      onChange={(e) => updateMeal(meal.id, { suggestions: e.target.value.split('\n') })}
+                      disabled={!isEditing}
+                      placeholder="Digite as sugestões de alimentos, uma por linha"
+                      rows={3}
+                    />
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-            
-            <TabsContent value="notes">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Observações</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isEditing ? (
-                    <Textarea
-                      value={editedPlan.notes || ''}
-                      onChange={(e) => setEditedPlan({
-                        ...editedPlan,
-                        notes: e.target.value
-                      })}
-                      placeholder="Adicione observações sobre o plano alimentar..."
-                      rows={5}
-                    />
-                  ) : (
-                    <p className="text-gray-600">
-                      {editedPlan.notes || 'Nenhuma observação adicionada.'}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

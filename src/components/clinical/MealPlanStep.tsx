@@ -44,7 +44,7 @@ const MealPlanStep: React.FC = () => {
         <CardContent className="p-6 text-center space-y-4">
           <AlertCircle className="h-12 w-12 mx-auto text-amber-500" />
           <p className="text-muted-foreground">Selecione um paciente para continuar</p>
-          <Button onClick={() => setCurrentStep('patient')}>
+          <Button onClick={() => setCurrentStep('patient-selection')}>
             Selecionar Paciente
           </Button>
         </CardContent>

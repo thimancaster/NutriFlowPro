@@ -61,10 +61,20 @@ function consultationDataReducer(state: ConsultationDataState, action: Consultat
 
 const ConsultationDataContext = createContext<{
   state: ConsultationDataState;
+  // Exposed properties for backward compatibility
+  selectedPatient: Patient | null;
+  consultationData: ConsultationData | null;
+  isConsultationActive: boolean;
+  patientHistoryData: any;
+  // Actions
   setActivePatient: (patient: Patient | null) => void;
+  setSelectedPatient: (patient: Patient | null) => void;
   setConsultationData: (data: ConsultationData | null) => void;
+  updateConsultationData: (data: Partial<ConsultationData>) => void;
   setCurrentStep: (step: ClinicalWorkflowStep) => void;
   saveConsultationData: () => Promise<void>;
+  autoSave: () => Promise<void>;
+  loadPatientHistory: (patientId: string) => Promise<void>;
   reset: () => void;
 } | undefined>(undefined);
 
@@ -96,6 +106,13 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     dispatch({ type: 'SET_CONSULTATION_DATA', payload: data });
   }, []);
 
+  const updateConsultationData = useCallback((data: Partial<ConsultationData>) => {
+    if (state.consultationData) {
+      const updatedData = { ...state.consultationData, ...data };
+      dispatch({ type: 'SET_CONSULTATION_DATA', payload: updatedData });
+    }
+  }, [state.consultationData]);
+
   const setCurrentStep = useCallback((step: ClinicalWorkflowStep) => {
     dispatch({ type: 'SET_CURRENT_STEP', payload: step });
   }, []);
@@ -120,16 +137,35 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     }
   }, [state.consultationData, user?.id]);
 
+  const autoSave = useCallback(async () => {
+    await saveConsultationData();
+  }, [saveConsultationData]);
+
+  const loadPatientHistory = useCallback(async (patientId: string) => {
+    // Mock implementation - replace with actual history loading
+    console.log('Loading patient history for:', patientId);
+  }, []);
+
   const reset = useCallback(() => {
     dispatch({ type: 'RESET' });
   }, []);
 
   const value = {
     state,
+    // Exposed properties for backward compatibility
+    selectedPatient: state.activePatient,
+    consultationData: state.consultationData,
+    isConsultationActive: !!state.activePatient && !!state.consultationData,
+    patientHistoryData: null, // Mock data for now
+    // Actions
     setActivePatient,
+    setSelectedPatient: setActivePatient, // Alias for backward compatibility
     setConsultationData,
+    updateConsultationData,
     setCurrentStep,
     saveConsultationData,
+    autoSave,
+    loadPatientHistory,
     reset,
   };
 
