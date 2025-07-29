@@ -1,9 +1,12 @@
 
 export type ClinicalWorkflowStep = 
-  | 'patient'
-  | 'calculation' 
-  | 'clinical'
-  | 'meal_plan'
+  | 'patient-selection'
+  | 'patient-info'
+  | 'anthropometry'
+  | 'nutritional-evaluation'
+  | 'meal-plan'
+  | 'recommendations'
+  | 'follow-up'
   | 'completed';
 
 export interface ClinicalWorkflowState {

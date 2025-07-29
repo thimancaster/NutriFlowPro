@@ -41,8 +41,8 @@ const ClinicalWorkflow: React.FC = () => {
     if (patientId && !activePatient) {
       console.log('Carregando paciente da URL para contexto integrado:', patientId);
       // For now, redirect to patient selection if no patient is selected
-      if (currentStep !== 'patient') {
-        setCurrentStep('patient');
+      if (currentStep !== 'patient-selection') {
+        setCurrentStep('patient-selection');
       }
     }
   }, [patientId, activePatient, currentStep, setCurrentStep]);
@@ -68,21 +68,41 @@ const ClinicalWorkflow: React.FC = () => {
     navigate('/dashboard');
   };
 
+  // Map unified context steps to clinical workflow steps
+  const mapUnifiedStepToClinical = (unifiedStep: string): ClinicalWorkflowStep => {
+    switch (unifiedStep) {
+      case 'patient': return 'patient-selection';
+      case 'calculation': return 'nutritional-evaluation';
+      case 'clinical': return 'anthropometry';
+      case 'meal_plan': return 'meal-plan';
+      case 'completed': return 'completed';
+      default: return 'patient-selection';
+    }
+  };
+
+  const mappedCurrentStep = mapUnifiedStepToClinical(currentStep);
+
   // Render the appropriate step content
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 'patient':
+    switch (mappedCurrentStep) {
+      case 'patient-selection':
         return <PatientSelectionStep />;
       
-      case 'calculation':
+      case 'patient-info':
+        return activePatient ? <PatientInfoStep /> : <PatientSelectionStep />;
+        
+      case 'anthropometry':
+        return activePatient ? <AnthropometryStep /> : <PatientSelectionStep />;
+      
+      case 'nutritional-evaluation':
         return activePatient ? (
           <Card>
             <CardHeader>
-              <CardTitle>Cálculo Nutricional</CardTitle>
+              <CardTitle>Avaliação Nutricional</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center space-y-4">
-                <p>Complete o cálculo nutricional para continuar</p>
+                <p>Complete a avaliação nutricional para continuar</p>
                 <button 
                   onClick={() => navigate('/calculator')}
                   className="bg-nutri-green text-white px-4 py-2 rounded hover:bg-nutri-green-dark"
@@ -92,16 +112,19 @@ const ClinicalWorkflow: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ) : null;
+        ) : <PatientSelectionStep />;
       
-      case 'clinical':
-        return activePatient ? <AnthropometryStep /> : null;
+      case 'meal-plan':
+        return activePatient ? <MealPlanStep /> : <PatientSelectionStep />;
       
-      case 'meal_plan':
-        return activePatient ? <MealPlanStep /> : null;
+      case 'recommendations':
+        return activePatient ? <RecommendationsStep /> : <PatientSelectionStep />;
+        
+      case 'follow-up':
+        return activePatient ? <AppointmentStep /> : <PatientSelectionStep />;
       
       case 'completed':
-        return activePatient ? <RecommendationsStep /> : null;
+        return activePatient ? <RecommendationsStep /> : <PatientSelectionStep />;
       
       default:
         return <PatientSelectionStep />;
@@ -126,9 +149,9 @@ const ClinicalWorkflow: React.FC = () => {
         </TabsList>
         
         <TabsContent value="workflow" className="space-y-4">
-          {currentStep !== 'patient' && (
+          {mappedCurrentStep !== 'patient-selection' && (
             <WorkflowSteps 
-              currentStep={currentStep}
+              currentStep={mappedCurrentStep}
               patient={activePatient}
               consultation={consultationData}
             />

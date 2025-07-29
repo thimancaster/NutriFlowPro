@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { Patient, ConsultationData } from '@/types';
 import { MealPlan, MacroTargets } from '@/types/mealPlan';
@@ -19,8 +18,8 @@ interface UnifiedEcosystemState {
   // Plano alimentar
   mealPlan: MealPlan | null;
   
-  // Estados de controle
-  currentStep: 'patient' | 'calculation' | 'clinical' | 'meal_plan' | 'completed';
+  // Estados de controle - usando step names consistentes
+  currentStep: 'patient-selection' | 'patient-info' | 'calculation' | 'clinical' | 'meal_plan' | 'completed';
   isLoading: boolean;
   error: string | null;
   
@@ -45,7 +44,7 @@ const initialState: UnifiedEcosystemState = {
   calculationData: null,
   consultationData: null,
   mealPlan: null,
-  currentStep: 'patient',
+  currentStep: 'patient-selection',
   isLoading: false,
   error: null,
   lastSaved: null,
@@ -319,7 +318,7 @@ export const UnifiedEcosystemProvider: React.FC<{ children: React.ReactNode }> =
   // Navegação do fluxo
   const goToNextStep = useCallback(() => {
     const stepOrder: UnifiedEcosystemState['currentStep'][] = [
-      'patient', 'calculation', 'clinical', 'meal_plan', 'completed'
+      'patient-selection', 'patient-info', 'calculation', 'clinical', 'meal_plan', 'completed'
     ];
     
     const currentIndex = stepOrder.indexOf(state.currentStep);
@@ -332,7 +331,7 @@ export const UnifiedEcosystemProvider: React.FC<{ children: React.ReactNode }> =
 
   const goToPreviousStep = useCallback(() => {
     const stepOrder: UnifiedEcosystemState['currentStep'][] = [
-      'patient', 'calculation', 'clinical', 'meal_plan', 'completed'
+      'patient-selection', 'patient-info', 'calculation', 'clinical', 'meal_plan', 'completed'
     ];
     
     const currentIndex = stepOrder.indexOf(state.currentStep);

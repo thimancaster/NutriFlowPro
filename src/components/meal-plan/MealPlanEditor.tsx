@@ -37,9 +37,9 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({
 
   const updateMealItem = (mealIndex: number, itemIndex: number, field: string, value: any) => {
     const updatedPlan = { ...editedPlan };
-    if (updatedPlan.meals && updatedPlan.meals[mealIndex] && updatedPlan.meals[mealIndex].items) {
-      updatedPlan.meals[mealIndex].items[itemIndex] = {
-        ...updatedPlan.meals[mealIndex].items[itemIndex],
+    if (updatedPlan.meals && updatedPlan.meals[mealIndex] && updatedPlan.meals[mealIndex].foods) {
+      updatedPlan.meals[mealIndex].foods[itemIndex] = {
+        ...updatedPlan.meals[mealIndex].foods[itemIndex],
         [field]: value
       };
       setEditedPlan(updatedPlan);
@@ -51,7 +51,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">
-            {editedPlan.name || 'Plano Alimentar'}
+            {editedPlan.title || 'Plano Alimentar'}
           </CardTitle>
           <div className="flex gap-2">
             {isEditing ? (
@@ -77,17 +77,17 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-gray-500" />
               <span className="text-sm">
-                {editedPlan.duration_days || 7} dias
+                {editedPlan.duration || 7} dias
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-gray-500" />
               <span className="text-sm">
-                {editedPlan.target_calories || 0} kcal/dia
+                {editedPlan.total_calories || 0} kcal/dia
               </span>
             </div>
             <Badge variant="outline">
-              {editedPlan.difficulty || 'Intermediário'}
+              {editedPlan.type || 'Personalizado'}
             </Badge>
           </div>
 
@@ -119,17 +119,17 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {meal.items?.map((item, itemIndex) => (
+                      {meal.foods?.map((item, itemIndex) => (
                         <div key={itemIndex} className="flex items-center gap-4 p-2 border rounded">
                           <div className="flex-1">
                             {isEditing ? (
                               <Input
-                                value={item.food_name}
-                                onChange={(e) => updateMealItem(mealIndex, itemIndex, 'food_name', e.target.value)}
+                                value={item.name}
+                                onChange={(e) => updateMealItem(mealIndex, itemIndex, 'name', e.target.value)}
                                 placeholder="Nome do alimento"
                               />
                             ) : (
-                              <span className="font-medium">{item.food_name}</span>
+                              <span className="font-medium">{item.name}</span>
                             )}
                           </div>
                           <div className="w-20">
@@ -168,7 +168,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({
                     <div>
                       <Label>Calorias Totais</Label>
                       <div className="text-2xl font-bold">
-                        {editedPlan.target_calories || 0} kcal
+                        {editedPlan.total_calories || 0} kcal
                       </div>
                     </div>
                     <div>
@@ -202,17 +202,17 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({
                 <CardContent>
                   {isEditing ? (
                     <Textarea
-                      value={editedPlan.description || ''}
+                      value={editedPlan.notes || ''}
                       onChange={(e) => setEditedPlan({
                         ...editedPlan,
-                        description: e.target.value
+                        notes: e.target.value
                       })}
                       placeholder="Adicione observações sobre o plano alimentar..."
                       rows={5}
                     />
                   ) : (
                     <p className="text-gray-600">
-                      {editedPlan.description || 'Nenhuma observação adicionada.'}
+                      {editedPlan.notes || 'Nenhuma observação adicionada.'}
                     </p>
                   )}
                 </CardContent>
