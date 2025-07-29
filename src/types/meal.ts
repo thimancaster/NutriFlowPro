@@ -20,6 +20,7 @@ export interface MealAssemblyFood {
   portion?: string;
   percentage?: number;
   selected?: boolean;
+  time?: string; // Add time property
 }
 
 export interface MealFood {

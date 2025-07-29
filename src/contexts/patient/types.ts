@@ -16,6 +16,7 @@ export interface PatientContextState {
     lastActivity: Date | null;
   };
   patientHistoryData: any[]; // New: Centralized history data
+  patientHistory: any[]; // Add missing property
 }
 
 export interface PatientContextActions {

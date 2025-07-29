@@ -44,8 +44,10 @@ export const useMealPlanState = ({
     consultationData
   );
 
-  // Use the meal plan actions hook
+  // Use the meal plan actions hook with proper props
   const {
+    generateMealPlan,
+    isGenerating,
     isSaving,
     handleSaveMealPlan
   } = useMealPlanActions({
@@ -60,6 +62,8 @@ export const useMealPlanState = ({
   return {
     mealDistribution,
     totalMealPercent: totalDistributionPercentage * 100,
+    generateMealPlan,
+    isGenerating,
     isSaving,
     handleMealPercentChange,
     handleSaveMealPlan,

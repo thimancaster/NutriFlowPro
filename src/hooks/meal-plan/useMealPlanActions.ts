@@ -1,15 +1,27 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { MealPlan, MealItem } from '@/types/meal';
+import { MealPlan, MealItem, MealDistributionItem } from '@/types/meal';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ConsultationData, Patient } from '@/types';
 
-export const useMealPlanActions = () => {
+interface UseMealPlanActionsProps {
+  activePatient: Patient | null;
+  consultationData: ConsultationData | null;
+  mealPlan: MealPlan | null;
+  setMealPlan: (mealPlan: MealPlan) => void;
+  mealDistribution: MealDistributionItem[];
+  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
+}
+
+export const useMealPlanActions = (props?: UseMealPlanActionsProps) => {
   const { toast } = useToast();
   const { activePatient } = usePatient();
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const generateMealPlan = useCallback(async (
     totalCalories: number,
@@ -38,7 +50,6 @@ export const useMealPlanActions = () => {
       ];
 
       const meals: MealItem[] = mealTypes.map((mealType, index) => ({
-        id: `meal-${index}`,
         name: mealType.name,
         time: mealType.time,
         percentage: mealType.percentage,
@@ -49,11 +60,7 @@ export const useMealPlanActions = () => {
         proteinPercent: 0.25, // 25% of calories from protein
         carbsPercent: 0.45,   // 45% of calories from carbs
         fatPercent: 0.30,     // 30% of calories from fat
-        foods: [],
-        totalCalories: Math.round(totalCalories * mealType.percentage),
-        totalProtein: Math.round(macros.protein * mealType.percentage),
-        totalCarbs: Math.round(macros.carbs * mealType.percentage),
-        totalFats: Math.round(macros.fat * mealType.percentage)
+        foods: []
       }));
 
       const mealPlan: MealPlan = {
@@ -107,8 +114,39 @@ export const useMealPlanActions = () => {
     }
   }, [activePatient, user, toast]);
 
+  const handleSaveMealPlan = useCallback(async () => {
+    if (!props?.consultationData || !props?.mealPlan || !props?.saveMealPlan) {
+      toast({
+        title: "Erro",
+        description: "Dados insuficientes para salvar o plano alimentar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await props.saveMealPlan(props.consultationData.id, props.mealPlan);
+      toast({
+        title: "Sucesso",
+        description: "Plano alimentar salvo com sucesso!",
+      });
+    } catch (error) {
+      console.error('Error saving meal plan:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar plano alimentar",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [props, toast]);
+
   return {
     generateMealPlan,
-    isGenerating
+    isGenerating,
+    isSaving,
+    handleSaveMealPlan
   };
 };
