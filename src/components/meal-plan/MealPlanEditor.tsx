@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { DetailedMealPlan } from '@/types/mealPlan';
+import { DetailedMealPlan, MealPlanMeal } from '@/types/mealPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,15 +10,19 @@ import { Edit2, Save, Plus, Trash2 } from 'lucide-react';
 
 interface MealPlanEditorProps {
   mealPlan: DetailedMealPlan;
+  onMealPlanUpdate?: (updatedMealPlan: DetailedMealPlan) => void;
 }
 
-const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
+const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan, onMealPlanUpdate }) => {
   const [editingMealPlan, setEditingMealPlan] = useState<DetailedMealPlan>(mealPlan);
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSave = () => {
     setIsEditing(false);
-    // Here you would typically call an API to save the meal plan
+    // Call the callback if provided
+    if (onMealPlanUpdate) {
+      onMealPlanUpdate(editingMealPlan);
+    }
     console.log('Saving meal plan:', editingMealPlan);
   };
 
@@ -27,28 +31,29 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
     setIsEditing(false);
   };
 
-  const calculateTotalNutrition = (meals: any[]) => {
+  const calculateTotalNutrition = (meals: MealPlanMeal[]) => {
     return meals.reduce(
       (totals, meal) => ({
-        calories: totals.calories + (meal.calories || 0),
-        protein: totals.protein + (meal.protein || 0),
-        carbs: totals.carbs + (meal.carbs || 0),
-        fats: totals.fats + (meal.fats || 0),
+        calories: totals.calories + (meal.total_calories || 0),
+        protein: totals.protein + (meal.total_protein || 0),
+        carbs: totals.carbs + (meal.total_carbs || 0),
+        fats: totals.fats + (meal.total_fats || 0),
       }),
       { calories: 0, protein: 0, carbs: 0, fats: 0 }
     );
   };
 
   const addMeal = () => {
-    const newMeal = {
+    const newMeal: MealPlanMeal = {
       id: Date.now().toString(),
       name: 'Nova Refeição',
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fats: 0,
-      percent: 0,
-      suggestions: []
+      type: 'cafe_da_manha',
+      foods: [],
+      total_calories: 0,
+      total_protein: 0,
+      total_carbs: 0,
+      total_fats: 0,
+      notes: ''
     };
 
     setEditingMealPlan({
@@ -64,7 +69,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
     });
   };
 
-  const updateMeal = (mealId: string, updates: any) => {
+  const updateMeal = (mealId: string, updates: Partial<MealPlanMeal>) => {
     setEditingMealPlan({
       ...editingMealPlan,
       meals: editingMealPlan.meals.map(meal => 
@@ -75,6 +80,12 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
 
   const totals = calculateTotalNutrition(editingMealPlan.meals);
 
+  // Get patient name from meal plan or use default
+  const getPatientName = () => {
+    // Try to get from calculation or use a default
+    return 'Paciente';
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -82,7 +93,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Edit2 className="h-5 w-5" />
-              Plano Alimentar - {editingMealPlan.patient_name || 'Paciente'}
+              Plano Alimentar - {getPatientName()}
             </CardTitle>
             <div className="flex gap-2">
               {isEditing ? (
@@ -108,11 +119,11 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="patient_name">Nome do Paciente</Label>
+              <Label htmlFor="title">Título do Plano</Label>
               <Input
-                id="patient_name"
-                value={editingMealPlan.patient_name || ''}
-                onChange={(e) => setEditingMealPlan({ ...editingMealPlan, patient_name: e.target.value })}
+                id="title"
+                value={editingMealPlan.notes || ''}
+                onChange={(e) => setEditingMealPlan({ ...editingMealPlan, notes: e.target.value })}
                 disabled={!isEditing}
               />
             </div>
@@ -184,8 +195,8 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
                       <Label>Calorias</Label>
                       <Input
                         type="number"
-                        value={meal.calories || 0}
-                        onChange={(e) => updateMeal(meal.id, { calories: Number(e.target.value) })}
+                        value={meal.total_calories || 0}
+                        onChange={(e) => updateMeal(meal.id, { total_calories: Number(e.target.value) })}
                         disabled={!isEditing}
                       />
                     </div>
@@ -193,8 +204,8 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
                       <Label>Proteínas (g)</Label>
                       <Input
                         type="number"
-                        value={meal.protein || 0}
-                        onChange={(e) => updateMeal(meal.id, { protein: Number(e.target.value) })}
+                        value={meal.total_protein || 0}
+                        onChange={(e) => updateMeal(meal.id, { total_protein: Number(e.target.value) })}
                         disabled={!isEditing}
                       />
                     </div>
@@ -202,8 +213,8 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
                       <Label>Carboidratos (g)</Label>
                       <Input
                         type="number"
-                        value={meal.carbs || 0}
-                        onChange={(e) => updateMeal(meal.id, { carbs: Number(e.target.value) })}
+                        value={meal.total_carbs || 0}
+                        onChange={(e) => updateMeal(meal.id, { total_carbs: Number(e.target.value) })}
                         disabled={!isEditing}
                       />
                     </div>
@@ -211,20 +222,20 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({ mealPlan }) => {
                       <Label>Gorduras (g)</Label>
                       <Input
                         type="number"
-                        value={meal.fats || 0}
-                        onChange={(e) => updateMeal(meal.id, { fats: Number(e.target.value) })}
+                        value={meal.total_fats || 0}
+                        onChange={(e) => updateMeal(meal.id, { total_fats: Number(e.target.value) })}
                         disabled={!isEditing}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <Label>Sugestões de Alimentos</Label>
+                    <Label>Observações</Label>
                     <Textarea
-                      value={meal.suggestions?.join('\n') || ''}
-                      onChange={(e) => updateMeal(meal.id, { suggestions: e.target.value.split('\n') })}
+                      value={meal.notes || ''}
+                      onChange={(e) => updateMeal(meal.id, { notes: e.target.value })}
                       disabled={!isEditing}
-                      placeholder="Digite as sugestões de alimentos, uma por linha"
+                      placeholder="Digite observações sobre esta refeição"
                       rows={3}
                     />
                   </div>

@@ -66,6 +66,7 @@ const ConsultationDataContext = createContext<{
   consultationData: ConsultationData | null;
   isConsultationActive: boolean;
   patientHistoryData: any;
+  isLoading: boolean;
   // Actions
   setActivePatient: (patient: Patient | null) => void;
   setSelectedPatient: (patient: Patient | null) => void;
@@ -75,6 +76,7 @@ const ConsultationDataContext = createContext<{
   saveConsultationData: () => Promise<void>;
   autoSave: () => Promise<void>;
   loadPatientHistory: (patientId: string) => Promise<void>;
+  startNewConsultation: (patient: Patient) => Promise<void>;
   reset: () => void;
 } | undefined>(undefined);
 
@@ -146,6 +148,50 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     console.log('Loading patient history for:', patientId);
   }, []);
 
+  const startNewConsultation = useCallback(async (patient: Patient) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_PATIENT', payload: patient });
+      
+      // Create new consultation data structure
+      const newConsultation: ConsultationData = {
+        id: `consultation-${Date.now()}`,
+        patient_id: patient.id,
+        weight: 0,
+        height: 0,
+        bmr: 0,
+        protein: 0,
+        carbs: 0,
+        fats: 0,
+        totalCalories: 0,
+        gender: 'M',
+        activity_level: 'moderado',
+        patient: {
+          id: patient.id,
+          name: patient.name,
+        },
+        results: {
+          bmr: 0,
+          get: 0,
+          vet: 0,
+          adjustment: 0,
+          macros: {
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+          },
+        },
+      };
+      
+      dispatch({ type: 'SET_CONSULTATION_DATA', payload: newConsultation });
+      dispatch({ type: 'SET_CURRENT_STEP', payload: 'patient-info' });
+    } catch (error: any) {
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, []);
+
   const reset = useCallback(() => {
     dispatch({ type: 'RESET' });
   }, []);
@@ -157,6 +203,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     consultationData: state.consultationData,
     isConsultationActive: !!state.activePatient && !!state.consultationData,
     patientHistoryData: null, // Mock data for now
+    isLoading: state.isLoading,
     // Actions
     setActivePatient,
     setSelectedPatient: setActivePatient, // Alias for backward compatibility
@@ -166,6 +213,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     saveConsultationData,
     autoSave,
     loadPatientHistory,
+    startNewConsultation,
     reset,
   };
 

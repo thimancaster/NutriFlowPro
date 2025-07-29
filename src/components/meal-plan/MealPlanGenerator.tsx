@@ -106,7 +106,7 @@ const MealPlanGenerator: React.FC = () => {
                   <div key={index} className="mb-2 p-2 bg-white rounded border">
                     <div className="font-medium">{meal.name}</div>
                     <div className="text-xs text-gray-600">
-                      {meal.calories} kcal | P: {meal.protein}g | C: {meal.carbs}g | G: {meal.fats}g
+                      {meal.total_calories} kcal | P: {meal.total_protein}g | C: {meal.total_carbs}g | G: {meal.total_fats}g
                     </div>
                   </div>
                 ))}
