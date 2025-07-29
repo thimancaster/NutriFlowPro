@@ -1,504 +1,315 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { saveMeasurement } from '@/services/anthropometryService';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, Save, SkipForward, Activity } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Calculator, TrendingUp, History } from 'lucide-react';
+import { PatientHistoryData } from '@/types/meal';
 
-const AnthropometryStep: React.FC = () => {
+interface AnthropometryStepProps {
+  onCalculationsComplete?: () => void;
+}
+
+const AnthropometryStep: React.FC<AnthropometryStepProps> = ({ onCalculationsComplete }) => {
   const { 
-    selectedPatient, 
-    patientHistoryData,
-    setCurrentStep,
-    updateConsultationData
+    consultationData, 
+    updateConsultationData, 
+    patientHistoryData 
   } = useConsultationData();
   
-  const { user } = useAuth();
   const { toast } = useToast();
   
-  const [measurements, setMeasurements] = useState({
+  const [formData, setFormData] = useState({
     weight: '',
     height: '',
-    waist: '',
-    hip: '',
-    arm: '',
-    thigh: '',
-    calf: '',
-    chest: '',
-    // Dobras cutâneas
-    triceps: '',
-    subscapular: '',
-    suprailiac: '',
-    abdominal: '',
-    // Bioimpedância
-    body_fat_pct: '',
-    lean_mass_kg: '',
-    muscle_mass_percentage: '',
-    water_percentage: ''
+    bodyFat: '',
+    goal: 'manutenção',
+    activityLevel: 'moderado'
   });
-  
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  
-  // Pré-preenchimento com dados históricos
+
+  const [results, setResults] = useState<any>(null);
+
   useEffect(() => {
-    if (patientHistoryData?.lastMeasurement) {
-      const lastMeasurement = patientHistoryData.lastMeasurement;
-      setMeasurements(prev => ({
-        ...prev,
-        weight: lastMeasurement.weight?.toString() || '',
-        height: lastMeasurement.height?.toString() || '',
-        waist: lastMeasurement.waist?.toString() || '',
-        hip: lastMeasurement.hip?.toString() || '',
-        arm: lastMeasurement.arm?.toString() || '',
-        thigh: lastMeasurement.thigh?.toString() || '',
-        calf: lastMeasurement.calf?.toString() || '',
-        chest: lastMeasurement.chest?.toString() || '',
-        triceps: lastMeasurement.triceps?.toString() || '',
-        subscapular: lastMeasurement.subscapular?.toString() || '',
-        suprailiac: lastMeasurement.suprailiac?.toString() || '',
-        abdominal: lastMeasurement.abdominal?.toString() || '',
-        body_fat_pct: lastMeasurement.body_fat_pct?.toString() || '',
-        lean_mass_kg: lastMeasurement.lean_mass_kg?.toString() || '',
-        muscle_mass_percentage: lastMeasurement.muscle_mass_percentage?.toString() || '',
-        water_percentage: lastMeasurement.water_percentage?.toString() || ''
-      }));
+    if (consultationData) {
+      setFormData({
+        weight: consultationData.weight?.toString() || '',
+        height: consultationData.height?.toString() || '',
+        bodyFat: '',
+        goal: consultationData.objective || 'manutenção',
+        activityLevel: consultationData.activity_level || 'moderado'
+      });
     }
-  }, [patientHistoryData?.lastMeasurement]);
-  
+  }, [consultationData]);
+
+  // Get last measurement safely
+  const lastMeasurement = patientHistoryData?.lastMeasurement;
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setMeasurements(prev => ({ ...prev, [name]: value }));
-    setHasChanges(true);
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
-  const calculateIMC = () => {
-    const weight = parseFloat(measurements.weight);
-    const height = parseFloat(measurements.height);
-    if (weight && height) {
-      return (weight / Math.pow(height / 100, 2)).toFixed(2);
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const calculateBMR = (weight: number, height: number, age: number, gender: string) => {
+    if (gender === 'male') {
+      return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+    } else {
+      return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
     }
-    return '';
   };
-  
-  const calculateRCQ = () => {
-    const waist = parseFloat(measurements.waist);
-    const hip = parseFloat(measurements.hip);
-    if (waist && hip) {
-      return (waist / hip).toFixed(2);
-    }
-    return '';
+
+  const getActivityMultiplier = (level: string) => {
+    const multipliers: Record<string, number> = {
+      'sedentario': 1.2,
+      'leve': 1.375,
+      'moderado': 1.55,
+      'intenso': 1.725,
+      'muito_intenso': 1.9
+    };
+    return multipliers[level] || 1.55;
   };
-  
-  const handleSaveMeasurements = async () => {
-    if (!selectedPatient || !user) {
+
+  const getGoalAdjustment = (goal: string) => {
+    const adjustments: Record<string, number> = {
+      'emagrecimento': -300,
+      'manutenção': 0,
+      'hipertrofia': 300
+    };
+    return adjustments[goal] || 0;
+  };
+
+  const handleCalculate = () => {
+    if (!consultationData) return;
+
+    const weight = parseFloat(formData.weight);
+    const height = parseFloat(formData.height);
+    const age = consultationData.age || 0;
+    const gender = consultationData.gender || 'male';
+
+    if (!weight || !height || !age) {
       toast({
-        title: "Erro",
-        description: "Paciente ou usuário não encontrado.",
+        title: "Dados incompletos",
+        description: "Preencha peso, altura e idade.",
         variant: "destructive"
       });
       return;
     }
-    
-    setIsSaving(true);
-    
-    try {
-      // Preparar dados de medição apenas com campos preenchidos
-      const measurementData: any = {
-        patient_id: selectedPatient.id,
-        date: new Date().toISOString(),
-      };
-      
-      // Adicionar apenas campos com valores
-      Object.entries(measurements).forEach(([key, value]) => {
-        if (value && value.trim() !== '') {
-          const numValue = parseFloat(value);
-          if (!isNaN(numValue)) {
-            measurementData[key] = numValue;
-          }
-        }
-      });
-      
-      // Calcular métricas se dados básicos estiverem disponíveis
-      if (measurementData.weight && measurementData.height) {
-        measurementData.imc = parseFloat(calculateIMC());
-        
-        // Atualizar dados da consulta com peso e altura
-        updateConsultationData({
-          weight: measurementData.weight,
-          height: measurementData.height
-        });
+
+    const bmr = calculateBMR(weight, height, age, gender);
+    const activityMultiplier = getActivityMultiplier(formData.activityLevel);
+    const tdee = bmr * activityMultiplier;
+    const adjustment = getGoalAdjustment(formData.goal);
+    const finalCalories = tdee + adjustment;
+
+    // Calculate macros (example distribution)
+    const protein = (finalCalories * 0.25) / 4; // 25% protein
+    const carbs = (finalCalories * 0.45) / 4; // 45% carbs  
+    const fat = (finalCalories * 0.30) / 9; // 30% fat
+
+    const calculationResults = {
+      bmr: Math.round(bmr),
+      get: Math.round(tdee),
+      vet: Math.round(finalCalories),
+      adjustment,
+      macros: {
+        protein: Math.round(protein),
+        carbs: Math.round(carbs),
+        fat: Math.round(fat)
       }
-      
-      if (measurementData.waist && measurementData.hip) {
-        measurementData.rcq = parseFloat(calculateRCQ());
-      }
-      
-      // Salvar apenas se houver dados relevantes
-      if (Object.keys(measurementData).length > 2) {
-        const result = await saveMeasurement(measurementData, user.id);
-        
-        if (result.success) {
-          toast({
-            title: "Sucesso",
-            description: "Medições antropométricas salvas com sucesso.",
-          });
-          setHasChanges(false);
-        } else {
-          throw new Error(result.error || 'Failed to save measurements');
-        }
-      }
-    } catch (error) {
-      console.error('Error saving measurements:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar as medições.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    };
+
+    setResults(calculationResults);
+
+    // Update consultation data
+    updateConsultationData({
+      weight,
+      height,
+      bmr: calculationResults.bmr,
+      protein: calculationResults.macros.protein,
+      carbs: calculationResults.macros.carbs,
+      fats: calculationResults.macros.fat,
+      totalCalories: calculationResults.vet,
+      results: calculationResults,
+      goal: formData.goal,
+      activity_level: formData.activityLevel
+    });
+
+    toast({
+      title: "Cálculos realizados",
+      description: "Valores nutricionais calculados com sucesso!",
+    });
+
+    onCalculationsComplete?.();
   };
-  
-  const handleContinue = async () => {
-    if (hasChanges) {
-      await handleSaveMeasurements();
-    }
-    setCurrentStep('nutritional-evaluation');
-  };
-  
-  const handleSkip = () => {
-    setCurrentStep('nutritional-evaluation');
-  };
-  
-  const handleBack = () => {
-    setCurrentStep('patient-info');
-  };
-  
-  if (!selectedPatient) return null;
-  
-  const hasHistoricalData = patientHistoryData?.anthropometryHistory && patientHistoryData.anthropometryHistory.length > 0;
-  const lastMeasurementDate = patientHistoryData?.lastMeasurement?.date 
-    ? new Date(patientHistoryData.lastMeasurement.date).toLocaleDateString('pt-BR')
-    : null;
-  
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Antropometria
-              <Badge variant="secondary" className="text-xs">Opcional</Badge>
-            </CardTitle>
-            <CardDescription>
-              {hasHistoricalData 
-                ? `Dados pré-preenchidos com última medição (${lastMeasurementDate}). Atualize conforme necessário.`
-                : "Registre as medidas antropométricas do paciente (opcional)."
-              }
-            </CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Calculator className="h-5 w-5 text-nutri-green" />
+          Avaliação Antropométrica
+        </CardTitle>
+        
+        {lastMeasurement && (
+          <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-1 text-sm text-blue-700 mb-1">
+              <History className="h-4 w-4" />
+              Última medição ({new Date(lastMeasurement.date).toLocaleDateString('pt-BR')})
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>Peso: {lastMeasurement.weight}kg</div>
+              <div>Altura: {lastMeasurement.height}cm</div>
+            </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleSkip}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <SkipForward className="mr-2 h-4 w-4" />
-            Pular Etapa
-          </Button>
-        </div>
+        )}
       </CardHeader>
       
-      <CardContent className="space-y-6">
-        {/* Medidas Básicas */}
-        <div>
-          <h3 className="text-lg font-medium mb-3">Medidas Básicas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="weight">Peso (kg)</Label>
-              <Input
-                id="weight"
-                name="weight"
-                type="number"
-                step="0.1"
-                value={measurements.weight}
-                onChange={handleInputChange}
-                placeholder="Ex: 70.5"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="height">Altura (cm)</Label>
-              <Input
-                id="height"
-                name="height"
-                type="number"
-                step="0.1"
-                value={measurements.height}
-                onChange={handleInputChange}
-                placeholder="Ex: 170"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>IMC</Label>
-              <div className="flex items-center h-10 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-                <span className="text-sm text-muted-foreground">{calculateIMC() || '--'}</span>
-              </div>
-            </div>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="weight">Peso atual (kg)</Label>
+            <Input
+              id="weight"
+              name="weight"
+              type="number"
+              step="0.1"
+              value={formData.weight}
+              onChange={handleInputChange}
+              placeholder="Ex: 70.5"
+            />
           </div>
-        </div>
-        
-        {/* Circunferências */}
-        <div>
-          <h3 className="text-lg font-medium mb-3">Circunferências (cm)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="waist">Cintura</Label>
-              <Input
-                id="waist"
-                name="waist"
-                type="number"
-                step="0.1"
-                value={measurements.waist}
-                onChange={handleInputChange}
-                placeholder="Ex: 80"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="hip">Quadril</Label>
-              <Input
-                id="hip"
-                name="hip"
-                type="number"
-                step="0.1"
-                value={measurements.hip}
-                onChange={handleInputChange}
-                placeholder="Ex: 95"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="arm">Braço</Label>
-              <Input
-                id="arm"
-                name="arm"
-                type="number"
-                step="0.1"
-                value={measurements.arm}
-                onChange={handleInputChange}
-                placeholder="Ex: 25"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>RCQ</Label>
-              <div className="flex items-center h-10 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-                <span className="text-sm text-muted-foreground">{calculateRCQ() || '--'}</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="thigh">Coxa</Label>
-              <Input
-                id="thigh"
-                name="thigh"
-                type="number"
-                step="0.1"
-                value={measurements.thigh}
-                onChange={handleInputChange}
-                placeholder="Ex: 45"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="calf">Panturrilha</Label>
-              <Input
-                id="calf"
-                name="calf"
-                type="number"
-                step="0.1"
-                value={measurements.calf}
-                onChange={handleInputChange}
-                placeholder="Ex: 35"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="chest">Tórax</Label>
-              <Input
-                id="chest"
-                name="chest"
-                type="number"
-                step="0.1"
-                value={measurements.chest}
-                onChange={handleInputChange}
-                placeholder="Ex: 90"
-              />
-            </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="height">Altura (cm)</Label>
+            <Input
+              id="height"
+              name="height"
+              type="number"
+              step="0.1"
+              value={formData.height}
+              onChange={handleInputChange}
+              placeholder="Ex: 170"
+            />
           </div>
-        </div>
-        
-        {/* Dobras Cutâneas */}
-        <div>
-          <h3 className="text-lg font-medium mb-3">Dobras Cutâneas (mm)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="triceps">Tríceps</Label>
-              <Input
-                id="triceps"
-                name="triceps"
-                type="number"
-                step="0.1"
-                value={measurements.triceps}
-                onChange={handleInputChange}
-                placeholder="Ex: 15"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="subscapular">Subescapular</Label>
-              <Input
-                id="subscapular"
-                name="subscapular"
-                type="number"
-                step="0.1"
-                value={measurements.subscapular}
-                onChange={handleInputChange}
-                placeholder="Ex: 12"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="suprailiac">Supra-ilíaca</Label>
-              <Input
-                id="suprailiac"
-                name="suprailiac"
-                type="number"
-                step="0.1"
-                value={measurements.suprailiac}
-                onChange={handleInputChange}
-                placeholder="Ex: 18"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="abdominal">Abdominal</Label>
-              <Input
-                id="abdominal"
-                name="abdominal"
-                type="number"
-                step="0.1"
-                value={measurements.abdominal}
-                onChange={handleInputChange}
-                placeholder="Ex: 20"
-              />
-            </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="bodyFat">% Gordura Corporal (opcional)</Label>
+            <Input
+              id="bodyFat"
+              name="bodyFat"
+              type="number"
+              step="0.1"
+              value={formData.bodyFat}
+              onChange={handleInputChange}
+              placeholder="Ex: 15"
+            />
           </div>
-        </div>
-        
-        {/* Bioimpedância */}
-        <div>
-          <h3 className="text-lg font-medium mb-3">Bioimpedância</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="body_fat_pct">% Gordura</Label>
-              <Input
-                id="body_fat_pct"
-                name="body_fat_pct"
-                type="number"
-                step="0.1"
-                value={measurements.body_fat_pct}
-                onChange={handleInputChange}
-                placeholder="Ex: 15.5"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="lean_mass_kg">Massa Magra (kg)</Label>
-              <Input
-                id="lean_mass_kg"
-                name="lean_mass_kg"
-                type="number"
-                step="0.1"
-                value={measurements.lean_mass_kg}
-                onChange={handleInputChange}
-                placeholder="Ex: 55.2"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="muscle_mass_percentage">% Músculo</Label>
-              <Input
-                id="muscle_mass_percentage"
-                name="muscle_mass_percentage"
-                type="number"
-                step="0.1"
-                value={measurements.muscle_mass_percentage}
-                onChange={handleInputChange}
-                placeholder="Ex: 42.5"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="water_percentage">% Água</Label>
-              <Input
-                id="water_percentage"
-                name="water_percentage"
-                type="number"
-                step="0.1"
-                value={measurements.water_percentage}
-                onChange={handleInputChange}
-                placeholder="Ex: 60.0"
-              />
-            </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="goal">Objetivo</Label>
+            <Select 
+              value={formData.goal} 
+              onValueChange={(value) => handleSelectChange('goal', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                <SelectItem value="manutenção">Manutenção</SelectItem>
+                <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="activityLevel">Nível de Atividade Física</Label>
+            <Select 
+              value={formData.activityLevel} 
+              onValueChange={(value) => handleSelectChange('activityLevel', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sedentario">Sedentário</SelectItem>
+                <SelectItem value="leve">Leve</SelectItem>
+                <SelectItem value="moderado">Moderado</SelectItem>
+                <SelectItem value="intenso">Intenso</SelectItem>
+                <SelectItem value="muito_intenso">Muito Intenso</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {hasChanges && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-amber-800">
-              <Activity className="h-4 w-4" />
-              <span className="text-sm font-medium">Alterações não salvas</span>
+        {results && (
+          <div className="mt-6 p-4 bg-nutri-light rounded-lg">
+            <h3 className="font-semibold text-nutri-green mb-3">Resultados dos Cálculos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div className="text-sm text-gray-600">TMB (Metabolismo Basal)</div>
+                <div className="text-lg font-semibold">{results.bmr} kcal</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">GET (Gasto Energético Total)</div>
+                <div className="text-lg font-semibold">{results.get} kcal</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">VET (Valor Energético Total)</div>
+                <div className="text-lg font-semibold text-nutri-green">{results.vet} kcal</div>
+              </div>
             </div>
-            <p className="text-sm text-amber-700 mt-1">
-              Você fez alterações nas medições. Clique em "Salvar" para preservar os dados.
-            </p>
+            
+            <div className="mt-4">
+              <div className="text-sm text-gray-600 mb-2">Distribuição de Macronutrientes</div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{results.macros.protein}g</div>
+                  <div className="text-xs text-gray-500">Proteína</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{results.macros.carbs}g</div>
+                  <div className="text-xs text-gray-500">Carboidrato</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{results.macros.fat}g</div>
+                  <div className="text-xs text-gray-500">Gordura</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {patientHistoryData?.anthropometryHistory && patientHistoryData.anthropometryHistory.length > 0 && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 className="font-medium text-gray-800 mb-2">Histórico Antropométrico</h4>
+            <div className="space-y-2">
+              {patientHistoryData.anthropometryHistory.slice(0, 3).map((record, index) => (
+                <div key={index} className="flex justify-between items-center text-sm">
+                  <span>{new Date(record.date).toLocaleDateString('pt-BR')}</span>
+                  <span>{record.weight}kg | {record.height}cm | IMC: {record.bmi.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
+      <CardFooter>
+        <Button 
+          onClick={handleCalculate}
+          className="bg-nutri-green hover:bg-nutri-green-dark w-full"
+        >
+          <Calculator className="mr-2 h-4 w-4" />
+          Calcular Valores Nutricionais
         </Button>
-        
-        <div className="flex gap-2">
-          {hasChanges && (
-            <Button 
-              variant="outline" 
-              onClick={handleSaveMeasurements}
-              disabled={isSaving}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? 'Salvando...' : 'Salvar'}
-            </Button>
-          )}
-          
-          <Button onClick={handleContinue} disabled={isSaving}>
-            Continuar
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
       </CardFooter>
     </Card>
   );

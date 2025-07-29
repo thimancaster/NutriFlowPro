@@ -35,7 +35,6 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
 
   async function saveConsultation(data: any) {
     try {
-      // Transform data to match Supabase schema
       const saveData = {
         id: data.id,
         user_id: data.user_id,
@@ -43,10 +42,11 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
         age: data.age || 0,
         weight: data.weight || 0,
         height: data.height || 0,
-        gender: data.gender || 'M',
+        gender: data.gender || 'male',
         activity_level: data.activity_level || 'moderado',
         goal: data.objective || data.goal || 'manutenção',
         bmr: data.bmr || 0,
+        tdee: data.results?.vet || data.bmr || 0,
         protein: data.protein || 0,
         carbs: data.carbs || 0,
         fats: data.fats || 0
@@ -80,7 +80,7 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
           patient_id: mealPlan.patient_id,
           calculation_id: consultationId,
           date: format(new Date(), 'yyyy-MM-dd'),
-          meals: mealPlan.meals as any, // Cast to Json type
+          meals: mealPlan.meals as any,
           total_calories: mealPlan.total_calories,
           total_protein: mealPlan.total_protein,
           total_carbs: mealPlan.total_carbs,

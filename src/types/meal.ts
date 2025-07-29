@@ -10,6 +10,29 @@ export interface MealDistributionItem {
   suggestions: string[];
 }
 
+export interface MealAssemblyFood {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  portion?: string;
+  percentage?: number;
+  selected?: boolean;
+}
+
+export interface MealFood {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
 export interface MealItem {
   mealNumber?: number;
   name: string;
@@ -50,6 +73,21 @@ export interface Meal {
   protein: number;
   carbs: number;
   fat: number;
-  foods: any[];
+  foods: MealFood[];
   [key: string]: any;
+}
+
+// Patient history interface for proper typing
+export interface PatientHistoryData {
+  lastMeasurement?: {
+    date: string;
+    weight: number;
+    height: number;
+  };
+  anthropometryHistory?: Array<{
+    date: string;
+    weight: number;
+    height: number;
+    bmi: number;
+  }>;
 }

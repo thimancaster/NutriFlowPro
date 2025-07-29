@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { ConsultationData, Patient } from '@/types';
+import { PatientHistoryData } from '@/types/meal';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -12,14 +13,6 @@ interface ConsultationDataState {
   currentStep: string;
   isSaving: boolean;
   lastSaved: Date | null;
-}
-
-interface ConsultationDataActions {
-  setCurrentStep: (step: string) => void;
-  updateConsultationData: (data: Partial<ConsultationData>) => void;
-  completeConsultation: () => Promise<void>;
-  autoSave: () => Promise<void>;
-  reset: () => void;
 }
 
 interface ConsultationDataContextType {
@@ -36,10 +29,10 @@ interface ConsultationDataContextType {
   reset: () => void;
   isLoading: boolean;
   startNewConsultation: (patient: Patient) => Promise<void>;
-  // Legacy compatibility - use PatientContext instead
+  // Legacy compatibility
   selectedPatient: Patient | null;
   setSelectedPatient: (patient: Patient | null) => void;
-  patientHistoryData: any[];
+  patientHistoryData: PatientHistoryData;
   setConsultationData: (data: ConsultationData | null) => void;
 }
 
@@ -49,12 +42,11 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Use PatientContext as single source of truth for patient data
   const { 
     activePatient,
     setActivePatient, 
     startPatientSession,
-    patientHistoryData,
+    patientHistory,
     isLoading: patientLoading 
   } = usePatient();
   
@@ -65,13 +57,27 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
 
   const isConsultationActive = activePatient !== null && consultationData !== null;
 
-  // Auto-save functionality
+  // Transform patient history for backward compatibility
+  const patientHistoryData: PatientHistoryData = {
+    lastMeasurement: patientHistory.length > 0 ? {
+      date: patientHistory[0].created_at || new Date().toISOString(),
+      weight: patientHistory[0].weight || 0,
+      height: patientHistory[0].height || 0,
+    } : undefined,
+    anthropometryHistory: patientHistory.map(record => ({
+      date: record.created_at || new Date().toISOString(),
+      weight: record.weight || 0,
+      height: record.height || 0,
+      bmi: record.weight && record.height ? record.weight / Math.pow(record.height / 100, 2) : 0
+    }))
+  };
+
   const autoSave = useCallback(async () => {
     if (!consultationData || !activePatient || !user?.id) return;
     
     setIsSaving(true);
     try {
-      // Transform data to match Supabase schema
+      // Transform data to match Supabase schema exactly
       const saveData = {
         id: consultationData.id,
         user_id: user.id,
@@ -79,10 +85,11 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
         age: consultationData.age || activePatient.age || 0,
         weight: consultationData.weight || 0,
         height: consultationData.height || 0,
-        gender: consultationData.gender || 'M',
+        gender: consultationData.gender || 'male',
         activity_level: consultationData.activity_level || 'moderado',
-        goal: consultationData.objective || 'manutenção',
+        goal: consultationData.objective || consultationData.goal || 'manutenção',
         bmr: consultationData.bmr || 0,
+        tdee: consultationData.results?.vet || consultationData.bmr || 0,
         protein: consultationData.protein || 0,
         carbs: consultationData.carbs || 0,
         fats: consultationData.fats || 0,
@@ -109,10 +116,8 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
   }, []);
 
   const startNewConsultation = useCallback(async (patient: Patient) => {
-    // Use PatientContext to set the active patient
     startPatientSession(patient);
     
-    // Initialize consultation data
     const newConsultation: ConsultationData = {
       id: crypto.randomUUID(),
       patient_id: patient.id,
@@ -123,7 +128,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
       carbs: 0,
       fats: 0,
       totalCalories: 0,
-      gender: 'M',
+      gender: 'male',
       activity_level: 'moderado',
       patient: {
         name: patient.name,
@@ -156,7 +161,6 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
         description: 'Dados salvos com sucesso!'
       });
       
-      // Reset consultation but keep patient active
       setConsultationData(null);
       setCurrentStep('patient-selection');
     } catch (error) {
@@ -174,7 +178,6 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     setLastSaved(null);
   }, []);
 
-  // Auto-save every 30 seconds when there's consultation data
   useEffect(() => {
     if (!isConsultationActive) return;
     
@@ -205,7 +208,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     reset,
     isLoading: patientLoading,
     startNewConsultation,
-    // Legacy compatibility - delegate to PatientContext
+    // Legacy compatibility
     selectedPatient: activePatient,
     setSelectedPatient: setActivePatient,
     patientHistoryData,

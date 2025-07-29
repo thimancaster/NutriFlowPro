@@ -1,78 +1,114 @@
+import { useState, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { MealPlan, MealItem } from '@/types/meal';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
-import { useState } from 'react';
-import { Patient, ConsultationData } from '@/types';
-import { MealPlan, MealDistributionItem } from '@/types/meal';
+export const useMealPlanActions = () => {
+  const { toast } = useToast();
+  const { activePatient } = usePatient();
+  const { user } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
 
-interface UseMealPlanActionsProps {
-  activePatient: Patient | null;
-  consultationData: ConsultationData | null;
-  mealPlan: MealPlan | null;
-  setMealPlan: (mealPlan: MealPlan) => void;
-  mealDistribution: Record<string, MealDistributionItem>;
-  saveMealPlan: (consultationId: string, mealPlan: MealPlan) => Promise<any>;
-}
-
-export const useMealPlanActions = ({
-  activePatient,
-  consultationData,
-  mealPlan,
-  setMealPlan,
-  mealDistribution,
-  saveMealPlan
-}: UseMealPlanActionsProps) => {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSaveMealPlan = async () => {
-    if (!activePatient || !consultationData) {
-      console.error('Missing patient or consultation data');
-      return;
+  const generateMealPlan = useCallback(async (
+    totalCalories: number,
+    macros: { protein: number; carbs: number; fat: number }
+  ) => {
+    if (!activePatient || !user) {
+      toast({
+        title: "Erro",
+        description: "Paciente ou usuário não encontrado",
+        variant: "destructive"
+      });
+      return null;
     }
 
-    setIsSaving(true);
+    setIsGenerating(true);
     
     try {
-      // Convert meal distribution to meals array
-      const meals = Object.values(mealDistribution).map(meal => ({
-        id: meal.id,
-        name: meal.name,
-        time: '', // Will be filled later
-        percentage: meal.percent,
-        calories: meal.calories,
-        protein: meal.protein,
-        carbs: meal.carbs,
-        fat: meal.fat,
+      // Generate meal plan structure
+      const mealTypes = [
+        { name: 'Café da manhã', time: '07:00', percentage: 0.25 },
+        { name: 'Lanche da manhã', time: '10:00', percentage: 0.10 },
+        { name: 'Almoço', time: '12:00', percentage: 0.30 },
+        { name: 'Lanche da tarde', time: '15:00', percentage: 0.10 },
+        { name: 'Jantar', time: '19:00', percentage: 0.20 },
+        { name: 'Ceia', time: '22:00', percentage: 0.05 }
+      ];
+
+      const meals: MealItem[] = mealTypes.map((mealType, index) => ({
+        id: `meal-${index}`,
+        name: mealType.name,
+        time: mealType.time,
+        percentage: mealType.percentage,
+        calories: Math.round(totalCalories * mealType.percentage),
+        protein: Math.round(macros.protein * mealType.percentage),
+        carbs: Math.round(macros.carbs * mealType.percentage),
+        fat: Math.round(macros.fat * mealType.percentage),
+        proteinPercent: 0.25, // 25% of calories from protein
+        carbsPercent: 0.45,   // 45% of calories from carbs
+        fatPercent: 0.30,     // 30% of calories from fat
         foods: [],
-        totalCalories: meal.calories,
-        totalProtein: meal.protein,
-        totalCarbs: meal.carbs,
-        totalFats: meal.fat
+        totalCalories: Math.round(totalCalories * mealType.percentage),
+        totalProtein: Math.round(macros.protein * mealType.percentage),
+        totalCarbs: Math.round(macros.carbs * mealType.percentage),
+        totalFats: Math.round(macros.fat * mealType.percentage)
       }));
 
-      const newMealPlan: MealPlan = {
+      const mealPlan: MealPlan = {
+        id: crypto.randomUUID(),
+        title: `Plano Alimentar - ${activePatient.name}`,
         patient_id: activePatient.id,
-        date: new Date().toISOString().split('T')[0],
+        user_id: user.id,
+        date: new Date().toISOString(),
+        total_calories: totalCalories,
+        total_protein: macros.protein,
+        total_carbs: macros.carbs,
+        total_fats: macros.fat,
         meals,
-        total_calories: consultationData.totalCalories,
-        total_protein: consultationData.protein,
-        total_carbs: consultationData.carbs,
-        total_fats: consultationData.fats
+        notes: ''
       };
 
-      setMealPlan(newMealPlan);
-      
-      // Save to backend if there's a consultation ID
-      if (consultationData.id) {
-        await saveMealPlan(consultationData.id, newMealPlan);
-      }
+      // Save to database
+      const { error } = await supabase
+        .from('meal_plans')
+        .insert({
+          id: mealPlan.id,
+          user_id: mealPlan.user_id,
+          patient_id: mealPlan.patient_id,
+          date: new Date().toISOString().split('T')[0],
+          meals: mealPlan.meals as any,
+          total_calories: mealPlan.total_calories,
+          total_protein: mealPlan.total_protein,
+          total_carbs: mealPlan.total_carbs,
+          total_fats: mealPlan.total_fats,
+          notes: mealPlan.notes || ''
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Plano alimentar gerado",
+        description: "Plano alimentar criado com sucesso!",
+      });
+
+      return mealPlan;
     } catch (error) {
-      console.error('Error saving meal plan:', error);
+      console.error('Error generating meal plan:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao gerar plano alimentar",
+        variant: "destructive"
+      });
+      return null;
     } finally {
-      setIsSaving(false);
+      setIsGenerating(false);
     }
-  };
+  }, [activePatient, user, toast]);
 
   return {
-    isSaving,
-    handleSaveMealPlan
+    generateMealPlan,
+    isGenerating
   };
 };

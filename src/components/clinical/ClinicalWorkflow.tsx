@@ -18,8 +18,7 @@ const ClinicalWorkflow: React.FC = () => {
     consultationData,
     currentStep,
     setCurrentStep,
-    isConsultationActive,
-    startNewConsultation
+    isConsultationActive
   } = useConsultationData();
   
   const { activePatient } = usePatient();
@@ -58,7 +57,6 @@ const ClinicalWorkflow: React.FC = () => {
     }
   ];
 
-  // Update completed steps based on current progress
   useEffect(() => {
     const newCompletedSteps: ClinicalWorkflowStep[] = [];
     
@@ -78,7 +76,6 @@ const ClinicalWorkflow: React.FC = () => {
   }, [activePatient, consultationData]);
 
   const handleStepClick = (stepId: ClinicalWorkflowStep) => {
-    // Only allow navigation to accessible steps
     if (stepId === 'patient-selection') {
       setCurrentStep(stepId);
     } else if (stepId === 'patient-info' && activePatient) {
@@ -99,7 +96,7 @@ const ClinicalWorkflow: React.FC = () => {
   };
 
   const renderStepContent = () => {
-    switch (currentStep as ClinicalWorkflowStep) {
+    switch (currentStep) {
       case 'patient-selection':
         return <PatientSelectionStep onPatientSelected={handleNextStep} />;
       case 'patient-info':

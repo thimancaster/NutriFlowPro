@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, History, TrendingUp } from 'lucide-react';
 import usePatientDataLoader from '@/hooks/usePatientDataLoader';
 
-const PatientInfoStep: React.FC = () => {
+interface PatientInfoStepProps {
+  onInfoConfirmed?: () => void;
+}
+
+const PatientInfoStep: React.FC<PatientInfoStepProps> = ({ onInfoConfirmed }) => {
   const { 
     selectedPatient, 
     consultationData, 
@@ -51,13 +54,6 @@ const PatientInfoStep: React.FC = () => {
         activityLevel: consultationData?.activity_level || prefilledData.activity_level || 'moderado',
         objective: consultationData?.objective || prefilledData.objective || 'manutenção'
       });
-      
-      console.log('Form pre-filled with:', {
-        fromConsultation: !!consultationData,
-        fromHistory: hasHistoricalData,
-        isFirstConsultation,
-        prefilledData
-      });
     }
   }, [selectedPatient, consultationData, dataLoading, getFormPrefilledData, hasHistoricalData, isFirstConsultation]);
   
@@ -73,7 +69,6 @@ const PatientInfoStep: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!formData.weight || !formData.height || !formData.age) {
       toast({
         title: "Campos obrigatórios",
@@ -83,7 +78,6 @@ const PatientInfoStep: React.FC = () => {
       return;
     }
     
-    // Convert form data to appropriate types
     const updatedData = {
       weight: parseFloat(formData.weight) || 0,
       height: parseFloat(formData.height) || 0,
@@ -94,7 +88,6 @@ const PatientInfoStep: React.FC = () => {
     };
     
     try {
-      // Update consultation data with form values
       updateConsultationData(updatedData);
       
       toast({
@@ -102,7 +95,7 @@ const PatientInfoStep: React.FC = () => {
         description: "Informações do paciente salvas com sucesso.",
       });
       
-      setCurrentStep('anthropometry');
+      onInfoConfirmed?.();
       
     } catch (error) {
       console.error('Erro no handleSubmit:', error);
