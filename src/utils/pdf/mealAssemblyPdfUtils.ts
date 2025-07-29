@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Meal, MealFood } from '@/types/meal';
@@ -72,34 +71,31 @@ export const generateMealAssemblyPDF = ({
     
     // Add meal summary
     doc.setFontSize(11);
-    const calories = meal.totalCalories || meal.calories || 0;
-    const protein = meal.totalProtein || meal.protein || 0;
-    const carbs = meal.totalCarbs || meal.carbs || 0;
-    const fat = meal.totalFats || meal.fat || 0;
+    const calories = meal.total_calories || 0;
+    const protein = meal.total_protein || 0;
+    const carbs = meal.total_carbs || 0;
+    const fat = meal.total_fats || 0;
     
     doc.text(`Calorias: ${calories} kcal | P: ${protein}g | C: ${carbs}g | G: ${fat}g`, 14, yPosition);
     
     yPosition += 10;
     
     // Add food table
-    const foods = meal.foods || [];
+    const foods = meal.items || [];
     if (foods.length > 0) {
       autoTable(doc, {
         startY: yPosition,
         head: [['Alimento', 'Porção', 'Calorias', 'Proteínas', 'Carboidratos', 'Gorduras']],
         body: foods.map(food => {
-          // Create a unified interface for accessing food properties using type assertion
-          const typedFood = food as any; // Use any to bypass type checking temporarily
-          
-          // Now we can safely access properties with fallbacks
-          const foodName = typedFood.food?.name || typedFood.name || '';
-          const portion = typedFood.quantity 
-            ? `${typedFood.quantity} ${typedFood.unit || ''}`
-            : typedFood.portion || 'N/A';
-          const foodCalories = Number(typedFood.calories || 0);
-          const foodProtein = Number(typedFood.protein || 0);
-          const foodCarbs = Number(typedFood.carbs || 0);
-          const foodFats = Number(typedFood.fats || typedFood.fat || 0);
+          // Use MealItem properties
+          const foodName = food.name || '';
+          const portion = food.quantity 
+            ? `${food.quantity} ${food.unit || ''}`
+            : 'N/A';
+          const foodCalories = Number(food.calories || 0);
+          const foodProtein = Number(food.protein || 0);
+          const foodCarbs = Number(food.carbs || 0);
+          const foodFats = Number(food.fat || 0);
           
           return [
             foodName,

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePatient } from '@/contexts/patient/PatientContext';
@@ -69,14 +68,128 @@ const MealPlanGenerator: React.FC = () => {
     }
   }, [calculationData, patientData, activePatient, consultationData, setActivePatient, setConsultationData, toast, systemType]);
 
-  // Default meal distribution setup
+  // Default meal distribution setup with all required properties
   const defaultMealDistribution: MealDistributionItem[] = [
-    { id: '1', name: 'Café da manhã', percent: 25, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '2', name: 'Lanche da manhã', percent: 10, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '3', name: 'Almoço', percent: 30, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '4', name: 'Lanche da tarde', percent: 10, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '5', name: 'Jantar', percent: 20, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] },
-    { id: '6', name: 'Ceia', percent: 5, calories: 0, protein: 0, carbs: 0, fat: 0, suggestions: [] }
+    { 
+      id: '1', 
+      name: 'Café da manhã', 
+      time: '07:00',
+      percent: 25,
+      percentage: 25,
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    },
+    { 
+      id: '2', 
+      name: 'Lanche da manhã', 
+      time: '10:00',
+      percent: 10,
+      percentage: 10,
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    },
+    { 
+      id: '3', 
+      name: 'Almoço', 
+      time: '12:00',
+      percent: 30,
+      percentage: 30,
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    },
+    { 
+      id: '4', 
+      name: 'Lanche da tarde', 
+      time: '15:00',
+      percent: 10,
+      percentage: 10,
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    },
+    { 
+      id: '5', 
+      name: 'Jantar', 
+      time: '19:00',
+      percent: 20,
+      percentage: 20,
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    },
+    { 
+      id: '6', 
+      name: 'Ceia', 
+      time: '22:00',
+      percent: 5,
+      percentage: 5,
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      foods: [],
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFats: 0,
+      proteinPercent: 0,
+      carbsPercent: 0,
+      fatPercent: 0,
+      suggestions: []
+    }
   ];
 
   // Create a wrapper function that matches the expected signature
@@ -87,6 +200,9 @@ const MealPlanGenerator: React.FC = () => {
     throw new Error('No consultation ID available');
   };
 
+  const mealPlanStateHook = useMealPlanState();
+
+  // Use the hook properties
   const {
     mealDistribution,
     totalMealPercent,
@@ -95,14 +211,7 @@ const MealPlanGenerator: React.FC = () => {
     handleSaveMealPlan,
     addMeal,
     removeMeal
-  } = useMealPlanState({
-    activePatient,
-    consultationData,
-    mealPlan,
-    setMealPlan,
-    saveConsultation: wrappedSaveConsultation,
-    saveMealPlan
-  });
+  } = mealPlanStateHook;
 
   if (!activePatient || !consultationData) {
     return (

@@ -158,7 +158,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         address: typeof patientData.address === 'string' ? patientData.address : JSON.stringify(patientData.address) || null,
         notes: patientData.notes || null,
         status: patientData.status || 'active',
-        goals: patientData.goals ? JSON.parse(JSON.stringify(patientData.goals)) : {},
+        goals: patientData.goals ? JSON.stringify(patientData.goals) : '{}',
         ...(patientData.id && { id: patientData.id }),
         ...(patientData.created_at && { created_at: patientData.created_at }),
         ...(patientData.updated_at && { updated_at: patientData.updated_at })
@@ -185,7 +185,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         address: data.address,
         notes: data.notes,
         status: data.status as 'active' | 'archived',
-        goals: typeof data.goals === 'object' && data.goals ? data.goals as any : {},
+        goals: typeof data.goals === 'string' ? JSON.parse(data.goals || '{}') : (data.goals as any || {}),
         created_at: data.created_at,
         updated_at: data.updated_at,
         user_id: data.user_id
@@ -223,7 +223,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
       }
 
-      if (filters.status && filters.status !== 'all' && filters.status !== '') {
+      if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
       }
 
@@ -249,7 +249,7 @@ export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ child
         address: d.address,
         notes: d.notes,
         status: d.status as 'active' | 'archived',
-        goals: typeof d.goals === 'object' && d.goals ? d.goals as any : {},
+        goals: typeof d.goals === 'string' ? JSON.parse(d.goals || '{}') : (d.goals as any || {}),
         created_at: d.created_at,
         updated_at: d.updated_at,
         user_id: d.user_id

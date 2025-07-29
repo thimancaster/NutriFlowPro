@@ -1,4 +1,3 @@
-
 export interface MealItem {
   id: string;
   name: string;
@@ -48,6 +47,7 @@ export interface MealAssemblyFood {
   selected?: boolean;
   percentage?: number;
   portion?: string;
+  foods?: any[]; // Add foods property
 }
 
 export interface MealFood {
