@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Profile, ActivityLevel, Objective } from '@/types/consultation';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,7 +16,8 @@ const useCalculatorState = () => {
     error,
     reset: resetCalculator,
     hasActivePatient,
-    activePatient
+    activePatient,
+    calculate
   } = useCalculator();
 
   // State for cache information

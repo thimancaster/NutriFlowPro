@@ -280,7 +280,7 @@ const NutritionalEvaluationStep: React.FC = () => {
                   <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                     <span className="font-medium">Proteína por kg</span>
                     <Badge variant="outline" className="bg-purple-100">
-                      {results.macros.proteinPerKg.toFixed(2)}g/kg
+                      {results.proteinPerKg.toFixed(2)}g/kg
                     </Badge>
                   </div>
                 </div>
