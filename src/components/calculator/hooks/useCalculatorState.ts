@@ -7,6 +7,7 @@ import { useCalculatorResults } from './useCalculatorResults';
 import { useCalculatorActions } from './useCalculatorActions';
 import { useCalculatorSync } from './useCalculatorSync';
 import { useToast } from '@/hooks/use-toast';
+import { useCalculator } from '@/hooks/useCalculator';
 
 const useCalculatorState = () => {
   const [activeTab, setActiveTab] = useState<'tmb' | 'activity' | 'results'>('tmb');
@@ -44,6 +45,9 @@ const useCalculatorState = () => {
 
   const { validateAndCalculate } = useCalculatorActions();
   const { syncPatientData } = useCalculatorSync();
+  
+  // Use the unified calculator
+  const unifiedCalculator = useCalculator();
 
   // State for cache information
   const [cacheInfo, setCacheInfo] = useState<{
@@ -78,7 +82,8 @@ const useCalculatorState = () => {
       profile
     };
 
-    const nutritionResults = await validateAndCalculate(calculationParams);
+    // Use the unified calculator
+    const nutritionResults = await unifiedCalculator.calculate(calculationParams);
     
     if (nutritionResults) {
       console.log('Resultados do cálculo:', nutritionResults);
@@ -117,7 +122,7 @@ const useCalculatorState = () => {
           protein: nutritionResults.macros.protein,
           carbs: nutritionResults.macros.carbs,
           fat: nutritionResults.macros.fat,
-          proteinPerKg: nutritionResults.proteinPerKg
+          proteinPerKg: nutritionResults.macros.proteinPerKg
         },
         calorieSummary: {
           totalCalories: nutritionResults.vet,
@@ -125,7 +130,7 @@ const useCalculatorState = () => {
           carbsCalories: nutritionResults.macros.carbs.kcal,
           fatCalories: nutritionResults.macros.fat.kcal
         },
-        formulaUsed: nutritionResults.formulaUsed
+        formulaUsed: nutritionResults.formulaUsed || 'Mifflin-St Jeor'
       };
 
       setResults(calculationResults);
@@ -149,6 +154,7 @@ const useCalculatorState = () => {
     resetForm();
     resetResults();
     setCacheInfo({ fromCache: false });
+    unifiedCalculator.reset();
     setActiveTab('tmb');
   };
 

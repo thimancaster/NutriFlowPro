@@ -14,6 +14,9 @@ export interface CalculatorResults {
     fat: { grams: number; kcal: number; percentage: number };
     proteinPerKg: number;
   };
+  formulaUsed?: string;
+  fromCache?: boolean;
+  cacheAge?: number;
 }
 
 export interface NutritionCalculationInput {
@@ -83,9 +86,19 @@ export const useCalculator = () => {
     setError(null);
 
     try {
-      // Map profile to simplified format for legacy calculation
-      const mappedProfile = calculationData.profile === 'eutrofico' || calculationData.profile === 'magro' ? 'magro' :
-                           calculationData.profile === 'sobrepeso_obesidade' || calculationData.profile === 'obeso' ? 'obeso' : 'atleta';
+      // Fix profile mapping logic
+      let mappedProfile: 'magro' | 'obeso' | 'atleta';
+      
+      if (calculationData.profile === 'eutrofico') {
+        mappedProfile = 'magro';
+      } else if (calculationData.profile === 'sobrepeso_obesidade') {
+        mappedProfile = 'obeso';
+      } else if (calculationData.profile === 'atleta') {
+        mappedProfile = 'atleta';
+      } else {
+        // Default fallback
+        mappedProfile = 'magro';
+      }
 
       const result = await nutritionCalculation.calculate(
         calculationData.weight,
@@ -107,7 +120,8 @@ export const useCalculator = () => {
             protein: {
               grams: result.macros.protein.grams,
               kcal: result.macros.protein.kcal,
-              percentage: result.macros.protein.percentage
+              percentage: result.macros.protein.percentage,
+              proteinPerKg: result.proteinPerKg
             },
             carbs: {
               grams: result.macros.carbs.grams,
@@ -120,7 +134,10 @@ export const useCalculator = () => {
               percentage: result.macros.fat.percentage
             },
             proteinPerKg: result.proteinPerKg
-          }
+          },
+          formulaUsed: result.formulaUsed || 'Mifflin-St Jeor',
+          fromCache: result.fromCache || false,
+          cacheAge: result.cacheAge
         };
 
         setResults(calculatorResults);

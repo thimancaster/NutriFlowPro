@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { useENPFormState } from './hooks/useENPFormState';
 import { useENPValidation } from './hooks/useENPValidation';
-import { useENPCalculation } from './hooks/useENPCalculation';
+import { useCalculator } from '@/hooks/useCalculator';
 import { useENPExport } from './hooks/useENPExport';
 import { ActivityLevel, Objective } from '@/types/consultation';
 
@@ -19,14 +19,31 @@ export const useENPCalculatorLogic = () => {
     formState.gerFormula,
     formState.bodyFatPercentage
   );
-  const calculation = useENPCalculation();
+  const calculator = useCalculator();
   const exportLogic = useENPExport();
   
   const handleCalculate = useCallback(async () => {
-    await calculation.handleCalculate(validation.validatedData, validation.isValid);
-  }, [calculation, validation]);
+    if (!validation.isValid) {
+      return;
+    }
+
+    const calculationData = {
+      weight: validation.validatedData.weight,
+      height: validation.validatedData.height,
+      age: validation.validatedData.age,
+      sex: validation.validatedData.sex,
+      activityLevel: validation.validatedData.activityLevel,
+      objective: validation.validatedData.objective,
+      profile: validation.validatedData.profile,
+      bodyFatPercentage: validation.validatedData.bodyFatPercentage
+    };
+
+    await calculator.calculate(calculationData);
+  }, [calculator, validation]);
 
   const handleExportResults = useCallback(() => {
+    if (!calculator.results) return;
+
     // Transform validated data to match export interface
     const exportData = {
       ...validation.validatedData,
@@ -34,13 +51,13 @@ export const useENPCalculatorLogic = () => {
       objective: validation.validatedData.objective as Objective,
       bodyFatPercentage: validation.validatedData.bodyFatPercentage || 0
     };
-    exportLogic.handleExportResults(calculation.results, exportData);
-  }, [exportLogic, calculation.results, validation.validatedData]);
+    exportLogic.handleExportResults(calculator.results, exportData);
+  }, [exportLogic, calculator.results, validation.validatedData]);
 
   const handleReset = useCallback(() => {
     formState.resetForm();
-    calculation.reset();
-  }, [formState, calculation]);
+    calculator.reset();
+  }, [formState, calculator]);
 
   return {
     // Form state
@@ -58,8 +75,8 @@ export const useENPCalculatorLogic = () => {
     handleReset,
     
     // Calculator state
-    isCalculating: calculation.isCalculating,
-    error: calculation.error,
-    results: calculation.results
+    isCalculating: calculator.isCalculating,
+    error: calculator.error,
+    results: calculator.results
   };
 };

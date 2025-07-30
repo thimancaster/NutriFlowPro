@@ -11,7 +11,4 @@ import {
 // Export with different names to avoid conflicts
 export { validateMacros, validateFields };
 
-// Re-export other utilities that aren't causing conflicts
-export * from './utils/calculations';
-
 // This file serves as a central export point for all calculator utilities
