@@ -18,8 +18,15 @@ export class MealPlanServiceV2 {
     try {
       const { userId, patientId, calculationId, targets, date = new Date().toISOString().split('T')[0] } = params;
       
-      // Call the optimized RPC function
-      const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan', {
+      console.log('Calling generate_meal_plan_with_cultural_rules with:', {
+        userId,
+        patientId,
+        targets,
+        date
+      });
+
+      // Call the culturally intelligent RPC function
+      const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan_with_cultural_rules', {
         p_user_id: userId,
         p_patient_id: patientId,
         p_target_calories: targets.calories,
@@ -34,8 +41,20 @@ export class MealPlanServiceV2 {
         return { success: false, error: error.message };
       }
 
+      if (!mealPlanId) {
+        return { success: false, error: 'No meal plan ID returned from generation' };
+      }
+
+      console.log('Generated meal plan ID:', mealPlanId);
+
       // Fetch the complete meal plan
-      return this.getMealPlan(mealPlanId);
+      const result = await this.getMealPlan(mealPlanId);
+      
+      if (result.success && result.data) {
+        console.log('Successfully fetched generated meal plan:', result.data);
+      }
+      
+      return result;
     } catch (error: any) {
       console.error('Error in generateMealPlan:', error);
       return { success: false, error: error.message };
@@ -47,6 +66,8 @@ export class MealPlanServiceV2 {
    */
   static async getMealPlan(id: string): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
+      console.log('Fetching meal plan with ID:', id);
+
       const { data: planData, error: planError } = await supabase
         .from('meal_plans')
         .select('*')
@@ -54,8 +75,15 @@ export class MealPlanServiceV2 {
         .single();
 
       if (planError) {
+        console.error('Error fetching meal plan:', planError);
         return { success: false, error: planError.message };
       }
+
+      if (!planData) {
+        return { success: false, error: 'Meal plan not found' };
+      }
+
+      console.log('Fetched meal plan data:', planData);
 
       const { data: itemsData, error: itemsError } = await supabase
         .from('meal_plan_items')
@@ -64,14 +92,19 @@ export class MealPlanServiceV2 {
         .order('meal_type, order_index');
 
       if (itemsError) {
+        console.error('Error fetching meal plan items:', itemsError);
         return { success: false, error: itemsError.message };
       }
+
+      console.log('Fetched meal plan items:', itemsData);
 
       // Transform data to MealPlan format
       const mealPlan: MealPlan = {
         ...planData,
         meals: this.groupItemsByMealType(itemsData || [])
       };
+
+      console.log('Transformed meal plan:', mealPlan);
 
       return { success: true, data: mealPlan };
     } catch (error: any) {
@@ -85,6 +118,8 @@ export class MealPlanServiceV2 {
    */
   static async saveMealPlan(mealPlan: Partial<MealPlan> & { id: string }): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
+      console.log('Saving meal plan:', mealPlan);
+
       // Update meal plan
       const { error: updateError } = await supabase
         .from('meal_plans')
@@ -99,6 +134,7 @@ export class MealPlanServiceV2 {
         .eq('id', mealPlan.id);
 
       if (updateError) {
+        console.error('Error updating meal plan:', updateError);
         return { success: false, error: updateError.message };
       }
 
@@ -118,6 +154,7 @@ export class MealPlanServiceV2 {
             .insert(items);
 
           if (itemsError) {
+            console.error('Error inserting meal plan items:', itemsError);
             return { success: false, error: itemsError.message };
           }
         }
@@ -135,6 +172,8 @@ export class MealPlanServiceV2 {
    * Group meal plan items by meal type in chronological order
    */
   private static groupItemsByMealType(items: MealPlanItem[]) {
+    console.log('Grouping items by meal type:', items);
+
     // Define the chronological order of meals (Brazilian standard)
     const mealOrder = [
       'cafe_da_manha',
@@ -164,19 +203,30 @@ export class MealPlanServiceV2 {
       return acc;
     }, {} as Record<string, any[]>);
 
+    console.log('Grouped items:', grouped);
+
     // Return meals in chronological order
-    return mealOrder
-      .filter(mealType => grouped[mealType])
-      .map(mealType => ({
-        id: `${mealType}-meal`,
-        type: mealType as 'cafe_da_manha' | 'lanche_manha' | 'almoco' | 'lanche_tarde' | 'jantar' | 'ceia',
-        name: this.getMealTypeName(mealType),
-        foods: grouped[mealType] || [],
-        total_calories: (grouped[mealType] || []).reduce((sum, food) => sum + food.calories, 0),
-        total_protein: (grouped[mealType] || []).reduce((sum, food) => sum + food.protein, 0),
-        total_carbs: (grouped[mealType] || []).reduce((sum, food) => sum + food.carbs, 0),
-        total_fats: (grouped[mealType] || []).reduce((sum, food) => sum + food.fats, 0)
-      }));
+    const meals = mealOrder
+      .filter(mealType => grouped[mealType] && grouped[mealType].length > 0)
+      .map(mealType => {
+        const foods = grouped[mealType] || [];
+        const meal = {
+          id: `${mealType}-meal`,
+          type: mealType as 'cafe_da_manha' | 'lanche_manha' | 'almoco' | 'lanche_tarde' | 'jantar' | 'ceia',
+          name: this.getMealTypeName(mealType),
+          foods: foods,
+          total_calories: foods.reduce((sum, food) => sum + (food.calories || 0), 0),
+          total_protein: foods.reduce((sum, food) => sum + (food.protein || 0), 0),
+          total_carbs: foods.reduce((sum, food) => sum + (food.carbs || 0), 0),
+          total_fats: foods.reduce((sum, food) => sum + (food.fats || 0), 0)
+        };
+        
+        console.log('Created meal:', meal);
+        return meal;
+      });
+
+    console.log('Final meals array:', meals);
+    return meals;
   }
 
   /**

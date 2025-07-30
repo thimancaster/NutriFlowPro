@@ -128,6 +128,7 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
 
       if (result.success && result.data) {
         setCurrentMealPlan(result.data);
+        setCurrentStep('completed');
         toast({
           title: 'Sucesso',
           description: 'Plano alimentar salvo com sucesso!'

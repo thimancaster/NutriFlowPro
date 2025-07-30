@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Utensils, Target } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { Badge } from '@/components/ui/badge';
+import { Utensils, Loader2, ArrowLeft } from 'lucide-react';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { Patient, ConsultationData } from '@/types';
 
@@ -20,24 +20,16 @@ const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
   onGenerate,
   onBack
 }) => {
-  const { user } = useAuth();
   const { isGenerating } = useMealPlanWorkflow();
 
-  const handleGenerate = async () => {
-    console.log('Generate button clicked');
-    await onGenerate();
-  };
-
-  if (!calculationData) {
+  if (!patient || !calculationData) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Dados de cálculo não encontrados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>Não foi possível encontrar os dados de cálculo nutricional.</p>
+        <CardContent className="p-6 text-center">
+          <p className="text-red-600">Dados necessários não encontrados</p>
           <Button onClick={onBack} className="mt-4">
-            Voltar para cálculo
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
           </Button>
         </CardContent>
       </Card>
@@ -45,98 +37,105 @@ const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Nutritional Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Metas Nutricionais
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {calculationData.totalCalories || 'N/A'}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Utensils className="h-5 w-5" />
+          Gerar Plano Alimentar Inteligente
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Patient and Calculation Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">Paciente</h3>
+            <p className="text-blue-700">{patient.name}</p>
+            {patient.gender && (
+              <p className="text-blue-600 text-sm">
+                {patient.gender === 'male' ? 'Masculino' : 'Feminino'}
+              </p>
+            )}
+          </div>
+          
+          <div className="p-4 bg-green-50 rounded-lg">
+            <h3 className="font-semibold text-green-900 mb-2">Necessidades Nutricionais</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-green-700">Calorias:</span>
+                <Badge variant="outline" className="ml-1">
+                  {calculationData.totalCalories} kcal
+                </Badge>
               </div>
-              <div className="text-sm text-gray-600">Calorias (kcal)</div>
-            </div>
-            <div className="text-center p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">
-                {calculationData.protein || 'N/A'}g
+              <div>
+                <span className="text-green-700">Proteínas:</span>
+                <Badge variant="outline" className="ml-1">
+                  {calculationData.protein}g
+                </Badge>
               </div>
-              <div className="text-sm text-gray-600">Proteína</div>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">
-                {calculationData.carbs || 'N/A'}g
+              <div>
+                <span className="text-green-700">Carboidratos:</span>
+                <Badge variant="outline" className="ml-1">
+                  {calculationData.carbs}g
+                </Badge>
               </div>
-              <div className="text-sm text-gray-600">Carboidratos</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {calculationData.fats || 'N/A'}g
+              <div>
+                <span className="text-green-700">Gorduras:</span>
+                <Badge variant="outline" className="ml-1">
+                  {calculationData.fats}g
+                </Badge>
               </div>
-              <div className="text-sm text-gray-600">Gorduras</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Generation Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="h-5 w-5" />
-            Gerar Plano Alimentar
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center">
-            <p className="text-gray-600 mb-6">
-              O sistema irá gerar automaticamente um plano alimentar balanceado 
-              baseado nos cálculos nutricionais realizados para <strong>{patient?.name}</strong>.
-            </p>
-            
-            <Button 
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              size="lg"
-              className="w-full max-w-md"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Gerando plano alimentar...
-                </>
-              ) : (
-                <>
-                  <Utensils className="mr-2 h-5 w-5" />
-                  Gerar Plano Alimentar Automático
-                </>
-              )}
-            </Button>
-          </div>
-
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium mb-2">O que será gerado:</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Distribuição em 6 refeições (café, lanche manhã, almoço, lanche tarde, jantar, ceia)</li>
-              <li>• Alimentos balanceados por refeição</li>
-              <li>• Quantidades calculadas automaticamente</li>
-              <li>• Possibilidade de edição e personalização posterior</li>
+        {/* Generation Info */}
+        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+          <div className="text-sm text-yellow-800">
+            <p className="font-medium mb-2">🧠 Inteligência Cultural Brasileira:</p>
+            <ul className="space-y-1">
+              <li>• Café da manhã: Pães, cereais, frutas e laticínios</li>
+              <li>• Almoço: Arroz, feijão, carnes e verduras</li>
+              <li>• Jantar: Refeições mais leves e saudáveis</li>
+              <li>• Lanches: Frutas, iogurtes e oleaginosas</li>
             </ul>
           </div>
+        </div>
 
-          <div className="flex justify-center">
-            <Button variant="outline" onClick={onBack}>
-              Voltar para Cálculo
-            </Button>
+        {/* Generation Actions */}
+        <div className="flex gap-4 justify-center">
+          <Button
+            onClick={onGenerate}
+            disabled={isGenerating}
+            size="lg"
+            className="min-w-[200px]"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Gerando plano...
+              </>
+            ) : (
+              <>
+                <Utensils className="mr-2 h-4 w-4" />
+                Gerar Plano Alimentar
+              </>
+            )}
+          </Button>
+          
+          <Button variant="outline" onClick={onBack} disabled={isGenerating}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+        </div>
+
+        {isGenerating && (
+          <div className="text-center text-sm text-gray-600">
+            <p>Gerando plano alimentar personalizado...</p>
+            <p className="mt-1">Isso pode levar alguns segundos.</p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

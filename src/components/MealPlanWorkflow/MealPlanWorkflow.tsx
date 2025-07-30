@@ -263,6 +263,37 @@ const MealPlanWorkflow: React.FC = () => {
           onBack={() => setCurrentStep('generation')}
         />
       )}
+
+      {/* Step 4: Completed */}
+      {currentStep === 'completed' && currentMealPlan && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-600">
+              <FileText className="h-5 w-5" />
+              Plano Alimentar Finalizado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h3 className="font-semibold text-green-900">Plano salvo com sucesso!</h3>
+                <p className="text-green-700 text-sm mt-1">
+                  O plano alimentar foi salvo e está disponível na lista de planos do paciente.
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button onClick={() => navigate('/meal-plans')}>
+                  Ver Todos os Planos
+                </Button>
+                <Button variant="outline" onClick={handleStartOver}>
+                  Criar Novo Plano
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
