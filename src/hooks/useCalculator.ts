@@ -1,7 +1,7 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNutritionCalculation } from './useNutritionCalculation';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 
 export interface CalculatorResults {
   tmb: number;
@@ -16,37 +16,84 @@ export interface CalculatorResults {
   };
 }
 
+export interface NutritionCalculationInput {
+  weight: number;
+  height: number;
+  age: number;
+  sex: 'M' | 'F';
+  activityLevel: ActivityLevel;
+  objective: Objective;
+  profile: Profile;
+  bodyFatPercentage?: number;
+}
+
 export const useCalculator = () => {
   const [results, setResults] = useState<CalculatorResults | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const { activePatient } = usePatient();
   const nutritionCalculation = useNutritionCalculation();
 
+  // Auto-populate form data from active patient
+  const [formData, setFormData] = useState<NutritionCalculationInput>({
+    weight: 0,
+    height: 0,
+    age: 0,
+    sex: 'F',
+    activityLevel: 'moderado',
+    objective: 'manutenção',
+    profile: 'eutrofico'
+  });
+
+  // Sync with active patient data
+  useEffect(() => {
+    if (activePatient) {
+      const calculatedAge = activePatient.birth_date 
+        ? new Date().getFullYear() - new Date(activePatient.birth_date).getFullYear()
+        : activePatient.age || 0;
+
+      setFormData(prev => ({
+        ...prev,
+        age: calculatedAge,
+        sex: activePatient.gender === 'male' ? 'M' : 'F',
+        // Keep other values unless they're not set
+        weight: prev.weight || 0,
+        height: prev.height || 0,
+      }));
+    }
+  }, [activePatient]);
+
+  // Update form data function
+  const updateFormData = (updates: Partial<NutritionCalculationInput>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
   const calculate = async (
-    weight: number,
-    height: number,
-    age: number,
-    sex: 'M' | 'F',
-    activityLevel: ActivityLevel,
-    objective: Objective,
-    profile: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta' | 'magro' | 'obeso' = 'eutrofico'
+    inputData?: Partial<NutritionCalculationInput>
   ): Promise<CalculatorResults | null> => {
+    const calculationData = inputData ? { ...formData, ...inputData } : formData;
+    
+    // Validation
+    if (!calculationData.weight || !calculationData.height || !calculationData.age) {
+      setError('Dados incompletos: peso, altura e idade são obrigatórios');
+      return null;
+    }
+
     setIsCalculating(true);
     setError(null);
 
     try {
-      // Map profile to simplified format for ENP
-      const mappedProfile = profile === 'eutrofico' || profile === 'magro' ? 'magro' :
-                           profile === 'sobrepeso_obesidade' || profile === 'obeso' ? 'obeso' : 'atleta';
+      // Map profile to simplified format for legacy calculation
+      const mappedProfile = calculationData.profile === 'eutrofico' || calculationData.profile === 'magro' ? 'magro' :
+                           calculationData.profile === 'sobrepeso_obesidade' || calculationData.profile === 'obeso' ? 'obeso' : 'atleta';
 
       const result = await nutritionCalculation.calculate(
-        weight,
-        height,
-        age,
-        sex,
-        activityLevel,
-        objective,
+        calculationData.weight,
+        calculationData.height,
+        calculationData.age,
+        calculationData.sex,
+        calculationData.activityLevel,
+        calculationData.objective,
         mappedProfile
       );
 
@@ -55,7 +102,7 @@ export const useCalculator = () => {
           tmb: result.tmb,
           get: result.get,
           vet: result.vet,
-          adjustment: result.vet - result.get, // Calculate adjustment from vet - get
+          adjustment: result.vet - result.get,
           macros: {
             protein: {
               grams: result.macros.protein.grams,
@@ -72,7 +119,7 @@ export const useCalculator = () => {
               kcal: result.macros.fat.kcal,
               percentage: result.macros.fat.percentage
             },
-            proteinPerKg: result.proteinPerKg // Use proteinPerKg from result
+            proteinPerKg: result.proteinPerKg
           }
         };
 
@@ -82,7 +129,7 @@ export const useCalculator = () => {
 
       return null;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo ENP';
+      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
       setError(errorMessage);
       console.error('Erro no cálculo:', error);
       return null;
@@ -91,18 +138,78 @@ export const useCalculator = () => {
     }
   };
 
+  // Calculate with manual parameters (for backward compatibility)
+  const calculateWithParams = async (
+    weight: number,
+    height: number,
+    age: number,
+    sex: 'M' | 'F',
+    activityLevel: ActivityLevel,
+    objective: Objective,
+    profile: Profile = 'eutrofico'
+  ): Promise<CalculatorResults | null> => {
+    return await calculate({
+      weight,
+      height,
+      age,
+      sex,
+      activityLevel,
+      objective,
+      profile
+    });
+  };
+
   const reset = () => {
     setResults(null);
     setError(null);
     setIsCalculating(false);
     nutritionCalculation.reset();
+    
+    // Reset form data but keep patient data if available
+    if (activePatient) {
+      const calculatedAge = activePatient.birth_date 
+        ? new Date().getFullYear() - new Date(activePatient.birth_date).getFullYear()
+        : activePatient.age || 0;
+
+      setFormData({
+        weight: 0,
+        height: 0,
+        age: calculatedAge,
+        sex: activePatient.gender === 'male' ? 'M' : 'F',
+        activityLevel: 'moderado',
+        objective: 'manutenção',
+        profile: 'eutrofico'
+      });
+    } else {
+      setFormData({
+        weight: 0,
+        height: 0,
+        age: 0,
+        sex: 'F',
+        activityLevel: 'moderado',
+        objective: 'manutenção',
+        profile: 'eutrofico'
+      });
+    }
   };
 
   return {
+    // Results
     results,
     isCalculating,
     error,
+    
+    // Form data
+    formData,
+    updateFormData,
+    
+    // Actions
     calculate,
-    reset
+    calculateWithParams, // Backward compatibility
+    reset,
+    
+    // Patient integration
+    hasActivePatient: !!activePatient,
+    activePatient
   };
 };

@@ -8,69 +8,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calculator, Activity, Target, Zap } from 'lucide-react';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
-import { useNutritionCalculation } from '@/hooks/useNutritionCalculation';
-import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+import { useCalculator } from '@/hooks/useCalculator';
+import { ActivityLevel, Objective } from '@/types/consultation';
 
 const NutritionalEvaluationStep: React.FC = () => {
   const { consultationData, selectedPatient, updateConsultationData } = useConsultationData();
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    weight: consultationData?.weight?.toString() || '',
-    height: consultationData?.height?.toString() || '',
-    age: consultationData?.age?.toString() || '',
-    sex: (consultationData?.gender === 'male' ? 'M' : 'F') as 'M' | 'F',
-    activityLevel: (consultationData?.activity_level || 'moderado') as ActivityLevel,
-    objective: (consultationData?.objective || 'manutenção') as Objective,
-    profile: 'eutrofico' as Profile
-  });
+  const { 
+    formData, 
+    updateFormData, 
+    calculate, 
+    results, 
+    isCalculating, 
+    error,
+    hasActivePatient 
+  } = useCalculator();
 
-  const { calculate, results, isCalculating, error } = useNutritionCalculation();
-
-  // Update form when consultation data changes
+  // Update form when consultation data changes or patient changes
   useEffect(() => {
     if (consultationData) {
-      setFormData({
-        weight: consultationData.weight?.toString() || '',
-        height: consultationData.height?.toString() || '',
-        age: consultationData.age?.toString() || '',
+      updateFormData({
+        weight: consultationData.weight || formData.weight,
+        height: consultationData.height || formData.height,
+        age: consultationData.age || formData.age,
         sex: (consultationData.gender === 'male' ? 'M' : 'F') as 'M' | 'F',
         activityLevel: (consultationData.activity_level || 'moderado') as ActivityLevel,
         objective: (consultationData.objective || 'manutenção') as Objective,
-        profile: 'eutrofico' as Profile
       });
     }
   }, [consultationData]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const numericFields = ['weight', 'height', 'age'];
+    const finalValue = numericFields.includes(field) ? parseFloat(value) || 0 : value;
+    updateFormData({ [field]: finalValue });
   };
 
   const handleCalculate = async () => {
-    const weight = parseFloat(formData.weight);
-    const height = parseFloat(formData.height);
-    const age = parseInt(formData.age);
-
-    if (!weight || !height || !age) {
-      return;
-    }
-
-    const result = await calculate(
-      weight,
-      height,
-      age,
-      formData.sex,
-      formData.activityLevel,
-      formData.objective,
-      formData.profile
-    );
+    const result = await calculate();
 
     if (result) {
-      // Update consultation data with calculated results - extracting grams from macro objects
+      // Update consultation data with calculated results
       updateConsultationData({
-        weight,
-        height,
-        age,
+        weight: formData.weight,
+        height: formData.height,
+        age: formData.age,
         gender: formData.sex === 'M' ? 'male' : 'female',
         activity_level: formData.activityLevel,
         objective: formData.objective,
@@ -80,9 +61,9 @@ const NutritionalEvaluationStep: React.FC = () => {
         fats: result.macros.fat.grams,
         results: {
           bmr: result.tmb,
-          get: result.vet,
+          get: result.get,
           vet: result.vet,
-          adjustment: 0,
+          adjustment: result.adjustment,
           macros: {
             protein: result.macros.protein.grams,
             carbs: result.macros.carbs.grams,
@@ -93,7 +74,7 @@ const NutritionalEvaluationStep: React.FC = () => {
     }
   };
 
-  const isFormValid = formData.weight && formData.height && formData.age;
+  const isFormValid = formData.weight > 0 && formData.height > 0 && formData.age > 0;
 
   return (
     <div className="space-y-6">
@@ -102,6 +83,11 @@ const NutritionalEvaluationStep: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-nutri-blue" />
             Avaliação Nutricional
+            {hasActivePatient && (
+              <Badge variant="outline" className="ml-auto">
+                Paciente Ativo
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -128,7 +114,7 @@ const NutritionalEvaluationStep: React.FC = () => {
                 id="weight"
                 type="number"
                 step="0.1"
-                value={formData.weight}
+                value={formData.weight || ''}
                 onChange={(e) => handleInputChange('weight', e.target.value)}
                 placeholder="Ex: 70.5"
               />
@@ -139,7 +125,7 @@ const NutritionalEvaluationStep: React.FC = () => {
                 id="height"
                 type="number"
                 step="0.1"
-                value={formData.height}
+                value={formData.height || ''}
                 onChange={(e) => handleInputChange('height', e.target.value)}
                 placeholder="Ex: 175"
               />
@@ -149,7 +135,7 @@ const NutritionalEvaluationStep: React.FC = () => {
               <Input
                 id="age"
                 type="number"
-                value={formData.age}
+                value={formData.age || ''}
                 onChange={(e) => handleInputChange('age', e.target.value)}
                 placeholder="Ex: 30"
               />
@@ -260,39 +246,45 @@ const NutritionalEvaluationStep: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                     <span className="font-medium">Proteínas</span>
-                    <Badge variant="outline" className="bg-blue-100">
-                      {results.macros.protein.grams}g
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-blue-100">
+                        {results.macros.protein.grams}g
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        ({results.macros.protein.percentage.toFixed(1)}%)
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                     <span className="font-medium">Carboidratos</span>
-                    <Badge variant="outline" className="bg-green-100">
-                      {results.macros.carbs.grams}g
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-green-100">
+                        {results.macros.carbs.grams}g
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        ({results.macros.carbs.percentage.toFixed(1)}%)
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                     <span className="font-medium">Gorduras</span>
-                    <Badge variant="outline" className="bg-yellow-100">
-                      {results.macros.fat.grams}g
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-yellow-100">
+                        {results.macros.fat.grams}g
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        ({results.macros.fat.percentage.toFixed(1)}%)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                    <span className="font-medium">Proteína por kg</span>
+                    <Badge variant="outline" className="bg-purple-100">
+                      {results.macros.proteinPerKg.toFixed(2)}g/kg
                     </Badge>
                   </div>
                 </div>
               </div>
-
-              {/* Recommendations */}
-              {results.recommendations && (
-                <div className="bg-muted/30 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Recomendações</h4>
-                  <div className="space-y-1 text-sm">
-                    {results.recommendations.map((rec, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <span className="text-nutri-green">•</span>
-                        <span>{rec}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </CardContent>

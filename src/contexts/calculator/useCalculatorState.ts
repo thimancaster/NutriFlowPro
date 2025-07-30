@@ -1,10 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
-import { calculateCompleteNutritionLegacy, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
-import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
+import { useCalculator } from '@/hooks/useCalculator';
 
 const initialState: CalculatorState = {
   weight: 0,
@@ -27,107 +26,134 @@ const initialState: CalculatorState = {
 export const useCalculatorState = () => {
   const [state, setState] = useState<CalculatorState>(initialState);
   const { toast } = useToast();
+  const { 
+    formData, 
+    updateFormData, 
+    calculate, 
+    results, 
+    isCalculating, 
+    error,
+    reset: resetCalculator 
+  } = useCalculator();
+  
+  // Sync state with unified calculator
+  useEffect(() => {
+    setState(prev => ({
+      ...prev,
+      weight: formData.weight,
+      height: formData.height,
+      age: formData.age,
+      sex: formData.sex,
+      activityLevel: formData.activityLevel,
+      objective: formData.objective,
+      profile: formData.profile,
+      loading: isCalculating
+    }));
+  }, [formData, isCalculating]);
+
+  // Sync results
+  useEffect(() => {
+    if (results) {
+      setState(prev => ({
+        ...prev,
+        bmr: Math.round(results.tmb),
+        tdee: Math.round(results.vet),
+        protein: Math.round(results.macros.protein.grams),
+        carbs: Math.round(results.macros.carbs.grams),
+        fats: Math.round(results.macros.fat.grams),
+        calculated: true,
+        loading: false,
+        activeTab: 'results'
+      }));
+
+      toast({
+        title: "Cálculo Realizado",
+        description: `Necessidades nutricionais calculadas: TMB ${results.tmb} kcal, VET ${results.vet} kcal`,
+      });
+    }
+  }, [results, toast]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro no Cálculo",
+        description: error,
+        variant: "destructive"
+      });
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  }, [error, toast]);
   
   const setWeight = (weight: number) => {
-    setState(prev => ({ ...prev, weight, calculated: false }));
+    updateFormData({ weight });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setHeight = (height: number) => {
-    setState(prev => ({ ...prev, height, calculated: false }));
+    updateFormData({ height });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setAge = (age: number) => {
-    setState(prev => ({ ...prev, age, calculated: false }));
+    updateFormData({ age });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setSex = (sex: 'M' | 'F') => {
-    setState(prev => ({ ...prev, sex, calculated: false }));
+    updateFormData({ sex });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setActivityLevel = (activityLevel: string) => {
-    setState(prev => ({ ...prev, activityLevel, calculated: false }));
+    updateFormData({ activityLevel: activityLevel as any });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setObjective = (objective: string) => {
-    setState(prev => ({ ...prev, objective, calculated: false }));
+    updateFormData({ objective: objective as any });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setProfile = (profile: Profile) => {
-    setState(prev => ({ ...prev, profile, calculated: false }));
+    updateFormData({ profile });
+    setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setActiveTab = (activeTab: 'basic' | 'advanced' | 'results') => {
     setState(prev => ({ ...prev, activeTab }));
   };
   
-  const calculateNutrition = () => {
+  const calculateNutrition = async () => {
     setState(prev => ({ ...prev, loading: true }));
     
-    // Simulating calculation delay for UI purposes
-    setTimeout(() => {
-      try {
-        // Basic validation
-        if (state.weight <= 0 || state.height <= 0 || state.age <= 0) {
-          toast({
-            title: "Dados Inválidos",
-            description: "Todos os valores devem ser maiores que zero",
-            variant: "destructive"
-          });
-          setState(prev => ({ ...prev, loading: false }));
-          return;
-        }
-        
-        // Normalizar profile usando funções de conversão
-        const normalizedProfile = stringToProfile(state.profile);
-        const legacyProfile = profileToLegacy(normalizedProfile);
-        
-        console.log('Profile conversion in calculator:', {
-          original: state.profile,
-          normalized: normalizedProfile,
-          legacy: legacyProfile
-        });
-        
-        // Use the legacy function with correct signature (7 parameters)
-        const results = calculateCompleteNutritionLegacy(
-          state.weight,
-          state.height,
-          state.age,
-          state.sex,
-          state.activityLevel as any,
-          state.objective as any,
-          legacyProfile
-        );
-        
-        setState(prev => ({
-          ...prev,
-          bmr: Math.round(results.tmb),
-          tdee: Math.round(results.vet),
-          protein: Math.round(results.macros.protein.grams),
-          carbs: Math.round(results.macros.carbs.grams),
-          fats: Math.round(results.macros.fat.grams),
-          loading: false,
-          calculated: true,
-          activeTab: 'results'
-        }));
-        
+    try {
+      // Basic validation
+      if (formData.weight <= 0 || formData.height <= 0 || formData.age <= 0) {
         toast({
-          title: "Cálculo Realizado",
-          description: `Necessidades nutricionais calculadas usando ${results.formulaUsed}`,
-        });
-        
-      } catch (error) {
-        console.error('Calculation error:', error);
-        toast({
-          title: "Erro no Cálculo",
-          description: "Ocorreu um erro ao calcular os valores nutricionais",
+          title: "Dados Inválidos",
+          description: "Todos os valores devem ser maiores que zero",
           variant: "destructive"
         });
         setState(prev => ({ ...prev, loading: false }));
+        return;
       }
-    }, 800);
+      
+      await calculate();
+      
+    } catch (error) {
+      console.error('Calculation error:', error);
+      toast({
+        title: "Erro no Cálculo",
+        description: "Ocorreu um erro ao calcular os valores nutricionais",
+        variant: "destructive"
+      });
+      setState(prev => ({ ...prev, loading: false }));
+    }
   };
   
-  const resetCalculator = () => {
+  const resetCalculatorState = () => {
+    resetCalculator();
     setState(initialState);
     // Clear localStorage
     localStorage.removeItem('calculatorState');
@@ -145,7 +171,7 @@ export const useCalculatorState = () => {
     setObjective,
     setProfile,
     calculateNutrition,
-    resetCalculator,
+    resetCalculator: resetCalculatorState,
     setActiveTab
   };
 };

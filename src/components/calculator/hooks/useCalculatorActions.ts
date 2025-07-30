@@ -1,5 +1,5 @@
 
-import { useNutritionCalculation } from '@/hooks/useNutritionCalculation';
+import { useCalculator } from '@/hooks/useCalculator';
 
 interface CalculationParams {
   weight: number;
@@ -12,7 +12,7 @@ interface CalculationParams {
 }
 
 export const useCalculatorActions = () => {
-  const nutritionCalculation = useNutritionCalculation();
+  const { calculateWithParams } = useCalculator();
 
   const validateInputs = (params: CalculationParams): boolean => {
     const { weight, height, age } = params;
@@ -35,7 +35,7 @@ export const useCalculatorActions = () => {
     }
 
     try {
-      const result = await nutritionCalculation.calculate(
+      const result = await calculateWithParams(
         params.weight,
         params.height,
         params.age,
