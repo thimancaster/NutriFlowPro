@@ -111,6 +111,27 @@ export const ENPCalculatorForm: React.FC = () => {
 	const errorMessages = validationErrors.map((error) => error.message);
 	const warningMessages = validationWarnings.map((warning) => warning.message);
 
+	// Helper functions to handle type conversions
+	const handleWeightChange = (value: string) => {
+		const numValue = parseFloat(value) || 0;
+		updateFormData({ weight: numValue });
+	};
+
+	const handleHeightChange = (value: string) => {
+		const numValue = parseFloat(value) || 0;
+		updateFormData({ height: numValue });
+	};
+
+	const handleAgeChange = (value: string) => {
+		const numValue = parseInt(value) || 0;
+		updateFormData({ age: numValue });
+	};
+
+	const handleBodyFatChange = (value: string) => {
+		const numValue = parseFloat(value) || undefined;
+		setBodyFatPercentage(numValue);
+	};
+
 	return (
 		<Tabs defaultValue="calculator" className="w-full">
 			<TabsList className="grid w-full grid-cols-2">
@@ -120,12 +141,12 @@ export const ENPCalculatorForm: React.FC = () => {
 
 			<TabsContent value="calculator" className="space-y-6">
 				<ENPDataInputs
-					weight={formData.weight}
-					setWeight={(weight) => updateFormData({ weight })}
-					height={formData.height}
-					setHeight={(height) => updateFormData({ height })}
-					age={formData.age}
-					setAge={(age) => updateFormData({ age })}
+					weight={formData.weight.toString()}
+					setWeight={handleWeightChange}
+					height={formData.height.toString()}
+					setHeight={handleHeightChange}
+					age={formData.age.toString()}
+					setAge={handleAgeChange}
 					sex={formData.sex}
 					setSex={(sex) => updateFormData({ sex })}
 					activityLevel={formData.activityLevel}
@@ -134,8 +155,8 @@ export const ENPCalculatorForm: React.FC = () => {
 					setObjective={(objective) => updateFormData({ objective: objective as Objective })}
 					profile={formData.profile}
 					setProfile={(profile) => updateFormData({ profile: profile as Profile })}
-					bodyFatPercentage={bodyFatPercentage}
-					setBodyFatPercentage={setBodyFatPercentage}
+					bodyFatPercentage={bodyFatPercentage?.toString() || ''}
+					setBodyFatPercentage={handleBodyFatChange}
 				/>
 
 				<GERFormulaSelection
