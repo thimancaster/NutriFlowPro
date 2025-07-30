@@ -1,12 +1,6 @@
-
 import { useState, useEffect } from 'react';
-import { Profile } from '@/types/consultation';
-import { Patient } from '@/types';
-import { useCalculatorForm } from './useCalculatorForm';
-import { useCalculatorResults } from './useCalculatorResults';
-import { useCalculatorActions } from './useCalculatorActions';
-import { useCalculatorSync } from './useCalculatorSync';
-import { useToast } from '@/hooks/use-toast';
+import { Profile, ActivityLevel, Objective } from '@/types/consultation';
+import { useToast } from '@/components/ui/use-toast';
 import { useCalculator } from '@/hooks/useCalculator';
 
 const useCalculatorState = () => {
@@ -15,39 +9,14 @@ const useCalculatorState = () => {
   
   const {
     formData,
-    handleInputChange,
-    handleProfileChange,
-    resetForm,
-    weight,
-    height,
-    age,
-    sex,
-    activityLevel,
-    objective,
-    profile,
-    patientName
-  } = useCalculatorForm();
-
-  const {
+    updateFormData,
     results,
     isCalculating,
-    showResults,
-    setIsCalculating,
-    setResults,
-    setShowResults,
-    resetResults,
-    tmbValue,
-    teeObject,
-    macros,
-    calorieSummary,
-    formulaUsed
-  } = useCalculatorResults();
-
-  const { validateAndCalculate } = useCalculatorActions();
-  const { syncPatientData } = useCalculatorSync();
-  
-  // Use the unified calculator
-  const unifiedCalculator = useCalculator();
+    error,
+    reset: resetCalculator,
+    hasActivePatient,
+    activePatient
+  } = useCalculator();
 
   // State for cache information
   const [cacheInfo, setCacheInfo] = useState<{
@@ -57,33 +26,70 @@ const useCalculatorState = () => {
     fromCache: false
   });
 
+  const [showResults, setShowResults] = useState(false);
+
+  // Derived values from formData
+  const weight = formData.weight.toString();
+  const height = formData.height.toString();
+  const age = formData.age.toString();
+  const sex = formData.sex;
+  const activityLevel = formData.activityLevel;
+  const objective = formData.objective;
+  const profile = formData.profile;
+  const patientName = activePatient?.name || '';
+
+  const handleInputChange = (name: string, value: any) => {
+    const updates: any = {};
+    
+    switch (name) {
+      case 'weight':
+        updates.weight = Number(value) || 0;
+        break;
+      case 'height':
+        updates.height = Number(value) || 0;
+        break;
+      case 'age':
+        updates.age = Number(value) || 0;
+        break;
+      case 'sex':
+        updates.sex = value;
+        break;
+      case 'activityLevel':
+        updates.activityLevel = value as ActivityLevel;
+        break;
+      case 'objective':
+        updates.objective = value as Objective;
+        break;
+      case 'profile':
+        updates.profile = value as Profile;
+        break;
+    }
+    
+    updateFormData(updates);
+  };
+
+  const handleProfileChange = (value: string) => {
+    updateFormData({ profile: value as Profile });
+  };
+
   const handleCalculateWrapper = async () => {
     console.log('=== INICIANDO CÁLCULO ===');
-    console.log('Dados do formulário:', {
-      weight: Number(weight),
-      height: Number(height),
-      age: Number(age),
-      sex,
-      activityLevel,
-      objective,
-      profile
-    });
+    console.log('Dados do formulário:', formData);
 
-    setIsCalculating(true);
     setCacheInfo({ fromCache: false });
 
     const calculationParams = {
-      weight: Number(weight),
-      height: Number(height),
-      age: Number(age),
-      sex,
-      activityLevel,
-      objective,
-      profile
+      weight: formData.weight,
+      height: formData.height,
+      age: formData.age,
+      sex: formData.sex,
+      activityLevel: formData.activityLevel as ActivityLevel,
+      objective: formData.objective as Objective,
+      profile: formData.profile as Profile
     };
 
     // Use the unified calculator
-    const nutritionResults = await unifiedCalculator.calculate(calculationParams);
+    const nutritionResults = await calculate(calculationParams);
     
     if (nutritionResults) {
       console.log('Resultados do cálculo:', nutritionResults);
@@ -110,30 +116,6 @@ const useCalculatorState = () => {
         });
       }
       
-      const calculationResults = {
-        tmbValue: nutritionResults.tmb,
-        teeObject: {
-          tmb: nutritionResults.tmb,
-          get: nutritionResults.get,
-          vet: nutritionResults.vet,
-          adjustment: nutritionResults.vet - nutritionResults.get
-        },
-        macros: {
-          protein: nutritionResults.macros.protein,
-          carbs: nutritionResults.macros.carbs,
-          fat: nutritionResults.macros.fat,
-          proteinPerKg: nutritionResults.macros.proteinPerKg
-        },
-        calorieSummary: {
-          totalCalories: nutritionResults.vet,
-          proteinCalories: nutritionResults.macros.protein.kcal,
-          carbsCalories: nutritionResults.macros.carbs.kcal,
-          fatCalories: nutritionResults.macros.fat.kcal
-        },
-        formulaUsed: nutritionResults.formulaUsed || 'Mifflin-St Jeor'
-      };
-
-      setResults(calculationResults);
       setShowResults(true);
       setActiveTab('results');
       console.log('=== CÁLCULO CONCLUÍDO COM SUCESSO ===');
@@ -145,23 +127,25 @@ const useCalculatorState = () => {
         variant: "destructive"
       });
     }
-
-    setIsCalculating(false);
   };
 
   const handleReset = () => {
     console.log('=== RESETANDO CALCULADORA ===');
-    resetForm();
-    resetResults();
+    resetCalculator();
     setCacheInfo({ fromCache: false });
-    unifiedCalculator.reset();
+    setShowResults(false);
     setActiveTab('tmb');
   };
 
-  const handleSyncPatientData = (patient: Patient) => {
-    console.log('=== SINCRONIZANDO DADOS DO PACIENTE ===', patient);
-    const currentData = { patientName, weight, height, age, sex };
-    syncPatientData(patient, currentData, handleInputChange);
+  const syncPatientData = (patient: any, currentData: any, handleInputChange: (name: string, value: any) => void) => {
+    if (patient) {
+      const calculatedAge = patient.birth_date 
+        ? new Date().getFullYear() - new Date(patient.birth_date).getFullYear()
+        : patient.age || 0;
+
+      handleInputChange('age', calculatedAge);
+      handleInputChange('sex', patient.gender === 'male' ? 'M' : 'F');
+    }
   };
 
   // Compatibility methods
@@ -185,12 +169,22 @@ const useCalculatorState = () => {
     profile,
     patientName,
     
-    // Results
-    tmbValue,
-    teeObject,
-    macros,
-    calorieSummary,
-    formulaUsed,
+    // Results - convert unified results to legacy format
+    tmbValue: results?.tmb || null,
+    teeObject: results ? {
+      tmb: results.tmb,
+      get: results.get,
+      vet: results.vet,
+      adjustment: results.adjustment
+    } : null,
+    macros: results?.macros || null,
+    calorieSummary: results ? {
+      totalCalories: results.vet,
+      proteinCalories: results.macros.protein.kcal,
+      carbsCalories: results.macros.carbs.kcal,
+      fatCalories: results.macros.fat.kcal
+    } : null,
+    formulaUsed: results?.formulaUsed || null,
     
     // Cache info
     fromCache: cacheInfo.fromCache,
@@ -207,12 +201,11 @@ const useCalculatorState = () => {
     handleCalculate: handleCalculateWrapper,
     handleReset,
     setActiveTab,
-    syncPatientData: handleSyncPatientData,
     
     // Compatibility methods
-    setSex,
-    setActivityLevel,
-    setObjective
+    setSex: (sex: 'M' | 'F') => handleInputChange('sex', sex),
+    setActivityLevel: (level: string) => handleInputChange('activityLevel', level),
+    setObjective: (objective: string) => handleInputChange('objective', objective)
   };
 };
 

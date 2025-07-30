@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNutritionCalculation } from './useNutritionCalculation';
 import { usePatient } from '@/contexts/patient/PatientContext';
@@ -6,15 +7,17 @@ import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 export interface CalculatorResults {
   tmb: number;
   get: number;
+  gea?: number; // GEA for ENP compatibility
   vet: number;
   adjustment: number;
   macros: {
     protein: { grams: number; kcal: number; percentage: number };
     carbs: { grams: number; kcal: number; percentage: number };
     fat: { grams: number; kcal: number; percentage: number };
-    proteinPerKg: number;
   };
+  proteinPerKg: number;
   formulaUsed?: string;
+  gerFormulaName?: string; // For ENP formula display
   fromCache?: boolean;
   cacheAge?: number;
 }
@@ -43,9 +46,9 @@ export const useCalculator = () => {
     height: 0,
     age: 0,
     sex: 'F',
-    activityLevel: 'moderado',
-    objective: 'manutenção',
-    profile: 'eutrofico'
+    activityLevel: 'moderado' as ActivityLevel,
+    objective: 'manutenção' as Objective,
+    profile: 'eutrofico' as Profile
   });
 
   // Sync with active patient data
@@ -114,14 +117,14 @@ export const useCalculator = () => {
         const calculatorResults: CalculatorResults = {
           tmb: result.tmb,
           get: result.get,
+          gea: result.get, // GEA equals GET for compatibility
           vet: result.vet,
           adjustment: result.vet - result.get,
           macros: {
             protein: {
               grams: result.macros.protein.grams,
               kcal: result.macros.protein.kcal,
-              percentage: result.macros.protein.percentage,
-              proteinPerKg: result.proteinPerKg
+              percentage: result.macros.protein.percentage
             },
             carbs: {
               grams: result.macros.carbs.grams,
@@ -132,10 +135,11 @@ export const useCalculator = () => {
               grams: result.macros.fat.grams,
               kcal: result.macros.fat.kcal,
               percentage: result.macros.fat.percentage
-            },
-            proteinPerKg: result.proteinPerKg
+            }
           },
+          proteinPerKg: result.proteinPerKg,
           formulaUsed: result.formulaUsed || 'Mifflin-St Jeor',
+          gerFormulaName: result.formulaUsed || 'Mifflin-St Jeor',
           fromCache: result.fromCache || false,
           cacheAge: result.cacheAge
         };

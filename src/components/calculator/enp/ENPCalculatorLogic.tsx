@@ -4,7 +4,7 @@ import { useENPFormState } from './hooks/useENPFormState';
 import { useENPValidation } from './hooks/useENPValidation';
 import { useCalculator } from '@/hooks/useCalculator';
 import { useENPExport } from './hooks/useENPExport';
-import { ActivityLevel, Objective } from '@/types/consultation';
+import { ActivityLevel, Objective, Profile } from '@/types/consultation';
 
 export const useENPCalculatorLogic = () => {
   const formState = useENPFormState();
@@ -32,9 +32,9 @@ export const useENPCalculatorLogic = () => {
       height: validation.validatedData.height,
       age: validation.validatedData.age,
       sex: validation.validatedData.sex,
-      activityLevel: validation.validatedData.activityLevel,
-      objective: validation.validatedData.objective,
-      profile: validation.validatedData.profile,
+      activityLevel: validation.validatedData.activityLevel as ActivityLevel,
+      objective: validation.validatedData.objective as Objective,
+      profile: validation.validatedData.profile as Profile,
       bodyFatPercentage: validation.validatedData.bodyFatPercentage
     };
 
@@ -49,6 +49,7 @@ export const useENPCalculatorLogic = () => {
       ...validation.validatedData,
       activityLevel: validation.validatedData.activityLevel as ActivityLevel,
       objective: validation.validatedData.objective as Objective,
+      profile: validation.validatedData.profile as Profile,
       bodyFatPercentage: validation.validatedData.bodyFatPercentage || 0
     };
     exportLogic.handleExportResults(calculator.results, exportData);
