@@ -15,6 +15,8 @@ interface UnifiedCalculatorStepProps {
   onComplete: () => void;
 }
 
+type Gender = 'male' | 'female' | 'other';
+
 const UnifiedCalculatorStep: React.FC<UnifiedCalculatorStepProps> = ({ onComplete }) => {
   const { activePatient } = usePatient();
   const { calculatorData, isCalculating, isSaving, calculateNutrition, saveCalculation } = useUnifiedCalculator();
@@ -24,7 +26,7 @@ const UnifiedCalculatorStep: React.FC<UnifiedCalculatorStepProps> = ({ onComplet
     weight: '',
     height: '',
     age: activePatient?.age?.toString() || '',
-    gender: activePatient?.gender || 'male',
+    gender: (activePatient?.gender || 'male') as Gender,
     activityLevel: 'moderado',
     objective: 'manutencao'
   });
@@ -108,7 +110,7 @@ const UnifiedCalculatorStep: React.FC<UnifiedCalculatorStepProps> = ({ onComplet
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Sexo</Label>
-              <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+              <Select value={formData.gender} onValueChange={(value: Gender) => setFormData(prev => ({ ...prev, gender: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
