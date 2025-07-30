@@ -3,7 +3,6 @@ import React from 'react';
 import { ENPCalculatorHeader } from './enp/ENPCalculatorHeader';
 import { ENPCalculatorForm } from './enp/ENPCalculatorForm';
 import { usePatient } from '@/contexts/patient/PatientContext';
-import { useCalculator } from '@/hooks/useCalculator';
 
 interface ENPCalculatorInterfaceProps {
   onCalculationComplete?: (results: any) => void;
@@ -15,15 +14,6 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
   onExportResults,
 }) => {
   const { activePatient } = usePatient();
-  const { 
-    formData, 
-    updateFormData, 
-    results, 
-    isCalculating, 
-    error, 
-    calculate,
-    reset
-  } = useCalculator();
 
   return (
     <div className="space-y-6">
@@ -47,18 +37,6 @@ export const ENPCalculatorInterface: React.FC<ENPCalculatorInterfaceProps> = ({
 
       {/* Form */}
       <ENPCalculatorForm />
-
-      {/* Export Button */}
-      {results && onExportResults && (
-        <div className="flex justify-end">
-          <button
-            onClick={onExportResults}
-            className="bg-nutri-blue text-white px-4 py-2 rounded hover:bg-nutri-blue-dark transition-colors"
-          >
-            Exportar Resultados
-          </button>
-        </div>
-      )}
     </div>
   );
 };

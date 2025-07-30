@@ -6,37 +6,15 @@ import { ENPCalculatorInterface } from './ENPCalculatorInterface';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info, Calculator } from 'lucide-react';
+import { useCalculator } from '@/hooks/useCalculator';
 
 const CalculatorTool: React.FC = () => {
   const { user } = useAuth();
   const { activePatient } = usePatient();
-  
-  const [calculationResults, setCalculationResults] = React.useState<any>(null);
-
-  const handleCalculationComplete = (results: any) => {
-    console.log('Cálculo ENP concluído:', results);
-    setCalculationResults(results);
-  };
-
-  const handleSavePatient = async () => {
-    if (!user || !activePatient || !calculationResults) return;
-    
-    // Implementar salvamento de dados no paciente
-    console.log('Salvando dados do paciente com resultados ENP:', {
-      patientId: activePatient.id,
-      results: calculationResults,
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  const handleGenerateMealPlan = async () => {
-    if (!user || !activePatient || !calculationResults) return;
-    
-    console.log('Gerando plano alimentar ENP com resultados:', calculationResults);
-  };
+  const { results } = useCalculator();
 
   const handleExportResults = () => {
-    if (!calculationResults) return;
+    if (!results) return;
     
     const exportData = {
       system: 'ENP - Engenharia Nutricional Padrão',
@@ -46,7 +24,7 @@ const CalculatorTool: React.FC = () => {
         name: activePatient.name 
       } : null,
       professional: user?.email,
-      results: calculationResults,
+      results: results,
       formula: 'Harris-Benedict Revisada (ENP)',
       standardDistribution: 'Café 25% | Lanche M 10% | Almoço 30% | Lanche T 10% | Jantar 20% | Ceia 5%'
     };
@@ -108,10 +86,20 @@ const CalculatorTool: React.FC = () => {
 
       {/* Interface Principal ENP */}
       <ENPCalculatorInterface 
-        onCalculationComplete={handleCalculationComplete}
-        onGenerateMealPlan={handleGenerateMealPlan}
         onExportResults={handleExportResults}
       />
+
+      {/* Export Button */}
+      {results && (
+        <div className="flex justify-end">
+          <button
+            onClick={handleExportResults}
+            className="bg-nutri-blue text-white px-4 py-2 rounded hover:bg-nutri-blue-dark transition-colors"
+          >
+            Exportar Resultados
+          </button>
+        </div>
+      )}
     </div>
   );
 };
