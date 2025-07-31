@@ -30,10 +30,10 @@ export const EnergyCalculationStep: React.FC = () => {
     weight: profile?.weight || 0,
     height: profile?.height || 0,
     age: profile?.age || 0,
-    gender: profile?.gender || 'F',
-    profileType: profile?.profileType || 'eutrofico',
+    gender: profile?.gender || 'F' as 'M' | 'F',
+    profileType: profile?.profileType || 'eutrofico' as 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
     activityFactor: energyCalculation?.activityFactor || 1.55,
-    objectiveType: energyCalculation?.objectiveType || 'manutencao',
+    objectiveType: energyCalculation?.objectiveType || 'manutencao' as 'hipertrofia' | 'emagrecimento' | 'manutencao',
     calorieAdjustment: energyCalculation?.calorieAdjustment || 0
   });
 
@@ -50,8 +50,8 @@ export const EnergyCalculationStep: React.FC = () => {
         weight: formData.weight,
         height: formData.height,
         age: formData.age,
-        gender: formData.gender as 'M' | 'F',
-        profileType: formData.profileType as any
+        gender: formData.gender,
+        profileType: formData.profileType
       });
     }
   };
@@ -107,7 +107,10 @@ export const EnergyCalculationStep: React.FC = () => {
                 <Label htmlFor="profileType">Perfil Corporal *</Label>
                 <Select 
                   value={formData.profileType} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, profileType: value }))}
+                  onValueChange={(value) => setFormData(prev => ({ 
+                    ...prev, 
+                    profileType: value as 'eutrofico' | 'sobrepeso_obesidade' | 'atleta'
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o perfil" />
@@ -124,7 +127,10 @@ export const EnergyCalculationStep: React.FC = () => {
                 <Label htmlFor="gender">Gênero *</Label>
                 <Select 
                   value={formData.gender} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+                  onValueChange={(value) => setFormData(prev => ({ 
+                    ...prev, 
+                    gender: value as 'M' | 'F'
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -231,7 +237,10 @@ export const EnergyCalculationStep: React.FC = () => {
                 <Label htmlFor="objectiveType">Objetivo *</Label>
                 <Select 
                   value={formData.objectiveType} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, objectiveType: value }))}
+                  onValueChange={(value) => setFormData(prev => ({ 
+                    ...prev, 
+                    objectiveType: value as 'hipertrofia' | 'emagrecimento' | 'manutencao'
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
