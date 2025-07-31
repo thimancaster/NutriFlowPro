@@ -12,6 +12,7 @@ import MealPlanWorkflowPage from '@/pages/MealPlanWorkflowPage';
 import Appointments from '@/pages/Appointments';
 import Settings from '@/pages/Settings';
 import AddTestimonial from '@/pages/AddTestimonial';
+import NutritionWorkflow from '@/pages/NutritionWorkflow';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/patients" element={<Patients />} />
       <Route path="/patient/:id" element={<PatientProfile />} />
       <Route path="/calculator" element={<Calculator />} />
+      <Route path="/nutrition-workflow" element={<NutritionWorkflow />} />
       <Route path="/meal-plans" element={<MealPlans />} />
       <Route path="/meal-plan-generator" element={<MealPlanGenerator />} />
       <Route path="/consultation" element={<UnifiedConsultationPage />} />
