@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -1131,13 +1131,13 @@ export type Database = {
     Functions: {
       check_premium_access_secure: {
         Args: Record<PropertyKey, never> | { feature_name: string }
-        Returns: Json
+        Returns: undefined
       }
       check_premium_quota: {
         Args:
           | Record<PropertyKey, never>
           | { p_user_id: string; p_feature: string; p_action?: string }
-        Returns: undefined
+        Returns: Json
       }
       check_rate_limit_secure: {
         Args: {
