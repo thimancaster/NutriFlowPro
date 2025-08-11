@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanItem, MacroTargets } from '@/types/mealPlan';
+import { MealPlan, MealPlanItem, MacroTargets, MealType, MEAL_TYPES } from '@/types/mealPlan';
 
 export interface CreateMealPlanParams {
   userId: string;
@@ -294,7 +294,7 @@ export class MealPlanServiceV2 {
   private static groupItemsByMealType(items: MealPlanItem[]) {
     console.log('🔄 Agrupando itens por tipo de refeição:', items.length);
 
-    const mealOrder = [
+    const mealOrder: MealType[] = [
       'cafe_da_manha',
       'lanche_manha', 
       'almoco',
@@ -304,10 +304,12 @@ export class MealPlanServiceV2 {
     ];
 
     const grouped = items.reduce((acc, item) => {
-      if (!acc[item.meal_type]) {
-        acc[item.meal_type] = [];
+      // Garantir que meal_type seja um dos tipos válidos
+      const validMealType = item.meal_type as MealType;
+      if (!acc[validMealType]) {
+        acc[validMealType] = [];
       }
-      acc[item.meal_type].push({
+      acc[validMealType].push({
         id: item.id,
         food_id: item.food_id || '',
         name: item.food_name,
@@ -320,7 +322,7 @@ export class MealPlanServiceV2 {
         order_index: item.order_index
       });
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {} as Record<MealType, any[]>);
 
     const meals = mealOrder
       .filter(mealType => grouped[mealType] && grouped[mealType].length > 0)
@@ -328,8 +330,8 @@ export class MealPlanServiceV2 {
         const foods = grouped[mealType] || [];
         const meal = {
           id: `${mealType}-meal`,
-          type: mealType as 'cafe_da_manha' | 'lanche_manha' | 'almoco' | 'lanche_tarde' | 'jantar' | 'ceia',
-          name: this.getMealTypeName(mealType),
+          type: mealType,
+          name: MEAL_TYPES[mealType],
           foods: foods,
           total_calories: foods.reduce((sum, food) => sum + (food.calories || 0), 0),
           total_protein: foods.reduce((sum, food) => sum + (food.protein || 0), 0),
@@ -375,14 +377,6 @@ export class MealPlanServiceV2 {
    * Get meal type display name in Portuguese
    */
   private static getMealTypeName(type: string): string {
-    const names: Record<string, string> = {
-      cafe_da_manha: 'Café da Manhã',
-      lanche_manha: 'Lanche da Manhã',
-      almoco: 'Almoço',
-      lanche_tarde: 'Lanche da Tarde',
-      jantar: 'Jantar',
-      ceia: 'Ceia'
-    };
-    return names[type] || type;
+    return MEAL_TYPES[type as MealType] || type;
   }
 }
