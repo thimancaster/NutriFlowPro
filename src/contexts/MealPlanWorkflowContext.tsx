@@ -14,6 +14,7 @@ interface MealPlanWorkflowState {
   currentMealPlan: MealPlan | null;
   isGenerating: boolean;
   isSaving: boolean;
+  error: string | null;
   
   // Workflow state
   currentStep: 'calculation' | 'generation' | 'editing' | 'completed';
@@ -25,6 +26,7 @@ interface MealPlanWorkflowState {
   saveMealPlan: (updates: Partial<MealPlan>) => Promise<void>;
   setCurrentStep: (step: 'calculation' | 'generation' | 'editing' | 'completed') => void;
   resetWorkflow: () => void;
+  clearError: () => void;
 }
 
 const MealPlanWorkflowContext = createContext<MealPlanWorkflowState | undefined>(undefined);
@@ -42,27 +44,56 @@ interface MealPlanWorkflowProviderProps {
 }
 
 export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> = ({ children }) => {
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [calculationData, setCalculationData] = useState<ConsultationData | null>(null);
+  const [patient, setPatientState] = useState<Patient | null>(null);
+  const [calculationData, setCalculationDataState] = useState<ConsultationData | null>(null);
   const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'calculation' | 'generation' | 'editing' | 'completed'>('calculation');
+  const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStepState] = useState<'calculation' | 'generation' | 'editing' | 'completed'>('calculation');
   
   const { toast } = useToast();
 
+  const setPatient = useCallback((newPatient: Patient | null) => {
+    console.log('🔄 Atualizando paciente:', newPatient?.name || 'null');
+    setPatientState(newPatient);
+  }, []);
+
+  const setCalculationData = useCallback((newData: ConsultationData | null) => {
+    console.log('🔄 Atualizando dados de cálculo:', newData ? 'presente' : 'null');
+    setCalculationDataState(newData);
+  }, []);
+
+  const setCurrentStep = useCallback((step: 'calculation' | 'generation' | 'editing' | 'completed') => {
+    console.log('🔄 Mudando etapa:', step);
+    setCurrentStepState(step);
+  }, []);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const generateMealPlan = useCallback(async (userId: string) => {
     if (!patient || !calculationData) {
+      const errorMsg = 'Paciente e dados de cálculo são necessários';
+      setError(errorMsg);
       toast({
         title: 'Erro',
-        description: 'Paciente e dados de cálculo são necessários',
+        description: errorMsg,
         variant: 'destructive'
       });
       return;
     }
 
-    console.log('Starting meal plan generation with:', { patient, calculationData });
+    console.log('🚀 Iniciando geração do plano alimentar:', {
+      patient: patient.name,
+      calories: calculationData.totalCalories
+    });
+
+    // Limpar erros anteriores
+    setError(null);
     setIsGenerating(true);
+    setCurrentStepState('generation');
     
     try {
       const targets: MacroTargets = {
@@ -72,7 +103,7 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
         fats: calculationData.fats || 67
       };
 
-      console.log('Generating meal plan with targets:', targets);
+      console.log('📊 Metas nutricionais:', targets);
 
       const result = await MealPlanServiceV2.generateMealPlan({
         userId,
@@ -82,27 +113,36 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
       });
 
       if (result.success && result.data) {
-        console.log('Meal plan generated successfully:', result.data);
+        console.log('✅ Plano gerado com sucesso:', result.data.id);
         setCurrentMealPlan(result.data);
-        setCurrentStep('editing');
+        setCurrentStepState('editing');
+        
         toast({
-          title: 'Sucesso',
-          description: 'Plano alimentar gerado com sucesso!'
+          title: 'Sucesso! 🇧🇷',
+          description: 'Plano alimentar brasileiro gerado com inteligência cultural!',
         });
       } else {
-        console.error('Failed to generate meal plan:', result.error);
+        console.error('❌ Falha na geração:', result.error);
+        const errorMsg = result.error || 'Erro ao gerar plano alimentar';
+        setError(errorMsg);
+        setCurrentStepState('generation'); // Permanecer na geração para retry
+        
         toast({
-          title: 'Erro',
-          description: result.error || 'Erro ao gerar plano alimentar',
-          variant: 'destructive'
+          title: 'Erro na Geração',
+          description: errorMsg,
+          variant: 'destructive',
         });
       }
     } catch (error: any) {
-      console.error('Error generating meal plan:', error);
+      console.error('❌ Erro inesperado na geração:', error);
+      const errorMsg = 'Erro inesperado ao gerar plano alimentar';
+      setError(errorMsg);
+      setCurrentStepState('generation');
+      
       toast({
-        title: 'Erro',
-        description: 'Erro inesperado ao gerar plano alimentar',
-        variant: 'destructive'
+        title: 'Erro Inesperado',
+        description: errorMsg,
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
@@ -111,15 +151,20 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
 
   const saveMealPlan = useCallback(async (updates: Partial<MealPlan>) => {
     if (!currentMealPlan) {
+      const errorMsg = 'Nenhum plano alimentar para salvar';
+      setError(errorMsg);
       toast({
         title: 'Erro',
-        description: 'Nenhum plano alimentar para salvar',
+        description: errorMsg,
         variant: 'destructive'
       });
       return;
     }
 
+    console.log('💾 Salvando plano alimentar:', currentMealPlan.id);
     setIsSaving(true);
+    setError(null);
+    
     try {
       const result = await MealPlanServiceV2.saveMealPlan({
         ...currentMealPlan,
@@ -127,24 +172,33 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
       });
 
       if (result.success && result.data) {
+        console.log('✅ Plano salvo com sucesso');
         setCurrentMealPlan(result.data);
-        setCurrentStep('completed');
+        setCurrentStepState('completed');
+        
         toast({
           title: 'Sucesso',
           description: 'Plano alimentar salvo com sucesso!'
         });
       } else {
+        console.error('❌ Erro ao salvar:', result.error);
+        const errorMsg = result.error || 'Erro ao salvar plano alimentar';
+        setError(errorMsg);
+        
         toast({
           title: 'Erro',
-          description: result.error || 'Erro ao salvar plano alimentar',
+          description: errorMsg,
           variant: 'destructive'
         });
       }
     } catch (error: any) {
-      console.error('Error saving meal plan:', error);
+      console.error('❌ Erro inesperado ao salvar:', error);
+      const errorMsg = 'Erro inesperado ao salvar plano alimentar';
+      setError(errorMsg);
+      
       toast({
-        title: 'Erro',
-        description: 'Erro inesperado ao salvar plano alimentar',
+        title: 'Erro Inesperado',
+        description: errorMsg,
         variant: 'destructive'
       });
     } finally {
@@ -153,13 +207,14 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
   }, [currentMealPlan, toast]);
 
   const resetWorkflow = useCallback(() => {
-    console.log('Resetting workflow');
-    setPatient(null);
-    setCalculationData(null);
+    console.log('🔄 Resetando workflow');
+    setPatientState(null);
+    setCalculationDataState(null);
     setCurrentMealPlan(null);
-    setCurrentStep('calculation');
+    setCurrentStepState('calculation');
     setIsGenerating(false);
     setIsSaving(false);
+    setError(null);
   }, []);
 
   const value: MealPlanWorkflowState = {
@@ -168,13 +223,15 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
     currentMealPlan,
     isGenerating,
     isSaving,
+    error,
     currentStep,
     setPatient,
     setCalculationData,
     generateMealPlan,
     saveMealPlan,
     setCurrentStep,
-    resetWorkflow
+    resetWorkflow,
+    clearError
   };
 
   return (

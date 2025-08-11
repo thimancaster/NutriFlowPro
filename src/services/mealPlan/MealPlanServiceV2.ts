@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { MealPlan, MealPlanItem, MacroTargets } from '@/types/mealPlan';
 
@@ -10,81 +9,174 @@ export interface CreateMealPlanParams {
   date?: string;
 }
 
+export interface ServiceResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  retry?: boolean;
+}
+
 export class MealPlanServiceV2 {
+  private static readonly MAX_RETRIES = 3;
+  private static readonly RETRY_DELAY = 2000; // 2 segundos
+  private static readonly TIMEOUT = 30000; // 30 segundos
+
   /**
-   * Generate a meal plan based on nutritional targets
+   * Generate a meal plan with retry logic and timeout
    */
-  static async generateMealPlan(params: CreateMealPlanParams): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
+  static async generateMealPlan(params: CreateMealPlanParams): Promise<ServiceResponse<MealPlan>> {
+    const { userId, patientId, calculationId, targets, date = new Date().toISOString().split('T')[0] } = params;
+    
+    console.log('🚀 Iniciando geração de plano alimentar:', {
+      userId,
+      patientId,
+      targets,
+      date
+    });
+
     try {
-      const { userId, patientId, calculationId, targets, date = new Date().toISOString().split('T')[0] } = params;
+      // Timeout wrapper
+      const generateWithTimeout = Promise.race([
+        this.performGeneration(userId, patientId, targets, date),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout na geração do plano alimentar')), this.TIMEOUT)
+        )
+      ]);
+
+      const mealPlanId = await generateWithTimeout;
       
-      console.log('Calling generate_meal_plan_with_cultural_rules with:', {
-        userId,
-        patientId,
-        targets,
-        date
-      });
-
-      // Call the culturally intelligent RPC function
-      const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan_with_cultural_rules', {
-        p_user_id: userId,
-        p_patient_id: patientId,
-        p_target_calories: targets.calories,
-        p_target_protein: targets.protein,
-        p_target_carbs: targets.carbs,
-        p_target_fats: targets.fats,
-        p_date: date
-      });
-
-      if (error) {
-        console.error('Error generating meal plan:', error);
-        return { success: false, error: error.message };
-      }
-
       if (!mealPlanId) {
-        return { success: false, error: 'No meal plan ID returned from generation' };
+        return { success: false, error: 'ID do plano alimentar não retornado' };
       }
 
-      console.log('Generated meal plan ID:', mealPlanId);
+      console.log('✅ Plano gerado com ID:', mealPlanId);
 
-      // Fetch the complete meal plan
-      const result = await this.getMealPlan(mealPlanId);
+      // Buscar o plano completo com retry
+      const result = await this.getMealPlanWithRetry(mealPlanId);
       
       if (result.success && result.data) {
-        console.log('Successfully fetched generated meal plan:', result.data);
+        console.log('✅ Plano carregado com sucesso:', {
+          id: result.data.id,
+          mealsCount: result.data.meals?.length || 0,
+          totalCalories: result.data.total_calories
+        });
       }
       
       return result;
     } catch (error: any) {
-      console.error('Error in generateMealPlan:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Erro na geração do plano:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Erro inesperado na geração do plano alimentar',
+        retry: true 
+      };
     }
   }
 
   /**
-   * Get a meal plan by ID with simplified query
+   * Perform the actual RPC call
    */
-  static async getMealPlan(id: string): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
-    try {
-      console.log('Fetching meal plan with ID:', id);
+  private static async performGeneration(
+    userId: string, 
+    patientId: string, 
+    targets: MacroTargets, 
+    date: string
+  ): Promise<string> {
+    console.log('📡 Chamando RPC generate_meal_plan_with_cultural_rules...');
 
+    const { data: mealPlanId, error } = await supabase.rpc('generate_meal_plan_with_cultural_rules', {
+      p_user_id: userId,
+      p_patient_id: patientId,
+      p_target_calories: targets.calories,
+      p_target_protein: targets.protein,
+      p_target_carbs: targets.carbs,
+      p_target_fats: targets.fats,
+      p_date: date
+    });
+
+    if (error) {
+      console.error('❌ Erro na RPC:', error);
+      throw new Error(`Erro na geração: ${error.message}`);
+    }
+
+    return mealPlanId;
+  }
+
+  /**
+   * Get meal plan with retry logic
+   */
+  private static async getMealPlanWithRetry(id: string): Promise<ServiceResponse<MealPlan>> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
+      console.log(`🔄 Tentativa ${attempt}/${this.MAX_RETRIES} de carregar plano ${id}`);
+
+      try {
+        const result = await this.getMealPlan(id);
+        
+        // Verificar se os dados estão completos
+        if (result.success && result.data && this.validateMealPlan(result.data)) {
+          console.log('✅ Plano carregado e validado com sucesso');
+          return result;
+        }
+
+        // Se dados incompletos mas sem erro, tentar novamente
+        if (result.success && result.data && !this.validateMealPlan(result.data)) {
+          console.warn('⚠️ Plano carregado mas dados incompletos, tentando novamente...');
+          lastError = new Error('Dados do plano incompletos');
+        } else {
+          lastError = new Error(result.error || 'Erro desconhecido');
+        }
+
+      } catch (error: any) {
+        console.error(`❌ Erro na tentativa ${attempt}:`, error);
+        lastError = error;
+      }
+
+      // Delay antes da próxima tentativa (exceto na última)
+      if (attempt < this.MAX_RETRIES) {
+        console.log(`⏳ Aguardando ${this.RETRY_DELAY}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
+      }
+    }
+
+    return { 
+      success: false, 
+      error: `Falha após ${this.MAX_RETRIES} tentativas: ${lastError?.message}`,
+      retry: true 
+    };
+  }
+
+  /**
+   * Get a meal plan by ID with improved error handling
+   */
+  static async getMealPlan(id: string): Promise<ServiceResponse<MealPlan>> {
+    try {
+      console.log('📥 Buscando plano alimentar:', id);
+
+      // Buscar dados do plano principal
       const { data: planData, error: planError } = await supabase
         .from('meal_plans')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle(); // Usar maybeSingle para evitar erro se não encontrar
 
       if (planError) {
-        console.error('Error fetching meal plan:', planError);
+        console.error('❌ Erro ao buscar plano:', planError);
         return { success: false, error: planError.message };
       }
 
       if (!planData) {
-        return { success: false, error: 'Meal plan not found' };
+        console.error('❌ Plano não encontrado:', id);
+        return { success: false, error: 'Plano alimentar não encontrado' };
       }
 
-      console.log('Fetched meal plan data:', planData);
+      console.log('📋 Dados do plano encontrados:', {
+        id: planData.id,
+        totalCalories: planData.total_calories
+      });
 
+      // Buscar itens do plano
       const { data: itemsData, error: itemsError } = await supabase
         .from('meal_plan_items')
         .select('*')
@@ -92,33 +184,61 @@ export class MealPlanServiceV2 {
         .order('meal_type, order_index');
 
       if (itemsError) {
-        console.error('Error fetching meal plan items:', itemsError);
+        console.error('❌ Erro ao buscar itens:', itemsError);
         return { success: false, error: itemsError.message };
       }
 
-      console.log('Fetched meal plan items:', itemsData);
+      console.log('🍽️ Itens encontrados:', itemsData?.length || 0);
 
-      // Transform data to MealPlan format
+      // Transformar dados para formato MealPlan
       const mealPlan: MealPlan = {
         ...planData,
         meals: this.groupItemsByMealType(itemsData || [])
       };
 
-      console.log('Transformed meal plan:', mealPlan);
+      console.log('✅ Plano transformado:', {
+        id: mealPlan.id,
+        mealsCount: mealPlan.meals.length
+      });
 
       return { success: true, data: mealPlan };
     } catch (error: any) {
-      console.error('Error in getMealPlan:', error);
+      console.error('❌ Erro inesperado ao buscar plano:', error);
       return { success: false, error: error.message };
     }
   }
 
   /**
+   * Validate meal plan completeness
+   */
+  private static validateMealPlan(mealPlan: MealPlan): boolean {
+    if (!mealPlan.id || !mealPlan.meals) {
+      console.warn('⚠️ Plano sem ID ou meals');
+      return false;
+    }
+
+    if (mealPlan.meals.length === 0) {
+      console.warn('⚠️ Plano sem refeições');
+      return false;
+    }
+
+    // Verificar se pelo menos uma refeição tem alimentos
+    const hasFoods = mealPlan.meals.some(meal => meal.foods && meal.foods.length > 0);
+    if (!hasFoods) {
+      console.warn('⚠️ Nenhuma refeição possui alimentos');
+      return false;
+    }
+
+    console.log('✅ Plano validado com sucesso');
+    return true;
+  }
+
+  /**
    * Save meal plan changes
    */
-  static async saveMealPlan(mealPlan: Partial<MealPlan> & { id: string }): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
+  static async saveMealPlan(mealPlan: Partial<MealPlan> & { id: string }): Promise<ServiceResponse<MealPlan>> {
     try {
-      console.log('Saving meal plan:', mealPlan);
+      console.log('💾 Salvando plano alimentar:', mealPlan.id);
 
       // Update meal plan
       const { error: updateError } = await supabase
@@ -134,7 +254,7 @@ export class MealPlanServiceV2 {
         .eq('id', mealPlan.id);
 
       if (updateError) {
-        console.error('Error updating meal plan:', updateError);
+        console.error('❌ Erro ao atualizar plano:', updateError);
         return { success: false, error: updateError.message };
       }
 
@@ -154,7 +274,7 @@ export class MealPlanServiceV2 {
             .insert(items);
 
           if (itemsError) {
-            console.error('Error inserting meal plan items:', itemsError);
+            console.error('❌ Erro ao inserir itens:', itemsError);
             return { success: false, error: itemsError.message };
           }
         }
@@ -163,7 +283,7 @@ export class MealPlanServiceV2 {
       // Return updated meal plan
       return this.getMealPlan(mealPlan.id);
     } catch (error: any) {
-      console.error('Error in saveMealPlan:', error);
+      console.error('❌ Erro ao salvar plano:', error);
       return { success: false, error: error.message };
     }
   }
@@ -172,9 +292,8 @@ export class MealPlanServiceV2 {
    * Group meal plan items by meal type in chronological order
    */
   private static groupItemsByMealType(items: MealPlanItem[]) {
-    console.log('Grouping items by meal type:', items);
+    console.log('🔄 Agrupando itens por tipo de refeição:', items.length);
 
-    // Define the chronological order of meals (Brazilian standard)
     const mealOrder = [
       'cafe_da_manha',
       'lanche_manha', 
@@ -203,9 +322,6 @@ export class MealPlanServiceV2 {
       return acc;
     }, {} as Record<string, any[]>);
 
-    console.log('Grouped items:', grouped);
-
-    // Return meals in chronological order
     const meals = mealOrder
       .filter(mealType => grouped[mealType] && grouped[mealType].length > 0)
       .map(mealType => {
@@ -221,11 +337,10 @@ export class MealPlanServiceV2 {
           total_fats: foods.reduce((sum, food) => sum + (food.fats || 0), 0)
         };
         
-        console.log('Created meal:', meal);
         return meal;
       });
 
-    console.log('Final meals array:', meals);
+    console.log('✅ Refeições agrupadas:', meals.length);
     return meals;
   }
 

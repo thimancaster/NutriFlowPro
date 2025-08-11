@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Utensils, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Utensils, Loader2, ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useUnifiedCalculator } from '@/hooks/useUnifiedCalculator';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -21,14 +22,24 @@ const UnifiedMealPlanStep: React.FC<UnifiedMealPlanStepProps> = ({ onComplete })
   const { 
     currentMealPlan, 
     isGenerating, 
+    error,
     generateMealPlan, 
     setPatient, 
-    setCalculationData 
+    setCalculationData,
+    clearError
   } = useMealPlanWorkflow();
 
+  // Sincronizar dados apenas uma vez quando disponíveis
   React.useEffect(() => {
-    if (activePatient && calculatorData) {
+    if (activePatient) {
+      console.log('🔄 Sincronizando paciente ativo:', activePatient.name);
       setPatient(activePatient);
+    }
+  }, [activePatient, setPatient]);
+
+  React.useEffect(() => {
+    if (calculatorData) {
+      console.log('🔄 Sincronizando dados da calculadora');
       setCalculationData({
         id: calculatorData.id || `unified-${Date.now()}`,
         totalCalories: calculatorData.totalCalories,
@@ -38,11 +49,21 @@ const UnifiedMealPlanStep: React.FC<UnifiedMealPlanStepProps> = ({ onComplete })
         objective: calculatorData.objective
       });
     }
-  }, [activePatient, calculatorData, setPatient, setCalculationData]);
+  }, [calculatorData, setCalculationData]);
 
   const handleGenerateMealPlan = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.error('❌ Usuário não autenticado');
+      return;
+    }
+    
+    clearError();
     await generateMealPlan(user.id);
+  };
+
+  const handleRetry = () => {
+    clearError();
+    handleGenerateMealPlan();
   };
 
   if (!calculatorData) {
@@ -86,6 +107,23 @@ const UnifiedMealPlanStep: React.FC<UnifiedMealPlanStepProps> = ({ onComplete })
               </div>
             </div>
           </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>{error}</span>
+                <Button
+                  onClick={handleRetry}
+                  variant="outline"
+                  size="sm"
+                  disabled={isGenerating}
+                >
+                  Tentar Novamente
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {!currentMealPlan ? (
             <div className="text-center space-y-4">
