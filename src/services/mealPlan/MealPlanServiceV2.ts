@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { MealPlan, MealPlanItem, MacroTargets, MealType, MEAL_TYPES } from '@/types/mealPlan';
 
@@ -190,10 +191,28 @@ export class MealPlanServiceV2 {
 
       console.log('🍽️ Itens encontrados:', itemsData?.length || 0);
 
+      // Convert items to proper MealPlanItem type
+      const typedItems: MealPlanItem[] = (itemsData || []).map(item => ({
+        id: item.id,
+        meal_plan_id: item.meal_plan_id,
+        meal_type: item.meal_type as MealType,
+        food_id: item.food_id,
+        food_name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fats: item.fats,
+        order_index: item.order_index
+      }));
+
       // Transformar dados para formato MealPlan
       const mealPlan: MealPlan = {
         ...planData,
-        meals: this.groupItemsByMealType(itemsData || [])
+        day_of_week: planData.day_of_week?.toString() || undefined,
+        meals: this.groupItemsByMealType(typedItems),
+        items: typedItems
       };
 
       console.log('✅ Plano transformado:', {
@@ -304,7 +323,6 @@ export class MealPlanServiceV2 {
     ];
 
     const grouped = items.reduce((acc, item) => {
-      // Garantir que meal_type seja um dos tipos válidos
       const validMealType = item.meal_type as MealType;
       if (!acc[validMealType]) {
         acc[validMealType] = [];
@@ -376,7 +394,7 @@ export class MealPlanServiceV2 {
   /**
    * Get meal type display name in Portuguese
    */
-  private static getMealTypeName(type: string): string {
-    return MEAL_TYPES[type as MealType] || type;
+  private static getMealTypeName(type: MealType): string {
+    return MEAL_TYPES[type] || type;
   }
 }

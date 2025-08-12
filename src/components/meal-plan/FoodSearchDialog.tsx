@@ -1,12 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Loader2 } from 'lucide-react';
-import { FoodService } from '@/services/foodService';
-import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 interface FoodSearchDialogProps {
   isOpen: boolean;
@@ -20,128 +17,65 @@ const FoodSearchDialog: React.FC<FoodSearchDialogProps> = ({
   onFoodSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    if (searchTerm.length >= 2) {
-      handleSearch();
-    } else {
-      setSearchResults([]);
-    }
-  }, [searchTerm]);
+  // Mock food data for demonstration
+  const mockFoods = [
+    { id: '1', name: 'Arroz branco', calories: 130, protein: 2.7, carbs: 28, fats: 0.3, portion_size: 100, portion_unit: 'g' },
+    { id: '2', name: 'Feijão carioca', calories: 77, protein: 4.8, carbs: 14, fats: 0.5, portion_size: 100, portion_unit: 'g' },
+    { id: '3', name: 'Frango grelhado', calories: 165, protein: 31, carbs: 0, fats: 3.6, portion_size: 100, portion_unit: 'g' },
+  ];
 
-  const handleSearch = async () => {
-    if (searchTerm.length < 2) return;
-
-    setIsSearching(true);
-    try {
-      // Usar o formato correto de filtros para o FoodService
-      const result = await FoodService.searchFoods({
-        query: searchTerm,
-        limit: 20
-      });
-      
-      // Acessar o array de dados corretamente
-      setSearchResults(result.data || []);
-    } catch (error) {
-      console.error('Erro na busca:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar alimentos",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSelectFood = (food: any) => {
-    onFoodSelect(food);
-    setSearchTerm('');
-    setSearchResults([]);
-  };
+  const filteredFoods = mockFoods.filter(food =>
+    food.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Buscar Alimento</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Campo de busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Digite o nome do alimento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
-              autoFocus
             />
           </div>
 
-          {/* Resultados da busca */}
-          <div className="space-y-2">
-            {isSearching && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                <span>Buscando alimentos...</span>
-              </div>
-            )}
-
-            {!isSearching && searchTerm.length >= 2 && searchResults.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>Nenhum alimento encontrado para "{searchTerm}"</p>
-              </div>
-            )}
-
-            {!isSearching && searchResults.length > 0 && (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {searchResults.map((food, index) => (
-                  <div
-                    key={food.id || index}
-                    className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleSelectFood(food)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{food.name}</h4>
-                        <p className="text-sm text-gray-600">
-                          {food.portion_size} {food.portion_unit}
-                        </p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {Math.round(food.calories)} kcal
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            P: {Math.round(food.protein)}g
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            C: {Math.round(food.carbs)}g
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            G: {Math.round(food.fats)}g
-                          </Badge>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="ghost">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
+          <div className="max-h-96 overflow-y-auto space-y-2">
+            {filteredFoods.map(food => (
+              <div
+                key={food.id}
+                className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                onClick={() => onFoodSelect(food)}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium">{food.name}</h4>
+                    <p className="text-sm text-gray-600">
+                      {food.calories} kcal por {food.portion_size}{food.portion_unit}
+                    </p>
                   </div>
-                ))}
+                  <div className="text-right text-sm">
+                    <div>P: {food.protein}g</div>
+                    <div>C: {food.carbs}g</div>
+                    <div>G: {food.fats}g</div>
+                  </div>
+                </div>
               </div>
-            )}
-
-            {searchTerm.length < 2 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>Digite pelo menos 2 caracteres para buscar</p>
-              </div>
-            )}
+            ))}
           </div>
+
+          {filteredFoods.length === 0 && searchTerm && (
+            <div className="text-center py-8 text-gray-500">
+              Nenhum alimento encontrado
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

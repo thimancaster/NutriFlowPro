@@ -1,3 +1,4 @@
+
 export type MealType = 
   | 'cafe_da_manha'
   | 'lanche_manha' 
@@ -24,6 +25,10 @@ export const MEAL_ORDER: MealType[] = [
   'ceia'
 ];
 
+// Aliases for compatibility
+export const MEAL_NAMES = MEAL_TYPES;
+export const MEAL_TIMES = MEAL_TYPES;
+
 export interface MealPlan {
   id: string;
   user_id: string;
@@ -40,22 +45,37 @@ export interface MealPlan {
   day_of_week?: string;
   created_at?: string;
   updated_at?: string;
+  items?: MealPlanItem[]; // Add items property for compatibility
 }
 
 export interface DetailedMealPlan extends MealPlan {
   patient?: Patient;
+  items?: MealPlanItem[];
 }
 
 export interface MealPlanMeal {
   id: string;
   type: MealType;
   name: string;
-  foods: any[];
+  foods: MealPlanFood[];
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
   notes?: string;
+}
+
+export interface MealPlanFood {
+  id: string;
+  food_id?: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  order_index: number;
 }
 
 export interface MealPlanItem {
@@ -93,11 +113,22 @@ export interface MacroTargets {
   fats: number;
 }
 
+// Alias for compatibility
+export interface NutritionalTargets extends MacroTargets {}
+
 export interface MealPlanGenerationParams {
   userId: string;
   patientId: string;
   targets: MacroTargets;
   date?: string;
+  mealTimeFoodMapping?: Record<string, string[]>;
+}
+
+export interface MealPlanFilters {
+  patientId?: string;
+  startDate?: string;
+  endDate?: string;
+  isTemplate?: boolean;
 }
 
 export interface Patient {
@@ -113,11 +144,30 @@ export interface Patient {
   updated_at?: string;
 }
 
-export const MEAL_NAMES: Record<MealType, string> = {
-  cafe_da_manha: 'Café da Manhã',
-  lanche_manha: 'Lanche da Manhã',
-  almoco: 'Almoço',
-  lanche_tarde: 'Lanche da Tarde',
-  jantar: 'Jantar',
-  ceia: 'Ceia'
+// Brazilian meal food mapping for cultural intelligence
+export const BRAZILIAN_MEAL_FOOD_MAPPING: Record<MealType, string[]> = {
+  cafe_da_manha: [
+    'Pão francês', 'Café com leite', 'Frutas', 'Queijo branco', 
+    'Manteiga', 'Aveia', 'Iogurte', 'Biscoito integral'
+  ],
+  lanche_manha: [
+    'Banana', 'Maçã', 'Castanhas', 'Iogurte natural', 
+    'Biscoito de aveia', 'Vitamina de frutas'
+  ],
+  almoco: [
+    'Arroz branco', 'Feijão carioca', 'Frango grelhado', 'Salada verde',
+    'Legumes refogados', 'Carne bovina', 'Peixe', 'Verduras'
+  ],
+  lanche_tarde: [
+    'Pão integral', 'Queijo minas', 'Frutas da estação', 'Chá',
+    'Biscoito integral', 'Iogurte com granola'
+  ],
+  jantar: [
+    'Sopa de legumes', 'Salada', 'Peixe grelhado', 'Frango light',
+    'Legumes cozidos', 'Arroz integral', 'Verduras refogadas'
+  ],
+  ceia: [
+    'Leite morno', 'Chá calmante', 'Frutas leves', 'Iogurte desnatado',
+    'Biscoito água e sal', 'Queijo cottage'
+  ]
 };

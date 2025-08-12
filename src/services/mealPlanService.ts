@@ -44,7 +44,7 @@ export class MealPlanService {
       total_fats: data.total_fats,
       notes: data.notes,
       is_template: data.is_template,
-      day_of_week: data.day_of_week,
+      day_of_week: data.day_of_week?.toString(),
       created_at: data.created_at,
       updated_at: data.updated_at
     };
@@ -208,7 +208,7 @@ export class MealPlanService {
           total_fats: mealPlan.total_fats,
           notes: mealPlan.notes,
           is_template: mealPlan.is_template,
-          day_of_week: mealPlan.day_of_week
+          day_of_week: mealPlan.day_of_week ? parseInt(mealPlan.day_of_week) : undefined
         })
         .select()
         .single();
@@ -239,6 +239,11 @@ export class MealPlanService {
       // Converter meals para Json se necessário
       if (updates.meals) {
         updateData.meals = updates.meals as any;
+      }
+
+      // Convert day_of_week to number if it's a string
+      if (updates.day_of_week && typeof updates.day_of_week === 'string') {
+        updateData.day_of_week = parseInt(updates.day_of_week);
       }
 
       const { data, error } = await supabase
