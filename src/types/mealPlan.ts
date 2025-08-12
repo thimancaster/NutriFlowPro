@@ -129,10 +129,8 @@ export interface MealPlanFilters {
   startDate?: string;
   endDate?: string;
   isTemplate?: boolean;
-  is_template?: boolean;
   limit?: number;
   date_from?: string;
-  patient_id?: string;
 }
 
 export interface Patient {
