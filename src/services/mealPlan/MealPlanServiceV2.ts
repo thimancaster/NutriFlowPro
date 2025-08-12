@@ -1,14 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanItem, MacroTargets, MealType, MEAL_TYPES } from '@/types/mealPlan';
-
-export interface CreateMealPlanParams {
-  userId: string;
-  patientId: string;
-  calculationId?: string;
-  targets: MacroTargets;
-  date?: string;
-}
+import { MealPlan, MealPlanItem, MealPlanGenerationParams, MealType, MEAL_TYPES } from '@/types/mealPlan';
 
 export interface ServiceResponse<T> {
   success: boolean;
@@ -25,8 +16,8 @@ export class MealPlanServiceV2 {
   /**
    * Generate a meal plan with retry logic and timeout
    */
-  static async generateMealPlan(params: CreateMealPlanParams): Promise<ServiceResponse<MealPlan>> {
-    const { userId, patientId, calculationId, targets, date = new Date().toISOString().split('T')[0] } = params;
+  static async generateMealPlan(params: MealPlanGenerationParams): Promise<ServiceResponse<MealPlan>> {
+    const { userId, patientId, targets, date = new Date().toISOString().split('T')[0] } = params;
     
     console.log('🚀 Iniciando geração de plano alimentar:', {
       userId,
@@ -80,7 +71,7 @@ export class MealPlanServiceV2 {
   private static async performGeneration(
     userId: string, 
     patientId: string, 
-    targets: MacroTargets, 
+    targets: { calories: number; protein: number; carbs: number; fats: number }, 
     date: string
   ): Promise<string> {
     console.log('📡 Chamando RPC generate_meal_plan_with_cultural_rules...');
@@ -191,11 +182,11 @@ export class MealPlanServiceV2 {
 
       console.log('🍽️ Itens encontrados:', itemsData?.length || 0);
 
-      // Convert items to proper MealPlanItem type
+      // Convert items to proper MealPlanItem type with safety mapping
       const typedItems: MealPlanItem[] = (itemsData || []).map(item => ({
         id: item.id,
         meal_plan_id: item.meal_plan_id,
-        meal_type: item.meal_type as MealType,
+        meal_type: this.mapMealTypeToPortuguese(item.meal_type),
         food_id: item.food_id,
         food_name: item.food_name,
         quantity: item.quantity,
@@ -225,6 +216,22 @@ export class MealPlanServiceV2 {
       console.error('❌ Erro inesperado ao buscar plano:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * Map meal type to Portuguese (safety fallback for any legacy English values)
+   */
+  private static mapMealTypeToPortuguese(mealType: string): MealType {
+    const mapping: Record<string, MealType> = {
+      'breakfast': 'cafe_da_manha',
+      'morning_snack': 'lanche_manha',
+      'lunch': 'almoco',
+      'afternoon_snack': 'lanche_tarde',
+      'dinner': 'jantar',
+      'evening_snack': 'ceia'
+    };
+    
+    return (mapping[mealType] || mealType) as MealType;
   }
 
   /**
@@ -323,7 +330,7 @@ export class MealPlanServiceV2 {
     ];
 
     const grouped = items.reduce((acc, item) => {
-      const validMealType = item.meal_type as MealType;
+      const validMealType = this.mapMealTypeToPortuguese(item.meal_type);
       if (!acc[validMealType]) {
         acc[validMealType] = [];
       }

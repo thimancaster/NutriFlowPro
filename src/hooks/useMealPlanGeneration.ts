@@ -1,15 +1,8 @@
 
 import { useState } from 'react';
 import { MealPlanServiceV2 } from '@/services/mealPlan/MealPlanServiceV2';
-import { MacroTargets, MealPlan } from '@/types/mealPlan';
+import { MealPlanGenerationParams, MealPlan } from '@/types/mealPlan';
 import { useToast } from '@/hooks/use-toast';
-
-interface MealPlanGenerationParams {
-  userId: string;
-  patientId: string;
-  targets: MacroTargets;
-  date?: string;
-}
 
 export const useMealPlanGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
