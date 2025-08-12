@@ -45,7 +45,7 @@ export interface MealPlan {
   day_of_week?: string;
   created_at?: string;
   updated_at?: string;
-  items?: MealPlanItem[]; // Add items property for compatibility
+  items?: MealPlanItem[];
 }
 
 export interface DetailedMealPlan extends MealPlan {
@@ -129,6 +129,10 @@ export interface MealPlanFilters {
   startDate?: string;
   endDate?: string;
   isTemplate?: boolean;
+  is_template?: boolean;
+  limit?: number;
+  date_from?: string;
+  patient_id?: string;
 }
 
 export interface Patient {

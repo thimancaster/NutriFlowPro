@@ -22,7 +22,7 @@ const MealPlans: React.FC = () => {
     
     switch (value) {
       case 'templates':
-        newFilters.is_template = true;
+        newFilters.isTemplate = true;
         break;
       case 'recent':
         newFilters.limit = 10;

@@ -4,174 +4,154 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MealType, MEAL_TYPES, MealPlanItem } from '@/types/mealPlan';
-import { useToast } from '@/hooks/use-toast';
+import { MealType, MealPlanItem } from '@/types/mealPlan';
 
-interface AddItemDialogProps {
+export interface AddItemDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
+  mealType: MealType;
   mealPlanId: string;
   onItemAdd: (item: MealPlanItem) => void;
 }
 
 const AddItemDialog: React.FC<AddItemDialogProps> = ({
   open,
-  onOpenChange,
+  onClose,
+  mealType,
   mealPlanId,
   onItemAdd
 }) => {
-  const [formData, setFormData] = useState({
-    meal_type: 'cafe_da_manha' as MealType,
-    food_name: '',
-    quantity: 100,
-    unit: 'g',
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fats: 0
-  });
-  const { toast } = useToast();
+  const [foodName, setFoodName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [unit, setUnit] = useState('g');
+  const [calories, setCalories] = useState('');
+  const [protein, setProtein] = useState('');
+  const [carbs, setCarbs] = useState('');
+  const [fats, setFats] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     const newItem: MealPlanItem = {
-      id: crypto.randomUUID(),
+      id: `temp-${Date.now()}`,
       meal_plan_id: mealPlanId,
-      meal_type: formData.meal_type,
-      food_name: formData.food_name,
-      quantity: formData.quantity,
-      unit: formData.unit,
-      calories: formData.calories,
-      protein: formData.protein,
-      carbs: formData.carbs,
-      fats: formData.fats,
+      meal_type: mealType,
+      food_name: foodName,
+      quantity: parseFloat(quantity) || 0,
+      unit,
+      calories: parseFloat(calories) || 0,
+      protein: parseFloat(protein) || 0,
+      carbs: parseFloat(carbs) || 0,
+      fats: parseFloat(fats) || 0,
       order_index: 0
     };
 
     onItemAdd(newItem);
-    onOpenChange(false);
     
     // Reset form
-    setFormData({
-      meal_type: 'cafe_da_manha' as MealType,
-      food_name: '',
-      quantity: 100,
-      unit: 'g',
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fats: 0
-    });
-
-    toast({
-      title: "Sucesso",
-      description: "Item adicionado com sucesso!",
-    });
+    setFoodName('');
+    setQuantity('');
+    setCalories('');
+    setProtein('');
+    setCarbs('');
+    setFats('');
+    
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Adicionar Alimento</DialogTitle>
         </DialogHeader>
-
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Refeição</Label>
-            <Select value={formData.meal_type} onValueChange={(value: MealType) => setFormData({...formData, meal_type: value})}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(MEAL_TYPES).map(([key, name]) => (
-                  <SelectItem key={key} value={key}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Nome do Alimento</Label>
+            <Label htmlFor="foodName">Nome do Alimento</Label>
             <Input
-              value={formData.food_name}
-              onChange={(e) => setFormData({...formData, food_name: e.target.value})}
+              id="foodName"
+              value={foodName}
+              onChange={(e) => setFoodName(e.target.value)}
               required
             />
           </div>
-
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Quantidade</Label>
+              <Label htmlFor="quantity">Quantidade</Label>
               <Input
+                id="quantity"
                 type="number"
-                value={formData.quantity}
-                onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})}
+                step="0.1"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
                 required
               />
             </div>
             <div>
-              <Label>Unidade</Label>
+              <Label htmlFor="unit">Unidade</Label>
               <Input
-                value={formData.unit}
-                onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                id="unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
                 required
               />
             </div>
           </div>
-
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Calorias</Label>
+              <Label htmlFor="calories">Calorias</Label>
               <Input
+                id="calories"
                 type="number"
                 step="0.1"
-                value={formData.calories}
-                onChange={(e) => setFormData({...formData, calories: Number(e.target.value)})}
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
                 required
               />
             </div>
             <div>
-              <Label>Proteína (g)</Label>
+              <Label htmlFor="protein">Proteína (g)</Label>
               <Input
+                id="protein"
                 type="number"
                 step="0.1"
-                value={formData.protein}
-                onChange={(e) => setFormData({...formData, protein: Number(e.target.value)})}
+                value={protein}
+                onChange={(e) => setProtein(e.target.value)}
                 required
               />
             </div>
           </div>
-
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Carboidratos (g)</Label>
+              <Label htmlFor="carbs">Carboidrato (g)</Label>
               <Input
+                id="carbs"
                 type="number"
                 step="0.1"
-                value={formData.carbs}
-                onChange={(e) => setFormData({...formData, carbs: Number(e.target.value)})}
+                value={carbs}
+                onChange={(e) => setCarbs(e.target.value)}
                 required
               />
             </div>
             <div>
-              <Label>Gorduras (g)</Label>
+              <Label htmlFor="fats">Gordura (g)</Label>
               <Input
+                id="fats"
                 type="number"
                 step="0.1"
-                value={formData.fats}
-                onChange={(e) => setFormData({...formData, fats: Number(e.target.value)})}
+                value={fats}
+                onChange={(e) => setFats(e.target.value)}
                 required
               />
             </div>
           </div>
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit">
