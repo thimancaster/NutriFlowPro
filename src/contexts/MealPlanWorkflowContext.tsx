@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Patient, ConsultationData } from '@/types';
 import { MealPlan, MacroTargets } from '@/types/mealPlan';
@@ -108,7 +107,6 @@ export const MealPlanWorkflowProvider: React.FC<MealPlanWorkflowProviderProps> =
       const result = await MealPlanServiceV2.generateMealPlan({
         userId,
         patientId: patient.id,
-        calculationId: calculationData.id,
         targets
       });
 
