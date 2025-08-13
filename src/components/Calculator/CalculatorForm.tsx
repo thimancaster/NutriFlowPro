@@ -7,7 +7,40 @@ import { useCalculationQuota } from '@/hooks/useCalculationQuota';
 import BasicInfoForm from './BasicInfoForm';
 import NutritionalResultsDisplay from './NutritionalResultsDisplay';
 import { Patient, ConsultationData } from '@/types';
-import { calculateNutritionalNeeds } from '@/utils/nutritionCalculations';
+
+// Simple calculation function - replace with actual calculation logic
+const calculateNutritionalNeeds = (data: any) => {
+  const weight = Number(data.weight);
+  const height = Number(data.height);
+  const age = Number(data.age);
+  
+  // Harris-Benedict equation for BMR
+  let bmr;
+  if (data.gender === 'male') {
+    bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+  } else {
+    bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+  }
+  
+  // Activity factor
+  const activityFactors = {
+    'sedentary': 1.2,
+    'lightly_active': 1.375,
+    'moderately_active': 1.55,
+    'very_active': 1.725,
+    'extra_active': 1.9
+  };
+  
+  const tdee = bmr * (activityFactors[data.activity_level as keyof typeof activityFactors] || 1.2);
+  
+  // Basic macro calculation
+  const protein = weight * 2.2; // 2.2g per kg
+  const fats = weight * 1; // 1g per kg
+  const carbsCalories = tdee - (protein * 4) - (fats * 9);
+  const carbs = carbsCalories / 4;
+  
+  return { bmr, tdee, protein, carbs, fats };
+};
 
 interface CalculatorFormProps {
   patient: Patient;
@@ -44,7 +77,7 @@ const CalculatorForm: React.FC<CalculatorFormProps> = ({
         ...data,
         ...results,
         patient: patient,
-        tipo: 'primeira_consulta'
+        totalCalories: results.tdee
       } as ConsultationData);
     }
   };

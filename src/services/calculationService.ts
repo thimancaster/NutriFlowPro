@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 interface CalculationData {
@@ -16,6 +17,13 @@ interface CalculationData {
   tipo: string;
   status: string;
   user_id: string;
+}
+
+interface QuotaResult {
+  success: boolean;
+  error?: string;
+  quota_exceeded?: boolean;
+  attempts_remaining?: number;
 }
 
 export async function saveCalculationResults(data: CalculationData) {
@@ -46,13 +54,15 @@ export async function saveCalculationResults(data: CalculationData) {
       throw quotaError;
     }
 
+    const quotaResultTyped = quotaResult as unknown as QuotaResult;
+
     // Check if quota was exceeded
-    if (!quotaResult.success) {
+    if (!quotaResultTyped.success) {
       return { 
         success: false, 
-        error: quotaResult.error,
-        quota_exceeded: quotaResult.quota_exceeded,
-        attempts_remaining: quotaResult.attempts_remaining
+        error: quotaResultTyped.error,
+        quota_exceeded: quotaResultTyped.quota_exceeded,
+        attempts_remaining: quotaResultTyped.attempts_remaining
       };
     }
 
@@ -74,7 +84,7 @@ export async function saveCalculationResults(data: CalculationData) {
     return { 
       success: true, 
       data: calculation,
-      quota_status: quotaResult
+      quota_status: quotaResultTyped
     };
   } catch (error: any) {
     console.error('Error saving calculation results:', error);

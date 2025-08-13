@@ -11,6 +11,13 @@ interface QuotaStatus {
   error?: string;
 }
 
+interface QuotaResult {
+  success: boolean;
+  error?: string;
+  quota_exceeded?: boolean;
+  attempts_remaining?: number;
+}
+
 export const useCalculationQuota = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -31,7 +38,7 @@ export const useCalculationQuota = () => {
         throw new Error('Failed to fetch calculation quota');
       }
       
-      return data as QuotaStatus;
+      return data as unknown as QuotaStatus;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: true
@@ -53,13 +60,13 @@ export const useCalculationQuota = () => {
         throw new Error('Failed to register calculation attempt');
       }
 
-      return data;
+      return data as unknown as QuotaResult;
     },
     onSuccess: (data) => {
       // Invalidate and refetch quota status
       queryClient.invalidateQueries({ queryKey: ['calculation-quota'] });
       
-      if (data.quota_exceeded) {
+      if (data?.quota_exceeded) {
         toast({
           title: "Limite atingido",
           description: "Você atingiu o limite de 10 cálculos gratuitos. Faça upgrade para premium!",
