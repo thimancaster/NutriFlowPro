@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,25 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   const handleInputChange = (field: string, value: string) => {
     const newData = { ...formData, [field]: value };
     setFormData(newData);
-    onFormChange(newData);
+    
+    // Convert string values to appropriate types for ConsultationData
+    const consultationData: Partial<ConsultationData> = {
+      weight: newData.weight ? Number(newData.weight) : undefined,
+      height: newData.height ? Number(newData.height) : undefined,
+      age: newData.age ? Number(newData.age) : undefined,
+      gender: newData.gender || undefined,
+      activity_level: newData.activity_level || undefined,
+      goal: newData.goal || undefined
+    };
+    
+    // Remove undefined values
+    Object.keys(consultationData).forEach(key => {
+      if (consultationData[key as keyof ConsultationData] === undefined) {
+        delete consultationData[key as keyof ConsultationData];
+      }
+    });
+    
+    onFormChange(consultationData);
   };
 
   return (
