@@ -1,6 +1,4 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface CalculationData {
   patient_id: string;
@@ -30,7 +28,35 @@ export async function saveCalculationResults(data: CalculationData) {
       return { success: false, error: 'Campos obrigatórios faltando' };
     }
     
-    // Insert calculation record
+    // First, register the calculation attempt and check quota
+    const { data: quotaResult, error: quotaError } = await supabase.rpc('register_calculation_attempt', {
+      p_patient_id: data.patient_id,
+      p_calculation_data: {
+        weight: data.weight,
+        height: data.height,
+        age: data.age,
+        gender: data.gender,
+        activity_level: data.activity_level,
+        goal: data.goal
+      }
+    });
+
+    if (quotaError) {
+      console.error('Quota check error:', quotaError);
+      throw quotaError;
+    }
+
+    // Check if quota was exceeded
+    if (!quotaResult.success) {
+      return { 
+        success: false, 
+        error: quotaResult.error,
+        quota_exceeded: quotaResult.quota_exceeded,
+        attempts_remaining: quotaResult.attempts_remaining
+      };
+    }
+
+    // If quota check passed, proceed with calculation
     const { data: calculation, error } = await supabase
       .from('calculations')
       .insert({
@@ -45,7 +71,11 @@ export async function saveCalculationResults(data: CalculationData) {
       throw error;
     }
     
-    return { success: true, data: calculation };
+    return { 
+      success: true, 
+      data: calculation,
+      quota_status: quotaResult
+    };
   } catch (error: any) {
     console.error('Error saving calculation results:', error);
     return { success: false, error: error.message };

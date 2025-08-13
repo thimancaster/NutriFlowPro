@@ -213,6 +213,44 @@ export type Database = {
           },
         ]
       }
+      calculation_attempts: {
+        Row: {
+          attempt_date: string | null
+          calculation_data: Json
+          created_at: string | null
+          id: string
+          is_successful: boolean | null
+          patient_id: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_date?: string | null
+          calculation_data?: Json
+          created_at?: string | null
+          id?: string
+          is_successful?: boolean | null
+          patient_id?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_date?: string | null
+          calculation_data?: Json
+          created_at?: string | null
+          id?: string
+          is_successful?: boolean | null
+          patient_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_attempts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calculation_history: {
         Row: {
           activity_level: string
@@ -1175,6 +1213,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_calculation_quota_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_subscriber_by_customer_id: {
         Args: { customer_id: string }
         Returns: {
@@ -1260,6 +1302,10 @@ export type Database = {
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
+      }
+      register_calculation_attempt: {
+        Args: { p_patient_id?: string; p_calculation_data?: Json }
+        Returns: Json
       }
       search_foods_secure: {
         Args: {
