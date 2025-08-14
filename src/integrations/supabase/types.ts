@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -360,12 +360,15 @@ export type Database = {
           measurements: Json | null
           notes: string | null
           patient_id: string | null
+          perfil_get: string | null
           protein: number
           status: string
+          superavit_deficit_calorico: number | null
           tdee: number
           tipo: string
           updated_at: string | null
           user_id: string
+          vet: number | null
           weight: number
         }
         Insert: {
@@ -384,12 +387,15 @@ export type Database = {
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
+          perfil_get?: string | null
           protein: number
           status?: string
+          superavit_deficit_calorico?: number | null
           tdee: number
           tipo?: string
           updated_at?: string | null
           user_id: string
+          vet?: number | null
           weight: number
         }
         Update: {
@@ -408,12 +414,15 @@ export type Database = {
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
+          perfil_get?: string | null
           protein?: number
           status?: string
+          superavit_deficit_calorico?: number | null
           tdee?: number
           tipo?: string
           updated_at?: string | null
           user_id?: string
+          vet?: number | null
           weight?: number
         }
         Relationships: [
@@ -887,6 +896,42 @@ export type Database = {
           },
         ]
       }
+      parametros_get_planilha: {
+        Row: {
+          created_at: string
+          fa_valor: number
+          formula_get_detalhe: string
+          formula_tmb_detalhe: string
+          id: string
+          perfil: string
+          sexo: string
+          tmb_base_valor: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fa_valor: number
+          formula_get_detalhe: string
+          formula_tmb_detalhe: string
+          id?: string
+          perfil: string
+          sexo: string
+          tmb_base_valor: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fa_valor?: number
+          formula_get_detalhe?: string
+          formula_tmb_detalhe?: string
+          id?: string
+          perfil?: string
+          sexo?: string
+          tmb_base_valor?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           address: string | null
@@ -1174,7 +1219,7 @@ export type Database = {
       check_premium_quota: {
         Args:
           | Record<PropertyKey, never>
-          | { p_user_id: string; p_feature: string; p_action?: string }
+          | { p_action?: string; p_feature: string; p_user_id: string }
         Returns: Json
       }
       check_rate_limit_secure: {
@@ -1191,25 +1236,25 @@ export type Database = {
       }
       generate_meal_plan: {
         Args: {
-          p_user_id: string
+          p_date?: string
           p_patient_id: string
           p_target_calories: number
-          p_target_protein: number
           p_target_carbs: number
           p_target_fats: number
-          p_date?: string
+          p_target_protein: number
+          p_user_id: string
         }
         Returns: string
       }
       generate_meal_plan_with_cultural_rules: {
         Args: {
-          p_user_id: string
+          p_date?: string
           p_patient_id: string
           p_target_calories: number
-          p_target_protein: number
           p_target_carbs: number
           p_target_fats: number
-          p_date?: string
+          p_target_protein: number
+          p_user_id: string
         }
         Returns: string
       }
@@ -1220,39 +1265,39 @@ export type Database = {
       get_subscriber_by_customer_id: {
         Args: { customer_id: string }
         Returns: {
-          user_id: string
           email: string
+          user_id: string
         }[]
       }
       get_subscriber_by_customer_id_safe: {
         Args: { customer_id: string }
         Returns: {
-          user_id: string
           email: string
+          user_id: string
         }[]
       }
       get_subscription_status: {
         Args: { user_id: string }
         Returns: {
-          is_premium: boolean
-          role: string
           email: string
-          stripe_customer_id: string
-          subscription_start: string
-          subscription_end: string
+          is_premium: boolean
           payment_status: string
+          role: string
+          stripe_customer_id: string
+          subscription_end: string
+          subscription_start: string
         }[]
       }
       get_subscription_status_safe: {
         Args: { user_id: string }
         Returns: {
-          is_premium: boolean
-          role: string
           email: string
-          stripe_customer_id: string
-          subscription_start: string
-          subscription_end: string
+          is_premium: boolean
           payment_status: string
+          role: string
+          stripe_customer_id: string
+          subscription_end: string
+          subscription_start: string
         }[]
       }
       get_user_role: {
@@ -1279,11 +1324,11 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | {
-              p_user_id: string
-              p_event_type: string
               p_event_data?: Json
+              p_event_type: string
               p_ip_address?: string
               p_user_agent?: string
+              p_user_id: string
             }
         Returns: undefined
       }
@@ -1291,11 +1336,11 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | {
-              p_user_id: string
-              p_event_type: string
               p_event_data?: Json
+              p_event_type: string
               p_ip_address?: string
               p_user_agent?: string
+              p_user_id: string
             }
         Returns: undefined
       }
@@ -1304,56 +1349,56 @@ export type Database = {
         Returns: undefined
       }
       register_calculation_attempt: {
-        Args: { p_patient_id?: string; p_calculation_data?: Json }
+        Args: { p_calculation_data?: Json; p_patient_id?: string }
         Returns: Json
       }
       search_foods_secure: {
         Args: {
-          search_query: string
           search_category?: string
           search_limit?: number
+          search_query: string
         }
         Returns: {
+          calories_per_100g: number
+          carbs_per_100g: number
+          category: string
+          fat_per_100g: number
           id: string
           name: string
-          category: string
-          calories_per_100g: number
-          protein_per_100g: number
-          carbs_per_100g: number
-          fat_per_100g: number
           portion_size: number
           portion_unit: string
+          protein_per_100g: number
         }[]
       }
       set_user_admin_role: {
-        Args: { target_user_id: string; is_admin: boolean }
+        Args: { is_admin: boolean; target_user_id: string }
         Returns: undefined
       }
       upsert_subscriber: {
         Args: {
-          p_user_id: string
           p_email: string
+          p_is_premium?: boolean
+          p_payment_status?: string
+          p_role?: string
           p_stripe_customer_id?: string
           p_stripe_subscription_id?: string
-          p_is_premium?: boolean
-          p_role?: string
-          p_payment_status?: string
-          p_subscription_start?: string
           p_subscription_end?: string
+          p_subscription_start?: string
+          p_user_id: string
         }
         Returns: undefined
       }
       upsert_subscriber_safe: {
         Args: {
-          p_user_id: string
           p_email: string
+          p_is_premium?: boolean
+          p_payment_status?: string
+          p_role?: string
           p_stripe_customer_id?: string
           p_stripe_subscription_id?: string
-          p_is_premium?: boolean
-          p_role?: string
-          p_payment_status?: string
-          p_subscription_start?: string
           p_subscription_end?: string
+          p_subscription_start?: string
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -1361,17 +1406,17 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | {
-              p_name: string
-              p_email?: string
-              p_phone?: string
               p_cpf?: string
+              p_email?: string
+              p_name: string
+              p_phone?: string
             }
         Returns: undefined
       }
       validate_premium_access_secure: {
         Args:
           | Record<PropertyKey, never>
-          | { feature_name: string; action_type?: string }
+          | { action_type?: string; feature_name: string }
         Returns: undefined
       }
     }

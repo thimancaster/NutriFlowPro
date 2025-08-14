@@ -1,68 +1,138 @@
-
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { 
-  Home, 
-  Users, 
-  Calculator, 
-  Utensils, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
-  Star,
-  Workflow
+import {
+  LayoutDashboard,
+  Users,
+  CalendarDays,
+  UtensilsCrossed,
+  FileText,
+  Settings,
+  Calendar,
+  Calculator,
 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { Badge } from '@/components/ui/badge';
 
-interface SidebarProps {
-  isOpen: boolean;
+interface SidebarItem {
+  icon: React.ComponentType<any>;
+  label: string;
+  href: string;
+  badge?: string;
 }
 
-const navigationItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Pacientes', href: '/patients', icon: Users },
-  { name: 'Calculadora', href: '/calculator', icon: Calculator },
-  { name: 'Workflow Nutricional', href: '/nutrition-workflow', icon: Workflow },
-  { name: 'Planos Alimentares', href: '/meal-plans', icon: Utensils },
-  { name: 'Agendamentos', href: '/appointments', icon: Calendar },
-  { name: 'Configurações', href: '/settings', icon: Settings },
-  { name: 'Depoimentos', href: '/testimonials', icon: Star }
+const sidebarItems = [
+  {
+    icon: LayoutDashboard,
+    label: 'Dashboard',
+    href: '/dashboard',
+  },
+  {
+    icon: Users,
+    label: 'Pacientes',
+    href: '/patients',
+  },
+  {
+    icon: Calculator,
+    label: 'Calculadora',
+    href: '/calculator',
+  },
+  {
+    icon: Calculator,
+    label: 'Planilha (Novo)',
+    href: '/planilha-calculator',
+    badge: 'Fase 1'
+  },
+  {
+    icon: CalendarDays,
+    label: 'Consultas',
+    href: '/consultations',
+  },
+  {
+    icon: UtensilsCrossed,
+    label: 'Planos Alimentares',
+    href: '/meal-plans',
+  },
+  {
+    icon: Calendar,
+    label: 'Agenda',
+    href: '/appointments',
+  },
+  {
+    icon: FileText,
+    label: 'Relatórios',
+    href: '/reports',
+  },
+  {
+    icon: Settings,
+    label: 'Configurações',
+    href: '/settings',
+  },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+const Sidebar: React.FC = () => {
+  const { user, logout } = useAuth();
+  const { clearActivePatient } = usePatient();
+
+  const handleLogout = async () => {
+    await logout();
+    clearActivePatient();
+  };
+
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 transform bg-white shadow-sm transition-transform duration-200 ease-in-out",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-        "lg:translate-x-0"
-      )}
-    >
-      <div className="flex h-full flex-col overflow-y-auto px-3 py-4">
-        <nav className="space-y-2">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            return (
+    <div className="flex flex-col h-full bg-gray-50 border-r py-4">
+      <div className="px-4 mb-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email} />
+                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <nav className="flex-grow">
+        <ul>
+          {sidebarItems.map((item) => (
+            <li key={item.label}>
               <NavLink
-                key={item.name}
                 to={item.href}
                 className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-nutri-green text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  )
+                  `flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 ${
+                    isActive ? 'font-semibold bg-gray-200' : ''
+                  }`
                 }
               >
-                <Icon className="h-5 w-5" />
-                {item.name}
+                <item.icon className="w-4 h-4 mr-2" />
+                {item.label}
+                {item.badge && (
+                  <Badge className="ml-auto">{item.badge}</Badge>
+                )}
               </NavLink>
-            );
-          })}
-        </nav>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="p-4 text-center text-xs text-gray-500">
+        NutriFlow Pro &copy; {new Date().getFullYear()}
       </div>
-    </aside>
+    </div>
   );
 };
 
