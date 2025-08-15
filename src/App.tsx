@@ -1,106 +1,70 @@
+
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import { LandingPage } from '@/pages/LandingPage';
-import { AuthPage } from '@/pages/AuthPage';
-import { Dashboard } from '@/pages/Dashboard';
-import { Patients } from '@/pages/Patients';
-import { Calculator } from '@/pages/Calculator';
-import { Consultations } from '@/pages/Consultations';
-import { MealPlans } from '@/pages/MealPlans';
-import { Appointments } from '@/pages/Appointments';
-import { Reports } from '@/pages/Reports';
-import { SettingsPage } from '@/pages/SettingsPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from '@/contexts/theme/ThemeProvider';
 import { AuthProvider } from '@/contexts/auth/AuthContext';
 import { PatientProvider } from '@/contexts/patient/PatientContext';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { CalculatorProvider } from '@/contexts/calculator/CalculatorContext';
+import { MealPlanProvider } from '@/contexts/MealPlanContext';
+import { Toaster } from '@/components/ui/toaster';
+import { Helmet } from 'react-helmet';
+
+// Pages
+import Dashboard from '@/pages/Dashboard';
+import Patients from '@/pages/Patients';
+import Calculator from '@/pages/Calculator';
+import MealPlans from '@/pages/MealPlans';
+import Appointments from '@/pages/Appointments';
+import SettingsPage from '@/pages/SettingsPage';
 import PlanilhaCalculator from '@/pages/PlanilhaCalculator';
 
-function App() {
-  const queryClient = new QueryClient();
+// Layout Components
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function App() {
   return (
-    <Router>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
         <AuthProvider>
           <PatientProvider>
-            <CalculatorProvider>
-              <Toaster />
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Dashboard />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/patients" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Patients />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/calculator" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Calculator />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/planilha-calculator" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PlanilhaCalculator />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/consultations" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Consultations />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/meal-plans" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <MealPlans />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/appointments" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Appointments />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/reports" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Reports />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <SettingsPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-              </Routes>
-            </CalculatorProvider>
+            <MealPlanProvider>
+              <Router>
+                <Helmet>
+                  <title>NutriFlow Pro - Sistema de Gestão Nutricional</title>
+                  <meta name="description" content="Sistema completo para profissionais de nutrição" />
+                </Helmet>
+                <Routes>
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <DashboardLayout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Dashboard />} />
+                    <Route path="patients" element={<Patients />} />
+                    <Route path="calculator" element={<Calculator />} />
+                    <Route path="planilha-calculator" element={<PlanilhaCalculator />} />
+                    <Route path="meal-plans" element={<MealPlans />} />
+                    <Route path="appointments" element={<Appointments />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                  </Route>
+                </Routes>
+                <Toaster />
+              </Router>
+            </MealPlanProvider>
           </PatientProvider>
         </AuthProvider>
-      </QueryClientProvider>
-    </Router>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

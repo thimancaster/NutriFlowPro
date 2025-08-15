@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      alimentos_v2: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          cho_g_por_referencia: number
+          created_at: string
+          fibra_g_por_referencia: number | null
+          fonte: string | null
+          id: string
+          kcal_por_referencia: number
+          lip_g_por_referencia: number
+          medida_padrao_referencia: string
+          nome: string
+          observacoes: string | null
+          peso_referencia_g: number
+          ptn_g_por_referencia: number
+          sodio_mg_por_referencia: number | null
+          subcategoria: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          cho_g_por_referencia: number
+          created_at?: string
+          fibra_g_por_referencia?: number | null
+          fonte?: string | null
+          id?: string
+          kcal_por_referencia: number
+          lip_g_por_referencia: number
+          medida_padrao_referencia: string
+          nome: string
+          observacoes?: string | null
+          peso_referencia_g: number
+          ptn_g_por_referencia: number
+          sodio_mg_por_referencia?: number | null
+          subcategoria?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          cho_g_por_referencia?: number
+          created_at?: string
+          fibra_g_por_referencia?: number | null
+          fonte?: string | null
+          id?: string
+          kcal_por_referencia?: number
+          lip_g_por_referencia?: number
+          medida_padrao_referencia?: string
+          nome?: string
+          observacoes?: string | null
+          peso_referencia_g?: number
+          ptn_g_por_referencia?: number
+          sodio_mg_por_referencia?: number | null
+          subcategoria?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       anthropometry: {
         Row: {
           abdominal: number | null
@@ -600,6 +660,69 @@ export type Database = {
         }
         Relationships: []
       }
+      itens_refeicao: {
+        Row: {
+          alimento_id: string | null
+          cho_g_calculado: number
+          created_at: string
+          id: string
+          kcal_calculado: number
+          lip_g_calculado: number
+          medida_utilizada: string
+          ordem: number
+          peso_total_g: number
+          ptn_g_calculado: number
+          quantidade: number
+          refeicao_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alimento_id?: string | null
+          cho_g_calculado: number
+          created_at?: string
+          id?: string
+          kcal_calculado: number
+          lip_g_calculado: number
+          medida_utilizada: string
+          ordem?: number
+          peso_total_g: number
+          ptn_g_calculado: number
+          quantidade?: number
+          refeicao_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alimento_id?: string | null
+          cho_g_calculado?: number
+          created_at?: string
+          id?: string
+          kcal_calculado?: number
+          lip_g_calculado?: number
+          medida_utilizada?: string
+          ordem?: number
+          peso_total_g?: number
+          ptn_g_calculado?: number
+          quantidade?: number
+          refeicao_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itens_refeicao_alimento_id_fkey"
+            columns: ["alimento_id"]
+            isOneToOne: false
+            referencedRelation: "alimentos_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itens_refeicao_refeicao_id_fkey"
+            columns: ["refeicao_id"]
+            isOneToOne: false
+            referencedRelation: "refeicoes_distribuicao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_cultural_rules: {
         Row: {
           created_at: string
@@ -985,6 +1108,149 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      plano_nutricional_diario: {
+        Row: {
+          calculation_id: string | null
+          cho_g_dia: number
+          cho_kcal: number
+          cho_percentual: number
+          created_at: string
+          id: string
+          lip_g_dia: number
+          lip_kcal: number
+          lip_percentual: number
+          lip_tipo_definicao: string
+          lip_valor: number
+          patient_id: string | null
+          ptn_g_dia: number
+          ptn_kcal: number
+          ptn_percentual: number
+          ptn_tipo_definicao: string
+          ptn_valor: number
+          updated_at: string
+          user_id: string
+          vet_kcal: number
+        }
+        Insert: {
+          calculation_id?: string | null
+          cho_g_dia: number
+          cho_kcal: number
+          cho_percentual: number
+          created_at?: string
+          id?: string
+          lip_g_dia: number
+          lip_kcal: number
+          lip_percentual: number
+          lip_tipo_definicao?: string
+          lip_valor: number
+          patient_id?: string | null
+          ptn_g_dia: number
+          ptn_kcal: number
+          ptn_percentual: number
+          ptn_tipo_definicao?: string
+          ptn_valor: number
+          updated_at?: string
+          user_id?: string
+          vet_kcal: number
+        }
+        Update: {
+          calculation_id?: string | null
+          cho_g_dia?: number
+          cho_kcal?: number
+          cho_percentual?: number
+          created_at?: string
+          id?: string
+          lip_g_dia?: number
+          lip_kcal?: number
+          lip_percentual?: number
+          lip_tipo_definicao?: string
+          lip_valor?: number
+          patient_id?: string | null
+          ptn_g_dia?: number
+          ptn_kcal?: number
+          ptn_percentual?: number
+          ptn_tipo_definicao?: string
+          ptn_valor?: number
+          updated_at?: string
+          user_id?: string
+          vet_kcal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_nutricional_diario_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_nutricional_diario_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refeicoes_distribuicao: {
+        Row: {
+          cho_g: number
+          cho_percentual: number
+          created_at: string
+          horario_sugerido: string | null
+          id: string
+          kcal_total: number
+          lip_g: number
+          lip_percentual: number
+          nome_refeicao: string
+          numero_refeicao: number
+          plano_nutricional_id: string | null
+          ptn_g: number
+          ptn_percentual: number
+          updated_at: string
+        }
+        Insert: {
+          cho_g?: number
+          cho_percentual?: number
+          created_at?: string
+          horario_sugerido?: string | null
+          id?: string
+          kcal_total?: number
+          lip_g?: number
+          lip_percentual?: number
+          nome_refeicao: string
+          numero_refeicao: number
+          plano_nutricional_id?: string | null
+          ptn_g?: number
+          ptn_percentual?: number
+          updated_at?: string
+        }
+        Update: {
+          cho_g?: number
+          cho_percentual?: number
+          created_at?: string
+          horario_sugerido?: string | null
+          id?: string
+          kcal_total?: number
+          lip_g?: number
+          lip_percentual?: number
+          nome_refeicao?: string
+          numero_refeicao?: number
+          plano_nutricional_id?: string | null
+          ptn_g?: number
+          ptn_percentual?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refeicoes_distribuicao_plano_nutricional_id_fkey"
+            columns: ["plano_nutricional_id"]
+            isOneToOne: false
+            referencedRelation: "plano_nutricional_diario"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_audit_log: {
         Row: {

@@ -26,4 +26,4 @@ const PlanilhaCalculator: React.FC = () => {
   );
 };
 
-export default PlanillaCalculator;
+export default PlanilhaCalculator;
