@@ -27,7 +27,7 @@ const navigation = [
 ];
 
 export default function Sidebar() {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const { activePatient, endPatientSession } = usePatient();
   const navigate = useNavigate();
 
@@ -36,7 +36,7 @@ export default function Sidebar() {
       if (activePatient) {
         endPatientSession();
       }
-      await signOut();
+      await logout();
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
