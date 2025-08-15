@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CalculationData {
   patient_id: string;
@@ -19,13 +20,6 @@ interface CalculationData {
   user_id: string;
 }
 
-interface QuotaResult {
-  success: boolean;
-  error?: string;
-  quota_exceeded?: boolean;
-  attempts_remaining?: number;
-}
-
 export async function saveCalculationResults(data: CalculationData) {
   try {
     console.log('Saving calculation data:', data);
@@ -36,37 +30,7 @@ export async function saveCalculationResults(data: CalculationData) {
       return { success: false, error: 'Campos obrigatórios faltando' };
     }
     
-    // First, register the calculation attempt and check quota
-    const { data: quotaResult, error: quotaError } = await supabase.rpc('register_calculation_attempt', {
-      p_patient_id: data.patient_id,
-      p_calculation_data: {
-        weight: data.weight,
-        height: data.height,
-        age: data.age,
-        gender: data.gender,
-        activity_level: data.activity_level,
-        goal: data.goal
-      }
-    });
-
-    if (quotaError) {
-      console.error('Quota check error:', quotaError);
-      throw quotaError;
-    }
-
-    const quotaResultTyped = quotaResult as unknown as QuotaResult;
-
-    // Check if quota was exceeded
-    if (!quotaResultTyped.success) {
-      return { 
-        success: false, 
-        error: quotaResultTyped.error,
-        quota_exceeded: quotaResultTyped.quota_exceeded,
-        attempts_remaining: quotaResultTyped.attempts_remaining
-      };
-    }
-
-    // If quota check passed, proceed with calculation
+    // Insert calculation record
     const { data: calculation, error } = await supabase
       .from('calculations')
       .insert({
@@ -81,11 +45,7 @@ export async function saveCalculationResults(data: CalculationData) {
       throw error;
     }
     
-    return { 
-      success: true, 
-      data: calculation,
-      quota_status: quotaResultTyped
-    };
+    return { success: true, data: calculation };
   } catch (error: any) {
     console.error('Error saving calculation results:', error);
     return { success: false, error: error.message };

@@ -1,183 +1,123 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { CalculatorTool } from '@/components/calculator';
 import { usePatient } from '@/contexts/patient/PatientContext';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { useCalculationQuota } from '@/hooks/useCalculationQuota';
-import CalculationQuotaDisplay from '@/components/CalculationQuotaDisplay';
-import PatientSelector from '@/components/Calculator/PatientSelector';
-import CalculatorForm from '@/components/Calculator/CalculatorForm';
-import { ConsultationData } from '@/types';
-import { saveCalculationResults } from '@/services/calculationService';
-import { saveConsultationHistory } from '@/services/consultationHistoryService';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Crown } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { User, Plus, Database, Eye } from 'lucide-react';
+import { CalculatorProvider } from '@/contexts/calculator/CalculatorContext';
+import PatientBanner from '@/components/patient/PatientBanner';
+import ContextualNavigation from '@/components/patient/ContextualNavigation';
+import { clearCalculatorDataOnStart } from '@/components/calculator/storageUtils';
 
-const Calculator = () => {
-  const { activePatient } = usePatient();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { canCalculate, quotaStatus, isPremium, attemptsRemaining } = useCalculationQuota();
-  
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+const CalculatorPage = () => {
+  const { activePatient, loadPatientById } = usePatient();
+  const [searchParams] = useSearchParams();
+  const patientId = searchParams.get('patientId');
+  const navigate = useNavigate();
 
-  const handleCalculate = async (data: ConsultationData) => {
-    if (!user || !activePatient) {
-      toast({
-        title: "Erro",
-        description: "Usuário ou paciente não encontrado",
-        variant: "destructive",
-      });
-      return;
+  // Clear calculator data on page load to ensure empty fields
+  useEffect(() => {
+    clearCalculatorDataOnStart();
+  }, []);
+
+  // Load patient if patientId is provided in URL but not active yet
+  useEffect(() => {
+    if (patientId && (!activePatient || activePatient.id !== patientId)) {
+      loadPatientById(patientId);
     }
+  }, [patientId, activePatient, loadPatientById]);
 
-    // Check quota before proceeding
-    if (!canCalculate) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
-    setIsCalculating(true);
-
-    try {
-      const calculationData = {
-        user_id: user.id,
-        patient_id: activePatient.id,
-        weight: data.weight || 0,
-        height: data.height || 0,
-        age: data.age || 0,
-        gender: data.gender || '',
-        activity_level: data.activity_level || '',
-        goal: data.goal || '',
-        bmr: data.bmr || 0,
-        tdee: data.tdee || 0,
-        protein: data.protein || 0,
-        carbs: data.carbs || 0,
-        fats: data.fats || 0,
-        tipo: 'primeira_consulta',
-        status: 'completed'
-      };
-
-      const result = await saveCalculationResults(calculationData);
-
-      if (!result.success) {
-        if (result.quota_exceeded) {
-          setShowUpgradeModal(true);
-          return;
-        }
-        throw new Error(result.error);
-      }
-
-      // Save to consultation history
-      try {
-        await saveConsultationHistory(activePatient.id, user.id, {
-          calculation_date: new Date().toISOString(),
-          consultation_number: 1,
-          tmb: data.bmr || 0,
-          vet: data.tdee || 0,
-          get: data.tdee || 0,
-          protein_g: data.protein || 0,
-          carbs_g: data.carbs || 0,
-          fat_g: data.fats || 0,
-          protein_kcal: (data.protein || 0) * 4,
-          carbs_kcal: (data.carbs || 0) * 4,
-          fat_kcal: (data.fats || 0) * 9,
-          formula_used: 'harris_benedict',
-          activity_level: data.activity_level || '',
-          objective: data.goal || '',
-          body_profile: 'normal',
-          sex: data.gender === 'male' ? 'M' : 'F',
-          age: data.age || 0,
-          weight: data.weight || 0,
-          height: data.height || 0
-        });
-      } catch (historyError) {
-        console.warn('Failed to save consultation history:', historyError);
-      }
-
-      toast({
-        title: "Cálculo realizado com sucesso!",
-        description: `Cálculo salvo para ${activePatient.name}. ${
-          !isPremium ? `Restam ${attemptsRemaining} cálculos gratuitos.` : ''
-        }`,
-      });
-
-    } catch (error: any) {
-      console.error('Error in calculation:', error);
-      toast({
-        title: "Erro no cálculo",
-        description: error.message || "Ocorreu um erro ao realizar o cálculo",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCalculating(false);
+  const handleViewPatientProfile = () => {
+    if (activePatient) {
+      navigate(`/patients/${activePatient.id}`);
     }
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Calculadora Nutricional</h1>
-        <p className="text-muted-foreground">
-          Calcule as necessidades nutricionais dos seus pacientes
-        </p>
+    <div className="container mx-auto py-8">
+      <ContextualNavigation currentModule="calculator" />
+      
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Calculadora Nutricional</h1>
+          <p className="text-muted-foreground">Calcule as necessidades energéticas e macronutrientes</p>
+        </div>
+        
+        <div className="flex space-x-2">
+          {!activePatient && (
+            <Link to="/patients">
+              <Button variant="outline" className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                <span>Selecionar Paciente</span>
+              </Button>
+            </Link>
+          )}
+          
+          {activePatient && (
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1"
+              onClick={handleViewPatientProfile}
+            >
+              <Eye className="h-4 w-4" />
+              <span>Ver Perfil</span>
+            </Button>
+          )}
+          
+          <Link to="/food-database">
+            <Button variant="outline" className="flex items-center gap-1">
+              <Database className="h-4 w-4" />
+              <span>Base de Alimentos</span>
+            </Button>
+          </Link>
+        </div>
       </div>
-
-      {/* Quota Display */}
-      <CalculationQuotaDisplay />
-
-      {/* Patient Selector */}
-      <PatientSelector />
-
-      {/* Calculator Form */}
-      {activePatient && (
-        <CalculatorForm
-          patient={activePatient}
-          onCalculate={handleCalculate}
-          isCalculating={isCalculating}
-          disabled={!canCalculate}
-        />
+      
+      {/* Display patient banner if patient is selected */}
+      {activePatient && <PatientBanner />}
+      
+      {!activePatient && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <AlertDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+              <div>
+                <span className="font-medium">Dica:</span> Selecione um paciente para preencher automaticamente os dados ou cadastre um novo paciente.
+              </div>
+              <Link to="/patients/new">
+                <Button size="sm" className="bg-nutri-green hover:bg-nutri-green-dark flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  Novo Paciente
+                </Button>
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
       )}
-
-      {/* Upgrade Modal */}
-      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-500" />
-              Upgrade para Premium
-            </DialogTitle>
-            <DialogDescription>
-              Você atingiu o limite de 10 cálculos gratuitos. Faça upgrade para o plano premium e tenha acesso ilimitado!
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Benefícios do Plano Premium:</h3>
-              <ul className="space-y-1 text-sm">
-                <li>✅ Cálculos nutricionais ilimitados</li>
-                <li>✅ Pacientes ilimitados</li>
-                <li>✅ Planos alimentares ilimitados</li>
-                <li>✅ Relatórios avançados</li>
-                <li>✅ Suporte prioritário</li>
-              </ul>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => setShowUpgradeModal(false)} variant="outline" className="flex-1">
-                Continuar Gratuito
-              </Button>
-              <Button className="flex-1">
-                <Crown className="h-4 w-4 mr-2" />
-                Fazer Upgrade
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Instruções</CardTitle>
+          <CardDescription>Como utilizar a calculadora nutricional</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ol className="list-decimal ml-5 space-y-2">
+            <li>Preencha os dados do paciente (peso, altura, idade, sexo e nível de atividade)</li>
+            <li>Selecione o objetivo do paciente (emagrecimento, manutenção ou hipertrofia)</li>
+            <li>Ajuste a distribuição de macronutrientes conforme necessário</li>
+            <li>Clique em "Calcular" para obter os resultados</li>
+            <li>Salve o paciente ou gere o plano alimentar a partir dos resultados</li>
+          </ol>
+        </CardContent>
+      </Card>
+      
+      <CalculatorProvider>
+        <CalculatorTool />
+      </CalculatorProvider>
     </div>
   );
 };
 
-export default Calculator;
+export default CalculatorPage;
