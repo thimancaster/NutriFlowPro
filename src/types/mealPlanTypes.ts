@@ -91,6 +91,7 @@ export interface ConsolidatedMealItem {
   carbs: number;
   fats: number;
   order_index: number;
+  meal_type?: MealType; // Added for backward compatibility
 }
 
 // Interface para compatibilidade com sistema legado
@@ -139,12 +140,6 @@ export interface MealPlanGenerationParams {
   date?: string;
   customDistribution?: Partial<Record<MealType, number>>;
   // Propriedades adicionais para compatibilidade
-  targets?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
-  };
   calculation_id?: string;
 }
 

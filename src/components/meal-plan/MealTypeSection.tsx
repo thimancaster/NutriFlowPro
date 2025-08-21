@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ConsolidatedMealItem } from '@/types/mealPlanTypes';
+import { ConsolidatedMealItem, MealType } from '@/types/mealPlanTypes';
 import { Edit, Trash2, Plus, Clock } from 'lucide-react';
 import AddItemDialog from './AddItemDialog';
 import EditItemDialog from './EditItemDialog';
@@ -63,7 +63,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
   const handleAdd = (newItem: ConsolidatedMealItem) => {
     const itemWithMealType = {
       ...newItem,
-      meal_type: mealType,
+      meal_type: mealType as MealType,
       id: crypto.randomUUID()
     };
     onItemAdd(itemWithMealType);

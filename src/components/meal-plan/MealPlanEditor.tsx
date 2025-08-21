@@ -2,7 +2,7 @@
 import React, {useState, useEffect} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
-import {ConsolidatedMealPlan, ConsolidatedMealItem, MEAL_ORDER, MEAL_NAMES, MEAL_TIMES} from "@/types/mealPlanTypes";
+import {ConsolidatedMealPlan, ConsolidatedMealItem, MEAL_ORDER, MEAL_TYPES, MEAL_TIMES} from "@/types/mealPlanTypes";
 import MealTypeSection from "./MealTypeSection";
 import {format} from "date-fns";
 import {ptBR} from "date-fns/locale";

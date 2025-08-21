@@ -1,58 +1,94 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calculator, Utensils, Edit, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, Circle, Users, Calculator, Utensils, FileText } from 'lucide-react';
+
+type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'completed';
 
 interface WorkflowProgressProps {
-  currentStep: 'calculation' | 'generation' | 'editing' | 'completed';
+  currentStep: WorkflowStep;
 }
 
 const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ currentStep }) => {
   const steps = [
-    { id: 'calculation', label: 'Cálculo', icon: Calculator },
-    { id: 'generation', label: 'Geração', icon: Utensils },
-    { id: 'editing', label: 'Edição', icon: Edit },
-    { id: 'completed', label: 'Concluído', icon: CheckCircle }
+    {
+      id: 'patient' as WorkflowStep,
+      name: 'Paciente',
+      description: 'Selecionar paciente',
+      icon: Users
+    },
+    {
+      id: 'nutritional' as WorkflowStep,
+      name: 'Cálculo',
+      description: 'Necessidades nutricionais',
+      icon: Calculator
+    },
+    {
+      id: 'generation' as WorkflowStep,
+      name: 'Geração',
+      description: 'Gerar plano alimentar',
+      icon: Utensils
+    },
+    {
+      id: 'mealPlan' as WorkflowStep,
+      name: 'Edição',
+      description: 'Personalizar plano',
+      icon: FileText
+    },
+    {
+      id: 'completed' as WorkflowStep,
+      name: 'Concluído',
+      description: 'Plano finalizado',
+      icon: CheckCircle
+    }
   ];
 
-  const getCurrentStepIndex = () => {
-    return steps.findIndex(step => step.id === currentStep);
+  const getStepStatus = (stepId: WorkflowStep) => {
+    const stepIndex = steps.findIndex(s => s.id === stepId);
+    const currentIndex = steps.findIndex(s => s.id === currentStep);
+    
+    if (stepIndex < currentIndex) return 'completed';
+    if (stepIndex === currentIndex) return 'current';
+    return 'pending';
   };
-
-  const currentIndex = getCurrentStepIndex();
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between space-x-4">
           {steps.map((step, index) => {
+            const status = getStepStatus(step.id);
             const Icon = step.icon;
-            const isActive = index === currentIndex;
-            const isCompleted = index < currentIndex;
-            const isUpcoming = index > currentIndex;
-
+            
             return (
               <div key={step.id} className="flex items-center">
-                <div className={`
-                  flex items-center justify-center w-10 h-10 rounded-full border-2 
-                  ${isActive ? 'bg-blue-600 border-blue-600 text-white' : ''}
-                  ${isCompleted ? 'bg-green-600 border-green-600 text-white' : ''}
-                  ${isUpcoming ? 'bg-gray-100 border-gray-300 text-gray-400' : ''}
-                `}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="ml-2">
-                  <div className={`text-sm font-medium ${
-                    isActive ? 'text-blue-600' : 
-                    isCompleted ? 'text-green-600' : 
-                    'text-gray-400'
-                  }`}>
-                    {step.label}
+                <div className="flex flex-col items-center space-y-2">
+                  <div className={`
+                    flex items-center justify-center w-10 h-10 rounded-full border-2
+                    ${status === 'completed' 
+                      ? 'bg-green-100 border-green-500 text-green-600' 
+                      : status === 'current'
+                      ? 'bg-blue-100 border-blue-500 text-blue-600'
+                      : 'bg-gray-100 border-gray-300 text-gray-400'
+                    }
+                  `}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-sm font-medium ${
+                      status === 'current' ? 'text-blue-600' : 
+                      status === 'completed' ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      {step.name}
+                    </div>
+                    <div className="text-xs text-gray-500">{step.description}</div>
                   </div>
                 </div>
+                
                 {index < steps.length - 1 && (
-                  <div className={`mx-4 h-0.5 w-16 ${
-                    index < currentIndex ? 'bg-green-600' : 'bg-gray-300'
+                  <div className={`flex-1 h-0.5 mx-4 ${
+                    status === 'completed' ? 'bg-green-300' : 'bg-gray-200'
                   }`} />
                 )}
               </div>
