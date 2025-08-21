@@ -2,71 +2,94 @@
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface Consultation {
+  id: string;
+  patient_id: string;
+  calculation_id?: string;
+  meal_plan_id?: string;
+  date: string;
+  metrics: {
+    weight: number;
+    height?: number;
+    bmi?: number;
+    objective?: string;
+    [key: string]: any;
+  };
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const consultationService = {
-  // Save consultation data
-  async saveConsultation(consultationData: any) {
+  // Create a new consultation record
+  async createConsultation(consultationData: Omit<Consultation, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; data?: Consultation; error?: string }> {
     try {
-      // Ensure required fields are present
-      const requiredFields = ['weight', 'height', 'age', 'gender', 'activity_level', 'goal', 'status', 'tipo'];
-      const missingFields = requiredFields.filter(field => !consultationData[field]);
-      
-      if (missingFields.length > 0) {
-        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-      }
-      
-      // Format the data for Supabase
-      const formattedData = {
-        id: consultationData.id || uuidv4(),
-        weight: Number(consultationData.weight),
-        height: Number(consultationData.height),
-        age: Number(consultationData.age),
-        gender: consultationData.gender,
-        activity_level: consultationData.activity_level,
-        goal: consultationData.goal,
-        bmr: Number(consultationData.bmr || 0),
-        tdee: Number(consultationData.tdee || 0),
-        protein: Number(consultationData.protein || 0),
-        carbs: Number(consultationData.carbs || 0),
-        fats: Number(consultationData.fats || 0),
-        user_id: consultationData.user_id,
-        patient_id: consultationData.patient_id,
-        tipo: consultationData.tipo,
-        status: consultationData.status,
-        notes: consultationData.notes || '',
-        measurements: consultationData.measurements || {}
+      const consultationRecord = {
+        id: uuidv4(),
+        ...consultationData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase
-        .from('calculations')
-        .insert([formattedData])
-        .select();
+        .from('consultations')
+        .insert([consultationRecord])
+        .select()
+        .single();
 
       if (error) {
-        throw new Error(`Error saving consultation: ${error.message}`);
+        throw new Error(`Error creating consultation: ${error.message}`);
       }
 
       return { 
         success: true, 
-        data: data[0], 
-        message: 'Consultation saved successfully' 
+        data: data as Consultation
       };
     } catch (error: any) {
-      console.error('Error in saveConsultation:', error);
+      console.error('Error in createConsultation:', error);
       return { 
         success: false, 
-        message: error.message || 'Failed to save consultation' 
+        error: error.message || 'Failed to create consultation' 
+      };
+    }
+  },
+
+  // Get consultations for a specific patient (for evolution chart)
+  async getPatientConsultations(patientId: string): Promise<{ success: boolean; data?: Consultation[]; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('consultations')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('date', { ascending: true });
+
+      if (error) {
+        throw new Error(`Error fetching consultations: ${error.message}`);
+      }
+
+      return { 
+        success: true, 
+        data: (data as Consultation[]) || []
+      };
+    } catch (error: any) {
+      console.error('Error in getPatientConsultations:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to fetch consultations' 
       };
     }
   },
 
   // Get a specific consultation
-  async getConsultation(id: string) {
+  async getConsultation(id: string): Promise<{ success: boolean; data?: Consultation; error?: string }> {
     try {
       const { data, error } = await supabase
-        .from('calculations')
+        .from('consultations')
         .select(`
           *,
-          patients(id, name, email, phone, gender)
+          patients(id, name, email, phone, gender),
+          calculations(id, bmr, tdee, protein, carbs, fats),
+          meal_plans(id, total_calories, total_protein, total_carbs, total_fats)
         `)
         .eq('id', id)
         .single();
@@ -77,51 +100,29 @@ export const consultationService = {
 
       return { 
         success: true, 
-        data,
-        message: 'Consultation retrieved successfully' 
+        data: data as Consultation
       };
     } catch (error: any) {
+      console.error('Error in getConsultation:', error);
       return { 
         success: false, 
-        message: error.message || 'Failed to retrieve consultation' 
-      };
-    }
-  },
-
-  // Get consultations for a specific patient
-  async getPatientConsultations(patientId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('calculations')
-        .select('*')
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw new Error(`Error fetching patient consultations: ${error.message}`);
-      }
-
-      return { 
-        success: true, 
-        data, 
-        message: 'Patient consultations retrieved successfully' 
-      };
-    } catch (error: any) {
-      return { 
-        success: false, 
-        message: error.message || 'Failed to retrieve patient consultations' 
+        error: error.message || 'Failed to fetch consultation' 
       };
     }
   },
 
   // Update an existing consultation
-  async updateConsultation(id: string, updates: any) {
+  async updateConsultation(id: string, updates: Partial<Consultation>): Promise<{ success: boolean; data?: Consultation; error?: string }> {
     try {
       const { data, error } = await supabase
-        .from('calculations')
-        .update(updates)
+        .from('consultations')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
-        .select();
+        .select()
+        .single();
 
       if (error) {
         throw new Error(`Error updating consultation: ${error.message}`);
@@ -129,14 +130,58 @@ export const consultationService = {
 
       return { 
         success: true, 
-        data: data[0], 
-        message: 'Consultation updated successfully' 
+        data: data as Consultation
       };
     } catch (error: any) {
+      console.error('Error in updateConsultation:', error);
       return { 
         success: false, 
-        message: error.message || 'Failed to update consultation' 
+        error: error.message || 'Failed to update consultation' 
+      };
+    }
+  },
+
+  // Calculate BMI from weight and height
+  calculateBMI(weight: number, height: number): number {
+    // Height should be in meters, weight in kg
+    const heightInMeters = height > 10 ? height / 100 : height; // Convert cm to m if needed
+    return Number((weight / (heightInMeters * heightInMeters)).toFixed(1));
+  },
+
+  // Get evolution data for charts
+  async getEvolutionData(patientId: string): Promise<{ success: boolean; data?: any[]; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('consultations')
+        .select('date, metrics, created_at')
+        .eq('patient_id', patientId)
+        .order('date', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      // Process data for chart consumption
+      const evolutionData = (data || []).map((consultation, index) => ({
+        consultation_number: index + 1,
+        date: consultation.date,
+        weight: consultation.metrics?.weight || 0,
+        bmi: consultation.metrics?.bmi || 0,
+        objective: consultation.metrics?.objective || 'manutenção'
+      }));
+
+      return { 
+        success: true, 
+        data: evolutionData
+      };
+    } catch (error: any) {
+      console.error('Error in getEvolutionData:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to fetch evolution data' 
       };
     }
   }
 };
+
+export default consultationService;
