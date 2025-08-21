@@ -61,7 +61,7 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
       const result = await calculateNutrition(calculationParams);
       
       if (result) {
-        // Salvar resultados na consulta - removendo 'get' que não existe no tipo
+        // Salvar resultados na consulta - incluindo 'get' obrigatório
         await updateConsultationData({
           bmr: result.tmb.value,
           totalCalories: result.vet,
@@ -72,6 +72,7 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
           objective: objective,
           results: {
             bmr: result.tmb.value,
+            get: result.get, // Adicionando propriedade obrigatória
             vet: result.vet,
             adjustment: result.adjustment,
             macros: {
@@ -297,7 +298,7 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
                 <p className="text-xl font-bold text-blue-600">
                   {results.macros.fat.grams}g
                 </p>
-                <p className="text-sm text-muted-foregor">
+                <p className="text-sm text-muted-foreground">
                   {results.macros.fat.kcal} kcal ({results.macros.fat.percentage}%)
                 </p>
               </div>
