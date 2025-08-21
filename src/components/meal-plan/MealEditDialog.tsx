@@ -6,15 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Save, X } from 'lucide-react';
-import { MealPlanMeal, MealPlanFood } from '@/types/mealPlan';
+import { ConsolidatedMeal, ConsolidatedMealItem } from '@/types/mealPlanTypes';
 import { useToast } from '@/hooks/use-toast';
 import FoodSearchDialog from './FoodSearchDialog';
 
 interface MealEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  meal: MealPlanMeal | null;
-  onSave: (updatedMeal: MealPlanMeal) => void;
+  meal: ConsolidatedMeal | null;
+  onSave: (updatedMeal: ConsolidatedMeal) => void;
 }
 
 const MealEditDialog: React.FC<MealEditDialogProps> = ({
@@ -23,7 +23,7 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
   meal,
   onSave
 }) => {
-  const [editedMeal, setEditedMeal] = useState<MealPlanMeal | null>(null);
+  const [editedMeal, setEditedMeal] = useState<ConsolidatedMeal | null>(null);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -34,43 +34,42 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
     }
   }, [meal]);
 
-  const calculateMealTotals = (foods: MealPlanFood[]) => {
-    return foods.reduce(
-      (totals, food) => ({
-        calories: totals.calories + food.calories,
-        protein: totals.protein + food.protein,
-        carbs: totals.carbs + food.carbs,
-        fats: totals.fats + food.fats
+  const calculateMealTotals = (items: ConsolidatedMealItem[]) => {
+    return items.reduce(
+      (totals, item) => ({
+        calories: totals.calories + item.calories,
+        protein: totals.protein + item.protein,
+        carbs: totals.carbs + item.carbs,
+        fats: totals.fats + item.fats
       }),
       { calories: 0, protein: 0, carbs: 0, fats: 0 }
     );
   };
 
-  const handleFoodQuantityChange = (foodIndex: number, newQuantity: number) => {
+  const handleItemQuantityChange = (itemIndex: number, newQuantity: number) => {
     if (!editedMeal) return;
 
-    const updatedFoods = [...editedMeal.foods];
-    const food = updatedFoods[foodIndex];
-    const originalQuantity = food.quantity;
+    const updatedItems = [...editedMeal.items];
+    const item = updatedItems[itemIndex];
+    const originalQuantity = item.quantity;
     
     if (originalQuantity > 0) {
       const factor = newQuantity / originalQuantity;
-      updatedFoods[foodIndex] = {
-        ...food,
+      updatedItems[itemIndex] = {
+        ...item,
         quantity: newQuantity,
-        calories: Math.round(food.calories / originalQuantity * newQuantity * 10) / 10,
-        protein: Math.round(food.protein / originalQuantity * newQuantity * 10) / 10,
-        carbs: Math.round(food.carbs / originalQuantity * newQuantity * 10) / 10,
-        fats: Math.round(food.fats / originalQuantity * newQuantity * 10) / 10
+        calories: Math.round(item.calories / originalQuantity * newQuantity * 10) / 10,
+        protein: Math.round(item.protein / originalQuantity * newQuantity * 10) / 10,
+        carbs: Math.round(item.carbs / originalQuantity * newQuantity * 10) / 10,
+        fats: Math.round(item.fats / originalQuantity * newQuantity * 10) / 10
       };
     }
 
-    const totals = calculateMealTotals(updatedFoods);
+    const totals = calculateMealTotals(updatedItems);
     
     setEditedMeal({
       ...editedMeal,
-      foods: updatedFoods,
-      ...totals,
+      items: updatedItems,
       total_calories: totals.calories,
       total_protein: totals.protein,
       total_carbs: totals.carbs,
@@ -78,16 +77,15 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
     });
   };
 
-  const handleRemoveFood = (foodIndex: number) => {
+  const handleRemoveItem = (itemIndex: number) => {
     if (!editedMeal) return;
 
-    const updatedFoods = editedMeal.foods.filter((_, index) => index !== foodIndex);
-    const totals = calculateMealTotals(updatedFoods);
+    const updatedItems = editedMeal.items.filter((_, index) => index !== itemIndex);
+    const totals = calculateMealTotals(updatedItems);
     
     setEditedMeal({
       ...editedMeal,
-      foods: updatedFoods,
-      ...totals,
+      items: updatedItems,
       total_calories: totals.calories,
       total_protein: totals.protein,
       total_carbs: totals.carbs,
@@ -98,26 +96,25 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
   const handleAddFood = (food: any) => {
     if (!editedMeal) return;
 
-    const newFood: MealPlanFood = {
+    const newItem: ConsolidatedMealItem = {
       id: crypto.randomUUID(),
       food_id: food.id,
-      name: food.name,
+      food_name: food.name,
       quantity: food.portion_size || 100,
       unit: food.portion_unit || 'g',
       calories: food.calories || 0,
       protein: food.protein || 0,
       carbs: food.carbs || 0,
       fats: food.fats || 0,
-      order_index: editedMeal.foods.length
+      order_index: editedMeal.items.length
     };
 
-    const updatedFoods = [...editedMeal.foods, newFood];
-    const totals = calculateMealTotals(updatedFoods);
+    const updatedItems = [...editedMeal.items, newItem];
+    const totals = calculateMealTotals(updatedItems);
     
     setEditedMeal({
       ...editedMeal,
-      foods: updatedFoods,
-      ...totals,
+      items: updatedItems,
       total_calories: totals.calories,
       total_protein: totals.protein,
       total_carbs: totals.carbs,
@@ -201,7 +198,7 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
                 </Button>
               </div>
 
-              {editedMeal.foods.length === 0 ? (
+              {editedMeal.items.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <p>Nenhum alimento adicionado ainda</p>
                   <Button 
@@ -215,11 +212,11 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {editedMeal.foods.map((food, index) => (
-                    <div key={food.id || index} className="border rounded-lg p-4">
+                  {editedMeal.items.map((item, index) => (
+                    <div key={item.id || index} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
-                          <h4 className="font-medium">{food.name}</h4>
+                          <h4 className="font-medium">{item.food_name}</h4>
                           <div className="grid grid-cols-2 gap-4 mt-2">
                             <div>
                               <Label htmlFor={`quantity-${index}`}>Quantidade</Label>
@@ -227,29 +224,30 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
                                 <Input
                                   id={`quantity-${index}`}
                                   type="number"
-                                  value={food.quantity}
-                                  onChange={(e) => handleFoodQuantityChange(index, Number(e.target.value))}
+                                  value={item.quantity}
+                                  onChange={(e) => handleItemQuantityChange(index, Number(e.target.value))}
                                   min="0.1"
                                   step="0.1"
                                   className="w-24"
                                 />
                                 <span className="flex items-center text-sm text-gray-600">
-                                  {food.unit}
+                                  {item.unit}
                                 </span>
                               </div>
                             </div>
+                            
                             <div className="flex gap-1 flex-wrap">
                               <Badge variant="outline" className="text-xs">
-                                {Math.round(food.calories)} kcal
+                                {Math.round(item.calories)} kcal
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                P: {Math.round(food.protein)}g
+                                P: {Math.round(item.protein)}g
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                C: {Math.round(food.carbs)}g
+                                C: {Math.round(item.carbs)}g
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                G: {Math.round(food.fats)}g
+                                G: {Math.round(item.fats)}g
                               </Badge>
                             </div>
                           </div>
@@ -257,7 +255,7 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveFood(index)}
+                          onClick={() => handleRemoveItem(index)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />

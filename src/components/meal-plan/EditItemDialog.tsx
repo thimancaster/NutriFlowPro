@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { MealPlanItem } from '@/types/mealPlan';
+import { ConsolidatedMealItem } from '@/types/mealPlanTypes';
 import { FoodService } from '@/services/foodService';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Calculator } from 'lucide-react';
@@ -12,8 +12,8 @@ import { Loader2, Calculator } from 'lucide-react';
 interface EditItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: MealPlanItem | null;
-  onSave: (item: MealPlanItem) => void;
+  item: ConsolidatedMealItem | null;
+  onSave: (item: ConsolidatedMealItem) => void;
 }
 
 const EditItemDialog: React.FC<EditItemDialogProps> = ({
@@ -96,7 +96,7 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
     try {
       setIsLoading(true);
       
-      const updatedItem: MealPlanItem = {
+      const updatedItem: ConsolidatedMealItem = {
         ...item,
         quantity,
         unit,
