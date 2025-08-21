@@ -9,7 +9,7 @@ import { useUnifiedCalculator } from '@/hooks/useUnifiedCalculator';
 import { usePatient } from '@/contexts/patient/PatientContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
-import MealPlanEditor from '@/components/meal-plan/MealPlanEditor';
+import ConsolidatedMealPlanEditor from '@/components/meal-plan/ConsolidatedMealPlanEditor';
 
 interface UnifiedMealPlanStepProps {
   onComplete: () => void;
@@ -29,17 +29,17 @@ const UnifiedMealPlanStep: React.FC<UnifiedMealPlanStepProps> = ({ onComplete })
     clearError
   } = useMealPlanWorkflow();
 
-  // Sincronizar dados apenas uma vez quando disponíveis
+  // Sync data only once when available
   React.useEffect(() => {
     if (activePatient) {
-      console.log('🔄 Sincronizando paciente ativo:', activePatient.name);
+      console.log('🔄 Syncing active patient:', activePatient.name);
       setPatient(activePatient);
     }
   }, [activePatient, setPatient]);
 
   React.useEffect(() => {
     if (calculatorData) {
-      console.log('🔄 Sincronizando dados da calculadora');
+      console.log('🔄 Syncing calculator data');
       setCalculationData({
         id: calculatorData.id || `unified-${Date.now()}`,
         totalCalories: calculatorData.totalCalories,
@@ -53,12 +53,12 @@ const UnifiedMealPlanStep: React.FC<UnifiedMealPlanStepProps> = ({ onComplete })
 
   const handleGenerateMealPlan = async () => {
     if (!user?.id) {
-      console.error('❌ Usuário não autenticado');
+      console.error('❌ User not authenticated');
       return;
     }
     
     clearError();
-    await generateMealPlan(user.id);
+    await generateMealPlan(calculatorData);
   };
 
   const handleRetry = () => {
@@ -178,7 +178,10 @@ const UnifiedMealPlanStep: React.FC<UnifiedMealPlanStepProps> = ({ onComplete })
                 </div>
               </div>
               
-              <MealPlanEditor mealPlan={currentMealPlan} />
+              <ConsolidatedMealPlanEditor 
+                mealPlan={currentMealPlan} 
+                patientName={activePatient?.name || 'Paciente'}
+              />
             </div>
           )}
         </CardContent>

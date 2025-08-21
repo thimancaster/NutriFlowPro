@@ -14,10 +14,13 @@ import {
   MealPlanGenerationParams,
 } from '@/types/mealPlanTypes';
 
+// Updated step types to match usage
+type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'completed';
+
 // Define the context type with all required properties
 interface MealPlanWorkflowContextType {
-  currentStep: 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'completed';
-  setCurrentStep: (step: 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'completed') => void;
+  currentStep: WorkflowStep;
+  setCurrentStep: (step: WorkflowStep) => void;
   isSaving: boolean;
   setIsSaving: (saving: boolean) => void;
   isGenerating: boolean;
@@ -29,6 +32,8 @@ interface MealPlanWorkflowContextType {
   calculationData: any | null;
   setCalculationData: (data: any) => void;
   currentMealPlan: ConsolidatedMealPlan | null;
+  error: string | null;
+  clearError: () => void;
   generateMealPlan: (nutritionalData: any) => Promise<void>;
   saveMealPlan: (updates: Partial<ConsolidatedMealPlan>) => Promise<void>;
   resetWorkflow: () => void;
@@ -43,21 +48,28 @@ const MealPlanWorkflowContext = createContext<MealPlanWorkflowContextType | unde
 export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [currentStep, setCurrentStep] = useState<
-    'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'completed'
-  >('patient');
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>('patient');
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [mealPlan, setMealPlan] = useState<ConsolidatedMealPlan | null>(null);
   const [patient, setPatient] = useState<any | null>(null);
   const [calculationData, setCalculationData] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { activePatient } = usePatient();
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const generateMealPlan = useCallback(async (nutritionalData: any) => {
-    if (!activePatient?.id || !user?.id) return;
+    if (!activePatient?.id || !user?.id) {
+      setError('Dados do paciente ou usuário não disponíveis');
+      return;
+    }
 
     setIsGenerating(true);
+    setError(null);
     
     try {
       const params: MealPlanGenerationParams = {
@@ -76,9 +88,12 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
         setMealPlan(result.data);
         setCurrentStep('mealPlan');
       } else {
+        setError(result.error || 'Erro ao gerar plano alimentar');
         console.error("Erro ao gerar plano:", result.error);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.message || 'Erro inesperado ao gerar plano';
+      setError(errorMessage);
       console.error("Erro ao gerar plano:", error);
     } finally {
       setIsGenerating(false);
@@ -89,12 +104,18 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     if (!mealPlan) return;
     
     setIsSaving(true);
+    setError(null);
+    
     try {
       const result = await MealPlanServiceV3.updateMealPlan(mealPlan.id, updates);
       if (result.success && result.data) {
         setMealPlan(result.data);
+      } else {
+        setError(result.error || 'Erro ao salvar plano');
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.message || 'Erro inesperado ao salvar plano';
+      setError(errorMessage);
       console.error("Erro ao salvar plano:", error);
     } finally {
       setIsSaving(false);
@@ -108,6 +129,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setMealPlan(null);
     setPatient(null);
     setCalculationData(null);
+    setError(null);
   }, []);
 
   useEffect(() => {
@@ -129,6 +151,8 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     calculationData,
     setCalculationData,
     currentMealPlan: mealPlan, // Alias for compatibility
+    error,
+    clearError,
     generateMealPlan,
     saveMealPlan,
     resetWorkflow,

@@ -76,7 +76,7 @@ const MealPlanWorkflow: React.FC = () => {
     }
     
     console.log('Generating meal plan with data:', { patient, calculationData });
-    await generateMealPlan(user.id);
+    await generateMealPlan(calculationData);
   };
 
   const handleBackToCalculator = () => {
@@ -89,7 +89,7 @@ const MealPlanWorkflow: React.FC = () => {
 
   const handleStartOver = () => {
     resetWorkflow();
-    setCurrentStep('calculation');
+    setCurrentStep('patient');
   };
 
   if (!user) {
@@ -120,7 +120,7 @@ const MealPlanWorkflow: React.FC = () => {
           </div>
         </div>
         
-        {currentStep !== 'calculation' && (
+        {currentStep !== 'patient' && (
           <Button variant="outline" onClick={handleStartOver}>
             Recomeçar
           </Button>
@@ -130,7 +130,7 @@ const MealPlanWorkflow: React.FC = () => {
       <WorkflowProgress currentStep={currentStep} />
 
       {/* Step 1: Patient Selection and Calculation */}
-      {currentStep === 'calculation' && (
+      {currentStep === 'patient' && (
         <div className="space-y-6">
           {!patient && (
             <Card>
@@ -251,12 +251,12 @@ const MealPlanWorkflow: React.FC = () => {
           patient={patient}
           calculationData={calculationData}
           onGenerate={handleGenerateMealPlan}
-          onBack={() => setCurrentStep('calculation')}
+          onBack={() => setCurrentStep('patient')}
         />
       )}
 
       {/* Step 3: Meal Plan Editing */}
-      {currentStep === 'editing' && currentMealPlan && (
+      {currentStep === 'mealPlan' && currentMealPlan && (
         <MealPlanEditingStep
           mealPlan={currentMealPlan}
           onSave={saveMealPlan}
