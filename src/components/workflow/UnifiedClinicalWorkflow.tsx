@@ -1,16 +1,17 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CheckCircle, UserPlus, LayoutDashboard, Utensils } from "lucide-react";
-import PatientForm from "@/components/patient/PatientForm";
+import { PatientForm } from "@/components/patient/PatientForm";
 import { usePatientForm } from "@/hooks/usePatientForm";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import MealPlanGenerator from '@/components/meal-plan/MealPlanGenerator';
 import MealPlanEditingStep from '@/components/MealPlanWorkflow/MealPlanEditingStep';
-import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
+import { ConsolidatedMealPlan } from '@/types/mealPlan';
 import { MealPlanService } from '@/services/mealPlanService';
 
 const tabs = [
@@ -31,6 +32,10 @@ const initialMealPlan: ConsolidatedMealPlan = {
   meals: [],
   notes: ''
 };
+
+export interface UnifiedClinicalWorkflowProps {
+  onWorkflowComplete?: () => void;
+}
 
 const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWorkflowComplete }) => {
   const { toast } = useToast();
@@ -119,7 +124,7 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWor
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               {tabs.map((tab) => (
-                <TabsTrigger key={tab.id} value={tab.id" className="flex items-center gap-2">
+                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
                 </TabsTrigger>
@@ -192,9 +197,5 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWor
     </div>
   );
 };
-
-export interface UnifiedClinicalWorkflowProps {
-  onWorkflowComplete?: () => void;
-}
 
 export default UnifiedClinicalWorkflow;
