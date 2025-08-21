@@ -2,63 +2,45 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ConsolidatedMealPlan, MealPlanGenerationParams, MealPlanGenerationResult } from '@/types/mealPlanTypes';
 import { DetailedMealPlan, MealPlanListResponse, MealPlanMeal } from '@/types/mealPlan';
+import { MealPlanServiceV3 } from './mealPlan/MealPlanServiceV3';
 
 export const MealPlanService = {
   async createMealPlan(params: MealPlanGenerationParams): Promise<MealPlanGenerationResult> {
-    try {
-      const mealPlanData = {
-        user_id: params.userId,
-        patient_id: params.patientId,
-        date: params.date || new Date().toISOString().split('T')[0],
-        total_calories: params.totalCalories,
-        total_protein: params.totalProtein,
-        total_carbs: params.totalCarbs,
-        total_fats: params.totalFats,
-        meals: [] // Convert from ConsolidatedMeal[] to proper format
-      };
+    return MealPlanServiceV3.generateMealPlan(params);
+  },
 
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .insert(mealPlanData)
-        .select('*')
-        .single();
-
-      if (error) throw error;
-
-      return { success: true, data: data as ConsolidatedMealPlan };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
+  async generateMealPlan(
+    userId: string,
+    patientId: string,
+    targets: { calories: number; protein: number; carbs: number; fats: number },
+    date?: string
+  ): Promise<MealPlanGenerationResult> {
+    const params: MealPlanGenerationParams = {
+      userId,
+      patientId,
+      totalCalories: targets.calories,
+      totalProtein: targets.protein,
+      totalCarbs: targets.carbs,
+      totalFats: targets.fats,
+      date
+    };
+    return MealPlanServiceV3.generateMealPlan(params);
   },
 
   async getMealPlan(id: string): Promise<ConsolidatedMealPlan | null> {
-    try {
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data as ConsolidatedMealPlan;
-    } catch (error) {
-      console.error('Error fetching meal plan:', error);
-      return null;
-    }
+    const result = await MealPlanServiceV3.getMealPlanById(id);
+    return result.success ? result.data || null : null;
   },
 
   async getMealPlanById(id: string): Promise<DetailedMealPlan | null> {
     try {
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const result = await MealPlanServiceV3.getMealPlanById(id);
+      
+      if (!result.success || !result.data) {
+        return null;
+      }
 
-      if (error) throw error;
-
-      // Convert ConsolidatedMealPlan to DetailedMealPlan format
-      const mealPlan = data as ConsolidatedMealPlan;
+      const mealPlan = result.data;
       const detailedMealPlan: DetailedMealPlan = {
         ...mealPlan,
         meals: mealPlan.meals?.map(meal => ({
@@ -86,22 +68,13 @@ export const MealPlanService = {
 
   async getMealPlans(userId: string, filters?: { patient_id?: string }): Promise<MealPlanListResponse> {
     try {
-      let query = supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const result = await MealPlanServiceV3.listMealPlans(userId, filters?.patient_id);
 
-      if (filters?.patient_id) {
-        query = query.eq('patient_id', filters.patient_id);
+      if (!result.success || !result.data) {
+        return { success: false, error: result.error };
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      // Convert to DetailedMealPlan format
-      const detailedPlans: DetailedMealPlan[] = (data as ConsolidatedMealPlan[]).map(plan => ({
+      const detailedPlans: DetailedMealPlan[] = result.data.map(plan => ({
         ...plan,
         meals: plan.meals?.map(meal => ({
           ...meal,
@@ -126,20 +99,7 @@ export const MealPlanService = {
   },
 
   async updateMealPlan(id: string, updates: Partial<ConsolidatedMealPlan>): Promise<MealPlanGenerationResult> {
-    try {
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .update(updates)
-        .eq('id', id)
-        .select('*')
-        .single();
-
-      if (error) throw error;
-
-      return { success: true, data: data as ConsolidatedMealPlan };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
+    return MealPlanServiceV3.updateMealPlan(id, updates);
   },
 
   async deleteMealPlan(id: string): Promise<{ success: boolean; error?: string }> {

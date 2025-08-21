@@ -25,7 +25,8 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
   const { data: response, isLoading, error } = useMealPlans(filters);
   const { deleteMealPlan, isDeleting } = useMealPlanMutations();
 
-  const mealPlans = response?.data || [];
+  // Extract meal plans from response
+  const mealPlans = response?.success && response.data ? response.data : [];
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este plano alimentar?')) {

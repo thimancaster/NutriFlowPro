@@ -1,4 +1,3 @@
-
 import React, {useState, useEffect} from "react";
 import {useParams, useNavigate} from "react-router-dom";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -25,6 +24,43 @@ const MealPlanViewPage: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [editingMeal, setEditingMeal] = useState<ConsolidatedMeal | null>(null);
 	const [showEditDialog, setShowEditDialog] = useState(false);
+
+	// Convert ConsolidatedMeal to MealPlanMeal for compatibility
+	const convertToMealPlanMeal = (meal: ConsolidatedMeal) => {
+		return {
+			...meal,
+			foods: meal.items?.map(item => ({
+				id: item.id,
+				food_id: item.food_id,
+				name: item.food_name,
+				quantity: item.quantity,
+				unit: item.unit,
+				calories: item.calories,
+				protein: item.protein,
+				carbs: item.carbs,
+				fats: item.fats
+			})) || []
+		};
+	};
+
+	// Convert MealPlanMeal back to ConsolidatedMeal
+	const convertFromMealPlanMeal = (meal: any): ConsolidatedMeal => {
+		return {
+			...meal,
+			items: meal.foods?.map((food: any, index: number) => ({
+				id: food.id || crypto.randomUUID(),
+				food_id: food.food_id,
+				food_name: food.name,
+				quantity: food.quantity,
+				unit: food.unit,
+				calories: food.calories,
+				protein: food.protein,
+				carbs: food.carbs,
+				fats: food.fats,
+				order_index: index
+			})) || []
+		};
+	};
 
 	useEffect(() => {
 		const fetchMealPlan = async () => {
@@ -128,6 +164,57 @@ const MealPlanViewPage: React.FC = () => {
 			toast({
 				title: "Erro",
 				description: error.message || "Erro ao salvar a refeição",
+				variant: "destructive",
+			});
+		}
+	};
+
+	const handleSaveMealPlan = async (updatedMealPlan: any) => {
+		if (!mealPlan) return;
+
+		try {
+			const consolidatedUpdates: Partial<ConsolidatedMealPlan> = {
+				total_calories: updatedMealPlan.total_calories,
+				total_protein: updatedMealPlan.total_protein,
+				total_carbs: updatedMealPlan.total_carbs,
+				total_fats: updatedMealPlan.total_fats,
+				notes: updatedMealPlan.notes
+			};
+
+			const result = await MealPlanService.updateMealPlan(mealPlan.id, consolidatedUpdates);
+			
+			if (result.success && result.data) {
+				const updatedDetailedPlan: DetailedMealPlan = {
+					...result.data,
+					meals: result.data.meals?.map(meal => ({
+						...meal,
+						foods: meal.items?.map(item => ({
+							id: item.id,
+							food_id: item.food_id,
+							name: item.food_name,
+							quantity: item.quantity,
+							unit: item.unit,
+							calories: item.calories,
+							protein: item.protein,
+							carbs: item.carbs,
+							fats: item.fats
+						})) || []
+					})) || []
+				};
+				
+				setMealPlan(updatedDetailedPlan);
+				toast({
+					title: "Sucesso",
+					description: "Plano alimentar salvo com sucesso!",
+				});
+			} else {
+				throw new Error(result.error || 'Erro ao salvar');
+			}
+		} catch (error: any) {
+			console.error('Erro ao salvar plano:', error);
+			toast({
+				title: "Erro",
+				description: error.message || "Erro ao salvar plano alimentar",
 				variant: "destructive",
 			});
 		}
@@ -356,8 +443,11 @@ const MealPlanViewPage: React.FC = () => {
 			<MealEditDialog
 				open={showEditDialog}
 				onOpenChange={setShowEditDialog}
-				meal={editingMeal}
-				onSave={handleSaveMeal}
+				meal={editingMeal ? convertToMealPlanMeal(editingMeal) : null}
+				onSave={async (updatedMeal: any) => {
+					const consolidatedMeal = convertFromMealPlanMeal(updatedMeal);
+					await handleSaveMeal(consolidatedMeal);
+				}}
 			/>
 		</div>
 	);

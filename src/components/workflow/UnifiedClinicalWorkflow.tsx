@@ -1,185 +1,190 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, User, Calculator, FileText } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import PatientForm from '@/components/patient/PatientForm';
-import { Patient } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight, CheckCircle, UserPlus, LayoutDashboard, Utensils } from "lucide-react";
+import PatientForm from "@/components/patient/PatientForm";
+import { usePatientForm } from "@/hooks/usePatientForm";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
+import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
+import MealPlanGenerator from '@/components/meal-plan/MealPlanGenerator';
+import MealPlanEditingStep from '@/components/MealPlanWorkflow/MealPlanEditingStep';
+import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
+import { MealPlanService } from '@/services/mealPlanService';
 
-export interface UnifiedClinicalWorkflowProps {
-  onComplete?: () => void;
-}
+const tabs = [
+  { id: 'patient', label: 'Paciente', icon: UserPlus },
+  { id: 'meal-plan', label: 'Plano Alimentar', icon: Utensils },
+  { id: 'review', label: 'Revisão', icon: CheckCircle },
+];
 
-type WorkflowStep = 'patient' | 'calculation' | 'mealPlan';
+const initialMealPlan: ConsolidatedMealPlan = {
+  id: '',
+  user_id: '',
+  patient_id: '',
+  date: new Date().toISOString().split('T')[0],
+  total_calories: 2000,
+  total_protein: 150,
+  total_carbs: 200,
+  total_fats: 80,
+  meals: [],
+  notes: ''
+};
 
-const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onComplete }) => {
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>('patient');
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [nutritionalResults, setNutritionalResults] = useState<any>(null);
-  
-  const { user } = useAuth();
-  const { savePatient } = usePatient();
+const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWorkflowComplete }) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const [patientData, setPatientData] = useState<any>(null);
+  const [mealPlan, setMealPlan] = useState<ConsolidatedMealPlan>(initialMealPlan);
+  const { setCurrentStep, isSaving } = useMealPlanWorkflow();
 
-  const handlePatientComplete = async (patientData: any) => {
+  const { handleSubmit: handlePatientSubmit, isLoading: isPatientSaving, error: patientError } = usePatientForm({
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Paciente salvo com sucesso!",
+      });
+      setActiveTab('meal-plan');
+    }
+  });
+
+  const handlePatientSave = async (data: any) => {
     try {
-      let patient: Patient;
-      
-      if (patientData.id) {
-        // Existing patient
-        patient = patientData as Patient;
-      } else {
-        // New patient
-        const result = await savePatient({
-          ...patientData,
-          user_id: user?.id
+      await handlePatientSubmit(data);
+      setPatientData(data);
+    } catch (error: any) {
+      console.error("Erro ao salvar paciente:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar paciente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMealPlanGenerated = (generatedMealPlan: ConsolidatedMealPlan) => {
+    setMealPlan(generatedMealPlan);
+    setActiveTab('review');
+  };
+
+  const handleSaveMealPlan = async (updates: Partial<ConsolidatedMealPlan>) => {
+    try {
+      setCurrentStep('editing');
+      const result = await MealPlanService.updateMealPlan(mealPlan.id, updates);
+
+      if (result.success && result.data) {
+        setMealPlan(result.data);
+        toast({
+          title: "Sucesso",
+          description: "Plano alimentar salvo com sucesso!",
         });
-        
-        if (!result.success || !result.data) {
-          throw new Error(result.error || 'Erro ao salvar paciente');
-        }
-        
-        patient = result.data;
+      } else {
+        throw new Error(result.error || 'Erro ao salvar');
       }
-      
-      setSelectedPatient(patient);
-      setCurrentStep('calculation');
-    } catch (error) {
-      console.error('Erro ao processar paciente:', error);
+    } catch (error: any) {
+      console.error('Erro ao salvar plano:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar plano alimentar",
+        variant: "destructive",
+      });
+    } finally {
+      setCurrentStep('completed');
     }
   };
 
-  const handleCalculationComplete = (results: any) => {
-    setNutritionalResults(results);
-    setCurrentStep('mealPlan');
-  };
-
-  const handleBack = () => {
-    if (currentStep === 'calculation') {
-      setCurrentStep('patient');
-    } else if (currentStep === 'mealPlan') {
-      setCurrentStep('calculation');
-    }
-  };
-
-  const handleWorkflowComplete = () => {
-    onComplete?.();
-  };
-
-  const getStepIcon = (step: WorkflowStep) => {
-    switch (step) {
-      case 'patient':
-        return <User className="h-4 w-4" />;
-      case 'calculation':
-        return <Calculator className="h-4 w-4" />;
-      case 'mealPlan':
-        return <FileText className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStepTitle = (step: WorkflowStep) => {
-    switch (step) {
-      case 'patient':
-        return 'Dados do Paciente';
-      case 'calculation':
-        return 'Cálculos Nutricionais';
-      case 'mealPlan':
-        return 'Plano Alimentar';
-      default:
-        return '';
+  const handleCompleteWorkflow = () => {
+    toast({
+      title: "Sucesso",
+      description: "Workflow concluído com sucesso!",
+    });
+    navigate('/dashboard');
+    if (onWorkflowComplete) {
+      onWorkflowComplete();
     }
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      {/* Progress indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {(['patient', 'calculation', 'mealPlan'] as WorkflowStep[]).map((step, index) => (
-            <div key={step} className="flex items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                currentStep === step 
-                  ? 'bg-blue-500 border-blue-500 text-white' 
-                  : 'border-gray-300 text-gray-400'
-              }`}>
-                {getStepIcon(step)}
-              </div>
-              {index < 2 && (
-                <div className={`flex-1 h-0.5 mx-4 ${
-                  (['calculation', 'mealPlan'] as WorkflowStep[]).includes(currentStep) && index === 0
-                    ? 'bg-blue-500' 
-                    : currentStep === 'mealPlan' && index === 1
-                    ? 'bg-blue-500'
-                    : 'bg-gray-300'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between mt-2">
-          {(['patient', 'calculation', 'mealPlan'] as WorkflowStep[]).map((step) => (
-            <div key={step} className="text-sm font-medium text-center w-32">
-              {getStepTitle(step)}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Step content */}
+    <div className="container mx-auto max-w-4xl p-6 space-y-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {getStepIcon(currentStep)}
-            {getStepTitle(currentStep)}
+            <LayoutDashboard className="h-5 w-5" />
+            Workflow Clínico Unificado
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {currentStep === 'patient' && (
-            <PatientForm onSubmit={handlePatientComplete} />
-          )}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id" className="flex items-center gap-2">
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {currentStep === 'calculation' && selectedPatient && (
-            <div className="text-center py-8">
-              <p className="mb-4">Funcionalidade de cálculos será implementada em breve</p>
-              <Button onClick={() => handleCalculationComplete({ 
-                totalCalories: 2000, 
-                protein: 120, 
-                carbs: 250, 
-                fats: 67,
-                objective: 'manutenção' 
-              })}>
-                Continuar com valores exemplo
-              </Button>
-            </div>
-          )}
+            {/* Patient Tab */}
+            <TabsContent value="patient" className="space-y-4">
+              <h2 className="text-xl font-semibold">Informações do Paciente</h2>
+              <PatientForm onSubmit={handlePatientSave} isLoading={isPatientSaving} />
+            </TabsContent>
 
-          {currentStep === 'mealPlan' && nutritionalResults && (
-            <div className="text-center py-8">
-              <p className="mb-4">Geração de plano alimentar será implementada em breve</p>
-              <Button onClick={handleWorkflowComplete}>
-                Finalizar Consulta
-              </Button>
-            </div>
-          )}
+            {/* Meal Plan Tab */}
+            <TabsContent value="meal-plan" className="space-y-4">
+              <h2 className="text-xl font-semibold">Gerar Plano Alimentar</h2>
+              <MealPlanGenerator onMealPlanGenerated={handleMealPlanGenerated} />
+            </TabsContent>
+
+            {/* Review Tab */}
+            <TabsContent value="review" className="space-y-4">
+              <h2 className="text-xl font-semibold">Revisão do Plano Alimentar</h2>
+              {mealPlan && (
+                <MealPlanEditingStep
+                  mealPlan={mealPlan}
+                  onSave={handleSaveMealPlan}
+                  onBack={() => setActiveTab('meal-plan')}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
-      {/* Navigation */}
-      <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
-          onClick={handleBack}
-          disabled={currentStep === 'patient'}
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        <Button
+          variant="outline"
+          onClick={() => {
+            const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+            if (currentIndex > 0) {
+              setActiveTab(tabs[currentIndex - 1].id);
+            }
+          }}
+          disabled={activeTab === tabs[0].id || isSaving}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
 
-        {currentStep === 'mealPlan' && (
-          <Button onClick={handleWorkflowComplete}>
-            Finalizar
+        {activeTab === 'review' ? (
+          <Button onClick={handleCompleteWorkflow} disabled={isSaving}>
+            Concluir Workflow
+            <CheckCircle className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button
+            onClick={() => {
+              const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+              if (currentIndex < tabs.length - 1) {
+                setActiveTab(tabs[currentIndex + 1].id);
+              }
+            }}
+            disabled={isSaving}
+          >
+            Próximo
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         )}
@@ -188,5 +193,8 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onCom
   );
 };
 
+export interface UnifiedClinicalWorkflowProps {
+  onWorkflowComplete?: () => void;
+}
+
 export default UnifiedClinicalWorkflow;
-export { type UnifiedClinicalWorkflowProps };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,6 +65,24 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
     setCurrentMealPlan(updatedMealPlan);
     setShowEditDialog(false);
+  };
+
+  // Convert ConsolidatedMeal to MealPlanMeal for compatibility
+  const convertToMealPlanMeal = (meal: ConsolidatedMeal) => {
+    return {
+      ...meal,
+      foods: meal.items?.map(item => ({
+        id: item.id,
+        food_id: item.food_id,
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fats: item.fats
+      })) || []
+    };
   };
 
   return (
@@ -192,8 +209,26 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
       <MealEditDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-        meal={editingMeal}
-        onSave={handleSaveMeal}
+        meal={editingMeal ? convertToMealPlanMeal(editingMeal) : null}
+        onSave={(updatedMeal) => {
+          // Convert back to ConsolidatedMeal
+          const consolidatedMeal: ConsolidatedMeal = {
+            ...updatedMeal,
+            items: updatedMeal.foods?.map((food, index) => ({
+              id: food.id || crypto.randomUUID(),
+              food_id: food.food_id,
+              food_name: food.name,
+              quantity: food.quantity,
+              unit: food.unit,
+              calories: food.calories,
+              protein: food.protein,
+              carbs: food.carbs,
+              fats: food.fats,
+              order_index: index
+            })) || []
+          };
+          handleSaveMeal(consolidatedMeal);
+        }}
       />
     </div>
   );

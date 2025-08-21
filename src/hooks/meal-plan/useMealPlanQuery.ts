@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { MealPlanService } from '@/services/mealPlanService';
-import { MealPlan, MealPlanFilters, MacroTargets } from '@/types/mealPlan';
+import { MealPlanFilters, MacroTargets } from '@/types/mealPlan';
+import { MealPlanGenerationParams } from '@/types/mealPlanTypes';
 
 export const useMealPlans = (filters: MealPlanFilters = {}) => {
   const { user } = useAuth();
@@ -11,8 +12,9 @@ export const useMealPlans = (filters: MealPlanFilters = {}) => {
   return useQuery({
     queryKey: ['meal-plans', user?.id, filters],
     queryFn: async () => {
-      const data = await MealPlanService.getMealPlans(user!.id, filters);
-      return { success: true, data };
+      if (!user?.id) throw new Error('User not authenticated');
+      const result = await MealPlanService.getMealPlans(user.id, { patient_id: filters.patientId });
+      return result;
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -33,8 +35,8 @@ export const useMealPlanMutations = () => {
   const { user } = useAuth();
 
   const createMealPlan = useMutation({
-    mutationFn: (data: Omit<MealPlan, 'id' | 'created_at' | 'updated_at'>) =>
-      MealPlanService.createMealPlan(data),
+    mutationFn: (params: MealPlanGenerationParams) =>
+      MealPlanService.createMealPlan(params),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
@@ -101,8 +103,10 @@ export const useMealPlanMutations = () => {
       patientId: string; 
       targets: MacroTargets; 
       date?: string;
-    }) => 
-      MealPlanService.generateMealPlan(user!.id, patientId, targets, date),
+    }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      return MealPlanService.generateMealPlan(user.id, patientId, targets, date);
+    },
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['meal-plans'] });

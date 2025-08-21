@@ -1,3 +1,4 @@
+
 // ARQUIVO ATUALIZADO - Mantendo compatibilidade com código existente
 // Importando tipos consolidados da fonte única de verdade
 
@@ -50,6 +51,7 @@ export interface DetailedMealPlan extends ConsolidatedMealPlan {
   calculation_id?: string;
   day_of_week?: string;
   items?: MealPlanItem[];
+  meals: MealPlanMeal[]; // Override to make required
 }
 
 // Interfaces para respostas de API legadas

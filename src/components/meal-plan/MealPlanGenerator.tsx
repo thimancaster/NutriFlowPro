@@ -75,26 +75,16 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({onMealPlanGenerate
 		try {
 			setIsGenerating(true);
 
-			const params: MealPlanGenerationParams = {
-				userId: user.id,
-				patientId: selectedPatient,
-				totalCalories: targetCalories,
-				totalProtein: targetProtein,
-				totalCarbs: targetCarbs,
-				totalFats: targetFats,
-				date: new Date().toISOString().split('T')[0]
-			};
-
 			const result = await MealPlanService.generateMealPlan(
-				params.userId,
-				params.patientId,
+				user.id,
+				selectedPatient,
 				{
-					calories: params.totalCalories,
-					protein: params.totalProtein,
-					carbs: params.totalCarbs,
-					fats: params.totalFats
+					calories: targetCalories,
+					protein: targetProtein,
+					carbs: targetCarbs,
+					fats: targetFats
 				},
-				params.date
+				new Date().toISOString().split('T')[0]
 			);
 
 			if (result.success && result.data) {
