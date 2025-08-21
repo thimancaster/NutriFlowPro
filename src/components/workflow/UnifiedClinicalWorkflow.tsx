@@ -189,3 +189,4 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onCom
 };
 
 export default UnifiedClinicalWorkflow;
+export { type UnifiedClinicalWorkflowProps };

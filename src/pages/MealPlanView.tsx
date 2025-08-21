@@ -8,6 +8,7 @@ import {ArrowLeft, Loader2, Edit, Download, Calendar} from "lucide-react";
 import {useAuth} from "@/contexts/auth/AuthContext";
 import {MealPlanService} from "@/services/mealPlanService";
 import {DetailedMealPlan, MealPlanMeal} from "@/types/mealPlan";
+import {ConsolidatedMeal} from "@/types/mealPlanTypes";
 import {format} from "date-fns";
 import {ptBR} from "date-fns/locale";
 import {useToast} from "@/hooks/use-toast";
@@ -22,7 +23,7 @@ const MealPlanViewPage: React.FC = () => {
 	const [mealPlan, setMealPlan] = useState<DetailedMealPlan | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [editingMeal, setEditingMeal] = useState<MealPlanMeal | null>(null);
+	const [editingMeal, setEditingMeal] = useState<ConsolidatedMeal | null>(null);
 	const [showEditDialog, setShowEditDialog] = useState(false);
 
 	useEffect(() => {
@@ -54,20 +55,39 @@ const MealPlanViewPage: React.FC = () => {
 	}, [id]);
 
 	const handleEditMeal = (meal: MealPlanMeal) => {
-		setEditingMeal(meal);
+		// Convert MealPlanMeal to ConsolidatedMeal for the dialog
+		const consolidatedMeal: ConsolidatedMeal = {
+			id: meal.id || '',
+			type: meal.type,
+			name: meal.name,
+			time: meal.time || '',
+			items: meal.items || [],
+			total_calories: meal.total_calories,
+			total_protein: meal.total_protein,
+			total_carbs: meal.total_carbs,
+			total_fats: meal.total_fats,
+			foods: meal.foods
+		};
+		setEditingMeal(consolidatedMeal);
 		setShowEditDialog(true);
 	};
 
-	const handleSaveMeal = async (updatedMeal: MealPlanMeal) => {
+	const handleSaveMeal = async (updatedMeal: ConsolidatedMeal) => {
 		if (!mealPlan) return;
 
 		try {
-			// Atualizar a refeição no plano
+			// Convert back to MealPlanMeal format
+			const mealPlanMeal: MealPlanMeal = {
+				...updatedMeal,
+				foods: updatedMeal.foods || []
+			};
+
+			// Update the meal in the plan
 			const updatedMeals = mealPlan.meals?.map(meal => 
-				meal.id === updatedMeal.id ? updatedMeal : meal
+				meal.id === mealPlanMeal.id ? mealPlanMeal : meal
 			) || [];
 
-			// Recalcular totais do plano
+			// Recalculate totals
 			const planTotals = updatedMeals.reduce(
 				(totals, meal) => ({
 					calories: totals.calories + meal.total_calories,
@@ -87,11 +107,15 @@ const MealPlanViewPage: React.FC = () => {
 				total_fats: planTotals.fats
 			};
 
-			// Salvar no backend
+			// Save to backend
 			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedPlan);
 			
 			if (result.success && result.data) {
-				setMealPlan(result.data as DetailedMealPlan);
+				// Convert back to DetailedMealPlan
+				const savedPlan = await MealPlanService.getMealPlanById(mealPlan.id);
+				if (savedPlan) {
+					setMealPlan(savedPlan);
+				}
 				toast({
 					title: "Sucesso",
 					description: "Refeição atualizada com sucesso!",
@@ -155,7 +179,7 @@ const MealPlanViewPage: React.FC = () => {
 						<p className="text-red-600 mb-4">
 							{error || "Plano alimentar não encontrado"}
 						</p>
-						<Button onClick={handleBackToList}>
+						<Button onClick={() => navigate("/meal-plans")}>
 							<ArrowLeft className="h-4 w-4 mr-2" />
 							Voltar para Lista
 						</Button>
@@ -170,7 +194,7 @@ const MealPlanViewPage: React.FC = () => {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
-					<Button variant="outline" onClick={handleBackToList}>
+					<Button variant="outline" onClick={() => navigate("/meal-plans")}>
 						<ArrowLeft className="h-4 w-4 mr-2" />
 						Voltar
 					</Button>
@@ -184,11 +208,11 @@ const MealPlanViewPage: React.FC = () => {
 				</div>
 
 				<div className="flex gap-2">
-					<Button variant="outline" onClick={handleExportPDF}>
+					<Button variant="outline">
 						<Download className="h-4 w-4 mr-2" />
 						Exportar PDF
 					</Button>
-					<Button onClick={handleEdit}>
+					<Button onClick={() => navigate(`/meal-plan-editor/${id}`)}>
 						<Edit className="h-4 w-4 mr-2" />
 						Editar
 					</Button>

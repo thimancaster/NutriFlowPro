@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { MealPlanWorkflowProvider } from '@/contexts/MealPlanWorkflowContext';
-import { UnifiedClinicalWorkflow } from '@/components/workflow/UnifiedClinicalWorkflow';
+import UnifiedClinicalWorkflow from '@/components/workflow/UnifiedClinicalWorkflow';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
