@@ -1,124 +1,191 @@
-
-import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
-import { usePatient } from '@/contexts/patient/PatientContext';
+import { ArrowLeft, ArrowRight, User, Calculator, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { PatientForm } from '@/components/patient/PatientForm';
-import { CalculatorForm } from '@/components/calculator/components';
-import { MealPlanGenerationStep } from './steps/MealPlanGenerationStep';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import PatientForm from '@/components/patient/PatientForm';
 import { Patient } from '@/types';
 
-interface UnifiedClinicalWorkflowProps {
-  onComplete: () => void;
+export interface UnifiedClinicalWorkflowProps {
+  onComplete?: () => void;
 }
 
-type WorkflowStep = 'patient' | 'nutritional' | 'mealPlan' | 'completed';
+type WorkflowStep = 'patient' | 'calculation' | 'mealPlan';
 
-export const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onComplete }) => {
+const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('patient');
-  const [patientData, setPatientData] = useState<Patient | null>(null);
-  const [calculationResults, setCalculationResults] = useState<{
-    totalCalories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
-    objective: string;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { activePatient } = usePatient();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [nutritionalResults, setNutritionalResults] = useState<any>(null);
+  
   const { user } = useAuth();
+  const { savePatient } = usePatient();
 
-  const handlePatientSubmit = useCallback(async (data: Patient) => {
-    setIsLoading(true);
+  const handlePatientComplete = async (patientData: any) => {
     try {
-      // For now, just set the patient data - implement actual save logic as needed
-      setPatientData(data);
-      setCurrentStep('nutritional');
+      let patient: Patient;
+      
+      if (patientData.id) {
+        // Existing patient
+        patient = patientData as Patient;
+      } else {
+        // New patient
+        const result = await savePatient({
+          ...patientData,
+          user_id: user?.id
+        });
+        
+        if (!result.success || !result.data) {
+          throw new Error(result.error || 'Erro ao salvar paciente');
+        }
+        
+        patient = result.data;
+      }
+      
+      setSelectedPatient(patient);
+      setCurrentStep('calculation');
     } catch (error) {
-      console.error("Erro ao salvar paciente:", error);
-    } finally {
-      setIsLoading(false);
+      console.error('Erro ao processar paciente:', error);
     }
-  }, []);
+  };
 
-  const handleCalculationComplete = useCallback((results: {
-    totalCalories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
-    objective: string;
-  }) => {
-    setCalculationResults(results);
+  const handleCalculationComplete = (results: any) => {
+    setNutritionalResults(results);
     setCurrentStep('mealPlan');
-  }, []);
+  };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
+  const handleBack = () => {
+    if (currentStep === 'calculation') {
+      setCurrentStep('patient');
+    } else if (currentStep === 'mealPlan') {
+      setCurrentStep('calculation');
+    }
+  };
+
+  const handleWorkflowComplete = () => {
+    onComplete?.();
+  };
+
+  const getStepIcon = (step: WorkflowStep) => {
+    switch (step) {
       case 'patient':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Etapa 1: Dados do Paciente</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex items-center justify-center min-h-[200px]">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <PatientForm onSubmit={handlePatientSubmit} initialValues={activePatient || undefined} />
-              )}
-            </CardContent>
-          </Card>
-        );
-      case 'nutritional':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Etapa 2: Cálculos Nutricionais</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CalculatorForm
-                onComplete={handleCalculationComplete}
-                onBack={() => setCurrentStep('patient')}
-              />
-            </CardContent>
-          </Card>
-        );
+        return <User className="h-4 w-4" />;
+      case 'calculation':
+        return <Calculator className="h-4 w-4" />;
       case 'mealPlan':
-        return (
-          <MealPlanGenerationStep
-            patientData={patientData}
-            calculationResults={calculationResults}
-            onBack={() => setCurrentStep('nutritional')}
-            onComplete={() => setCurrentStep('completed')}
-          />
-        );
-      case 'completed':
-        return (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center p-6">
-              <CheckCircle className="h-10 w-10 text-green-500 mb-4" />
-              <h2 className="text-2xl font-bold text-center mb-4">Atendimento Concluído!</h2>
-              <p className="text-gray-600 text-center mb-4">
-                Obrigado por utilizar nosso sistema. O plano alimentar foi gerado e está pronto para ser compartilhado com o paciente.
-              </p>
-              <Button onClick={onComplete}>
-                Finalizar
-              </Button>
-            </CardContent>
-          </Card>
-        );
+        return <FileText className="h-4 w-4" />;
       default:
-        return <div>Etapa inválida</div>;
+        return null;
+    }
+  };
+
+  const getStepTitle = (step: WorkflowStep) => {
+    switch (step) {
+      case 'patient':
+        return 'Dados do Paciente';
+      case 'calculation':
+        return 'Cálculos Nutricionais';
+      case 'mealPlan':
+        return 'Plano Alimentar';
+      default:
+        return '';
     }
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-4">
-      {renderStepContent()}
+    <div className="container mx-auto p-6 max-w-4xl">
+      {/* Progress indicator */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          {(['patient', 'calculation', 'mealPlan'] as WorkflowStep[]).map((step, index) => (
+            <div key={step} className="flex items-center">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                currentStep === step 
+                  ? 'bg-blue-500 border-blue-500 text-white' 
+                  : 'border-gray-300 text-gray-400'
+              }`}>
+                {getStepIcon(step)}
+              </div>
+              {index < 2 && (
+                <div className={`flex-1 h-0.5 mx-4 ${
+                  (['calculation', 'mealPlan'] as WorkflowStep[]).includes(currentStep) && index === 0
+                    ? 'bg-blue-500' 
+                    : currentStep === 'mealPlan' && index === 1
+                    ? 'bg-blue-500'
+                    : 'bg-gray-300'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          {(['patient', 'calculation', 'mealPlan'] as WorkflowStep[]).map((step) => (
+            <div key={step} className="text-sm font-medium text-center w-32">
+              {getStepTitle(step)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Step content */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {getStepIcon(currentStep)}
+            {getStepTitle(currentStep)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {currentStep === 'patient' && (
+            <PatientForm onSubmit={handlePatientComplete} />
+          )}
+
+          {currentStep === 'calculation' && selectedPatient && (
+            <div className="text-center py-8">
+              <p className="mb-4">Funcionalidade de cálculos será implementada em breve</p>
+              <Button onClick={() => handleCalculationComplete({ 
+                totalCalories: 2000, 
+                protein: 120, 
+                carbs: 250, 
+                fats: 67,
+                objective: 'manutenção' 
+              })}>
+                Continuar com valores exemplo
+              </Button>
+            </div>
+          )}
+
+          {currentStep === 'mealPlan' && nutritionalResults && (
+            <div className="text-center py-8">
+              <p className="mb-4">Geração de plano alimentar será implementada em breve</p>
+              <Button onClick={handleWorkflowComplete}>
+                Finalizar Consulta
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Navigation */}
+      <div className="flex justify-between mt-6">
+        <Button 
+          variant="outline" 
+          onClick={handleBack}
+          disabled={currentStep === 'patient'}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+
+        {currentStep === 'mealPlan' && (
+          <Button onClick={handleWorkflowComplete}>
+            Finalizar
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
+
+export default UnifiedClinicalWorkflow;

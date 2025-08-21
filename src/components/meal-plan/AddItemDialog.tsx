@@ -4,159 +4,157 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MealType, MealPlanItem } from '@/types/mealPlan';
+import { ConsolidatedMealItem } from '@/types/mealPlanTypes';
 
-export interface AddItemDialogProps {
+interface AddItemDialogProps {
   open: boolean;
-  onClose: () => void;
-  mealType: MealType;
+  onOpenChange: (open: boolean) => void;
+  mealType: string;
   mealPlanId: string;
-  onItemAdd: (item: MealPlanItem) => void;
+  onAdd: (item: ConsolidatedMealItem) => void;
 }
 
 const AddItemDialog: React.FC<AddItemDialogProps> = ({
   open,
-  onClose,
+  onOpenChange,
   mealType,
   mealPlanId,
-  onItemAdd
+  onAdd
 }) => {
-  const [foodName, setFoodName] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState('g');
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fats, setFats] = useState('');
+  const [formData, setFormData] = useState({
+    food_name: '',
+    quantity: '',
+    unit: 'g',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: ''
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newItem: MealPlanItem = {
-      id: `temp-${Date.now()}`,
-      meal_plan_id: mealPlanId,
-      meal_type: mealType,
-      food_name: foodName,
-      quantity: parseFloat(quantity) || 0,
-      unit,
-      calories: parseFloat(calories) || 0,
-      protein: parseFloat(protein) || 0,
-      carbs: parseFloat(carbs) || 0,
-      fats: parseFloat(fats) || 0,
+    const newItem: ConsolidatedMealItem = {
+      id: crypto.randomUUID(),
+      food_name: formData.food_name,
+      quantity: parseFloat(formData.quantity) || 0,
+      unit: formData.unit,
+      calories: parseFloat(formData.calories) || 0,
+      protein: parseFloat(formData.protein) || 0,
+      carbs: parseFloat(formData.carbs) || 0,
+      fats: parseFloat(formData.fats) || 0,
       order_index: 0
     };
 
-    onItemAdd(newItem);
+    onAdd(newItem);
     
     // Reset form
-    setFoodName('');
-    setQuantity('');
-    setCalories('');
-    setProtein('');
-    setCarbs('');
-    setFats('');
-    
-    onClose();
+    setFormData({
+      food_name: '',
+      quantity: '',
+      unit: 'g',
+      calories: '',
+      protein: '',
+      carbs: '',
+      fats: ''
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Alimento</DialogTitle>
         </DialogHeader>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="foodName">Nome do Alimento</Label>
-            <Input
-              id="foodName"
-              value={foodName}
-              onChange={(e) => setFoodName(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4">
             <div>
-              <Label htmlFor="quantity">Quantidade</Label>
+              <Label htmlFor="food_name">Nome do Alimento</Label>
               <Input
-                id="quantity"
-                type="number"
-                step="0.1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                id="food_name"
+                value={formData.food_name}
+                onChange={(e) => setFormData({ ...formData, food_name: e.target.value })}
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="unit">Unidade</Label>
-              <Input
-                id="unit"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                required
-              />
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="quantity">Quantidade</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  step="0.1"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="unit">Unidade</Label>
+                <Input
+                  id="unit"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+            
             <div>
               <Label htmlFor="calories">Calorias</Label>
               <Input
                 id="calories"
                 type="number"
                 step="0.1"
-                value={calories}
-                onChange={(e) => setCalories(e.target.value)}
+                value={formData.calories}
+                onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="protein">Proteína (g)</Label>
-              <Input
-                id="protein"
-                type="number"
-                step="0.1"
-                value={protein}
-                onChange={(e) => setProtein(e.target.value)}
-                required
-              />
+            
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label htmlFor="protein">Proteína (g)</Label>
+                <Input
+                  id="protein"
+                  type="number"
+                  step="0.1"
+                  value={formData.protein}
+                  onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="carbs">Carboidratos (g)</Label>
+                <Input
+                  id="carbs"
+                  type="number"
+                  step="0.1"
+                  value={formData.carbs}
+                  onChange={(e) => setFormData({ ...formData, carbs: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="fats">Gorduras (g)</Label>
+                <Input
+                  id="fats"
+                  type="number"
+                  step="0.1"
+                  value={formData.fats}
+                  onChange={(e) => setFormData({ ...formData, fats: e.target.value })}
+                  required
+                />
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="carbs">Carboidrato (g)</Label>
-              <Input
-                id="carbs"
-                type="number"
-                step="0.1"
-                value={carbs}
-                onChange={(e) => setCarbs(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="fats">Gordura (g)</Label>
-              <Input
-                id="fats"
-                type="number"
-                step="0.1"
-                value={fats}
-                onChange={(e) => setFats(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">
-              Adicionar
-            </Button>
+            <Button type="submit">Adicionar</Button>
           </div>
         </form>
       </DialogContent>

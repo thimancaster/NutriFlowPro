@@ -1,13 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConsolidatedMealItem } from '@/types/mealPlanTypes';
-import { FoodService } from '@/services/foodService';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Calculator } from 'lucide-react';
 
 interface EditItemDialogProps {
   open: boolean;
@@ -22,213 +19,148 @@ const EditItemDialog: React.FC<EditItemDialogProps> = ({
   item,
   onSave
 }) => {
-  const [quantity, setQuantity] = useState(0);
-  const [unit, setUnit] = useState('g');
-  const [isLoading, setIsLoading] = useState(false);
-  const [calculatedNutrition, setCalculatedNutrition] = useState({
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fats: 0
+  const [formData, setFormData] = useState({
+    food_name: '',
+    quantity: '',
+    unit: 'g',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: ''
   });
-  const { toast } = useToast();
 
   useEffect(() => {
     if (item) {
-      setQuantity(item.quantity);
-      setUnit(item.unit);
-      calculateNutrition(item.quantity);
+      setFormData({
+        food_name: item.food_name,
+        quantity: item.quantity.toString(),
+        unit: item.unit,
+        calories: item.calories.toString(),
+        protein: item.protein.toString(),
+        carbs: item.carbs.toString(),
+        fats: item.fats.toString()
+      });
     }
   }, [item]);
 
-  const calculateNutrition = async (newQuantity: number) => {
-    if (!item || !item.food_id) {
-      // Se não há food_id, usar proporção baseada nos valores atuais
-      if (item && item.quantity > 0) {
-        const factor = newQuantity / item.quantity;
-        setCalculatedNutrition({
-          calories: Math.round(item.calories * factor * 10) / 10,
-          protein: Math.round(item.protein * factor * 10) / 10,
-          carbs: Math.round(item.carbs * factor * 10) / 10,
-          fats: Math.round(item.fats * factor * 10) / 10
-        });
-      }
-      return;
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!item) return;
 
-    try {
-      // Buscar dados originais do alimento
-      const food = await FoodService.getFoodById(item.food_id);
-      if (food) {
-        const nutrition = FoodService.calculateNutrition(food, newQuantity);
-        setCalculatedNutrition(nutrition);
-      }
-    } catch (error) {
-      console.error('Erro ao calcular nutrição:', error);
-      // Fallback para cálculo proporcional
-      if (item.quantity > 0) {
-        const factor = newQuantity / item.quantity;
-        setCalculatedNutrition({
-          calories: Math.round(item.calories * factor * 10) / 10,
-          protein: Math.round(item.protein * factor * 10) / 10,
-          carbs: Math.round(item.carbs * factor * 10) / 10,
-          fats: Math.round(item.fats * factor * 10) / 10
-        });
-      }
-    }
-  };
+    const updatedItem: ConsolidatedMealItem = {
+      ...item,
+      food_name: formData.food_name,
+      quantity: parseFloat(formData.quantity) || 0,
+      unit: formData.unit,
+      calories: parseFloat(formData.calories) || 0,
+      protein: parseFloat(formData.protein) || 0,
+      carbs: parseFloat(formData.carbs) || 0,
+      fats: parseFloat(formData.fats) || 0
+    };
 
-  const handleQuantityChange = (newQuantity: number) => {
-    setQuantity(newQuantity);
-    calculateNutrition(newQuantity);
-  };
-
-  const handleSave = async () => {
-    if (!item || quantity <= 0) {
-      toast({
-        title: "Erro",
-        description: "A quantidade deve ser maior que zero",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      
-      const updatedItem: ConsolidatedMealItem = {
-        ...item,
-        quantity,
-        unit,
-        calories: calculatedNutrition.calories,
-        protein: calculatedNutrition.protein,
-        carbs: calculatedNutrition.carbs,
-        fats: calculatedNutrition.fats
-      };
-
-      onSave(updatedItem);
-      
-      toast({
-        title: "Sucesso",
-        description: "Item atualizado com sucesso!",
-      });
-      
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Erro ao salvar item:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar as alterações",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    onSave(updatedItem);
   };
 
   if (!item) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Editar Item
-          </DialogTitle>
+          <DialogTitle>Editar Alimento</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-medium text-lg">{item.food_name}</h4>
-            <p className="text-sm text-gray-600">
-              Unidade original: {item.unit}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4">
             <div>
-              <Label htmlFor="edit-quantity">Quantidade</Label>
+              <Label htmlFor="food_name">Nome do Alimento</Label>
               <Input
-                id="edit-quantity"
-                type="number"
-                value={quantity}
-                onChange={(e) => handleQuantityChange(Number(e.target.value))}
-                min="0.1"
-                step="0.1"
-                className="mt-1"
-                disabled={isLoading}
+                id="food_name"
+                value={formData.food_name}
+                onChange={(e) => setFormData({ ...formData, food_name: e.target.value })}
+                required
               />
             </div>
             
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="quantity">Quantidade</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  step="0.1"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="unit">Unidade</Label>
+                <Input
+                  id="unit"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            
             <div>
-              <Label htmlFor="edit-unit">Unidade</Label>
+              <Label htmlFor="calories">Calorias</Label>
               <Input
-                id="edit-unit"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="mt-1"
-                disabled={isLoading}
+                id="calories"
+                type="number"
+                step="0.1"
+                value={formData.calories}
+                onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
+                required
               />
             </div>
-          </div>
-
-          <div className="bg-blue-50 p-4 rounded-lg border">
-            <div className="text-sm font-medium mb-3 text-blue-900">
-              Valores nutricionais calculados:
+            
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label htmlFor="protein">Proteína (g)</Label>
+                <Input
+                  id="protein"
+                  type="number"
+                  step="0.1"
+                  value={formData.protein}
+                  onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="carbs">Carboidratos (g)</Label>
+                <Input
+                  id="carbs"
+                  type="number"
+                  step="0.1"
+                  value={formData.carbs}
+                  onChange={(e) => setFormData({ ...formData, carbs: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="fats">Gorduras (g)</Label>
+                <Input
+                  id="fats"
+                  type="number"
+                  step="0.1"
+                  value={formData.fats}
+                  onChange={(e) => setFormData({ ...formData, fats: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-white p-2 rounded text-center">
-                <div className="font-bold text-lg text-blue-600">
-                  {calculatedNutrition.calories.toFixed(0)}
-                </div>
-                <div className="text-gray-600">kcal</div>
-              </div>
-              <div className="bg-white p-2 rounded text-center">
-                <div className="font-bold text-lg text-red-600">
-                  {calculatedNutrition.protein.toFixed(1)}g
-                </div>
-                <div className="text-gray-600">Proteínas</div>
-              </div>
-              <div className="bg-white p-2 rounded text-center">
-                <div className="font-bold text-lg text-yellow-600">
-                  {calculatedNutrition.carbs.toFixed(1)}g
-                </div>
-                <div className="text-gray-600">Carboidratos</div>
-              </div>
-              <div className="bg-white p-2 rounded text-center">
-                <div className="font-bold text-lg text-green-600">
-                  {calculatedNutrition.fats.toFixed(1)}g
-                </div>
-                <div className="text-gray-600">Gorduras</div>
-              </div>
-            </div>
           </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button 
-              onClick={handleSave} 
-              className="flex-1" 
-              disabled={isLoading || quantity <= 0}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                'Salvar Alterações'
-              )}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
+          
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
+            <Button type="submit">Salvar</Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

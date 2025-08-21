@@ -51,7 +51,7 @@ export interface DetailedMealPlan extends ConsolidatedMealPlan {
   calculation_id?: string;
   day_of_week?: string;
   items?: MealPlanItem[];
-  meals?: MealPlanMeal[];
+  // Manter meals como required para compatibilidade com ConsolidatedMealPlan
 }
 
 // Interfaces para respostas de API legadas

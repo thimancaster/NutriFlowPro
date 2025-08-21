@@ -63,7 +63,6 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
   const handleAdd = (newItem: ConsolidatedMealItem) => {
     const itemWithMealType = {
       ...newItem,
-      meal_type: mealType as MealType,
       id: crypto.randomUUID()
     };
     onItemAdd(itemWithMealType);
