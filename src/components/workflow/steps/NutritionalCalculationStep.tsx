@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,33 +6,23 @@ import { Badge } from '@/components/ui/badge';
 import { Calculator, Activity, Target, Zap } from 'lucide-react';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
-import { useCalculator } from '@/hooks/useCalculator';
+import { useConsolidatedNutrition } from '@/hooks/useConsolidatedNutrition';
 import { 
   mapActivityLevelToNew,
   mapObjectiveToNew,
   mapProfileToNew 
 } from '@/utils/nutrition/typeMapping';
-import { CalculationInputs } from '@/utils/nutrition/centralMotor/enpCore';
 
 interface NutritionalCalculationStepProps {
   onCalculationComplete: () => void;
 }
 
-/**
- * ETAPA DE CÁLCULOS NUTRICIONAIS
- * 
- * Implementa 100% fielmente as fórmulas da planilha central:
- * - TMB (Harris-Benedict ou Mifflin-St Jeor por perfil)
- * - GEA (TMB × Fator de Atividade)  
- * - GET (GEA ± ajuste por objetivo)
- * - Distribuição de macronutrientes
- */
 export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProps> = ({
   onCalculationComplete
 }) => {
   const { consultationData, updateConsultationData } = useConsultationData();
   const { activePatient } = usePatient();
-  const { calculate, results, isCalculating } = useCalculator();
+  const { calculateNutrition, results, isCalculating } = useConsolidatedNutrition();
   
   const [activityLevel, setActivityLevel] = useState('moderado');
   const [objective, setObjective] = useState('manutenção');
@@ -59,24 +48,23 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
     }
 
     try {
-      const calculationInputs: CalculationInputs = {
+      const calculationParams = {
         weight: consultationData.weight,
         height: consultationData.height,
         age: consultationData.age,
-        gender: activePatient.gender === 'male' ? 'M' : 'F',
+        gender: activePatient.gender === 'male' ? 'M' as const : 'F' as const,
         activityLevel: mapActivityLevelToNew(activityLevel as any),
         objective: mapObjectiveToNew(objective as any),
         profile: mapProfileToNew(profile as any)
       };
 
-      const result = await calculate(calculationInputs);
+      const result = await calculateNutrition(calculationParams);
       
       if (result) {
-        // Salvar resultados na consulta
+        // Salvar resultados na consulta - removendo 'get' que não existe no tipo
         await updateConsultationData({
           bmr: result.tmb.value,
-          get: result.get,
-          totalCalories: result.get,
+          totalCalories: result.vet,
           protein: result.macros.protein.grams,
           carbs: result.macros.carbs.grams,
           fats: result.macros.fat.grams,
@@ -84,8 +72,7 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
           objective: objective,
           results: {
             bmr: result.tmb.value,
-            get: result.get,
-            vet: result.get,
+            vet: result.vet,
             adjustment: result.adjustment,
             macros: {
               protein: result.macros.protein.grams,
@@ -274,8 +261,8 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
                 <p className="text-2xl font-bold text-orange-600">{results.gea} kcal</p>
               </div>
               <div className="bg-white p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">GET</p>
-                <p className="text-2xl font-bold text-green-600">{results.get} kcal</p>
+                <p className="text-sm text-muted-foreground">VET</p>
+                <p className="text-2xl font-bold text-green-600">{results.vet} kcal</p>
               </div>
               <div className="bg-white p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Ajuste</p>
@@ -295,9 +282,6 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
                 <p className="text-sm text-muted-foreground">
                   {results.macros.protein.kcal} kcal ({results.macros.protein.percentage}%)
                 </p>
-                <Badge variant="secondary" className="mt-2">
-                  {results.proteinPerKg}g/kg
-                </Badge>
               </div>
               <div className="bg-white p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Carboidratos</p>
@@ -313,7 +297,7 @@ export const NutritionalCalculationStep: React.FC<NutritionalCalculationStepProp
                 <p className="text-xl font-bold text-blue-600">
                   {results.macros.fat.grams}g
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foregor">
                   {results.macros.fat.kcal} kcal ({results.macros.fat.percentage}%)
                 </p>
               </div>
