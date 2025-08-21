@@ -1,8 +1,34 @@
-
 /**
- * Sistema de Cálculos Nutricionais Único - NutriFlow Pro
- * Implementação fiel à planilha de referência
+ * [DEPRECATED] Sistema de Cálculos Nutricionais Único - LEGACY
+ * 
+ * ⚠️  AVISO: Este módulo está sendo descontinuado.
+ * 
+ * Para novos desenvolvimentos, use o motor nutricional centralizado:
+ * import { calculateCompleteNutrition } from '@/utils/nutrition/centralMotor';
+ * 
+ * O novo motor está 100% fiel à planilha central e implementa todas as
+ * fórmulas, parâmetros e regras exatamente conforme especificado.
  */
+
+console.warn(`
+🔄 MIGRAÇÃO NECESSÁRIA - calculations/core.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Este arquivo está DEPRECATED e será removido em versões futuras.
+
+✅ SUBSTITUA POR:
+   import { calculateCompleteNutrition } from '@/utils/nutrition/centralMotor';
+
+📋 BENEFÍCIOS DO NOVO MOTOR:
+   • 100% fiel à planilha central
+   • Seleção automática de fórmulas por perfil  
+   • Cálculo de macros por diferença
+   • Distribuição automática por 6 refeições
+   • Validações completas
+`);
+
+// Redirecionar para motor centralizado com wrapper de compatibilidade
+import { calculateCompleteNutritionLegacy } from '@/utils/nutrition/centralMotor/wrappers';
 
 export type Profile = 'eutrofico' | 'sobrepeso_obesidade' | 'atleta';
 export type Gender = 'M' | 'F';
@@ -142,30 +168,35 @@ export function calculateMacros(vet: number, weight: number, proteinPerKg: numbe
 }
 
 /**
- * Função principal de cálculo completo
+ * [DEPRECATED] Função principal de cálculo completo
+ * Use calculateCompleteNutrition do motor centralizado
  */
 export function calculateCompleteNutrition(inputs: CalculationInputs): CalculationResults {
-  try {
-    const tmb = calculateTMB(inputs.profile, inputs.gender, inputs.weight, inputs.height, inputs.age);
-    const get = calculateGET(tmb, inputs.activityFactor);
-    const vet = calculateVET(get, inputs.objective, inputs.calorieAdjustment);
-    const macros = calculateMacros(vet, inputs.weight, inputs.proteinPerKg, inputs.lipidPerKg);
-
-    return {
-      tmb: Math.round(tmb),
-      get: Math.round(get),
-      vet: Math.round(vet),
-      macros: {
-        protein: macros.protein,
-        carbs: macros.carbs,
-        fats: macros.fats
-      },
-      totalCalories: Math.round(vet)
-    };
-  } catch (error) {
-    console.error('Erro no cálculo nutricional:', error);
-    throw error;
-  }
+  console.warn('[DEPRECATED] Use calculateCompleteNutrition do motor centralizado');
+  
+  // Redirecionar para motor centralizado
+  const result = calculateCompleteNutritionLegacy(
+    inputs.weight,
+    inputs.height, 
+    inputs.age,
+    inputs.gender,
+    inputs.activityFactor.toString(), // Converter para string
+    inputs.objective,
+    inputs.profile
+  );
+  
+  // Converter formato de retorno
+  return {
+    tmb: result.tmb,
+    get: result.get,
+    vet: result.vet,
+    macros: {
+      protein: result.macros.protein,
+      carbs: result.macros.carbs,
+      fats: result.macros.fat
+    },
+    totalCalories: result.vet
+  };
 }
 
 // Fatores de atividade padrão

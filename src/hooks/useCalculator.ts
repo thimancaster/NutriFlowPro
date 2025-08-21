@@ -1,236 +1,116 @@
 
-import { useState, useEffect } from 'react';
-import { useNutritionCalculation } from './useNutritionCalculation';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import { ActivityLevel, Objective, Profile } from '@/types/consultation';
+/**
+ * Hook Unificado para Cálculos Nutricionais
+ * [UPDATED] Agora usa o motor nutricional centralizado que é 100% fiel à planilha
+ */
 
-export interface CalculatorResults {
-  tmb: number;
-  get: number;
-  gea?: number; // GEA for ENP compatibility
-  vet: number;
-  adjustment: number;
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number };
-    carbs: { grams: number; kcal: number; percentage: number };
-    fat: { grams: number; kcal: number; percentage: number };
-  };
-  proteinPerKg: number;
-  formulaUsed?: string;
-  gerFormulaName?: string; // For ENP formula display
-  fromCache?: boolean;
-  cacheAge?: number;
+import { useState, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+// Usar o motor nutricional centralizado
+import { 
+  calculateCompleteNutrition,
+  validateInputs,
+  type CalculationInputs,
+  type CompleteNutritionalResult
+} from '@/utils/nutrition/centralMotor';
+
+export interface UseCalculatorReturn {
+  formData: CalculationInputs;
+  results: CompleteNutritionalResult | null;
+  isCalculating: boolean;
+  error: string | null;
+  updateFormData: (data: Partial<CalculationInputs>) => void;
+  calculate: () => Promise<CompleteNutritionalResult | null>;
+  reset: () => void;
 }
 
-export interface NutritionCalculationInput {
-  weight: number;
-  height: number;
-  age: number;
-  sex: 'M' | 'F';
-  activityLevel: ActivityLevel;
-  objective: Objective;
-  profile: Profile;
-  bodyFatPercentage?: number;
-}
+const initialFormData: CalculationInputs = {
+  weight: 0,
+  height: 0, 
+  age: 0,
+  gender: 'F',
+  profile: 'eutrofico',
+  activityLevel: 'moderado', 
+  objective: 'manutencao'
+};
 
-export const useCalculator = () => {
-  const [results, setResults] = useState<CalculatorResults | null>(null);
+export const useCalculator = (): UseCalculatorReturn => {
+  const [formData, setFormData] = useState<CalculationInputs>(initialFormData);
+  const [results, setResults] = useState<CompleteNutritionalResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { activePatient } = usePatient();
-  const nutritionCalculation = useNutritionCalculation();
+  const { toast } = useToast();
 
-  // Auto-populate form data from active patient
-  const [formData, setFormData] = useState<NutritionCalculationInput>({
-    weight: 0,
-    height: 0,
-    age: 0,
-    sex: 'F',
-    activityLevel: 'moderado' as ActivityLevel,
-    objective: 'manutenção' as Objective,
-    profile: 'eutrofico' as Profile
-  });
+  const updateFormData = useCallback((data: Partial<CalculationInputs>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+    setError(null);
+  }, []);
 
-  // Sync with active patient data
-  useEffect(() => {
-    if (activePatient) {
-      const calculatedAge = activePatient.birth_date 
-        ? new Date().getFullYear() - new Date(activePatient.birth_date).getFullYear()
-        : activePatient.age || 0;
-
-      setFormData(prev => ({
-        ...prev,
-        age: calculatedAge,
-        sex: activePatient.gender === 'male' ? 'M' : 'F',
-        // Keep other values unless they're not set
-        weight: prev.weight || 0,
-        height: prev.height || 0,
-      }));
-    }
-  }, [activePatient]);
-
-  // Update form data function
-  const updateFormData = (updates: Partial<NutritionCalculationInput>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
-
-  const calculate = async (
-    inputData?: Partial<NutritionCalculationInput>
-  ): Promise<CalculatorResults | null> => {
-    const calculationData = inputData ? { ...formData, ...inputData } : formData;
+  const calculate = useCallback(async (): Promise<CompleteNutritionalResult | null> => {
+    console.log('🧮 Iniciando cálculo nutricional com motor centralizado:', formData);
     
-    // Validation
-    if (!calculationData.weight || !calculationData.height || !calculationData.age) {
-      setError('Dados incompletos: peso, altura e idade são obrigatórios');
-      return null;
-    }
-
     setIsCalculating(true);
     setError(null);
 
     try {
-      // Fix profile mapping logic
-      let mappedProfile: 'magro' | 'obeso' | 'atleta';
-      
-      if (calculationData.profile === 'eutrofico') {
-        mappedProfile = 'magro';
-      } else if (calculationData.profile === 'sobrepeso_obesidade') {
-        mappedProfile = 'obeso';
-      } else if (calculationData.profile === 'atleta') {
-        mappedProfile = 'atleta';
-      } else {
-        // Default fallback
-        mappedProfile = 'magro';
+      // Validar dados de entrada usando validação do motor centralizado
+      const validation = validateInputs(formData);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
       }
 
-      const result = await nutritionCalculation.calculate(
-        calculationData.weight,
-        calculationData.height,
-        calculationData.age,
-        calculationData.sex,
-        calculationData.activityLevel,
-        calculationData.objective,
-        mappedProfile
-      );
+      // Calcular usando motor centralizado (100% fiel à planilha)
+      const calculationResults = calculateCompleteNutrition(formData);
 
-      if (result) {
-        const calculatorResults: CalculatorResults = {
-          tmb: result.tmb,
-          get: result.get,
-          gea: result.get, // GEA equals GET for compatibility
-          vet: result.vet,
-          adjustment: result.vet - result.get,
-          macros: {
-            protein: {
-              grams: result.macros.protein.grams,
-              kcal: result.macros.protein.kcal,
-              percentage: result.macros.protein.percentage
-            },
-            carbs: {
-              grams: result.macros.carbs.grams,
-              kcal: result.macros.carbs.kcal,
-              percentage: result.macros.carbs.percentage
-            },
-            fat: {
-              grams: result.macros.fat.grams,
-              kcal: result.macros.fat.kcal,
-              percentage: result.macros.fat.percentage
-            }
-          },
-          proteinPerKg: result.proteinPerKg,
-          formulaUsed: result.formulaUsed || 'Mifflin-St Jeor',
-          gerFormulaName: result.formulaUsed || 'Mifflin-St Jeor',
-          fromCache: result.fromCache || false,
-          cacheAge: result.cacheAge
-        };
+      console.log('✅ Cálculo concluído com motor centralizado:', {
+        tmb: calculationResults.tmb.value,
+        formula: calculationResults.tmb.formula,
+        get: calculationResults.get,
+        profileUsed: calculationResults.profileUsed,
+        formulaUsed: calculationResults.formulaUsed
+      });
 
-        setResults(calculatorResults);
-        return calculatorResults;
-      }
+      setResults(calculationResults);
 
-      return null;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
+      toast({
+        title: "Cálculo Realizado",
+        description: `TMB: ${calculationResults.tmb.value} kcal | GET: ${calculationResults.get} kcal`,
+      });
+
+      return calculationResults;
+    } catch (error: any) {
+      console.error('❌ Erro no cálculo:', error);
+      const errorMessage = error.message || 'Erro no cálculo nutricional';
       setError(errorMessage);
-      console.error('Erro no cálculo:', error);
+      
+      toast({
+        title: "Erro no Cálculo",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
       return null;
     } finally {
       setIsCalculating(false);
     }
-  };
+  }, [formData, toast]);
 
-  // Calculate with manual parameters (for backward compatibility)
-  const calculateWithParams = async (
-    weight: number,
-    height: number,
-    age: number,
-    sex: 'M' | 'F',
-    activityLevel: ActivityLevel,
-    objective: Objective,
-    profile: Profile = 'eutrofico'
-  ): Promise<CalculatorResults | null> => {
-    return await calculate({
-      weight,
-      height,
-      age,
-      sex,
-      activityLevel,
-      objective,
-      profile
-    });
-  };
-
-  const reset = () => {
+  const reset = useCallback(() => {
+    console.log('🔄 Resetando calculadora nutricional');
+    setFormData(initialFormData);
     setResults(null);
     setError(null);
     setIsCalculating(false);
-    nutritionCalculation.reset();
-    
-    // Reset form data but keep patient data if available
-    if (activePatient) {
-      const calculatedAge = activePatient.birth_date 
-        ? new Date().getFullYear() - new Date(activePatient.birth_date).getFullYear()
-        : activePatient.age || 0;
-
-      setFormData({
-        weight: 0,
-        height: 0,
-        age: calculatedAge,
-        sex: activePatient.gender === 'male' ? 'M' : 'F',
-        activityLevel: 'moderado',
-        objective: 'manutenção',
-        profile: 'eutrofico'
-      });
-    } else {
-      setFormData({
-        weight: 0,
-        height: 0,
-        age: 0,
-        sex: 'F',
-        activityLevel: 'moderado',
-        objective: 'manutenção',
-        profile: 'eutrofico'
-      });
-    }
-  };
+  }, []);
 
   return {
-    // Results
+    formData,
     results,
     isCalculating,
     error,
-    
-    // Form data
-    formData,
     updateFormData,
-    
-    // Actions
     calculate,
-    calculateWithParams, // Backward compatibility
-    reset,
-    
-    // Patient integration
-    hasActivePatient: !!activePatient,
-    activePatient
+    reset
   };
 };

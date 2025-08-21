@@ -1,19 +1,45 @@
-
 /**
- * Sistema de Cálculos Nutricionais - ENP Unificado
- * Engenharia Nutricional Padrão - Versão Final
+ * [DEPRECATED] Sistema de Cálculos Nutricionais - LEGACY
+ * 
+ * ⚠️  AVISO: Este sistema está sendo descontinuado.
+ * 
+ * Para novos desenvolvimentos, use:
+ * import { calculateCompleteNutrition } from '@/utils/nutrition/centralMotor';
+ * 
+ * Este arquivo mantém compatibilidade com código existente mas redireciona
+ * internamente para o novo motor nutricional que é 100% fiel à planilha.
  */
 
-// Exports principais ENP
-export * from './nutrition/enpCalculations';
-export * from './nutrition/cleanCalculations';
+console.warn(`
+🔄 SISTEMA NUTRICIONAL EM MIGRAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Este arquivo (nutritionCalculations.ts) está DEPRECATED.
+
+✅ PARA NOVOS DESENVOLVIMENTOS:
+   import { calculateCompleteNutrition } from '@/utils/nutrition/centralMotor';
+
+⚠️  PARA CÓDIGO LEGADO:
+   Este arquivo mantém compatibilidade mas redireciona para o motor atualizado.
+
+📋 MIGRAÇÃO RECOMENDADA:
+   Substitua as chamadas antigas pelo novo motor nutricional centralizado.
+`);
+
+// Redirecionar para motor nutricional centralizado
+export * from './nutrition/centralMotor';
+
+// Manter exports legados com wrappers
+export { 
+  calculateCompleteNutritionLegacy as calculateCompleteNutrition,
+  calculateTMBLegacy as calculateTMB
+} from './nutrition/centralMotor/wrappers';
 
 // Exportar funções de antropometria
 export * from './nutrition/anthropometryCalculations';
 
 // Legacy compatibility exports
 export { 
-  calculateCompleteNutritionLegacy as calculateCompleteNutrition,
   validateLegacyParameters as validateAllParameters,
   type LegacyCalculationResult as CompleteNutritionResult
 } from './nutrition/legacyCalculations';
@@ -22,13 +48,10 @@ export {
 export { calculateComplete, validateCompleteInputs } from './nutrition/completeCalculation';
 
 // Re-exports organizados para compatibilidade
-export { calculateTMB } from './nutrition/tmbCalculations';
 export { calculateGET } from './nutrition/getCalculations';
 export { calculateVET } from './nutrition/vetCalculations';
-export { calculateMacros, mapProfileToCalculation } from './nutrition/macroCalculations';
 
 // Função principal recomendada (ENP)
 export { 
-  calculateNutritionClean as calculateENPNutrition, 
   validateCalculationInputs as validateENPData 
 } from './nutrition/cleanCalculations';
