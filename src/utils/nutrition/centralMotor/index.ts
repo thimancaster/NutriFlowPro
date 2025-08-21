@@ -41,6 +41,8 @@ export {
 } from './wrappers';
 
 // Re-export das constantes com nomes legados para compatibilidade
+import { PLANILHA_CONSTANTS } from './enpCore';
+
 export const ACTIVITY_FACTORS = PLANILHA_CONSTANTS.ACTIVITY_FACTORS;
 export const PROTEIN_RATIOS = PLANILHA_CONSTANTS.PROTEIN_RATIOS; 
 export const OBJECTIVE_FACTORS = PLANILHA_CONSTANTS.OBJECTIVE_ADJUSTMENTS;

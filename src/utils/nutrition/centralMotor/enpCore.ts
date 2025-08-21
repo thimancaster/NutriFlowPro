@@ -88,6 +88,8 @@ export interface CompleteNutritionalResult {
   tmb: TMBResult;
   gea: number;
   get: number;
+  vet: number; // VET = GET no sistema ENP
+  adjustment: number; // Ajuste aplicado (emagrecimento/hipertrofia)
   macros: MacroResult;
   mealDistribution: Record<string, {
     calories: number;
@@ -97,6 +99,7 @@ export interface CompleteNutritionalResult {
   }>;
   formulaUsed: string;
   profileUsed: ProfileType;
+  proteinPerKg: number; // g/kg de proteína
 }
 
 /**
@@ -278,6 +281,7 @@ export function calculateCompleteNutrition(inputs: CalculationInputs): CompleteN
 
   // 3. Calcular GET com ajuste por objetivo
   const get = calculateGET(gea, inputs.objective);
+  const adjustment = PLANILHA_CONSTANTS.OBJECTIVE_ADJUSTMENTS[inputs.objective];
 
   // 4. Calcular macronutrientes
   const macros = calculateMacronutrients(get, inputs.weight, inputs.profile);
@@ -285,14 +289,20 @@ export function calculateCompleteNutrition(inputs: CalculationInputs): CompleteN
   // 5. Distribuir por refeições
   const mealDistribution = calculateMealDistribution(macros, get);
 
+  // 6. Calcular proteína por kg
+  const proteinPerKg = PLANILHA_CONSTANTS.PROTEIN_RATIOS[inputs.profile];
+
   return {
     tmb,
     gea,
     get,
+    vet: get, // VET = GET no sistema atual
+    adjustment,
     macros,
     mealDistribution,
     formulaUsed: `${tmb.formula} (${inputs.profile})`,
-    profileUsed: inputs.profile
+    profileUsed: inputs.profile,
+    proteinPerKg
   };
 }
 

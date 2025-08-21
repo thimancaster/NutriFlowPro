@@ -1,5 +1,12 @@
 
 import { useCalculator } from '@/hooks/useCalculator';
+import {
+  mapProfileToNew,
+  mapActivityLevelToNew,
+  mapObjectiveToNew,
+  mapGenderToNew
+} from '@/utils/nutrition/typeMapping';
+import { CalculationInputs } from '@/utils/nutrition/centralMotor/enpCore';
 
 interface CalculationParams {
   weight: number;
@@ -12,7 +19,7 @@ interface CalculationParams {
 }
 
 export const useCalculatorActions = () => {
-  const { calculateWithParams } = useCalculator();
+  const { calculate } = useCalculator();
 
   const validateInputs = (params: CalculationParams): boolean => {
     const { weight, height, age } = params;
@@ -35,16 +42,18 @@ export const useCalculatorActions = () => {
     }
 
     try {
-      const result = await calculateWithParams(
-        params.weight,
-        params.height,
-        params.age,
-        params.sex,
-        params.activityLevel as any,
-        params.objective as any,
-        params.profile as any
-      );
+      // Map legacy parameters to new system
+      const mappedInputs: CalculationInputs = {
+        weight: params.weight,
+        height: params.height,
+        age: params.age,
+        gender: mapGenderToNew(params.sex),
+        activityLevel: mapActivityLevelToNew(params.activityLevel as any),
+        objective: mapObjectiveToNew(params.objective as any),
+        profile: mapProfileToNew(params.profile as any)
+      };
 
+      const result = await calculate(mappedInputs);
       return result;
     } catch (error) {
       console.error('Calculation error:', error);

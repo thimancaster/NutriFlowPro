@@ -3,6 +3,15 @@ import { useState, useEffect } from 'react';
 import { Profile, ActivityLevel, Objective } from '@/types/consultation';
 import { useToast } from '@/components/ui/use-toast';
 import { useCalculator } from '@/hooks/useCalculator';
+import {
+  mapProfileToNew,
+  mapProfileToLegacy,
+  mapActivityLevelToNew,
+  mapActivityLevelToLegacy,
+  mapObjectiveToNew,
+  mapObjectiveToLegacy,
+  mapGenderToNew
+} from '@/utils/nutrition/typeMapping';
 
 const useCalculatorState = () => {
   const [activeTab, setActiveTab] = useState<'tmb' | 'activity' | 'results'>('tmb');
@@ -15,8 +24,6 @@ const useCalculatorState = () => {
     isCalculating,
     error,
     reset: resetCalculator,
-    hasActivePatient,
-    activePatient,
     calculate
   } = useCalculator();
 
@@ -30,15 +37,16 @@ const useCalculatorState = () => {
 
   const [showResults, setShowResults] = useState(false);
 
-  // Derived values from formData
+  // Derived values from formData with type conversion
   const weight = formData.weight.toString();
   const height = formData.height.toString();
   const age = formData.age.toString();
-  const sex = formData.sex;
-  const activityLevel = formData.activityLevel;
-  const objective = formData.objective;
-  const profile = formData.profile;
-  const patientName = activePatient?.name || '';
+  const sex = formData.gender;
+  const activityLevel = mapActivityLevelToLegacy(formData.activityLevel);
+  const objective = mapObjectiveToLegacy(formData.objective);
+  const profile = mapProfileToLegacy(formData.profile);
+  const patientName = ''; // Legacy compatibility
+  const activePatient = null; // Legacy compatibility
 
   const handleInputChange = (name: string, value: any) => {
     const updates: any = {};
@@ -53,17 +61,18 @@ const useCalculatorState = () => {
       case 'age':
         updates.age = Number(value) || 0;
         break;
+      case 'gender':
       case 'sex':
-        updates.sex = value;
+        updates.gender = mapGenderToNew(value);
         break;
       case 'activityLevel':
-        updates.activityLevel = value as ActivityLevel;
+        updates.activityLevel = mapActivityLevelToNew(value as ActivityLevel);
         break;
       case 'objective':
-        updates.objective = value as Objective;
+        updates.objective = mapObjectiveToNew(value as Objective);
         break;
       case 'profile':
-        updates.profile = value as Profile;
+        updates.profile = mapProfileToNew(value as Profile);
         break;
     }
     
@@ -71,7 +80,7 @@ const useCalculatorState = () => {
   };
 
   const handleProfileChange = (value: string) => {
-    updateFormData({ profile: value as Profile });
+    updateFormData({ profile: mapProfileToNew(value as Profile) });
   };
 
   const handleCalculateWrapper = async () => {
@@ -80,43 +89,16 @@ const useCalculatorState = () => {
 
     setCacheInfo({ fromCache: false });
 
-    const calculationParams = {
-      weight: formData.weight,
-      height: formData.height,
-      age: formData.age,
-      sex: formData.sex,
-      activityLevel: formData.activityLevel as ActivityLevel,
-      objective: formData.objective as Objective,
-      profile: formData.profile as Profile
-    };
-
     // Use the unified calculator
-    const nutritionResults = await calculate(calculationParams);
+    const nutritionResults = await calculate();
     
     if (nutritionResults) {
       console.log('Resultados do cálculo:', nutritionResults);
       
-      // Check if result came from cache
-      const fromCache = nutritionResults.fromCache || false;
-      const cacheAge = nutritionResults.cacheAge;
-
-      setCacheInfo({ 
-        fromCache, 
-        cacheAge 
+      toast({
+        title: "Cálculo Realizado",
+        description: `Novos resultados calculados`,
       });
-
-      // Show toast with cache information
-      if (fromCache) {
-        toast({
-          title: "Resultado do Cache",
-          description: `Cálculo recuperado do cache (${cacheAge ? Math.floor(cacheAge / 1000) + 's' : 'recente'})`,
-        });
-      } else {
-        toast({
-          title: "Cálculo Realizado",
-          description: `Novos resultados calculados e salvos no cache`,
-        });
-      }
       
       setShowResults(true);
       setActiveTab('results');
@@ -139,26 +121,10 @@ const useCalculatorState = () => {
     setActiveTab('tmb');
   };
 
-  const syncPatientData = (patient: any, currentData: any, handleInputChange: (name: string, value: any) => void) => {
-    if (patient) {
-      const calculatedAge = patient.birth_date 
-        ? new Date().getFullYear() - new Date(patient.birth_date).getFullYear()
-        : patient.age || 0;
-
-      handleInputChange('age', calculatedAge);
-      handleInputChange('sex', patient.gender === 'male' ? 'M' : 'F');
-    }
-  };
-
   // Compatibility methods
   const setSex = (sex: 'M' | 'F') => handleInputChange('sex', sex);
   const setActivityLevel = (level: string) => handleInputChange('activityLevel', level);
   const setObjective = (objective: string) => handleInputChange('objective', objective);
-
-  // Debug effect para monitorar mudanças no profile
-  useEffect(() => {
-    console.log('Profile changed:', profile);
-  }, [profile]);
 
   return {
     // Form data
@@ -172,9 +138,9 @@ const useCalculatorState = () => {
     patientName,
     
     // Results - convert unified results to legacy format
-    tmbValue: results?.tmb || null,
+    tmbValue: results?.tmb.value || null,
     teeObject: results ? {
-      tmb: results.tmb,
+      tmb: results.tmb.value,
       get: results.get,
       vet: results.vet,
       adjustment: results.adjustment
@@ -205,9 +171,9 @@ const useCalculatorState = () => {
     setActiveTab,
     
     // Compatibility methods
-    setSex: (sex: 'M' | 'F') => handleInputChange('sex', sex),
-    setActivityLevel: (level: string) => handleInputChange('activityLevel', level),
-    setObjective: (objective: string) => handleInputChange('objective', objective)
+    setSex,
+    setActivityLevel,
+    setObjective
   };
 };
 

@@ -15,14 +15,19 @@ import {
   type CompleteNutritionalResult
 } from '@/utils/nutrition/centralMotor';
 
+// Legacy compatibility types
 export interface UseCalculatorReturn {
   formData: CalculationInputs;
   results: CompleteNutritionalResult | null;
   isCalculating: boolean;
   error: string | null;
   updateFormData: (data: Partial<CalculationInputs>) => void;
-  calculate: () => Promise<CompleteNutritionalResult | null>;
+  calculate: (params?: any) => Promise<CompleteNutritionalResult | null>;
   reset: () => void;
+  // Legacy compatibility properties
+  hasActivePatient: boolean;
+  activePatient: any;
+  calculateWithParams?: (weight: number, height: number, age: number, gender: string, activityLevel: string, objective: string, profile: string) => Promise<CompleteNutritionalResult | null>;
 }
 
 const initialFormData: CalculationInputs = {
@@ -47,26 +52,28 @@ export const useCalculator = (): UseCalculatorReturn => {
     setError(null);
   }, []);
 
-  const calculate = useCallback(async (): Promise<CompleteNutritionalResult | null> => {
-    console.log('🧮 Iniciando cálculo nutricional com motor centralizado:', formData);
+  const calculate = useCallback(async (params?: any): Promise<CompleteNutritionalResult | null> => {
+    const inputsToUse = params || formData;
+    console.log('🧮 Iniciando cálculo nutricional com motor centralizado:', inputsToUse);
     
     setIsCalculating(true);
     setError(null);
 
     try {
       // Validar dados de entrada usando validação do motor centralizado
-      const validation = validateInputs(formData);
+      const validation = validateInputs(inputsToUse);
       if (!validation.isValid) {
         throw new Error(validation.errors.join(', '));
       }
 
       // Calcular usando motor centralizado (100% fiel à planilha)
-      const calculationResults = calculateCompleteNutrition(formData);
+      const calculationResults = calculateCompleteNutrition(inputsToUse);
 
       console.log('✅ Cálculo concluído com motor centralizado:', {
         tmb: calculationResults.tmb.value,
         formula: calculationResults.tmb.formula,
         get: calculationResults.get,
+        vet: calculationResults.vet,
         profileUsed: calculationResults.profileUsed,
         formulaUsed: calculationResults.formulaUsed
       });
@@ -96,6 +103,29 @@ export const useCalculator = (): UseCalculatorReturn => {
     }
   }, [formData, toast]);
 
+  const calculateWithParams = useCallback(async (
+    weight: number,
+    height: number, 
+    age: number,
+    gender: string,
+    activityLevel: string,
+    objective: string,
+    profile: string
+  ): Promise<CompleteNutritionalResult | null> => {
+    // Map legacy values to new system
+    const mappedInputs: CalculationInputs = {
+      weight,
+      height,
+      age,
+      gender: gender === 'M' || gender === 'male' ? 'M' : 'F',
+      activityLevel: activityLevel === 'intenso' ? 'muito_ativo' : activityLevel as any,
+      objective: objective === 'manutenção' ? 'manutencao' : objective as any,
+      profile: profile === 'sobrepeso_obesidade' ? 'obeso_sobrepeso' : profile as any
+    };
+
+    return calculate(mappedInputs);
+  }, [calculate]);
+
   const reset = useCallback(() => {
     console.log('🔄 Resetando calculadora nutricional');
     setFormData(initialFormData);
@@ -111,6 +141,16 @@ export const useCalculator = (): UseCalculatorReturn => {
     error,
     updateFormData,
     calculate,
-    reset
+    reset,
+    // Legacy compatibility
+    hasActivePatient: false,
+    activePatient: null,
+    calculateWithParams
   };
+};
+
+// Legacy wrapper function
+export const useNutritionCalculator = () => {
+  const calculator = useCalculator();
+  return calculator;
 };
