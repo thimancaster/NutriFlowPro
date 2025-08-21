@@ -26,6 +26,8 @@ export class MealPlanServiceV2 {
       date
     });
 
+    console.warn('⚠️ [DEPRECATED] MealPlanServiceV2 está obsoleto. Use MealPlanServiceV3 para novos desenvolvimentos.');
+
     try {
       // Timeout wrapper
       const generateWithTimeout = Promise.race([

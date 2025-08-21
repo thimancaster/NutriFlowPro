@@ -1,153 +1,31 @@
 
-export type MealType = 
-  | 'cafe_da_manha'
-  | 'lanche_manha' 
-  | 'almoco'
-  | 'lanche_tarde'
-  | 'jantar'
-  | 'ceia';
+// ARQUIVO ATUALIZADO - Mantendo compatibilidade com código existente
+// Importando tipos consolidados da fonte única de verdade
 
-export const MEAL_TYPES: Record<MealType, string> = {
-  cafe_da_manha: 'Café da Manhã',
-  lanche_manha: 'Lanche da Manhã', 
-  almoco: 'Almoço',
-  lanche_tarde: 'Lanche da Tarde',
-  jantar: 'Jantar',
-  ceia: 'Ceia'
-};
+export * from './mealPlanTypes';
 
-export const MEAL_ORDER: MealType[] = [
-  'cafe_da_manha',
-  'lanche_manha',
-  'almoco', 
-  'lanche_tarde',
-  'jantar',
-  'ceia'
-];
+// Re-exportar tipos principais para compatibilidade
+export type { 
+  MealType,
+  ConsolidatedMealPlan as MealPlan,
+  ConsolidatedMeal as Meal,
+  ConsolidatedMealItem as MealItem,
+  PDFMealPlanData as MealPlanExportOptions,
+  MealPlanGenerationParams,
+  MealPlanGenerationResult as MealPlanResponse
+} from './mealPlanTypes';
 
-// Aliases for compatibility
+// Manter exports específicos para compatibilidade
+export { 
+  MEAL_TYPES,
+  MEAL_ORDER,
+  DEFAULT_MEAL_DISTRIBUTION,
+  MEAL_TIMES
+} from './mealPlanTypes';
+
+// Aliases para compatibilidade com código existente
 export const MEAL_NAMES = MEAL_TYPES;
-export const MEAL_TIMES = MEAL_TYPES;
-
-export interface MealPlan {
-  id: string;
-  user_id: string;
-  patient_id: string;
-  calculation_id?: string;
-  date: string;
-  meals: MealPlanMeal[];
-  total_calories: number;
-  total_protein: number;
-  total_carbs: number;
-  total_fats: number;
-  notes?: string;
-  is_template?: boolean;
-  day_of_week?: string;
-  created_at?: string;
-  updated_at?: string;
-  items?: MealPlanItem[];
-}
-
-export interface DetailedMealPlan extends MealPlan {
-  patient?: Patient;
-  items?: MealPlanItem[];
-}
-
-export interface MealPlanMeal {
-  id: string;
-  type: MealType;
-  name: string;
-  foods: MealPlanFood[];
-  total_calories: number;
-  total_protein: number;
-  total_carbs: number;
-  total_fats: number;
-  notes?: string;
-}
-
-export interface MealPlanFood {
-  id: string;
-  food_id?: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  order_index: number;
-}
-
-export interface MealPlanItem {
-  id: string;
-  meal_plan_id: string;
-  meal_type: MealType;
-  food_id?: string;
-  food_name: string;
-  quantity: number;
-  unit: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  order_index: number;
-}
-
-export interface MealPlanResponse {
-  success: boolean;
-  data?: MealPlan;
-  error?: string;
-}
-
-export interface MealPlanListResponse {
-  success: boolean;
-  data?: MealPlan[];
-  error?: string;
-  total?: number;
-}
-
-export interface MacroTargets {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-}
-
-// Alias for compatibility
-export interface NutritionalTargets extends MacroTargets {}
-
-export interface MealPlanGenerationParams {
-  userId: string;
-  patientId: string;
-  targets: MacroTargets;
-  date?: string;
-  mealTimeFoodMapping?: Record<string, string[]>;
-}
-
-export interface MealPlanFilters {
-  patientId?: string;
-  startDate?: string;
-  endDate?: string;
-  isTemplate?: boolean;
-  limit?: number;
-  date_from?: string;
-}
-
-export interface Patient {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  birth_date?: string;
-  gender?: 'male' | 'female';
-  address?: string;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Brazilian meal food mapping for cultural intelligence
-export const BRAZILIAN_MEAL_FOOD_MAPPING: Record<MealType, string[]> = {
+export const BRAZILIAN_MEAL_FOOD_MAPPING = {
   cafe_da_manha: [
     'Pão francês', 'Café com leite', 'Frutas', 'Queijo branco', 
     'Manteiga', 'Aveia', 'Iogurte', 'Biscoito integral'
@@ -173,3 +51,36 @@ export const BRAZILIAN_MEAL_FOOD_MAPPING: Record<MealType, string[]> = {
     'Biscoito água e sal', 'Queijo cottage'
   ]
 };
+
+// Interface para compatibilidade com Patient type
+export interface Patient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: 'male' | 'female';
+  address?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Interfaces adicionais para compatibilidade
+export interface MacroTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
+export interface NutritionalTargets extends MacroTargets {}
+
+export interface MealPlanFilters {
+  patientId?: string;
+  startDate?: string;
+  endDate?: string;
+  isTemplate?: boolean;
+  limit?: number;
+  date_from?: string;
+}
