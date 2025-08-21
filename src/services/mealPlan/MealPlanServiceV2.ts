@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanItem, MealPlanGenerationParams, MealType, MEAL_TYPES } from '@/types/mealPlan';
+import { ConsolidatedMealPlan, ConsolidatedMealItem, MealPlanGenerationParams, MealType, MEAL_TYPES } from '@/types/mealPlanTypes';
 
 export interface ServiceResponse<T> {
   success: boolean;
@@ -16,13 +17,16 @@ export class MealPlanServiceV2 {
   /**
    * Generate a meal plan with retry logic and timeout
    */
-  static async generateMealPlan(params: MealPlanGenerationParams): Promise<ServiceResponse<MealPlan>> {
-    const { userId, patientId, targets, date = new Date().toISOString().split('T')[0] } = params;
+  static async generateMealPlan(params: MealPlanGenerationParams): Promise<ServiceResponse<ConsolidatedMealPlan>> {
+    const { userId, patientId, totalCalories, totalProtein, totalCarbs, totalFats, date = new Date().toISOString().split('T')[0] } = params;
     
     console.log('🚀 Iniciando geração de plano alimentar:', {
       userId,
       patientId,
-      targets,
+      totalCalories,
+      totalProtein,
+      totalCarbs,
+      totalFats,
       date
     });
 
@@ -31,7 +35,7 @@ export class MealPlanServiceV2 {
     try {
       // Timeout wrapper
       const generateWithTimeout = Promise.race([
-        this.performGeneration(userId, patientId, targets, date),
+        this.performGeneration(userId, patientId, { calories: totalCalories, protein: totalProtein, carbs: totalCarbs, fats: totalFats }, date),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Timeout na geração do plano alimentar')), this.TIMEOUT)
         )
@@ -99,7 +103,7 @@ export class MealPlanServiceV2 {
   /**
    * Get meal plan with retry logic
    */
-  private static async getMealPlanWithRetry(id: string): Promise<ServiceResponse<MealPlan>> {
+  private static async getMealPlanWithRetry(id: string): Promise<ServiceResponse<ConsolidatedMealPlan>> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
@@ -144,7 +148,7 @@ export class MealPlanServiceV2 {
   /**
    * Get a meal plan by ID with improved error handling
    */
-  static async getMealPlan(id: string): Promise<ServiceResponse<MealPlan>> {
+  static async getMealPlan(id: string): Promise<ServiceResponse<ConsolidatedMealPlan>> {
     try {
       console.log('📥 Buscando plano alimentar:', id);
 
@@ -184,11 +188,9 @@ export class MealPlanServiceV2 {
 
       console.log('🍽️ Itens encontrados:', itemsData?.length || 0);
 
-      // Convert items to proper MealPlanItem type with safety mapping
-      const typedItems: MealPlanItem[] = (itemsData || []).map(item => ({
+      // Convert items to proper ConsolidatedMealItem type with safety mapping
+      const typedItems: ConsolidatedMealItem[] = (itemsData || []).map(item => ({
         id: item.id,
-        meal_plan_id: item.meal_plan_id,
-        meal_type: this.mapMealTypeToPortuguese(item.meal_type),
         food_id: item.food_id,
         food_name: item.food_name,
         quantity: item.quantity,
@@ -197,15 +199,24 @@ export class MealPlanServiceV2 {
         protein: item.protein,
         carbs: item.carbs,
         fats: item.fats,
-        order_index: item.order_index
+        order_index: item.order_index,
+        meal_type: this.mapMealTypeToPortuguese(item.meal_type)
       }));
 
-      // Transformar dados para formato MealPlan
-      const mealPlan: MealPlan = {
-        ...planData,
-        day_of_week: planData.day_of_week?.toString() || undefined,
+      // Transformar dados para formato ConsolidatedMealPlan
+      const mealPlan: ConsolidatedMealPlan = {
+        id: planData.id,
+        user_id: planData.user_id,
+        patient_id: planData.patient_id,
+        date: planData.date,
+        total_calories: planData.total_calories,
+        total_protein: planData.total_protein,
+        total_carbs: planData.total_carbs,
+        total_fats: planData.total_fats,
         meals: this.groupItemsByMealType(typedItems),
-        items: typedItems
+        notes: planData.notes,
+        created_at: planData.created_at,
+        updated_at: planData.updated_at
       };
 
       console.log('✅ Plano transformado:', {
@@ -239,7 +250,7 @@ export class MealPlanServiceV2 {
   /**
    * Validate meal plan completeness
    */
-  private static validateMealPlan(mealPlan: MealPlan): boolean {
+  private static validateMealPlan(mealPlan: ConsolidatedMealPlan): boolean {
     if (!mealPlan.id || !mealPlan.meals) {
       console.warn('⚠️ Plano sem ID ou meals');
       return false;
@@ -250,10 +261,10 @@ export class MealPlanServiceV2 {
       return false;
     }
 
-    // Verificar se pelo menos uma refeição tem alimentos
-    const hasFoods = mealPlan.meals.some(meal => meal.foods && meal.foods.length > 0);
-    if (!hasFoods) {
-      console.warn('⚠️ Nenhuma refeição possui alimentos');
+    // Verificar se pelo menos uma refeição tem items
+    const hasItems = mealPlan.meals.some(meal => meal.items && meal.items.length > 0);
+    if (!hasItems) {
+      console.warn('⚠️ Nenhuma refeição possui itens');
       return false;
     }
 
@@ -264,7 +275,7 @@ export class MealPlanServiceV2 {
   /**
    * Save meal plan changes
    */
-  static async saveMealPlan(mealPlan: Partial<MealPlan> & { id: string }): Promise<ServiceResponse<MealPlan>> {
+  static async saveMealPlan(mealPlan: Partial<ConsolidatedMealPlan> & { id: string }): Promise<ServiceResponse<ConsolidatedMealPlan>> {
     try {
       console.log('💾 Salvando plano alimentar:', mealPlan.id);
 
@@ -319,7 +330,7 @@ export class MealPlanServiceV2 {
   /**
    * Group meal plan items by meal type in chronological order
    */
-  private static groupItemsByMealType(items: MealPlanItem[]) {
+  private static groupItemsByMealType(items: ConsolidatedMealItem[]) {
     console.log('🔄 Agrupando itens por tipo de refeição:', items.length);
 
     const mealOrder: MealType[] = [
@@ -332,38 +343,28 @@ export class MealPlanServiceV2 {
     ];
 
     const grouped = items.reduce((acc, item) => {
-      const validMealType = this.mapMealTypeToPortuguese(item.meal_type);
+      const validMealType = this.mapMealTypeToPortuguese(item.meal_type || 'cafe_da_manha');
       if (!acc[validMealType]) {
         acc[validMealType] = [];
       }
-      acc[validMealType].push({
-        id: item.id,
-        food_id: item.food_id || '',
-        name: item.food_name,
-        quantity: item.quantity,
-        unit: item.unit,
-        calories: item.calories,
-        protein: item.protein,
-        carbs: item.carbs,
-        fats: item.fats,
-        order_index: item.order_index
-      });
+      acc[validMealType].push(item);
       return acc;
-    }, {} as Record<MealType, any[]>);
+    }, {} as Record<MealType, ConsolidatedMealItem[]>);
 
     const meals = mealOrder
       .filter(mealType => grouped[mealType] && grouped[mealType].length > 0)
       .map(mealType => {
-        const foods = grouped[mealType] || [];
+        const mealItems = grouped[mealType] || [];
         const meal = {
           id: `${mealType}-meal`,
           type: mealType,
           name: MEAL_TYPES[mealType],
-          foods: foods,
-          total_calories: foods.reduce((sum, food) => sum + (food.calories || 0), 0),
-          total_protein: foods.reduce((sum, food) => sum + (food.protein || 0), 0),
-          total_carbs: foods.reduce((sum, food) => sum + (food.carbs || 0), 0),
-          total_fats: foods.reduce((sum, food) => sum + (food.fats || 0), 0)
+          time: '07:00', // Default time, should be mapped properly
+          items: mealItems,
+          total_calories: mealItems.reduce((sum, item) => sum + (item.calories || 0), 0),
+          total_protein: mealItems.reduce((sum, item) => sum + (item.protein || 0), 0),
+          total_carbs: mealItems.reduce((sum, item) => sum + (item.carbs || 0), 0),
+          total_fats: mealItems.reduce((sum, item) => sum + (item.fats || 0), 0)
         };
         
         return meal;
@@ -380,18 +381,18 @@ export class MealPlanServiceV2 {
     const items: any[] = [];
     
     meals.forEach(meal => {
-      meal.foods.forEach((food: any, index: number) => {
+      meal.items?.forEach((item: ConsolidatedMealItem, index: number) => {
         items.push({
           meal_plan_id: mealPlanId,
           meal_type: meal.type,
-          food_id: food.food_id,
-          food_name: food.name,
-          quantity: food.quantity,
-          unit: food.unit,
-          calories: food.calories,
-          protein: food.protein,
-          carbs: food.carbs,
-          fats: food.fats,
+          food_id: item.food_id,
+          food_name: item.food_name,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fats: item.fats,
           order_index: index
         });
       });

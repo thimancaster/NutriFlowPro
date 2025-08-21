@@ -1,4 +1,3 @@
-
 import React, {useState, useEffect} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
@@ -8,10 +7,10 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import {Badge} from "@/components/ui/badge";
 import {Users, Calculator, Utensils, Loader2} from "lucide-react";
 import {useAuth} from "@/contexts/auth/AuthContext";
-import {PatientService} from "@/services/patientService";
+import {PatientService, PatientsResponse} from "@/services/patientService";
 import {MealPlanService} from "@/services/mealPlanService";
 import {useToast} from "@/hooks/use-toast";
-import {Patient} from "@/types/patient";
+import {Patient} from "@/types";
 import {MealPlanGenerationParams} from "@/types/mealPlanTypes";
 
 interface MealPlanGeneratorProps {
@@ -39,7 +38,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({onMealPlanGenerate
 
 		try {
 			setIsLoadingPatients(true);
-			const response = await PatientService.getPatients(user.id);
+			const response: PatientsResponse = await PatientService.getPatients(user.id);
 			
 			if (response.success && response.data) {
 				setPatients(response.data);
@@ -94,7 +93,8 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({onMealPlanGenerate
 					protein: params.totalProtein,
 					carbs: params.totalCarbs,
 					fats: params.totalFats
-				}
+				},
+				params.date
 			);
 
 			if (result.success && result.data) {
@@ -150,7 +150,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({onMealPlanGenerate
 								) : (
 									patients.map((patient) => (
 										<SelectItem key={patient.id} value={patient.id}>
-											{patient.name} - {patient.age} anos
+											{patient.name}
 										</SelectItem>
 									))
 								)}

@@ -26,7 +26,9 @@ export {
 // Aliases para compatibilidade com código existente
 export const MEAL_NAMES = MEAL_TYPES;
 
-// Tipos legados para compatibilidade com código existente
+// Tipos legados para compatibilidade com código existente - usando os tipos consolidados
+import { ConsolidatedMealItem, ConsolidatedMeal, ConsolidatedMealPlan, MealPlanGenerationParams as BaseGenerationParams } from './mealPlanTypes';
+
 export interface MealPlanItem extends ConsolidatedMealItem {}
 export interface MealPlanMeal extends ConsolidatedMeal {
   foods: MealPlanFood[];
@@ -120,7 +122,7 @@ export interface MealPlanFilters {
 }
 
 // Interface estendida para parâmetros de geração com targets
-export interface ExtendedMealPlanGenerationParams extends MealPlanGenerationParams {
+export interface ExtendedMealPlanGenerationParams extends BaseGenerationParams {
   targets?: MacroTargets;
   calculation_id?: string;
 }

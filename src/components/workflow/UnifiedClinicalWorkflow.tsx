@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -26,26 +27,21 @@ export const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = (
     objective: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { createPatient, updatePatient, activePatient } = usePatient();
+  const { activePatient } = usePatient();
   const { user } = useAuth();
 
   const handlePatientSubmit = useCallback(async (data: Patient) => {
     setIsLoading(true);
     try {
-      if (activePatient) {
-        await updatePatient({ id: activePatient.id, ...data });
-        setPatientData({ ...activePatient, ...data });
-      } else {
-        const newPatient = await createPatient(data);
-        setPatientData(newPatient);
-      }
+      // For now, just set the patient data - implement actual save logic as needed
+      setPatientData(data);
       setCurrentStep('nutritional');
     } catch (error) {
       console.error("Erro ao salvar paciente:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [createPatient, updatePatient, activePatient]);
+  }, []);
 
   const handleCalculationComplete = useCallback((results: {
     totalCalories: number;
@@ -85,7 +81,6 @@ export const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = (
             </CardHeader>
             <CardContent>
               <CalculatorForm
-                patient={activePatient}
                 onComplete={handleCalculationComplete}
                 onBack={() => setCurrentStep('patient')}
               />

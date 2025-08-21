@@ -31,7 +31,7 @@ const ConsolidatedConsultationPage: React.FC = () => {
     <MealPlanWorkflowProvider>
       <div className="container mx-auto p-6 max-w-7xl">
         <UnifiedClinicalWorkflow 
-          onWorkflowComplete={handleWorkflowComplete}
+          onComplete={handleWorkflowComplete}
         />
       </div>
     </MealPlanWorkflowProvider>
