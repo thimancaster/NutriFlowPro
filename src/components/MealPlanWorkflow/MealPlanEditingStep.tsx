@@ -7,12 +7,12 @@ import { Save, Download, Edit } from 'lucide-react';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MealPlan, MealPlanMeal } from '@/types/mealPlan';
+import { ConsolidatedMealPlan, ConsolidatedMeal } from '@/types/mealPlanTypes';
 import MealEditDialog from '@/components/meal-plan/MealEditDialog';
 
 interface MealPlanEditingStepProps {
-  mealPlan: MealPlan;
-  onSave: (updates: Partial<MealPlan>) => Promise<void>;
+  mealPlan: ConsolidatedMealPlan;
+  onSave: (updates: Partial<ConsolidatedMealPlan>) => Promise<void>;
   onBack: () => void;
 }
 
@@ -23,8 +23,8 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 }) => {
   const { isSaving, setCurrentStep } = useMealPlanWorkflow();
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingMeal, setEditingMeal] = useState<MealPlanMeal | null>(null);
-  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan>(mealPlan);
+  const [editingMeal, setEditingMeal] = useState<ConsolidatedMeal | null>(null);
+  const [currentMealPlan, setCurrentMealPlan] = useState<ConsolidatedMealPlan>(mealPlan);
 
   const handleSave = async () => {
     await onSave(currentMealPlan);
@@ -39,7 +39,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
     }
   };
 
-  const handleSaveMeal = (updatedMeal: MealPlanMeal) => {
+  const handleSaveMeal = (updatedMeal: ConsolidatedMeal) => {
     const updatedMeals = currentMealPlan.meals.map(meal =>
       meal.id === updatedMeal.id ? updatedMeal : meal
     );
@@ -55,7 +55,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
       { calories: 0, protein: 0, carbs: 0, fats: 0 }
     );
 
-    const updatedMealPlan: MealPlan = {
+    const updatedMealPlan: ConsolidatedMealPlan = {
       ...currentMealPlan,
       meals: updatedMeals,
       total_calories: newTotals.calories,
@@ -142,16 +142,16 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
                 {/* Foods List */}
                 <div className="space-y-2">
-                  {meal.foods.map((food, index) => (
+                  {meal.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <div>
-                        <span className="font-medium">{food.name}</span>
+                        <span className="font-medium">{item.food_name}</span>
                         <span className="text-gray-600 ml-2">
-                          {food.quantity}{food.unit}
+                          {item.quantity}{item.unit}
                         </span>
                       </div>
                       <div className="text-sm text-gray-600">
-                        {Math.round(food.calories)} kcal
+                        {Math.round(item.calories)} kcal
                       </div>
                     </div>
                   ))}

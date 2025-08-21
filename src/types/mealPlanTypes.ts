@@ -60,6 +60,10 @@ export interface ConsolidatedMealPlan {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  // Propriedades adicionais para compatibilidade
+  is_template?: boolean;
+  calculation_id?: string;
+  day_of_week?: string;
 }
 
 export interface ConsolidatedMeal {
@@ -72,6 +76,8 @@ export interface ConsolidatedMeal {
   total_protein: number;
   total_carbs: number;
   total_fats: number;
+  // Propriedade adicional para compatibilidade com sistema legado
+  foods?: LegacyMealFood[];
 }
 
 export interface ConsolidatedMealItem {
@@ -85,6 +91,19 @@ export interface ConsolidatedMealItem {
   carbs: number;
   fats: number;
   order_index: number;
+}
+
+// Interface para compatibilidade com sistema legado
+export interface LegacyMealFood {
+  id?: string;
+  food_id?: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
 }
 
 // Interface para geração de PDF (compatível com generateMealPlanPDF)
@@ -119,6 +138,14 @@ export interface MealPlanGenerationParams {
   totalFats: number;
   date?: string;
   customDistribution?: Partial<Record<MealType, number>>;
+  // Propriedades adicionais para compatibilidade
+  targets?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  calculation_id?: string;
 }
 
 export interface MealPlanGenerationResult {

@@ -25,6 +25,40 @@ export {
 
 // Aliases para compatibilidade com código existente
 export const MEAL_NAMES = MEAL_TYPES;
+
+// Tipos legados para compatibilidade com código existente
+export interface MealPlanItem extends ConsolidatedMealItem {}
+export interface MealPlanMeal extends ConsolidatedMeal {
+  foods: MealPlanFood[];
+}
+export interface MealPlanFood {
+  id?: string;
+  food_id?: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
+// Interface estendida para compatibilidade com o sistema legado
+export interface DetailedMealPlan extends ConsolidatedMealPlan {
+  is_template?: boolean;
+  calculation_id?: string;
+  day_of_week?: string;
+  items?: MealPlanItem[];
+  meals?: MealPlanMeal[];
+}
+
+// Interfaces para respostas de API legadas
+export interface MealPlanListResponse {
+  success: boolean;
+  data?: DetailedMealPlan[];
+  error?: string;
+}
+
 export const BRAZILIAN_MEAL_FOOD_MAPPING = {
   cafe_da_manha: [
     'Pão francês', 'Café com leite', 'Frutas', 'Queijo branco', 
@@ -83,4 +117,10 @@ export interface MealPlanFilters {
   isTemplate?: boolean;
   limit?: number;
   date_from?: string;
+}
+
+// Interface estendida para parâmetros de geração com targets
+export interface ExtendedMealPlanGenerationParams extends MealPlanGenerationParams {
+  targets?: MacroTargets;
+  calculation_id?: string;
 }
