@@ -4,6 +4,16 @@ import { Profile } from '@/types/consultation';
 import { CalculatorState } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useCalculator } from '@/hooks/useCalculator';
+import {
+  mapProfileToNew,
+  mapProfileToLegacy,
+  mapActivityLevelToNew,
+  mapActivityLevelToLegacy,
+  mapObjectiveToNew,
+  mapObjectiveToLegacy,
+  mapGenderToNew,
+  mapGenderToLegacy
+} from '@/utils/nutrition/typeMapping';
 
 const initialState: CalculatorState = {
   weight: 0,
@@ -43,10 +53,10 @@ export const useCalculatorState = () => {
       weight: formData.weight,
       height: formData.height,
       age: formData.age,
-      sex: formData.sex,
-      activityLevel: formData.activityLevel,
-      objective: formData.objective,
-      profile: formData.profile,
+      sex: mapGenderToLegacy(formData.gender),
+      activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
+      objective: mapObjectiveToLegacy(formData.objective),
+      profile: mapProfileToLegacy(formData.profile),
       loading: isCalculating
     }));
   }, [formData, isCalculating]);
@@ -56,7 +66,7 @@ export const useCalculatorState = () => {
     if (results) {
       setState(prev => ({
         ...prev,
-        bmr: Math.round(results.tmb),
+        bmr: Math.round(results.tmb.value), // Extract numeric value
         tdee: Math.round(results.vet),
         protein: Math.round(results.macros.protein.grams),
         carbs: Math.round(results.macros.carbs.grams),
@@ -68,7 +78,7 @@ export const useCalculatorState = () => {
 
       toast({
         title: "Cálculo Realizado",
-        description: `Necessidades nutricionais calculadas: TMB ${results.tmb} kcal, VET ${results.vet} kcal`,
+        description: `Necessidades nutricionais calculadas: TMB ${results.tmb.value} kcal, VET ${results.vet} kcal`,
       });
     }
   }, [results, toast]);
@@ -101,22 +111,22 @@ export const useCalculatorState = () => {
   };
   
   const setSex = (sex: 'M' | 'F') => {
-    updateFormData({ sex });
+    updateFormData({ gender: mapGenderToNew(sex) });
     setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setActivityLevel = (activityLevel: string) => {
-    updateFormData({ activityLevel: activityLevel as any });
+    updateFormData({ activityLevel: mapActivityLevelToNew(activityLevel as any) });
     setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setObjective = (objective: string) => {
-    updateFormData({ objective: objective as any });
+    updateFormData({ objective: mapObjectiveToNew(objective as any) });
     setState(prev => ({ ...prev, calculated: false }));
   };
   
   const setProfile = (profile: Profile) => {
-    updateFormData({ profile });
+    updateFormData({ profile: mapProfileToNew(profile) });
     setState(prev => ({ ...prev, calculated: false }));
   };
   

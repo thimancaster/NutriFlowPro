@@ -10,6 +10,11 @@ import { Calculator, Activity, Target, Zap } from 'lucide-react';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useCalculator } from '@/hooks/useCalculator';
 import { ActivityLevel, Objective } from '@/types/consultation';
+import {
+  mapActivityLevelToNew,
+  mapObjectiveToNew,
+  mapGenderToNew
+} from '@/utils/nutrition/typeMapping';
 
 const NutritionalEvaluationStep: React.FC = () => {
   const { consultationData, selectedPatient, updateConsultationData } = useConsultationData();
@@ -30,9 +35,9 @@ const NutritionalEvaluationStep: React.FC = () => {
         weight: consultationData.weight || formData.weight,
         height: consultationData.height || formData.height,
         age: consultationData.age || formData.age,
-        sex: (consultationData.gender === 'male' ? 'M' : 'F') as 'M' | 'F',
-        activityLevel: (consultationData.activity_level || 'moderado') as ActivityLevel,
-        objective: (consultationData.objective || 'manutenção') as Objective,
+        gender: mapGenderToNew(consultationData.gender === 'male' ? 'M' : 'F'),
+        activityLevel: mapActivityLevelToNew((consultationData.activity_level || 'moderado') as ActivityLevel),
+        objective: mapObjectiveToNew((consultationData.objective || 'manutenção') as Objective),
       });
     }
   }, [consultationData]);
@@ -52,7 +57,7 @@ const NutritionalEvaluationStep: React.FC = () => {
         weight: formData.weight,
         height: formData.height,
         age: formData.age,
-        gender: formData.sex === 'M' ? 'male' : 'female',
+        gender: formData.gender === 'M' ? 'male' : 'female',
         activity_level: formData.activityLevel,
         objective: formData.objective,
         totalCalories: result.vet,
@@ -60,7 +65,7 @@ const NutritionalEvaluationStep: React.FC = () => {
         carbs: result.macros.carbs.grams,
         fats: result.macros.fat.grams,
         results: {
-          bmr: result.tmb,
+          bmr: result.tmb.value, // Extract numeric value
           get: result.get,
           vet: result.vet,
           adjustment: result.adjustment,
@@ -154,8 +159,8 @@ const NutritionalEvaluationStep: React.FC = () => {
                   <SelectItem value="sedentario">Sedentário</SelectItem>
                   <SelectItem value="leve">Atividade Leve</SelectItem>
                   <SelectItem value="moderado">Atividade Moderada</SelectItem>
-                  <SelectItem value="intenso">Atividade Intensa</SelectItem>
-                  <SelectItem value="muito_intenso">Muito Intenso</SelectItem>
+                  <SelectItem value="muito_ativo">Atividade Intensa</SelectItem>
+                  <SelectItem value="extremamente_ativo">Muito Intenso</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -167,7 +172,7 @@ const NutritionalEvaluationStep: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
-                  <SelectItem value="manutenção">Manutenção</SelectItem>
+                  <SelectItem value="manutencao">Manutenção</SelectItem>
                   <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
                 </SelectContent>
               </Select>
@@ -207,7 +212,7 @@ const NutritionalEvaluationStep: React.FC = () => {
                       <span className="text-sm font-medium">TMB</span>
                     </div>
                     <div className="text-2xl font-bold text-orange-600">
-                      {results.tmb}
+                      {results.tmb.value}
                     </div>
                     <div className="text-xs text-muted-foreground">kcal/dia</div>
                   </CardContent>

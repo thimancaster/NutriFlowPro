@@ -10,6 +10,14 @@ import GERFormulaSelection from "../inputs/GERFormulaSelection";
 import {useCalculator} from "@/hooks/useCalculator";
 import {ActivityLevel, Objective, Profile} from "@/types/consultation";
 import {GERFormula} from "@/types/gerFormulas";
+import {
+	mapActivityLevelToNew,
+	mapObjectiveToNew,
+	mapProfileToNew,
+	mapActivityLevelToLegacy,
+	mapObjectiveToLegacy,
+	mapProfileToLegacy
+} from "@/utils/nutrition/typeMapping";
 
 export const ENPCalculatorForm: React.FC = () => {
 	const {
@@ -54,10 +62,10 @@ export const ENPCalculatorForm: React.FC = () => {
 		weight: formData.weight,
 		height: formData.height,
 		age: formData.age,
-		sex: formData.sex,
-		activityLevel: formData.activityLevel,
-		objective: formData.objective,
-		profile: formData.profile,
+		gender: formData.gender, // Use gender instead of sex
+		activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
+		objective: mapObjectiveToLegacy(formData.objective),
+		profile: mapProfileToLegacy(formData.profile),
 		bodyFatPercentage
 	};
 
@@ -92,7 +100,7 @@ export const ENPCalculatorForm: React.FC = () => {
 
 	const transformedResults = results
 		? {
-				tmb: results.tmb,
+				tmb: results.tmb.value, // Extract numeric value from TMBResult
 				get: results.get,
 				vet: results.vet,
 				adjustment: results.adjustment,
@@ -147,14 +155,20 @@ export const ENPCalculatorForm: React.FC = () => {
 					setHeight={handleHeightChange}
 					age={formData.age.toString()}
 					setAge={handleAgeChange}
-					sex={formData.sex}
-					setSex={(sex) => updateFormData({ sex })}
-					activityLevel={formData.activityLevel}
-					setActivityLevel={(activityLevel) => updateFormData({ activityLevel: activityLevel as ActivityLevel })}
-					objective={formData.objective}
-					setObjective={(objective) => updateFormData({ objective: objective as Objective })}
-					profile={formData.profile}
-					setProfile={(profile) => updateFormData({ profile: profile as Profile })}
+					sex={formData.gender}
+					setSex={(gender) => updateFormData({ gender })}
+					activityLevel={mapActivityLevelToLegacy(formData.activityLevel)}
+					setActivityLevel={(activityLevel) => updateFormData({ 
+						activityLevel: mapActivityLevelToNew(activityLevel as ActivityLevel) 
+					})}
+					objective={mapObjectiveToLegacy(formData.objective)}
+					setObjective={(objective) => updateFormData({ 
+						objective: mapObjectiveToNew(objective as Objective) 
+					})}
+					profile={mapProfileToLegacy(formData.profile)}
+					setProfile={(profile) => updateFormData({ 
+						profile: mapProfileToNew(profile as Profile) 
+					})}
 					bodyFatPercentage={bodyFatPercentage?.toString() || ''}
 					setBodyFatPercentage={handleBodyFatChange}
 				/>
@@ -162,7 +176,7 @@ export const ENPCalculatorForm: React.FC = () => {
 				<GERFormulaSelection
 					selectedFormula={gerFormula}
 					onFormulaChange={setGERFormula}
-					profile={formData.profile}
+					profile={mapProfileToLegacy(formData.profile)}
 					hasBodyFat={!!bodyFatPercentage}
 					age={formData.age}
 					weight={formData.weight}
