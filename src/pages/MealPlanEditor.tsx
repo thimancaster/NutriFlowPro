@@ -32,7 +32,7 @@ const MealPlanEditor: React.FC = () => {
               foods: meal.items.map(item => ({
                 id: item.id,
                 food_id: item.food_id,
-                name: item.food_name, // MealPlanItem has food_name, MealPlanFood needs name
+                name: item.food_name, // Convert food_name to name for MealPlanFood compatibility
                 quantity: item.quantity,
                 unit: item.unit,
                 calories: item.calories,
@@ -43,7 +43,7 @@ const MealPlanEditor: React.FC = () => {
               items: meal.items.map(item => ({
                 id: item.id,
                 food_id: item.food_id,
-                name: item.food_name, // Convert food_name to name for MealPlanFood compatibility
+                name: item.food_name, // Convert food_name to name for compatibility
                 quantity: item.quantity,
                 unit: item.unit,
                 calories: item.calories,
