@@ -32,7 +32,7 @@ const MealPlanEditor: React.FC = () => {
               foods: meal.items.map(item => ({
                 id: item.id,
                 food_id: item.food_id,
-                name: item.food_name,
+                name: item.food_name || item.name || '',
                 quantity: item.quantity,
                 unit: item.unit,
                 calories: item.calories,
@@ -43,7 +43,7 @@ const MealPlanEditor: React.FC = () => {
               items: meal.items.map(item => ({
                 id: item.id,
                 food_id: item.food_id,
-                name: item.food_name,
+                name: item.food_name || item.name || '',
                 quantity: item.quantity,
                 unit: item.unit,
                 calories: item.calories,
@@ -79,7 +79,7 @@ const MealPlanEditor: React.FC = () => {
         foods: meal.items.map(item => ({
           id: item.id,
           food_id: item.food_id,
-          name: item.food_name,
+          name: item.food_name || item.name || '',
           quantity: item.quantity,
           unit: item.unit,
           calories: item.calories,
@@ -90,7 +90,7 @@ const MealPlanEditor: React.FC = () => {
         items: meal.items.map(item => ({
           id: item.id,
           food_id: item.food_id,
-          name: item.food_name,
+          name: item.food_name || item.name || '',
           quantity: item.quantity,
           unit: item.unit,
           calories: item.calories,
@@ -135,6 +135,32 @@ const MealPlanEditor: React.FC = () => {
     }
   };
 
+  const handleSaveClick = async () => {
+    if (mealPlan) {
+      // Convert DetailedMealPlan to ConsolidatedMealPlan
+      const consolidatedMealPlan: ConsolidatedMealPlan = {
+        ...mealPlan,
+        meals: mealPlan.meals.map(meal => ({
+          ...meal,
+          items: meal.foods.map(food => ({
+            id: food.id,
+            food_id: food.food_id,
+            food_name: food.name,
+            meal_id: meal.id,
+            name: food.name,
+            quantity: food.quantity,
+            unit: food.unit,
+            calories: food.calories,
+            protein: food.protein,
+            carbs: food.carbs,
+            fats: food.fats
+          }))
+        }))
+      };
+      await handleSave(consolidatedMealPlan);
+    }
+  };
+
   if (isLoading) {
     return <div>Carregando plano alimentar...</div>;
   }
@@ -153,7 +179,7 @@ const MealPlanEditor: React.FC = () => {
             Editar Plano
           </Button>
         ) : (
-          <Button onClick={() => handleSave(mealPlan)}>
+          <Button onClick={handleSaveClick}>
             <Save className="mr-2 h-4 w-4" />
             Salvar Plano
           </Button>

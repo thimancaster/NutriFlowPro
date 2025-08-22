@@ -7,7 +7,7 @@ interface ConsultationFormHandlerReturn {
   setFormData: (data: any) => void;
   step: number;
   setStep: (step: number) => void;
-  autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  autoSaveStatus: 'idle' | 'saving' | 'success' | 'error';
   isSubmitting: boolean;
   handleFormSubmit: (data: any) => Promise<any>;
   handleFormChange: (data: any) => any;
@@ -21,37 +21,30 @@ export const useConsultationFormHandler = (
 ): ConsultationFormHandlerReturn => {
   const [formData, setFormData] = useState(consultation || {});
   const [step, setStep] = useState(1);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   
   const { 
-    isSaving,
-    handleSubmitConsultation,
-    saveAutoChanges
+    isLoading,
+    createConsultation,
+    updateConsultation
   } = useSaveConsultation();
 
   const handleFormSubmit = useCallback(async (data: any) => {
     setAutoSaveStatus('saving');
     try {
-      // Create a mock form event for the handler
-      const mockEvent = {
-        preventDefault: () => {},
-        currentTarget: {}
-      } as any;
-      
-      const result = await handleSubmitConsultation(
-        mockEvent,
-        data,
-        {},
-        consultationId || '',
-        () => {}
-      );
-      setAutoSaveStatus('saved');
+      let result;
+      if (consultationId) {
+        result = await updateConsultation(consultationId, data);
+      } else {
+        result = await createConsultation(data);
+      }
+      setAutoSaveStatus('success');
       return result;
     } catch (error) {
       setAutoSaveStatus('error');
       throw error;
     }
-  }, [consultationId, handleSubmitConsultation]);
+  }, [consultationId, createConsultation, updateConsultation]);
 
   const handleFormChange = useCallback((data: any) => {
     const updatedData = { ...formData, ...data };
@@ -65,9 +58,9 @@ export const useConsultationFormHandler = (
 
   const handleSaveConsultationClick = useCallback(async (data: any) => {
     if (consultationId) {
-      await saveAutoChanges(consultationId, data, {});
+      await updateConsultation(consultationId, data);
     }
-  }, [consultationId, saveAutoChanges]);
+  }, [consultationId, updateConsultation]);
 
   return {
     formData,
@@ -75,7 +68,7 @@ export const useConsultationFormHandler = (
     step,
     setStep,
     autoSaveStatus,
-    isSubmitting: isSaving,
+    isSubmitting: isLoading,
     handleFormSubmit,
     handleFormChange,
     handleStepChange,
