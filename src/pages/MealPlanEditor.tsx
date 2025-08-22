@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MealPlanService } from '@/services/mealPlanService';
@@ -32,7 +31,7 @@ const MealPlanEditor: React.FC = () => {
               foods: meal.items.map(item => ({
                 id: item.id,
                 food_id: item.food_id,
-                name: item.food_name || item.name || '',
+                name: item.food_name || '', // Use food_name from MealPlanItem
                 quantity: item.quantity,
                 unit: item.unit,
                 calories: item.calories,
@@ -43,7 +42,7 @@ const MealPlanEditor: React.FC = () => {
               items: meal.items.map(item => ({
                 id: item.id,
                 food_id: item.food_id,
-                name: item.food_name || item.name || '',
+                name: item.food_name || '', // Use food_name from MealPlanItem
                 quantity: item.quantity,
                 unit: item.unit,
                 calories: item.calories,
@@ -79,7 +78,7 @@ const MealPlanEditor: React.FC = () => {
         foods: meal.items.map(item => ({
           id: item.id,
           food_id: item.food_id,
-          name: item.food_name || item.name || '',
+          name: item.food_name, // MealPlanItem has food_name
           quantity: item.quantity,
           unit: item.unit,
           calories: item.calories,
@@ -90,7 +89,7 @@ const MealPlanEditor: React.FC = () => {
         items: meal.items.map(item => ({
           id: item.id,
           food_id: item.food_id,
-          name: item.food_name || item.name || '',
+          name: item.food_name, // MealPlanItem has food_name
           quantity: item.quantity,
           unit: item.unit,
           calories: item.calories,
@@ -145,9 +144,8 @@ const MealPlanEditor: React.FC = () => {
           items: meal.foods.map(food => ({
             id: food.id,
             food_id: food.food_id,
-            food_name: food.name,
             meal_id: meal.id,
-            name: food.name,
+            food_name: food.name, // MealPlanFood has name, MealPlanItem needs food_name
             quantity: food.quantity,
             unit: food.unit,
             calories: food.calories,
