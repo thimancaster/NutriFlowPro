@@ -1,117 +1,67 @@
-
 import React from 'react';
-import { Patient } from '@/types/patient';
-import { ModernCard, ModernCardContent } from '@/components/ui/modern-card';
-import { Badge } from '@/components/ui';
-import { formatDate } from '@/utils/dateUtils';
-import { calculateAge } from '@/utils/patient';
+import { Patient } from '@/types';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface PatientCardProps {
   patient: Patient;
-  variant?: 'default' | 'compact' | 'preview';
   onClick?: () => void;
-  showActions?: boolean;
-  className?: string;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({
-  patient,
-  variant = 'default',
-  onClick,
-  showActions = true,
-  className = ''
-}) => {
-  // Status indicator logic
-  const getStatusIndicator = () => {
-    if (patient.status === 'archived') {
-      return <Badge variant="outline" className="magnetic-hover">Arquivado</Badge>;
+const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
+  const getLastAppointmentText = () => {
+    if (!patient.last_appointment) {
+      return 'Sem consultas';
     }
     
-    return <Badge variant="success" className="magnetic-hover">Ativo</Badge>;
+    const lastAppointment = new Date(patient.last_appointment);
+    const daysSince = Math.floor(
+      (new Date().getTime() - lastAppointment.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    if (daysSince === 0) return 'Hoje';
+    if (daysSince === 1) return 'Ontem';
+    if (daysSince < 30) return `${daysSince} dias atrás`;
+    if (daysSince < 365) return `${Math.floor(daysSince / 30)} meses atrás`;
+    return `${Math.floor(daysSince / 365)} anos atrás`;
   };
-  
-  // Compact variant for list items
-  if (variant === 'compact') {
-    return (
-      <div 
-        className={`p-3 border-b hover:bg-gray-50 dark:hover:bg-dark-bg-elevated/60 cursor-pointer flex items-center justify-between transition-all duration-300 side-expand magnetic-hover hover:translate-x-1 ${className}`}
-        onClick={onClick}
-      >
-        <div>
-          <h3 className="font-medium text-glow-hover transition-all duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.name}</h3>
-          <p className="text-sm text-gray-500 dark:text-dark-text-muted transition-colors duration-300">
-            {patient.email || patient.phone || 'Sem contato'}
-          </p>
-        </div>
-        {getStatusIndicator()}
-      </div>
-    );
-  }
-  
-  // Preview variant for quick view
-  if (variant === 'preview') {
-    return (
-      <ModernCard variant="magnetic" className={`w-72 shadow-lg ${className}`}>
-        <ModernCardContent className="p-4">
-          <div className="flex justify-between items-start mb-3">
-            <h3 className="font-medium text-glow-hover">{patient.name}</h3>
-            {getStatusIndicator()}
-          </div>
-          
-          {patient.goals && (
-            <div className="mb-2">
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">
-                <span className="text-gray-500 dark:text-dark-text-muted">Objetivo:</span> {patient.goals.objective || 'Não definido'}
-              </p>
-            </div>
-          )}
-          
-          <div className="text-xs text-gray-500 dark:text-dark-text-muted transition-colors duration-300">
-            Última consulta: {patient.last_appointment ? formatDate(patient.last_appointment) : 'Nenhuma'}
-          </div>
-        </ModernCardContent>
-      </ModernCard>
-    );
-  }
-  
-  // Default full variant
+
   return (
-    <ModernCard 
-      variant="hover-lift" 
-      interactive={!!onClick}
-      className={className} 
-      onClick={onClick}
-    >
-      <ModernCardContent className="p-4">
-        <div className="flex justify-between items-start mb-4">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-glow-hover">{patient.name}</h2>
-            <p className="text-gray-500 dark:text-dark-text-muted transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.email || 'Sem email'}</p>
-            <p className="text-gray-500 dark:text-dark-text-muted transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.phone || 'Sem telefone'}</p>
-            {patient.birth_date && (
-              <p className="text-gray-500 dark:text-dark-text-muted transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{calculateAge(patient.birth_date)} anos</p>
-            )}
-          </div>
-          {getStatusIndicator()}
+    <Card className="bg-white shadow-md rounded-lg overflow-hidden">
+      <CardHeader className="flex items-center space-x-4 p-4">
+        <Avatar>
+          <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${patient.name}`} />
+          <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <h4 className="text-sm font-semibold">{patient.name}</h4>
+          <p className="text-xs text-gray-500">{patient.email || 'Sem email'}</p>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          {patient.goals && (
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium mb-1 text-glow-hover">Objetivos</h3>
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.goals.objective || 'Não definido'}</p>
-              <p className="text-sm transition-colors duration-300 hover:text-nutri-green dark:hover:text-dark-accent-green">{patient.goals.profile || ''}</p>
-            </div>
-          )}
-        </div>
-        
-        {showActions && (
-          <div className="mt-4 flex justify-end">
-            {/* Action buttons will be added here */}
+      </CardHeader>
+      <CardContent className="p-4 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <span className="font-semibold">Idade:</span> {patient.age || 'N/A'}
           </div>
-        )}
-      </ModernCardContent>
-    </ModernCard>
+          <div>
+            <span className="font-semibold">Telefone:</span> {patient.phone || 'N/A'}
+          </div>
+          <div>
+            <span className="font-semibold">Última consulta:</span> {getLastAppointmentText()}
+          </div>
+          <div>
+            <span className="font-semibold">Status:</span> {patient.status}
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="p-4 flex justify-end">
+        <Link to={`/patients/${patient.id}`}>
+          <Button size="sm">Ver Detalhes</Button>
+        </Link>
+      </CardFooter>
+    </Card>
   );
 };
 

@@ -1,18 +1,30 @@
 
-// Export all types from their respective files
-export * from './appointment';
-export * from './consultation';
-export * from './meal';
+// Re-export all types from individual modules
 export * from './patient';
-export * from './nutrition';
-export * from './auth';
+export * from './mealPlanTypes';
 
-// Common types used across the application
-export interface PaginationParams {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
+// Additional types that are commonly used across the application
+export interface AddressDetails {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+}
+
+export interface PatientFilters {
+  search?: string;
+  status?: 'active' | 'archived' | '';
+  sortBy?: 'name' | 'created_at' | 'updated_at';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
   limit?: number;
-  offset?: number;
+}
+
+export interface PatientResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
 }

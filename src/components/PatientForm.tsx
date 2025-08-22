@@ -191,7 +191,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         cpf: formData.cpf || null,
         birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null,
         gender: formData.sex === 'M' ? 'male' : formData.sex === 'F' ? 'female' : formData.sex === 'O' ? 'other' : undefined,
-        address: Object.values(address).some(v => v) ? address : null,
+        address: Object.values(address).some(v => v) ? address : null, // Keep as object
         notes: notes || null,
         goals: {
           objective: formData.objective || '',

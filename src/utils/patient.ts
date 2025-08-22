@@ -53,7 +53,7 @@ export const getPatientStatusInfo = (patient: Patient) => {
     };
   }
   
-  // Check last appointment date
+  // Check last appointment date - handle optional property
   const lastAppointment = patient.last_appointment ? new Date(patient.last_appointment) : null;
   const today = new Date();
   
