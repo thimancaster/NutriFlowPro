@@ -1,195 +1,148 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { MealPlanService } from '@/services/mealPlanService';
-import { DetailedMealPlan, MealPlanMeal, MealPlanFood, ConsolidatedMealPlan } from '@/types/mealPlan';
-import MealPlanForm from '@/components/MealPlanForm';
-import { BackButton } from '@/components/ui/back-button';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Save } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft, Save, Download, Print } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { MealPlanServiceV3 } from '@/services/mealPlan/MealPlanServiceV3';
+import { ConsolidatedMealPlan, MealPlanFood } from '@/types/mealPlanTypes';
+import ConsolidatedMealPlanEditor from '@/components/meal-plan/ConsolidatedMealPlanEditor';
 
 const MealPlanEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [mealPlan, setMealPlan] = useState<DetailedMealPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [mealPlan, setMealPlan] = useState<ConsolidatedMealPlan | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const fetchMealPlan = async () => {
-      if (id) {
-        setIsLoading(true);
-        const fetchedMealPlan = await MealPlanService.getMealPlanById(id);
-        if (fetchedMealPlan) {
-          // Convert ConsolidatedMealPlan to DetailedMealPlan
-          const detailedMealPlan: DetailedMealPlan = {
-            ...fetchedMealPlan,
-            day_of_week: fetchedMealPlan.day_of_week || 0,
-            meals: fetchedMealPlan.meals.map(meal => ({
-              ...meal,
-              foods: meal.items.map(item => ({
-                id: item.id,
-                food_id: item.food_id,
-                name: item.food_name, // MealPlanItem has food_name, convert to name for MealPlanFood
-                quantity: item.quantity,
-                unit: item.unit,
-                calories: item.calories,
-                protein: item.protein,
-                carbs: item.carbs,
-                fats: item.fats
-              })),
-              items: meal.items.map(item => ({
-                id: item.id,
-                food_id: item.food_id,
-                name: item.food_name, // MealPlanItem has food_name, convert to name for compatibility
-                quantity: item.quantity,
-                unit: item.unit,
-                calories: item.calories,
-                protein: item.protein,
-                carbs: item.carbs,
-                fats: item.fats
-              }))
-            }))
-          };
-          setMealPlan(detailedMealPlan);
-        } else {
-          toast({
-            title: "Erro ao carregar o plano alimentar",
-            description: "Plano alimentar não encontrado.",
-            variant: "destructive",
-          });
-          navigate('/meal-plans');
-        }
-        setIsLoading(false);
-      }
-    };
+    if (id) {
+      loadMealPlan(id);
+    }
+  }, [id]);
 
-    fetchMealPlan();
-  }, [id, navigate, toast]);
-
-  const handleMealPlanUpdate = useCallback((updatedMealPlan: ConsolidatedMealPlan) => {
-    // Convert ConsolidatedMealPlan to DetailedMealPlan for compatibility
-    const detailedMealPlan: DetailedMealPlan = {
-      ...updatedMealPlan,
-      day_of_week: updatedMealPlan.day_of_week || 0,
-      meals: updatedMealPlan.meals.map(meal => ({
-        ...meal,
-        foods: meal.items.map(item => ({
-          id: item.id,
-          food_id: item.food_id,
-          name: item.food_name, // MealPlanItem has food_name
-          quantity: item.quantity,
-          unit: item.unit,
-          calories: item.calories,
-          protein: item.protein,
-          carbs: item.carbs,
-          fats: item.fats
-        })),
-        items: meal.items.map(item => ({
-          id: item.id,
-          food_id: item.food_id,
-          name: item.food_name, // Convert food_name to name for compatibility
-          quantity: item.quantity,
-          unit: item.unit,
-          calories: item.calories,
-          protein: item.protein,
-          carbs: item.carbs,
-          fats: item.fats
-        }))
-      }))
-    };
-    
-    setMealPlan(detailedMealPlan);
-  }, []);
-
-  const handleSave = async (updatedMealPlan: ConsolidatedMealPlan) => {
-    setIsLoading(true);
+  const loadMealPlan = async (planId: string) => {
     try {
-      if (id) {
-        const result = await MealPlanService.updateMealPlan(id, updatedMealPlan);
-        if (result.success && result.data) {
-          toast({
-            title: "Plano alimentar atualizado",
-            description: "O plano alimentar foi atualizado com sucesso.",
-          });
-          handleMealPlanUpdate(result.data);
-          setIsEditing(false);
-        } else {
-          toast({
-            title: "Erro ao atualizar o plano alimentar",
-            description: result.error || "Ocorreu um erro ao salvar o plano alimentar.",
-            variant: "destructive",
-          });
-        }
+      setIsLoading(true);
+      const result = await MealPlanServiceV3.getMealPlanById(planId);
+      
+      if (result.success && result.data) {
+        // Convert MealPlanItem to MealPlanFood for editor compatibility
+        const convertedPlan: ConsolidatedMealPlan = {
+          ...result.data,
+          meals: result.data.meals.map(meal => ({
+            ...meal,
+            foods: meal.items.map(item => ({
+              id: item.id,
+              food_id: item.food_id,
+              name: item.name || 'Item sem nome', // MealPlanItem uses 'name', not 'food_name'
+              quantity: item.quantity,
+              unit: item.unit,
+              calories: item.calories,
+              protein: item.protein,
+              carbs: item.carbs,
+              fats: item.fats
+            } as MealPlanFood)),
+            items: meal.items.map(item => ({
+              id: item.id,
+              food_id: item.food_id,
+              name: item.name || 'Item sem nome', // MealPlanItem uses 'name', not 'food_name'
+              quantity: item.quantity,
+              unit: item.unit,
+              calories: item.calories,
+              protein: item.protein,
+              carbs: item.carbs,
+              fats: item.fats
+            }))
+          }))
+        };
+        
+        setMealPlan(convertedPlan);
+      } else {
+        throw new Error(result.error || 'Erro ao carregar plano');
       }
     } catch (error: any) {
+      console.error('Erro ao carregar plano:', error);
       toast({
-        title: "Erro ao atualizar o plano alimentar",
-        description: error.message || "Ocorreu um erro ao salvar o plano alimentar.",
-        variant: "destructive",
+        title: 'Erro',
+        description: error.message || 'Erro ao carregar plano alimentar',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSaveClick = async () => {
-    if (mealPlan) {
-      // Convert DetailedMealPlan to ConsolidatedMealPlan
-      const consolidatedMealPlan: ConsolidatedMealPlan = {
-        ...mealPlan,
-        meals: mealPlan.meals.map(meal => ({
-          ...meal,
-          items: meal.foods.map(food => ({
-            id: food.id,
-            food_id: food.food_id,
-            meal_id: meal.id,
-            food_name: food.name, // MealPlanFood has name, MealPlanItem needs food_name
-            quantity: food.quantity,
-            unit: food.unit,
-            calories: food.calories,
-            protein: food.protein,
-            carbs: food.carbs,
-            fats: food.fats
-          }))
-        }))
-      };
-      await handleSave(consolidatedMealPlan);
+  const handleSave = async (updatedPlan: ConsolidatedMealPlan) => {
+    if (!id) return;
+    
+    try {
+      setIsSaving(true);
+      const result = await MealPlanServiceV3.updateMealPlan(id, updatedPlan);
+      
+      if (result.success && result.data) {
+        setMealPlan(result.data);
+        toast({
+          title: 'Sucesso',
+          description: 'Plano alimentar salvo com sucesso!'
+        });
+      } else {
+        throw new Error(result.error || 'Erro ao salvar plano');
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar plano:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao salvar plano alimentar',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   if (isLoading) {
-    return <div>Carregando plano alimentar...</div>;
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <p>Carregando plano alimentar...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!mealPlan) {
-    return <div>Plano alimentar não encontrado.</div>;
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600">Plano alimentar não encontrado</p>
+            <Button onClick={() => navigate(-1)} className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <BackButton to="/meal-plans" />
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Editar Plano
-          </Button>
-        ) : (
-          <Button onClick={handleSaveClick}>
-            <Save className="mr-2 h-4 w-4" />
-            Salvar Plano
-          </Button>
-        )}
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
       </div>
-      
-      <MealPlanForm
+
+      <ConsolidatedMealPlanEditor
         mealPlan={mealPlan}
-        isEditing={isEditing}
+        patientName="Paciente"
         onSave={handleSave}
-        onCancel={() => setIsEditing(false)}
+        isSaving={isSaving}
       />
     </div>
   );

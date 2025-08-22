@@ -3,7 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle, Utensils } from 'lucide-react';
+import { Loader2, AlertCircle, Utensils, Calculator, RefreshCw } from 'lucide-react';
+import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 
 interface MealPlanGenerationFormProps {
   onGenerate: () => void;
@@ -27,6 +28,24 @@ const MealPlanGenerationForm: React.FC<MealPlanGenerationFormProps> = ({
   patientName = 'Paciente',
   calculationData
 }) => {
+  const { calculationStatus, autoCalculateNutrition, error } = useMealPlanWorkflow();
+
+  console.log('[WORKFLOW:PLAN] 🎛️ MealPlanGenerationForm render:', {
+    calculationStatus,
+    canGenerate,
+    hasCalculationData: !!calculationData,
+    validationMessage
+  });
+
+  const handleCalculateNow = async () => {
+    console.log('[WORKFLOW:PLAN] 🧮 Botão "Calcular agora" clicado');
+    await autoCalculateNutrition();
+  };
+
+  const isCalculating = calculationStatus === 'loading';
+  const isReady = calculationStatus === 'ready';
+  const hasError = calculationStatus === 'error' || !!error;
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -39,7 +58,40 @@ const MealPlanGenerationForm: React.FC<MealPlanGenerationFormProps> = ({
             </p>
           </div>
 
-          {calculationData && (
+          {/* Status do Cálculo */}
+          {isCalculating && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-center gap-2 text-blue-800">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="font-medium">Calculando necessidades nutricionais...</span>
+              </div>
+              <p className="text-blue-600 text-sm text-center mt-1">
+                Analisando dados do paciente para determinar metas ideais
+              </p>
+            </div>
+          )}
+
+          {/* Erro no Cálculo */}
+          {hasError && !isCalculating && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>{error || validationMessage}</span>
+                <Button
+                  onClick={handleCalculateNow}
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                >
+                  <Calculator className="h-4 w-4 mr-1" />
+                  Calcular agora
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Dados de Cálculo Prontos */}
+          {calculationData && isReady && (
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
               <h4 className="font-medium text-green-900 mb-2">📊 Metas Nutricionais</h4>
               <div className="grid grid-cols-2 gap-2 text-sm text-green-700">
@@ -51,16 +103,28 @@ const MealPlanGenerationForm: React.FC<MealPlanGenerationFormProps> = ({
             </div>
           )}
 
-          {!canGenerate && validationMessage && (
-            <Alert variant="destructive">
+          {/* Sem Dados de Cálculo */}
+          {!calculationData && !isCalculating && !hasError && (
+            <Alert>
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{validationMessage}</AlertDescription>
+              <AlertDescription className="flex items-center justify-between">
+                <span>Dados de cálculo nutricional necessários para gerar o plano</span>
+                <Button
+                  onClick={handleCalculateNow}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Calculator className="h-4 w-4 mr-1" />
+                  Calcular agora
+                </Button>
+              </AlertDescription>
             </Alert>
           )}
 
+          {/* Botão Principal */}
           <Button 
             onClick={onGenerate} 
-            disabled={!canGenerate || isGenerating}
+            disabled={!canGenerate || isGenerating || isCalculating || !isReady}
             className="w-full"
             size="lg"
           >
@@ -68,6 +132,11 @@ const MealPlanGenerationForm: React.FC<MealPlanGenerationFormProps> = ({
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Gerando Plano com Inteligência Cultural...
+              </>
+            ) : isCalculating ? (
+              <>
+                <Calculator className="mr-2 h-4 w-4" />
+                Calculando necessidades nutricionais...
               </>
             ) : (
               <>
