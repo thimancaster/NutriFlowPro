@@ -1,102 +1,83 @@
 
 import { useState } from 'react';
-import { useToast } from './use-toast';
-import { useNavigate } from 'react-router-dom';
-import { ConsultationData } from '@/types';
-import { consultationService } from '@/services';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { consultationService } from '@/services/consultationService';
+import { ConsultationCreateInput, ConsultationUpdateInput } from '@/types/consultationTypes';
 
-export const useSaveConsultation = () => {
+interface UseSaveConsultationProps {
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+export const useSaveConsultation = ({ onSuccess, onError }: UseSaveConsultationProps = {}) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleSaveConsultation = async (
-    id: string | undefined, 
-    consultation: ConsultationData,
-    updatePatientData?: (patientId: string, data: any) => Promise<void>
-  ) => {
-    if (!user) {
-      toast({
-        title: 'Error',
-        description: 'You must be logged in to save a consultation',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+
+  const createConsultation = async (data: ConsultationCreateInput) => {
+    setIsLoading(true);
     try {
-      // Prepare the data for saving
-      const consultationToSave = {
-        id: id !== 'new' ? id : undefined,
-        patient_id: consultation.patient_id || '',
-        weight: consultation.weight,
-        height: consultation.height,
-        age: consultation.age || 0,
-        gender: consultation.gender,
-        activity_level: consultation.activity_level,
-        goal: consultation.goal || consultation.objective,
-        bmr: consultation.results?.bmr || consultation.bmr,
-        tdee: consultation.results?.get || consultation.tdee,
-        protein: consultation.results?.macros.protein || consultation.protein,
-        carbs: consultation.results?.macros.carbs || consultation.carbs,
-        fats: consultation.results?.macros.fat || consultation.fats,
-        notes: consultation.notes || '',
-        tipo: 'primeira_consulta', // Default value
-        status: 'em_andamento', // Default value
-        user_id: user.id,
-      };
+      const result = await consultationService.createConsultation(data);
       
-      const result = await consultationService.saveConsultation(consultationToSave);
-      
-      if (result.success && result.data?.id) {
+      if (result.success) {
         toast({
-          title: 'Success',
-          description: 'Consultation saved successfully',
+          title: "Sucesso",
+          description: "Consulta criada com sucesso!",
         });
-        
-        // Update patient data if this is a new consultation and we have a callback
-        if (consultation.patient_id && updatePatientData) {
-          await updatePatientData(consultation.patient_id, {
-            measurements: {
-              weight: consultation.weight,
-              height: consultation.height,
-            },
-          });
-        }
-        
-        // Redirect to the saved consultation
-        if (id === 'new') {
-          navigate(`/consultation/${result.data.id}`);
-        }
-        
-        return result.data.id;
+        onSuccess?.();
+        return result.data;
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to save consultation',
-          variant: 'destructive',
-        });
-        return null;
+        throw new Error(result.error || 'Erro ao criar consulta');
       }
-    } catch (err) {
-      console.error('Error saving consultation:', err);
+    } catch (error: any) {
+      const errorMessage = error.message || 'Erro ao criar consulta';
       toast({
-        title: 'Error',
-        description: `Failed to save consultation: ${(err as Error).message}`,
-        variant: 'destructive',
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
       });
-      return null;
+      onError?.(errorMessage);
+      throw error;
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-  
+
+  const updateConsultation = async (id: string, data: ConsultationUpdateInput) => {
+    setIsLoading(true);
+    try {
+      const result = await consultationService.updateConsultation(id, data);
+      
+      if (result.success) {
+        toast({
+          title: "Sucesso",
+          description: "Consulta atualizada com sucesso!",
+        });
+        onSuccess?.();
+        return result.data;
+      } else {
+        throw new Error(result.error || 'Erro ao atualizar consulta');
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Erro ao atualizar consulta';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      onError?.(errorMessage);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Alias for backward compatibility
+  const saveConsultation = updateConsultation;
+
   return {
-    handleSaveConsultation,
-    isSubmitting
+    createConsultation,
+    updateConsultation,
+    saveConsultation,
+    isLoading
   };
 };

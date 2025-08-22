@@ -1,32 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
-
-export interface Consultation {
-  id: string;
-  patient_id: string;
-  calculation_id?: string;
-  meal_plan_id?: string;
-  date: string;
-  metrics: {
-    weight: number;
-    height?: number;
-    bmi?: number;
-    objective?: string;
-    [key: string]: any;
-  };
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import { Consultation, ConsultationCreateInput, ConsultationUpdateInput } from '@/types/consultationTypes';
 
 export const consultationService = {
   // Create a new consultation record
-  async createConsultation(consultationData: Omit<Consultation, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; data?: Consultation; error?: string }> {
+  async createConsultation(consultationData: ConsultationCreateInput): Promise<{ success: boolean; data?: Consultation; error?: string }> {
     try {
       const consultationRecord = {
         id: uuidv4(),
         ...consultationData,
+        date: consultationData.date || new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -85,12 +69,7 @@ export const consultationService = {
     try {
       const { data, error } = await supabase
         .from('consultations')
-        .select(`
-          *,
-          patients(id, name, email, phone, gender),
-          calculations(id, bmr, tdee, protein, carbs, fats),
-          meal_plans(id, total_calories, total_protein, total_carbs, total_fats)
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -112,7 +91,7 @@ export const consultationService = {
   },
 
   // Update an existing consultation
-  async updateConsultation(id: string, updates: Partial<Consultation>): Promise<{ success: boolean; data?: Consultation; error?: string }> {
+  async updateConsultation(id: string, updates: ConsultationUpdateInput): Promise<{ success: boolean; data?: Consultation; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('consultations')
@@ -141,10 +120,14 @@ export const consultationService = {
     }
   },
 
+  // Save consultation - alias for updateConsultation to maintain compatibility
+  async saveConsultation(id: string, updates: ConsultationUpdateInput): Promise<{ success: boolean; data?: Consultation; error?: string }> {
+    return this.updateConsultation(id, updates);
+  },
+
   // Calculate BMI from weight and height
   calculateBMI(weight: number, height: number): number {
-    // Height should be in meters, weight in kg
-    const heightInMeters = height > 10 ? height / 100 : height; // Convert cm to m if needed
+    const heightInMeters = height > 10 ? height / 100 : height;
     return Number((weight / (heightInMeters * heightInMeters)).toFixed(1));
   },
 

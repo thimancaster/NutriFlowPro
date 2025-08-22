@@ -1,456 +1,151 @@
-import React, {useState, useEffect} from "react";
-import {useParams, useNavigate} from "react-router-dom";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {Badge} from "@/components/ui/badge";
-import {ArrowLeft, Loader2, Edit, Download, Calendar} from "lucide-react";
-import {useAuth} from "@/contexts/auth/AuthContext";
-import {MealPlanService} from "@/services/mealPlanService";
-import {DetailedMealPlan, MealPlanMeal} from "@/types/mealPlan";
-import {ConsolidatedMeal} from "@/types/mealPlanTypes";
-import {format} from "date-fns";
-import {ptBR} from "date-fns/locale";
-import {useToast} from "@/hooks/use-toast";
-import MealEditDialog from "@/components/meal-plan/MealEditDialog";
 
-const MealPlanViewPage: React.FC = () => {
-	const {id} = useParams<{id: string}>();
-	const navigate = useNavigate();
-	const {user} = useAuth();
-	const {toast} = useToast();
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useMealPlanQuery } from '@/hooks/meal-plan/useMealPlanQuery';
+import { Loader2, Utensils, Download } from 'lucide-react';
 
-	const [mealPlan, setMealPlan] = useState<DetailedMealPlan | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [editingMeal, setEditingMeal] = useState<ConsolidatedMeal | null>(null);
-	const [showEditDialog, setShowEditDialog] = useState(false);
+const MealPlanView: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const { data: mealPlan, isLoading, error } = useMealPlanQuery(id);
 
-	// Convert ConsolidatedMeal to MealPlanMeal for compatibility
-	const convertToMealPlanMeal = (meal: ConsolidatedMeal) => {
-		return {
-			...meal,
-			foods: meal.items?.map(item => ({
-				id: item.id,
-				food_id: item.food_id,
-				name: item.food_name,
-				quantity: item.quantity,
-				unit: item.unit,
-				calories: item.calories,
-				protein: item.protein,
-				carbs: item.carbs,
-				fats: item.fats
-			})) || []
-		};
-	};
+  const handleDownloadPDF = async (plan: ConsolidatedMealPlan) => {
+    try {
+      // TODO: Implement PDF generation
+      console.log('Generating PDF for meal plan:', plan.id);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
 
-	// Convert MealPlanMeal back to ConsolidatedMeal
-	const convertFromMealPlanMeal = (meal: any): ConsolidatedMeal => {
-		return {
-			...meal,
-			items: meal.foods?.map((food: any, index: number) => ({
-				id: food.id || crypto.randomUUID(),
-				food_id: food.food_id,
-				food_name: food.name,
-				quantity: food.quantity,
-				unit: food.unit,
-				calories: food.calories,
-				protein: food.protein,
-				carbs: food.carbs,
-				fats: food.fats,
-				order_index: index
-			})) || []
-		};
-	};
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Carregando plano alimentar...</span>
+        </div>
+      </div>
+    );
+  }
 
-	useEffect(() => {
-		const fetchMealPlan = async () => {
-			if (!id) {
-				setError("ID do plano alimentar não fornecido");
-				setIsLoading(false);
-				return;
-			}
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-600">Erro ao carregar plano alimentar: {error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-			try {
-				setIsLoading(true);
-				const plan = await MealPlanService.getMealPlanById(id);
+  if (!mealPlan) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-muted-foreground">Plano alimentar não encontrado.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-				if (plan) {
-					setMealPlan(plan);
-				} else {
-					setError("Plano alimentar não encontrado");
-				}
-			} catch (error: any) {
-				console.error("Erro ao carregar plano alimentar:", error);
-				setError(error.message ?? "Erro ao carregar plano alimentar");
-			} finally {
-				setIsLoading(false);
-			}
-		};
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Utensils className="h-5 w-5" />
+              Plano Alimentar
+            </CardTitle>
+            <Button 
+              onClick={() => handleDownloadPDF(mealPlan)}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Nutritional Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{Math.round(mealPlan.total_calories)}</p>
+                <p className="text-sm text-muted-foreground">kcal totais</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{Math.round(mealPlan.total_protein)}g</p>
+                <p className="text-sm text-muted-foreground">Proteína</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{Math.round(mealPlan.total_carbs)}g</p>
+                <p className="text-sm text-muted-foreground">Carboidratos</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{Math.round(mealPlan.total_fats)}g</p>
+                <p className="text-sm text-muted-foreground">Gorduras</p>
+              </div>
+            </div>
 
-		fetchMealPlan();
-	}, [id]);
+            {/* Meals */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Refeições</h3>
+              {mealPlan.meals.map((meal, index) => (
+                <Card key={meal.id || index}>
+                  <CardHeader>
+                    <CardTitle className="text-base">{meal.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {meal.foods?.map((food, foodIndex) => (
+                        <div key={food.id || foodIndex} className="flex justify-between items-center">
+                          <span>{food.food_name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {food.quantity}{food.unit} - {Math.round(food.calories)} kcal
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-2 border-t">
+                      <div className="flex justify-between text-sm">
+                        <span>Total da refeição:</span>
+                        <span className="font-medium">
+                          {Math.round(meal.total_calories)} kcal | 
+                          {Math.round(meal.total_protein)}g ptn | 
+                          {Math.round(meal.total_carbs)}g cho | 
+                          {Math.round(meal.total_fats)}g lip
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-	const handleEditMeal = (meal: MealPlanMeal) => {
-		// Convert MealPlanMeal to ConsolidatedMeal for the dialog
-		const consolidatedMeal: ConsolidatedMeal = {
-			id: meal.id || '',
-			type: meal.type,
-			name: meal.name,
-			time: meal.time || '',
-			items: meal.items || [],
-			total_calories: meal.total_calories,
-			total_protein: meal.total_protein,
-			total_carbs: meal.total_carbs,
-			total_fats: meal.total_fats,
-			foods: meal.foods
-		};
-		setEditingMeal(consolidatedMeal);
-		setShowEditDialog(true);
-	};
-
-	const handleSaveMeal = async (updatedMeal: ConsolidatedMeal) => {
-		if (!mealPlan) return;
-
-		try {
-			// Convert back to MealPlanMeal format
-			const mealPlanMeal: MealPlanMeal = {
-				...updatedMeal,
-				foods: updatedMeal.foods || []
-			};
-
-			// Update the meal in the plan
-			const updatedMeals = mealPlan.meals?.map(meal => 
-				meal.id === mealPlanMeal.id ? mealPlanMeal : meal
-			) || [];
-
-			// Recalculate totals
-			const planTotals = updatedMeals.reduce(
-				(totals, meal) => ({
-					calories: totals.calories + meal.total_calories,
-					protein: totals.protein + meal.total_protein,
-					carbs: totals.carbs + meal.total_carbs,
-					fats: totals.fats + meal.total_fats
-				}),
-				{ calories: 0, protein: 0, carbs: 0, fats: 0 }
-			);
-
-			const updatedPlan: DetailedMealPlan = {
-				...mealPlan,
-				meals: updatedMeals,
-				total_calories: planTotals.calories,
-				total_protein: planTotals.protein,
-				total_carbs: planTotals.carbs,
-				total_fats: planTotals.fats
-			};
-
-			// Save to backend
-			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedPlan);
-			
-			if (result.success && result.data) {
-				// Convert back to DetailedMealPlan
-				const savedPlan = await MealPlanService.getMealPlanById(mealPlan.id);
-				if (savedPlan) {
-					setMealPlan(savedPlan);
-				}
-				toast({
-					title: "Sucesso",
-					description: "Refeição atualizada com sucesso!",
-				});
-			} else {
-				throw new Error(result.error || "Erro ao salvar");
-			}
-		} catch (error: any) {
-			console.error("Erro ao salvar refeição:", error);
-			toast({
-				title: "Erro",
-				description: error.message || "Erro ao salvar a refeição",
-				variant: "destructive",
-			});
-		}
-	};
-
-	const handleSaveMealPlan = async (updatedMealPlan: any) => {
-		if (!mealPlan) return;
-
-		try {
-			const consolidatedUpdates: Partial<ConsolidatedMealPlan> = {
-				total_calories: updatedMealPlan.total_calories,
-				total_protein: updatedMealPlan.total_protein,
-				total_carbs: updatedMealPlan.total_carbs,
-				total_fats: updatedMealPlan.total_fats,
-				notes: updatedMealPlan.notes
-			};
-
-			const result = await MealPlanService.updateMealPlan(mealPlan.id, consolidatedUpdates);
-			
-			if (result.success && result.data) {
-				const updatedDetailedPlan: DetailedMealPlan = {
-					...result.data,
-					meals: result.data.meals?.map(meal => ({
-						...meal,
-						foods: meal.items?.map(item => ({
-							id: item.id,
-							food_id: item.food_id,
-							name: item.food_name,
-							quantity: item.quantity,
-							unit: item.unit,
-							calories: item.calories,
-							protein: item.protein,
-							carbs: item.carbs,
-							fats: item.fats
-						})) || []
-					})) || []
-				};
-				
-				setMealPlan(updatedDetailedPlan);
-				toast({
-					title: "Sucesso",
-					description: "Plano alimentar salvo com sucesso!",
-				});
-			} else {
-				throw new Error(result.error || 'Erro ao salvar');
-			}
-		} catch (error: any) {
-			console.error('Erro ao salvar plano:', error);
-			toast({
-				title: "Erro",
-				description: error.message || "Erro ao salvar plano alimentar",
-				variant: "destructive",
-			});
-		}
-	};
-
-	const handleBackToList = () => {
-		navigate("/meal-plans");
-	};
-
-	const handleEdit = () => {
-		navigate(`/meal-plan-editor/${id}`);
-	};
-
-	const handleExportPDF = () => {
-		// Export functionality will be implemented in a future update
-		console.log("Export PDF functionality to be implemented");
-	};
-
-	if (!user) {
-		return (
-			<div className="container mx-auto p-6">
-				<Card>
-					<CardContent className="p-6 text-center">
-						<p>Você precisa estar logado para visualizar planos alimentares.</p>
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
-	if (isLoading) {
-		return (
-			<div className="container mx-auto p-6">
-				<div className="flex items-center justify-center min-h-[400px]">
-					<div className="text-center">
-						<Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-						<p>Carregando plano alimentar...</p>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
-	if (error || !mealPlan) {
-		return (
-			<div className="container mx-auto p-6">
-				<Card>
-					<CardContent className="p-6 text-center">
-						<p className="text-red-600 mb-4">
-							{error || "Plano alimentar não encontrado"}
-						</p>
-						<Button onClick={() => navigate("/meal-plans")}>
-							<ArrowLeft className="h-4 w-4 mr-2" />
-							Voltar para Lista
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
-	return (
-		<div className="container mx-auto p-6 space-y-6">
-			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-4">
-					<Button variant="outline" onClick={() => navigate("/meal-plans")}>
-						<ArrowLeft className="h-4 w-4 mr-2" />
-						Voltar
-					</Button>
-					<div>
-						<h1 className="text-3xl font-bold">Visualizar Plano Alimentar</h1>
-						<p className="text-gray-600 flex items-center gap-2">
-							<Calendar className="h-4 w-4" />
-							{format(new Date(mealPlan.date), "dd/MM/yyyy", {locale: ptBR})}
-						</p>
-					</div>
-				</div>
-
-				<div className="flex gap-2">
-					<Button variant="outline">
-						<Download className="h-4 w-4 mr-2" />
-						Exportar PDF
-					</Button>
-					<Button onClick={() => navigate(`/meal-plan-editor/${id}`)}>
-						<Edit className="h-4 w-4 mr-2" />
-						Editar
-					</Button>
-				</div>
-			</div>
-
-			{/* Plan Overview */}
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<CardTitle>Resumo Nutricional</CardTitle>
-						<div className="flex gap-2">
-							{mealPlan.is_template && <Badge variant="secondary">Template</Badge>}
-						</div>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-						<div className="text-center p-4 bg-blue-50 rounded-lg">
-							<div className="text-2xl font-bold text-blue-600">
-								{Math.round(mealPlan.total_calories)}
-							</div>
-							<div className="text-sm text-gray-600">Calorias</div>
-						</div>
-						<div className="text-center p-4 bg-red-50 rounded-lg">
-							<div className="text-2xl font-bold text-red-600">
-								{Math.round(mealPlan.total_protein)}g
-							</div>
-							<div className="text-sm text-gray-600">Proteínas</div>
-						</div>
-						<div className="text-center p-4 bg-yellow-50 rounded-lg">
-							<div className="text-2xl font-bold text-yellow-600">
-								{Math.round(mealPlan.total_carbs)}g
-							</div>
-							<div className="text-sm text-gray-600">Carboidratos</div>
-						</div>
-						<div className="text-center p-4 bg-green-50 rounded-lg">
-							<div className="text-2xl font-bold text-green-600">
-								{Math.round(mealPlan.total_fats)}g
-							</div>
-							<div className="text-sm text-gray-600">Gorduras</div>
-						</div>
-					</div>
-
-					{mealPlan.notes && (
-						<div className="mt-4 p-4 bg-gray-50 rounded-lg">
-							<h4 className="font-medium mb-2">Observações:</h4>
-							<p className="text-gray-700">{mealPlan.notes}</p>
-						</div>
-					)}
-				</CardContent>
-			</Card>
-
-			{/* Meals */}
-			<div className="grid gap-6">
-				{mealPlan.meals?.map((meal) => (
-					<Card key={meal.id}>
-						<CardHeader>
-							<div className="flex items-center justify-between">
-								<CardTitle className="text-lg">{meal.name}</CardTitle>
-								<div className="flex items-center gap-2">
-									<Badge variant="outline">
-										{Math.round(meal.total_calories)} kcal
-									</Badge>
-									<Button
-										size="sm"
-										variant="ghost"
-										onClick={() => handleEditMeal(meal)}
-										className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-									>
-										<Edit className="h-4 w-4" />
-									</Button>
-								</div>
-							</div>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								{/* Meal Macros */}
-								<div className="grid grid-cols-3 gap-4 text-sm">
-									<div className="text-center p-2 bg-red-50 rounded">
-										<div className="font-medium text-red-600">
-											{Math.round(meal.total_protein)}g
-										</div>
-										<div className="text-gray-600">Proteína</div>
-									</div>
-									<div className="text-center p-2 bg-yellow-50 rounded">
-										<div className="font-medium text-yellow-600">
-											{Math.round(meal.total_carbs)}g
-										</div>
-										<div className="text-gray-600">Carboidratos</div>
-									</div>
-									<div className="text-center p-2 bg-green-50 rounded">
-										<div className="font-medium text-green-600">
-											{Math.round(meal.total_fats)}g
-										</div>
-										<div className="text-gray-600">Gorduras</div>
-									</div>
-								</div>
-
-								{/* Foods List */}
-								<div className="space-y-2">
-									<h4 className="font-medium">Alimentos:</h4>
-									{meal.foods?.length > 0 ? (
-										<div className="space-y-2">
-											{meal.foods.map((food) => (
-												<div
-													key={
-														food.id ||
-														food.food_id ||
-														`${food.name}-${food.quantity}`
-													}
-													className="flex justify-between items-center p-3 bg-gray-50 rounded">
-													<div>
-														<span className="font-medium">
-															{food.name}
-														</span>
-														<span className="text-gray-600 ml-2">
-															{food.quantity}
-															{food.unit}
-														</span>
-													</div>
-													<div className="text-sm text-gray-600">
-														{Math.round(food.calories)} kcal
-													</div>
-												</div>
-											))}
-										</div>
-									) : (
-										<p className="text-gray-500 italic">
-											Nenhum alimento adicionado
-										</p>
-									)}
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-				))}
-			</div>
-
-			{/* Meal Edit Dialog */}
-			<MealEditDialog
-				open={showEditDialog}
-				onOpenChange={setShowEditDialog}
-				meal={editingMeal ? convertToMealPlanMeal(editingMeal) : null}
-				onSave={async (updatedMeal: any) => {
-					const consolidatedMeal = convertFromMealPlanMeal(updatedMeal);
-					await handleSaveMeal(consolidatedMeal);
-				}}
-			/>
-		</div>
-	);
+            {/* Notes */}
+            {mealPlan.notes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Observações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">{mealPlan.notes}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 
-export default MealPlanViewPage;
+export default MealPlanView;

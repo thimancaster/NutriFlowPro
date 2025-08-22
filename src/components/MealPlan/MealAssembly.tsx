@@ -1,42 +1,65 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { ConsolidatedMealPlan, MealPlanGenerationParams } from '@/types/mealPlanTypes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Utensils, Plus, Save } from 'lucide-react';
-import { MealPlanService } from '@/services/mealPlanService';
-import { MealPlan } from '@/types/mealPlan';
+import { Utensils } from 'lucide-react';
 
 interface MealAssemblyProps {
-  mealPlan?: MealPlan;
-  onSave?: (mealPlan: MealPlan) => void;
+  mealPlan?: ConsolidatedMealPlan;
+  onGenerate?: (params: MealPlanGenerationParams) => void;
+  onEdit?: (mealPlan: ConsolidatedMealPlan) => void;
 }
 
-const MealAssembly: React.FC<MealAssemblyProps> = ({ mealPlan, onSave }) => {
-  const [isSaving, setIsSaving] = useState(false);
+const MealAssembly: React.FC<MealAssemblyProps> = ({
+  mealPlan,
+  onGenerate,
+  onEdit
+}) => {
+  const handleGenerateMealPlan = () => {
+    if (onGenerate && mealPlan) {
+      // Convert ConsolidatedMealPlan to MealPlanGenerationParams
+      const params: MealPlanGenerationParams = {
+        userId: mealPlan.user_id,
+        patientId: mealPlan.patient_id,
+        calculationId: mealPlan.calculation_id,
+        totalCalories: mealPlan.total_calories,
+        totalProtein: mealPlan.total_protein,
+        totalCarbs: mealPlan.total_carbs,
+        totalFats: mealPlan.total_fats,
+        targets: {
+          kcal: mealPlan.total_calories,
+          protein_g: mealPlan.total_protein,
+          carb_g: mealPlan.total_carbs,
+          fat_g: mealPlan.total_fats
+        }
+      };
+      onGenerate(params);
+    }
+  };
 
-  const handleSave = async () => {
-    if (!mealPlan) return;
-    
-    setIsSaving(true);
-    try {
-      const result = await MealPlanService.createMealPlan(mealPlan);
-      if (result.success && result.data) {
-        onSave?.(result.data);
-      }
-    } catch (error) {
-      console.error('Error saving meal plan:', error);
-    } finally {
-      setIsSaving(false);
+  const handleEditMealPlan = () => {
+    if (onEdit && mealPlan) {
+      onEdit(mealPlan);
     }
   };
 
   if (!mealPlan) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <Utensils className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-500">Nenhum plano alimentar selecionado</p>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Utensils className="h-5 w-5" />
+            Plano Alimentar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            Nenhum plano alimentar disponível. Gere um novo plano.
+          </p>
+          <Button onClick={handleGenerateMealPlan} disabled={!onGenerate}>
+            Gerar Plano Alimentar
+          </Button>
         </CardContent>
       </Card>
     );
@@ -45,65 +68,40 @@ const MealAssembly: React.FC<MealAssemblyProps> = ({ mealPlan, onSave }) => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Montagem do Plano Alimentar</CardTitle>
-          <Button onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Salvando...' : 'Salvar Plano'}
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Utensils className="h-5 w-5" />
+          Plano Alimentar
+        </CardTitle>
       </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-4 gap-4 text-center">
-          <div>
-            <div className="text-2xl font-bold text-blue-600">
-              {Math.round(mealPlan.total_calories)}
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{Math.round(mealPlan.total_calories)}</p>
+              <p className="text-sm text-muted-foreground">kcal</p>
             </div>
-            <div className="text-sm text-gray-600">Calorias</div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{Math.round(mealPlan.total_protein)}g</p>
+              <p className="text-sm text-muted-foreground">Proteína</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{Math.round(mealPlan.total_carbs)}g</p>
+              <p className="text-sm text-muted-foreground">Carboidratos</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{Math.round(mealPlan.total_fats)}g</p>
+              <p className="text-sm text-muted-foreground">Gorduras</p>
+            </div>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-red-600">
-              {Math.round(mealPlan.total_protein)}g
-            </div>
-            <div className="text-sm text-gray-600">Proteínas</div>
+
+          <div className="flex gap-2">
+            <Button onClick={handleEditMealPlan} disabled={!onEdit}>
+              Editar Plano
+            </Button>
+            <Button variant="outline" onClick={handleGenerateMealPlan} disabled={!onGenerate}>
+              Gerar Novo
+            </Button>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-yellow-600">
-              {Math.round(mealPlan.total_carbs)}g
-            </div>
-            <div className="text-sm text-gray-600">Carboidratos</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-green-600">
-              {Math.round(mealPlan.total_fats)}g
-            </div>
-            <div className="text-sm text-gray-600">Gorduras</div>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          {mealPlan.meals.map((meal) => (
-            <div key={meal.id} className="border rounded-lg p-3">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-medium">{meal.name}</h3>
-                <Badge>{Math.round(meal.total_calories)} kcal</Badge>
-              </div>
-              
-              {meal.foods.length === 0 ? (
-                <p className="text-gray-500 text-sm">Nenhum alimento adicionado</p>
-              ) : (
-                <div className="space-y-1">
-                  {meal.foods.map((food) => (
-                    <div key={food.id} className="flex justify-between text-sm">
-                      <span>{food.name} ({food.quantity} {food.unit})</span>
-                      <span>{Math.round(food.calories)} kcal</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
         </div>
       </CardContent>
     </Card>

@@ -4,14 +4,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CheckCircle, UserPlus, LayoutDashboard, Utensils } from "lucide-react";
-import { PatientForm } from "@/components/patient/PatientForm";
+import PatientForm from "@/components/patient/PatientForm";
 import { usePatientForm } from "@/hooks/usePatientForm";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import MealPlanGenerator from '@/components/meal-plan/MealPlanGenerator';
 import MealPlanEditingStep from '@/components/MealPlanWorkflow/MealPlanEditingStep';
-import { ConsolidatedMealPlan } from '@/types/mealPlan';
+import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { MealPlanService } from '@/services/mealPlanService';
 
 const tabs = [
@@ -30,14 +30,19 @@ const initialMealPlan: ConsolidatedMealPlan = {
   total_carbs: 200,
   total_fats: 80,
   meals: [],
-  notes: ''
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
 };
 
 export interface UnifiedClinicalWorkflowProps {
   onWorkflowComplete?: () => void;
+  onComplete?: () => void;
 }
 
-const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWorkflowComplete }) => {
+const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ 
+  onWorkflowComplete, 
+  onComplete 
+}) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
@@ -76,7 +81,7 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWor
 
   const handleSaveMealPlan = async (updates: Partial<ConsolidatedMealPlan>) => {
     try {
-      setCurrentStep('editing');
+      setCurrentStep('review');
       const result = await MealPlanService.updateMealPlan(mealPlan.id, updates);
 
       if (result.success && result.data) {
@@ -108,6 +113,9 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({ onWor
     navigate('/dashboard');
     if (onWorkflowComplete) {
       onWorkflowComplete();
+    }
+    if (onComplete) {
+      onComplete();
     }
   };
 

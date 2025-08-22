@@ -1,137 +1,60 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { MealPlanService } from '@/services/mealPlanService';
-import { MealPlanFilters, MacroTargets } from '@/types/mealPlan';
-import { MealPlanGenerationParams } from '@/types/mealPlanTypes';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 
-export const useMealPlans = (filters: MealPlanFilters = {}) => {
-  const { user } = useAuth();
-
+export const useMealPlanQuery = (mealPlanId: string | undefined) => {
   return useQuery({
-    queryKey: ['meal-plans', user?.id, filters],
-    queryFn: async () => {
-      if (!user?.id) throw new Error('User not authenticated');
-      const result = await MealPlanService.getMealPlans(user.id, { patient_id: filters.patientId });
-      return result;
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
+    queryKey: ['meal-plan', mealPlanId],
+    queryFn: async (): Promise<ConsolidatedMealPlan | null> => {
+      if (!mealPlanId) return null;
+      
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select(`
+          *,
+          meal_plan_items (
+            id,
+            meal_type,
+            food_id,
+            food_name,
+            quantity,
+            unit,
+            calories,
+            protein,
+            carbs,
+            fats,
+            order_index
+          )
+        `)
+        .eq('id', mealPlanId)
+        .single();
 
-export const useMealPlan = (id: string) => {
-  return useQuery({
-    queryKey: ['meal-plan', id],
-    queryFn: () => MealPlanService.getMealPlan(id),
-    enabled: !!id,
-  });
-};
-
-export const useMealPlanMutations = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { user } = useAuth();
-
-  const createMealPlan = useMutation({
-    mutationFn: (params: MealPlanGenerationParams) =>
-      MealPlanService.createMealPlan(params),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
-        toast({
-          title: 'Sucesso',
-          description: 'Plano alimentar criado com sucesso',
-        });
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.error || 'Erro ao criar plano alimentar',
-          variant: 'destructive',
-        });
+      if (error) {
+        throw new Error(`Error fetching meal plan: ${error.message}`);
       }
-    },
-  });
 
-  const updateMealPlan = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<MealPlan> }) =>
-      MealPlanService.updateMealPlan(id, data),
-    onSuccess: (result, variables) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
-        queryClient.invalidateQueries({ queryKey: ['meal-plan', variables.id] });
-        toast({
-          title: 'Sucesso',
-          description: 'Plano alimentar atualizado com sucesso',
-        });
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.error || 'Erro ao atualizar plano alimentar',
-          variant: 'destructive',
-        });
-      }
-    },
-  });
+      // Transform the data to match ConsolidatedMealPlan structure
+      const mealPlan: ConsolidatedMealPlan = {
+        id: data.id,
+        user_id: data.user_id,
+        patient_id: data.patient_id,
+        calculation_id: data.calculation_id,
+        date: data.date,
+        total_calories: data.total_calories,
+        total_protein: data.total_protein,
+        total_carbs: data.total_carbs,
+        total_fats: data.total_fats,
+        notes: data.notes,
+        is_template: data.is_template,
+        day_of_week: data.day_of_week,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        meals: data.meals || []
+      };
 
-  const deleteMealPlan = useMutation({
-    mutationFn: (id: string) => MealPlanService.deleteMealPlan(id),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
-        toast({
-          title: 'Sucesso',
-          description: 'Plano alimentar excluído com sucesso',
-        });
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.error || 'Erro ao excluir plano alimentar',
-          variant: 'destructive',
-        });
-      }
+      return mealPlan;
     },
+    enabled: !!mealPlanId
   });
-
-  const generateMealPlan = useMutation({
-    mutationFn: ({ 
-      patientId, 
-      targets, 
-      date 
-    }: { 
-      patientId: string; 
-      targets: MacroTargets; 
-      date?: string;
-    }) => {
-      if (!user?.id) throw new Error('User not authenticated');
-      return MealPlanService.generateMealPlan(user.id, patientId, targets, date);
-    },
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
-        toast({
-          title: 'Sucesso',
-          description: 'Plano alimentar gerado com sucesso',
-        });
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.error || 'Erro ao gerar plano alimentar',
-          variant: 'destructive',
-        });
-      }
-    },
-  });
-
-  return {
-    createMealPlan,
-    updateMealPlan,
-    deleteMealPlan,
-    generateMealPlan,
-    isCreating: createMealPlan.isPending,
-    isUpdating: updateMealPlan.isPending,
-    isDeleting: deleteMealPlan.isPending,
-    isGenerating: generateMealPlan.isPending,
-  };
 };

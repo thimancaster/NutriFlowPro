@@ -7,13 +7,73 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
+      alimentos_v2: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          cho_g_por_referencia: number
+          created_at: string
+          fibra_g_por_referencia: number | null
+          fonte: string | null
+          id: string
+          kcal_por_referencia: number
+          lip_g_por_referencia: number
+          medida_padrao_referencia: string
+          nome: string
+          observacoes: string | null
+          peso_referencia_g: number
+          ptn_g_por_referencia: number
+          sodio_mg_por_referencia: number | null
+          subcategoria: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          cho_g_por_referencia: number
+          created_at?: string
+          fibra_g_por_referencia?: number | null
+          fonte?: string | null
+          id?: string
+          kcal_por_referencia: number
+          lip_g_por_referencia: number
+          medida_padrao_referencia: string
+          nome: string
+          observacoes?: string | null
+          peso_referencia_g: number
+          ptn_g_por_referencia: number
+          sodio_mg_por_referencia?: number | null
+          subcategoria?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          cho_g_por_referencia?: number
+          created_at?: string
+          fibra_g_por_referencia?: number | null
+          fonte?: string | null
+          id?: string
+          kcal_por_referencia?: number
+          lip_g_por_referencia?: number
+          medida_padrao_referencia?: string
+          nome?: string
+          observacoes?: string | null
+          peso_referencia_g?: number
+          ptn_g_por_referencia?: number
+          sodio_mg_por_referencia?: number | null
+          subcategoria?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       anthropometry: {
         Row: {
           abdominal: number | null
@@ -213,6 +273,44 @@ export type Database = {
           },
         ]
       }
+      calculation_attempts: {
+        Row: {
+          attempt_date: string | null
+          calculation_data: Json
+          created_at: string | null
+          id: string
+          is_successful: boolean | null
+          patient_id: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_date?: string | null
+          calculation_data?: Json
+          created_at?: string | null
+          id?: string
+          is_successful?: boolean | null
+          patient_id?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_date?: string | null
+          calculation_data?: Json
+          created_at?: string | null
+          id?: string
+          is_successful?: boolean | null
+          patient_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_attempts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calculation_history: {
         Row: {
           activity_level: string
@@ -322,12 +420,15 @@ export type Database = {
           measurements: Json | null
           notes: string | null
           patient_id: string | null
+          perfil_get: string | null
           protein: number
           status: string
+          superavit_deficit_calorico: number | null
           tdee: number
           tipo: string
           updated_at: string | null
           user_id: string
+          vet: number | null
           weight: number
         }
         Insert: {
@@ -346,12 +447,15 @@ export type Database = {
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
+          perfil_get?: string | null
           protein: number
           status?: string
+          superavit_deficit_calorico?: number | null
           tdee: number
           tipo?: string
           updated_at?: string | null
           user_id: string
+          vet?: number | null
           weight: number
         }
         Update: {
@@ -370,12 +474,15 @@ export type Database = {
           measurements?: Json | null
           notes?: string | null
           patient_id?: string | null
+          perfil_get?: string | null
           protein?: number
           status?: string
+          superavit_deficit_calorico?: number | null
           tdee?: number
           tipo?: string
           updated_at?: string | null
           user_id?: string
+          vet?: number | null
           weight?: number
         }
         Relationships: [
@@ -387,6 +494,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      consultations: {
+        Row: {
+          calculation_id: string | null
+          created_at: string
+          date: string
+          id: string
+          meal_plan_id: string | null
+          metrics: Json
+          notes: string | null
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          calculation_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          meal_plan_id?: string | null
+          metrics?: Json
+          notes?: string | null
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          calculation_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          meal_plan_id?: string | null
+          metrics?: Json
+          notes?: string | null
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       food_categories: {
         Row: {
@@ -552,6 +695,69 @@ export type Database = {
           sustainability_score?: number | null
         }
         Relationships: []
+      }
+      itens_refeicao: {
+        Row: {
+          alimento_id: string | null
+          cho_g_calculado: number
+          created_at: string
+          id: string
+          kcal_calculado: number
+          lip_g_calculado: number
+          medida_utilizada: string
+          ordem: number
+          peso_total_g: number
+          ptn_g_calculado: number
+          quantidade: number
+          refeicao_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alimento_id?: string | null
+          cho_g_calculado: number
+          created_at?: string
+          id?: string
+          kcal_calculado: number
+          lip_g_calculado: number
+          medida_utilizada: string
+          ordem?: number
+          peso_total_g: number
+          ptn_g_calculado: number
+          quantidade?: number
+          refeicao_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alimento_id?: string | null
+          cho_g_calculado?: number
+          created_at?: string
+          id?: string
+          kcal_calculado?: number
+          lip_g_calculado?: number
+          medida_utilizada?: string
+          ordem?: number
+          peso_total_g?: number
+          ptn_g_calculado?: number
+          quantidade?: number
+          refeicao_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itens_refeicao_alimento_id_fkey"
+            columns: ["alimento_id"]
+            isOneToOne: false
+            referencedRelation: "alimentos_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itens_refeicao_refeicao_id_fkey"
+            columns: ["refeicao_id"]
+            isOneToOne: false
+            referencedRelation: "refeicoes_distribuicao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meal_cultural_rules: {
         Row: {
@@ -849,6 +1055,42 @@ export type Database = {
           },
         ]
       }
+      parametros_get_planilha: {
+        Row: {
+          created_at: string
+          fa_valor: number
+          formula_get_detalhe: string
+          formula_tmb_detalhe: string
+          id: string
+          perfil: string
+          sexo: string
+          tmb_base_valor: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fa_valor: number
+          formula_get_detalhe: string
+          formula_tmb_detalhe: string
+          id?: string
+          perfil: string
+          sexo: string
+          tmb_base_valor: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fa_valor?: number
+          formula_get_detalhe?: string
+          formula_tmb_detalhe?: string
+          id?: string
+          perfil?: string
+          sexo?: string
+          tmb_base_valor?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           address: string | null
@@ -902,6 +1144,149 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      plano_nutricional_diario: {
+        Row: {
+          calculation_id: string | null
+          cho_g_dia: number
+          cho_kcal: number
+          cho_percentual: number
+          created_at: string
+          id: string
+          lip_g_dia: number
+          lip_kcal: number
+          lip_percentual: number
+          lip_tipo_definicao: string
+          lip_valor: number
+          patient_id: string | null
+          ptn_g_dia: number
+          ptn_kcal: number
+          ptn_percentual: number
+          ptn_tipo_definicao: string
+          ptn_valor: number
+          updated_at: string
+          user_id: string
+          vet_kcal: number
+        }
+        Insert: {
+          calculation_id?: string | null
+          cho_g_dia: number
+          cho_kcal: number
+          cho_percentual: number
+          created_at?: string
+          id?: string
+          lip_g_dia: number
+          lip_kcal: number
+          lip_percentual: number
+          lip_tipo_definicao?: string
+          lip_valor: number
+          patient_id?: string | null
+          ptn_g_dia: number
+          ptn_kcal: number
+          ptn_percentual: number
+          ptn_tipo_definicao?: string
+          ptn_valor: number
+          updated_at?: string
+          user_id?: string
+          vet_kcal: number
+        }
+        Update: {
+          calculation_id?: string | null
+          cho_g_dia?: number
+          cho_kcal?: number
+          cho_percentual?: number
+          created_at?: string
+          id?: string
+          lip_g_dia?: number
+          lip_kcal?: number
+          lip_percentual?: number
+          lip_tipo_definicao?: string
+          lip_valor?: number
+          patient_id?: string | null
+          ptn_g_dia?: number
+          ptn_kcal?: number
+          ptn_percentual?: number
+          ptn_tipo_definicao?: string
+          ptn_valor?: number
+          updated_at?: string
+          user_id?: string
+          vet_kcal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_nutricional_diario_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_nutricional_diario_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refeicoes_distribuicao: {
+        Row: {
+          cho_g: number
+          cho_percentual: number
+          created_at: string
+          horario_sugerido: string | null
+          id: string
+          kcal_total: number
+          lip_g: number
+          lip_percentual: number
+          nome_refeicao: string
+          numero_refeicao: number
+          plano_nutricional_id: string | null
+          ptn_g: number
+          ptn_percentual: number
+          updated_at: string
+        }
+        Insert: {
+          cho_g?: number
+          cho_percentual?: number
+          created_at?: string
+          horario_sugerido?: string | null
+          id?: string
+          kcal_total?: number
+          lip_g?: number
+          lip_percentual?: number
+          nome_refeicao: string
+          numero_refeicao: number
+          plano_nutricional_id?: string | null
+          ptn_g?: number
+          ptn_percentual?: number
+          updated_at?: string
+        }
+        Update: {
+          cho_g?: number
+          cho_percentual?: number
+          created_at?: string
+          horario_sugerido?: string | null
+          id?: string
+          kcal_total?: number
+          lip_g?: number
+          lip_percentual?: number
+          nome_refeicao?: string
+          numero_refeicao?: number
+          plano_nutricional_id?: string | null
+          ptn_g?: number
+          ptn_percentual?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refeicoes_distribuicao_plano_nutricional_id_fkey"
+            columns: ["plano_nutricional_id"]
+            isOneToOne: false
+            referencedRelation: "plano_nutricional_diario"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_audit_log: {
         Row: {
@@ -1136,7 +1521,7 @@ export type Database = {
       check_premium_quota: {
         Args:
           | Record<PropertyKey, never>
-          | { p_user_id: string; p_feature: string; p_action?: string }
+          | { p_action?: string; p_feature: string; p_user_id: string }
         Returns: Json
       }
       check_rate_limit_secure: {
@@ -1153,64 +1538,68 @@ export type Database = {
       }
       generate_meal_plan: {
         Args: {
-          p_user_id: string
+          p_date?: string
           p_patient_id: string
           p_target_calories: number
-          p_target_protein: number
           p_target_carbs: number
           p_target_fats: number
-          p_date?: string
+          p_target_protein: number
+          p_user_id: string
         }
         Returns: string
       }
       generate_meal_plan_with_cultural_rules: {
         Args: {
-          p_user_id: string
+          p_date?: string
           p_patient_id: string
           p_target_calories: number
-          p_target_protein: number
           p_target_carbs: number
           p_target_fats: number
-          p_date?: string
+          p_target_protein: number
+          p_user_id: string
         }
         Returns: string
+      }
+      get_calculation_quota_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_subscriber_by_customer_id: {
         Args: { customer_id: string }
         Returns: {
-          user_id: string
           email: string
+          user_id: string
         }[]
       }
       get_subscriber_by_customer_id_safe: {
         Args: { customer_id: string }
         Returns: {
-          user_id: string
           email: string
+          user_id: string
         }[]
       }
       get_subscription_status: {
         Args: { user_id: string }
         Returns: {
-          is_premium: boolean
-          role: string
           email: string
-          stripe_customer_id: string
-          subscription_start: string
-          subscription_end: string
+          is_premium: boolean
           payment_status: string
+          role: string
+          stripe_customer_id: string
+          subscription_end: string
+          subscription_start: string
         }[]
       }
       get_subscription_status_safe: {
         Args: { user_id: string }
         Returns: {
-          is_premium: boolean
-          role: string
           email: string
-          stripe_customer_id: string
-          subscription_start: string
-          subscription_end: string
+          is_premium: boolean
           payment_status: string
+          role: string
+          stripe_customer_id: string
+          subscription_end: string
+          subscription_start: string
         }[]
       }
       get_user_role: {
@@ -1237,11 +1626,11 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | {
-              p_user_id: string
-              p_event_type: string
               p_event_data?: Json
+              p_event_type: string
               p_ip_address?: string
               p_user_agent?: string
+              p_user_id: string
             }
         Returns: undefined
       }
@@ -1249,11 +1638,11 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | {
-              p_user_id: string
-              p_event_type: string
               p_event_data?: Json
+              p_event_type: string
               p_ip_address?: string
               p_user_agent?: string
+              p_user_id: string
             }
         Returns: undefined
       }
@@ -1261,53 +1650,57 @@ export type Database = {
         Args: { p_meal_plan_id: string }
         Returns: undefined
       }
+      register_calculation_attempt: {
+        Args: { p_calculation_data?: Json; p_patient_id?: string }
+        Returns: Json
+      }
       search_foods_secure: {
         Args: {
-          search_query: string
           search_category?: string
           search_limit?: number
+          search_query: string
         }
         Returns: {
+          calories_per_100g: number
+          carbs_per_100g: number
+          category: string
+          fat_per_100g: number
           id: string
           name: string
-          category: string
-          calories_per_100g: number
-          protein_per_100g: number
-          carbs_per_100g: number
-          fat_per_100g: number
           portion_size: number
           portion_unit: string
+          protein_per_100g: number
         }[]
       }
       set_user_admin_role: {
-        Args: { target_user_id: string; is_admin: boolean }
+        Args: { is_admin: boolean; target_user_id: string }
         Returns: undefined
       }
       upsert_subscriber: {
         Args: {
-          p_user_id: string
           p_email: string
+          p_is_premium?: boolean
+          p_payment_status?: string
+          p_role?: string
           p_stripe_customer_id?: string
           p_stripe_subscription_id?: string
-          p_is_premium?: boolean
-          p_role?: string
-          p_payment_status?: string
-          p_subscription_start?: string
           p_subscription_end?: string
+          p_subscription_start?: string
+          p_user_id: string
         }
         Returns: undefined
       }
       upsert_subscriber_safe: {
         Args: {
-          p_user_id: string
           p_email: string
+          p_is_premium?: boolean
+          p_payment_status?: string
+          p_role?: string
           p_stripe_customer_id?: string
           p_stripe_subscription_id?: string
-          p_is_premium?: boolean
-          p_role?: string
-          p_payment_status?: string
-          p_subscription_start?: string
           p_subscription_end?: string
+          p_subscription_start?: string
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -1315,17 +1708,17 @@ export type Database = {
         Args:
           | Record<PropertyKey, never>
           | {
-              p_name: string
-              p_email?: string
-              p_phone?: string
               p_cpf?: string
+              p_email?: string
+              p_name: string
+              p_phone?: string
             }
         Returns: undefined
       }
       validate_premium_access_secure: {
         Args:
           | Record<PropertyKey, never>
-          | { feature_name: string; action_type?: string }
+          | { action_type?: string; feature_name: string }
         Returns: undefined
       }
     }
