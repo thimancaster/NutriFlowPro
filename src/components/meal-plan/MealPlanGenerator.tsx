@@ -1,145 +1,170 @@
 import React, { useState, useEffect } from 'react';
-import { Patient } from '@/types/patient'; // Import from correct location
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from '@radix-ui/react-icons';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Utensils, Plus, Minus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { patientService } from '@/services';
+import { Patient } from '@/types';
+import { PatientService } from '@/services';
+import { MealPlanService } from '@/services/mealPlanService';
 
 interface MealPlanGeneratorProps {
-  onMealPlanGenerated?: (mealPlanId: string) => void;
+  patientId: string;
+  onMealPlanGenerated: (mealPlanId: string) => void;
 }
 
-const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({
-  onMealPlanGenerated
-}) => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [totalCalories, setTotalCalories] = useState<string>('');
+interface MealSettings {
+  numMeals: string;
+  totalCalories: string;
+  dietType: string;
+  restrictions: string;
+}
+
+const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ patientId, onMealPlanGenerated }) => {
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [mealSettings, setMealSettings] = useState<MealSettings>({
+    numMeals: '3',
+    totalCalories: '2000',
+    dietType: 'balanced',
+    restrictions: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchPatients = async () => {
-      if (user?.id) {
-        const result = await patientService.getPatients(user.id);
-        if (result.success && result.data) {
-          // Ensure patients have the required status property
-          const patientsWithStatus = result.data.map(patient => ({
-            ...patient,
-            status: patient.status || 'active' as 'active' | 'archived'
-          }));
-          setPatients(patientsWithStatus);
+    const fetchPatient = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedPatient = await PatientService.getPatientById(patientId);
+        if (fetchedPatient) {
+          setPatient(fetchedPatient);
+        } else {
+          toast({
+            title: 'Erro',
+            description: 'Paciente não encontrado.',
+            variant: 'destructive'
+          });
         }
+      } catch (error) {
+        toast({
+          title: 'Erro',
+          description: 'Falha ao buscar paciente.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchPatients();
-  }, [user?.id]);
+    fetchPatient();
+  }, [patientId, toast]);
 
-  const handleGenerateMealPlan = async () => {
-    if (!selectedPatient || !startDate || !totalCalories) {
-      toast({
-        title: 'Erro',
-        description: 'Por favor, preencha todos os campos.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setMealSettings(prevSettings => ({
+      ...prevSettings,
+      [name]: value
+    }));
+  };
 
+  const generateMealPlan = async () => {
     setIsLoading(true);
     try {
-      // Simulate meal plan generation
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Placeholder for meal plan generation logic
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Simulate success
+      // Simulate successful meal plan generation
+      const generatedMealPlanId = 'meal-plan-123';
       toast({
         title: 'Sucesso',
-        description: `Plano alimentar gerado para ${selectedPatient.name} em ${format(startDate, 'dd/MM/yyyy')}.`,
+        description: 'Plano alimentar gerado com sucesso!'
       });
-
-      // Call the callback with a dummy meal plan ID
-      onMealPlanGenerated?.('dummy-meal-plan-id');
+      onMealPlanGenerated(generatedMealPlanId);
     } catch (error) {
       toast({
         title: 'Erro',
-        description: 'Erro ao gerar plano alimentar.',
-        variant: 'destructive',
+        description: 'Falha ao gerar plano alimentar.',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader2 className="animate-spin h-10 w-10 text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return <div className="text-center">Paciente não encontrado.</div>;
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gerador de Plano Alimentar</CardTitle>
+        <CardTitle>Gerar Plano Alimentar</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="numMeals">Número de Refeições</Label>
+            <Select name="numMeals" id="numMeals" value={mealSettings.numMeals} onValueChange={(value) => handleInputChange({ target: { name: 'numMeals', value } } as any)}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 Refeições</SelectItem>
+                <SelectItem value="5">5 Refeições</SelectItem>
+                <SelectItem value="6">6 Refeições</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="totalCalories">Total de Calorias</Label>
+            <Input
+              type="number"
+              id="totalCalories"
+              name="totalCalories"
+              value={mealSettings.totalCalories}
+              onChange={handleInputChange}
+              className="text-sm"
+            />
+          </div>
+        </div>
         <div>
-          <Label htmlFor="patient">Paciente</Label>
-          <Select onValueChange={(value) => {
-            const patient = patients.find(p => p.id === value);
-            setSelectedPatient(patient || null);
-          }}>
-            <SelectTrigger id="patient">
-              <SelectValue placeholder="Selecione um paciente" />
+          <Label htmlFor="dietType">Tipo de Dieta</Label>
+          <Select name="dietType" id="dietType" value={mealSettings.dietType} onValueChange={(value) => handleInputChange({ target: { name: 'dietType', value } } as any)}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
-              {patients.map((patient) => (
-                <SelectItem key={patient.id} value={patient.id}>
-                  {patient.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="balanced">Balanceada</SelectItem>
+              <SelectItem value="low-carb">Low Carb</SelectItem>
+              <SelectItem value="vegetarian">Vegetariana</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Data</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, 'PP', { locale: ptBR }) : <span>Selecione a data</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                locale={ptBR}
-                selected={startDate}
-                onSelect={setStartDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div>
-          <Label htmlFor="calories">Total de Calorias</Label>
-          <Input
-            type="number"
-            id="calories"
-            placeholder="Ex: 2000"
-            value={totalCalories}
-            onChange={(e) => setTotalCalories(e.target.value)}
+          <Label htmlFor="restrictions">Restrições Alimentares</Label>
+          <Textarea
+            id="restrictions"
+            name="restrictions"
+            value={mealSettings.restrictions}
+            onChange={handleInputChange}
+            placeholder="Ex: Sem glúten, sem lactose"
+            className="text-sm"
           />
         </div>
-        <Button onClick={handleGenerateMealPlan} disabled={isLoading}>
-          {isLoading ? 'Gerando...' : 'Gerar Plano Alimentar'}
+        <Button onClick={generateMealPlan} className="w-full bg-green-500 text-white hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+          Gerar Plano Alimentar
         </Button>
       </CardContent>
     </Card>

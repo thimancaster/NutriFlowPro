@@ -5,7 +5,17 @@ export interface PatientGoals {
   activityLevel?: 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo';
   target_weight?: number;
   notes?: string;
-  customGoals?: string; // Add missing customGoals property
+  customGoals?: string;
+}
+
+export interface AddressDetails {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
 }
 
 export interface Patient {
@@ -17,7 +27,7 @@ export interface Patient {
   cpf?: string;
   birth_date: string;
   gender: 'male' | 'female' | 'other';
-  address?: string | object; // Allow both string and object types
+  address?: string | AddressDetails;
   notes?: string;
   status: 'active' | 'archived';
   goals?: PatientGoals;
@@ -27,5 +37,5 @@ export interface Patient {
   age?: number;
   weight?: number;
   height?: number;
-  last_appointment?: string; // Add missing last_appointment property
+  last_appointment?: string;
 }

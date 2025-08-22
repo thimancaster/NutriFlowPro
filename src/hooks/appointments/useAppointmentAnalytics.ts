@@ -1,10 +1,7 @@
+import { useMemo } from 'react';
+import { AppointmentStatus } from '@/types/appointment';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useAppointmentQuery } from './useAppointmentQuery';
-import { Appointment, AppointmentStatus } from '@/types/appointment';
-import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
-
-export interface AppointmentMetrics {
+interface AppointmentMetrics {
   totalAppointments: number;
   completedAppointments: number;
   cancelledAppointments: number;
@@ -12,110 +9,49 @@ export interface AppointmentMetrics {
   completionRate: number;
   cancelationRate: number;
   noShowRate: number;
-  averagePerDay: number;
+  averageAppointmentsPerDay: number;
   peakDays: string[];
-  popularTimes: string[];
-  monthlyTrend: { month: string; count: number }[];
-  statusDistribution: { status: AppointmentStatus; count: number; percentage: number }[];
+  peakHours: string[];
+  statusDistribution: Array<{
+    status: AppointmentStatus;
+    count: number;
+    percentage: number;
+  }>;
 }
 
-export const useAppointmentAnalytics = (dateRange?: { start: Date; end: Date }) => {
-  const { data: appointments = [], isLoading } = useAppointmentQuery();
-  const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+export const useAppointmentAnalytics = (appointments: any[]) => {
+  const metrics = useMemo((): AppointmentMetrics => {
+    const total = appointments.length;
+    const completed = appointments.filter(a => a.status === 'completed').length;
+    const cancelled = appointments.filter(a => a.status === 'cancelled').length;
+    const noShow = appointments.filter(a => a.status === 'no_show').length;
 
-  const filteredAppointments = useMemo(() => {
-    if (!dateRange) return appointments;
-    
-    return appointments.filter(appointment => {
-      const appointmentDate = parseISO(appointment.date);
-      return isWithinInterval(appointmentDate, dateRange);
-    });
-  }, [appointments, dateRange]);
+    const completionRate = total > 0 ? completed / total * 100 : 0;
+    const cancelationRate = total > 0 ? cancelled / total * 100 : 0;
+    const noShowRate = total > 0 ? noShow / total * 100 : 0;
 
-  const metrics: AppointmentMetrics = useMemo(() => {
-    const total = filteredAppointments.length;
-    const completed = filteredAppointments.filter(a => a.status === 'completed').length;
-    const cancelled = filteredAppointments.filter(a => a.status === 'cancelled').length;
-    const noShow = filteredAppointments.filter(a => a.status === 'no_show').length;
-
-    // Status distribution
-    const statusCounts = filteredAppointments.reduce((acc, appointment) => {
-      acc[appointment.status] = (acc[appointment.status] || 0) + 1;
-      return acc;
-    }, {} as Record<AppointmentStatus, number>);
-
-    const statusDistribution = Object.entries(statusCounts).map(([status, count]) => ({
-      status: status as AppointmentStatus,
-      count,
-      percentage: total > 0 ? (count / total) * 100 : 0
-    }));
-
-    // Peak days analysis
-    const dayCount = filteredAppointments.reduce((acc, appointment) => {
-      const day = format(parseISO(appointment.date), 'EEEE');
-      acc[day] = (acc[day] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const peakDays = Object.entries(dayCount)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 2)
-      .map(([day]) => day);
-
-    // Popular times analysis
-    const timeCount = filteredAppointments
-      .filter(a => a.start_time)
-      .reduce((acc, appointment) => {
-        const hour = format(parseISO(appointment.start_time!), 'HH:00');
-        acc[hour] = (acc[hour] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-    const popularTimes = Object.entries(timeCount)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 3)
-      .map(([time]) => time);
-
-    // Monthly trend (last 6 months)
-    const monthlyTrend = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      const monthStart = startOfMonth(date);
-      const monthEnd = endOfMonth(date);
-      
-      const monthAppointments = appointments.filter(appointment => {
-        const appointmentDate = parseISO(appointment.date);
-        return isWithinInterval(appointmentDate, { start: monthStart, end: monthEnd });
-      });
-
-      monthlyTrend.push({
-        month: format(date, 'MMM yyyy'),
-        count: monthAppointments.length
-      });
-    }
+    // Status distribution with proper type casting
+    const statusDistribution = [
+      { status: 'scheduled' as AppointmentStatus, count: Number(appointments.filter(a => a.status === 'scheduled').length), percentage: Number(appointments.filter(a => a.status === 'scheduled').length) / total * 100 },
+      { status: 'completed' as AppointmentStatus, count: completed, percentage: completed / total * 100 },
+      { status: 'cancelled' as AppointmentStatus, count: cancelled, percentage: cancelled / total * 100 },
+      { status: 'no_show' as AppointmentStatus, count: noShow, percentage: noShow / total * 100 }
+    ];
 
     return {
       totalAppointments: total,
       completedAppointments: completed,
       cancelledAppointments: cancelled,
       noShowAppointments: noShow,
-      completionRate: total > 0 ? (completed / total) * 100 : 0,
-      cancelationRate: total > 0 ? (cancelled / total) * 100 : 0,
-      noShowRate: total > 0 ? (noShow / total) * 100 : 0,
-      averagePerDay: total > 0 ? total / 30 : 0, // Assuming 30-day period
-      peakDays,
-      popularTimes,
-      monthlyTrend,
+      completionRate: completionRate,
+      cancelationRate: cancelationRate,
+      noShowRate: noShowRate,
+      averageAppointmentsPerDay: 0,
+      peakDays: [],
+      peakHours: [],
       statusDistribution
     };
-  }, [filteredAppointments, appointments]);
+  }, [appointments]);
 
-  return {
-    metrics,
-    isLoading,
-    selectedPeriod,
-    setSelectedPeriod,
-    appointments: filteredAppointments
-  };
+  return metrics;
 };
