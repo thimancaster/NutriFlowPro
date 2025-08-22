@@ -51,6 +51,19 @@ export interface MealPlanItem {
   order_index?: number;
 }
 
+// Add MealPlanFood interface for compatibility
+export interface MealPlanFood {
+  id: string;
+  food_id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
 // Legacy alias for backward compatibility
 export interface ConsolidatedMealItem extends MealPlanItem {
   meal_type?: MealType;

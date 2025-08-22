@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Download, Print } from 'lucide-react';
+import { ArrowLeft, Save, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MealPlanServiceV3 } from '@/services/mealPlan/MealPlanServiceV3';
-import { ConsolidatedMealPlan, MealPlanFood } from '@/types/mealPlanTypes';
+import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import ConsolidatedMealPlanEditor from '@/components/meal-plan/ConsolidatedMealPlanEditor';
 
 const MealPlanEditor: React.FC = () => {
@@ -29,37 +29,7 @@ const MealPlanEditor: React.FC = () => {
       const result = await MealPlanServiceV3.getMealPlanById(planId);
       
       if (result.success && result.data) {
-        // Convert MealPlanItem to MealPlanFood for editor compatibility
-        const convertedPlan: ConsolidatedMealPlan = {
-          ...result.data,
-          meals: result.data.meals.map(meal => ({
-            ...meal,
-            foods: meal.items.map(item => ({
-              id: item.id,
-              food_id: item.food_id,
-              name: item.name || 'Item sem nome', // MealPlanItem uses 'name', not 'food_name'
-              quantity: item.quantity,
-              unit: item.unit,
-              calories: item.calories,
-              protein: item.protein,
-              carbs: item.carbs,
-              fats: item.fats
-            } as MealPlanFood)),
-            items: meal.items.map(item => ({
-              id: item.id,
-              food_id: item.food_id,
-              name: item.name || 'Item sem nome', // MealPlanItem uses 'name', not 'food_name'
-              quantity: item.quantity,
-              unit: item.unit,
-              calories: item.calories,
-              protein: item.protein,
-              carbs: item.carbs,
-              fats: item.fats
-            }))
-          }))
-        };
-        
-        setMealPlan(convertedPlan);
+        setMealPlan(result.data);
       } else {
         throw new Error(result.error || 'Erro ao carregar plano');
       }
@@ -141,8 +111,6 @@ const MealPlanEditor: React.FC = () => {
       <ConsolidatedMealPlanEditor
         mealPlan={mealPlan}
         patientName="Paciente"
-        onSave={handleSave}
-        isSaving={isSaving}
       />
     </div>
   );
