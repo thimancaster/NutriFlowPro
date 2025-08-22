@@ -105,13 +105,14 @@ export const useMealPlanQuery = (mealPlanId: string | undefined) => {
         user_id: data.user_id,
         patient_id: data.patient_id,
         calculation_id: data.calculation_id,
-        name: data.name || 'Plano Alimentar',
-        description: data.description,
+        name: data.notes || 'Plano Alimentar', // Use notes as fallback for name
+        description: data.notes,
         date: data.date,
         total_calories: data.total_calories,
         total_protein: data.total_protein,
         total_carbs: data.total_carbs,
         total_fats: data.total_fats,
+        notes: data.notes,
         created_at: data.created_at,
         updated_at: data.updated_at,
         meals

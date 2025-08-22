@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Save, Download, Edit } from 'lucide-react';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ConsolidatedMealPlan, ConsolidatedMeal, MealAssemblyFood } from '@/types/mealPlanTypes';
+import { ConsolidatedMealPlan, ConsolidatedMeal, MealAssemblyFood, MealPlanItem } from '@/types/mealPlanTypes';
 import { MealPlanMeal, MealPlanFood } from '@/types/mealPlan';
 import MealEditDialog from '@/components/meal-plan/MealEditDialog';
 

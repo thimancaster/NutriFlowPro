@@ -18,10 +18,17 @@ export interface AddressDetails {
   state?: string;
 }
 
+export interface PatientFilters {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface Patient {
   id: string;
   name: string;
-  email?: string; // Make email optional to match context
+  email?: string;
   phone?: string;
   secondaryPhone?: string;
   cpf?: string;
@@ -34,7 +41,7 @@ export interface Patient {
   created_at?: string;
   updated_at?: string;
   user_id?: string;
-  age?: number; // Add age property
+  age?: number;
   weight?: number;
   height?: number;
   last_appointment?: string;

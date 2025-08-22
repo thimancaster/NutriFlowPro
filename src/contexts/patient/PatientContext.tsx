@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -16,7 +15,7 @@ interface PatientContextType {
   patients: Patient[];
   activePatient: Patient | null;
   loading: boolean;
-  isLoading: boolean; // Add alias
+  isLoading: boolean;
   error: string | null;
   totalPatients: number;
   isPatientActive: boolean;
@@ -30,10 +29,13 @@ interface PatientContextType {
     currentStep: string;
     lastActivity: Date | null;
   };
+  patientHistoryData: any[];
+  patientHistory: any[];
   setFilters: (filters: { search: string; status: string }) => void;
   updateFilters: (newFilters: Partial<PatientFilters>) => Promise<void>;
   loadPatients: () => Promise<void>;
   loadPatientById: (patientId: string) => Promise<void>;
+  loadPatientHistory: (patientId: string) => Promise<void>;
   setActivePatient: (patient: Patient | null) => void;
   startPatientSession: (patient: Patient) => void;
   endPatientSession: () => void;
@@ -44,7 +46,6 @@ interface PatientContextType {
   clearActivePatient: () => void;
   refreshPatients: () => Promise<void>;
   addRecentPatient: (patient: Patient) => void;
-  patientHistory: any[];
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
@@ -75,6 +76,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [patientHistory, setPatientHistory] = useState<any[]>([]);
+  const [patientHistoryData, setPatientHistoryData] = useState<any[]>([]);
   const [totalPatients, setTotalPatients] = useState(0);
   const [filtersState, setFiltersState] = useState({ search: '', status: '' });
   const [currentFilters, setCurrentFilters] = useState<PatientFilters>({ 
@@ -99,6 +101,17 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
   const updateFilters = useCallback(async (newFilters: Partial<PatientFilters>) => {
     setCurrentFilters(prev => ({ ...prev, ...newFilters }));
     await loadPatients();
+  }, []);
+
+  const loadPatientHistory = useCallback(async (patientId: string) => {
+    try {
+      // Mock implementation - replace with actual history loading
+      const history = [];
+      setPatientHistory(history);
+      setPatientHistoryData(history);
+    } catch (error) {
+      console.error('Error loading patient history:', error);
+    }
   }, []);
 
   const loadPatients = useCallback(async () => {
@@ -163,7 +176,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
           address: patient.address || '',
           secondaryPhone: patient.secondaryphone || '',
           age,
-          last_appointment: undefined // This will be loaded separately if needed
+          last_appointment: undefined
         };
       });
 
@@ -231,7 +244,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
   }, [loadPatients]);
 
   const addRecentPatient = useCallback((patient: Patient) => {
-    // Add to recent patients logic if needed
     console.log('Adding recent patient:', patient.name);
   }, []);
 
@@ -258,17 +270,17 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     
     try {
       // Convert Patient data to match database schema
-      const dbPatient = {
+      const dbPatient: any = {
         ...patientData,
         address: typeof patientData.address === 'object' 
           ? JSON.stringify(patientData.address) 
           : patientData.address || '',
-        goals: patientData.goals ? JSON.stringify(patientData.goals) as Json : null,
+        goals: patientData.goals ? JSON.stringify(patientData.goals) : null,
         secondaryphone: patientData.secondaryPhone,
         user_id: user.id
       };
 
-      // Remove fields that don't exist in database
+      // Remove fields that don't exist in database or are computed
       const {
         secondaryPhone,
         last_appointment,
@@ -321,7 +333,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       setLoading(true);
       setError(null);
       try {
-        // Ensure goals is not undefined before stringifying
         const goals = patientData.goals ? JSON.stringify(patientData.goals) as Json : null;
         
         const newPatient = {
@@ -334,7 +345,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
           secondaryphone: patientData.secondaryPhone || ''
         };
         
-        // Remove fields that don't exist in database
         const {
           secondaryPhone,
           last_appointment,
@@ -354,7 +364,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
           throw error;
         }
         
-        // Transform the data to match our Patient type
         let parsedGoals: PatientGoals = {};
         if (data.goals) {
           try {
@@ -378,7 +387,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
           address: data.address || '',
           secondaryPhone: data.secondaryphone || '',
           age: data.birth_date ? calculateAge(data.birth_date) : undefined,
-          last_appointment: undefined // This will be loaded separately if needed
+          last_appointment: undefined
         };
         
         setPatients([...patients, transformedData]);
@@ -398,7 +407,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     setLoading(true);
     setError(null);
     try {
-      // Ensure goals is not undefined before stringifying
       const goals = updates.goals ? JSON.stringify(updates.goals) as Json : undefined;
       
       const dbUpdates = {
@@ -410,7 +418,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
         secondaryphone: updates.secondaryPhone
       };
 
-      // Remove fields that don't exist in database
       const {
         secondaryPhone,
         last_appointment,
@@ -431,7 +438,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
         throw error;
       }
       
-      // Transform the data to match our Patient type
       let parsedGoals: PatientGoals = {};
       if (data.goals) {
         try {
@@ -455,7 +461,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
         address: data.address || '',
         secondaryPhone: data.secondaryphone || '',
         age: data.birth_date ? calculateAge(data.birth_date) : undefined,
-        last_appointment: undefined // This will be loaded separately if needed
+        last_appointment: undefined
       };
       
       setPatients(
@@ -495,10 +501,13 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     filters: filtersState,
     currentFilters,
     sessionData,
+    patientHistoryData,
+    patientHistory,
     setFilters,
     updateFilters,
     loadPatients,
     loadPatientById,
+    loadPatientHistory,
     setActivePatient,
     startPatientSession,
     endPatientSession,
@@ -509,7 +518,6 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     clearActivePatient,
     refreshPatients,
     addRecentPatient,
-    patientHistory,
   };
 
   return (

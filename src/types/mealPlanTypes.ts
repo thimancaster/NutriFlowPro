@@ -55,7 +55,7 @@ export interface MealPlanItem {
   carbs: number;
   fats: number;
   order_index: number;
-  meal_type?: MealType; // Add meal_type property
+  meal_type?: MealType;
 }
 
 // Consolidated meal item (alias for MealPlanItem)
@@ -84,6 +84,15 @@ export const MEAL_TIMES: Record<MealType, string> = {
   evening_snack: '21:00'
 };
 
+export const DEFAULT_MEAL_DISTRIBUTION: Record<MealType, number> = {
+  breakfast: 25,
+  morning_snack: 10,
+  lunch: 35,
+  afternoon_snack: 10,
+  dinner: 15,
+  evening_snack: 5
+};
+
 export interface ConsolidatedMeal {
   id: string;
   name: string;
@@ -109,12 +118,13 @@ export interface ConsolidatedMealPlan {
   calculation_id?: string;
   name: string;
   description?: string;
-  date?: string; // Add date property
+  date?: string;
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
   meals: ConsolidatedMeal[];
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
@@ -129,15 +139,31 @@ export interface MealPlanGenerationParams {
   date?: string;
   culturalRules?: any;
   calculationId?: string;
-  targets?: any; // Add targets property
+  targets?: any;
+}
+
+export interface MealPlanGenerationResult {
+  success: boolean;
+  data?: ConsolidatedMealPlan;
+  error?: string;
+}
+
+export interface PDFMeal {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  percent: number;
+  suggestions: string[];
 }
 
 export interface PDFMealPlanData {
-  id: string;
+  id?: string;
   patient_name: string;
   patient_age?: number;
   patient_gender?: 'male' | 'female';
-  date: string;
+  date?: string;
   total_calories: number;
   total_protein: number;
   total_carbs: number;
@@ -160,4 +186,20 @@ export interface PDFMealPlanData {
     total_carbs: number;
     total_fats: number;
   }[];
+  // Legacy props for backward compatibility
+  patientName?: string;
+  patientAge?: number;
+  patientGender?: 'male' | 'female';
+  totalCalories?: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFats?: number;
+}
+
+export interface MealPlanExportOptions {
+  patientName: string;
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFats: number;
 }
