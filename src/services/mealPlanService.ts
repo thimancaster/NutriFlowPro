@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ConsolidatedMealPlan, MealPlanGenerationParams, MealPlanGenerationResult } from '@/types/mealPlanTypes';
-import { DetailedMealPlan, MealPlanListResponse, MealPlanMeal } from '@/types/mealPlan';
+import { DetailedMealPlan, MealPlanListResponse, MealPlanMeal, MealPlanFood } from '@/types/mealPlan';
 import { MealPlanServiceV3 } from './mealPlan/MealPlanServiceV3';
 
 export const MealPlanService = {
@@ -43,9 +43,9 @@ export const MealPlanService = {
       const mealPlan = result.data;
       const detailedMealPlan: DetailedMealPlan = {
         ...mealPlan,
-        meals: mealPlan.meals?.map(meal => ({
-          ...meal,
-          foods: meal.items?.map(item => ({
+        day_of_week: mealPlan.day_of_week,
+        meals: mealPlan.meals?.map(meal => {
+          const foods: MealPlanFood[] = meal.items?.map(item => ({
             id: item.id,
             food_id: item.food_id,
             name: item.food_name,
@@ -55,8 +55,14 @@ export const MealPlanService = {
             protein: item.protein,
             carbs: item.carbs,
             fats: item.fats
-          })) || []
-        })) || []
+          })) || [];
+
+          return {
+            ...meal,
+            foods,
+            items: foods
+          };
+        }) || []
       };
 
       return detailedMealPlan;
@@ -71,30 +77,34 @@ export const MealPlanService = {
       const result = await MealPlanServiceV3.listMealPlans(userId, filters?.patient_id);
 
       if (!result.success || !result.data) {
-        return { success: false, error: result.error };
+        return { 
+          success: false, 
+          error: result.error, 
+          data: [], 
+          count: 0 
+        };
       }
 
-      const detailedPlans: DetailedMealPlan[] = result.data.map(plan => ({
+      const detailedPlans: ConsolidatedMealPlan[] = result.data.map(plan => ({
         ...plan,
         meals: plan.meals?.map(meal => ({
           ...meal,
-          foods: meal.items?.map(item => ({
-            id: item.id,
-            food_id: item.food_id,
-            name: item.food_name,
-            quantity: item.quantity,
-            unit: item.unit,
-            calories: item.calories,
-            protein: item.protein,
-            carbs: item.carbs,
-            fats: item.fats
-          })) || []
+          items: meal.items || []
         })) || []
       }));
 
-      return { success: true, data: detailedPlans };
+      return { 
+        success: true, 
+        data: detailedPlans, 
+        count: detailedPlans.length 
+      };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message, 
+        data: [], 
+        count: 0 
+      };
     }
   },
 

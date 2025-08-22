@@ -1,20 +1,29 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ConsultationService } from './consultationService';
-import { PatientService } from './patient/PatientService';
-import { MealPlanService } from './mealPlanService';
+import { PatientService } from './patient';
 
-export class DatabaseService {
-  static async healthCheck() {
+export const DatabaseService = {
+  async healthCheck() {
     try {
-      const { data, error } = await supabase.from('patients').select('count').limit(1);
-      return { success: !error, error: error?.message };
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .limit(1);
+      
+      if (error) throw error;
+      return { success: true, message: 'Database connection healthy' };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
-  }
+  },
 
-  static consultation = ConsultationService;
-  static patient = PatientService;
-  static mealPlan = MealPlanService;
-}
+  async seedData() {
+    // Implementation for seeding initial data
+    console.log('Seeding data...');
+  },
+
+  // Re-export services for convenience
+  consultation: ConsultationService,
+  patient: PatientService
+};

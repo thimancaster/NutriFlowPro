@@ -33,8 +33,9 @@ export interface MealPlanMeal {
   total_fats: number;
 }
 
-export interface DetailedMealPlan extends Omit<ConsolidatedMealPlan, 'meals'> {
+export interface DetailedMealPlan extends Omit<ConsolidatedMealPlan, 'meals' | 'day_of_week'> {
   meals: MealPlanMeal[];
+  day_of_week?: number;
 }
 
 // Nutrition calculation interfaces
@@ -71,6 +72,7 @@ export interface MealPlanFilters {
   date_from?: string;
   date_to?: string;
   is_template?: boolean;
+  limit?: number;
 }
 
 export interface MealPlanListResponse {

@@ -8,6 +8,7 @@ import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ConsolidatedMealPlan, ConsolidatedMeal } from '@/types/mealPlanTypes';
+import { MealPlanMeal, MealPlanFood } from '@/types/mealPlan';
 import MealEditDialog from '@/components/meal-plan/MealEditDialog';
 
 interface MealPlanEditingStepProps {
@@ -69,20 +70,23 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
   };
 
   // Convert ConsolidatedMeal to MealPlanMeal for compatibility
-  const convertToMealPlanMeal = (meal: ConsolidatedMeal) => {
+  const convertToMealPlanMeal = (meal: ConsolidatedMeal): MealPlanMeal => {
+    const foods: MealPlanFood[] = meal.items?.map(item => ({
+      id: item.id,
+      food_id: item.food_id,
+      name: item.food_name,
+      quantity: item.quantity,
+      unit: item.unit,
+      calories: item.calories,
+      protein: item.protein,
+      carbs: item.carbs,
+      fats: item.fats
+    })) || [];
+
     return {
       ...meal,
-      foods: meal.items?.map(item => ({
-        id: item.id,
-        food_id: item.food_id,
-        name: item.food_name,
-        quantity: item.quantity,
-        unit: item.unit,
-        calories: item.calories,
-        protein: item.protein,
-        carbs: item.carbs,
-        fats: item.fats
-      })) || []
+      foods,
+      items: foods
     };
   };
 
