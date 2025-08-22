@@ -1,36 +1,25 @@
 
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentType = 'consulta' | 'retorno' | 'avaliacao' | 'urgencia';
 
 export interface Appointment {
   id: string;
   patient_id: string;
+  user_id?: string;
+  appointment_type_id?: string;
+  title?: string;
+  type: string;
+  status: AppointmentStatus;
   date: string;
   start_time?: string;
   end_time?: string;
-  type: string; // Required field - always populated
-  appointment_type_id?: string; // Optional reference to appointment_types table
-  status: AppointmentStatus;
   notes?: string;
   recommendations?: string;
-  title?: string;
   created_at?: string;
   updated_at?: string;
-  user_id?: string;
-  // Additional computed fields
-  patient?: any;
+  patient?: {
+    id: string;
+    name: string;
+  };
   patientName?: string;
-}
-
-export interface AppointmentType {
-  id: string;
-  name: string;
-  color: string;
-  description?: string;
-  duration_minutes?: number;
-}
-
-// Enhanced appointment with additional computed fields
-export interface EnhancedAppointment extends Appointment {
-  patient_name?: string;
-  appointment_type?: AppointmentType;
 }

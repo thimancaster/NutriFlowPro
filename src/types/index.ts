@@ -31,14 +31,34 @@ export {
 export interface ConsultationData {
   id?: string;
   patient_id?: string;
+  user_id?: string;
+  patient?: any;
   date?: string;
+  
+  // Basic metrics
+  weight?: number;
+  height?: number;
+  age?: number;
+  gender?: 'male' | 'female';
+  
+  // Activity and objectives
+  activity_level?: string;
+  activityLevel?: string;
   objective?: 'manutencao' | 'emagrecimento' | 'hipertrofia';
   profile?: 'eutrofico' | 'obeso_sobrepeso' | 'atleta';
-  activityLevel?: 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo';
+  goal?: string;
+  
+  // Nutritional values
   totalCalories?: number;
   protein?: number;
   carbs?: number;
   fats?: number;
+  
+  // Calculated values
+  bmr?: number;
+  tdee?: number;
+  
+  // Additional data
   metrics?: {
     weight?: number;
     height?: number;
@@ -47,6 +67,10 @@ export interface ConsultationData {
   };
   results?: any;
   notes?: string;
+  recommendations?: string;
+  appointment_id?: string;
+  
+  // Timestamps
   created_at?: string;
   updated_at?: string;
 }
