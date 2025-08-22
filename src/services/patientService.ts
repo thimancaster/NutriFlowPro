@@ -1,9 +1,15 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PatientResponse } from '@/types/patient';
+import { Patient } from '@/types/patient';
+
+export interface PatientServiceResponse {
+  success: boolean;
+  data?: Patient | Patient[];
+  error?: string;
+}
 
 export const PatientService = {
-  async getPatients(userId: string, filters?: any): Promise<PatientResponse[]> {
+  async getPatients(userId: string, filters?: any): Promise<PatientServiceResponse> {
     try {
       let query = supabase
         .from('patients')
@@ -16,16 +22,18 @@ export const PatientService = {
 
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message };
+      }
       
-      return data || [];
-    } catch (error) {
+      return { success: true, data: data || [] };
+    } catch (error: any) {
       console.error('Error fetching patients:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async getPatient(id: string): Promise<Patient | null> {
+  async getPatient(id: string): Promise<PatientServiceResponse> {
     try {
       const { data, error } = await supabase
         .from('patients')
@@ -33,15 +41,18 @@ export const PatientService = {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true, data };
+    } catch (error: any) {
       console.error('Error fetching patient:', error);
-      return null;
+      return { success: false, error: error.message };
     }
   },
 
-  async createPatient(patientData: Omit<Patient, 'id' | 'created_at' | 'updated_at'>): Promise<Patient> {
+  async createPatient(patientData: Omit<Patient, 'id' | 'created_at' | 'updated_at'>): Promise<PatientServiceResponse> {
     try {
       const { data, error } = await supabase
         .from('patients')
@@ -49,15 +60,18 @@ export const PatientService = {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true, data };
+    } catch (error: any) {
       console.error('Error creating patient:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
+  async updatePatient(id: string, updates: Partial<Patient>): Promise<PatientServiceResponse> {
     try {
       const { data, error } = await supabase
         .from('patients')
@@ -66,25 +80,32 @@ export const PatientService = {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true, data };
+    } catch (error: any) {
       console.error('Error updating patient:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   },
 
-  async deletePatient(id: string): Promise<void> {
+  async deletePatient(id: string): Promise<PatientServiceResponse> {
     try {
       const { error } = await supabase
         .from('patients')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
-    } catch (error) {
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true };
+    } catch (error: any) {
       console.error('Error deleting patient:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   }
 };

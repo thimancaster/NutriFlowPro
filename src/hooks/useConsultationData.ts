@@ -1,116 +1,81 @@
+import { useState } from 'react';
+import { ConsultationData, Profile } from '@/types';
 
-import { useState, useEffect } from 'react';
-import { ConsultationData } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from 'uuid';
-import { mapSupabaseConsultation } from '@/types/consultations';
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
 
-export const useConsultationData = (consultationId?: string) => {
-  const [consultation, setConsultation] = useState<ConsultationData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
+export const useConsultationData = () => {
+  const [consultationData, setConsultationData] = useState<ConsultationData>({
+    weight: 0,
+    height: 0,
+    age: 0,
+    gender: 'male',
+    activity_level: 'moderado',
+    objective: 'manutencao'
+  });
 
-  useEffect(() => {
-    if (!consultationId) {
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchConsultation = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Use calculations table instead of consultations
-        const { data, error } = await supabase
-          .from('calculations')
-          .select('*')
-          .eq('id', consultationId)
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          // Safely transform the data to match our expected ConsultationData type
-          try {
-            const consultationData = mapSupabaseConsultation(data);
-            setConsultation(consultationData);
-          } catch (conversionError) {
-            console.error('Data conversion error:', conversionError);
-            setError(new Error('Invalid consultation data format'));
-          }
-        } else {
-          setConsultation(null);
-        }
-      } catch (err) {
-        console.error('Error fetching consultation:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch consultation'));
-        
-        toast({
-          title: 'Error',
-          description: 'Failed to load consultation data',
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
+  const updateConsultationData = (data: Partial<ConsultationData>) => {
+    setConsultationData(prev => {
+      const updated = { ...prev, ...data };
+      
+      // Ensure gender is properly typed
+      if (data.gender) {
+        updated.gender = data.gender as 'male' | 'female' | 'other';
       }
-    };
-
-    fetchConsultation();
-  }, [consultationId, toast]);
-
-  const setNutritionalConsultation = (data: Partial<ConsultationData>) => {
-    if (!consultation) return;
-    
-    const updatedConsultation = {
-      ...consultation,
-      ...data
-    };
-    
-    setConsultation(updatedConsultation);
+      
+      // Ensure objective is properly typed
+      if (data.objective) {
+        updated.objective = data.objective as 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado';
+      }
+      
+      return updated;
+    });
   };
 
-  const createNewConsultation = (patientId: string, patientName: string): ConsultationData => {
-    const newConsultation: ConsultationData = {
-      id: uuidv4(),
-      patient_id: patientId,
+  const resetConsultationData = () => {
+    setConsultationData({
       weight: 0,
       height: 0,
-      bmr: 0,
-      protein: 0,
-      carbs: 0,
-      fats: 0,
-      totalCalories: 0,
-      gender: 'male', // Changed from 'M' to 'male'
+      age: 0,
+      gender: 'male',
       activity_level: 'moderado',
-      patient: {
-        name: patientName,
-        id: patientId
-      },
-      results: {
-        bmr: 0,
-        get: 0,
-        vet: 0,
-        adjustment: 0,
-        macros: {
-          protein: 0,
-          carbs: 0,
-          fat: 0
-        }
-      }
-    };
-    
-    setConsultation(newConsultation);
-    return newConsultation;
+      objective: 'manutencao'
+    });
   };
 
-  return { 
-    consultation, 
-    setConsultation,
-    isLoading, 
-    error,
-    setNutritionalConsultation,
-    createNewConsultation
+  const loadPatientData = (patient: any) => {
+    const genderMap = {
+      'M': 'male' as const,
+      'F': 'female' as const,
+      'male': 'male' as const,
+      'female': 'female' as const,
+      'other': 'other' as const
+    };
+
+    setConsultationData(prev => ({
+      ...prev,
+      gender: genderMap[patient.gender as keyof typeof genderMap] || 'other',
+      age: patient.age || calculateAge(patient.birth_date) || 0,
+      weight: patient.weight || 0,
+      height: patient.height || 0,
+    }));
+  };
+
+  return {
+    consultationData,
+    setConsultationData: updateConsultationData,
+    resetConsultationData,
+    loadPatientData
   };
 };

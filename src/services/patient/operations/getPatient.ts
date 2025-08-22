@@ -1,8 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PatientResponse } from '@/types/patient';
 
-export const getPatient = async (id: string): Promise<PatientResponse | null> => {
+export interface PatientServiceResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+export const getPatient = async (id: string): Promise<PatientServiceResponse> => {
   try {
     const { data, error } = await supabase
       .from('patients')
@@ -10,10 +15,13 @@ export const getPatient = async (id: string): Promise<PatientResponse | null> =>
       .eq('id', id)
       .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true, data };
+  } catch (error: any) {
     console.error('Error fetching patient:', error);
-    return null;
+    return { success: false, error: error.message || 'Unknown error occurred' };
   }
 };

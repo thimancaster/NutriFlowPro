@@ -1,4 +1,3 @@
-
 // Patient types
 export type { Patient, PatientGoals, AddressDetails } from './patient';
 export type { PatientFilters } from './patient';
@@ -31,46 +30,20 @@ export {
 export interface ConsultationData {
   id?: string;
   patient_id?: string;
-  user_id?: string;
-  patient?: any;
-  date?: string;
-  
-  // Basic metrics
-  weight?: number;
-  height?: number;
-  age?: number;
-  gender?: 'male' | 'female' | 'other';
-  
-  // Activity and objectives - Using broader string types to accommodate all variations
-  activity_level?: string;
-  activityLevel?: string;
-  objective?: string; // Changed to string to accommodate all objective types
-  profile?: 'eutrofico' | 'obeso_sobrepeso' | 'atleta';
-  goal?: string;
-  
-  // Nutritional values
-  totalCalories?: number;
+  weight: number;
+  height: number;
+  age: number;
+  gender: 'male' | 'female' | 'other';
+  activity_level: string;
+  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado';
+  profile?: Profile;
+  recommendations?: string;
+  notes?: string;
+  bmr?: number;
+  tdee?: number;
   protein?: number;
   carbs?: number;
   fats?: number;
-  
-  // Calculated values
-  bmr?: number;
-  tdee?: number;
-  
-  // Additional data
-  metrics?: {
-    weight?: number;
-    height?: number;
-    bmi?: number;
-    bodyFat?: number;
-  };
-  results?: any;
-  notes?: string;
-  recommendations?: string;
-  appointment_id?: string;
-  
-  // Timestamps
   created_at?: string;
   updated_at?: string;
 }
@@ -103,15 +76,16 @@ export interface Appointment {
 // Updated MealPlan type for backward compatibility
 export interface MealPlan {
   id: string;
-  patient_id: string;
-  user_id?: string;
   name: string;
+  user_id?: string;
+  patient_id?: string;
   date?: string;
-  meals: any[];
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
+  meals: MealPlanMeal[];
+  notes?: string;
   created_at: string;
   updated_at: string;
 }

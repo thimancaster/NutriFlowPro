@@ -1,179 +1,240 @@
-
-import React, { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { PatientService } from '@/services/patientService';
-import { Patient } from '@/types';
-import { 
-  PatientCard, 
-  PatientList, 
-  StatusFilter,
-  PatientFormDialog,
-  PatientViewDialog
-} from '@/components/patients';
-import Pagination from '@/components/ui/pagination';
-import { Loader2, Plus } from 'lucide-react';
+import { Patient, PatientFilters } from '@/types/patient';
+import PatientListHeader from '@/components/patients/PatientListHeader';
+import PatientCard from '@/components/patient/PatientCard';
+import PatientLoadingState from '@/components/patients/PatientLoadingState';
+import PatientErrorState from '@/components/patients/PatientErrorState';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from '@/components/ui/button';
-import { usePatientFilters } from '@/hooks/patient/usePatientFilters';
+import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 
-const ITEMS_PER_PAGE = 10;
-
-const Patients: React.FC = () => {
+const Patients = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-  
-  const {
-    filters,
-    currentPage,
-    setCurrentPage,
-    setStatusFilter,
-    setSearchTerm
-  } = usePatientFilters();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [filters, setFilters] = useState<PatientFilters>({
+    search: '',
+    status: 'all',
+    page: 1,
+    limit: 10,
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  });
 
-  const fetchPatients = async () => {
-    setLoading(true);
+  const transformPatientData = (rawPatient: any): Patient => {
+    return {
+      id: rawPatient.id,
+      name: rawPatient.name,
+      email: rawPatient.email || '',
+      phone: rawPatient.phone || '',
+      secondaryPhone: rawPatient.secondaryphone || '',
+      cpf: rawPatient.cpf || '',
+      birth_date: rawPatient.birth_date || '',
+      gender: rawPatient.gender as 'male' | 'female' | 'other' || 'other',
+      address: rawPatient.address || '',
+      notes: rawPatient.notes || '',
+      status: rawPatient.status === 'inactive' ? 'archived' : (rawPatient.status as 'active' | 'archived' || 'active'),
+      goals: rawPatient.goals || {},
+      created_at: rawPatient.created_at,
+      updated_at: rawPatient.updated_at,
+      user_id: rawPatient.user_id,
+      age: rawPatient.birth_date ? calculateAge(rawPatient.birth_date) : undefined
+    };
+  };
+
+  const loadPatients = async () => {
+    if (!user?.id) return;
+
+    setIsLoading(true);
     try {
-      // Mock implementation since getPatients doesn't exist
-      const mockPatients: Patient[] = [];
-      setPatients(mockPatients);
-      setTotalCount(0);
-    } catch (error) {
-      console.error('Error fetching patients:', error);
+      const result = await PatientService.getPatients(user.id, { status: filters.status });
+      
+      if (result.success && result.data) {
+        const patientsArray = Array.isArray(result.data) ? result.data : [result.data];
+        const transformedPatients = patientsArray.map(transformPatientData);
+        setPatients(transformedPatients);
+        setTotalPatients(transformedPatients.length);
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Falha ao carregar pacientes",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os pacientes',
-        variant: 'destructive'
+        title: "Erro",
+        description: error.message || "Erro inesperado",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPatients();
-  }, [filters, currentPage]);
+  const handleCreatePatient = async (patientData: Partial<Patient>) => {
+    if (!user?.id) return;
 
-  const handleCreatePatient = () => {
-    setSelectedPatient(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditPatient = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setIsFormOpen(true);
-  };
-
-  const handleViewPatient = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setIsViewOpen(true);
-  };
-
-  const handleSavePatient = async (patientData: Partial<Patient>) => {
     try {
-      if (selectedPatient) {
-        // Update patient
-        await PatientService.updatePatient(selectedPatient.id, patientData);
+      const createData = {
+        ...patientData,
+        user_id: user.id,
+        name: patientData.name || '',
+        gender: patientData.gender || 'other',
+        status: patientData.status || 'active',
+      } as Omit<Patient, 'id' | 'created_at' | 'updated_at'>;
+
+      const result = await PatientService.createPatient(createData);
+      
+      if (result.success) {
+        await loadPatients();
         toast({
-          title: 'Sucesso',
-          description: 'Paciente atualizado com sucesso'
+          title: "Sucesso",
+          description: "Paciente criado com sucesso!",
         });
       } else {
-        // Create patient
-        await PatientService.createPatient(patientData);
         toast({
-          title: 'Sucesso',
-          description: 'Paciente criado com sucesso'
+          title: "Erro",
+          description: result.error || "Falha ao criar paciente",
+          variant: "destructive"
         });
       }
-      
-      setIsFormOpen(false);
-      await fetchPatients();
-    } catch (error) {
-      console.error('Error saving patient:', error);
+    } catch (error: any) {
       toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o paciente',
-        variant: 'destructive'
+        title: "Erro",
+        description: error.message || "Erro inesperado",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdatePatient = async (patientId: string, patientData: Partial<Patient>) => {
+    try {
+      const result = await PatientService.updatePatient(patientId, patientData);
+      
+      if (result.success) {
+        await loadPatients();
+        toast({
+          title: "Sucesso",
+          description: "Paciente atualizado com sucesso!",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Falha ao atualizar paciente",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro inesperado",
+        variant: "destructive"
       });
     }
   };
 
   const handleDeletePatient = async (patientId: string) => {
     try {
-      await PatientService.deletePatient(patientId);
+      const result = await PatientService.deletePatient(patientId);
+      
+      if (result.success) {
+        await loadPatients();
+        toast({
+          title: "Sucesso",
+          description: "Paciente removido com sucesso!",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Falha ao remover paciente",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: 'Sucesso',
-        description: 'Paciente excluído com sucesso'
-      });
-      await fetchPatients();
-    } catch (error) {
-      console.error('Error deleting patient:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir o paciente',
-        variant: 'destructive'
+        title: "Erro",
+        description: error.message || "Erro inesperado",
+        variant: "destructive"
       });
     }
   };
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
+    setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
+  };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+  const handleRetry = () => {
+    loadPatients();
+  };
+
+  useEffect(() => {
+    loadPatients();
+  }, [user?.id, filters]);
+
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  if (isLoading) {
+    return <PatientLoadingState />;
+  }
+
+  if (error) {
+    return <PatientErrorState errorMessage={error} onRetry={handleRetry} />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Pacientes</h1>
-        <Button onClick={handleCreatePatient}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Paciente
-        </Button>
+    <div>
+      <PatientListHeader
+        totalItems={totalPatients}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {patients.map((patient) => (
+          <PatientCard
+            key={patient.id}
+            patient={patient}
+            onEdit={() => navigate(`/patients/${patient.id}`)}
+            onDelete={() => handleDeletePatient(patient.id)}
+          />
+        ))}
       </div>
-
-      <div className="flex gap-4">
-        <StatusFilter 
-          value={filters.status || 'all'}
-          onChange={setStatusFilter}
-        />
-      </div>
-
-      <PatientList
-        patients={patients}
-        onEdit={handleEditPatient}
-        onView={handleViewPatient}
-        onDelete={handleDeletePatient}
-      />
-
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
-
-      <PatientFormDialog
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSave={handleSavePatient}
-        patient={selectedPatient}
-      />
-
-      <PatientViewDialog
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        patient={selectedPatient}
-      />
     </div>
   );
 };
