@@ -104,6 +104,7 @@ export class MealPlanServiceV2 {
         type: mealType,
         name: this.getMealName(mealType),
         time: MEAL_TIMES[mealType],
+        foods: [],
         items: items.map((item, index) => ({
           id: item.id || `${dbResult.id}-${mealType}-${index}`,
           meal_id: `${dbResult.id}-${mealType}`,
@@ -117,6 +118,10 @@ export class MealPlanServiceV2 {
           fats: item.fats || 0,
           order_index: index
         })),
+        totalCalories: totals.calories,
+        totalProtein: totals.protein,
+        totalCarbs: totals.carbs,
+        totalFats: totals.fats,
         total_calories: totals.calories,
         total_protein: totals.protein,
         total_carbs: totals.carbs,
@@ -137,6 +142,7 @@ export class MealPlanServiceV2 {
 
     return {
       id: dbResult.id || crypto.randomUUID(),
+      name: dbResult.name || 'Plano Alimentar',
       user_id: params.userId,
       patient_id: params.patientId,
       calculation_id: params.calculationId || null,
@@ -278,6 +284,7 @@ export class MealPlanServiceV2 {
           type: mealType,
           name: this.getMealName(mealType),
           time: MEAL_TIMES[mealType],
+          foods: [],
           items: items.map(item => ({
             id: item.id,
             meal_id: `${data.id}-${mealType}`,
@@ -291,6 +298,10 @@ export class MealPlanServiceV2 {
             fats: item.fats,
             order_index: item.order_index || 0
           })),
+          totalCalories: totals.calories,
+          totalProtein: totals.protein,
+          totalCarbs: totals.carbs,
+          totalFats: totals.fats,
           total_calories: totals.calories,
           total_protein: totals.protein,
           total_carbs: totals.carbs,
@@ -300,6 +311,7 @@ export class MealPlanServiceV2 {
 
       return {
         id: data.id,
+        name: data.name || 'Plano Alimentar',
         user_id: data.user_id,
         patient_id: data.patient_id,
         calculation_id: data.calculation_id,

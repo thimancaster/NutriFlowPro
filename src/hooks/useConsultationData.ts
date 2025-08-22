@@ -81,8 +81,8 @@ export const useConsultationData = (consultationId?: string) => {
       protein: 0,
       carbs: 0,
       fats: 0,
-      totalCalories: 0, // ADDED
-      gender: 'M',
+      totalCalories: 0,
+      gender: 'male', // Changed from 'M' to 'male'
       activity_level: 'moderado',
       patient: {
         name: patientName,

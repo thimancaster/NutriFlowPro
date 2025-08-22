@@ -4,6 +4,7 @@ import { AppointmentStatus } from '@/types/appointment';
 export const getStatusLabel = (status: AppointmentStatus): string => {
   const statusLabels: Record<AppointmentStatus, string> = {
     scheduled: 'Agendado',
+    confirmed: 'Confirmado',
     completed: 'Concluído',
     cancelled: 'Cancelado',
     no_show: 'Faltou',
@@ -16,6 +17,7 @@ export const getStatusLabel = (status: AppointmentStatus): string => {
 export const getStatusColor = (status: AppointmentStatus): string => {
   const statusColors: Record<AppointmentStatus, string> = {
     scheduled: 'bg-blue-100 text-blue-800',
+    confirmed: 'bg-green-100 text-green-800',
     completed: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
     no_show: 'bg-gray-100 text-gray-800',
@@ -26,5 +28,5 @@ export const getStatusColor = (status: AppointmentStatus): string => {
 };
 
 export const isValidStatus = (status: string): status is AppointmentStatus => {
-  return ['scheduled', 'completed', 'cancelled', 'no_show', 'rescheduled'].includes(status);
+  return ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show', 'rescheduled'].includes(status);
 };

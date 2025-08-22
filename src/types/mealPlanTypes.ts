@@ -201,26 +201,19 @@ export interface PDFMealPlanData {
 
 export interface MealPlanExportOptions {
   patientName: string;
+  patientAge?: number;
+  patientGender?: 'male' | 'female';
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
   totalFats: number;
   meals: {
-    id: string;
     name: string;
-    time: string;
-    items: {
-      food_name: string;
-      quantity: number;
-      unit: string;
-      calories: number;
-      protein: number;
-      carbs: number;
-      fats: number;
-    }[];
-    total_calories: number;
-    total_protein: number;
-    total_carbs: number;
-    total_fats: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    percent: number;
+    suggestions: string[];
   }[];
 }

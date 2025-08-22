@@ -41,10 +41,10 @@ export interface ConsultationData {
   age?: number;
   gender?: 'male' | 'female' | 'other';
   
-  // Activity and objectives
+  // Activity and objectives - Using broader string types to accommodate all variations
   activity_level?: string;
   activityLevel?: string;
-  objective?: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção';
+  objective?: string; // Changed to string to accommodate all objective types
   profile?: 'eutrofico' | 'obeso_sobrepeso' | 'atleta';
   goal?: string;
   
@@ -100,7 +100,7 @@ export interface Appointment {
   patientName?: string;
 }
 
-// Legacy MealPlan type for backward compatibility
+// Updated MealPlan type for backward compatibility
 export interface MealPlan {
   id: string;
   patient_id: string;

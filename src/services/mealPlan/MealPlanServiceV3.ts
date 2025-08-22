@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ConsolidatedMealPlan, 
@@ -165,7 +164,12 @@ export class MealPlanServiceV3 {
         type: mealType,
         name: MEAL_TYPES[mealType],
         time: MEAL_TIMES[mealType],
+        foods: [], // Add empty foods array
         items: mealItems,
+        totalCalories: totals.calories,
+        totalProtein: totals.protein,
+        totalCarbs: totals.carbs,
+        totalFats: totals.fats,
         total_calories: totals.calories,
         total_protein: totals.protein,
         total_carbs: totals.carbs,
@@ -175,6 +179,7 @@ export class MealPlanServiceV3 {
 
     return {
       id: mealPlan.id,
+      name: mealPlan.name || 'Plano Alimentar', // Add required name field
       user_id: mealPlan.user_id,
       patient_id: mealPlan.patient_id,
       date: mealPlan.date,
@@ -198,27 +203,32 @@ export class MealPlanServiceV3 {
     patientAge?: number,
     patientGender?: 'male' | 'female'
   ): PDFMealPlanData {
-    const pdfMeals: PDFMeal[] = mealPlan.meals.map(meal => ({
-      name: meal.name,
-      calories: meal.total_calories,
-      protein: meal.total_protein,
-      carbs: meal.total_carbs,
-      fat: meal.total_fats,
-      percent: Math.round((meal.total_calories / mealPlan.total_calories) * 100),
-      suggestions: meal.items.map(item => 
-        `${item.food_name} (${item.quantity}${item.unit})`
-      )
-    }));
-
     return {
-      patientName,
-      patientAge,
-      patientGender,
-      meals: pdfMeals,
-      totalCalories: mealPlan.total_calories,
-      totalProtein: mealPlan.total_protein,
-      totalCarbs: mealPlan.total_carbs,
-      totalFats: mealPlan.total_fats
+      patient_name: patientName,
+      patient_age: patientAge,
+      patient_gender: patientGender,
+      total_calories: mealPlan.total_calories,
+      total_protein: mealPlan.total_protein,
+      total_carbs: mealPlan.total_carbs,
+      total_fats: mealPlan.total_fats,
+      meals: mealPlan.meals.map(meal => ({
+        id: meal.id,
+        name: meal.name,
+        time: meal.time || '',
+        items: meal.items?.map(item => ({
+          food_name: item.food_name,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fats: item.fats
+        })) || [],
+        total_calories: meal.total_calories,
+        total_protein: meal.total_protein,
+        total_carbs: meal.total_carbs,
+        total_fats: meal.total_fats
+      }))
     };
   }
 

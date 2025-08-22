@@ -66,13 +66,24 @@ export const useConsolidatedMealPlan = (): UseConsolidatedMealPlanReturn => {
   }, [toast]);
 
   const handleExportPDF = useCallback((data: PDFMealPlanData) => {
+    // Convert PDFMealPlanData to MealPlanExportOptions
     const exportOptions: MealPlanExportOptions = {
       patientName: data.patient_name || data.patientName || 'Paciente',
+      patientAge: data.patient_age || data.patientAge,
+      patientGender: data.patient_gender || data.patientGender,
       totalCalories: data.total_calories || data.totalCalories || 0,
       totalProtein: data.total_protein || data.totalProtein || 0,
       totalCarbs: data.total_carbs || data.totalCarbs || 0,
       totalFats: data.total_fats || data.totalFats || 0,
-      meals: data.meals || []
+      meals: data.meals?.map(meal => ({
+        name: meal.name,
+        calories: meal.total_calories,
+        protein: meal.total_protein,
+        carbs: meal.total_carbs,
+        fat: meal.total_fats,
+        percent: Math.round((meal.total_calories / (data.total_calories || data.totalCalories || 1)) * 100),
+        suggestions: meal.items?.map(item => `${item.food_name} (${item.quantity}${item.unit})`) || []
+      })) || []
     };
     
     return exportMealPlanToPDF(exportOptions);
