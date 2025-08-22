@@ -1,74 +1,41 @@
 
-import React from 'react';
-import { usePatientList } from '@/hooks/patient/usePatientList';
-import { useDebugPatients } from '@/hooks/useDebugPatients';
-import PatientPageHeader from './patients/PatientPageHeader';
-import PatientListHeader from './patients/PatientListHeader';
-import PatientTable from './patients/PatientTable';
-import PatientLoadingState from './patients/PatientLoadingState';
-import PatientErrorState from './patients/PatientErrorState';
-import PatientEmptyState from './patients/PatientEmptyState';
-import PatientPagination from './patient/PatientPagination';
+import React, { useState, useEffect } from 'react';
+import { usePatient } from '@/contexts/patient/PatientContext';
+import { Patient } from '@/types/patient';
 
-const Patients = () => {
-  // Debug hook to trace patient data
-  useDebugPatients();
-  
-  const {
-    patients,
-    isLoading,
-    error,
-    filters,
-    pagination,
-    totalPatients,
-    handleFilterChange,
-    handlePageChange,
-    handleStatusChange,
-    refetch
-  } = usePatientList();
+const Patients: React.FC = () => {
+  const { patients, loading, error, loadPatients } = usePatient();
+  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
 
-  if (isLoading) {
-    return <PatientLoadingState />;
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
+
+  useEffect(() => {
+    setFilteredPatients(patients);
+  }, [patients]);
+
+  if (loading) {
+    return <div>Carregando pacientes...</div>;
   }
 
   if (error) {
-    return <PatientErrorState errorMessage={error.message} onRetry={refetch} />;
+    return <div>Erro: {error}</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PatientPageHeader />
-      
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <PatientListHeader 
-          totalItems={totalPatients}
-          filters={filters}
-          onFilterChange={handleFilterChange}
-        />
-        
-        {patients.length === 0 ? (
-          <PatientEmptyState />
-        ) : (
-          <>
-            <PatientTable 
-              patients={patients}
-              totalItems={totalPatients}
-              filters={filters}
-              onViewDetail={async (patientOrId) => {
-                // Handle view detail logic
-              }}
-              onStatusChange={refetch}
-              onPageChange={handlePageChange}
-            />
-            
-            <PatientPagination
-              currentPage={pagination.currentPage}
-              totalItems={totalPatients}
-              pageSize={pagination.pageSize}
-              onPageChange={handlePageChange}
-            />
-          </>
-        )}
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Pacientes</h2>
+      <div className="grid gap-4">
+        {filteredPatients.map((patient) => (
+          <div key={patient.id} className="p-4 border rounded-lg">
+            <h3 className="font-semibold">{patient.name}</h3>
+            <p className="text-gray-600">{patient.email}</p>
+            <p className="text-sm text-gray-500">
+              Status: {patient.status === 'active' ? 'Ativo' : 'Arquivado'}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );

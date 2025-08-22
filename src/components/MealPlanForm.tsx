@@ -1,105 +1,92 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { DetailedMealPlan, ConsolidatedMealPlan } from '@/types/mealPlan';
-import { Save, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { ConsolidatedMealPlan, ConsolidatedMeal } from '@/types/mealPlanTypes';
 
-interface MealPlanFormProps {
-  mealPlan: DetailedMealPlan;
-  isEditing: boolean;
-  onSave: (mealPlan: ConsolidatedMealPlan) => void;
-  onCancel: () => void;
+interface MealPlanFormData {
+  meals: Array<{
+    id: string;
+    name: string;
+    time: string;
+    total_calories: number;
+    total_protein: number;
+    total_carbs: number;
+    total_fats: number;
+    items: Array<{
+      id: string;
+      meal_id: string;
+      food_id: string;
+      food_name: string;
+      quantity: number;
+      unit: string;
+      calories: number;
+      protein: number;
+      carbs: number;
+      fats: number;
+      order_index: number;
+    }>;
+  }>;
 }
 
-const MealPlanForm: React.FC<MealPlanFormProps> = ({
-  mealPlan,
-  isEditing,
-  onSave,
-  onCancel
-}) => {
-  const handleSave = () => {
-    // Convert DetailedMealPlan to ConsolidatedMealPlan for saving
-    const consolidatedPlan: ConsolidatedMealPlan = {
-      ...mealPlan,
-      day_of_week: parseInt(mealPlan.day_of_week?.toString() || '0'),
-      meals: mealPlan.meals.map(meal => ({
-        ...meal,
-        items: meal.foods.map(food => ({
-          id: food.id,
-          meal_id: meal.id,
-          food_id: food.food_id,
-          food_name: food.name,
-          quantity: food.quantity,
-          unit: food.unit,
-          calories: food.calories,
-          protein: food.protein,
-          carbs: food.carbs,
-          fats: food.fats,
-          order_index: 0
-        }))
-      }))
+interface MealPlanFormProps {
+  onSubmit: (mealPlan: ConsolidatedMealPlan) => void;
+}
+
+const MealPlanForm: React.FC<MealPlanFormProps> = ({ onSubmit }) => {
+  const [formData, setFormData] = useState<MealPlanFormData>({ meals: [] });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Transform form data to ConsolidatedMealPlan
+    const transformedMeals: ConsolidatedMeal[] = formData.meals.map(meal => ({
+      ...meal,
+      foods: meal.items.map(item => ({
+        id: item.id,
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fat: item.fats
+      })),
+      items: meal.items,
+      totalCalories: meal.total_calories,
+      totalProtein: meal.total_protein,
+      totalCarbs: meal.total_carbs,
+      totalFats: meal.total_fats,
+      total_calories: meal.total_calories,
+      total_protein: meal.total_protein,
+      total_carbs: meal.total_carbs,
+      total_fats: meal.total_fats
+    }));
+
+    const mealPlan: ConsolidatedMealPlan = {
+      id: `plan-${Date.now()}`,
+      patient_id: '',
+      name: 'Generated Meal Plan',
+      date: new Date().toISOString().split('T')[0],
+      total_calories: transformedMeals.reduce((sum, meal) => sum + meal.totalCalories, 0),
+      total_protein: transformedMeals.reduce((sum, meal) => sum + meal.totalProtein, 0),
+      total_carbs: transformedMeals.reduce((sum, meal) => sum + meal.totalCarbs, 0),
+      total_fats: transformedMeals.reduce((sum, meal) => sum + meal.totalFats, 0),
+      meals: transformedMeals,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    onSave(consolidatedPlan);
+
+    onSubmit(mealPlan);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {isEditing ? 'Editando Plano Alimentar' : 'Plano Alimentar'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{Math.round(mealPlan.total_calories)}</div>
-            <div className="text-sm text-muted-foreground">Calorias</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{Math.round(mealPlan.total_protein)}g</div>
-            <div className="text-sm text-muted-foreground">Proteínas</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{Math.round(mealPlan.total_carbs)}g</div>
-            <div className="text-sm text-muted-foreground">Carboidratos</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{Math.round(mealPlan.total_fats)}g</div>
-            <div className="text-sm text-muted-foreground">Gorduras</div>
-          </div>
-        </div>
-
-        {mealPlan.meals.map((meal) => (
-          <div key={meal.id} className="border rounded-lg p-4">
-            <h4 className="font-medium mb-2">{meal.name}</h4>
-            <div className="space-y-2">
-              {meal.foods.map((food) => (
-                <div key={food.id} className="flex items-center justify-between text-sm">
-                  <span>{food.name}</span>
-                  <span className="text-muted-foreground">
-                    {food.quantity}{food.unit} • {Math.round(food.calories)} kcal
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {isEditing && (
-          <div className="flex gap-2 pt-4">
-            <Button onClick={handleSave} className="flex-1">
-              <Save className="h-4 w-4 mr-2" />
-              Salvar
-            </Button>
-            <Button onClick={onCancel} variant="outline" className="flex-1">
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="text-center text-gray-500">
+        Formulário de criação de plano alimentar
+      </div>
+      <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
+        Criar Plano
+      </button>
+    </form>
   );
 };
 

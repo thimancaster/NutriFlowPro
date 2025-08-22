@@ -1,4 +1,3 @@
-
 export interface MealDistributionItem {
   id: string;
   name: string;
@@ -55,6 +54,7 @@ export interface MealPlanItem {
   carbs: number;
   fats: number;
   order_index: number;
+  meal_type?: MealType; // Add meal_type property
 }
 
 // Consolidated meal item (alias for MealPlanItem)
@@ -65,14 +65,7 @@ export type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snac
 
 export const MEAL_TYPES: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
 
-export const MEAL_ORDER: Record<MealType, number> = {
-  breakfast: 1,
-  morning_snack: 2,
-  lunch: 3,
-  afternoon_snack: 4,
-  dinner: 5,
-  evening_snack: 6
-};
+export const MEAL_ORDER: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
 
 export const MEAL_TIMES: Record<MealType, string> = {
   breakfast: '07:00',
@@ -108,7 +101,7 @@ export interface ConsolidatedMealPlan {
   calculation_id?: string;
   name: string;
   description?: string;
-  date: string;
+  date?: string; // Add date property
   total_calories: number;
   total_protein: number;
   total_carbs: number;
@@ -127,7 +120,8 @@ export interface MealPlanGenerationParams {
   totalFats: number;
   date?: string;
   culturalRules?: any;
-  calculationId?: string; // Add missing property
+  calculationId?: string;
+  targets?: any; // Add targets property
 }
 
 export interface PDFMealPlanData {
