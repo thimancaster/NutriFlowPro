@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -16,6 +17,20 @@ import {
 // Updated step types to match usage consistently
 export type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'display' | 'editing' | 'review' | 'completed';
 
+// Calculation data interface
+interface CalculationData {
+  id?: string;
+  totalCalories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  objective?: string;
+  tmb?: number;
+  get?: number;
+  vet?: number;
+  systemType?: string;
+}
+
 // Define the context type with all required properties
 interface MealPlanWorkflowContextType {
   currentStep: WorkflowStep;
@@ -28,8 +43,8 @@ interface MealPlanWorkflowContextType {
   setMealPlan: (plan: ConsolidatedMealPlan | null) => void;
   patient: any | null;
   setPatient: (patient: any) => void;
-  calculationData: any | null;
-  setCalculationData: (data: any) => void;
+  calculationData: CalculationData | null;
+  setCalculationData: (data: CalculationData | null) => void;
   currentMealPlan: ConsolidatedMealPlan | null;
   generationParams: MealPlanGenerationParams | null;
   setGenerationParams: (params: MealPlanGenerationParams | null) => void;
@@ -49,16 +64,32 @@ const MealPlanWorkflowContext = createContext<MealPlanWorkflowContextType | unde
 export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>('patient');
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>('generation');
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [mealPlan, setMealPlan] = useState<ConsolidatedMealPlan | null>(null);
   const [patient, setPatient] = useState<any | null>(null);
-  const [calculationData, setCalculationData] = useState<any | null>(null);
+  const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
   const [generationParams, setGenerationParams] = useState<MealPlanGenerationParams | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { activePatient } = usePatient();
+
+  // Initialize calculation data from URL params or state
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const createPlan = urlParams.get('createPlan');
+    
+    if (createPlan === 'true') {
+      // Try to get calculation data from navigation state
+      const state = (window.history.state?.usr) || {};
+      if (state.calculationData) {
+        console.log('[MEALPLAN:WORKFLOW] Inicializando com dados de cálculo:', state.calculationData);
+        setCalculationData(state.calculationData);
+        setCurrentStep('generation');
+      }
+    }
+  }, []);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -74,6 +105,8 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setError(null);
     
     try {
+      console.log('[MEALPLAN:WORKFLOW] Gerando plano com dados:', nutritionalData);
+      
       const params: MealPlanGenerationParams = {
         userId: user.id,
         patientId: activePatient.id,
@@ -87,16 +120,17 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
       const result = await MealPlanServiceV3.generateMealPlan(params);
 
       if (result.success && result.data) {
+        console.log('[MEALPLAN:WORKFLOW] ✅ Plano gerado:', result.data.id);
         setMealPlan(result.data);
         setCurrentStep('display');
       } else {
         setError(result.error || 'Erro ao gerar plano alimentar');
-        console.error("Erro ao gerar plano:", result.error);
+        console.error("[MEALPLAN:WORKFLOW] ❌ Erro ao gerar plano:", result.error);
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Erro inesperado ao gerar plano';
       setError(errorMessage);
-      console.error("Erro ao gerar plano:", error);
+      console.error("[MEALPLAN:WORKFLOW] ❌ Erro ao gerar plano:", error);
     } finally {
       setIsGenerating(false);
     }
@@ -125,19 +159,16 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
   }, [mealPlan]);
 
   const resetWorkflow = useCallback(() => {
-    setCurrentStep('patient');
+    console.log('[MEALPLAN:WORKFLOW] Reset do workflow');
+    setCurrentStep('generation');
     setIsSaving(false);
     setIsGenerating(false);
     setMealPlan(null);
     setPatient(null);
-    setCalculationData(null);
     setGenerationParams(null);
     setError(null);
+    // Manter calculationData para permitir nova geração
   }, []);
-
-  useEffect(() => {
-    resetWorkflow();
-  }, [activePatient, resetWorkflow]);
 
   // Provide the context value
   const value: MealPlanWorkflowContextType = {
