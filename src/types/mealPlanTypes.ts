@@ -127,6 +127,7 @@ export interface MealPlanGenerationParams {
   totalFats: number;
   date?: string;
   culturalRules?: any;
+  calculationId?: string; // Add missing property
 }
 
 export interface PDFMealPlanData {

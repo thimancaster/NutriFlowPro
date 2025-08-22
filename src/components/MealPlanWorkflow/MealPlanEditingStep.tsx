@@ -7,7 +7,7 @@ import { Save, Download, Edit } from 'lucide-react';
 import { useMealPlanWorkflow } from '@/contexts/MealPlanWorkflowContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ConsolidatedMealPlan, ConsolidatedMeal } from '@/types/mealPlanTypes';
+import { ConsolidatedMealPlan, ConsolidatedMeal, MealAssemblyFood } from '@/types/mealPlanTypes';
 import { MealPlanMeal, MealPlanFood } from '@/types/mealPlan';
 import MealEditDialog from '@/components/meal-plan/MealEditDialog';
 
@@ -226,7 +226,10 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
           // Convert back to ConsolidatedMeal
           const consolidatedMeal: ConsolidatedMeal = {
             ...updatedMeal,
-            foods: updatedMeal.foods || [],
+            foods: updatedMeal.foods?.map(food => ({
+              ...food,
+              fat: food.fats // Convert fats to fat for MealAssemblyFood
+            })) as MealAssemblyFood[] || [],
             totalCalories: updatedMeal.total_calories,
             totalProtein: updatedMeal.total_protein,
             totalCarbs: updatedMeal.total_carbs,

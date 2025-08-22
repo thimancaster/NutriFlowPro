@@ -21,20 +21,20 @@ export interface AddressDetails {
 export interface Patient {
   id: string;
   name: string;
-  email: string;
-  phone: string;
+  email?: string; // Make email optional to match context
+  phone?: string;
   secondaryPhone?: string;
   cpf?: string;
-  birth_date: string;
+  birth_date?: string;
   gender: 'male' | 'female' | 'other';
   address?: string | AddressDetails;
   notes?: string;
-  status: 'active' | 'archived';
+  status?: 'active' | 'archived';
   goals?: PatientGoals;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  age?: number;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  age?: number; // Add age property
   weight?: number;
   height?: number;
   last_appointment?: string;
