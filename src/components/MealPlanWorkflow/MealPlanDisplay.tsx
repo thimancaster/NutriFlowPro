@@ -43,7 +43,7 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              🇧🇷 Plano Alimentar - {format(new Date(mealPlan.date), "dd/MM/yyyy", { locale: ptBR })}
+              🇧🇷 Plano Alimentar - {format(new Date(mealPlan.date || mealPlan.created_at), "dd/MM/yyyy", { locale: ptBR })}
             </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">{mealPlan.total_calories.toFixed(0)} kcal</Badge>
@@ -64,11 +64,11 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                     <span className="font-medium">{meal.name}</span>
                     <span className="text-sm text-muted-foreground ml-2">({meal.time})</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      {meal.items.length} {meal.items.length === 1 ? 'item' : 'itens'}
+                      {(meal.items?.length || meal.foods?.length || 0)} {(meal.items?.length || meal.foods?.length || 0) === 1 ? 'item' : 'itens'}
                     </span>
                   </div>
                   <Badge variant="secondary">
-                    {meal.total_calories.toFixed(0)} kcal
+                    {meal.totalCalories.toFixed(0)} kcal
                   </Badge>
                 </div>
               ))}

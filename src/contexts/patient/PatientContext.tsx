@@ -1,359 +1,317 @@
-
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Patient, PatientFilters } from '@/types';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useCallback,
+  useEffect,
+} from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { PatientService } from '@/services/patient/PatientService';
+import { useAuth } from '../auth/AuthContext';
 
-interface PatientContextState {
-  // Patient management
-  activePatient: Patient | null;
-  patients: Patient[];
-  patientHistory: any[];
-  
-  // Loading states
-  isLoading: boolean;
-  isLoadingHistory: boolean;
-  
-  // Session data
-  sessionData: {
-    consultationActive: boolean;
-    currentStep: string;
-    lastActivity: Date | null;
-  };
-  
-  // Filters and pagination
-  filters: PatientFilters;
-  totalCount: number;
-  
-  // Actions
-  setActivePatient: (patient: Patient | null) => void;
-  startPatientSession: (patient: Patient) => void;
-  endPatientSession: () => void;
-  loadPatients: (filters?: PatientFilters) => Promise<void>;
-  updatePatient: (id: string, data: Partial<Patient>) => Promise<void>;
-  deletePatient: (id: string) => Promise<void>;
-  setFilters: (filters: PatientFilters) => void;
-  resetFilters: () => void;
-  savePatient: (patientData: Partial<Patient>) => Promise<{ success: boolean; data?: Patient; error?: string }>;
-  refreshPatients: (filters?: PatientFilters) => Promise<void>;
-  isPatientActive: boolean;
-  loadPatientById: (patientId: string) => Promise<void>;
+// Define the shape of our patient data
+export interface Patient {
+  id: string;
+  user_id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  secondaryPhone?: string;
+  cpf?: string;
+  birth_date?: string;
+  gender: 'male' | 'female' | 'other';
+  address?: string;
+  notes?: string;
+  status?: 'active' | 'archived';
+  created_at?: string;
+  updated_at?: string;
+  goals?: PatientGoals;
+  last_appointment?: string;
 }
 
-const PatientContext = createContext<PatientContextState | undefined>(undefined);
+export interface PatientGoals {
+  objective?: string;
+  activityLevel?: string;
+  profile?: string;
+}
 
-const initialState: PatientFilters = {
-  search: '',
-  status: 'active',
-  sortBy: 'name',
-  sortOrder: 'asc',
-  page: 1,
-  limit: 10
-};
-
-export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activePatient, setActivePatient] = useState<Patient | null>(null);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [patientHistory, setPatientHistory] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-  
-  const [filters, setFiltersState] = useState<PatientFilters>({
-    search: '',
-    status: 'active',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    page: 1,
-    limit: 10
-  });
-
-  const [sessionData] = useState({
-    consultationActive: false,
-    currentStep: 'initial',
-    lastActivity: null as Date | null,
-  });
-
-  const { user } = useAuth();
-
-  const isPatientActive = !!activePatient;
-
-  const startPatientSession = (patient: Patient) => {
-    setActivePatient(patient);
-    loadPatientHistory(patient.id);
+interface PatientContextType {
+  patients: Patient[];
+  activePatient: Patient | null;
+  loading: boolean;
+  error: string | null;
+  filters: {
+    search: string;
+    status: string;
   };
+  setFilters: (filters: { search: string; status: string }) => void;
+  loadPatients: () => Promise<void>;
+  setActivePatient: (patient: Patient | null) => void;
+  savePatient: (patientData: Partial<Patient>) => Promise<Patient | null>;
+  deletePatient: (id: string) => Promise<void>;
+  createPatient: (patientData: Omit<Patient, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<Patient | null>;
+  updatePatient: (id: string, updates: Partial<Patient>) => Promise<Patient | null>;
+  clearActivePatient: () => void;
+}
 
-  const endPatientSession = () => {
-    setActivePatient(null);
-    setPatientHistory([]);
-  };
+const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
-  const loadPatientById = useCallback(async (patientId: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', patientId)
-        .single();
-
-      if (error) {
-        console.error('Error loading patient by ID:', error);
-      } else if (data) {
-        const transformedPatient = transformPatientData(data);
-        setActivePatient(transformedPatient);
-      }
-    } catch (error) {
-      console.error('Error loading patient by ID:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const loadPatientHistory = useCallback(async (patientId: string) => {
-    setIsLoadingHistory(true);
-    try {
-      // Use a generic query since patient_history table may not exist
-      const { data, error } = await supabase
-        .from('calculations')
-        .select('*')
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading patient history:', error);
-      } else {
-        setPatientHistory(data || []);
-      }
-    } catch (error) {
-      console.error('Error loading patient history:', error);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, []);
-
-  const transformPatientData = (rawPatient: any): Patient => {
-    return {
-      id: rawPatient.id,
-      name: rawPatient.name,
-      email: rawPatient.email || '',
-      phone: rawPatient.phone || '',
-      secondaryPhone: rawPatient.secondaryphone || '',
-      cpf: rawPatient.cpf || '',
-      birth_date: rawPatient.birth_date || '',
-      gender: (rawPatient.gender === 'male' || rawPatient.gender === 'female' || rawPatient.gender === 'other') 
-        ? rawPatient.gender 
-        : 'other',
-      address: rawPatient.address || '',
-      notes: rawPatient.notes || '',
-      status: rawPatient.status === 'archived' ? 'archived' : 'active',
-      goals: rawPatient.goals || {},
-      created_at: rawPatient.created_at,
-      updated_at: rawPatient.updated_at,
-      user_id: rawPatient.user_id,
-      last_appointment: rawPatient.last_appointment
-    };
-  };
-
-  const savePatient = async (patientData: Partial<Patient>) => {
-    setIsLoading(true);
-    try {
-      // Convert address to string if it's an object
-      const processedData = {
-        ...patientData,
-        address: typeof patientData.address === 'object' 
-          ? JSON.stringify(patientData.address) 
-          : patientData.address
-      };
-
-      if (patientData.id) {
-        // Update existing patient
-        const { data, error } = await supabase
-          .from('patients')
-          .update(processedData)
-          .eq('id', patientData.id)
-          .select()
-          .single();
-
-        if (error) {
-          return { success: false, error: error.message };
-        }
-
-        const transformedPatient = transformPatientData(data);
-        return { success: true, data: transformedPatient };
-      } else {
-        // Create new patient
-        const { data, error } = await supabase
-          .from('patients')
-          .insert(processedData)
-          .select()
-          .single();
-
-        if (error) {
-          return { success: false, error: error.message };
-        }
-
-        const transformedPatient = transformPatientData(data);
-        return { success: true, data: transformedPatient };
-      }
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updatePatient = async (id: string, data: Partial<Patient>) => {
-    setIsLoading(true);
-    try {
-      const processedData = {
-        ...data,
-        address: typeof data.address === 'object' 
-          ? JSON.stringify(data.address) 
-          : data.address
-      };
-
-      const { error } = await supabase
-        .from('patients')
-        .update(processedData)
-        .eq('id', id);
-
-      if (error) {
-        console.error('Error updating patient:', error);
-      } else {
-        setPatients(prevPatients =>
-          prevPatients.map(patient => (patient.id === id ? { ...patient, ...data } : patient))
-        );
-        if (activePatient && activePatient.id === id) {
-          setActivePatient({ ...activePatient, ...data });
-        }
-        await loadPatients();
-      }
-    } catch (error) {
-      console.error('Error updating patient:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deletePatient = async (id: string) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('patients')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Error deleting patient:', error);
-      } else {
-        setPatients(prevPatients => prevPatients.filter(patient => patient.id !== id));
-        if (activePatient && activePatient.id === id) {
-          setActivePatient(null);
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting patient:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const setFilters = (newFilters: PatientFilters) => {
-    setFiltersState(prevFilters => ({ ...prevFilters, ...newFilters, page: 1 }));
-  };
-
-  const resetFilters = () => {
-    setFiltersState(initialState);
-  };
-
-  const loadPatients = useCallback(async (newFilters?: PatientFilters) => {
-    setIsLoading(true);
-    try {
-      const activeFilters = newFilters || filters;
-      
-      let query = supabase
-        .from('patients')
-        .select('*', { count: 'exact' });
-
-      if (activeFilters.search) {
-        query = query.ilike('name', `%${activeFilters.search}%`);
-      }
-
-      if (activeFilters.status && activeFilters.status !== 'active' && activeFilters.status !== 'archived') {
-        // Handle invalid status values
-      } else if (activeFilters.status) {
-        query = query.eq('status', activeFilters.status);
-      }
-
-      if (activeFilters.sortBy) {
-        query = query.order(activeFilters.sortBy, { ascending: activeFilters.sortOrder === 'asc' });
-      }
-
-      if (activeFilters.page && activeFilters.limit) {
-        const startIndex = (activeFilters.page - 1) * activeFilters.limit;
-        const endIndex = startIndex + activeFilters.limit - 1;
-        query = query.range(startIndex, endIndex);
-      }
-
-      const { data, error, count } = await query;
-
-      if (error) {
-        console.error('Error loading patients:', error);
-      } else {
-        const transformedPatients = (data || []).map(transformPatientData);
-        setPatients(transformedPatients);
-        setTotalCount(count || 0);
-      }
-    } catch (error) {
-      console.error('Error loading patients:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters]);
-
-  const refreshPatients = loadPatients;
-
-  useEffect(() => {
-    if (user) {
-      loadPatients();
-    }
-  }, [user, loadPatients]);
-
-  const contextValue: PatientContextState = {
-    activePatient,
-    patients,
-    patientHistory,
-    isLoading,
-    isLoadingHistory,
-    sessionData,
-    filters,
-    totalCount,
-    setActivePatient,
-    startPatientSession,
-    endPatientSession,
-    loadPatients,
-    updatePatient,
-    deletePatient,
-    setFilters,
-    resetFilters,
-    savePatient,
-    refreshPatients,
-    isPatientActive,
-    loadPatientById
-  };
-
-  return (
-    <PatientContext.Provider value={contextValue}>
-      {children}
-    </PatientContext.Provider>
-  );
-};
-
-export const usePatient = () => {
+export const usePatient = (): PatientContextType => {
   const context = useContext(PatientContext);
   if (!context) {
     throw new Error('usePatient must be used within a PatientProvider');
   }
   return context;
+};
+
+interface PatientProviderProps {
+  children: React.ReactNode;
+}
+
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export const PatientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState({ search: '', status: '' });
+  const { user } = useAuth();
+
+  const loadPatients = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const query = supabase
+        .from('patients')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (filters.status && filters.status !== '') {
+        if (filters.status === 'active') {
+          query.eq('status', 'active');
+        } else if (filters.status === 'archived') {
+          query.eq('status', 'archived');
+        }
+      }
+
+      if (filters.search) {
+        query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform the data to match our Patient type
+      const transformedData: Patient[] = (data || []).map(patient => ({
+        ...patient,
+        gender: patient.gender as 'male' | 'female' | 'other',
+        goals: patient.goals as PatientGoals,
+        address: patient.address || '',
+        secondaryPhone: patient.secondaryphone || '',
+        last_appointment: undefined // This will be loaded separately if needed
+      }));
+
+      setPatients(transformedData);
+    } catch (err: any) {
+      console.error('Error loading patients:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, filters]);
+
+  const savePatient = useCallback(async (patientData: Partial<Patient>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+    
+    try {
+      // Convert Patient data to match database schema
+      const dbPatient = {
+        ...patientData,
+        address: typeof patientData.address === 'object' 
+          ? JSON.stringify(patientData.address) 
+          : patientData.address || '',
+        goals: patientData.goals ? JSON.stringify(patientData.goals) : null,
+        secondaryphone: patientData.secondaryPhone,
+        user_id: user.id
+      };
+
+      // Remove fields that don't exist in database
+      const {
+        secondaryPhone,
+        last_appointment,
+        ...cleanDbPatient
+      } = dbPatient;
+
+      if (patientData.id) {
+        const result = await PatientService.updatePatient(patientData.id, cleanDbPatient);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update patient');
+        }
+        return result.data;
+      } else {
+        const result = await PatientService.createPatient(cleanDbPatient);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create patient');
+        }
+        return result.data;
+      }
+    } catch (error: any) {
+      console.error('Error saving patient:', error);
+      throw error;
+    }
+  }, [user?.id]);
+
+  const deletePatient = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await PatientService.deletePatient(id);
+      setPatients(patients.filter((patient) => patient.id !== id));
+      if (activePatient?.id === id) {
+        setActivePatient(null);
+      }
+    } catch (err: any) {
+      console.error('Error deleting patient:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [patients, activePatient]);
+
+  const createPatient = useCallback(
+    async (
+      patientData: Omit<Patient, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+    ): Promise<Patient | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Ensure goals is not undefined before stringifying
+        const goals = patientData.goals ? JSON.stringify(patientData.goals) : null;
+        
+        const newPatient = {
+          ...patientData,
+          user_id: user?.id,
+          goals: goals,
+        };
+        
+        const { data, error } = await supabase
+          .from('patients')
+          .insert([newPatient])
+          .select()
+          .single();
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Transform the data to match our Patient type
+        const transformedData: Patient = {
+          ...data,
+          gender: data.gender as 'male' | 'female' | 'other',
+          goals: data.goals as PatientGoals,
+          address: data.address || '',
+          secondaryPhone: data.secondaryphone || '',
+          last_appointment: undefined // This will be loaded separately if needed
+        };
+        
+        setPatients([...patients, transformedData]);
+        return transformedData;
+      } catch (err: any) {
+        console.error('Error creating patient:', err);
+        setError(err.message);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id, patients]
+  );
+
+  const updatePatient = useCallback(async (id: string, updates: Partial<Patient>): Promise<Patient | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Ensure goals is not undefined before stringifying
+      const goals = updates.goals ? JSON.stringify(updates.goals) : undefined;
+      
+      const { data, error } = await supabase
+        .from('patients')
+        .update({ ...updates, goals })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Transform the data to match our Patient type
+      const transformedData: Patient = {
+        ...data,
+        gender: data.gender as 'male' | 'female' | 'other',
+        goals: data.goals as PatientGoals,
+        address: data.address || '',
+        secondaryPhone: data.secondaryphone || '',
+        last_appointment: undefined // This will be loaded separately if needed
+      };
+      
+      setPatients(
+        patients.map((patient) => (patient.id === id ? transformedData : patient))
+      );
+      
+      if (activePatient?.id === id) {
+        setActivePatient(transformedData);
+      }
+      
+      return transformedData;
+    } catch (err: any) {
+      console.error('Error updating patient:', err);
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [patients, activePatient]);
+
+  const clearActivePatient = useCallback(() => {
+    setActivePatient(null);
+  }, []);
+
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
+
+  const value: PatientContextType = {
+    patients,
+    activePatient,
+    loading,
+    error,
+    filters,
+    setFilters,
+    loadPatients,
+    setActivePatient,
+    savePatient,
+    deletePatient,
+    createPatient,
+    updatePatient,
+    clearActivePatient,
+  };
+
+  return (
+    <PatientContext.Provider value={value}>
+      {children}
+    </PatientContext.Provider>
+  );
 };

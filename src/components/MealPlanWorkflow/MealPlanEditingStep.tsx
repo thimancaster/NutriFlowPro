@@ -48,10 +48,10 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
     // Recalcular totais do plano alimentar
     const newTotals = updatedMeals.reduce(
       (acc, meal) => ({
-        calories: acc.calories + meal.total_calories,
-        protein: acc.protein + meal.total_protein,
-        carbs: acc.carbs + meal.total_carbs,
-        fats: acc.fats + meal.total_fats,
+        calories: acc.calories + meal.totalCalories,
+        protein: acc.protein + meal.totalProtein,
+        carbs: acc.carbs + meal.totalCarbs,
+        fats: acc.fats + meal.totalFats,
       }),
       { calories: 0, protein: 0, carbs: 0, fats: 0 }
     );
@@ -71,22 +71,27 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
   // Convert ConsolidatedMeal to MealPlanMeal for compatibility
   const convertToMealPlanMeal = (meal: ConsolidatedMeal): MealPlanMeal => {
-    const foods: MealPlanFood[] = meal.items?.map(item => ({
+    const foods: MealPlanFood[] = (meal.items || meal.foods || []).map(item => ({
       id: item.id,
-      food_id: item.food_id,
-      name: item.food_name,
+      food_id: 'food_id' in item ? item.food_id : item.id,
+      name: 'food_name' in item ? item.food_name : item.name,
       quantity: item.quantity,
       unit: item.unit,
       calories: item.calories,
       protein: item.protein,
       carbs: item.carbs,
-      fats: item.fats
-    })) || [];
+      fats: 'fats' in item ? item.fats : item.fat
+    }));
 
     return {
       ...meal,
+      type: meal.type || 'breakfast',
       foods,
-      items: foods
+      items: foods,
+      total_calories: meal.totalCalories,
+      total_protein: meal.totalProtein,
+      total_carbs: meal.totalCarbs,
+      total_fats: meal.totalFats
     };
   };
 
@@ -97,7 +102,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
         <CardHeader>
           <div className="flex items-center justify-between">
           <CardTitle>
-            Plano Alimentar - {format(new Date(currentMealPlan.date), 'dd/MM/yyyy', { locale: ptBR })}
+            Plano Alimentar - {format(new Date(currentMealPlan.date || currentMealPlan.created_at), 'dd/MM/yyyy', { locale: ptBR })}
           </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">
@@ -126,7 +131,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
                 <CardTitle className="text-lg">{meal.name}</CardTitle>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
-                    {Math.round(meal.total_calories)} kcal
+                    {Math.round(meal.totalCalories)} kcal
                   </Badge>
                   <Button
                     variant="ghost"
@@ -144,19 +149,19 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="text-center p-2 bg-red-50 rounded">
                     <div className="font-medium text-red-600">
-                      {Math.round(meal.total_protein)}g
+                      {Math.round(meal.totalProtein)}g
                     </div>
                     <div className="text-gray-600">Proteína</div>
                   </div>
                   <div className="text-center p-2 bg-yellow-50 rounded">
                     <div className="font-medium text-yellow-600">
-                      {Math.round(meal.total_carbs)}g
+                      {Math.round(meal.totalCarbs)}g
                     </div>
                     <div className="text-gray-600">Carboidratos</div>
                   </div>
                   <div className="text-center p-2 bg-green-50 rounded">
                     <div className="font-medium text-green-600">
-                      {Math.round(meal.total_fats)}g
+                      {Math.round(meal.totalFats)}g
                     </div>
                     <div className="text-gray-600">Gorduras</div>
                   </div>
@@ -164,10 +169,12 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
                 {/* Foods List */}
                 <div className="space-y-2">
-                  {meal.items && meal.items.map((item, index) => (
+                  {(meal.items || meal.foods || []).map((item, index) => (
                     <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <div>
-                        <span className="font-medium">{item.food_name}</span>
+                        <span className="font-medium">
+                          {'food_name' in item ? item.food_name : item.name}
+                        </span>
                         <span className="text-gray-600 ml-2">
                           {item.quantity}{item.unit}
                         </span>
@@ -219,19 +226,15 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
           // Convert back to ConsolidatedMeal
           const consolidatedMeal: ConsolidatedMeal = {
             ...updatedMeal,
-            items: updatedMeal.foods?.map((food, index) => ({
-              id: food.id || crypto.randomUUID(),
-              meal_id: updatedMeal.id,
-              food_id: food.food_id,
-              food_name: food.name,
-              quantity: food.quantity,
-              unit: food.unit,
-              calories: food.calories,
-              protein: food.protein,
-              carbs: food.carbs,
-              fats: food.fats,
-              order_index: index
-            })) || []
+            foods: updatedMeal.foods || [],
+            totalCalories: updatedMeal.total_calories,
+            totalProtein: updatedMeal.total_protein,
+            totalCarbs: updatedMeal.total_carbs,
+            totalFats: updatedMeal.total_fats,
+            total_calories: updatedMeal.total_calories,
+            total_protein: updatedMeal.total_protein,
+            total_carbs: updatedMeal.total_carbs,
+            total_fats: updatedMeal.total_fats
           };
           handleSaveMeal(consolidatedMeal);
         }}
