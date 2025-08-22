@@ -40,8 +40,8 @@ export class MealPlanServiceV2 {
       let mealPlanId: string;
       if (typeof data === 'string') {
         mealPlanId = data;
-      } else if (typeof data === 'object' && data.id) {
-        mealPlanId = data.id;
+      } else if (typeof data === 'object' && data !== null && 'id' in data) {
+        mealPlanId = (data as any).id;
       } else {
         throw new Error('Formato de resposta inválido');
       }

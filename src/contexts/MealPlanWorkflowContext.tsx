@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -15,7 +14,7 @@ import {
 } from '@/types/mealPlanTypes';
 
 // Updated step types to match usage consistently
-export type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'editing' | 'review' | 'completed';
+export type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'display' | 'editing' | 'review' | 'completed';
 
 // Define the context type with all required properties
 interface MealPlanWorkflowContextType {
@@ -32,6 +31,8 @@ interface MealPlanWorkflowContextType {
   calculationData: any | null;
   setCalculationData: (data: any) => void;
   currentMealPlan: ConsolidatedMealPlan | null;
+  generationParams: MealPlanGenerationParams | null;
+  setGenerationParams: (params: MealPlanGenerationParams | null) => void;
   error: string | null;
   clearError: () => void;
   generateMealPlan: (nutritionalData: any) => Promise<void>;
@@ -54,6 +55,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
   const [mealPlan, setMealPlan] = useState<ConsolidatedMealPlan | null>(null);
   const [patient, setPatient] = useState<any | null>(null);
   const [calculationData, setCalculationData] = useState<any | null>(null);
+  const [generationParams, setGenerationParams] = useState<MealPlanGenerationParams | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { activePatient } = usePatient();
@@ -86,7 +88,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
 
       if (result.success && result.data) {
         setMealPlan(result.data);
-        setCurrentStep('mealPlan');
+        setCurrentStep('display');
       } else {
         setError(result.error || 'Erro ao gerar plano alimentar');
         console.error("Erro ao gerar plano:", result.error);
@@ -129,6 +131,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setMealPlan(null);
     setPatient(null);
     setCalculationData(null);
+    setGenerationParams(null);
     setError(null);
   }, []);
 
@@ -150,7 +153,9 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setPatient,
     calculationData,
     setCalculationData,
-    currentMealPlan: mealPlan, // Alias for compatibility
+    currentMealPlan: mealPlan,
+    generationParams,
+    setGenerationParams,
     error,
     clearError,
     generateMealPlan,

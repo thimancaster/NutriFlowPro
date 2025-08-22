@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MealPlanService } from '@/services/mealPlanService';
@@ -25,7 +26,7 @@ const MealPlanEditor: React.FC = () => {
           // Convert ConsolidatedMealPlan to DetailedMealPlan
           const detailedMealPlan: DetailedMealPlan = {
             ...fetchedMealPlan,
-            day_of_week: fetchedMealPlan.day_of_week?.toString() || '0',
+            day_of_week: fetchedMealPlan.day_of_week || 0,
             meals: fetchedMealPlan.meals.map(meal => ({
               ...meal,
               foods: meal.items.map(item => ({
@@ -72,7 +73,7 @@ const MealPlanEditor: React.FC = () => {
     // Convert ConsolidatedMealPlan to DetailedMealPlan for compatibility
     const detailedMealPlan: DetailedMealPlan = {
       ...updatedMealPlan,
-      day_of_week: updatedMealPlan.day_of_week?.toString() || '0',
+      day_of_week: updatedMealPlan.day_of_week || 0,
       meals: updatedMealPlan.meals.map(meal => ({
         ...meal,
         foods: meal.items.map(item => ({
