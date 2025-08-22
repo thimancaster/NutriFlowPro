@@ -1,220 +1,186 @@
 
-/**
- * HOOK CONSOLIDADO PARA CÁLCULOS NUTRICIONAIS
- * 
- * Este é o hook único que deve ser usado para todos os cálculos nutricionais.
- * Utiliza exclusivamente o motor centralizado que é 100% fiel à planilha.
- * 
- * SUBSTITUI: useCalculator, useUnifiedCalculator, useNutritionCalculator
- */
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  calculateCompleteNutrition,
-  validateInputs,
-  type CalculationInputs,
-  type CompleteNutritionalResult
-} from '@/utils/nutrition/centralMotor';
+import { loadPatientNutritionContext, savePatientMetrics } from '@/utils/patientDataLoader';
+import { PatientInput, CalculationResult } from '@/types';
+import { saveCalculationResults } from '@/services/calculationService';
 
-export interface ConsolidatedNutritionParams {
-  weight: number;
-  height: number;
-  age: number;
-  gender: 'M' | 'F';
-  activityLevel: 'sedentario' | 'leve' | 'moderado' | 'muito_ativo' | 'extremamente_ativo';
-  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia';
-  profile: 'eutrofico' | 'obeso_sobrepeso' | 'atleta';
-}
-
-export interface ConsolidatedNutritionReturn {
-  // Estado
-  results: CompleteNutritionalResult | null;
-  isCalculating: boolean;
-  error: string | null;
-  
-  // Ações
-  calculateNutrition: (params: ConsolidatedNutritionParams) => Promise<CompleteNutritionalResult | null>;
-  clearResults: () => void;
-  
-  // Utilitários
-  validateParameters: (params: ConsolidatedNutritionParams) => { isValid: boolean; errors: string[] };
-  
-  // Dados calculados derivados (para compatibilidade)
-  tmb: number | null;
-  gea: number | null;
-  get: number | null;
-  vet: number | null;
-  macros: {
-    protein: { grams: number; kcal: number; percentage: number } | null;
-    carbs: { grams: number; kcal: number; percentage: number } | null;
-    fat: { grams: number; kcal: number; percentage: number } | null;
+interface NutritionState {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  calculationId?: string;
+  targets?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
   };
+  result?: CalculationResult;
+  error?: string;
 }
 
-export const useConsolidatedNutrition = (): ConsolidatedNutritionReturn => {
-  const [results, setResults] = useState<CompleteNutritionalResult | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const useConsolidatedNutrition = () => {
+  const [state, setState] = useState<NutritionState>({ status: 'idle' });
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const validateParameters = useCallback((params: ConsolidatedNutritionParams) => {
-    const errors: string[] = [];
-    
-    if (!params.weight || params.weight <= 0 || params.weight > 500) {
-      errors.push('Peso deve estar entre 1 e 500 kg');
-    }
-    
-    if (!params.height || params.height <= 0 || params.height > 250) {
-      errors.push('Altura deve estar entre 1 e 250 cm');
-    }
-    
-    if (!params.age || params.age <= 0 || params.age > 120) {
-      errors.push('Idade deve estar entre 1 e 120 anos');
-    }
-    
-    if (!['M', 'F'].includes(params.gender)) {
-      errors.push('Gênero deve ser M ou F');
-    }
-    
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }, []);
+  const calculateFromPatient = useCallback(async (patientId: string) => {
+    if (!user?.id) return;
 
-  const calculateNutrition = useCallback(async (
-    params: ConsolidatedNutritionParams
-  ): Promise<CompleteNutritionalResult | null> => {
-    console.log('🧮 Iniciando cálculo nutricional consolidado:', params);
-    
-    setIsCalculating(true);
-    setError(null);
+    console.log('[ATTEND:E2E] Starting calculation from patient:', patientId);
+    setState(prev => ({ ...prev, status: 'loading' }));
 
     try {
-      // Validar parâmetros de entrada
-      const validation = validateParameters(params);
-      if (!validation.isValid) {
-        throw new Error(validation.errors.join(', '));
-      }
-
-      // Preparar dados para o motor central
-      const calculationInputs: CalculationInputs = {
-        weight: params.weight,
-        height: params.height,
-        age: params.age,
-        gender: params.gender,
-        activityLevel: params.activityLevel,
-        objective: params.objective,
-        profile: params.profile
-      };
-
-      // Validar com motor central
-      const motorValidation = validateInputs(calculationInputs);
-      if (!motorValidation.isValid) {
-        throw new Error(motorValidation.errors.join(', '));
-      }
-
-      // Executar cálculos usando motor central (100% fiel à planilha)
-      const calculationResults = calculateCompleteNutrition(calculationInputs);
-
-      console.log('✅ Cálculo consolidado concluído:', {
-        tmb: calculationResults.tmb.value,
-        formula: calculationResults.tmb.formula,
-        gea: calculationResults.gea,
-        get: calculationResults.get,
-        vet: calculationResults.vet,
-        profileUsed: calculationResults.profileUsed,
-        formulaUsed: calculationResults.formulaUsed,
-        macros: {
-          protein: `${calculationResults.macros.protein.grams}g (${calculationResults.macros.protein.kcal} kcal)`,
-          carbs: `${calculationResults.macros.carbs.grams}g (${calculationResults.macros.carbs.kcal} kcal)`,
-          fat: `${calculationResults.macros.fat.grams}g (${calculationResults.macros.fat.kcal} kcal)`
-        }
-      });
-
-      setResults(calculationResults);
-
-      toast({
-        title: "Cálculo Nutricional Concluído",
-        description: `TMB: ${calculationResults.tmb.value} kcal | GET: ${calculationResults.get} kcal | Fórmula: ${calculationResults.formulaUsed}`,
-      });
-
-      return calculationResults;
+      // Load patient context
+      const context = await loadPatientNutritionContext(patientId);
       
+      if (!context.hasCompleteData) {
+        setState({
+          status: 'error',
+          error: `Dados incompletos: ${context.missingFields.join(', ')}`
+        });
+        
+        toast({
+          title: "Dados incompletos",
+          description: `Faltam dados: ${context.missingFields.join(', ')}. Preencha para prosseguir.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Perform calculation
+      const result = await calculate(context.patientData);
+      
+      console.log('[ATTEND:E2E] Calculation completed successfully');
+      setState({
+        status: 'ready',
+        calculationId: result.id,
+        targets: result.targets,
+        result
+      });
+
     } catch (error: any) {
-      console.error('❌ Erro no cálculo consolidado:', error);
-      const errorMessage = error.message || 'Erro no cálculo nutricional';
-      setError(errorMessage);
+      console.error('[ATTEND:E2E] Calculation failed:', error);
+      setState({
+        status: 'error',
+        error: error.message
+      });
       
       toast({
-        title: "Erro no Cálculo Nutricional",
-        description: errorMessage,
+        title: "Erro no cálculo",
+        description: error.message,
         variant: "destructive"
       });
-      
-      return null;
-    } finally {
-      setIsCalculating(false);
     }
-  }, [validateParameters, toast]);
+  }, [user?.id, toast]);
 
-  const clearResults = useCallback(() => {
-    console.log('🔄 Limpando resultados do cálculo consolidado');
-    setResults(null);
-    setError(null);
-  }, []);
+  const calculate = useCallback(async (input: PatientInput): Promise<CalculationResult> => {
+    if (!user?.id) throw new Error('User not authenticated');
 
-  // Dados derivados para compatibilidade com código existente
-  const tmb = results?.tmb.value || null;
-  const gea = results?.gea || null;
-  const get = results?.get || null;
-  const vet = results?.vet || null;
-  
-  const macros = {
-    protein: results?.macros.protein || null,
-    carbs: results?.macros.carbs || null,
-    fat: results?.macros.fat || null
-  };
+    console.log('[ATTEND:E2E] Performing nutrition calculation');
+
+    // Basic BMR calculation (Harris-Benedict)
+    const bmr = input.sex === 'male' 
+      ? 88.362 + (13.397 * input.weight) + (4.799 * input.height) - (5.677 * input.age)
+      : 447.593 + (9.247 * input.weight) + (3.098 * input.height) - (4.330 * input.age);
+
+    // Activity factor
+    const activityFactors: Record<string, number> = {
+      'sedentario': 1.2,
+      'leve': 1.375,
+      'moderado': 1.55,
+      'intenso': 1.725,
+      'extremo': 1.9
+    };
+
+    const activityFactor = activityFactors[input.activityLevel] || 1.55;
+    const get = bmr * activityFactor;
+
+    // Objective adjustments
+    let vet = get;
+    switch (input.objective) {
+      case 'emagrecimento':
+        vet = get * 0.85; // 15% deficit
+        break;
+      case 'hipertrofia':
+        vet = get * 1.15; // 15% surplus
+        break;
+      default:
+        vet = get;
+    }
+
+    // Macronutrient distribution
+    const protein = Math.round(input.weight * 2.2); // 2.2g per kg
+    const fats = Math.round(vet * 0.25 / 9); // 25% of calories from fat
+    const carbs = Math.round((vet - (protein * 4) - (fats * 9)) / 4); // Remaining from carbs
+
+    const calculationData = {
+      patient_id: input.id,
+      weight: input.weight,
+      height: input.height,
+      age: input.age,
+      gender: input.sex,
+      activity_level: input.activityLevel,
+      goal: input.objective,
+      bmr: Math.round(bmr),
+      tdee: Math.round(get),
+      protein,
+      carbs,
+      fats,
+      tipo: 'primeira_consulta',
+      status: 'completo',
+      user_id: user.id
+    };
+
+    // Save to database
+    const saveResult = await saveCalculationResults(calculationData);
+    
+    if (!saveResult.success) {
+      throw new Error('Failed to save calculation');
+    }
+
+    const result: CalculationResult = {
+      id: saveResult.data?.id || '',
+      bmr: Math.round(bmr),
+      get: Math.round(get),
+      vet: Math.round(vet),
+      targets: {
+        calories: Math.round(vet),
+        protein,
+        carbs,
+        fats
+      },
+      macros: {
+        protein,
+        carbs,
+        fat: fats
+      }
+    };
+
+    return result;
+  }, [user?.id]);
+
+  const savePatientChanges = useCallback(async (
+    patientId: string,
+    changes: {
+      weight?: number;
+      height?: number;
+      notes?: string;
+    }
+  ) => {
+    if (!user?.id) return false;
+
+    console.log('[ATTEND:E2E] Saving patient changes');
+    return await savePatientMetrics(patientId, user.id, changes);
+  }, [user?.id]);
 
   return {
-    // Estado
-    results,
-    isCalculating,
-    error,
-    
-    // Ações
-    calculateNutrition,
-    clearResults,
-    
-    // Utilitários
-    validateParameters,
-    
-    // Compatibilidade
-    tmb,
-    gea,
-    get,
-    vet,
-    macros
+    state,
+    calculateFromPatient,
+    calculate,
+    savePatientChanges,
+    isReady: state.status === 'ready',
+    isLoading: state.status === 'loading',
+    hasError: state.status === 'error'
   };
-};
-
-/**
- * WRAPPER PARA COMPATIBILIDADE COM CÓDIGO LEGADO
- * 
- * [DEPRECATED] - Use useConsolidatedNutrition diretamente
- */
-export const useNutritionCalculator = () => {
-  console.warn('[DEPRECATED] useNutritionCalculator - Use useConsolidatedNutrition diretamente');
-  return useConsolidatedNutrition();
-};
-
-/**
- * WRAPPER PARA COMPATIBILIDADE COM SISTEMA UNIFICADO
- * 
- * [DEPRECATED] - Use useConsolidatedNutrition diretamente
- */
-export const useUnifiedNutrition = () => {
-  console.warn('[DEPRECATED] useUnifiedNutrition - Use useConsolidatedNutrition diretamente');
-  return useConsolidatedNutrition();
 };

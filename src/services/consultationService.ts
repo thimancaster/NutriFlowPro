@@ -1,43 +1,66 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Consultation, ConsultationCreateInput, ConsultationUpdateInput } from '@/types/consultationTypes';
+
+export interface ConsultationCreatePayload {
+  patient_id: string;
+  calculation_id?: string;
+  meal_plan_id?: string;
+  date: string;
+  metrics: {
+    weight?: number;
+    height?: number;
+    bmi?: number;
+    objective?: string;
+    bmr?: number;
+    tdee?: number;
+    protein?: number;
+    carbs?: number;
+    fats?: number;
+  };
+  notes?: string;
+}
+
+export interface ConsultationRecord {
+  id: string;
+  patient_id: string;
+  calculation_id?: string;
+  meal_plan_id?: string;
+  date: string;
+  metrics: any;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const ConsultationService = {
-  async createConsultation(consultationData: ConsultationCreateInput): Promise<{ success: boolean; data?: Consultation; error?: string }> {
+  async create(payload: ConsultationCreatePayload): Promise<{ success: boolean; data?: ConsultationRecord; error?: string }> {
+    console.log('[ATTEND:E2E] Creating consultation record:', payload);
+    
     try {
       const { data, error } = await supabase
         .from('consultations')
-        .insert(consultationData)
+        .insert({
+          patient_id: payload.patient_id,
+          calculation_id: payload.calculation_id,
+          meal_plan_id: payload.meal_plan_id,
+          date: payload.date,
+          metrics: payload.metrics,
+          notes: payload.notes
+        })
         .select()
         .single();
 
       if (error) throw error;
 
-      return { success: true, data: data as Consultation };
+      console.log('[ATTEND:E2E] Consultation created successfully');
+      return { success: true, data: data as ConsultationRecord };
     } catch (error: any) {
-      console.error('Error creating consultation:', error);
+      console.error('[ATTEND:E2E] Error creating consultation:', error);
       return { success: false, error: error.message };
     }
   },
 
-  async getConsultation(id: string): Promise<{ success: boolean; data?: Consultation; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('consultations')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      return { success: true, data: data as Consultation };
-    } catch (error: any) {
-      console.error('Error fetching consultation:', error);
-      return { success: false, error: error.message };
-    }
-  },
-
-  async listConsultationsByPatient(patientId: string): Promise<{ success: boolean; data?: Consultation[]; error?: string }> {
+  async listByPatient(patientId: string): Promise<{ success: boolean; data?: ConsultationRecord[]; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('consultations')
@@ -47,46 +70,8 @@ export const ConsultationService = {
 
       if (error) throw error;
 
-      return { success: true, data: (data as Consultation[]) || [] };
+      return { success: true, data: data as ConsultationRecord[] };
     } catch (error: any) {
-      console.error('Error listing consultations:', error);
-      return { success: false, error: error.message };
-    }
-  },
-
-  async updateConsultation(id: string, updates: ConsultationUpdateInput): Promise<{ success: boolean; data?: Consultation; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('consultations')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return { success: true, data: data as Consultation };
-    } catch (error: any) {
-      console.error('Error updating consultation:', error);
-      return { success: false, error: error.message };
-    }
-  },
-
-  async deleteConsultation(id: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('consultations')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error deleting consultation:', error);
       return { success: false, error: error.message };
     }
   },

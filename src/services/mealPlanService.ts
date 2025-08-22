@@ -1,187 +1,236 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { MealPlan, MealPlanFood, MealPlanMeal, MealType } from '@/types/meal';
+import { MealPlan, MealPlanMeal } from '@/types';
 
-export class MealPlanService {
-  static async generateMealPlan(params: any): Promise<any> {
-    const meals = [
-      {
-        id: crypto.randomUUID(),
-        name: 'Café da Manhã',
-        time: '07:00',
-        type: 'cafe_da_manha',
-        foods: [
-          { id: crypto.randomUUID(), name: 'Omelete', quantity: 2, unit: 'unidades', calories: 150, protein: 12, carbs: 3, fat: 10 },
-          { id: crypto.randomUUID(), name: 'Pão Integral', quantity: 2, unit: 'fatias', calories: 120, protein: 4, carbs: 20, fat: 1 },
-        ],
-        totalCalories: 270,
-        totalProtein: 16,
-        totalCarbs: 23,
-        totalFats: 11,
-        total_calories: 270,
-        total_protein: 16,
-        total_carbs: 23,
-        total_fats: 11,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: 'Almoço',
-        time: '12:00',
-        type: 'almoco',
-        foods: [
-          { id: crypto.randomUUID(), name: 'Frango Grelhado', quantity: 150, unit: 'gramas', calories: 200, protein: 30, carbs: 0, fat: 8 },
-          { id: crypto.randomUUID(), name: 'Arroz Integral', quantity: 100, unit: 'gramas', calories: 110, protein: 2, carbs: 25, fat: 1 },
-          { id: crypto.randomUUID(), name: 'Salada Mista', quantity: 200, unit: 'gramas', calories: 50, protein: 1, carbs: 10, fat: 1 },
-        ],
-        totalCalories: 360,
-        totalProtein: 33,
-        totalCarbs: 35,
-        totalFats: 10,
-        total_calories: 360,
-        total_protein: 33,
-        total_carbs: 35,
-        total_fats: 10,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: 'Lanche da Tarde',
-        time: '16:00',
-        type: 'lanche_tarde',
-        foods: [
-          { id: crypto.randomUUID(), name: 'Iogurte Natural', quantity: 200, unit: 'gramas', calories: 140, protein: 10, carbs: 15, fat: 4 },
-          { id: crypto.randomUUID(), name: 'Frutas Vermelhas', quantity: 100, unit: 'gramas', calories: 50, protein: 1, carbs: 12, fat: 0 },
-        ],
-        totalCalories: 190,
-        totalProtein: 11,
-        totalCarbs: 27,
-        totalFats: 4,
-        total_calories: 190,
-        total_protein: 11,
-        total_carbs: 27,
-        total_fats: 4,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: 'Jantar',
-        time: '20:00',
-        type: 'jantar',
-        foods: [
-          { id: crypto.randomUUID(), name: 'Salmão Assado', quantity: 150, unit: 'gramas', calories: 250, protein: 30, carbs: 0, fat: 13 },
-          { id: crypto.randomUUID(), name: 'Brócolis Cozido', quantity: 200, unit: 'gramas', calories: 60, protein: 4, carbs: 10, fat: 0 },
-        ],
-        totalCalories: 310,
-        totalProtein: 34,
-        totalCarbs: 10,
-        totalFats: 13,
-        total_calories: 310,
-        total_protein: 34,
-        total_carbs: 10,
-        total_fats: 13,
-      },
-    ];
+export interface MealPlanGenerationParams {
+  patientId: string;
+  calculationId: string;
+  targets: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  date?: string;
+}
 
-    const transformedMeals: MealPlanMeal[] = meals.map(meal => ({
-      ...meal,
-      type: meal.type || 'cafe_da_manha' as MealType,
-      foods: meal.foods || [],
-      items: meal.items || meal.foods || [],
-      totalCalories: meal.totalCalories || 0,
-      totalProtein: meal.totalProtein || 0,
-      totalCarbs: meal.totalCarbs || 0,
-      totalFats: meal.totalFats || 0,
-      total_calories: meal.total_calories || meal.totalCalories || 0,
-      total_protein: meal.total_protein || meal.totalProtein || 0,
-      total_carbs: meal.total_carbs || meal.totalCarbs || 0,
-      total_fats: meal.total_fats || meal.totalFats || 0,
-    }));
-
-    return {
-      id: crypto.randomUUID(),
-      name: params.name || 'Plano Alimentar',
-      user_id: params.userId,
-      patient_id: params.patientId,
-      date: params.date || new Date().toISOString().split('T')[0],
-      meals: transformedMeals,
-      total_calories: transformedMeals.reduce((sum, meal) => sum + meal.total_calories, 0),
-      total_protein: transformedMeals.reduce((sum, meal) => sum + meal.total_protein, 0),
-      total_carbs: transformedMeals.reduce((sum, meal) => sum + meal.total_carbs, 0),
-      total_fats: transformedMeals.reduce((sum, meal) => sum + meal.total_fats, 0),
-      notes: params.notes,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  }
-
-  static async getMealPlan(id: string): Promise<MealPlan | null> {
+export const MealPlanService = {
+  async generateMealPlan(params: MealPlanGenerationParams): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
+    console.log('[ATTEND:E2E] Generating meal plan with params:', params);
+    
     try {
-      // Simulate fetching meal plan data from a database
-      const mealPlan: MealPlan = {
-        id: id,
-        name: 'Plano Alimentar Exemplo',
-        user_id: 'user-123',
-        patient_id: 'patient-456',
-        date: new Date().toISOString().split('T')[0],
-        total_calories: 1200,
-        total_protein: 100,
-        total_carbs: 150,
-        total_fats: 50,
-        meals: [
-          {
-            id: crypto.randomUUID(),
-            name: 'Café da Manhã',
-            time: '07:00',
-            type: 'cafe_da_manha',
-            foods: [
-              { id: crypto.randomUUID(), name: 'Omelete', quantity: 2, unit: 'unidades', calories: 150, protein: 12, carbs: 3, fat: 10 },
-              { id: crypto.randomUUID(), name: 'Pão Integral', quantity: 2, unit: 'fatias', calories: 120, protein: 4, carbs: 20, fat: 1 },
-            ],
-            totalCalories: 270,
-            totalProtein: 16,
-            totalCarbs: 23,
-            totalFats: 11,
-            total_calories: 270,
-            total_protein: 16,
-            total_carbs: 23,
-            total_fats: 11,
-          },
-          {
-            id: crypto.randomUUID(),
-            name: 'Almoço',
-            time: '12:00',
-            type: 'almoco',
-            foods: [
-              { id: crypto.randomUUID(), name: 'Frango Grelhado', quantity: 150, unit: 'gramas', calories: 200, protein: 30, carbs: 0, fat: 8 },
-              { id: crypto.randomUUID(), name: 'Arroz Integral', quantity: 100, unit: 'gramas', calories: 110, protein: 2, carbs: 25, fat: 1 },
-              { id: crypto.randomUUID(), name: 'Salada Mista', quantity: 200, unit: 'gramas', calories: 50, protein: 1, carbs: 10, fat: 1 },
-            ],
-            totalCalories: 360,
-            totalProtein: 33,
-            totalCarbs: 35,
-            totalFats: 10,
-            total_calories: 360,
-            total_protein: 33,
-            total_carbs: 35,
-            total_fats: 10,
-          },
-        ],
-        notes: 'Plano alimentar exemplo para teste.',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const mealPlanId = await generateMealPlanWithSupabase(
+        user.user.id,
+        params.patientId,
+        params.targets.calories,
+        params.targets.protein,
+        params.targets.carbs,
+        params.targets.fats,
+        params.date
+      );
+
+      // Fetch the generated meal plan
+      const { data: mealPlan, error } = await supabase
+        .from('meal_plans')
+        .select(`
+          *,
+          meal_plan_items (*)
+        `)
+        .eq('id', mealPlanId)
+        .single();
+
+      if (error) throw error;
+
+      // Transform to expected format
+      const transformedMealPlan: MealPlan = {
+        id: mealPlan.id,
+        name: `Plano - ${new Date(mealPlan.date).toLocaleDateString('pt-BR')}`,
+        user_id: mealPlan.user_id,
+        patient_id: mealPlan.patient_id,
+        date: mealPlan.date,
+        total_calories: mealPlan.total_calories,
+        total_protein: mealPlan.total_protein,
+        total_carbs: mealPlan.total_carbs,
+        total_fats: mealPlan.total_fats,
+        meals: transformMealsFromItems(mealPlan.meal_plan_items || []),
+        notes: mealPlan.notes,
+        created_at: mealPlan.created_at,
+        updated_at: mealPlan.updated_at
       };
-      return mealPlan;
-    } catch (error) {
-      console.error("Error fetching meal plan:", error);
-      return null;
-    }
-  }
 
-  static async saveMealPlan(mealPlan: MealPlan): Promise<MealPlan | null> {
+      console.log('[ATTEND:E2E] Meal plan generated successfully');
+      return { success: true, data: transformedMealPlan };
+
+    } catch (error: any) {
+      console.error('[ATTEND:E2E] Error generating meal plan:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getMealPlan(id: string): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
     try {
-      // Simulate saving the meal plan to a database
-      console.log("Meal plan saved:", mealPlan);
-      return mealPlan;
-    } catch (error) {
-      console.error("Error saving meal plan:", error);
-      return null;
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select(`
+          *,
+          meal_plan_items (*)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      const transformedMealPlan: MealPlan = {
+        id: data.id,
+        name: `Plano - ${new Date(data.date).toLocaleDateString('pt-BR')}`,
+        user_id: data.user_id,
+        patient_id: data.patient_id,
+        date: data.date,
+        total_calories: data.total_calories,
+        total_protein: data.total_protein,
+        total_carbs: data.total_carbs,
+        total_fats: data.total_fats,
+        meals: transformMealsFromItems(data.meal_plan_items || []),
+        notes: data.notes,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
+      return { success: true, data: transformedMealPlan };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async updateMealPlan(id: string, updates: Partial<MealPlan>): Promise<{ success: boolean; data?: MealPlan; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .update({
+          total_calories: updates.total_calories,
+          total_protein: updates.total_protein,
+          total_carbs: updates.total_carbs,
+          total_fats: updates.total_fats,
+          notes: updates.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return this.getMealPlan(id);
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getMealPlans(patientId: string): Promise<{ success: boolean; data?: MealPlan[]; error?: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select(`
+          *,
+          meal_plan_items (*)
+        `)
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mealPlans: MealPlan[] = (data || []).map(item => ({
+        id: item.id,
+        name: `Plano - ${new Date(item.date).toLocaleDateString('pt-BR')}`,
+        user_id: item.user_id,
+        patient_id: item.patient_id,
+        date: item.date,
+        total_calories: item.total_calories,
+        total_protein: item.total_protein,
+        total_carbs: item.total_carbs,
+        total_fats: item.total_fats,
+        meals: transformMealsFromItems(item.meal_plan_items || []),
+        notes: item.notes,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+
+      return { success: true, data: mealPlans };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  async deleteMealPlan(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
+};
+
+// Helper function to use Supabase function
+async function generateMealPlanWithSupabase(
+  userId: string,
+  patientId: string,
+  calories: number,
+  protein: number,
+  carbs: number,
+  fats: number,
+  date?: string
+): Promise<string> {
+  const { data, error } = await supabase.rpc('generate_meal_plan', {
+    p_user_id: userId,
+    p_patient_id: patientId,
+    p_target_calories: calories,
+    p_target_protein: protein,
+    p_target_carbs: carbs,
+    p_target_fats: fats,
+    p_date: date || new Date().toISOString().split('T')[0]
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// Helper function to transform meal plan items to meals
+function transformMealsFromItems(items: any[]): MealPlanMeal[] {
+  const mealTypes = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
+  const mealNames = ['Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar', 'Ceia'];
+
+  return mealTypes.map((type, index) => {
+    const mealItems = items.filter(item => item.meal_type === type);
+    
+    return {
+      id: `${type}-meal`,
+      name: mealNames[index],
+      type: type,
+      foods: mealItems.map(item => ({
+        id: item.id,
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fats: item.fats
+      })),
+      totalCalories: mealItems.reduce((sum, item) => sum + (item.calories || 0), 0),
+      totalProtein: mealItems.reduce((sum, item) => sum + (item.protein || 0), 0),
+      totalCarbs: mealItems.reduce((sum, item) => sum + (item.carbs || 0), 0),
+      totalFats: mealItems.reduce((sum, item) => sum + (item.fats || 0), 0)
+    };
+  });
 }

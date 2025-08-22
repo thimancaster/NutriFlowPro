@@ -1,6 +1,15 @@
+
 // Patient types
 export type { Patient, PatientGoals, AddressDetails } from './patient';
 export type { PatientFilters } from './patient';
+
+// Profile type for consultation
+export interface Profile {
+  id: string;
+  name: string;
+  type: 'eutrofico' | 'sobrepeso' | 'obeso' | 'magro';
+  description?: string;
+}
 
 // Meal plan types - avoiding conflicts by using specific exports
 export type { 
@@ -46,6 +55,26 @@ export interface ConsultationData {
   fats?: number;
   created_at?: string;
   updated_at?: string;
+  
+  // Additional fields for E2E flow
+  results?: {
+    bmr: number;
+    get: number;
+    vet: number;
+    adjustment: number;
+    macros: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    };
+  };
+  totalCalories?: number;
+  goal?: string;
+  patient?: {
+    id: string;
+    name: string;
+    age?: number;
+  };
 }
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
@@ -88,4 +117,57 @@ export interface MealPlan {
   notes?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface MealPlanMeal {
+  id: string;
+  name: string;
+  type: string;
+  foods: MealPlanFood[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFats: number;
+}
+
+export interface MealPlanFood {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
+// Patient Input for E2E flow
+export interface PatientInput {
+  id: string;
+  sex: 'male' | 'female';
+  age: number;
+  weight: number;
+  height: number;
+  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado';
+  activityLevel: string;
+  profile?: Profile;
+}
+
+// Calculation result interface
+export interface CalculationResult {
+  id: string;
+  bmr: number;
+  get: number;
+  vet: number;
+  targets: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  macros: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
 }
