@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import ConsultationResults from '@/components/Consultation/ConsultationResults';
@@ -30,9 +31,9 @@ const Consultation: React.FC = () => {
     handleSaveConsultationClick
   } = useConsultationFormHandler(consultationId, consultation);
 
-  // Map autoSaveStatus to expected type
+  // Map autoSaveStatus to expected type - fix the comparison
   const autoSaveStatus: 'idle' | 'saving' | 'success' | 'error' = 
-    formAutoSaveStatus === 'saved' ? 'success' : formAutoSaveStatus;
+    formAutoSaveStatus === 'success' ? 'success' : formAutoSaveStatus;
   
   // Handle loading and error states
   if (isLoading) {
