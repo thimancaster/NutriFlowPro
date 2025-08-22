@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { useConsultation } from '@/hooks/useConsultation';
+import { useSaveConsultation } from '@/hooks/useSaveConsultation';
 
 interface ConsultationFormHandlerReturn {
   formData: any;
@@ -24,28 +24,34 @@ export const useConsultationFormHandler = (
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   const { 
-    createConsultation, 
-    updateConsultation, 
-    saveConsultation, 
-    isLoading: isSubmitting 
-  } = useConsultation();
+    isSaving,
+    handleSubmitConsultation,
+    saveAutoChanges
+  } = useSaveConsultation();
 
   const handleFormSubmit = useCallback(async (data: any) => {
     setAutoSaveStatus('saving');
     try {
-      let result;
-      if (consultationId) {
-        result = await updateConsultation(consultationId, data);
-      } else {
-        result = await createConsultation(data);
-      }
+      // Create a mock form event for the handler
+      const mockEvent = {
+        preventDefault: () => {},
+        currentTarget: {}
+      } as any;
+      
+      const result = await handleSubmitConsultation(
+        mockEvent,
+        data,
+        {},
+        consultationId || '',
+        () => {}
+      );
       setAutoSaveStatus('saved');
       return result;
     } catch (error) {
       setAutoSaveStatus('error');
       throw error;
     }
-  }, [consultationId, createConsultation, updateConsultation]);
+  }, [consultationId, handleSubmitConsultation]);
 
   const handleFormChange = useCallback((data: any) => {
     const updatedData = { ...formData, ...data };
@@ -59,9 +65,9 @@ export const useConsultationFormHandler = (
 
   const handleSaveConsultationClick = useCallback(async (data: any) => {
     if (consultationId) {
-      await saveConsultation(consultationId, data);
+      await saveAutoChanges(consultationId, data, {});
     }
-  }, [consultationId, saveConsultation]);
+  }, [consultationId, saveAutoChanges]);
 
   return {
     formData,
@@ -69,7 +75,7 @@ export const useConsultationFormHandler = (
     step,
     setStep,
     autoSaveStatus,
-    isSubmitting,
+    isSubmitting: isSaving,
     handleFormSubmit,
     handleFormChange,
     handleStepChange,

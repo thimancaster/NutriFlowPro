@@ -1,8 +1,9 @@
-
 import React from 'react';
 import { useMealPlans } from '@/hooks/meal-plan/useMealPlans';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar, FileText, PlusCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -11,64 +12,60 @@ interface PatientMealPlansProps {
 }
 
 const PatientMealPlans: React.FC<PatientMealPlansProps> = ({ patientId }) => {
-  const { data: result, isLoading, error } = useMealPlans({
-    patient_id: patientId
-  });
+  const { data: mealPlans, isLoading, error } = useMealPlans(patientId);
 
   if (isLoading) {
-    return <div className="p-4 text-center">Carregando planos alimentares...</div>;
+    return (
+      <Card>
+        <CardContent>Carregando planos alimentares...</CardContent>
+      </Card>
+    );
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-600">Erro ao carregar planos alimentares</div>;
-  }
-
-  const mealPlans = result?.data || [];
-
-  if (mealPlans.length === 0) {
-    return <div className="p-4 text-center text-gray-600">Nenhum plano alimentar encontrado</div>;
+    return (
+      <Card>
+        <CardContent>Erro ao carregar planos alimentares: {error.message}</CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {mealPlans.map((plan) => (
-        <Card key={plan.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                Plano de {format(new Date(plan.date), 'dd/MM/yyyy', { locale: ptBR })}
-              </CardTitle>
-              <div className="flex gap-2">
-                <Badge variant="outline">
-                  {Math.round(plan.total_calories)} kcal
-                </Badge>
-                <Badge variant="outline">
-                  P: {Math.round(plan.total_protein)}g
-                </Badge>
-                <Badge variant="outline">
-                  C: {Math.round(plan.total_carbs)}g
-                </Badge>
-                <Badge variant="outline">
-                  G: {Math.round(plan.total_fats)}g
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {plan.meals.map((meal) => (
-                <div key={meal.id} className="border-l-4 border-blue-500 pl-4">
-                  <h4 className="font-medium">{meal.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    {Math.round(meal.total_calories)} kcal - {meal.items.length} itens
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Planos Alimentares</CardTitle>
+        <Button variant="outline" size="icon">
+          <PlusCircle className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {mealPlans?.data && mealPlans.data.length > 0 ? (
+          <div className="grid gap-4">
+            {mealPlans.data.map((mealPlan) => (
+              <div key={mealPlan.id} className="border rounded-md p-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <p className="text-sm text-gray-700">
+                    {format(new Date(mealPlan.date), 'PPPP', { locale: ptBR })}
                   </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                <div className="flex items-center space-x-2 mt-2">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  <p className="text-sm text-gray-700">
+                    Calorias: {mealPlan.total_calories}
+                  </p>
+                  <Badge variant="secondary">
+                    {mealPlan.meals?.length} Refeições
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div>Nenhum plano alimentar encontrado para este paciente.</div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

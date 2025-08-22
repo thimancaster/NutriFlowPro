@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useCallback } from 'react';
 import ConsultationWizard from '@/components/Consultation/ConsultationWizard';
 import ConsultationResults from '@/components/Consultation/ConsultationResults';
 import ConsultationFormWrapper from '@/components/Consultation/ConsultationFormWrapper';
@@ -7,7 +6,7 @@ import { useConsultationLoader } from '@/hooks/useConsultationLoader';
 import { useConsultationFormHandler } from '@/hooks/useConsultationFormHandler';
 import { ConsultationError, ConsultationLoading, ConsultationNotFound } from '@/components/Consultation/ConsultationStateDisplay';
 
-const Consultation = () => {
+const Consultation: React.FC = () => {
   const { 
     consultation, 
     setConsultation,
@@ -19,13 +18,21 @@ const Consultation = () => {
   } = useConsultationLoader();
   
   const {
+    formData,
+    setFormData,
     step,
-    autoSaveStatus,
+    setStep,
+    autoSaveStatus: formAutoSaveStatus,
     isSubmitting,
+    handleFormSubmit,
     handleFormChange,
     handleStepChange,
     handleSaveConsultationClick
   } = useConsultationFormHandler(consultationId, consultation);
+
+  // Map autoSaveStatus to expected type
+  const autoSaveStatus: 'idle' | 'saving' | 'success' | 'error' = 
+    formAutoSaveStatus === 'saved' ? 'success' : formAutoSaveStatus;
   
   // Handle loading and error states
   if (isLoading) {
@@ -47,7 +54,13 @@ const Consultation = () => {
       setConsultation(updatedConsultation);
     }
   };
-  
+
+  const handleSaveConsultation = useCallback(async () => {
+    if (formData) {
+      await handleSaveConsultationClick(formData);
+    }
+  }, [formData, handleSaveConsultationClick]);
+
   return (
     <div className="container mx-auto py-8 px-4">
       <ConsultationWizard
@@ -68,7 +81,7 @@ const Consultation = () => {
         {step === 2 && consultation && consultation.results && (
           <ConsultationResults
             results={consultation.results}
-            onSave={handleSaveConsultationClick}
+            onSave={handleSaveConsultation}
             isSaving={isSubmitting}
           />
         )}

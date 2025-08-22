@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ConsolidatedMealPlan, ConsolidatedMeal, MealPlanItem } from '@/types/mealPlanTypes';
 import { 
@@ -14,13 +13,14 @@ export class MealPlanServiceV2 {
     try {
       const targetDate = params.date || new Date().toISOString().split('T')[0];
       
-      const { data, error } = await supabase.rpc('generate_meal_plan_v2', {
+      // Use the correct RPC function name
+      const { data, error } = await supabase.rpc('generate_meal_plan_with_cultural_rules', {
         p_user_id: params.userId,
         p_patient_id: params.patientId,
-        p_total_calories: params.totalCalories,
-        p_total_protein: params.totalProtein,
-        p_total_carbs: params.totalCarbs,
-        p_total_fats: params.totalFats,
+        p_target_calories: params.totalCalories,
+        p_target_protein: params.totalProtein,
+        p_target_carbs: params.totalCarbs,
+        p_target_fats: params.totalFats,
         p_date: targetDate
       });
 
@@ -29,14 +29,28 @@ export class MealPlanServiceV2 {
         throw new Error(`Erro na base de dados: ${error.message}`);
       }
 
-      if (!data || data.length === 0) {
+      if (!data) {
         return {
           success: false,
           error: 'Nenhum dado retornado do servidor'
         };
       }
 
-      const mealPlan = this.transformDatabaseResult(data[0], params);
+      // Handle the case where data might be a string (meal plan ID)
+      let mealPlanId: string;
+      if (typeof data === 'string') {
+        mealPlanId = data;
+      } else if (typeof data === 'object' && data.id) {
+        mealPlanId = data.id;
+      } else {
+        throw new Error('Formato de resposta inválido');
+      }
+
+      // Fetch the complete meal plan
+      const mealPlan = await this.getMealPlanById(mealPlanId);
+      if (!mealPlan) {
+        throw new Error('Falha ao recuperar plano gerado');
+      }
       
       return {
         success: true,
@@ -180,11 +194,10 @@ export class MealPlanServiceV2 {
           .delete()
           .eq('meal_plan_id', mealPlanId);
 
-        // Insert new items
-        const allItems = updates.meals.flatMap(meal => 
-          meal.items.map(item => ({
+        // Insert new items with correct structure
+        const allItems = updates.meals.flatMap((meal, mealIndex) => 
+          meal.items.map((item, itemIndex) => ({
             meal_plan_id: mealPlanId,
-            meal_id: item.meal_id,
             food_id: item.food_id,
             food_name: item.food_name,
             quantity: item.quantity,
@@ -193,7 +206,8 @@ export class MealPlanServiceV2 {
             protein: item.protein,
             carbs: item.carbs,
             fats: item.fats,
-            order_index: item.order_index
+            meal_type: meal.type,
+            order_index: itemIndex
           }))
         );
 
@@ -266,7 +280,7 @@ export class MealPlanServiceV2 {
           time: MEAL_TIMES[mealType],
           items: items.map(item => ({
             id: item.id,
-            meal_id: item.meal_id,
+            meal_id: `${data.id}-${mealType}`,
             food_id: item.food_id,
             food_name: item.food_name,
             quantity: item.quantity,
