@@ -1,4 +1,3 @@
-
 export interface MealDistributionItem {
   id: string;
   name: string;
@@ -206,4 +205,22 @@ export interface MealPlanExportOptions {
   totalProtein: number;
   totalCarbs: number;
   totalFats: number;
+  meals: {
+    id: string;
+    name: string;
+    time: string;
+    items: {
+      food_name: string;
+      quantity: number;
+      unit: string;
+      calories: number;
+      protein: number;
+      carbs: number;
+      fats: number;
+    }[];
+    total_calories: number;
+    total_protein: number;
+    total_carbs: number;
+    total_fats: number;
+  }[];
 }

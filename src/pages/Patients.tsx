@@ -1,279 +1,181 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePatientList } from '@/hooks/patient/usePatientList';
-import { usePatientOperations } from '@/hooks/patient/usePatientOperations';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { MoreVertical, Edit, Copy, Trash2, UserPlus } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Search } from 'lucide-react';
+import { Patient, PatientFilters } from '@/types';
+import { 
+  PatientCard, 
+  PatientStatusBadge 
+} from '@/components/patient';
+import { 
+  SearchField, 
+  StatusFilter, 
+  SortFilter, 
+  FilterActions 
+} from '@/components/patient/filters';
+import { 
+  PatientLoadingState, 
+  PatientErrorState 
+} from '@/components/patients';
+import { usePatientFilters } from '@/hooks/patient/usePatientFilters';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Pagination } from '@/components/ui/pagination';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useSearchParams } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Switch } from "@/components/ui/switch"
-import { Link } from 'react-router-dom';
-import { PatientFilters as TypedPatientFilters } from '@/types/patient';
+import { supabase } from '@/integrations/supabase/client';
+import Pagination from '@/components/ui/pagination';
 
 const Patients: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const {
-    patients,
-    isLoading,
-    error,
-    handleSearch,
-    handlePageChange,
-    handleFilterChange: handleFilterChangeInternal,
-    handleStatusChange,
-    refetch,
-    pagination,
-    searchTerm,
-    filters,
-    setCurrentPage,
-    setSearchTerm,
-  } = usePatientList();
-  const { deletePatient, duplicatePatient } = usePatientOperations();
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // Default page size
 
-  const handleCreate = () => {
-    navigate('/patients/new');
-  };
+  const { filters, updateFilters, resetFilters } = usePatientFilters();
 
-  const handleEdit = (id: string) => {
-    navigate(`/patients/${id}`);
-  };
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-  const handleDuplicate = async (patient: any) => {
     try {
-      await duplicatePatient(patient);
+      let query = supabase
+        .from('patients')
+        .select('*, total:count', { count: 'exact' });
+
+      if (filters.search) {
+        query = query.ilike('name', `%${filters.search}%`);
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+
+      // Apply sorting
+      if (filters.sortBy) {
+        const ascending = filters.sortOrder === 'asc';
+        query = query.order(filters.sortBy, { ascending });
+      } else {
+        // Default sorting by created_at descending
+        query = query.order('created_at', { ascending: false });
+      }
+
+      const startIndex = (currentPage - 1) * pageSize;
+      query = query.range(startIndex, startIndex + pageSize - 1);
+
+      const { data, error: fetchError, count } = await query;
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      setPatients(data || []);
+      setTotalItems(count || 0);
+      setTotalPages(Math.ceil((count || 0) / pageSize));
+    } catch (e: any) {
+      setError(e.message);
       toast({
-        title: "Paciente Duplicado",
-        description: "Paciente duplicado com sucesso.",
-      });
-      await refetch();
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao duplicar paciente.",
+        title: "Erro ao carregar pacientes",
+        description: "Ocorreu um erro ao buscar os pacientes. Tente novamente.",
         variant: "destructive",
       });
+      console.error("Error fetching patients:", e);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleDelete = async () => {
-    if (selectedPatientId) {
-      try {
-        await deletePatient(selectedPatientId);
-        toast({
-          title: "Paciente Removido",
-          description: "Paciente removido com sucesso.",
-        });
-        await refetch();
-      } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao remover paciente.",
-          variant: "destructive",
-        });
-      } finally {
-        setShowDeleteDialog(false);
-        setSelectedPatientId(null);
-      }
-    }
-  };
-
-  const confirmDelete = (id: string) => {
-    setSelectedPatientId(id);
-    setShowDeleteDialog(true);
-  };
-
-  const handleFilterChange = useCallback((newFilters: Partial<TypedPatientFilters>) => {
-    const mappedFilters = {
-      ...newFilters,
-      status: newFilters.status as '' | 'active' | 'archived' || ''
-    };
-    handleFilterChangeInternal(mappedFilters);
-  }, [handleFilterChangeInternal]);
+  }, [filters, currentPage, pageSize, toast]);
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    if (debouncedSearchTerm) {
-      params.set('search', debouncedSearchTerm);
-    } else {
-      params.delete('search');
-    }
-    setSearchParams(params);
-  }, [debouncedSearchTerm, setSearchParams, searchParams]);
+    fetchData();
+  }, [fetchData]);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center py-8">
-          <p>Carregando pacientes...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
+    updateFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
 
-  if (error) {
-    const errorMessage = typeof error === 'string' ? error : (error as Error)?.message || 'Erro desconhecido';
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center py-8">
-          <p className="text-red-600">{errorMessage}</p>
-        </div>
-      </div>
-    );
-  }
+  const handleResetFilters = () => {
+    resetFilters();
+    setCurrentPage(1); // Reset to first page when filters are reset
+  };
 
-  const finalFilters: TypedPatientFilters = {
-    ...filters,
-    status: filters.status as '' | 'active' | 'archived' || ''
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page on search
+    fetchData();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Pacientes</h1>
-        <Button onClick={handleCreate} className="space-x-2">
-          <UserPlus className="h-4 w-4" />
-          <span>Adicionar Paciente</span>
+      <div className="flex flex-wrap items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-nutri-blue mb-1">Pacientes</h1>
+          <p className="text-gray-500">Gerencie seus pacientes ({totalItems} total)</p>
+        </div>
+        <Button onClick={() => navigate('/patients/new')}>
+          <PlusCircle className="h-4 w-4 mr-2" /> Novo Paciente
         </Button>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-        <div className="md:col-span-2">
-          <Input
-            type="search"
-            placeholder="Buscar paciente..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="status">Status:</Label>
-          <select
-            id="status"
-            className="border p-2 rounded"
-            value={finalFilters.status}
-            onChange={(e) => handleFilterChange({ status: e.target.value as '' | 'active' | 'archived' })}
-          >
-            <option value="">Todos</option>
-            <option value="active">Ativos</option>
-            <option value="archived">Arquivados</option>
-          </select>
-        </div>
-      </div>
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 md:space-x-4">
+            <SearchField 
+              value={filters.search || ''}
+              onChange={(value) => handleFilterChange({ search: value })}
+              onSearch={handleSearch}
+            />
+            <div className="flex items-center space-x-2">
+              <StatusFilter
+                status={filters.status || 'all'}
+                onStatusChange={(status) => handleFilterChange({ status })}
+              />
+              <SortFilter
+                value={`${filters.sortBy}:${filters.sortOrder}`}
+                onChange={(sortBy, sortOrder) => handleFilterChange({ sortBy, sortOrder })}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={handleResetFilters}>
+              Resetar
+            </Button>
+            <Button onClick={handleSearch}>
+              Buscar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableCaption>Lista de pacientes cadastrados.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {patients.map((patient) => (
-              <TableRow key={patient.id}>
-                <TableCell className="font-medium">{patient.name}</TableCell>
-                <TableCell>{patient.email}</TableCell>
-                <TableCell>{patient.phone}</TableCell>
-                <TableCell>
-                  <Badge variant={patient.status === 'active' ? 'default' : 'secondary'}>
-                    {patient.status === 'active' ? 'Ativo' : 'Arquivado'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleEdit(patient.id)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(patient)}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Duplicar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => confirmDelete(patient.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Remover
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-            {patients.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">Nenhum paciente encontrado.</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {loading ? (
+        <PatientLoadingState />
+      ) : error ? (
+        <PatientErrorState errorMessage={error} onRetry={fetchData} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {patients.map((patient) => (
+            <PatientCard key={patient.id} patient={patient} />
+          ))}
+        </div>
+      )}
 
-      <div className="flex justify-center mt-4">
+      {/* Pagination */}
+      {totalPages > 1 && (
         <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
+          currentPage={currentPage}
+          totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      </div>
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação irá remover o paciente permanentemente. Tem certeza que deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Remover</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      )}
     </div>
   );
 };

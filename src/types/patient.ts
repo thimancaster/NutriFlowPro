@@ -20,9 +20,11 @@ export interface AddressDetails {
 
 export interface PatientFilters {
   search?: string;
-  status?: string;
+  status?: '' | 'active' | 'archived';
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface Patient {
