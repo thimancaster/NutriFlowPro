@@ -1,46 +1,37 @@
 
-import { useState, useCallback } from 'react';
-import { PatientFilters } from '@/types';
+import { useState } from 'react';
+import { PatientFilters } from '@/types/patient';
 
-interface UsePatientFiltersReturn {
+export interface UsePatientFiltersReturn {
   filters: PatientFilters;
-  updateFilters: (newFilters: Partial<PatientFilters>) => void;
-  resetFilters: () => void;
-  handleStatusChange: (status: 'active' | 'archived' | '') => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  setStatusFilter: (status: PatientFilters['status']) => void;
+  setSearchTerm: (term: string) => void;
 }
 
-const defaultFilters: PatientFilters = {
-  status: '',
-  search: '',
-  sortBy: 'name',
-  sortOrder: 'asc',
-  page: 1,
-  limit: 10
-};
-
 export const usePatientFilters = (): UsePatientFiltersReturn => {
-  const [filters, setFilters] = useState<PatientFilters>(defaultFilters);
+  const [filters, setFilters] = useState<PatientFilters>({
+    status: 'all',
+    search: ''
+  });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const updateFilters = useCallback((newFilters: Partial<PatientFilters>) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters,
-      page: newFilters.page || 1 // Reset to page 1 when filters change
-    }));
-  }, []);
+  const setStatusFilter = (status: PatientFilters['status']) => {
+    setFilters(prev => ({ ...prev, status }));
+    setCurrentPage(1);
+  };
 
-  const resetFilters = useCallback(() => {
-    setFilters(defaultFilters);
-  }, []);
-
-  const handleStatusChange = useCallback((status: 'active' | 'archived' | '') => {
-    updateFilters({ status, page: 1 });
-  }, [updateFilters]);
+  const setSearchTerm = (search: string) => {
+    setFilters(prev => ({ ...prev, search }));
+    setCurrentPage(1);
+  };
 
   return {
     filters,
-    updateFilters,
-    resetFilters,
-    handleStatusChange
+    currentPage,
+    setCurrentPage,
+    setStatusFilter,
+    setSearchTerm
   };
 };

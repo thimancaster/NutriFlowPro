@@ -1,4 +1,3 @@
-
 export interface PatientGoals {
   objective?: 'manutencao' | 'emagrecimento' | 'hipertrofia';
   profile?: 'eutrofico' | 'obeso_sobrepeso' | 'atleta';
@@ -47,4 +46,21 @@ export interface Patient {
   weight?: number;
   height?: number;
   last_appointment?: string;
+}
+
+export interface PatientResponse {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  gender: 'male' | 'female' | 'other';
+  birth_date?: string;
+  age?: number;
+  status: 'active' | 'archived';
+  address?: string | AddressDetails;
+  goals?: PatientGoals;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }

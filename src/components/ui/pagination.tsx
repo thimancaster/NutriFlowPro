@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from './button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
@@ -9,13 +9,9 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
-  totalPages,
-  onPageChange
-}) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
   return (
     <div className="flex items-center justify-center gap-2">
       <Button
@@ -27,16 +23,9 @@ const Pagination: React.FC<PaginationProps> = ({
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
-      {pages.map(page => (
-        <Button
-          key={page}
-          variant={currentPage === page ? "default" : "outline"}
-          size="sm"
-          onClick={() => onPageChange(page)}
-        >
-          {page}
-        </Button>
-      ))}
+      <span className="text-sm">
+        Página {currentPage} de {totalPages}
+      </span>
       
       <Button
         variant="outline"

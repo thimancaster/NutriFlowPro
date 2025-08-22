@@ -285,6 +285,7 @@ export class MealPlanServiceV3 {
       // Converter para formato consolidado (sem itens para lista)
       const consolidatedPlans = (data || []).map(plan => ({
         id: plan.id,
+        name: plan.name || 'Plano Alimentar', // Add missing name property
         user_id: plan.user_id,
         patient_id: plan.patient_id,
         date: plan.date,
