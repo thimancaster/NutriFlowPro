@@ -1,12 +1,14 @@
+
 import React, { useState, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
-import { ConsultationData } from '@/types';
+import { ConsultationData, ConsolidatedMealPlan } from '@/types';
 import ClinicalForm from '../clinical/ClinicalForm';
 import MealPlanGenerationStep from '../MealPlanWorkflow/MealPlanGenerationStep';
 import WorkflowHeader from '../clinical/WorkflowHeader';
+import { usePatient } from '@/contexts/patient/PatientContext';
 
 interface UnifiedClinicalWorkflowProps {
   patientId: string;
@@ -31,6 +33,7 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({
   const [activeTab, setActiveTab] = useState('clinical');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { activePatient } = usePatient();
 
   const handleConsultationUpdate = (data: Partial<ConsultationData>) => {
     setConsultationData(prev => ({ ...prev, ...data }));
@@ -42,13 +45,11 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({
     }
   }, [onConsultationComplete]);
 
-  const handleMealPlanGenerated = useCallback((generatedMealPlan: ConsolidatedMealPlan) => {
-    // Convert the ConsolidatedMealPlan to a string ID for the callback
+  const handleMealPlanGenerated = useCallback((mealPlanId: string) => {
     if (onMealPlanComplete) {
-      onMealPlanComplete(generatedMealPlan.id);
+      onMealPlanComplete(mealPlanId);
     }
-    // Optionally, you can also navigate the user or perform other actions
-    navigate(`/meal-plan/${generatedMealPlan.id}`);
+    navigate(`/meal-plan/${mealPlanId}`);
   }, [onMealPlanComplete, navigate]);
 
   return (
@@ -57,7 +58,7 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
 
-      <WorkflowHeader patientId={patientId} consultationData={consultationData} />
+      <WorkflowHeader consultationData={consultationData} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
@@ -74,7 +75,7 @@ const UnifiedClinicalWorkflow: React.FC<UnifiedClinicalWorkflowProps> = ({
         </TabsContent>
         <TabsContent value="meal-plan" className="outline-none">
           <MealPlanGenerationStep
-            patientId={patientId}
+            patient={activePatient || undefined}
             consultationData={consultationData}
             onMealPlanGenerated={handleMealPlanGenerated}
           />

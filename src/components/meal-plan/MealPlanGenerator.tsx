@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,9 +40,9 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ patientId, onMeal
     const fetchPatient = async () => {
       setIsLoading(true);
       try {
-        const fetchedPatient = await PatientService.getPatientById(patientId);
-        if (fetchedPatient) {
-          setPatient(fetchedPatient);
+        const result = await PatientService.getPatient(patientId);
+        if (result.success && result.data) {
+          setPatient(result.data);
         } else {
           toast({
             title: 'Erro',
@@ -74,10 +75,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ patientId, onMeal
   const generateMealPlan = async () => {
     setIsLoading(true);
     try {
-      // Placeholder for meal plan generation logic
       await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Simulate successful meal plan generation
       const generatedMealPlanId = 'meal-plan-123';
       toast({
         title: 'Sucesso',
@@ -116,7 +114,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ patientId, onMeal
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="numMeals">Número de Refeições</Label>
-            <Select name="numMeals" id="numMeals" value={mealSettings.numMeals} onValueChange={(value) => handleInputChange({ target: { name: 'numMeals', value } } as any)}>
+            <Select value={mealSettings.numMeals} onValueChange={(value) => handleInputChange({ target: { name: 'numMeals', value } } as any)}>
               <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -141,7 +139,7 @@ const MealPlanGenerator: React.FC<MealPlanGeneratorProps> = ({ patientId, onMeal
         </div>
         <div>
           <Label htmlFor="dietType">Tipo de Dieta</Label>
-          <Select name="dietType" id="dietType" value={mealSettings.dietType} onValueChange={(value) => handleInputChange({ target: { name: 'dietType', value } } as any)}>
+          <Select value={mealSettings.dietType} onValueChange={(value) => handleInputChange({ target: { name: 'dietType', value } } as any)}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>

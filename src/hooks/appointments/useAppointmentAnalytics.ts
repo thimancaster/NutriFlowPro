@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { AppointmentStatus } from '@/types/appointment';
 
-interface AppointmentMetrics {
+export interface AppointmentMetrics {
   totalAppointments: number;
   completedAppointments: number;
   cancelledAppointments: number;
@@ -9,49 +11,92 @@ interface AppointmentMetrics {
   completionRate: number;
   cancelationRate: number;
   noShowRate: number;
-  averageAppointmentsPerDay: number;
+  averagePerDay: number;
   peakDays: string[];
-  peakHours: string[];
-  statusDistribution: Array<{
-    status: AppointmentStatus;
-    count: number;
-    percentage: number;
-  }>;
+  popularTimes: string[];
+  monthlyTrend: { month: string; count: number }[];
+  statusDistribution: { status: AppointmentStatus; count: number; percentage: number }[];
 }
 
-export const useAppointmentAnalytics = (appointments: any[]) => {
-  const metrics = useMemo((): AppointmentMetrics => {
-    const total = appointments.length;
-    const completed = appointments.filter(a => a.status === 'completed').length;
-    const cancelled = appointments.filter(a => a.status === 'cancelled').length;
-    const noShow = appointments.filter(a => a.status === 'no_show').length;
+export const useAppointmentAnalytics = (dateRange: { start: Date; end: Date }) => {
+  const [metrics, setMetrics] = useState<AppointmentMetrics>({
+    totalAppointments: 0,
+    completedAppointments: 0,
+    cancelledAppointments: 0,
+    noShowAppointments: 0,
+    completionRate: 0,
+    cancelationRate: 0,
+    noShowRate: 0,
+    averagePerDay: 0,
+    peakDays: [],
+    popularTimes: [],
+    monthlyTrend: [],
+    statusDistribution: []
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-    const completionRate = total > 0 ? completed / total * 100 : 0;
-    const cancelationRate = total > 0 ? cancelled / total * 100 : 0;
-    const noShowRate = total > 0 ? noShow / total * 100 : 0;
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      setIsLoading(true);
+      
+      try {
+        const { data: appointments, error } = await supabase
+          .from('appointments')
+          .select('*')
+          .gte('date', dateRange.start.toISOString())
+          .lte('date', dateRange.end.toISOString());
 
-    // Status distribution with proper type casting
-    const statusDistribution = [
-      { status: 'scheduled' as AppointmentStatus, count: Number(appointments.filter(a => a.status === 'scheduled').length), percentage: Number(appointments.filter(a => a.status === 'scheduled').length) / total * 100 },
-      { status: 'completed' as AppointmentStatus, count: completed, percentage: completed / total * 100 },
-      { status: 'cancelled' as AppointmentStatus, count: cancelled, percentage: cancelled / total * 100 },
-      { status: 'no_show' as AppointmentStatus, count: noShow, percentage: noShow / total * 100 }
-    ];
+        if (error) {
+          console.error('Error fetching appointments:', error);
+          return;
+        }
 
-    return {
-      totalAppointments: total,
-      completedAppointments: completed,
-      cancelledAppointments: cancelled,
-      noShowAppointments: noShow,
-      completionRate: completionRate,
-      cancelationRate: cancelationRate,
-      noShowRate: noShowRate,
-      averageAppointmentsPerDay: 0,
-      peakDays: [],
-      peakHours: [],
-      statusDistribution
+        const totalAppointments = appointments?.length || 0;
+        const completedAppointments = appointments?.filter(a => a.status === 'completed').length || 0;
+        const cancelledAppointments = appointments?.filter(a => a.status === 'cancelled').length || 0;
+        const noShowAppointments = appointments?.filter(a => a.status === 'no_show').length || 0;
+
+        const completionRate = totalAppointments > 0 ? (completedAppointments / totalAppointments) * 100 : 0;
+        const cancelationRate = totalAppointments > 0 ? (cancelledAppointments / totalAppointments) * 100 : 0;
+        const noShowRate = totalAppointments > 0 ? (noShowAppointments / totalAppointments) * 100 : 0;
+
+        const statusCounts = appointments?.reduce((acc: Record<string, number>, appointment) => {
+          acc[appointment.status] = (acc[appointment.status] || 0) + 1;
+          return acc;
+        }, {}) || {};
+
+        const statusDistribution = Object.entries(statusCounts).map(([status, count]) => ({
+          status: status as AppointmentStatus,
+          count: Number(count),
+          percentage: totalAppointments > 0 ? (Number(count) / totalAppointments) * 100 : 0
+        }));
+
+        const daysDiff = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
+        const averagePerDay = daysDiff > 0 ? totalAppointments / daysDiff : 0;
+
+        setMetrics({
+          totalAppointments,
+          completedAppointments,
+          cancelledAppointments,
+          noShowAppointments,
+          completionRate,
+          cancelationRate,
+          noShowRate,
+          averagePerDay,
+          peakDays: ['Segunda', 'Terça'], // Mock data
+          popularTimes: ['09:00', '14:00'], // Mock data
+          monthlyTrend: [], // Mock data
+          statusDistribution
+        });
+      } catch (error) {
+        console.error('Error calculating metrics:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [appointments]);
 
-  return metrics;
+    fetchMetrics();
+  }, [dateRange]);
+
+  return { metrics, isLoading };
 };
