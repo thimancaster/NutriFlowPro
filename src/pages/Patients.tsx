@@ -1,181 +1,187 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
-import { Patient, PatientFilters } from '@/types';
-import { 
-  PatientCard, 
-  PatientStatusBadge 
-} from '@/components/patient';
-import { 
-  SearchField, 
-  StatusFilter, 
-  SortFilter, 
-  FilterActions 
-} from '@/components/patient/filters';
-import { 
-  PatientLoadingState, 
-  PatientErrorState 
-} from '@/components/patients';
-import { usePatientFilters } from '@/hooks/patient/usePatientFilters';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import Pagination from '@/components/ui/pagination';
+import { PatientService } from '@/services/patient/PatientService';
+import { Patient, PatientFilters } from '@/types/patient';
+import { StatusFilter, SearchField, SortFilter } from '@/components/patient/filters';
+import { PatientCard } from '@/components/patient';
+import { PatientFormDialog } from '@/components/patient/PatientFormDialog';
+import { PatientViewDialog } from '@/components/patient/PatientViewDialog';
+import { Pagination } from '@/components/ui/pagination';
+
+const ITEMS_PER_PAGE = 12;
 
 const Patients: React.FC = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [showNewPatientDialog, setShowNewPatientDialog] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // Default page size
+  const [filters, setFilters] = useState<PatientFilters>({
+    search: '',
+    status: 'all',
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    sortBy: 'name',
+    sortOrder: 'asc'
+  });
 
-  const { filters, updateFilters, resetFilters } = usePatientFilters();
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      let query = supabase
-        .from('patients')
-        .select('*, total:count', { count: 'exact' });
-
-      if (filters.search) {
-        query = query.ilike('name', `%${filters.search}%`);
+  const { data: patientsData, isLoading, error, refetch } = useQuery({
+    queryKey: ['patients', filters],
+    queryFn: async () => {
+      const result = await PatientService.getPatients(filters);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch patients');
       }
-
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-
-      // Apply sorting
-      if (filters.sortBy) {
-        const ascending = filters.sortOrder === 'asc';
-        query = query.order(filters.sortBy, { ascending });
-      } else {
-        // Default sorting by created_at descending
-        query = query.order('created_at', { ascending: false });
-      }
-
-      const startIndex = (currentPage - 1) * pageSize;
-      query = query.range(startIndex, startIndex + pageSize - 1);
-
-      const { data, error: fetchError, count } = await query;
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      setPatients(data || []);
-      setTotalItems(count || 0);
-      setTotalPages(Math.ceil((count || 0) / pageSize));
-    } catch (e: any) {
-      setError(e.message);
-      toast({
-        title: "Erro ao carregar pacientes",
-        description: "Ocorreu um erro ao buscar os pacientes. Tente novamente.",
-        variant: "destructive",
-      });
-      console.error("Error fetching patients:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, currentPage, pageSize, toast]);
+      return result;
+    },
+    staleTime: 30000,
+  });
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (patientsData?.success && patientsData.data) {
+      // Transform the data to match our Patient interface
+      const transformedPatients = patientsData.data.map((patient: any) => ({
+        ...patient,
+        gender: patient.gender || 'other' as 'male' | 'female' | 'other'
+      }));
+      setPatients(transformedPatients);
+    }
+  }, [patientsData]);
 
-  const handleFilterChange = (newFilters: Partial<PatientFilters>) => {
-    updateFilters(newFilters);
-    setCurrentPage(1); // Reset to first page when filters change
-  };
+  const handleStatusFilter = useCallback((status: 'active' | 'archived' | 'all') => {
+    setFilters(prev => ({ ...prev, status, page: 1 }));
+  }, []);
 
-  const handleResetFilters = () => {
-    resetFilters();
-    setCurrentPage(1); // Reset to first page when filters are reset
-  };
+  const handleSort = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setFilters(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
+  }, []);
 
-  const handleSearch = () => {
-    setCurrentPage(1); // Reset to first page on search
-    fetchData();
-  };
+  const totalPages = Math.ceil((patientsData?.total || 0) / ITEMS_PER_PAGE);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Erro ao carregar pacientes</h3>
+          <p className="text-gray-500 mb-4">{error instanceof Error ? error.message : 'Erro desconhecido'}</p>
+          <Button onClick={() => refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-wrap items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-nutri-blue mb-1">Pacientes</h1>
-          <p className="text-gray-500">Gerencie seus pacientes ({totalItems} total)</p>
-        </div>
-        <Button onClick={() => navigate('/patients/new')}>
-          <PlusCircle className="h-4 w-4 mr-2" /> Novo Paciente
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">Pacientes</h1>
+        <Button onClick={() => setShowNewPatientDialog(true)} className="bg-nutri-green hover:bg-nutri-green-dark">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Novo Paciente
         </Button>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 md:space-x-4">
-            <SearchField 
-              value={filters.search || ''}
-              onChange={(value) => handleFilterChange({ search: value })}
-              onSearch={handleSearch}
-            />
-            <div className="flex items-center space-x-2">
-              <StatusFilter
-                status={filters.status || 'all'}
-                onStatusChange={(status) => handleFilterChange({ status })}
-              />
-              <SortFilter
-                value={`${filters.sortBy}:${filters.sortOrder}`}
-                onChange={(sortBy, sortOrder) => handleFilterChange({ sortBy, sortOrder })}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={handleResetFilters}>
-              Resetar
-            </Button>
-            <Button onClick={handleSearch}>
-              Buscar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <PatientLoadingState />
-      ) : error ? (
-        <PatientErrorState errorMessage={error} onRetry={fetchData} />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {patients.map((patient) => (
-            <PatientCard key={patient.id} patient={patient} />
-          ))}
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-2">
+          <SearchField 
+            value={filters.search || ''} 
+            onChange={(search) => setFilters(prev => ({ ...prev, search, page: 1 }))}
+            onSearch={() => {}}
+          />
         </div>
+        <StatusFilter 
+          value={filters.status || 'all'} 
+          onChange={handleStatusFilter}
+        />
+        <SortFilter 
+          value={`${filters.sortBy}:${filters.sortOrder}`}
+          onChange={handleSort}
+        />
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-nutri-green" />
+        </div>
+      ) : patients.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg mb-4">Nenhum paciente encontrado</p>
+          <Button onClick={() => setShowNewPatientDialog(true)} className="bg-nutri-green hover:bg-nutri-green-dark">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Cadastrar primeiro paciente
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {patients.map((patient) => (
+              <PatientCard
+                key={patient.id}
+                patient={patient}
+                onClick={() => setSelectedPatient(patient)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={filters.page || 1}
+              totalPages={totalPages}
+              onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+            />
+          )}
+        </>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      )}
+      {/* Dialogs */}
+      <PatientFormDialog
+        open={showNewPatientDialog}
+        onClose={() => setShowNewPatientDialog(false)}
+        onSuccess={() => {
+          refetch();
+          setShowNewPatientDialog(false);
+        }}
+      />
+
+      <PatientViewDialog
+        patient={selectedPatient}
+        open={!!selectedPatient}
+        onClose={() => setSelectedPatient(null)}
+        onEdit={(patient) => {
+          setEditingPatient(patient);
+          setSelectedPatient(null);
+        }}
+        onSuccess={() => {
+          refetch();
+          setSelectedPatient(null);
+        }}
+      />
+
+      <PatientFormDialog
+        open={!!editingPatient}
+        editPatient={editingPatient}
+        onClose={() => setEditingPatient(null)}
+        onSuccess={() => {
+          refetch();
+          setEditingPatient(null);
+        }}
+      />
     </div>
   );
 };

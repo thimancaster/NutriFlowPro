@@ -1,5 +1,5 @@
 
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
 export type AppointmentType = 'consulta' | 'retorno' | 'avaliacao' | 'urgencia';
 
 export interface Appointment {

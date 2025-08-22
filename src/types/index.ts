@@ -39,12 +39,12 @@ export interface ConsultationData {
   weight?: number;
   height?: number;
   age?: number;
-  gender?: 'male' | 'female';
+  gender?: 'male' | 'female' | 'other';
   
   // Activity and objectives
   activity_level?: string;
   activityLevel?: string;
-  objective?: 'manutencao' | 'emagrecimento' | 'hipertrofia';
+  objective?: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção';
   profile?: 'eutrofico' | 'obeso_sobrepeso' | 'atleta';
   goal?: string;
   
@@ -75,7 +75,7 @@ export interface ConsultationData {
   updated_at?: string;
 }
 
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
 export type AppointmentType = 'consulta' | 'retorno' | 'avaliacao' | 'urgencia';
 
 export interface Appointment {
@@ -104,7 +104,9 @@ export interface Appointment {
 export interface MealPlan {
   id: string;
   patient_id: string;
+  user_id?: string;
   name: string;
+  date?: string;
   meals: any[];
   total_calories: number;
   total_protein: number;

@@ -20,7 +20,7 @@ export interface AddressDetails {
 
 export interface PatientFilters {
   search?: string;
-  status?: '' | 'active' | 'archived';
+  status?: '' | 'active' | 'archived' | 'all';
   page?: number;
   limit?: number;
   sortBy?: string;

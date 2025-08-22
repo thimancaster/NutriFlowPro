@@ -8,30 +8,10 @@ interface StatusFilterProps {
 }
 
 const StatusFilter: React.FC<StatusFilterProps> = ({ value, onChange }) => {
-  const handleValueChange = (newValue: string) => {
-    onChange(newValue as 'active' | 'archived' | 'all');
-  };
-
-  const getDisplayValue = () => {
-    switch (value) {
-      case 'active':
-        return 'Ativos';
-      case 'archived':
-        return 'Arquivados';
-      case 'all':
-      case '':
-        return 'Todos';
-      default:
-        return 'Status';
-    }
-  };
-
   return (
-    <Select value={value || 'all'} onValueChange={handleValueChange}>
+    <Select value={value || 'all'} onValueChange={onChange}>
       <SelectTrigger className="w-full">
-        <SelectValue placeholder="Status">
-          {getDisplayValue()}
-        </SelectValue>
+        <SelectValue placeholder="Status" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Todos</SelectItem>
