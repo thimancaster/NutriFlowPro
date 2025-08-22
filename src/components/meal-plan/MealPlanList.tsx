@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, User, FileText, Trash2, Edit, Plus } from 'lucide-react';
-import { useMealPlans, useMealPlanMutations } from '@/hooks/meal-plan/useMealPlanQuery';
+import { useMealPlans } from '@/hooks/meal-plan/useMealPlans';
+import { useMealPlanMutations } from '@/hooks/meal-plan/useMealPlanMutations';
 import { MealPlanFilters } from '@/types/mealPlan';
 import { formatDate } from '@/utils/dateUtils';
 
@@ -22,7 +24,8 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
   onCreateNew
 }) => {
   const navigate = useNavigate();
-  const { data: response, isLoading, error } = useMealPlans(filters);
+  const patientId = filters?.patient_id;
+  const { data: response, isLoading, error } = useMealPlans(patientId);
   const { deleteMealPlan, isDeleting } = useMealPlanMutations();
 
   // Extract meal plans from response
@@ -30,7 +33,7 @@ const MealPlanList: React.FC<MealPlanListProps> = ({
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este plano alimentar?')) {
-      await deleteMealPlan.mutateAsync(id);
+      await deleteMealPlan(id);
     }
   };
 

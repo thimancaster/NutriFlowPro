@@ -1,12 +1,12 @@
 
 import { useState } from 'react';
 import { MealPlanServiceV2 } from '@/services/mealPlan/MealPlanServiceV2';
-import { MealPlanGenerationParams, MealPlan } from '@/types/mealPlan';
+import { MealPlanGenerationParams, ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { useToast } from '@/hooks/use-toast';
 
 export const useMealPlanGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPlan, setGeneratedPlan] = useState<MealPlan | null>(null);
+  const [generatedPlan, setGeneratedPlan] = useState<ConsolidatedMealPlan | null>(null);
   const { toast } = useToast();
 
   const generateMealPlan = async (params: MealPlanGenerationParams) => {

@@ -4,24 +4,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ConsolidatedMealItem } from '@/types/mealPlanTypes';
+import { MealPlanItem } from '@/types/mealPlanTypes';
 
 interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (item: ConsolidatedMealItem) => void;
   mealType: string;
+  onAdd: (item: MealPlanItem) => void;
 }
 
 const AddItemDialog: React.FC<AddItemDialogProps> = ({
   open,
   onOpenChange,
-  onAdd,
-  mealType
+  mealType,
+  onAdd
 }) => {
   const [formData, setFormData] = useState({
     food_name: '',
-    quantity: 0,
+    quantity: 1,
     unit: 'g',
     calories: 0,
     protein: 0,
@@ -32,7 +32,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newItem: ConsolidatedMealItem = {
+    const newItem: MealPlanItem = {
       id: crypto.randomUUID(),
       meal_id: `${mealType}-meal`,
       food_id: crypto.randomUUID(),
@@ -52,7 +52,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
     // Reset form
     setFormData({
       food_name: '',
-      quantity: 0,
+      quantity: 1,
       unit: 'g',
       calories: 0,
       protein: 0,
@@ -63,7 +63,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Adicionar Alimento</DialogTitle>
         </DialogHeader>
@@ -107,9 +107,9 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
               <Input
                 id="calories"
                 type="number"
+                step="0.1"
                 value={formData.calories}
                 onChange={(e) => setFormData(prev => ({ ...prev, calories: Number(e.target.value) }))}
-                required
               />
             </div>
             <div>
@@ -120,7 +120,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
                 step="0.1"
                 value={formData.protein}
                 onChange={(e) => setFormData(prev => ({ ...prev, protein: Number(e.target.value) }))}
-                required
               />
             </div>
           </div>
@@ -134,7 +133,6 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
                 step="0.1"
                 value={formData.carbs}
                 onChange={(e) => setFormData(prev => ({ ...prev, carbs: Number(e.target.value) }))}
-                required
               />
             </div>
             <div>
@@ -145,12 +143,11 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
                 step="0.1"
                 value={formData.fats}
                 onChange={(e) => setFormData(prev => ({ ...prev, fats: Number(e.target.value) }))}
-                required
               />
             </div>
           </div>
           
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>

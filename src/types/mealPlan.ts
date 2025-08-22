@@ -3,7 +3,8 @@ import {
   ConsolidatedMealPlan, 
   ConsolidatedMeal, 
   MEAL_TYPES,
-  MealType 
+  MealType,
+  MealPlanGenerationParams as BaseMealPlanGenerationParams
 } from './mealPlanTypes';
 
 // Legacy interfaces for backward compatibility
@@ -25,15 +26,15 @@ export interface MealPlanMeal {
   name: string;
   time?: string;
   foods: MealPlanFood[];
+  items: MealPlanFood[]; // Alias for compatibility
   total_calories: number;
   total_protein: number;
   total_carbs: number;
   total_fats: number;
 }
 
-export interface DetailedMealPlan extends Omit<ConsolidatedMealPlan, 'meals' | 'day_of_week'> {
+export interface DetailedMealPlan extends Omit<ConsolidatedMealPlan, 'meals'> {
   meals: MealPlanMeal[];
-  day_of_week?: number; // Changed to number to match ConsolidatedMealPlan
 }
 
 // Nutrition calculation interfaces
@@ -58,6 +59,13 @@ export interface NutritionalData {
   culturalRules?: any;
 }
 
+export interface NutritionalTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
 export interface MealPlanFilters {
   patient_id?: string;
   date_from?: string;
@@ -65,18 +73,22 @@ export interface MealPlanFilters {
   is_template?: boolean;
 }
 
+export interface MealPlanListResponse {
+  data: ConsolidatedMealPlan[];
+  count: number;
+  success: boolean;
+  error?: string;
+}
+
 // Generation interfaces with proper inheritance
-export interface ExtendedMealPlanGenerationParams {
-  userId: string;
-  patientId: string;
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFats: number;
+export interface ExtendedMealPlanGenerationParams extends BaseMealPlanGenerationParams {
   date?: string;
   culturalRules?: any;
-  targets?: MacroTargets; // Use our own MacroTargets interface
 }
+
+// Re-export from mealPlanTypes for convenience
+export type MealPlanGenerationParams = BaseMealPlanGenerationParams;
+export type MealPlan = ConsolidatedMealPlan;
 
 // Export commonly used types
 export type { ConsolidatedMealPlan, ConsolidatedMeal, MealType };

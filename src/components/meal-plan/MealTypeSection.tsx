@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ConsolidatedMealItem, MealType } from '@/types/mealPlanTypes';
+import { MealPlanItem, MealType } from '@/types/mealPlanTypes';
 import { Edit, Trash2, Plus, Clock } from 'lucide-react';
 import AddItemDialog from './AddItemDialog';
 import EditItemDialog from './EditItemDialog';
@@ -15,11 +15,11 @@ interface MealTypeSectionProps {
     time: string;
     color: string;
   };
-  items: ConsolidatedMealItem[];
+  items: MealPlanItem[];
   mealPlanId: string;
-  onItemUpdate: (item: ConsolidatedMealItem) => void;
+  onItemUpdate: (item: MealPlanItem) => void;
   onItemRemove: (itemId: string) => void;
-  onItemAdd: (item: ConsolidatedMealItem) => void;
+  onItemAdd: (item: MealPlanItem) => void;
   isLoading: boolean;
 }
 
@@ -35,7 +35,7 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
 }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ConsolidatedMealItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MealPlanItem | null>(null);
 
   // Calculate totals for this meal type
   const totals = items.reduce(
@@ -49,18 +49,18 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
     { calories: 0, protein: 0, carbs: 0, fats: 0 }
   );
 
-  const handleEdit = (item: ConsolidatedMealItem) => {
+  const handleEdit = (item: MealPlanItem) => {
     setSelectedItem(item);
     setShowEditDialog(true);
   };
 
-  const handleEditSave = (updatedItem: ConsolidatedMealItem) => {
+  const handleEditSave = (updatedItem: MealPlanItem) => {
     onItemUpdate(updatedItem);
     setShowEditDialog(false);
     setSelectedItem(null);
   };
 
-  const handleAdd = (newItem: ConsolidatedMealItem) => {
+  const handleAdd = (newItem: MealPlanItem) => {
     const itemWithMealType = {
       ...newItem,
       id: crypto.randomUUID()
@@ -167,7 +167,6 @@ const MealTypeSection: React.FC<MealTypeSectionProps> = ({
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         mealType={mealType}
-        mealPlanId={mealPlanId}
         onAdd={handleAdd}
       />
 
