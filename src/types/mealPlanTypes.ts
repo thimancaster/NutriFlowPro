@@ -1,3 +1,4 @@
+
 export interface MealDistributionItem {
   id: string;
   name: string;
@@ -60,10 +61,17 @@ export interface MealPlanItem {
 // Consolidated meal item (alias for MealPlanItem)
 export type ConsolidatedMealItem = MealPlanItem;
 
-// Meal types
+// Meal types - using English names for consistency with database
 export type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
 
-export const MEAL_TYPES: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
+export const MEAL_TYPES: Record<MealType, string> = {
+  breakfast: 'Café da Manhã',
+  morning_snack: 'Lanche da Manhã', 
+  lunch: 'Almoço',
+  afternoon_snack: 'Lanche da Tarde',
+  dinner: 'Jantar',
+  evening_snack: 'Ceia'
+};
 
 export const MEAL_ORDER: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
 

@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { PatientService } from '@/services/patient/PatientService';
 import { useAuth } from '../auth/AuthContext';
-import { Patient, PatientGoals } from '@/types/patient';
+import { Patient, PatientGoals, PatientFilters } from '@/types/patient';
 
 interface PatientContextType {
   patients: Patient[];
@@ -18,27 +18,33 @@ interface PatientContextType {
   loading: boolean;
   isLoading: boolean; // Add alias
   error: string | null;
+  totalPatients: number;
+  isPatientActive: boolean;
   filters: {
     search: string;
     status: string;
   };
+  currentFilters: PatientFilters;
   sessionData: {
     consultationActive: boolean;
     currentStep: string;
     lastActivity: Date | null;
   };
   setFilters: (filters: { search: string; status: string }) => void;
+  updateFilters: (newFilters: Partial<PatientFilters>) => Promise<void>;
   loadPatients: () => Promise<void>;
+  loadPatientById: (patientId: string) => Promise<void>;
   setActivePatient: (patient: Patient | null) => void;
   startPatientSession: (patient: Patient) => void;
-  endPatientSession: () => void; // Add missing method
+  endPatientSession: () => void;
   savePatient: (patientData: Partial<Patient>) => Promise<{ success: boolean; data?: Patient; error?: string }>;
   deletePatient: (id: string) => Promise<void>;
   createPatient: (patientData: Omit<Patient, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<Patient | null>;
   updatePatient: (id: string, updates: Partial<Patient>) => Promise<Patient | null>;
   clearActivePatient: () => void;
-  refreshPatients: () => Promise<void>; // Add missing method
-  patientHistory: any[]; // Add missing property
+  refreshPatients: () => Promise<void>;
+  addRecentPatient: (patient: Patient) => void;
+  patientHistory: any[];
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
@@ -69,7 +75,14 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [patientHistory, setPatientHistory] = useState<any[]>([]);
+  const [totalPatients, setTotalPatients] = useState(0);
   const [filtersState, setFiltersState] = useState({ search: '', status: '' });
+  const [currentFilters, setCurrentFilters] = useState<PatientFilters>({ 
+    search: '', 
+    status: 'active',
+    page: 1,
+    limit: 10
+  });
   const [sessionData, setSessionData] = useState({
     consultationActive: false,
     currentStep: '',
@@ -77,8 +90,15 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
   });
   const { user } = useAuth();
 
+  const isPatientActive = Boolean(activePatient && sessionData.consultationActive);
+
   const setFilters = useCallback((newFilters: { search: string; status: string }) => {
     setFiltersState(newFilters);
+  }, []);
+
+  const updateFilters = useCallback(async (newFilters: Partial<PatientFilters>) => {
+    setCurrentFilters(prev => ({ ...prev, ...newFilters }));
+    await loadPatients();
   }, []);
 
   const loadPatients = useCallback(async () => {
@@ -90,7 +110,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     try {
       const query = supabase
         .from('patients')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', user.id);
 
       if (filtersState.status && filtersState.status !== '' && filtersState.status !== 'all') {
@@ -101,7 +121,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
         query.or(`name.ilike.%${filtersState.search}%,email.ilike.%${filtersState.search}%`);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error, count } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -119,11 +139,27 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
           }
         }
 
+        // Parse goals from JSON
+        let goals: PatientGoals = {};
+        if (patient.goals) {
+          try {
+            goals = typeof patient.goals === 'string' 
+              ? JSON.parse(patient.goals) 
+              : patient.goals as PatientGoals;
+          } catch (e) {
+            console.warn('Failed to parse patient goals:', e);
+            goals = {};
+          }
+        }
+
         return {
           ...patient,
+          email: patient.email || '',
           gender: patient.gender as 'male' | 'female' | 'other',
-          status: patient.status as 'active' | 'archived',
-          goals: patient.goals as PatientGoals,
+          status: (patient.status === 'active' || patient.status === 'archived') 
+            ? patient.status as 'active' | 'archived'
+            : 'active',
+          goals,
           address: patient.address || '',
           secondaryPhone: patient.secondaryphone || '',
           age,
@@ -132,6 +168,7 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       });
 
       setPatients(transformedData);
+      setTotalPatients(count || 0);
     } catch (err: any) {
       console.error('Error loading patients:', err);
       setError(err.message);
@@ -140,9 +177,63 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     }
   }, [user?.id, filtersState]);
 
+  const loadPatientById = useCallback(async (patientId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', patientId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Transform single patient data
+        let goals: PatientGoals = {};
+        if (data.goals) {
+          try {
+            goals = typeof data.goals === 'string' 
+              ? JSON.parse(data.goals) 
+              : data.goals as PatientGoals;
+          } catch (e) {
+            console.warn('Failed to parse patient goals:', e);
+            goals = {};
+          }
+        }
+
+        const transformedPatient: Patient = {
+          ...data,
+          email: data.email || '',
+          gender: data.gender as 'male' | 'female' | 'other',
+          status: (data.status === 'active' || data.status === 'archived') 
+            ? data.status as 'active' | 'archived'
+            : 'active',
+          goals,
+          address: data.address || '',
+          secondaryPhone: data.secondaryphone || '',
+          age: data.birth_date ? calculateAge(data.birth_date) : undefined,
+          last_appointment: undefined
+        };
+
+        setActivePatient(transformedPatient);
+      }
+    } catch (err: any) {
+      console.error('Error loading patient by ID:', err);
+      setError(err.message);
+    }
+  }, [user?.id]);
+
   const refreshPatients = useCallback(async () => {
     await loadPatients();
   }, [loadPatients]);
+
+  const addRecentPatient = useCallback((patient: Patient) => {
+    // Add to recent patients logic if needed
+    console.log('Adding recent patient:', patient.name);
+  }, []);
 
   const startPatientSession = useCallback((patient: Patient) => {
     setActivePatient(patient);
@@ -237,11 +328,25 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
           ...patientData,
           user_id: user?.id,
           goals: goals,
+          address: typeof patientData.address === 'object' 
+            ? JSON.stringify(patientData.address) 
+            : patientData.address || '',
+          secondaryphone: patientData.secondaryPhone || ''
         };
+        
+        // Remove fields that don't exist in database
+        const {
+          secondaryPhone,
+          last_appointment,
+          age,
+          weight,
+          height,
+          ...cleanDbPatient
+        } = newPatient;
         
         const { data, error } = await supabase
           .from('patients')
-          .insert([newPatient])
+          .insert([cleanDbPatient])
           .select()
           .single();
         
@@ -250,12 +355,29 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
         }
         
         // Transform the data to match our Patient type
+        let parsedGoals: PatientGoals = {};
+        if (data.goals) {
+          try {
+            parsedGoals = typeof data.goals === 'string' 
+              ? JSON.parse(data.goals) 
+              : data.goals as PatientGoals;
+          } catch (e) {
+            console.warn('Failed to parse patient goals:', e);
+            parsedGoals = {};
+          }
+        }
+
         const transformedData: Patient = {
           ...data,
+          email: data.email || '',
           gender: data.gender as 'male' | 'female' | 'other',
-          goals: data.goals as PatientGoals,
+          status: (data.status === 'active' || data.status === 'archived') 
+            ? data.status as 'active' | 'archived'
+            : 'active',
+          goals: parsedGoals,
           address: data.address || '',
           secondaryPhone: data.secondaryphone || '',
+          age: data.birth_date ? calculateAge(data.birth_date) : undefined,
           last_appointment: undefined // This will be loaded separately if needed
         };
         
@@ -279,9 +401,28 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       // Ensure goals is not undefined before stringifying
       const goals = updates.goals ? JSON.stringify(updates.goals) as Json : undefined;
       
+      const dbUpdates = {
+        ...updates,
+        goals,
+        address: typeof updates.address === 'object' 
+          ? JSON.stringify(updates.address) 
+          : updates.address || '',
+        secondaryphone: updates.secondaryPhone
+      };
+
+      // Remove fields that don't exist in database
+      const {
+        secondaryPhone,
+        last_appointment,
+        age,
+        weight,
+        height,
+        ...cleanDbUpdates
+      } = dbUpdates;
+      
       const { data, error } = await supabase
         .from('patients')
-        .update({ ...updates, goals })
+        .update(cleanDbUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -291,12 +432,29 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       }
       
       // Transform the data to match our Patient type
+      let parsedGoals: PatientGoals = {};
+      if (data.goals) {
+        try {
+          parsedGoals = typeof data.goals === 'string' 
+            ? JSON.parse(data.goals) 
+            : data.goals as PatientGoals;
+        } catch (e) {
+          console.warn('Failed to parse patient goals:', e);
+          parsedGoals = {};
+        }
+      }
+
       const transformedData: Patient = {
         ...data,
+        email: data.email || '',
         gender: data.gender as 'male' | 'female' | 'other',
-        goals: data.goals as PatientGoals,
+        status: (data.status === 'active' || data.status === 'archived') 
+          ? data.status as 'active' | 'archived'
+          : 'active',
+        goals: parsedGoals,
         address: data.address || '',
         secondaryPhone: data.secondaryphone || '',
+        age: data.birth_date ? calculateAge(data.birth_date) : undefined,
         last_appointment: undefined // This will be loaded separately if needed
       };
       
@@ -330,21 +488,27 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
     patients,
     activePatient,
     loading,
-    isLoading: loading, // Add alias
+    isLoading: loading,
     error,
+    totalPatients,
+    isPatientActive,
     filters: filtersState,
+    currentFilters,
     sessionData,
     setFilters,
+    updateFilters,
     loadPatients,
+    loadPatientById,
     setActivePatient,
     startPatientSession,
     endPatientSession,
     savePatient,
-    deletePatient: async () => {}, // Simplified placeholder
-    createPatient: async () => null, // Simplified placeholder
-    updatePatient: async () => null, // Simplified placeholder
-    clearActivePatient: () => setActivePatient(null),
+    deletePatient,
+    createPatient,
+    updatePatient,
+    clearActivePatient,
     refreshPatients,
+    addRecentPatient,
     patientHistory,
   };
 
@@ -353,6 +517,20 @@ export const PatientProvider: React.FC<PatientProviderProps> = ({ children }) =>
       {children}
     </PatientContext.Provider>
   );
+};
+
+// Helper function to calculate age
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
 };
 
 // Export the Patient interface from this context for backward compatibility

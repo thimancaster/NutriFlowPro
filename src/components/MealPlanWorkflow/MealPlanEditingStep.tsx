@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,17 +70,35 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
   // Convert ConsolidatedMeal to MealPlanMeal for compatibility
   const convertToMealPlanMeal = (meal: ConsolidatedMeal): MealPlanMeal => {
-    const foods: MealPlanFood[] = (meal.items || meal.foods || []).map(item => ({
-      id: item.id,
-      food_id: 'food_id' in item ? item.food_id : item.id,
-      name: 'food_name' in item ? item.food_name : item.name,
-      quantity: item.quantity,
-      unit: item.unit,
-      calories: item.calories,
-      protein: item.protein,
-      carbs: item.carbs,
-      fats: 'fats' in item ? item.fats : item.fat
-    }));
+    const foods: MealPlanFood[] = (meal.items || meal.foods || []).map(item => {
+      if ('food_name' in item) {
+        // It's a MealPlanItem
+        return {
+          id: item.id,
+          food_id: item.food_id,
+          name: item.food_name,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fats: item.fats
+        };
+      } else {
+        // It's a MealAssemblyFood
+        return {
+          id: item.id,
+          food_id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fats: item.fat
+        };
+      }
+    });
 
     return {
       ...meal,
@@ -230,6 +247,19 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
               ...food,
               fat: food.fats // Convert fats to fat for MealAssemblyFood
             })) as MealAssemblyFood[] || [],
+            items: updatedMeal.foods?.map(food => ({
+              id: food.id,
+              meal_id: updatedMeal.id,
+              food_id: food.food_id,
+              food_name: food.name,
+              quantity: food.quantity,
+              unit: food.unit,
+              calories: food.calories,
+              protein: food.protein,
+              carbs: food.carbs,
+              fats: food.fats,
+              order_index: 0
+            })) as MealPlanItem[] || [],
             totalCalories: updatedMeal.total_calories,
             totalProtein: updatedMeal.total_protein,
             totalCarbs: updatedMeal.total_carbs,

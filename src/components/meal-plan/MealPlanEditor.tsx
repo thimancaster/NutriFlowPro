@@ -2,7 +2,7 @@
 import React, {useState, useEffect} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
-import {ConsolidatedMealPlan, ConsolidatedMealItem, MEAL_ORDER, MEAL_TYPES, MEAL_TIMES} from "@/types/mealPlanTypes";
+import {ConsolidatedMealPlan, MealPlanItem, MEAL_ORDER, MEAL_TYPES, MEAL_TIMES, MealType} from "@/types/mealPlanTypes";
 import MealTypeSection from "./MealTypeSection";
 import {format} from "date-fns";
 import {ptBR} from "date-fns/locale";
@@ -14,48 +14,48 @@ interface MealPlanEditorProps {
 	onMealPlanUpdate?: (updatedMealPlan: ConsolidatedMealPlan) => void;
 }
 
-type MealType = typeof MEAL_ORDER[number];
-
 // Configuração das refeições em ordem cronológica brasileira
 const MEAL_TYPE_CONFIG: Record<MealType, {name: string; time: string; color: string}> = {
-	cafe_da_manha: {name: "Café da Manhã", time: "07:00", color: "bg-orange-100"},
-	lanche_manha: {name: "Lanche da Manhã", time: "10:00", color: "bg-yellow-100"},
-	almoco: {name: "Almoço", time: "12:30", color: "bg-green-100"},
-	lanche_tarde: {name: "Lanche da Tarde", time: "15:30", color: "bg-blue-100"},
-	jantar: {name: "Jantar", time: "19:00", color: "bg-purple-100"},
-	ceia: {name: "Ceia", time: "21:30", color: "bg-pink-100"},
+	breakfast: {name: "Café da Manhã", time: "07:00", color: "bg-orange-100"},
+	morning_snack: {name: "Lanche da Manhã", time: "10:00", color: "bg-yellow-100"},
+	lunch: {name: "Almoço", time: "12:30", color: "bg-green-100"},
+	afternoon_snack: {name: "Lanche da Tarde", time: "15:30", color: "bg-blue-100"},
+	dinner: {name: "Jantar", time: "19:00", color: "bg-purple-100"},
+	evening_snack: {name: "Ceia", time: "21:30", color: "bg-pink-100"},
 };
 
 const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpdate}) => {
-	const [items, setItems] = useState<ConsolidatedMealItem[]>([]);
+	const [items, setItems] = useState<MealPlanItem[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const {toast} = useToast();
 
 	useEffect(() => {
 		// Convert meals to items for backward compatibility
-		const allItems: ConsolidatedMealItem[] = [];
+		const allItems: MealPlanItem[] = [];
 		mealPlan.meals?.forEach(meal => {
-			meal.items.forEach(item => {
-				allItems.push({
-					...item,
-					meal_type: meal.type
+			if (meal.items) {
+				meal.items.forEach(item => {
+					allItems.push({
+						...item,
+						meal_type: meal.type
+					});
 				});
-			});
+			}
 		});
 		setItems(allItems);
 	}, [mealPlan]);
 
 	// Group items by meal type
 	const groupedItems = items.reduce((acc, item) => {
-		const mealType = item.meal_type || 'cafe_da_manha';
+		const mealType = item.meal_type || 'breakfast';
 		if (!acc[mealType]) {
 			acc[mealType] = [];
 		}
 		acc[mealType].push(item);
 		return acc;
-	}, {} as Record<string, ConsolidatedMealItem[]>);
+	}, {} as Record<string, MealPlanItem[]>);
 
-	const saveMealPlanChanges = async (updatedItems: ConsolidatedMealItem[]) => {
+	const saveMealPlanChanges = async (updatedItems: MealPlanItem[]) => {
 		try {
 			setIsLoading(true);
 
@@ -101,7 +101,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpda
 		}
 	};
 
-	const handleItemUpdate = async (updatedItem: ConsolidatedMealItem) => {
+	const handleItemUpdate = async (updatedItem: MealPlanItem) => {
 		console.log("Updating item:", updatedItem);
 
 		const updatedItems = items.map((item) => (item.id === updatedItem.id ? updatedItem : item));
@@ -118,7 +118,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpda
 		await saveMealPlanChanges(updatedItems);
 	};
 
-	const handleItemAdd = async (newItem: ConsolidatedMealItem) => {
+	const handleItemAdd = async (newItem: MealPlanItem) => {
 		console.log("Adding new item:", newItem);
 
 		const updatedItems = [...items, newItem];
@@ -145,7 +145,7 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpda
 					<div className="flex items-center justify-between">
 						<CardTitle className="flex items-center gap-2">
 							🇧🇷 Plano Alimentar Brasileiro -{" "}
-							{format(new Date(mealPlan.date), "dd/MM/yyyy", {locale: ptBR})}
+							{format(new Date(mealPlan.date || mealPlan.created_at), "dd/MM/yyyy", {locale: ptBR})}
 						</CardTitle>
 						<div className="flex gap-2">
 							<Badge variant="outline">
