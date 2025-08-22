@@ -1,24 +1,20 @@
-import { useEffect } from 'react';
-import { usePatient } from '@/contexts/patient/PatientContext';
+import { useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export const useDebugPatients = () => {
-  const { patients, totalPatients, isLoading, error, currentFilters } = usePatient();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    console.log('🔍 DEBUG Patient Context State:');
-    console.log('- Patients count:', patients.length);
-    console.log('- Total patients:', totalPatients);
-    console.log('- Is loading:', isLoading);
-    console.log('- Error:', error?.message);
-    console.log('- Current filters:', currentFilters);
-    console.log('- Patients data:', patients);
-  }, [patients, totalPatients, isLoading, error, currentFilters]);
+  const handleError = useCallback((error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Patient debug error:', errorMessage);
+    toast({
+      title: "Erro de Debug",
+      description: errorMessage,
+      variant: "destructive"
+    });
+  }, [toast]);
 
   return {
-    patients,
-    totalPatients,
-    isLoading,
-    error,
-    currentFilters
+    handleError
   };
 };

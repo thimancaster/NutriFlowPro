@@ -31,7 +31,8 @@ export interface MealAssemblyFood {
   fat: number;
 }
 
-export interface Meal {
+// Updated Meal interface to avoid conflicts
+export interface MealPlanMealType {
   id: string;
   name: string;
   time: string;
@@ -127,6 +128,9 @@ export interface ConsolidatedMealPlan {
   notes?: string;
   created_at: string;
   updated_at: string;
+  is_template?: boolean;
+  day_of_week?: number;
+  targets?: any;
 }
 
 export interface MealPlanGenerationParams {
@@ -161,8 +165,11 @@ export interface PDFMeal {
 export interface PDFMealPlanData {
   id?: string;
   patient_name: string;
+  patientName?: string; // For backward compatibility
   patient_age?: number;
+  patientAge?: number; // For backward compatibility
   patient_gender?: 'male' | 'female';
+  patientGender?: 'male' | 'female'; // For backward compatibility
   date?: string;
   total_calories: number;
   total_protein: number;
@@ -187,9 +194,6 @@ export interface PDFMealPlanData {
     total_fats: number;
   }[];
   // Legacy props for backward compatibility
-  patientName?: string;
-  patientAge?: number;
-  patientGender?: 'male' | 'female';
   totalCalories?: number;
   totalProtein?: number;
   totalCarbs?: number;

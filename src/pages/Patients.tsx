@@ -1,170 +1,279 @@
-
-import React from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { usePatientDetail } from '@/hooks/patient/usePatientDetail';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePatientList } from '@/hooks/patient/usePatientList';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { Link } from 'react-router-dom';
+import { usePatientOperations } from '@/hooks/patient/usePatientOperations';
 import { Button } from '@/components/ui/button';
-import { Calculator, Utensils } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { MoreVertical, Edit, Copy, Trash2, UserPlus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Pagination } from '@/components/ui/pagination';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useSearchParams } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Switch } from "@/components/ui/switch"
+import { Link } from 'react-router-dom';
+import { PatientFilters as TypedPatientFilters } from '@/types/patient';
 
-// Import extracted components
-import PatientDetailModal from '@/components/patient/PatientDetailModal';
-import PatientFiltersComponent from '@/components/patient/PatientFilters';
-import PatientPageHeader from '@/components/patients/PatientPageHeader';
-import PatientTableHeader from '@/components/patients/PatientTableHeader';
-import PatientTable from '@/components/patients/PatientTable';
-import PatientLoadingState from '@/components/patients/PatientLoadingState';
-import PatientErrorState from '@/components/patients/PatientErrorState';
-import { usePatient } from '@/contexts/patient/PatientContext';
-import { Patient } from '@/types';
-
-const Patients = () => {
-  const { user } = useAuth();
-  const { startPatientSession } = usePatient();
-  
-  // Custom wrapper for the patient detail functionality
-  const { 
-    patient, 
-    refetch: refetchPatientDetail,
-    isLoading: isPatientDetailLoading,
-    error: patientDetailError,
-    isError: isPatientDetailError
-  } = usePatientDetail();
-  
-  // Manual implementation of the missing properties
-  const isModalOpen = !!patient;
-  
-  const openPatientDetail = async (patientOrId: string | Patient) => {
-    if (typeof patientOrId === 'string') {
-      window.location.href = `/patients/${patientOrId}`;
-    } else {
-      window.location.href = `/patients/${patientOrId.id}`;
-    }
-    return Promise.resolve();
-  };
-  
-  const closePatientDetail = () => {
-    window.history.back();
-  };
-  
-  // Use the patient list hook for fetching and filtering patients
+const Patients: React.FC = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const {
     patients,
-    totalPatients,
-    pagination,
-    filters,
     isLoading,
     error,
+    handleSearch,
     handlePageChange,
-    handleFilterChange,
+    handleFilterChange: handleFilterChangeInternal,
     handleStatusChange,
-    refetch
+    refetch,
+    pagination,
+    searchTerm,
+    filters,
+    setCurrentPage,
+    setSearchTerm,
   } = usePatientList();
-  
-  // Function to handle patient status change and refresh
-  const handlePatientStatusChange = async () => {
-    await refetch();
-    if (patient) {
-      // Refresh the patient details after status change
-      const updatedPatient = patients.find(p => p.id === patient.id);
-      if (updatedPatient) {
-        // Update local patient state with the refreshed data
-        await openPatientDetail(updatedPatient.id);
+  const { deletePatient, duplicatePatient } = usePatientOperations();
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const handleCreate = () => {
+    navigate('/patients/new');
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/patients/${id}`);
+  };
+
+  const handleDuplicate = async (patient: any) => {
+    try {
+      await duplicatePatient(patient);
+      toast({
+        title: "Paciente Duplicado",
+        description: "Paciente duplicado com sucesso.",
+      });
+      await refetch();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao duplicar paciente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedPatientId) {
+      try {
+        await deletePatient(selectedPatientId);
+        toast({
+          title: "Paciente Removido",
+          description: "Paciente removido com sucesso.",
+        });
+        await refetch();
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao remover paciente.",
+          variant: "destructive",
+        });
+      } finally {
+        setShowDeleteDialog(false);
+        setSelectedPatientId(null);
       }
     }
   };
 
-  // Handle starting a session with a patient
-  const handleStartPatientSession = (selectedPatient: Patient) => {
-    startPatientSession(selectedPatient);
+  const confirmDelete = (id: string) => {
+    setSelectedPatientId(id);
+    setShowDeleteDialog(true);
   };
 
-  // Extend the PatientTable component to include patient action buttons
-  const renderPatientActions = (patientData: Patient) => (
-    <div className="flex space-x-1">
-      <Link to={`/calculator?patientId=${patientData.id}`}>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-1"
-          onClick={() => handleStartPatientSession(patientData)}
-        >
-          <Calculator className="h-4 w-4" />
-          <span className="hidden lg:inline">Calculadora</span>
-        </Button>
-      </Link>
-      
-      <Link to={`/meal-plans?patientId=${patientData.id}`}>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-1"
-          onClick={() => handleStartPatientSession(patientData)}
-        >
-          <Utensils className="h-4 w-4" />
-          <span className="hidden lg:inline">Plano</span>
-        </Button>
-      </Link>
-    </div>
-  );
+  const handleFilterChange = useCallback((newFilters: Partial<TypedPatientFilters>) => {
+    const mappedFilters = {
+      ...newFilters,
+      status: newFilters.status as '' | 'active' | 'archived' || ''
+    };
+    handleFilterChangeInternal(mappedFilters);
+  }, [handleFilterChangeInternal]);
 
-  // Create a wrapper function to handle the status change signature mismatch
-  const handleStatusChangeWrapper = (status: 'active' | 'archived' | 'all') => {
-    handleStatusChange(status);
-  };
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (debouncedSearchTerm) {
+      params.set('search', debouncedSearchTerm);
+    } else {
+      params.delete('search');
+    }
+    setSearchParams(params);
+  }, [debouncedSearchTerm, setSearchParams, searchParams]);
 
-  const handleSearchAction = () => {
-    // The search is handled automatically by the filter changes
-    console.log('Search triggered');
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-8">
+          <p>Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    const errorMessage = typeof error === 'string' ? error : (error as Error)?.message || 'Erro desconhecido';
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-8">
+          <p className="text-red-600">{errorMessage}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const finalFilters: TypedPatientFilters = {
+    ...filters,
+    status: filters.status as '' | 'active' | 'archived' || ''
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PatientPageHeader />
-      
-      <PatientFiltersComponent 
-        filters={filters}
-        onFiltersChange={handleFilterChange}
-        onStatusChange={handleStatusChangeWrapper}
-        onSearch={handleSearchAction}
-      />
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <PatientTableHeader totalItems={pagination.total} />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <PatientLoadingState />
-          ) : error ? (
-            <PatientErrorState 
-              errorMessage={error.message} 
-              onRetry={() => refetch()} 
-            />
-          ) : (
-            <PatientTable
-              patients={patients}
-              totalItems={pagination.total}
-              filters={filters}
-              onViewDetail={openPatientDetail}
-              onStatusChange={refetch}
-              onPageChange={handlePageChange}
-              userId={user?.id}
-              renderActions={renderPatientActions}
-            />
-          )}
-        </CardContent>
-      </Card>
-      
-      {patient && (
-        <PatientDetailModal
-          isOpen={isModalOpen}
-          onClose={closePatientDetail}
-          patient={patient}
-          onStatusChange={handlePatientStatusChange}
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Pacientes</h1>
+        <Button onClick={handleCreate} className="space-x-2">
+          <UserPlus className="h-4 w-4" />
+          <span>Adicionar Paciente</span>
+        </Button>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <div className="md:col-span-2">
+          <Input
+            type="search"
+            placeholder="Buscar paciente..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Label htmlFor="status">Status:</Label>
+          <select
+            id="status"
+            className="border p-2 rounded"
+            value={finalFilters.status}
+            onChange={(e) => handleFilterChange({ status: e.target.value as '' | 'active' | 'archived' })}
+          >
+            <option value="">Todos</option>
+            <option value="active">Ativos</option>
+            <option value="archived">Arquivados</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableCaption>Lista de pacientes cadastrados.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">Nome</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {patients.map((patient) => (
+              <TableRow key={patient.id}>
+                <TableCell className="font-medium">{patient.name}</TableCell>
+                <TableCell>{patient.email}</TableCell>
+                <TableCell>{patient.phone}</TableCell>
+                <TableCell>
+                  <Badge variant={patient.status === 'active' ? 'default' : 'secondary'}>
+                    {patient.status === 'active' ? 'Ativo' : 'Arquivado'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Abrir menu</span>
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => handleEdit(patient.id)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDuplicate(patient)}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Duplicar
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => confirmDelete(patient.id)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+            {patients.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center">Nenhum paciente encontrado.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={handlePageChange}
         />
-      )}
+      </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá remover o paciente permanentemente. Tem certeza que deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

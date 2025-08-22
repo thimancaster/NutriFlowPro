@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-export interface UnifiedClinicalWorkflowProps {
+interface UnifiedClinicalWorkflowProps {
   onComplete?: () => void;
 }
 
