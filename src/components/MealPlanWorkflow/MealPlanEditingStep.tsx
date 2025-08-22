@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -159,7 +160,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
 
                 {/* Foods List */}
                 <div className="space-y-2">
-                  {meal.items.map((item, index) => (
+                  {meal.items && meal.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <div>
                         <span className="font-medium">{item.food_name}</span>
@@ -216,6 +217,7 @@ const MealPlanEditingStep: React.FC<MealPlanEditingStepProps> = ({
             ...updatedMeal,
             items: updatedMeal.foods?.map((food, index) => ({
               id: food.id || crypto.randomUUID(),
+              meal_id: updatedMeal.id,
               food_id: food.food_id,
               food_name: food.name,
               quantity: food.quantity,

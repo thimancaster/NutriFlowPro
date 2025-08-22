@@ -11,7 +11,12 @@ export const useMealPlans = (patientId?: string) => {
     queryFn: async () => {
       if (!user?.id) return { success: false, data: [] };
       
-      const result = await MealPlanService.getMealPlans(user.id, patientId ? { patient_id: patientId } : undefined);
+      const filters: any = {};
+      if (patientId) {
+        filters.patient_id = patientId;
+      }
+      
+      const result = await MealPlanService.getMealPlans(user.id, filters);
       return result;
     },
     enabled: !!user?.id

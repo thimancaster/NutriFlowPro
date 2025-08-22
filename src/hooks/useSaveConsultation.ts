@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { consultationService } from '@/services/consultationService';
+import { ConsultationService } from '@/services/consultationService';
 import { ConsultationCreateInput, ConsultationUpdateInput } from '@/types/consultationTypes';
 
 interface UseSaveConsultationProps {
@@ -16,7 +16,7 @@ export const useSaveConsultation = ({ onSuccess, onError }: UseSaveConsultationP
   const createConsultation = async (data: ConsultationCreateInput) => {
     setIsLoading(true);
     try {
-      const result = await consultationService.createConsultation(data);
+      const result = await ConsultationService.createConsultation(data);
       
       if (result.success) {
         toast({
@@ -45,7 +45,7 @@ export const useSaveConsultation = ({ onSuccess, onError }: UseSaveConsultationP
   const updateConsultation = async (id: string, data: ConsultationUpdateInput) => {
     setIsLoading(true);
     try {
-      const result = await consultationService.updateConsultation(id, data);
+      const result = await ConsultationService.updateConsultation(id, data);
       
       if (result.success) {
         toast({
@@ -73,11 +73,15 @@ export const useSaveConsultation = ({ onSuccess, onError }: UseSaveConsultationP
 
   // Alias for backward compatibility
   const saveConsultation = updateConsultation;
+  const handleSaveConsultation = updateConsultation;
+  const isSubmitting = isLoading;
 
   return {
     createConsultation,
     updateConsultation,
     saveConsultation,
-    isLoading
+    handleSaveConsultation,
+    isLoading,
+    isSubmitting
   };
 };
