@@ -15,7 +15,7 @@ import {
 } from '@/types/mealPlanTypes';
 
 // Updated step types to match usage
-type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'completed';
+type WorkflowStep = 'patient' | 'nutritional' | 'generation' | 'mealPlan' | 'editing' | 'review' | 'completed';
 
 // Define the context type with all required properties
 interface MealPlanWorkflowContextType {
