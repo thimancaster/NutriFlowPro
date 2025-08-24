@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, memo, useMemo, useCallback} from "react";
 import {Link} from "react-router-dom";
 import {
 	LayoutDashboard,
@@ -17,6 +17,7 @@ import {Button} from "@/components/ui/button";
 import {ThemeToggle} from "@/components/ui/theme-toggle";
 import {NavbarDesktopNavigation, NavbarUserMenu, NavbarMobileMenu} from "./navbar/index";
 
+// Memoize navigation items to prevent recreation on every render
 const navigationItems = [
 	{name: "Dashboard", href: "/dashboard", icon: LayoutDashboard},
 	{name: "Pacientes", href: "/patients", icon: Users},
@@ -28,17 +29,36 @@ const navigationItems = [
 	{name: "Configurações", href: "/settings", icon: Settings},
 ];
 
-const Navbar = () => {
+const Navbar = memo(() => {
 	const {logout} = useAuth();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-	const handleLogout = async () => {
+	const handleLogout = useCallback(async () => {
 		try {
 			await logout();
 		} catch (error) {
 			console.error("Error logging out:", error);
 		}
-	};
+	}, [logout]);
+
+	const toggleMobileMenu = useCallback(() => {
+		setIsMobileMenuOpen((prev) => !prev);
+	}, []);
+
+	const closeMobileMenu = useCallback(() => {
+		setIsMobileMenuOpen(false);
+	}, []);
+
+	const logoElement = useMemo(
+		() => (
+			<Link to="/dashboard" className="flex items-center">
+				<span className="text-nutri-green font-bold text-2xl">Nutri</span>
+				<span className="text-nutri-blue font-bold text-2xl">Flow</span>
+				<span className="text-nutri-blue font-bold text-2xl ml-1">Pro</span>
+			</Link>
+		),
+		[]
+	);
 
 	return (
 		<nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
@@ -46,13 +66,7 @@ const Navbar = () => {
 				<div className="flex justify-between h-16">
 					{/* Logo and Desktop Navigation */}
 					<div className="flex">
-						<div className="flex-shrink-0 flex items-center">
-							<Link to="/dashboard" className="flex items-center">
-								<span className="text-nutri-green font-bold text-2xl">Nutri</span>
-								<span className="text-nutri-blue font-bold text-2xl">Flow</span>
-								<span className="text-nutri-blue font-bold text-2xl ml-1">Pro</span>
-							</Link>
-						</div>
+						<div className="flex-shrink-0 flex items-center">{logoElement}</div>
 
 						<NavbarDesktopNavigation navigationItems={navigationItems} />
 					</div>
@@ -70,7 +84,7 @@ const Navbar = () => {
 							<Button
 								variant="ghost"
 								size="sm"
-								onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+								onClick={toggleMobileMenu}
 								className="inline-flex items-center justify-center p-2 h-9 w-9">
 								{isMobileMenuOpen ? (
 									<X className="h-5 w-5" />
@@ -86,10 +100,12 @@ const Navbar = () => {
 			<NavbarMobileMenu
 				navigationItems={navigationItems}
 				isOpen={isMobileMenuOpen}
-				onClose={() => setIsMobileMenuOpen(false)}
+				onClose={closeMobileMenu}
 			/>
 		</nav>
 	);
-};
+});
+
+Navbar.displayName = "Navbar";
 
 export default Navbar;
