@@ -149,93 +149,107 @@ export const ENPCalculatorForm: React.FC = () => {
 	};
 
 	return (
-		<Tabs defaultValue="calculator" className="w-full">
-			<TabsList className="grid w-full grid-cols-2">
-				<TabsTrigger value="calculator">Calculadora ENP</TabsTrigger>
-				<TabsTrigger value="validator">Validação Sistema</TabsTrigger>
-			</TabsList>
+		<div className="w-full bg-card border border-border rounded-lg overflow-hidden">
+			<Tabs defaultValue="calculator" className="w-full">
+				<TabsList className="grid w-full grid-cols-2 bg-muted rounded-lg p-1 h-14">
+					<TabsTrigger
+						value="calculator"
+						className="rounded-md transition-all duration-200 bg-background border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:border-primary hover:bg-accent hover:border-border text-sm font-medium mx-2">
+						Calculadora ENP
+					</TabsTrigger>
+					<TabsTrigger
+						value="validator"
+						className="rounded-md transition-all duration-200 bg-background border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:border-primary hover:bg-accent hover:border-border text-sm font-medium mx-2">
+						Validação Sistema
+					</TabsTrigger>
+				</TabsList>
 
-			<TabsContent value="calculator" className="space-y-6">
-				<ENPDataInputs
-					weight={formData.weight.toString()}
-					setWeight={handleWeightChange}
-					height={formData.height.toString()}
-					setHeight={handleHeightChange}
-					age={formData.age.toString()}
-					setAge={handleAgeChange}
-					sex={formData.gender}
-					setSex={(gender) => updateFormData({gender})}
-					activityLevel={mapActivityLevelToLegacy(formData.activityLevel)}
-					setActivityLevel={(activityLevel) =>
-						updateFormData({
-							activityLevel: mapActivityLevelToNew(activityLevel as ActivityLevel),
-						})
-					}
-					objective={mapObjectiveToLegacy(formData.objective)}
-					setObjective={(objective) =>
-						updateFormData({
-							objective: mapObjectiveToNew(objective as Objective),
-						})
-					}
-					profile={mapProfileToLegacy(formData.profile)}
-					setProfile={(profile) =>
-						updateFormData({
-							profile: mapProfileToNew(profile as Profile),
-						})
-					}
-					bodyFatPercentage={bodyFatPercentage?.toString() || ""}
-					setBodyFatPercentage={handleBodyFatChange}
-				/>
-
-				<GERFormulaSelection
-					selectedFormula={gerFormula}
-					onFormulaChange={setGERFormula}
-					profile={mapProfileToLegacy(formData.profile)}
-					hasBodyFat={!!bodyFatPercentage}
-					age={formData.age}
-					weight={formData.weight}
-					height={formData.height}
-				/>
-
-				<ENPValidation errors={errorMessages} warnings={warningMessages} />
-
-				{!results && (
-					<CalculatorActions
-						isCalculating={isCalculating}
-						calculateResults={handleCalculate}
-						disabled={!isValid}
+				<TabsContent
+					value="calculator"
+					className="space-y-6 bg-transparent border-0 rounded-none p-6">
+					<ENPDataInputs
+						weight={formData.weight.toString()}
+						setWeight={handleWeightChange}
+						height={formData.height.toString()}
+						setHeight={handleHeightChange}
+						age={formData.age.toString()}
+						setAge={handleAgeChange}
+						sex={formData.gender}
+						setSex={(gender) => updateFormData({gender})}
+						activityLevel={mapActivityLevelToLegacy(formData.activityLevel)}
+						setActivityLevel={(activityLevel) =>
+							updateFormData({
+								activityLevel: mapActivityLevelToNew(
+									activityLevel as ActivityLevel
+								),
+							})
+						}
+						objective={mapObjectiveToLegacy(formData.objective)}
+						setObjective={(objective) =>
+							updateFormData({
+								objective: mapObjectiveToNew(objective as Objective),
+							})
+						}
+						profile={mapProfileToLegacy(formData.profile)}
+						setProfile={(profile) =>
+							updateFormData({
+								profile: mapProfileToNew(profile as Profile),
+							})
+						}
+						bodyFatPercentage={bodyFatPercentage?.toString() || ""}
+						setBodyFatPercentage={handleBodyFatChange}
 					/>
-				)}
 
-				{error && (
-					<div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-						<p className="text-destructive text-sm font-medium">{error}</p>
-					</div>
-				)}
+					<GERFormulaSelection
+						selectedFormula={gerFormula}
+						onFormulaChange={setGERFormula}
+						profile={mapProfileToLegacy(formData.profile)}
+						hasBodyFat={!!bodyFatPercentage}
+						age={formData.age}
+						weight={formData.weight}
+						height={formData.height}
+					/>
 
-				{results && transformedResults && (
-					<div className="space-y-6">
-						{/* Formula Info */}
-						{gerFormula && (
-							<div className="text-sm text-center text-muted-foreground bg-muted/30 p-3 rounded-md border">
-								Cálculo de TMB realizado com a fórmula:{" "}
-								<strong>{gerFormula}</strong>
-							</div>
-						)}
+					<ENPValidation errors={errorMessages} warnings={warningMessages} />
 
-						{/* Main Results Display - Includes all components and actions */}
-						<ENPResultsPanel
-							results={transformedResults}
-							weight={validatedData.weight}
-							onExportResults={handleExportResults}
+					{!results && (
+						<CalculatorActions
+							isCalculating={isCalculating}
+							calculateResults={handleCalculate}
+							disabled={!isValid}
 						/>
-					</div>
-				)}
-			</TabsContent>
+					)}
 
-			<TabsContent value="validator">
-				<ENPCalculationValidator />
-			</TabsContent>
-		</Tabs>
+					{error && (
+						<div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+							<p className="text-destructive text-sm font-medium">{error}</p>
+						</div>
+					)}
+
+					{results && transformedResults && (
+						<div className="space-y-6">
+							{/* Formula Info */}
+							{gerFormula && (
+								<div className="text-sm text-center text-muted-foreground bg-muted/30 p-3 rounded-md border">
+									Cálculo de TMB realizado com a fórmula:{" "}
+									<strong>{gerFormula}</strong>
+								</div>
+							)}
+
+							{/* Main Results Display - Includes all components and actions */}
+							<ENPResultsPanel
+								results={transformedResults}
+								weight={validatedData.weight}
+								onExportResults={handleExportResults}
+							/>
+						</div>
+					)}
+				</TabsContent>
+
+				<TabsContent value="validator" className="bg-transparent border-0 rounded-none p-6">
+					<ENPCalculationValidator />
+				</TabsContent>
+			</Tabs>
+		</div>
 	);
 };
