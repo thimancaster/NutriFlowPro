@@ -51,6 +51,7 @@ const AppRoutes = () => {
 			<Route path="/reset-password" element={<ResetPassword />} />
 			<Route path="/pricing" element={<Pricing />} />
 			<Route path="/recursos" element={<Recursos />} />
+			<Route path="/auth" element={<AuthHandler />} />
 			<Route path="/auth/callback" element={<AuthHandler />} />
 
 			{/* Replace old signup routes with unified version */}

@@ -26,7 +26,7 @@ enabled = true
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
+site_url = "http://localhost:8080"
 
 # O webhook do Stripe não precisa de autenticação JWT
 [functions.stripe-webhook]
