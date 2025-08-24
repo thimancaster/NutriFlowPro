@@ -1,4 +1,3 @@
-
 import React from "react";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {ENPDataInputs} from "../inputs/ENPDataInputs";
@@ -16,7 +15,7 @@ import {
 	mapProfileToNew,
 	mapActivityLevelToLegacy,
 	mapObjectiveToLegacy,
-	mapProfileToLegacy
+	mapProfileToLegacy,
 } from "@/utils/nutrition/typeMapping";
 
 export const ENPCalculatorForm: React.FC = () => {
@@ -28,7 +27,7 @@ export const ENPCalculatorForm: React.FC = () => {
 		error,
 		calculate,
 		hasActivePatient,
-		activePatient
+		activePatient,
 	} = useCalculator();
 
 	// Local state for ENP-specific fields
@@ -37,7 +36,9 @@ export const ENPCalculatorForm: React.FC = () => {
 
 	// Validation state
 	const [validationErrors, setValidationErrors] = React.useState<Array<{message: string}>>([]);
-	const [validationWarnings, setValidationWarnings] = React.useState<Array<{message: string}>>([]);
+	const [validationWarnings, setValidationWarnings] = React.useState<Array<{message: string}>>(
+		[]
+	);
 	const [isValid, setIsValid] = React.useState(false);
 
 	// Validate form data
@@ -46,11 +47,13 @@ export const ENPCalculatorForm: React.FC = () => {
 		const warnings: Array<{message: string}> = [];
 
 		if (!formData.weight || formData.weight <= 0) errors.push({message: "Peso é obrigatório"});
-		if (!formData.height || formData.height <= 0) errors.push({message: "Altura é obrigatória"});
+		if (!formData.height || formData.height <= 0)
+			errors.push({message: "Altura é obrigatória"});
 		if (!formData.age || formData.age <= 0) errors.push({message: "Idade é obrigatória"});
 		if (!gerFormula) errors.push({message: "Fórmula GER é obrigatória"});
 
-		if (formData.age > 65) warnings.push({message: "Paciente idoso - considere fatores especiais"});
+		if (formData.age > 65)
+			warnings.push({message: "Paciente idoso - considere fatores especiais"});
 		if (formData.weight < 50) warnings.push({message: "Peso baixo - monitore adequação"});
 
 		setValidationErrors(errors);
@@ -66,7 +69,7 @@ export const ENPCalculatorForm: React.FC = () => {
 		activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
 		objective: mapObjectiveToLegacy(formData.objective),
 		profile: mapProfileToLegacy(formData.profile),
-		bodyFatPercentage
+		bodyFatPercentage,
 	};
 
 	const handleCalculate = async () => {
@@ -76,24 +79,29 @@ export const ENPCalculatorForm: React.FC = () => {
 
 	const handleExportResults = () => {
 		if (!results) return;
-		
+
 		const exportData = {
-			system: 'ENP - Engenharia Nutricional Padrão',
+			system: "ENP - Engenharia Nutricional Padrão",
 			timestamp: new Date().toISOString(),
-			patient: activePatient ? { 
-				id: activePatient.id, 
-				name: activePatient.name 
-			} : null,
+			patient: activePatient
+				? {
+						id: activePatient.id,
+						name: activePatient.name,
+				  }
+				: null,
 			results: results,
-			formula: gerFormula || 'Mifflin-St Jeor',
-			standardDistribution: 'Café 25% | Lanche M 10% | Almoço 30% | Lanche T 10% | Jantar 20% | Ceia 5%'
+			formula: gerFormula || "Mifflin-St Jeor",
+			standardDistribution:
+				"Café 25% | Lanche M 10% | Almoço 30% | Lanche T 10% | Jantar 20% | Ceia 5%",
 		};
-		
-		const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+		const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: "application/json"});
 		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
+		const a = document.createElement("a");
 		a.href = url;
-		a.download = `enp-calculo-${activePatient?.name || 'paciente'}-${new Date().toISOString().split('T')[0]}.json`;
+		a.download = `enp-calculo-${activePatient?.name || "paciente"}-${
+			new Date().toISOString().split("T")[0]
+		}.json`;
 		a.click();
 		URL.revokeObjectURL(url);
 	};
@@ -122,17 +130,17 @@ export const ENPCalculatorForm: React.FC = () => {
 	// Helper functions to handle type conversions
 	const handleWeightChange = (value: string) => {
 		const numValue = parseFloat(value) || 0;
-		updateFormData({ weight: numValue });
+		updateFormData({weight: numValue});
 	};
 
 	const handleHeightChange = (value: string) => {
 		const numValue = parseFloat(value) || 0;
-		updateFormData({ height: numValue });
+		updateFormData({height: numValue});
 	};
 
 	const handleAgeChange = (value: string) => {
 		const numValue = parseInt(value) || 0;
-		updateFormData({ age: numValue });
+		updateFormData({age: numValue});
 	};
 
 	const handleBodyFatChange = (value: string) => {
@@ -156,20 +164,26 @@ export const ENPCalculatorForm: React.FC = () => {
 					age={formData.age.toString()}
 					setAge={handleAgeChange}
 					sex={formData.gender}
-					setSex={(gender) => updateFormData({ gender })}
+					setSex={(gender) => updateFormData({gender})}
 					activityLevel={mapActivityLevelToLegacy(formData.activityLevel)}
-					setActivityLevel={(activityLevel) => updateFormData({ 
-						activityLevel: mapActivityLevelToNew(activityLevel as ActivityLevel) 
-					})}
+					setActivityLevel={(activityLevel) =>
+						updateFormData({
+							activityLevel: mapActivityLevelToNew(activityLevel as ActivityLevel),
+						})
+					}
 					objective={mapObjectiveToLegacy(formData.objective)}
-					setObjective={(objective) => updateFormData({ 
-						objective: mapObjectiveToNew(objective as Objective) 
-					})}
+					setObjective={(objective) =>
+						updateFormData({
+							objective: mapObjectiveToNew(objective as Objective),
+						})
+					}
 					profile={mapProfileToLegacy(formData.profile)}
-					setProfile={(profile) => updateFormData({ 
-						profile: mapProfileToNew(profile as Profile) 
-					})}
-					bodyFatPercentage={bodyFatPercentage?.toString() || ''}
+					setProfile={(profile) =>
+						updateFormData({
+							profile: mapProfileToNew(profile as Profile),
+						})
+					}
+					bodyFatPercentage={bodyFatPercentage?.toString() || ""}
 					setBodyFatPercentage={handleBodyFatChange}
 				/>
 
@@ -194,8 +208,8 @@ export const ENPCalculatorForm: React.FC = () => {
 				)}
 
 				{error && (
-					<div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-						<p className="text-red-600 text-sm font-medium">{error}</p>
+					<div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+						<p className="text-destructive text-sm font-medium">{error}</p>
 					</div>
 				)}
 
@@ -203,7 +217,7 @@ export const ENPCalculatorForm: React.FC = () => {
 					<div className="space-y-6">
 						{/* Formula Info */}
 						{gerFormula && (
-							<div className="text-sm text-center text-gray-700 bg-gray-50 p-3 rounded-md border">
+							<div className="text-sm text-center text-muted-foreground bg-muted/30 p-3 rounded-md border">
 								Cálculo de TMB realizado com a fórmula:{" "}
 								<strong>{gerFormula}</strong>
 							</div>
