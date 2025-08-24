@@ -151,16 +151,12 @@ export const ENPCalculatorForm: React.FC = () => {
 	return (
 		<div className="w-full bg-card border border-border rounded-lg overflow-hidden">
 			<Tabs defaultValue="calculator" className="w-full">
-				<TabsList className="grid w-full grid-cols-2 bg-muted rounded-lg p-1 h-14">
-					<TabsTrigger
-						value="calculator"
-						className="rounded-md transition-all duration-200 bg-background border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:border-primary hover:bg-accent hover:border-border text-sm font-medium mx-2">
-						Calculadora ENP
+				<TabsList className="rounded-none mb-6 grid w-full grid-cols-2 px-2 h-12 gap-2">
+					<TabsTrigger value="calculator" className="flex items-center gap-2">
+						<span>Calculadora ENP</span>
 					</TabsTrigger>
-					<TabsTrigger
-						value="validator"
-						className="rounded-md transition-all duration-200 bg-background border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:border-primary hover:bg-accent hover:border-border text-sm font-medium mx-2">
-						Validação Sistema
+					<TabsTrigger value="validator" className="flex items-center gap-2">
+						<span>Validação Sistema</span>
 					</TabsTrigger>
 				</TabsList>
 
