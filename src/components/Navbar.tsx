@@ -26,7 +26,6 @@ const navigationItems = [
 	{name: "Plano Alimentar", href: "/meal-plan-generator", icon: Utensils},
 	{name: "Consulta", href: "/consultation", icon: Stethoscope},
 	{name: "Clínico", href: "/clinical", icon: Activity},
-	{name: "Configurações", href: "/settings", icon: Settings},
 ];
 
 const Navbar = memo(() => {
@@ -52,28 +51,30 @@ const Navbar = memo(() => {
 	const logoElement = useMemo(
 		() => (
 			<Link to="/dashboard" className="flex items-center">
-				<span className="text-nutri-green font-bold text-2xl">Nutri</span>
-				<span className="text-nutri-blue font-bold text-2xl">Flow</span>
-				<span className="text-nutri-blue font-bold text-2xl ml-1">Pro</span>
+				<span className="text-nutri-green font-bold text-xl sm:text-2xl">Nutri</span>
+				<span className="text-nutri-blue font-bold text-xl sm:text-2xl">Flow</span>
+				<span className="text-nutri-blue font-bold text-xl sm:text-2xl ml-1">Pro</span>
 			</Link>
 		),
 		[]
 	);
 
 	return (
-		<nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+		<nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 w-full">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-				<div className="flex justify-between h-16">
-					{/* Logo and Desktop Navigation */}
-					<div className="flex">
-						<div className="flex-shrink-0 flex items-center">{logoElement}</div>
+				<div className="flex justify-between items-center h-16 w-full">
+					{/* Left side - Logo and Desktop Navigation */}
+					<div className="flex items-center flex-1 min-w-0">
+						<div className="flex-shrink-0 flex items-center mr-2 lg:mr-4">
+							{logoElement}
+						</div>
 
 						<NavbarDesktopNavigation navigationItems={navigationItems} />
 					</div>
 
-					{/* Right side - Theme toggle and User menu with improved alignment */}
-					<div className="flex items-center gap-4">
-						<div className="flex items-center h-9">
+					{/* Right side - Theme toggle and User menu */}
+					<div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+						<div className="hidden md:flex items-center h-9">
 							<ThemeToggle />
 						</div>
 
