@@ -6,7 +6,7 @@ import {ENPCalculationValidator} from "../validation/ENPCalculationValidator";
 import {ENPResultsPanel} from "../ENPResultsPanel";
 import CalculatorActions from "../CalculatorActions";
 import GERFormulaSelection from "../inputs/GERFormulaSelection";
-import {useCalculator} from "@/hooks/useCalculator";
+import {useSimpleCalculator} from "@/hooks/useSimpleCalculator";
 import {ActivityLevel, Objective, Profile} from "@/types/consultation";
 import {GERFormula} from "@/types/gerFormulas";
 import {
@@ -17,6 +17,7 @@ import {
 	mapObjectiveToLegacy,
 	mapProfileToLegacy,
 } from "@/utils/nutrition/typeMapping";
+import {usePatient} from "@/contexts/patient/PatientContext";
 
 export const ENPCalculatorForm: React.FC = () => {
 	const {
@@ -26,9 +27,9 @@ export const ENPCalculatorForm: React.FC = () => {
 		isCalculating,
 		error,
 		calculate,
-		hasActivePatient,
-		activePatient,
-	} = useCalculator();
+	} = useSimpleCalculator();
+	
+	const {activePatient} = usePatient();
 
 	// Local state for ENP-specific fields
 	const [bodyFatPercentage, setBodyFatPercentage] = React.useState<number | undefined>();
@@ -41,7 +42,7 @@ export const ENPCalculatorForm: React.FC = () => {
 	);
 	const [isValid, setIsValid] = React.useState(false);
 
-	// Validate form data
+	// Validação básica
 	React.useEffect(() => {
 		const errors: Array<{message: string}> = [];
 		const warnings: Array<{message: string}> = [];
@@ -50,7 +51,6 @@ export const ENPCalculatorForm: React.FC = () => {
 		if (!formData.height || formData.height <= 0)
 			errors.push({message: "Altura é obrigatória"});
 		if (!formData.age || formData.age <= 0) errors.push({message: "Idade é obrigatória"});
-		if (!gerFormula) errors.push({message: "Fórmula GER é obrigatória"});
 
 		if (formData.age > 65)
 			warnings.push({message: "Paciente idoso - considere fatores especiais"});
@@ -59,16 +59,16 @@ export const ENPCalculatorForm: React.FC = () => {
 		setValidationErrors(errors);
 		setValidationWarnings(warnings);
 		setIsValid(errors.length === 0);
-	}, [formData, gerFormula]);
+	}, [formData]);
 
 	const validatedData = {
 		weight: formData.weight,
 		height: formData.height,
 		age: formData.age,
-		gender: formData.gender, // Use gender instead of sex
-		activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
-		objective: mapObjectiveToLegacy(formData.objective),
-		profile: mapProfileToLegacy(formData.profile),
+		gender: formData.gender,
+		activityLevel: formData.activityLevel,
+		objective: formData.objective,
+		profile: formData.profile,
 		bodyFatPercentage,
 	};
 
@@ -86,19 +86,8 @@ export const ENPCalculatorForm: React.FC = () => {
 		}
 		console.log('[CALC:DEBUG] Iniciando cálculo...');
 		try {
-			// Use the unified calculator with proper input conversion
-			const calculationInput = {
-				id: activePatient?.id || 'temp-id',
-				sex: formData.gender === 'M' ? 'male' as const : 'female' as const,
-				weight: formData.weight,
-				height: formData.height,
-				age: formData.age,
-				objective: mapObjectiveToLegacy(formData.objective),
-				activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
-				profile: mapProfileToLegacy(formData.profile)
-			};
-			
-			const result = await calculate(calculationInput);
+			console.log('[CALC:DEBUG] Chamando calculate com formData:', formData);
+			const result = await calculate();
 			console.log('[CALC:DEBUG] Resultado:', result);
 		} catch (error) {
 			console.error('[CALC:DEBUG] Erro no cálculo:', error);
@@ -137,10 +126,10 @@ export const ENPCalculatorForm: React.FC = () => {
 
 	const transformedResults = results
 		? {
-				tmb: results.tmb.value, // Extract numeric value from TMBResult
+				tmb: results.tmb.value,
 				get: results.get,
 				vet: results.vet,
-				adjustment: results.adjustment,
+				adjustment: 0, // Simplificado
 				macros: {
 					protein: {
 						grams: results.macros.protein.grams,
@@ -177,6 +166,22 @@ export const ENPCalculatorForm: React.FC = () => {
 		setBodyFatPercentage(numValue);
 	};
 
+	const handleGenderChange = (gender: 'M' | 'F') => {
+		updateFormData({gender});
+	};
+
+	const handleActivityLevelChange = (activityLevel: string) => {
+		updateFormData({activityLevel});
+	};
+
+	const handleObjectiveChange = (objective: string) => {
+		updateFormData({objective});
+	};
+
+	const handleProfileChange = (profile: string) => {
+		updateFormData({profile});
+	};
+
 	return (
 		<div className="w-full bg-card border border-border rounded-lg overflow-hidden">
 			<Tabs defaultValue="calculator" className="w-full">
@@ -200,27 +205,13 @@ export const ENPCalculatorForm: React.FC = () => {
 						age={formData.age.toString()}
 						setAge={handleAgeChange}
 						sex={formData.gender}
-						setSex={(gender) => updateFormData({gender})}
-						activityLevel={mapActivityLevelToLegacy(formData.activityLevel)}
-						setActivityLevel={(activityLevel) =>
-							updateFormData({
-								activityLevel: mapActivityLevelToNew(
-									activityLevel as ActivityLevel
-								),
-							})
-						}
-						objective={mapObjectiveToLegacy(formData.objective)}
-						setObjective={(objective) =>
-							updateFormData({
-								objective: mapObjectiveToNew(objective as Objective),
-							})
-						}
-						profile={mapProfileToLegacy(formData.profile)}
-						setProfile={(profile) =>
-							updateFormData({
-								profile: mapProfileToNew(profile as Profile),
-							})
-						}
+						setSex={handleGenderChange}
+						activityLevel={formData.activityLevel as any}
+						setActivityLevel={handleActivityLevelChange}
+						objective={formData.objective as any}
+						setObjective={handleObjectiveChange}
+						profile={formData.profile as any}
+						setProfile={handleProfileChange}
 						bodyFatPercentage={bodyFatPercentage?.toString() || ""}
 						setBodyFatPercentage={handleBodyFatChange}
 					/>
@@ -228,7 +219,7 @@ export const ENPCalculatorForm: React.FC = () => {
 					<GERFormulaSelection
 						selectedFormula={gerFormula}
 						onFormulaChange={setGERFormula}
-						profile={mapProfileToLegacy(formData.profile)}
+						profile={formData.profile as any}
 						hasBodyFat={!!bodyFatPercentage}
 						age={formData.age}
 						weight={formData.weight}
