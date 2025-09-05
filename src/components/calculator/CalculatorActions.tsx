@@ -30,7 +30,10 @@ const CalculatorActions = ({
         className="w-full max-w-md"
       >
         <Button 
-          onClick={calculateResults} 
+          onClick={() => {
+            console.log('[CALC:DEBUG] Botão Calcular clicado');
+            calculateResults();
+          }} 
           variant="primary"
           animation="shimmer"
           disabled={isCalculating || disabled}

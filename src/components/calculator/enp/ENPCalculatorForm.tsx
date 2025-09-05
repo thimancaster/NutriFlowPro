@@ -73,8 +73,26 @@ export const ENPCalculatorForm: React.FC = () => {
 	};
 
 	const handleCalculate = async () => {
-		if (!isValid) return;
-		await calculate();
+		console.log('[CALC:DEBUG] handleCalculate chamado', { isValid, formData });
+		if (!isValid) {
+			console.log('[CALC:DEBUG] Validação falhou', { validationErrors });
+			return;
+		}
+	const handleCalculate = async () => {
+		console.log('[CALC:DEBUG] handleCalculate chamado', { isValid, formData });
+		if (!isValid) {
+			console.log('[CALC:DEBUG] Validação falhou', { validationErrors });
+			return;
+		}
+		console.log('[CALC:DEBUG] Iniciando cálculo...');
+		try {
+			// Use the no-params version from useCalculator
+			const result = await calculate();
+			console.log('[CALC:DEBUG] Resultado:', result);
+		} catch (error) {
+			console.error('[CALC:DEBUG] Erro no cálculo:', error);
+		}
+	};
 	};
 
 	const handleExportResults = () => {
