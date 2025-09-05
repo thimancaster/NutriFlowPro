@@ -19,6 +19,8 @@ interface NutritionState {
   error?: string;
 }
 
+export type ConsolidatedNutritionParams = PatientInput;
+
 export const useConsolidatedNutrition = () => {
   const [state, setState] = useState<NutritionState>({ status: 'idle' });
   const { user } = useAuth();
@@ -77,10 +79,13 @@ export const useConsolidatedNutrition = () => {
   const calculate = useCallback(async (input: PatientInput): Promise<CalculationResult> => {
     if (!user?.id) throw new Error('User not authenticated');
 
-    console.log('[ATTEND:E2E] Performing nutrition calculation');
+    console.log('[ATTEND:E2E] Performing nutrition calculation', input);
+
+    // Normalize gender field
+    const sex = input.sex || (input.gender === 'M' ? 'male' : 'female');
 
     // Basic BMR calculation (Harris-Benedict)
-    const bmr = input.sex === 'male' 
+    const bmr = sex === 'male' 
       ? 88.362 + (13.397 * input.weight) + (4.799 * input.height) - (5.677 * input.age)
       : 447.593 + (9.247 * input.weight) + (3.098 * input.height) - (4.330 * input.age);
 
@@ -119,7 +124,7 @@ export const useConsolidatedNutrition = () => {
       weight: input.weight,
       height: input.height,
       age: input.age,
-      gender: input.sex,
+      gender: sex,
       activity_level: input.activityLevel,
       goal: input.objective,
       bmr: Math.round(bmr),
@@ -144,6 +149,13 @@ export const useConsolidatedNutrition = () => {
       bmr: Math.round(bmr),
       get: Math.round(get),
       vet: Math.round(vet),
+      tmb: {
+        value: Math.round(bmr),
+        formula: 'Harris-Benedict Revisada'
+      },
+      gea: Math.round(get - bmr),
+      adjustment: Math.round(vet - get),
+      formulaUsed: 'Harris-Benedict Revisada',
       targets: {
         calories: Math.round(vet),
         protein,
@@ -151,9 +163,21 @@ export const useConsolidatedNutrition = () => {
         fats
       },
       macros: {
-        protein,
-        carbs,
-        fat: fats
+        protein: {
+          grams: protein,
+          kcal: protein * 4,
+          percentage: Math.round((protein * 4 / vet) * 100)
+        },
+        carbs: {
+          grams: carbs,
+          kcal: carbs * 4,
+          percentage: Math.round((carbs * 4 / vet) * 100)
+        },
+        fat: {
+          grams: fats,
+          kcal: fats * 9,
+          percentage: Math.round((fats * 9 / vet) * 100)
+        }
       }
     };
 
@@ -181,6 +205,12 @@ export const useConsolidatedNutrition = () => {
     savePatientChanges,
     isReady: state.status === 'ready',
     isLoading: state.status === 'loading',
-    hasError: state.status === 'error'
+    hasError: state.status === 'error',
+    // Legacy compatibility
+    results: state.result,
+    isCalculating: state.status === 'loading',
+    error: state.error,
+    calculateNutrition: calculate,
+    clearResults: () => setState({ status: 'idle' })
   };
 };

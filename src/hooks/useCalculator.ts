@@ -66,22 +66,35 @@ export const useCalculator = (): UseCalculatorReturn => {
     setFormData(prev => ({ ...prev, ...data }));
   }, []);
 
-  const calculate = useCallback(async (params?: NewCalculationInputs): Promise<CompleteNutritionalResult | null> => {
-    const inputsToUse = params || formData;
+  const calculate = useCallback(async (params?: any): Promise<CompleteNutritionalResult | null> => {
+    const inputsToUse = params || {
+      id: 'temp-calc',
+      sex: formData.gender === 'M' ? 'male' as const : 'female' as const,
+      weight: formData.weight,
+      height: formData.height,
+      age: formData.age,
+      objective: mapObjectiveToLegacy(formData.objective),
+      activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
+      profile: mapProfileToLegacy(formData.profile)
+    };
+    
     console.log('🧮 useCalculator: Delegando para sistema consolidado:', inputsToUse);
     
-    // Convert to consolidated nutrition params
-    const consolidatedParams: ConsolidatedNutritionParams = {
-      weight: inputsToUse.weight,
-      height: inputsToUse.height,
-      age: inputsToUse.age,
-      gender: inputsToUse.gender,
-      activityLevel: inputsToUse.activityLevel,
-      objective: inputsToUse.objective,
-      profile: inputsToUse.profile
-    };
-
-    return await calculateNutrition(consolidatedParams);
+    try {
+      const result = await calculateNutrition(inputsToUse);
+      
+      // Convert to expected legacy format
+      return {
+        ...result,
+        tmb: result.tmb || { value: result.bmr, formula: 'Harris-Benedict' },
+        mealDistribution: [], // Add required properties for legacy compatibility
+        profileUsed: inputsToUse.profile,
+        proteinPerKg: Math.round(result.macros.protein.grams / inputsToUse.weight)
+      };
+    } catch (error) {
+      console.error('Calculation error:', error);
+      return null;
+    }
   }, [formData, calculateNutrition]);
 
   const calculateWithParams = useCallback(async (
@@ -96,17 +109,32 @@ export const useCalculator = (): UseCalculatorReturn => {
     console.log('🧮 useCalculator: calculateWithParams (legacy) delegando para sistema consolidado');
     
     // Map legacy values to new system
-    const consolidatedParams: ConsolidatedNutritionParams = {
+    const calculationInput = {
+      id: 'temp-calc',
+      sex: gender === 'M' || gender === 'male' ? 'male' as const : 'female' as const,
       weight,
       height,
       age,
-      gender: gender === 'M' || gender === 'male' ? 'M' : 'F',
       activityLevel: mapActivityLevelToNew(activityLevel as any),
       objective: mapObjectiveToNew(objective as any),
       profile: mapProfileToNew(profile as any)
     };
 
-    return await calculateNutrition(consolidatedParams);
+    try {
+      const result = await calculateNutrition(calculationInput);
+      
+      // Convert to expected legacy format
+      return {
+        ...result,
+        tmb: result.tmb || { value: result.bmr, formula: 'Harris-Benedict' },
+        mealDistribution: [], // Add required properties for legacy compatibility
+        profileUsed: profile,
+        proteinPerKg: Math.round(result.macros.protein.grams / weight)
+      };
+    } catch (error) {
+      console.error('Calculation error:', error);
+      return null;
+    }
   }, [calculateNutrition]);
 
   const reset = useCallback(() => {

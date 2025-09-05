@@ -86,8 +86,19 @@ export const ENPCalculatorForm: React.FC = () => {
 		}
 		console.log('[CALC:DEBUG] Iniciando cálculo...');
 		try {
-			// Use the no-params version from useCalculator
-			const result = await calculate();
+			// Use the unified calculator with proper input conversion
+			const calculationInput = {
+				id: activePatient?.id || 'temp-id',
+				sex: formData.gender === 'M' ? 'male' as const : 'female' as const,
+				weight: formData.weight,
+				height: formData.height,
+				age: formData.age,
+				objective: mapObjectiveToLegacy(formData.objective),
+				activityLevel: mapActivityLevelToLegacy(formData.activityLevel),
+				profile: mapProfileToLegacy(formData.profile)
+			};
+			
+			const result = await calculate(calculationInput);
 			console.log('[CALC:DEBUG] Resultado:', result);
 		} catch (error) {
 			console.error('[CALC:DEBUG] Erro no cálculo:', error);

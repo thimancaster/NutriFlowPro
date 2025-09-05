@@ -44,7 +44,7 @@ export interface ConsultationData {
   age: number;
   gender: 'male' | 'female' | 'other';
   activity_level: string;
-  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado';
+  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado' | string;
   profile?: Profile;
   recommendations?: string;
   notes?: string;
@@ -117,6 +117,9 @@ export interface MealPlan {
   notes?: string;
   created_at: string;
   updated_at: string;
+  is_template?: boolean;
+  calculation_id?: string;
+  targets?: any;
 }
 
 export interface MealPlanMeal {
@@ -128,6 +131,10 @@ export interface MealPlanMeal {
   totalProtein: number;
   totalCarbs: number;
   totalFats: number;
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fats: number;
 }
 
 export interface MealPlanFood {
@@ -145,12 +152,13 @@ export interface MealPlanFood {
 export interface PatientInput {
   id: string;
   sex: 'male' | 'female';
+  gender?: 'M' | 'F';
   age: number;
   weight: number;
   height: number;
-  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado';
+  objective: string;
   activityLevel: string;
-  profile?: Profile;
+  profile?: string;
 }
 
 // Calculation result interface
@@ -159,6 +167,13 @@ export interface CalculationResult {
   bmr: number;
   get: number;
   vet: number;
+  tmb?: {
+    value: number;
+    formula: string;
+  };
+  gea?: number;
+  adjustment?: number;
+  formulaUsed?: string;
   targets: {
     calories: number;
     protein: number;
@@ -166,8 +181,8 @@ export interface CalculationResult {
     fats: number;
   };
   macros: {
-    protein: number;
-    carbs: number;
-    fat: number;
+    protein: { grams: number; kcal: number; percentage: number; };
+    carbs: { grams: number; kcal: number; percentage: number; };
+    fat: { grams: number; kcal: number; percentage: number; };
   };
 }
