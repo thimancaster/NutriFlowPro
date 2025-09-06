@@ -39,12 +39,13 @@ export {
 export interface ConsultationData {
   id?: string;
   patient_id?: string;
+  user_id?: string;
   weight: number;
   height: number;
   age: number;
   gender: 'male' | 'female' | 'other';
   activity_level: string;
-  objective: 'manutencao' | 'emagrecimento' | 'hipertrofia' | 'manutenção' | 'personalizado' | string;
+  objective: string;
   profile?: Profile;
   recommendations?: string;
   notes?: string;
@@ -55,6 +56,7 @@ export interface ConsultationData {
   fats?: number;
   created_at?: string;
   updated_at?: string;
+  date?: string;
   
   // Additional fields for E2E flow
   results?: {
@@ -146,6 +148,7 @@ export interface MealPlanFood {
   protein: number;
   carbs: number;
   fats: number;
+  fat?: number; // Alias for compatibility
 }
 
 // Patient Input for E2E flow

@@ -6,7 +6,7 @@ import {ENPCalculationValidator} from "../validation/ENPCalculationValidator";
 import {ENPResultsPanel} from "../ENPResultsPanel";
 import CalculatorActions from "../CalculatorActions";
 import GERFormulaSelection from "../inputs/GERFormulaSelection";
-import {useSimpleCalculator} from "@/hooks/useSimpleCalculator";
+import {useCalculatorFix} from "@/hooks/useCalculatorFix";
 import {ActivityLevel, Objective, Profile} from "@/types/consultation";
 import {GERFormula} from "@/types/gerFormulas";
 import {
@@ -20,14 +20,22 @@ import {
 import {usePatient} from "@/contexts/patient/PatientContext";
 
 export const ENPCalculatorForm: React.FC = () => {
-	const {
-		formData,
-		updateFormData,
-		results,
-		isCalculating,
-		error,
-		calculate,
-	} = useSimpleCalculator();
+	const { calculate, isCalculating, result: results, error } = useCalculatorFix();
+	
+	// Form state
+	const [formData, setFormData] = React.useState({
+		weight: 0,
+		height: 0,
+		age: 0,
+		gender: 'M' as 'M' | 'F',
+		activityLevel: 'moderado',
+		objective: 'manutencao',
+		profile: 'eutrofico'
+	});
+
+	const updateFormData = (updates: Partial<typeof formData>) => {
+		setFormData(prev => ({ ...prev, ...updates }));
+	};
 	
 	const {activePatient} = usePatient();
 
@@ -78,21 +86,23 @@ export const ENPCalculatorForm: React.FC = () => {
 			console.log('[CALC:DEBUG] Validação falhou', { validationErrors });
 			return;
 		}
-	const handleCalculate = async () => {
-		console.log('[CALC:DEBUG] handleCalculate chamado', { isValid, formData });
-		if (!isValid) {
-			console.log('[CALC:DEBUG] Validação falhou', { validationErrors });
-			return;
-		}
 		console.log('[CALC:DEBUG] Iniciando cálculo...');
 		try {
-			console.log('[CALC:DEBUG] Chamando calculate com formData:', formData);
-			const result = await calculate();
+			const calculationInputs = {
+				weight: formData.weight,
+				height: formData.height,
+				age: formData.age,
+				sex: formData.gender,
+				activityLevel: formData.activityLevel,
+				objective: formData.objective,
+				profile: formData.profile
+			};
+			console.log('[CALC:DEBUG] Chamando calculate com:', calculationInputs);
+			const result = await calculate(calculationInputs);
 			console.log('[CALC:DEBUG] Resultado:', result);
 		} catch (error) {
 			console.error('[CALC:DEBUG] Erro no cálculo:', error);
 		}
-	};
 	};
 
 	const handleExportResults = () => {
@@ -126,7 +136,7 @@ export const ENPCalculatorForm: React.FC = () => {
 
 	const transformedResults = results
 		? {
-				tmb: results.tmb.value,
+				tmb: results.tmb,
 				get: results.get,
 				vet: results.vet,
 				adjustment: 0, // Simplificado

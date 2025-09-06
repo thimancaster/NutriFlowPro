@@ -160,6 +160,8 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
 
       // Use default values if patient data is incomplete
       const calculationParams = {
+        id: activePatient.id,
+        sex: (activePatient.gender as 'male' | 'female') || 'male',
         weight: activePatient.weight || 70, // default weight
         height: activePatient.height || 170, // default height
         age: patientAge,
@@ -210,15 +212,28 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
         date: new Date().toISOString().split('T')[0]
       };
 
-      const result = await MealPlanServiceV3.generateMealPlan(params);
+      const mealPlanId = await MealPlanServiceV3.generateMealPlan({
+        patientId: params.patientId,
+        calculationId: 'calc-' + Date.now(),
+        targets: {
+          calories: params.totalCalories,
+          protein: params.totalProtein,
+          carbs: params.totalCarbs,
+          fats: params.totalFats
+        }
+      });
 
-      if (result.success && result.data) {
-        console.log('[WORKFLOW:PLAN] ✅ Plano gerado:', result.data.id);
-        setMealPlan(result.data);
-        setCurrentStep('display');
+      if (mealPlanId) {
+        const mealPlan = await MealPlanServiceV3.getMealPlanById(mealPlanId);
+        if (mealPlan) {
+          console.log('[WORKFLOW:PLAN] ✅ Plano gerado:', mealPlan.id);
+          setMealPlan(mealPlan);
+          setCurrentStep('display');
+        } else {
+          throw new Error('Erro ao recuperar plano gerado');
+        }
       } else {
-        setError(result.error || 'Erro ao gerar plano alimentar');
-        console.error("[WORKFLOW:PLAN] ❌ Erro ao gerar plano:", result.error);
+        throw new Error('Erro ao gerar plano alimentar');
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Erro inesperado ao gerar plano';
@@ -236,11 +251,14 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setError(null);
     
     try {
-      const result = await MealPlanServiceV3.updateMealPlan(mealPlan.id, updates);
-      if (result.success && result.data) {
-        setMealPlan(result.data);
+      const success = await MealPlanServiceV3.updateMealPlan(mealPlan.id, updates);
+      if (success) {
+        const updatedMealPlan = await MealPlanServiceV3.getMealPlanById(mealPlan.id);
+        if (updatedMealPlan) {
+          setMealPlan(updatedMealPlan);
+        }
       } else {
-        setError(result.error || 'Erro ao salvar plano');
+        setError('Erro ao salvar plano');
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Erro inesperado ao salvar plano';

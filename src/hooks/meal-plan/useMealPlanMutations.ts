@@ -8,10 +8,10 @@ export const useMealPlanMutations = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ConsolidatedMealPlan> }) => {
-      return MealPlanService.updateMealPlan(id, updates);
-    },
+	const updateMutation = useMutation({
+		mutationFn: async ({ id, updates }: { id: string; updates: Partial<ConsolidatedMealPlan> }) => {
+			return MealPlanService.updateMealPlan(id, updates as any);
+		},
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
       toast({

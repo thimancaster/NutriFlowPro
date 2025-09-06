@@ -80,12 +80,12 @@ const MealPlanEditor: React.FC<MealPlanEditorProps> = ({mealPlan, onMealPlanUpda
 				total_fats: newTotals.fats,
 			};
 
-			const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedMealPlan);
+		const result = await MealPlanService.updateMealPlan(mealPlan.id, updatedMealPlan as any);
 
-			if (result.success && result.data) {
-				if (onMealPlanUpdate) {
-					onMealPlanUpdate(result.data as ConsolidatedMealPlan);
-				}
+		if (result.success && result.data) {
+			if (onMealPlanUpdate) {
+				onMealPlanUpdate(result.data as unknown as ConsolidatedMealPlan);
+			}
 			} else {
 				throw new Error(result.error || "Erro ao salvar alterações");
 			}
