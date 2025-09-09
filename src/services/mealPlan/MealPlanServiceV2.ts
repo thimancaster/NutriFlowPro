@@ -311,7 +311,7 @@ export class MealPlanServiceV2 {
 
       return {
         id: data.id,
-        name: data.name || 'Plano Alimentar',
+        name: `Plano - ${new Date(data.date).toLocaleDateString('pt-BR')}`,
         user_id: data.user_id,
         patient_id: data.patient_id,
         calculation_id: data.calculation_id,

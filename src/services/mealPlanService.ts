@@ -230,7 +230,11 @@ function transformMealsFromItems(items: any[]): MealPlanMeal[] {
       totalCalories: mealItems.reduce((sum, item) => sum + (item.calories || 0), 0),
       totalProtein: mealItems.reduce((sum, item) => sum + (item.protein || 0), 0),
       totalCarbs: mealItems.reduce((sum, item) => sum + (item.carbs || 0), 0),
-      totalFats: mealItems.reduce((sum, item) => sum + (item.fats || 0), 0)
+      totalFats: mealItems.reduce((sum, item) => sum + (item.fats || 0), 0),
+      total_calories: mealItems.reduce((sum, item) => sum + (item.calories || 0), 0),
+      total_protein: mealItems.reduce((sum, item) => sum + (item.protein || 0), 0),
+      total_carbs: mealItems.reduce((sum, item) => sum + (item.carbs || 0), 0),
+      total_fats: mealItems.reduce((sum, item) => sum + (item.fats || 0), 0)
     };
   });
 }

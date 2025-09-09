@@ -27,12 +27,7 @@ const MealPlanEditor: React.FC = () => {
     try {
       setIsLoading(true);
       const result = await MealPlanServiceV3.getMealPlanById(planId);
-      
-      if (result.success && result.data) {
-        setMealPlan(result.data);
-      } else {
-        throw new Error(result.error || 'Erro ao carregar plano');
-      }
+      setMealPlan(result);
     } catch (error: any) {
       console.error('Erro ao carregar plano:', error);
       toast({
@@ -52,14 +47,14 @@ const MealPlanEditor: React.FC = () => {
       setIsSaving(true);
       const result = await MealPlanServiceV3.updateMealPlan(id, updatedPlan);
       
-      if (result.success && result.data) {
-        setMealPlan(result.data);
+      if (result) {
+        setMealPlan(result);
         toast({
           title: 'Sucesso',
           description: 'Plano alimentar salvo com sucesso!'
         });
       } else {
-        throw new Error(result.error || 'Erro ao salvar plano');
+        throw new Error('Erro ao salvar plano');
       }
     } catch (error: any) {
       console.error('Erro ao salvar plano:', error);

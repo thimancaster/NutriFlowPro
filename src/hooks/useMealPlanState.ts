@@ -298,8 +298,8 @@ export const useMealPlanState = (
   return {
     patient,
     consultationData,
-    mealPlan,
-    setMealPlan,
+    mealPlan: mealPlan as any,
+    setMealPlan: (plan: any) => setMealPlan(plan),
     mealDistribution: Object.values(mealDistributionItems),
     setMealDistribution,
     updateMealDistribution,

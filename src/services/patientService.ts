@@ -26,7 +26,17 @@ export const PatientService = {
         return { success: false, error: error.message };
       }
       
-      return { success: true, data: data || [] };
+      const transformedData = (data || []).map((patient: any) => ({
+        ...patient,
+        gender: (patient.gender === 'male' || patient.gender === 'female' || patient.gender === 'other') 
+          ? patient.gender as 'male' | 'female' | 'other'
+          : 'other' as const,
+        status: (patient.status === 'active' || patient.status === 'archived')
+          ? patient.status as 'active' | 'archived'
+          : 'active' as const
+      }));
+      
+      return { success: true, data: transformedData };
     } catch (error: any) {
       console.error('Error fetching patients:', error);
       return { success: false, error: error.message };
@@ -45,7 +55,17 @@ export const PatientService = {
         return { success: false, error: error.message };
       }
       
-      return { success: true, data };
+      const transformedData = {
+        ...data,
+        gender: (data.gender === 'male' || data.gender === 'female' || data.gender === 'other') 
+          ? data.gender as 'male' | 'female' | 'other'
+          : 'other' as const,
+        status: (data.status === 'active' || data.status === 'archived')
+          ? data.status as 'active' | 'archived'
+          : 'active' as const
+      };
+      
+      return { success: true, data: transformedData };
     } catch (error: any) {
       console.error('Error fetching patient:', error);
       return { success: false, error: error.message };
@@ -54,9 +74,15 @@ export const PatientService = {
 
   async createPatient(patientData: Omit<Patient, 'id' | 'created_at' | 'updated_at'>): Promise<PatientServiceResponse> {
     try {
+      const dbData = {
+        ...patientData,
+        address: typeof patientData.address === 'string' ? patientData.address : JSON.stringify(patientData.address),
+        gender: patientData.gender || 'other'
+      };
+      
       const { data, error } = await supabase
         .from('patients')
-        .insert(patientData)
+        .insert(dbData)
         .select()
         .single();
 
@@ -64,7 +90,17 @@ export const PatientService = {
         return { success: false, error: error.message };
       }
       
-      return { success: true, data };
+      const transformedData = {
+        ...data,
+        gender: (data.gender === 'male' || data.gender === 'female' || data.gender === 'other') 
+          ? data.gender as 'male' | 'female' | 'other'
+          : 'other' as const,
+        status: (data.status === 'active' || data.status === 'archived')
+          ? data.status as 'active' | 'archived'
+          : 'active' as const
+      };
+      
+      return { success: true, data: transformedData };
     } catch (error: any) {
       console.error('Error creating patient:', error);
       return { success: false, error: error.message };
@@ -84,7 +120,17 @@ export const PatientService = {
         return { success: false, error: error.message };
       }
       
-      return { success: true, data };
+      const transformedData = {
+        ...data,
+        gender: (data.gender === 'male' || data.gender === 'female' || data.gender === 'other') 
+          ? data.gender as 'male' | 'female' | 'other'
+          : 'other' as const,
+        status: (data.status === 'active' || data.status === 'archived')
+          ? data.status as 'active' | 'archived'
+          : 'active' as const
+      };
+      
+      return { success: true, data: transformedData };
     } catch (error: any) {
       console.error('Error updating patient:', error);
       return { success: false, error: error.message };
