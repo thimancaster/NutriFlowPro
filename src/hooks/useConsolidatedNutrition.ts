@@ -141,7 +141,8 @@ export const useConsolidatedNutrition = () => {
     const saveResult = await saveCalculationResults(calculationData);
     
     if (!saveResult.success) {
-      throw new Error('Failed to save calculation');
+      console.error('[ATTEND:E2E] Save failed:', saveResult.error);
+      throw new Error(saveResult.error || 'Failed to save calculation');
     }
 
     const result: CalculationResult = {

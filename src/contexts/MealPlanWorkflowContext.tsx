@@ -109,6 +109,13 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
       return;
     }
 
+    if (!user?.id) {
+      console.log('[WORKFLOW:PLAN] ❌ Usuário não autenticado');
+      setError('Usuário não autenticado');
+      setCalculationStatus('error');
+      return;
+    }
+
     console.log('[WORKFLOW:PLAN] 🧮 Iniciando auto-cálculo nutricional para:', activePatient.name);
     setCalculationStatus('loading');
     setError(null);
@@ -119,7 +126,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
         ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
         : 30; // default age if not available
 
-      // Use default values if patient data is incomplete
+      // Use default values if patient data is incomplete  
       const calculationParams = {
         id: activePatient.id,
         sex: (activePatient.gender as 'male' | 'female') || 'male',
@@ -132,7 +139,13 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
         profile: activePatient.goals?.profile || 'eutrofico' as any
       };
 
-      console.log('[WORKFLOW:PLAN] 📋 Parâmetros de cálculo:', calculationParams);
+      console.log('[WORKFLOW:PLAN] 📋 Parâmetros completos:', {
+        hasId: !!calculationParams.id,
+        weight: calculationParams.weight,
+        height: calculationParams.height,
+        age: calculationParams.age,
+        allFields: Object.keys(calculationParams)
+      });
 
       const result = await calculateNutrition(calculationParams);
       
@@ -143,18 +156,32 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
       }
     } catch (error: any) {
       console.error('[WORKFLOW:PLAN] ❌ Erro no auto-cálculo:', error);
-      setError(error.message || 'Erro no cálculo nutricional');
+      setError(`Erro no cálculo: ${error.message || 'Erro desconhecido'}`);
       setCalculationStatus('error');
     }
-  }, [activePatient, calculateNutrition]);
+  }, [activePatient, calculateNutrition, user?.id]);
 
   // Auto-calculate when patient is available but no calculation data exists
   useEffect(() => {
-    if (activePatient && calculationStatus === 'idle' && !calculationData) {
-      console.log('[WORKFLOW:PLAN] 🔄 Disparando auto-cálculo para paciente:', activePatient.name);
-      autoCalculateNutrition();
+    if (activePatient && user?.id && calculationStatus === 'idle' && !calculationData && !isCalculating) {
+      // Ensure we have basic patient data before calculating
+      const hasBasicData = activePatient.id && activePatient.name;
+      
+      if (hasBasicData) {
+        console.log('[WORKFLOW:PLAN] 🔄 Disparando auto-cálculo para paciente:', activePatient.name);
+        autoCalculateNutrition();
+      } else {
+        console.log('[WORKFLOW:PLAN] ⚠️ Dados básicos do paciente insuficientes:', {
+          id: activePatient.id,
+          name: activePatient.name
+        });
+        setError('Dados básicos do paciente insuficientes');
+        setCalculationStatus('error');
+      }
+    } else if (!user?.id && activePatient) {
+      console.log('[WORKFLOW:PLAN] ⏳ Aguardando autenticação do usuário...');
     }
-  }, [activePatient, calculationStatus, calculationData, autoCalculateNutrition]);
+  }, [activePatient, user?.id, calculationStatus, calculationData, autoCalculateNutrition, isCalculating]);
 
   // Update calculation status based on consolidatedNutrition results
   useEffect(() => {
