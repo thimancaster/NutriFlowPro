@@ -153,9 +153,9 @@ export interface MealPlanFood {
 
 // Patient Input for E2E flow
 export interface PatientInput {
-  id: string;
-  sex: 'male' | 'female';
-  gender?: 'M' | 'F';
+  id?: string;
+  sex?: 'male' | 'female';
+  gender: 'M' | 'F';
   age: number;
   weight: number;
   height: number;

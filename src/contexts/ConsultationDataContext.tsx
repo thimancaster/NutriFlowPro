@@ -123,13 +123,15 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
       patient_id: patient.id,
       weight: 0,
       height: 0,
+      age: patient.birth_date ? new Date().getFullYear() - new Date(patient.birth_date).getFullYear() : 30,
+      gender: patient.gender === 'male' ? 'male' : patient.gender === 'female' ? 'female' : 'other',
+      activity_level: 'moderado',
+      objective: 'manutenção',
       bmr: 0,
       protein: 0,
       carbs: 0,
       fats: 0,
       totalCalories: 0,
-      gender: 'male',
-      activity_level: 'moderado',
       patient: {
         name: patient.name,
         id: patient.id

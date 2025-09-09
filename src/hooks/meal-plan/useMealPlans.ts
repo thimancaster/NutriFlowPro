@@ -16,7 +16,7 @@ export const useMealPlans = (patientId?: string) => {
         filters.patient_id = patientId;
       }
       
-      const result = await MealPlanService.getMealPlans(user.id, filters);
+      const result = await MealPlanService.getMealPlans(user.id);
       return result;
     },
     enabled: !!user?.id

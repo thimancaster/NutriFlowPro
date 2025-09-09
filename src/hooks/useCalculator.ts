@@ -1,4 +1,3 @@
-
 /**
  * Hook Unificado para Cálculos Nutricionais
  * [UPDATED] Agora redireciona para o sistema consolidado
@@ -22,8 +21,10 @@ import {
 // Legacy compatibility types
 import type { 
   CalculationInputs as NewCalculationInputs,
-  CompleteNutritionalResult
+  CompleteNutritionalResult,
+  TMBResult
 } from '@/utils/nutrition/centralMotor/enpCore';
+import { PatientInput } from '@/types';
 
 export interface UseCalculatorReturn {
   formData: NewCalculationInputs;
@@ -83,14 +84,22 @@ export const useCalculator = (): UseCalculatorReturn => {
     try {
       const result = await calculateNutrition(inputsToUse);
       
-      // Convert to expected legacy format
+      const tmbResult: TMBResult = {
+        value: result.bmr,
+        formula: 'harris_benedict',
+        details: 'Calculation completed'
+      };
+
+      const mealDistribution: Record<string, { calories: number; protein: number; carbs: number; fat: number; }> = {};
+      
       return {
         ...result,
-        tmb: result.tmb || { value: result.bmr, formula: 'Harris-Benedict' },
-        mealDistribution: [], // Add required properties for legacy compatibility
-        profileUsed: inputsToUse.profile,
-        proteinPerKg: Math.round(result.macros.protein.grams / inputsToUse.weight)
-      };
+        tmb: tmbResult,
+        mealDistribution,
+        profileUsed: inputsToUse.profile as any,
+        proteinPerKg: Math.round(result.macros.protein.grams / inputsToUse.weight),
+        gea: result.gea || 0
+      } as CompleteNutritionalResult;
     } catch (error) {
       console.error('Calculation error:', error);
       return null;
@@ -109,9 +118,10 @@ export const useCalculator = (): UseCalculatorReturn => {
     console.log('🧮 useCalculator: calculateWithParams (legacy) delegando para sistema consolidado');
     
     // Map legacy values to new system
-    const calculationInput = {
+    const calculationInput: PatientInput = {
       id: 'temp-calc',
       sex: gender === 'M' || gender === 'male' ? 'male' as const : 'female' as const,
+      gender: gender === 'M' || gender === 'male' ? 'M' as const : 'F' as const,
       weight,
       height,
       age,
@@ -123,14 +133,23 @@ export const useCalculator = (): UseCalculatorReturn => {
     try {
       const result = await calculateNutrition(calculationInput);
       
-      // Convert to expected legacy format
+      // Convert to expected legacy format with proper types
+      const tmbResult: TMBResult = {
+        value: result.bmr,
+        formula: 'harris_benedict',
+        details: 'Calculation completed'
+      };
+
+      const mealDistribution: Record<string, { calories: number; protein: number; carbs: number; fat: number; }> = {};
+      
       return {
         ...result,
-        tmb: result.tmb || { value: result.bmr, formula: 'Harris-Benedict' },
-        mealDistribution: [], // Add required properties for legacy compatibility
-        profileUsed: profile,
-        proteinPerKg: Math.round(result.macros.protein.grams / weight)
-      };
+        tmb: tmbResult,
+        mealDistribution,
+        profileUsed: profile as any,
+        proteinPerKg: Math.round(result.macros.protein.grams / weight),
+        gea: result.gea || 0
+      } as CompleteNutritionalResult;
     } catch (error) {
       console.error('Calculation error:', error);
       return null;
@@ -145,7 +164,13 @@ export const useCalculator = (): UseCalculatorReturn => {
 
   return {
     formData,
-    results,
+    results: results ? {
+      ...results,
+      tmb: results.tmb ? { ...results.tmb, details: 'Calculation completed' } : { value: results.bmr, formula: 'harris_benedict' as const, details: 'Calculation completed' },
+      mealDistribution: {} as Record<string, { calories: number; protein: number; carbs: number; fat: number; }>,
+      profileUsed: formData.profile as any,
+      proteinPerKg: formData.weight > 0 ? Math.round((results.macros?.protein?.grams || 0) / formData.weight) : 0
+    } as any : null,
     isCalculating,
     error,
     updateFormData,

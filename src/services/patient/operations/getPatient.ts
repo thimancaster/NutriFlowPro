@@ -31,4 +31,4 @@ export const getPatient = async (id: string): Promise<PatientServiceResponse> =>
   }
 };
 
-export { PatientServiceResponse };
+export { PatientServiceResponse as PatientResponse };
