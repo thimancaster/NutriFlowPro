@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient } from '@/types/patient';
 
@@ -23,12 +22,28 @@ export const getPatient = async (id: string): Promise<PatientServiceResponse> =>
       return { success: false, error: error.message };
     }
     
-    console.log('[ATTEND:E2E] Patient data loaded successfully');
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('[ATTEND:E2E] Exception loading patient:', error);
-    return { success: false, error: error.message || 'Unknown error occurred' };
-  }
-};
+    if (data) {
+      console.log('[ATTEND:E2E] Patient data loaded successfully');
+        const transformedData = {
+          ...data,
+          gender: (data.gender === 'male' || data.gender === 'female' || data.gender === 'other') 
+            ? data.gender as 'male' | 'female' | 'other'
+            : 'other' as const,
+          status: (data.status === 'active' || data.status === 'archived')
+            ? data.status as 'active' | 'archived'
+            : 'active' as const,
+          goals: data.goals ? (typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals) : {},
+          secondaryPhone: data.secondaryphone || '',
+          address: data.address || ''
+        };
+        return { success: true, data: transformedData };
+      } else {
+        return { success: false, error: "Patient not found" };
+      }
+    } catch (error: any) {
+      console.error('[ATTEND:E2E] Exception loading patient:', error);
+      return { success: false, error: error.message || 'Unknown error occurred' };
+    }
+  };
 
-export { PatientServiceResponse as PatientResponse };
+export type { PatientServiceResponse as PatientResponse };

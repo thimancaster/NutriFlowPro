@@ -39,10 +39,10 @@ const MealPlans: React.FC = () => {
     setError(null);
     
     try {
-      const result = await MealPlanService.getMealPlans(user.id, filters);
+      const result = await MealPlanService.getMealPlans(user.id);
       
       if (result.success && result.data) {
-        setMealPlans(result.data);
+        setMealPlans(result.data as any);
       } else {
         setError(result.error || 'Erro ao carregar planos alimentares');
       }

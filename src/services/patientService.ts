@@ -62,7 +62,10 @@ export const PatientService = {
           : 'other' as const,
         status: (data.status === 'active' || data.status === 'archived')
           ? data.status as 'active' | 'archived'
-          : 'active' as const
+          : 'active' as const,
+        goals: data.goals ? (typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals) : {},
+        secondaryPhone: data.secondaryphone || '',
+        address: data.address || ''
       };
       
       return { success: true, data: transformedData };
@@ -77,12 +80,14 @@ export const PatientService = {
       const dbData = {
         ...patientData,
         address: typeof patientData.address === 'string' ? patientData.address : JSON.stringify(patientData.address),
-        gender: patientData.gender || 'other'
+        gender: patientData.gender || 'other',
+        goals: patientData.goals ? JSON.stringify(patientData.goals) : null,
+        secondaryphone: patientData.secondaryPhone
       };
       
       const { data, error } = await supabase
         .from('patients')
-        .insert(dbData)
+        .insert(dbData as any)
         .select()
         .single();
 
@@ -97,7 +102,10 @@ export const PatientService = {
           : 'other' as const,
         status: (data.status === 'active' || data.status === 'archived')
           ? data.status as 'active' | 'archived'
-          : 'active' as const
+          : 'active' as const,
+        goals: data.goals ? (typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals) : {},
+        secondaryPhone: data.secondaryphone || '',
+        address: data.address || ''
       };
       
       return { success: true, data: transformedData };
@@ -109,9 +117,16 @@ export const PatientService = {
 
   async updatePatient(id: string, updates: Partial<Patient>): Promise<PatientServiceResponse> {
     try {
+      const dbUpdates = {
+        ...updates,
+        address: typeof updates.address === 'string' ? updates.address : JSON.stringify(updates.address),
+        goals: updates.goals ? JSON.stringify(updates.goals) : null,
+        secondaryphone: updates.secondaryPhone
+      };
+      
       const { data, error } = await supabase
         .from('patients')
-        .update(updates)
+        .update(dbUpdates as any)
         .eq('id', id)
         .select()
         .single();
@@ -127,7 +142,10 @@ export const PatientService = {
           : 'other' as const,
         status: (data.status === 'active' || data.status === 'archived')
           ? data.status as 'active' | 'archived'
-          : 'active' as const
+          : 'active' as const,
+        goals: data.goals ? (typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals) : {},
+        secondaryPhone: data.secondaryphone || '',
+        address: data.address || ''
       };
       
       return { success: true, data: transformedData };

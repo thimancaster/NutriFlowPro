@@ -53,7 +53,9 @@ export const loadPatientNutritionContext = async (patientId: string): Promise<Pa
       .order('date', { ascending: false })
       .limit(1);
 
-    const lastObjective = consultations?.[0]?.metrics?.objective;
+    const lastObjective = consultations?.[0]?.metrics && typeof consultations[0].metrics === 'object' 
+      ? (consultations[0].metrics as any).objective 
+      : undefined;
 
     // Calculate age from birth_date
     const age = patient.birth_date ? calculateAge(patient.birth_date) : 0;
@@ -62,6 +64,7 @@ export const loadPatientNutritionContext = async (patientId: string): Promise<Pa
     const patientData: PatientInput = {
       id: patientId,
       sex: patient.gender === 'male' ? 'male' : 'female',
+      gender: patient.gender === 'male' ? 'M' : 'F',
       age,
       weight: latestMetrics?.weight || 0,
       height: latestMetrics?.height || 0,

@@ -39,6 +39,11 @@ const MealPlanGenerator: React.FC = () => {
         const simulatedConsultationData = {
           id: `enp-${Date.now()}`,
           patient_id: patientData.id,
+          weight: patientData?.weight || 70,
+          height: patientData?.height || 170,
+          age: patientData?.age || 30,
+          gender: patientData?.gender === 'M' ? 'male' as const : 'female' as const,
+          activity_level: patientData?.activityLevel || 'sedentary',
           objective: calculationData.objective || 'manutenção',
           totalCalories: calculationData.tdee,
           protein: calculationData.protein,

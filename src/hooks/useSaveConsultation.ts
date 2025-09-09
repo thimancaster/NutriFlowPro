@@ -1,8 +1,6 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ConsultationService } from '@/services/consultationService';
-import { ConsultationCreateInput, ConsultationUpdateInput } from '@/types/consultationTypes';
 
 interface UseSaveConsultationProps {
   onSuccess?: () => void;
@@ -47,11 +45,16 @@ export const useSaveConsultation = ({ onSuccess, onError }: UseSaveConsultationP
     }
   };
 
-  const updateConsultation = async (id: string, data: ConsultationUpdateInput) => {
+  const updateConsultation = async (id: string, data: any) => {
     setIsLoading(true);
     try {
       // Update not available in current service, use create for now
-      const result = await ConsultationService.create(data);
+      const payload = {
+        patient_id: id,
+        date: data.date || new Date().toISOString(),
+        metrics: data.metrics || {}
+      };
+      const result = await ConsultationService.create(payload);
       
       if (result.success) {
         toast({
