@@ -5,9 +5,11 @@ import MealPlanWorkflow from '@/components/MealPlanWorkflow/MealPlanWorkflow';
 
 const MealPlanWorkflowPage: React.FC = () => {
   return (
-    <MealPlanWorkflowProvider>
-      <MealPlanWorkflow />
-    </MealPlanWorkflowProvider>
+    <div className="container mx-auto px-4 py-8">
+      <MealPlanWorkflowProvider>
+        <MealPlanWorkflow />
+      </MealPlanWorkflowProvider>
+    </div>
   );
 };
 
