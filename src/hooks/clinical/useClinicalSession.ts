@@ -68,7 +68,7 @@ export const useClinicalSession = (patientId?: string, appointmentId?: string) =
             measurements: calculation.measurements || {},
             notes: calculation.notes
           },
-          status: calculation.status === 'completo' ? 'completed' : 'in_progress',
+          status: calculation.status === 'concluida' ? 'completed' : 'in_progress',
           created_at: calculation.created_at,
           updated_at: calculation.created_at // Use created_at as fallback since updated_at might not exist
         };
@@ -216,7 +216,7 @@ export const useClinicalSession = (patientId?: string, appointmentId?: string) =
       const { error } = await supabase
         .from('calculations')
         .update({
-          status: 'completo',
+          status: 'concluida', // Must match check_status_calc constraint
           last_auto_save: new Date().toISOString()
         })
         .eq('id', session.id);

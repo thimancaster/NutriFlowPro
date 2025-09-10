@@ -52,7 +52,7 @@ export const handleAutoSaveConsultation = async (
  */
 export const updateConsultationStatus = async (
   consultationId: string,
-  status: 'em_andamento' | 'completo'
+  status: 'em_andamento' | 'concluida' | 'cancelada' // Must match check_status_calc constraint
 ): Promise<boolean> => {
   try {
     if (!consultationId) {

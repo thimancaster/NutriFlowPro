@@ -67,7 +67,7 @@ export const useMealPlanHandler = ({
         gender: patientData.gender || 'other',
         activity_level: 'moderado', // valor padrão se não especificado
         tipo: 'primeira_consulta',
-        status: 'completo'
+        status: 'concluida', // Must match check_status_calc constraint
       };
 
       const { data: savedCalculation, error: calcError } = await supabase

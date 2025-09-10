@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { normalizeCalculationStatus, normalizeGender, sanitizeCalculationData, getCalculationErrorMessage } from '@/utils/calculationValidation';
 
 interface CalculationData {
   patient_id: string;
@@ -30,16 +31,20 @@ export async function saveCalculationResults(data: CalculationData) {
       return { success: false, error: 'Campos obrigatórios faltando' };
     }
     
-    // Normalize gender to ensure it's 'M' or 'F'
-    const normalizedGender = normalizeGender(data.gender);
-    console.log('Gender normalized from', data.gender, 'to', normalizedGender);
+    // Sanitize and normalize all data before database insertion
+    const sanitizedData = sanitizeCalculationData(data);
+    console.log('Data sanitized:', { 
+      originalStatus: data.status, 
+      sanitizedStatus: sanitizedData.status,
+      originalGender: data.gender,
+      sanitizedGender: sanitizedData.gender
+    });
     
     // Insert calculation record
     const { data: calculation, error } = await supabase
       .from('calculations')
       .insert({
-        ...data,
-        gender: normalizedGender,
+        ...sanitizedData,
         created_at: new Date().toISOString()
       })
       .select('*')
@@ -47,38 +52,19 @@ export async function saveCalculationResults(data: CalculationData) {
     
     if (error) {
       console.error('Database error saving calculation:', error);
-      throw error;
+      const userFriendlyMessage = getCalculationErrorMessage(error);
+      return { success: false, error: userFriendlyMessage };
     }
     
     return { success: true, data: calculation };
   } catch (error: any) {
     console.error('Error saving calculation results:', error);
-    return { success: false, error: error.message };
+    const userFriendlyMessage = getCalculationErrorMessage(error);
+    return { success: false, error: userFriendlyMessage };
   }
 }
 
-/**
- * Normalizes gender values to ensure they match database constraints
- */
-function normalizeGender(gender: string): 'M' | 'F' {
-  if (!gender) return 'M'; // Default to Male if no gender provided
-  
-  const normalizedValue = gender.toString().trim().toUpperCase();
-  
-  // Handle various formats
-  if (normalizedValue === 'M' || normalizedValue === 'MALE' || normalizedValue === 'MASCULINO') {
-    return 'M';
-  }
-  
-  if (normalizedValue === 'F' || normalizedValue === 'FEMALE' || normalizedValue === 'FEMININO') {
-    return 'F';
-  }
-  
-  // Default to 'M' if unable to determine
-  console.warn('Unable to normalize gender value:', gender, '- defaulting to M');
-  return 'M';
-}
-
+// Remove old validation functions - now imported from utils
 export async function getPatientCalculations(patientId: string) {
   try {
     const { data, error } = await supabase

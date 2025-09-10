@@ -37,7 +37,7 @@ export const useConsultation = () => {
         
         await updateConsultationStatus(
           consultationId,
-          formData.consultationStatus as 'em_andamento' | 'completo'
+          formData.consultationStatus as 'em_andamento' | 'concluida'
         );
       } catch (error) {
         console.error('Error updating consultation metadata:', error);
@@ -75,7 +75,7 @@ export const useConsultation = () => {
           fats: results.macros.fat,
           activity_level: formData.activityLevel,
           goal: formData.objective,
-          status: formData.consultationStatus as 'em_andamento' | 'completo'
+          status: formData.consultationStatus as 'em_andamento' | 'concluida'
         }
       );
       

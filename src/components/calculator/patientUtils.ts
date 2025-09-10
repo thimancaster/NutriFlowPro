@@ -80,7 +80,7 @@ export async function saveTemporaryPatient(
 // Helper function to update the status of a calculation
 export async function updateCalculationStatus(
   calculationId: string, 
-  status: 'em_andamento' | 'completo'
+  status: 'em_andamento' | 'concluida' | 'cancelada'
 ): Promise<boolean> {
   try {
     const { error } = await supabase
