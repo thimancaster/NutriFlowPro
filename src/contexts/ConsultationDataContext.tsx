@@ -85,7 +85,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
         age: consultationData.age || activePatient.age || 0,
         weight: consultationData.weight || 0,
         height: consultationData.height || 0,
-        gender: consultationData.gender || 'male',
+        gender: consultationData.gender === 'male' ? 'M' : consultationData.gender === 'female' ? 'F' : 'M', // Normalize to database format
         activity_level: consultationData.activity_level || 'moderado',
         goal: consultationData.objective || consultationData.goal || 'manutenção',
         bmr: consultationData.bmr || 0,

@@ -30,11 +30,16 @@ export async function saveCalculationResults(data: CalculationData) {
       return { success: false, error: 'Campos obrigatórios faltando' };
     }
     
+    // Normalize gender to ensure it's 'M' or 'F'
+    const normalizedGender = normalizeGender(data.gender);
+    console.log('Gender normalized from', data.gender, 'to', normalizedGender);
+    
     // Insert calculation record
     const { data: calculation, error } = await supabase
       .from('calculations')
       .insert({
         ...data,
+        gender: normalizedGender,
         created_at: new Date().toISOString()
       })
       .select('*')
@@ -50,6 +55,28 @@ export async function saveCalculationResults(data: CalculationData) {
     console.error('Error saving calculation results:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Normalizes gender values to ensure they match database constraints
+ */
+function normalizeGender(gender: string): 'M' | 'F' {
+  if (!gender) return 'M'; // Default to Male if no gender provided
+  
+  const normalizedValue = gender.toString().trim().toUpperCase();
+  
+  // Handle various formats
+  if (normalizedValue === 'M' || normalizedValue === 'MALE' || normalizedValue === 'MASCULINO') {
+    return 'M';
+  }
+  
+  if (normalizedValue === 'F' || normalizedValue === 'FEMALE' || normalizedValue === 'FEMININO') {
+    return 'F';
+  }
+  
+  // Default to 'M' if unable to determine
+  console.warn('Unable to normalize gender value:', gender, '- defaulting to M');
+  return 'M';
 }
 
 export async function getPatientCalculations(patientId: string) {

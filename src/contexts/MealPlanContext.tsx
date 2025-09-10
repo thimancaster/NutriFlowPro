@@ -42,7 +42,7 @@ export const MealPlanProvider: React.FC<MealPlanProviderProps> = ({ children }) 
         age: data.age || 0,
         weight: data.weight || 0,
         height: data.height || 0,
-        gender: data.gender || 'male',
+        gender: data.gender === 'male' ? 'M' : data.gender === 'female' ? 'F' : 'M', // Normalize to database format
         activity_level: data.activity_level || 'moderado',
         goal: data.objective || data.goal || 'manutenção',
         bmr: data.bmr || 0,

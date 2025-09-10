@@ -124,7 +124,7 @@ export const useConsolidatedNutrition = () => {
       weight: input.weight,
       height: input.height,
       age: input.age,
-      gender: sex,
+      gender: input.gender, // Use the correct 'M' or 'F' format
       activity_level: input.activityLevel,
       goal: input.objective,
       bmr: Math.round(bmr),

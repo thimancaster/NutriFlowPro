@@ -163,7 +163,7 @@ export const useUnifiedCalculator = () => {
           weight: calculatorData.weight,
           height: calculatorData.height,
           age: calculatorData.age,
-          gender: calculatorData.gender,
+          gender: calculatorData.gender === 'male' ? 'M' : 'F', // Convert to database format
           activity_level: calculatorData.activityLevel,
           goal: calculatorData.objective,
           bmr: calculatorData.bmr,

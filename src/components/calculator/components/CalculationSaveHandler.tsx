@@ -70,7 +70,7 @@ export const useCalculationSaveHandler = ({
         weight: weightValue,
         height: heightValue,
         age: ageValue,
-        gender: sex === 'M' ? 'male' : 'female',
+        gender: sex, // Keep as 'M' or 'F' for database compatibility
         activity_level: activityLevel,
         goal: objective,
         bmr: tmbValue || 0,

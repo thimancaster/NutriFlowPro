@@ -64,7 +64,7 @@ export const loadPatientNutritionContext = async (patientId: string): Promise<Pa
     const patientData: PatientInput = {
       id: patientId,
       sex: patient.gender === 'male' ? 'male' : 'female',
-      gender: patient.gender === 'male' ? 'M' : 'F',
+      gender: patient.gender === 'male' ? 'M' : patient.gender === 'female' ? 'F' : 'M', // Ensure proper format
       age,
       weight: latestMetrics?.weight || 0,
       height: latestMetrics?.height || 0,
