@@ -14,13 +14,19 @@ interface MealPlanGenerationStepProps {
     name: string;
     gender?: string;
     birth_date?: string;
+    weight?: number;
+    height?: number;
   };
   calculationResults?: {
+    id?: string;
     totalCalories: number;
     protein: number;
     carbs: number;
     fats: number;
     objective: string;
+    tmb?: number;
+    get?: number;
+    vet?: number;
   };
   onBack?: () => void;
   onComplete?: () => void;
@@ -66,16 +72,43 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
       fats: calculationResults.fats
     });
 
-    const result = await generateMealPlan(
-      calculationResults.totalCalories,
-      calculationResults.protein,
-      calculationResults.carbs,
-      calculationResults.fats,
-      patientData.id
-    );
+    try {
+      // Use the new orchestrated workflow
+      const { PlanWorkflowService } = await import('@/services/workflow/planWorkflow');
+      
+      const result = await PlanWorkflowService.gerarPlanoAlimentar({
+        patientData: {
+          id: patientData.id,
+          name: patientData.name,
+          weight: patientData.weight || 70,
+          height: patientData.height || 170,
+          age: patientAge,
+          gender: patientGender as 'male' | 'female',
+          birth_date: patientData.birth_date
+        },
+        calculationResults: {
+          id: calculationResults.id || `calc-${Date.now()}`,
+          patient_id: patientData.id,
+          user_id: 'current-user', // This should come from auth context
+          totalCalories: calculationResults.totalCalories,
+          protein: calculationResults.protein,
+          carbs: calculationResults.carbs,
+          fats: calculationResults.fats,
+          tmb: calculationResults.tmb || calculationResults.totalCalories * 0.7,
+          get: calculationResults.get || calculationResults.totalCalories * 0.85,
+          vet: calculationResults.vet || calculationResults.totalCalories,
+          objective: calculationResults.objective || 'manutencao',
+          status: 'concluida'
+        },
+        userId: 'current-user' // This should come from auth context
+      });
 
-    if (result) {
-      console.log('✅ [MealPlanGenerationStep] Plano gerado com sucesso:', result.id);
+      if (result) {
+        console.log('✅ [MealPlanGenerationStep] Plano gerado com sucesso:', result.id);
+      }
+    } catch (error: any) {
+      console.error('❌ [MealPlanGenerationStep] Erro na geração:', error);
+      // Error will be handled by the UI state
     }
   };
 

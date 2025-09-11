@@ -133,7 +133,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
         weight: activePatient.weight || 70, // default weight
         height: activePatient.height || 170, // default height
         age: patientAge,
-        gender: (activePatient.gender === 'male' ? 'M' : 'F') as 'M' | 'F',
+        gender: (activePatient.gender === 'male' ? 'M' : activePatient.gender === 'female' ? 'F' : 'M') as 'M' | 'F',
         activityLevel: activePatient.goals?.activityLevel || 'moderado' as any,
         objective: activePatient.goals?.objective || 'manutencao' as any,
         profile: activePatient.goals?.profile || 'eutrofico' as any
@@ -226,16 +226,37 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setError(null);
     
     try {
-      const result = await generatePlan(
-        {
-          totalCalories: nutritionalData.totalCalories,
-          protein: nutritionalData.protein,
-          carbs: nutritionalData.carbs,
-          fats: nutritionalData.fats
+      // Use the new orchestrated workflow
+      const { PlanWorkflowService } = await import('@/services/workflow/planWorkflow');
+      
+      const result = await PlanWorkflowService.gerarPlanoAlimentar({
+        patientData: {
+          id: activePatient.id,
+          name: activePatient.name,
+          weight: activePatient.weight,
+          height: activePatient.height,
+          age: activePatient.birth_date 
+            ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+            : undefined,
+          gender: activePatient.gender === 'female' ? 'F' as const : 'M' as const,
+          birth_date: activePatient.birth_date
         },
-        activePatient.id,
-        user.id
-      );
+        calculationResults: calculationData ? {
+          id: calculationData.id || `calc-${Date.now()}`,
+          patient_id: activePatient.id,
+          user_id: user.id,
+          totalCalories: calculationData.totalCalories,
+          protein: calculationData.protein,
+          carbs: calculationData.carbs,
+          fats: calculationData.fats,
+          tmb: calculationData.tmb || calculationData.totalCalories * 0.7,
+          get: calculationData.get || calculationData.totalCalories * 0.85,
+          vet: calculationData.vet || calculationData.totalCalories,
+          objective: calculationData.objective || 'manutencao',
+          status: 'concluida'
+        } : undefined,
+        userId: user.id
+      });
 
       if (result) {
         console.log('[WORKFLOW:PLAN] ✅ Plano gerado com sucesso:', result.id);
@@ -248,7 +269,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
       setError(errorMessage);
       console.error("[WORKFLOW:PLAN] ❌ Erro ao gerar plano:", error);
     }
-  }, [activePatient, user, generatePlan]);
+  }, [activePatient, user, calculationData]);
 
   const saveMealPlan = useCallback(async (updates: Partial<ConsolidatedMealPlan>) => {
     if (!mealPlan) return;
