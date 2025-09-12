@@ -6,7 +6,7 @@ import {ENPCalculationValidator} from "../validation/ENPCalculationValidator";
 import {ENPResultsPanel} from "../ENPResultsPanel";
 import CalculatorActions from "../CalculatorActions";
 import GERFormulaSelection from "../inputs/GERFormulaSelection";
-import {useCalculatorFix} from "@/hooks/useCalculatorFix";
+import {useOfficialCalculations} from "@/hooks/useOfficialCalculations";
 import {ActivityLevel, Objective, Profile} from "@/types/consultation";
 import {GERFormula} from "@/types/gerFormulas";
 import {
@@ -20,7 +20,7 @@ import {
 import {usePatient} from "@/contexts/patient/PatientContext";
 
 export const ENPCalculatorForm: React.FC = () => {
-	const { calculate, isCalculating, result: results, error } = useCalculatorFix();
+	const { calculate, loading: isCalculating, results, error, updateInputs } = useOfficialCalculations();
 	
 	// Form state
 	const [formData, setFormData] = React.useState({
@@ -88,17 +88,23 @@ export const ENPCalculatorForm: React.FC = () => {
 		}
 		console.log('[CALC:DEBUG] Iniciando cálculo...');
 		try {
+			// Update inputs first
 			const calculationInputs = {
 				weight: formData.weight,
 				height: formData.height,
 				age: formData.age,
-				sex: formData.gender,
-				activityLevel: formData.activityLevel,
-				objective: formData.objective,
-				profile: formData.profile
+				gender: formData.gender as 'M' | 'F',
+				activityLevel: formData.activityLevel as any,
+				objective: formData.objective as any,
+				profile: formData.profile as any,
+				macroInputs: {
+					proteinPerKg: formData.profile === 'atleta' ? 2.0 : formData.profile === 'obeso' ? 1.2 : 1.6,
+					fatPerKg: 1.0
+				}
 			};
+			updateInputs(calculationInputs);
 			console.log('[CALC:DEBUG] Chamando calculate com:', calculationInputs);
-			const result = await calculate(calculationInputs);
+			const result = await calculate();
 			console.log('[CALC:DEBUG] Resultado:', result);
 		} catch (error) {
 			console.error('[CALC:DEBUG] Erro no cálculo:', error);
@@ -136,7 +142,7 @@ export const ENPCalculatorForm: React.FC = () => {
 
 	const transformedResults = results
 		? {
-				tmb: results.tmb,
+				tmb: results.tmb.value,
 				get: results.get,
 				vet: results.vet,
 				adjustment: 0, // Simplificado

@@ -1,16 +1,19 @@
 /**
- * OFFICIAL CALCULATIONS HOOK
+ * OFFICIAL CALCULATIONS HOOK - SINGLE SOURCE OF TRUTH
  * Provides access to official nutrition calculations with proper state management
+ * This is the ONLY hook that should be used for nutritional calculations.
  */
 
 import { useState, useCallback } from 'react';
 import {
   calculateComplete_Official,
   validateMealDistribution,
+  validateCalculationInputs,
   type CalculationInputs,
   type CalculationResult,
-  type ManualMacroInputs
-} from '@/utils/nutrition/official/formulas';
+  type ManualMacroInputs,
+  type PercentageMacroInputs
+} from '@/utils/nutrition/official/officialCalculations';
 import { useToast } from '@/hooks/use-toast';
 
 export interface OfficialCalculationState {
@@ -51,47 +54,18 @@ export const useOfficialCalculations = () => {
     }));
   }, []);
 
-  // Validate inputs before calculation
-  const validateInputs = useCallback((inputs: Partial<CalculationInputs>): string[] => {
-    const errors: string[] = [];
+  // Update percentage inputs specifically
+  const updatePercentageInputs = useCallback((percentageInputs: PercentageMacroInputs) => {
+    setState(prev => ({
+      ...prev,
+      inputs: { ...prev.inputs, percentageInputs, macroInputs: undefined },
+      error: null
+    }));
+  }, []);
 
-    if (!inputs.weight || inputs.weight <= 0) {
-      errors.push('Peso é obrigatório e deve ser maior que zero');
-    }
-    if (!inputs.height || inputs.height <= 0) {
-      errors.push('Altura é obrigatória e deve ser maior que zero');
-    }
-    if (!inputs.age || inputs.age <= 0) {
-      errors.push('Idade é obrigatória e deve ser maior que zero');
-    }
-    if (!inputs.gender) {
-      errors.push('Sexo é obrigatório');
-    }
-    if (!inputs.profile) {
-      errors.push('Perfil corporal é obrigatório');
-    }
-    if (!inputs.activityLevel) {
-      errors.push('Nível de atividade é obrigatório');
-    }
-    if (!inputs.objective) {
-      errors.push('Objetivo é obrigatório');
-    }
-    if (!inputs.macroInputs?.proteinPerKg || inputs.macroInputs.proteinPerKg <= 0) {
-      errors.push('Proteína por kg deve ser maior que zero');
-    }
-    if (!inputs.macroInputs?.fatPerKg || inputs.macroInputs.fatPerKg <= 0) {
-      errors.push('Gordura por kg deve ser maior que zero');
-    }
-
-    // Nutritional validation
-    if (inputs.macroInputs?.proteinPerKg && inputs.macroInputs.proteinPerKg > 5) {
-      errors.push('Proteína muito alta (>5g/kg). Verifique o valor.');
-    }
-    if (inputs.macroInputs?.fatPerKg && inputs.macroInputs.fatPerKg > 3) {
-      errors.push('Gordura muito alta (>3g/kg). Verifique o valor.');
-    }
-
-    return errors;
+  // Validate inputs before calculation (uses official validation)
+  const validateInputs = useCallback((inputs: Partial<CalculationInputs>) => {
+    return validateCalculationInputs(inputs);
   }, []);
 
   // Perform official calculation
@@ -99,10 +73,10 @@ export const useOfficialCalculations = () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      // Validate inputs
-      const validationErrors = validateInputs(state.inputs);
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join('. '));
+      // Validate inputs using official validation
+      const validation = validateInputs(state.inputs);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join('. '));
       }
 
       // Ensure we have complete inputs
@@ -151,16 +125,31 @@ export const useOfficialCalculations = () => {
 
   // Get calculation preview (without full calculation)
   const getPreview = useCallback(() => {
-    const { weight, macroInputs } = state.inputs;
+    const { weight, macroInputs, percentageInputs } = state.inputs;
     
-    if (!weight || !macroInputs) return null;
+    if (!weight) return null;
 
-    return {
-      proteinGrams: Math.round(macroInputs.proteinPerKg * weight * 10) / 10,
-      proteinKcal: Math.round(macroInputs.proteinPerKg * weight * 4),
-      fatGrams: Math.round(macroInputs.fatPerKg * weight * 10) / 10,
-      fatKcal: Math.round(macroInputs.fatPerKg * weight * 9)
-    };
+    if (macroInputs) {
+      return {
+        proteinGrams: Math.round(macroInputs.proteinPerKg * weight * 10) / 10,
+        proteinKcal: Math.round(macroInputs.proteinPerKg * weight * 4),
+        fatGrams: Math.round(macroInputs.fatPerKg * weight * 10) / 10,
+        fatKcal: Math.round(macroInputs.fatPerKg * weight * 9),
+        inputMethod: 'grams_per_kg' as const
+      };
+    }
+
+    if (percentageInputs) {
+      // Rough preview based on estimated VET of 2000 kcal
+      const estimatedVet = 2000;
+      return {
+        proteinKcal: Math.round((estimatedVet * percentageInputs.proteinPercent) / 100),
+        fatKcal: Math.round((estimatedVet * percentageInputs.fatPercent) / 100),
+        inputMethod: 'percentages' as const
+      };
+    }
+
+    return null;
   }, [state.inputs]);
 
   // Validate meal distribution
@@ -170,9 +159,14 @@ export const useOfficialCalculations = () => {
 
   // Check if ready to calculate
   const canCalculate = useCallback(() => {
-    const errors = validateInputs(state.inputs);
-    return errors.length === 0 && !state.loading;
+    const validation = validateInputs(state.inputs);
+    return validation.isValid && !state.loading;
   }, [state.inputs, state.loading, validateInputs]);
+
+  // Get current validation status
+  const getValidation = useCallback(() => {
+    return validateInputs(state.inputs);
+  }, [state.inputs, validateInputs]);
 
   return {
     // State
@@ -184,6 +178,7 @@ export const useOfficialCalculations = () => {
     // Actions
     updateInputs,
     updateMacroInputs,
+    updatePercentageInputs,
     calculate,
     reset,
 
@@ -191,6 +186,7 @@ export const useOfficialCalculations = () => {
     getPreview,
     validateMealDist,
     canCalculate,
+    getValidation,
     validateInputs: (inputs?: Partial<CalculationInputs>) => 
       validateInputs(inputs || state.inputs)
   };
