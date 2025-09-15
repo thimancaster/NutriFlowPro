@@ -1,40 +1,25 @@
 
 import React from 'react';
-import { MealPlanWorkflowProvider } from '@/contexts/MealPlanWorkflowContext';
-import UnifiedClinicalWorkflow from '@/components/workflow/UnifiedClinicalWorkflow';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { ClinicalWorkflowProvider } from '@/contexts/ClinicalWorkflowContext';
+import UnifiedClinicalPage from '@/components/clinical/UnifiedClinicalPage';
 
 /**
- * PÁGINA DE CONSULTA CONSOLIDADA
+ * PÁGINA CLÍNICA CONSOLIDADA
  * 
- * Esta é a nova página padrão para atendimento nutricional.
- * Integra todo o fluxo consolidado em uma única interface.
+ * Esta é a nova página unificada para todo o atendimento nutricional.
+ * Integra sessões clínicas com histórico completo e pré-preenchimento inteligente.
  * 
- * SUBSTITUI: ConsultationPage, UnifiedConsultationPage
+ * ARQUITETURA UNIFICADA:
+ * - Elimina redundância da funcionalidade "Consulta"
+ * - Trata cada atendimento como "Sessão Clínica" persistida
+ * - Pré-preenchimento automático para acompanhamentos
+ * - Histórico completo de evolução do paciente
  */
 const ConsolidatedConsultationPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleWorkflowComplete = () => {
-    toast({
-      title: "Consulta Finalizada",
-      description: "O atendimento nutricional foi concluído com sucesso!",
-    });
-    
-    // Navegar para dashboard ou lista de pacientes
-    navigate('/patients');
-  };
-
   return (
-    <MealPlanWorkflowProvider>
-      <div className="container mx-auto p-6 max-w-7xl">
-        <UnifiedClinicalWorkflow 
-          onComplete={handleWorkflowComplete}
-        />
-      </div>
-    </MealPlanWorkflowProvider>
+    <ClinicalWorkflowProvider>
+      <UnifiedClinicalPage />
+    </ClinicalWorkflowProvider>
   );
 };
 
