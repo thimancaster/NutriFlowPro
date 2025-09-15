@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Calculator, User, Activity, Target, Zap, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { useOfficialCalculations } from '@/hooks/useOfficialCalculations';
+import { useActivePatient } from '@/hooks/useActivePatient';
 import type { 
   Gender, 
   PatientProfile, 
@@ -37,8 +38,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
     calculate,
     reset,
     getValidation,
-    canCalculate
+    canCalculate,
+    availableFormulas
   } = useOfficialCalculations();
+
+  const { activePatient } = useActivePatient();
 
   // Local form state
   const [formData, setFormData] = useState({
@@ -61,6 +65,28 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
     fatPercent: '25',
     carbsPercent: '55'
   });
+
+  // Pre-fill form with active patient data
+  useEffect(() => {
+    if (activePatient) {
+      console.log('[CALCULATOR] Pre-filling with patient data:', activePatient.name);
+      
+      const patientAge = activePatient.birth_date 
+        ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        : '';
+
+      setFormData(prev => ({
+        ...prev,
+        weight: activePatient.weight?.toString() || prev.weight,
+        height: activePatient.height?.toString() || prev.height,
+        age: patientAge.toString() || prev.age,
+        gender: (activePatient.gender === 'male' ? 'M' : activePatient.gender === 'female' ? 'F' : prev.gender) as Gender,
+        activityLevel: (activePatient.goals?.activityLevel || prev.activityLevel) as ActivityLevel,
+        objective: (activePatient.goals?.objective || prev.objective) as Objective,
+        profile: (activePatient.goals?.profile || prev.profile) as PatientProfile
+      }));
+    }
+  }, [activePatient]);
 
   // Update official inputs when form data changes
   useEffect(() => {
@@ -179,18 +205,20 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label>Perfil Corporal</Label>
+              <Label>Fórmula de Cálculo</Label>
               <Select 
                 value={formData.profile} 
                 onValueChange={(value: PatientProfile) => setFormData(prev => ({ ...prev, profile: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o perfil" />
+                  <SelectValue placeholder="Selecione a fórmula" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="eutrofico">Eutrófico (Harris-Benedict)</SelectItem>
-                  <SelectItem value="sobrepeso_obesidade">Sobrepeso/Obesidade (Mifflin-St Jeor)</SelectItem>
-                  <SelectItem value="atleta">Atleta (Tinsley)</SelectItem>
+                  {availableFormulas.map(formula => (
+                    <SelectItem key={formula.value} value={formula.value}>
+                      {formula.label} - {formula.description}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

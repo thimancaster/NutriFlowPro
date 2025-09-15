@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
-import { useConsolidatedNutrition } from '@/hooks/useConsolidatedNutrition';
+import { useOfficialCalculations } from '@/hooks/useOfficialCalculations';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
 import {
   ConsolidatedMealPlan,
@@ -76,7 +76,7 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
 
   const { user } = useAuth();
   const { activePatient } = usePatient();
-  const { calculateNutrition, results, isCalculating } = useConsolidatedNutrition();
+  const { calculate: calculateOfficial, results: officialResults, loading: isOfficialCalculating } = useOfficialCalculations();
   const { isGenerating, mealPlan, generateMealPlan: generatePlan, clearMealPlan } = useMealPlanGeneration();
 
   // Initialize calculation data from URL params or state
@@ -126,31 +126,23 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
         ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
         : 30; // default age if not available
 
-      // Use default values if patient data is incomplete  
-      const calculationParams = {
-        id: activePatient.id,
-        sex: (activePatient.gender as 'male' | 'female') || 'male',
-        weight: activePatient.weight || 70, // default weight
-        height: activePatient.height || 170, // default height
+      // Use official calculation system
+      const { calculateComplete_Official } = await import('@/utils/nutrition/official/officialCalculations');
+      
+      const result = await calculateComplete_Official({
+        weight: activePatient.weight || 70,
+        height: activePatient.height || 170,
         age: patientAge,
         gender: (activePatient.gender === 'male' ? 'M' : activePatient.gender === 'female' ? 'F' : 'M') as 'M' | 'F',
-        activityLevel: activePatient.goals?.activityLevel || 'moderado' as any,
-        objective: activePatient.goals?.objective || 'manutencao' as any,
-        profile: activePatient.goals?.profile || 'eutrofico' as any
-      };
-
-      console.log('[WORKFLOW:PLAN] 📋 Parâmetros completos:', {
-        hasId: !!calculationParams.id,
-        weight: calculationParams.weight,
-        height: calculationParams.height,
-        age: calculationParams.age,
-        allFields: Object.keys(calculationParams)
+        profile: (activePatient.goals?.profile || 'eutrofico') as any,
+        activityLevel: (activePatient.goals?.activityLevel || 'moderado') as any,
+        objective: (activePatient.goals?.objective || 'manutenção') as any,
+        macroInputs: { proteinPerKg: 1.6, fatPerKg: 1.0 } // Default macro inputs
       });
-
-      const result = await calculateNutrition(calculationParams);
       
       if (result) {
         console.log('[WORKFLOW:PLAN] ✅ Auto-cálculo concluído com sucesso');
+        // The result will be handled by the useEffect watching officialResults
       } else {
         throw new Error('Falha no cálculo nutricional');
       }
@@ -159,11 +151,11 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
       setError(`Erro no cálculo: ${error.message || 'Erro desconhecido'}`);
       setCalculationStatus('error');
     }
-  }, [activePatient, calculateNutrition, user?.id]);
+  }, [activePatient, user?.id]);
 
   // Auto-calculate when patient is available but no calculation data exists
   useEffect(() => {
-    if (activePatient && user?.id && calculationStatus === 'idle' && !calculationData && !isCalculating) {
+    if (activePatient && user?.id && calculationStatus === 'idle' && !calculationData && !isOfficialCalculating) {
       // Ensure we have basic patient data before calculating
       const hasBasicData = activePatient.id && activePatient.name;
       
@@ -181,36 +173,36 @@ export const MealPlanWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     } else if (!user?.id && activePatient) {
       console.log('[WORKFLOW:PLAN] ⏳ Aguardando autenticação do usuário...');
     }
-  }, [activePatient, user?.id, calculationStatus, calculationData, autoCalculateNutrition, isCalculating]);
+  }, [activePatient, user?.id, calculationStatus, calculationData, autoCalculateNutrition, isOfficialCalculating]);
 
-  // Update calculation status based on consolidatedNutrition results
+  // Update calculation status based on official calculation results
   useEffect(() => {
-    if (isCalculating) {
+    if (isOfficialCalculating) {
       setCalculationStatus('loading');
-    } else if (results) {
-      console.log('[WORKFLOW:PLAN] ✅ Resultados de cálculo disponíveis:', {
-        vet: results.vet,
-        protein: results.macros.protein.grams,
-        carbs: results.macros.carbs.grams,
-        fats: results.macros.fat.grams
+    } else if (officialResults) {
+      console.log('[WORKFLOW:PLAN] ✅ Resultados de cálculo oficial disponíveis:', {
+        vet: officialResults.vet,
+        protein: officialResults.macros.protein.grams,
+        carbs: officialResults.macros.carbs.grams,
+        fats: officialResults.macros.fat.grams
       });
       
       const newCalculationData: CalculationData = {
-        id: `auto-calc-${Date.now()}`,
-        totalCalories: results.vet,
-        protein: results.macros.protein.grams,
-        carbs: results.macros.carbs.grams,
-        fats: results.macros.fat.grams,
-        tmb: results.tmb.value,
-        get: results.get,
-        vet: results.vet,
-        systemType: 'ENP'
+        id: `official-calc-${Date.now()}`,
+        totalCalories: officialResults.vet,
+        protein: officialResults.macros.protein.grams,
+        carbs: officialResults.macros.carbs.grams,
+        fats: officialResults.macros.fat.grams,
+        tmb: officialResults.tmb.value,
+        get: officialResults.get,
+        vet: officialResults.vet,
+        systemType: 'OFFICIAL'
       };
       
       setCalculationData(newCalculationData);
       setCalculationStatus('ready');
     }
-  }, [isCalculating, results]);
+  }, [isOfficialCalculating, officialResults]);
 
   const clearError = useCallback(() => {
     setError(null);

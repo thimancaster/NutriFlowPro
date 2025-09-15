@@ -157,22 +157,47 @@ export class PlanWorkflowService {
       ? Math.floor((new Date().getTime() - new Date(patient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
       : patient.age || 30;
 
-    // Basic nutritional calculations (simplified)
     const weight = patient.weight || 70;
     const height = patient.height || 170;
     const gender = normalizeGender(patient.gender);
     
-    // Harris-Benedict BMR calculation
-    const bmr = gender === 'M' 
-      ? 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age)
-      : 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
-    
-    const tdee = bmr * 1.55; // Moderate activity level
-    
-    // Macronutrient distribution (40% carbs, 30% protein, 30% fat)
-    const protein = (tdee * 0.30) / 4; // 4 kcal/g
-    const carbs = (tdee * 0.40) / 4;   // 4 kcal/g
-    const fats = (tdee * 0.30) / 9;    // 9 kcal/g
+    let bmr: number, tdee: number, protein: number, carbs: number, fats: number;
+
+    try {
+      // Use official calculation system for consistency
+      const { calculateComplete_Official } = await import('@/utils/nutrition/official/officialCalculations');
+      
+      // Use official calculation engine
+      const officialResult = calculateComplete_Official({
+        weight,
+        height,
+        age,
+        gender: gender as 'M' | 'F',
+        profile: 'eutrofico', // Default profile
+        activityLevel: 'moderado', // Default activity
+        objective: 'manutenção', // Default objective
+        macroInputs: { proteinPerKg: 1.6, fatPerKg: 1.0 } // Default macros
+      });
+      
+      bmr = officialResult.tmb.value;
+      tdee = officialResult.vet;
+      protein = officialResult.macros.protein.grams;
+      carbs = officialResult.macros.carbs.grams;
+      fats = officialResult.macros.fat.grams;
+      
+    } catch (error) {
+      // Fallback to basic calculation if official fails
+      console.warn('[PLAN_WORKFLOW] Official calculation failed, using fallback:', error);
+      
+      bmr = gender === 'M' 
+        ? 66 + (13.7 * weight) + (5.0 * height) - (6.8 * age)
+        : 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
+      
+      tdee = bmr * 1.55;
+      protein = (tdee * 0.25) / 4; 
+      carbs = (tdee * 0.50) / 4;   
+      fats = (tdee * 0.25) / 9;    
+    }
 
     const calculationData = sanitizeCalculationData({
       patient_id: patient.id,

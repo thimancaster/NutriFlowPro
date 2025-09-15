@@ -11,6 +11,31 @@ export type PatientProfile = 'eutrofico' | 'sobrepeso_obesidade' | 'atleta';
 export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'muito_intenso';
 export type Objective = 'emagrecimento' | 'manutenção' | 'hipertrofia' | 'personalizado';
 
+// FORMULA METADATA FOR DYNAMIC UI (Ground Truth)
+export const AVAILABLE_FORMULAS = [
+  {
+    value: 'eutrofico',
+    label: 'Harris-Benedict',
+    description: 'Para pacientes eutróficos',
+    requiresHeight: true,
+    requiresAge: true
+  },
+  {
+    value: 'sobrepeso_obesidade', 
+    label: 'Mifflin-St Jeor',
+    description: 'Para sobrepeso/obesidade',
+    requiresHeight: true,
+    requiresAge: true
+  },
+  {
+    value: 'atleta',
+    label: 'Tinsley', 
+    description: 'Para atletas/alta massa muscular',
+    requiresHeight: false,
+    requiresAge: false
+  }
+] as const;
+
 // OFFICIAL ACTIVITY FACTORS - FIXED VALUES (Ground Truth)
 export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   sedentario: 1.2,

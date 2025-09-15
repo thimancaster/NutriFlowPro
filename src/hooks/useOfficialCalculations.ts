@@ -9,6 +9,7 @@ import {
   calculateComplete_Official,
   validateMealDistribution,
   validateCalculationInputs,
+  AVAILABLE_FORMULAS,
   type CalculationInputs,
   type CalculationResult,
   type ManualMacroInputs,
@@ -188,6 +189,9 @@ export const useOfficialCalculations = () => {
     canCalculate,
     getValidation,
     validateInputs: (inputs?: Partial<CalculationInputs>) => 
-      validateInputs(inputs || state.inputs)
+      validateInputs(inputs || state.inputs),
+    
+    // Formula metadata for dynamic UI
+    availableFormulas: AVAILABLE_FORMULAS
   };
 };
