@@ -28,11 +28,6 @@ const AnthropometryInputs: React.FC<AnthropometryInputsProps> = ({
           type="number"
           value={height}
           onChange={(e) => setHeight(e.target.value)}
-          onFocus={(e) => {
-            if (e.target.value === '0') {
-              setHeight('');
-            }
-          }}
           placeholder="Em centímetros"
           className="w-full"
           min="50"
@@ -50,11 +45,6 @@ const AnthropometryInputs: React.FC<AnthropometryInputsProps> = ({
           type="number"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
-          onFocus={(e) => {
-            if (e.target.value === '0') {
-              setWeight('');
-            }
-          }}
           placeholder="Em quilogramas"
           className="w-full"
           min="1"

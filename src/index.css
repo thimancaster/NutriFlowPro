@@ -1,9 +1,4 @@
-/* Tailwind directives first */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Import modular CSS files after Tailwind layers are defined */
+/* Import modular CSS files first */
 @import './styles/base/variables.css';
 @import './styles/base/global.css';
 @import './styles/themes/dark-theme.css';
@@ -16,3 +11,8 @@
 @import './styles/utilities/helpers.css';
 @import './styles/brand/nutri-brand.css';
 @import './styles/animations/keyframes.css';
+
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

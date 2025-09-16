@@ -1,141 +1,145 @@
 
 /* CSS Custom Properties - Variáveis base do sistema - Tema Claro Clean Professional */
-:root {
-  /* Core Background & Text - Clean Professional */
-  --background: 210 40% 98%; /* #f8fafc - Branco azulado suave */
-  --foreground: 222.2 84% 4.9%; /* #0f172a - Grafite escuro */
+@layer base {
+  :root {
+    /* Core Background & Text - Clean Professional */
+    --background: 210 40% 98%; /* #f8fafc - Branco azulado suave */
+    --foreground: 222.2 84% 4.9%; /* #0f172a - Grafite escuro */
 
-  /* Cards & Surfaces */
-  --card: 0 0% 100%; /* #ffffff - Branco puro */
-  --card-foreground: 222.2 84% 4.9%; /* #0f172a */
+    /* Cards & Surfaces */
+    --card: 0 0% 100%; /* #ffffff - Branco puro */
+    --card-foreground: 222.2 84% 4.9%; /* #0f172a */
 
-  /* Popovers & Dropdowns */
-  --popover: 0 0% 100%; /* #ffffff */
-  --popover-foreground: 222.2 84% 4.9%; /* #0f172a */
+    /* Popovers & Dropdowns */
+    --popover: 0 0% 100%; /* #ffffff */
+    --popover-foreground: 222.2 84% 4.9%; /* #0f172a */
 
-  /* Primary Colors - Verde NutriFlow */
-  --primary: 142 70% 45%; /* #22c55e - Verde NutriFlow */
-  --primary-foreground: 210 40% 98%; /* #f8fafc */
+    /* Primary Colors - Verde NutriFlow */
+    --primary: 142 70% 45%; /* #22c55e - Verde NutriFlow */
+    --primary-foreground: 210 40% 98%; /* #f8fafc */
 
-  /* Secondary Elements */
-  --secondary: 210 20% 96%; /* #f1f5f9 - Azul muito claro */
-  --secondary-foreground: 222.2 47.4% 11.2%; /* #1e293b */
+    /* Secondary Elements */
+    --secondary: 210 20% 96%; /* #f1f5f9 - Azul muito claro */
+    --secondary-foreground: 222.2 47.4% 11.2%; /* #1e293b */
 
-  /* Muted Elements */
-  --muted: 210 40% 96.1%; /* #f1f5f9 */
-  --muted-foreground: 215.4 16.3% 46.9%; /* #64748b */
+    /* Muted Elements */
+    --muted: 210 40% 96.1%; /* #f1f5f9 */
+    --muted-foreground: 215.4 16.3% 46.9%; /* #64748b */
 
-  /* Accent Elements */
-  --accent: 210 40% 96.1%; /* #f1f5f9 */
-  --accent-foreground: 222.2 47.4% 11.2%; /* #1e293b */
+    /* Accent Elements */
+    --accent: 210 40% 96.1%; /* #f1f5f9 */
+    --accent-foreground: 222.2 47.4% 11.2%; /* #1e293b */
 
-  /* Destructive Elements */
-  --destructive: 0 84.2% 60.2%; /* #ef4444 */
-  --destructive-foreground: 210 40% 98%; /* #f8fafc */
+    /* Destructive Elements */
+    --destructive: 0 84.2% 60.2%; /* #ef4444 */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
 
-  /* Borders & Inputs */
-  --border: 214.3 31.8% 91.4%; /* #e2e8f0 */
-  --input: 214.3 31.8% 91.4%; /* #e2e8f0 */
-  --ring: 142 70% 45%; /* Verde NutriFlow para focus */
+    /* Borders & Inputs */
+    --border: 214.3 31.8% 91.4%; /* #e2e8f0 */
+    --input: 214.3 31.8% 91.4%; /* #e2e8f0 */
+    --ring: 142 70% 45%; /* Verde NutriFlow para focus */
 
-  --radius: 0.5rem;
+    --radius: 0.5rem;
 
-  /* Cores específicas do NutriFlow - Tema Claro */
-  --nutri-green: 142 70% 45%; /* #22c55e */
-  --nutri-green-light: 142 60% 55%; /* #4ade80 */
-  --nutri-green-dark: 142 80% 35%; /* #16a34a */
-  --nutri-blue: 217 91% 60%; /* #3b82f6 */
-  --nutri-blue-light: 217 80% 70%; /* #60a5fa */
-  --nutri-blue-dark: 217 91% 50%; /* #2563eb */
+    /* Cores específicas do NutriFlow - Tema Claro */
+    --nutri-green: 142 70% 45%; /* #22c55e */
+    --nutri-green-light: 142 60% 55%; /* #4ade80 */
+    --nutri-green-dark: 142 80% 35%; /* #16a34a */
+    --nutri-blue: 217 91% 60%; /* #3b82f6 */
+    --nutri-blue-light: 217 80% 70%; /* #60a5fa */
+    --nutri-blue-dark: 217 91% 50%; /* #2563eb */
 
-  /* Sidebar - Tema Claro */
-  --sidebar-background: 142 70% 45%; /* Verde NutriFlow */
-  --sidebar-foreground: 0 0% 100%; /* Branco */
-  --sidebar-primary: 210 40% 96.1%; /* Azul claro */
-  --sidebar-primary-foreground: 222.2 47.4% 11.2%; /* Grafite */
-  --sidebar-accent: 142 50% 40%; /* Verde accent */
-  --sidebar-accent-foreground: 0 0% 100%; /* Branco */
-  --sidebar-border: 142 60% 40%; /* Verde borda */
-  --sidebar-ring: 217.2 91.2% 59.8%; /* Azul anel */
+    /* Sidebar - Tema Claro */
+    --sidebar-background: 142 70% 45%; /* Verde NutriFlow */
+    --sidebar-foreground: 0 0% 100%; /* Branco */
+    --sidebar-primary: 210 40% 96.1%; /* Azul claro */
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%; /* Grafite */
+    --sidebar-accent: 142 50% 40%; /* Verde accent */
+    --sidebar-accent-foreground: 0 0% 100%; /* Branco */
+    --sidebar-border: 142 60% 40%; /* Verde borda */
+    --sidebar-ring: 217.2 91.2% 59.8%; /* Azul anel */
+  }
 }
 
 /* Classes utilitárias para cores do NutriFlow */
-.text-nutri-green {
-  color: hsl(var(--nutri-green));
-}
-
-.text-nutri-green-light {
-  color: hsl(var(--nutri-green-light));
-}
-
-.text-nutri-green-dark {
-  color: hsl(var(--nutri-green-dark));
-}
-
-.text-nutri-blue {
-  color: hsl(var(--nutri-blue));
-}
-
-.text-nutri-blue-light {
-  color: hsl(var(--nutri-blue-light));
-}
-
-.text-nutri-blue-dark {
-  color: hsl(var(--nutri-blue-dark));
-}
-
-.bg-nutri-green {
-  background-color: hsl(var(--nutri-green));
-}
-
-.bg-nutri-green-light {
-  background-color: hsl(var(--nutri-green-light));
-}
-
-.bg-nutri-green-dark {
-  background-color: hsl(var(--nutri-green-dark));
-}
-
-.bg-nutri-blue {
-  background-color: hsl(var(--nutri-blue));
-}
-
-.bg-nutri-blue-light {
-  background-color: hsl(var(--nutri-blue-light));
-}
-
-.bg-nutri-blue-dark {
-  background-color: hsl(var(--nutri-blue-dark));
-}
-
-.border-nutri-green {
-  border-color: hsl(var(--nutri-green));
-}
-
-.border-nutri-blue {
-  border-color: hsl(var(--nutri-blue));
-}
-
-.hover\:bg-nutri-green:hover {
-  background-color: hsl(var(--nutri-green));
-}
-
-.hover\:bg-nutri-blue:hover {
-  background-color: hsl(var(--nutri-blue));
-}
-
-.hover\:text-nutri-green:hover {
-  color: hsl(var(--nutri-green));
-}
-
-.hover\:text-nutri-blue:hover {
-  color: hsl(var(--nutri-blue));
-}
-
-.hover\:border-nutri-green:hover {
-  border-color: hsl(var(--nutri-green));
-}
-
-.hover\:border-nutri-blue:hover {
-  border-color: hsl(var(--nutri-blue));
+@layer utilities {
+  .text-nutri-green {
+    color: hsl(var(--nutri-green));
+  }
+  
+  .text-nutri-green-light {
+    color: hsl(var(--nutri-green-light));
+  }
+  
+  .text-nutri-green-dark {
+    color: hsl(var(--nutri-green-dark));
+  }
+  
+  .text-nutri-blue {
+    color: hsl(var(--nutri-blue));
+  }
+  
+  .text-nutri-blue-light {
+    color: hsl(var(--nutri-blue-light));
+  }
+  
+  .text-nutri-blue-dark {
+    color: hsl(var(--nutri-blue-dark));
+  }
+  
+  .bg-nutri-green {
+    background-color: hsl(var(--nutri-green));
+  }
+  
+  .bg-nutri-green-light {
+    background-color: hsl(var(--nutri-green-light));
+  }
+  
+  .bg-nutri-green-dark {
+    background-color: hsl(var(--nutri-green-dark));
+  }
+  
+  .bg-nutri-blue {
+    background-color: hsl(var(--nutri-blue));
+  }
+  
+  .bg-nutri-blue-light {
+    background-color: hsl(var(--nutri-blue-light));
+  }
+  
+  .bg-nutri-blue-dark {
+    background-color: hsl(var(--nutri-blue-dark));
+  }
+  
+  .border-nutri-green {
+    border-color: hsl(var(--nutri-green));
+  }
+  
+  .border-nutri-blue {
+    border-color: hsl(var(--nutri-blue));
+  }
+  
+  .hover\:bg-nutri-green:hover {
+    background-color: hsl(var(--nutri-green));
+  }
+  
+  .hover\:bg-nutri-blue:hover {
+    background-color: hsl(var(--nutri-blue));
+  }
+  
+  .hover\:text-nutri-green:hover {
+    color: hsl(var(--nutri-green));
+  }
+  
+  .hover\:text-nutri-blue:hover {
+    color: hsl(var(--nutri-blue));
+  }
+  
+  .hover\:border-nutri-green:hover {
+    border-color: hsl(var(--nutri-green));
+  }
+  
+  .hover\:border-nutri-blue:hover {
+    border-color: hsl(var(--nutri-blue));
+  }
 }
