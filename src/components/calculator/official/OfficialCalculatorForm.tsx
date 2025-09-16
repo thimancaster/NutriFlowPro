@@ -160,6 +160,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
                 step="0.1"
                 value={formData.weight}
                 onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                onFocus={(e) => {
+                  if (e.target.value === '0') {
+                    setFormData(prev => ({ ...prev, weight: '' }));
+                  }
+                }}
                 placeholder="70.0"
               />
             </div>
@@ -171,6 +176,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
                 type="number"
                 value={formData.height}
                 onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
+                onFocus={(e) => {
+                  if (e.target.value === '0') {
+                    setFormData(prev => ({ ...prev, height: '' }));
+                  }
+                }}
                 placeholder="170"
               />
             </div>
@@ -182,6 +192,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
                 type="number"
                 value={formData.age}
                 onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
+                onFocus={(e) => {
+                  if (e.target.value === '0') {
+                    setFormData(prev => ({ ...prev, age: '' }));
+                  }
+                }}
                 placeholder="30"
               />
             </div>
@@ -298,6 +313,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
                     step="0.1"
                     value={gramsPerKgInputs.proteinPerKg}
                     onChange={(e) => setGramsPerKgInputs(prev => ({ ...prev, proteinPerKg: e.target.value }))}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        setGramsPerKgInputs(prev => ({ ...prev, proteinPerKg: '' }));
+                      }
+                    }}
                     placeholder="1.6"
                   />
                 </div>
@@ -309,6 +329,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
                     step="0.1"
                     value={gramsPerKgInputs.fatPerKg}
                     onChange={(e) => setGramsPerKgInputs(prev => ({ ...prev, fatPerKg: e.target.value }))}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        setGramsPerKgInputs(prev => ({ ...prev, fatPerKg: '' }));
+                      }
+                    }}
                     placeholder="1.0"
                   />
                 </div>

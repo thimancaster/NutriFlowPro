@@ -1,20 +1,23 @@
 
 /* Estilos específicos da marca NutriFlow */
-@layer utilities {
-  /* Melhorias para elementos específicos do NutriFlow */
-  .nutri-brand {
-    @apply font-bold text-xl;
-  }
 
-  .dark .nutri-brand .nutri-text {
-    @apply text-dark-accent-green;
-  }
+/* Melhorias para elementos específicos do NutriFlow */
+.nutri-brand {
+  font-weight: bold;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
 
-  .dark .nutri-brand .flow-text {
-    @apply text-nutri-blue;
-  }
+.dark .nutri-brand .nutri-text {
+  color: hsl(var(--dark-accent-green));
+}
 
-  .dark .nutri-brand .pro-text {
-    @apply text-dark-text-muted text-sm;
-  }
+.dark .nutri-brand .flow-text {
+  color: hsl(var(--nutri-blue));
+}
+
+.dark .nutri-brand .pro-text {
+  color: hsl(var(--dark-text-muted));
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }

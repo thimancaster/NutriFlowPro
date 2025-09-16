@@ -1,36 +1,76 @@
 
 /* Componentes de botões com animações */
-@layer components {
-  /* Botões com animações suaves */
-  .nutri-button {
-    @apply relative px-6 py-2 rounded-lg font-medium transition-all duration-300 
-           hover:shadow-lg active:shadow-inner active:scale-[0.98]
-           will-change-transform overflow-hidden backdrop-blur-sm;
-  }
 
-  .nutri-button::after {
-    @apply content-[''] absolute top-0 left-0 w-full h-full bg-white/10 opacity-0 
-           transition-all duration-300 pointer-events-none rounded-lg;
-  }
+/* Botões com animações suaves */
+.nutri-button {
+  position: relative;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 300ms;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  will-change: transform;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
 
-  .nutri-button:hover::after {
-    @apply opacity-100;
-  }
+.nutri-button:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
 
-  .nutri-button-primary {
-    @apply nutri-button bg-nutri-green text-white hover:bg-nutri-green-dark shadow-lg;
-  }
-  
-  .nutri-button-secondary {
-    @apply nutri-button bg-nutri-blue text-white hover:bg-nutri-blue-dark shadow-lg;
-  }
+.nutri-button:active {
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  transform: scale(0.98);
+}
 
-  /* Botões específicos para modo escuro */
-  .dark .nutri-button::after {
-    @apply bg-white/5;
-  }
+.nutri-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: all 300ms;
+  pointer-events: none;
+  border-radius: 0.5rem;
+}
 
-  .dark .nutri-button-primary {
-    @apply bg-dark-accent-green text-dark-bg-primary hover:bg-dark-accent-green/90 shadow-dark-glow;
-  }
+.nutri-button:hover::after {
+  opacity: 1;
+}
+
+.nutri-button-primary {
+  background: hsl(var(--nutri-green));
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.nutri-button-primary:hover {
+  background: hsl(var(--nutri-green-dark));
+}
+
+.nutri-button-secondary {
+  background: hsl(var(--nutri-blue));
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.nutri-button-secondary:hover {
+  background: hsl(var(--nutri-blue-dark));
+}
+
+/* Botões específicos para modo escuro */
+.dark .nutri-button::after {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .nutri-button-primary {
+  background: hsl(var(--dark-accent-green));
+  color: hsl(var(--dark-bg-primary));
+}
+
+.dark .nutri-button-primary:hover {
+  background: hsl(var(--dark-accent-green) / 0.9);
 }

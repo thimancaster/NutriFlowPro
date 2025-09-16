@@ -1,56 +1,83 @@
 /* Componentes de formulários e inputs */
-@layer components {
 
-  /* Inputs with focus outline disabled */
-  .nutri-input {
-    @apply rounded-lg border border-input bg-background px-4 py-2 focus:outline-none text-foreground placeholder:text-muted-foreground transition-all duration-200;
-  }
+/* Inputs with focus outline disabled */
+.nutri-input {
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  padding: 0.5rem 1rem;
+  outline: none;
+  color: hsl(var(--foreground));
+  transition: all 200ms;
+}
 
-  .dark .nutri-input {
-    @apply bg-dark-bg-elevated border-dark-border-secondary text-dark-text-primary placeholder:text-dark-text-placeholder;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-  }
+.nutri-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
 
-  .dark .nutri-input:focus {
-    @apply border-dark-accent-green/50;
-  }
+.dark .nutri-input {
+  background: hsl(var(--dark-bg-elevated));
+  border-color: hsl(var(--dark-border-secondary));
+  color: hsl(var(--dark-text-primary));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
 
-  /* Campos de formulário melhorados */
-  .dark-form-field {
-    @apply bg-dark-bg-elevated border-dark-border-secondary text-dark-text-primary backdrop-blur-sm;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-  }
+.dark .nutri-input::placeholder {
+  color: hsl(var(--dark-text-placeholder));
+}
 
-  .dark-form-field:focus {
-    @apply border-dark-accent-green ring-dark-accent-green/20 shadow-dark-glow;
-  }
+.dark .nutri-input:focus {
+  border-color: hsl(var(--dark-accent-green) / 0.5);
+}
 
-  /* Melhorias para inputs no tema claro */
-  :root:not(.dark) .nutri-input {
-    @apply text-gray-900 placeholder:text-gray-500;
-  }
+/* Campos de formulário melhorados */
+.dark-form-field {
+  background: hsl(var(--dark-bg-elevated));
+  border-color: hsl(var(--dark-border-secondary));
+  color: hsl(var(--dark-text-primary));
+  backdrop-filter: blur(4px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
 
-  /* Labels e textos de formulário no tema claro */
-  :root:not(.dark) .form-label {
-    @apply text-gray-900 font-medium;
-  }
+.dark-form-field:focus {
+  border-color: hsl(var(--dark-accent-green));
+  box-shadow: 0 0 0 1px hsl(var(--dark-accent-green) / 0.2), var(--shadow-dark-glow);
+}
 
-  /* Select components no tema claro */
-  :root:not(.dark) [data-radix-select-trigger] {
-    @apply text-gray-900;
-  }
+/* Melhorias para inputs no tema claro */
+:root:not(.dark) .nutri-input {
+  color: rgb(17 24 39);
+}
 
-  :root:not(.dark) [data-radix-select-trigger][data-placeholder] {
-    @apply text-gray-500;
-  }
+:root:not(.dark) .nutri-input::placeholder {
+  color: rgb(107 114 128);
+}
 
-  /* Texto de erro no tema claro */
-  :root:not(.dark) .text-destructive {
-    @apply text-red-600;
-  }
+/* Labels e textos de formulário no tema claro */
+:root:not(.dark) .form-label {
+  color: rgb(17 24 39);
+  font-weight: 500;
+}
 
-  /* Textarea no tema claro */
-  :root:not(.dark) textarea {
-    @apply text-gray-900 placeholder:text-gray-500;
-  }
+/* Select components no tema claro */
+:root:not(.dark) [data-radix-select-trigger] {
+  color: rgb(17 24 39);
+}
+
+:root:not(.dark) [data-radix-select-trigger][data-placeholder] {
+  color: rgb(107 114 128);
+}
+
+/* Texto de erro no tema claro */
+:root:not(.dark) .text-destructive {
+  color: rgb(220 38 38);
+}
+
+/* Textarea no tema claro */
+:root:not(.dark) textarea {
+  color: rgb(17 24 39);
+}
+
+:root:not(.dark) textarea::placeholder {
+  color: rgb(107 114 128);
 }

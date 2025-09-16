@@ -142,7 +142,8 @@ export function BirthDatePicker({
               date > new Date() || date < new Date("1900-01-01")
             }
             initialFocus
-            fromYear={1900}
+            captionLayout="dropdown"
+            fromYear={1920}
             toYear={new Date().getFullYear()}
             className="p-3 pointer-events-auto"
             defaultMonth={value || subYears(new Date(), 30)}
