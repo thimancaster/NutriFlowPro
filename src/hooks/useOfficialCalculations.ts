@@ -1,197 +1,116 @@
-/**
- * OFFICIAL CALCULATIONS HOOK - SINGLE SOURCE OF TRUTH
- * Provides access to official nutrition calculations with proper state management
- * This is the ONLY hook that should be used for nutritional calculations.
- */
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useForm, UseFormReturn } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   calculateComplete_Official,
-  validateMealDistribution,
-  validateCalculationInputs,
+  CalculationInputs,
+  CalculationResult,
   AVAILABLE_FORMULAS,
-  type CalculationInputs,
-  type CalculationResult,
-  type ManualMacroInputs,
-  type PercentageMacroInputs
 } from '@/utils/nutrition/official/officialCalculations';
-import { useToast } from '@/hooks/use-toast';
+import { Patient } from '@/types';
 
-export interface OfficialCalculationState {
-  inputs: Partial<CalculationInputs>;
-  results: CalculationResult | null;
-  loading: boolean;
-  error: string | null;
-}
+// Define o esquema de validação para o formulário da calculadora
+const calculatorSchema = z.object({
+  weight: z.number().min(1, 'Peso é obrigatório'),
+  height: z.number().min(1, 'Altura é obrigatória'),
+  age: z.number().min(1, 'Idade é obrigatória'),
+  sex: z.enum(['M', 'F'], { required_error: 'Sexo é obrigatório' }),
+  formula: z.string().min(1, 'Fórmula é obrigatória'),
+  activityLevel: z.string().min(1, 'Nível de atividade é obrigatório'),
+  objective: z.string().min(1, 'Objetivo é obrigatório'),
+  proteinPerKg: z.number().min(0.1, 'Proteína g/kg é obrigatória'),
+  fatPerKg: z.number().min(0.1, 'Gordura g/kg é obrigatória'),
+});
 
-const initialState: OfficialCalculationState = {
-  inputs: {
-    macroInputs: { proteinPerKg: 1.6, fatPerKg: 1.0 } // Default values
-  },
-  results: null,
-  loading: false,
-  error: null
-};
+// Extrai o tipo dos dados do formulário a partir do esquema Zod
+export type OfficialCalculatorFormData = z.infer<typeof calculatorSchema>;
 
-export const useOfficialCalculations = () => {
-  const [state, setState] = useState<OfficialCalculationState>(initialState);
-  const { toast } = useToast();
+/**
+ * Hook customizado para gerenciar toda a lógica da Calculadora Nutricional Oficial.
+ * Ele lida com o estado do formulário, a execução dos cálculos e os resultados.
+ */
+export function useOfficialCalculations() {
+  const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Update calculation inputs
-  const updateInputs = useCallback((updates: Partial<CalculationInputs>) => {
-    setState(prev => ({
-      ...prev,
-      inputs: { ...prev.inputs, ...updates },
-      error: null
-    }));
-  }, []);
+  // Inicializa o formulário com 'react-hook-form' e validação Zod
+  const form: UseFormReturn<OfficialCalculatorFormData> = useForm<OfficialCalculatorFormData>({
+    resolver: zodResolver(calculatorSchema),
+    defaultValues: {
+      weight: 0,
+      height: 0,
+      age: 0,
+      proteinPerKg: 0,
+      fatPerKg: 0,
+    },
+  });
 
-  // Update macro inputs specifically
-  const updateMacroInputs = useCallback((macroInputs: ManualMacroInputs) => {
-    setState(prev => ({
-      ...prev,
-      inputs: { ...prev.inputs, macroInputs },
-      error: null
-    }));
-  }, []);
-
-  // Update percentage inputs specifically
-  const updatePercentageInputs = useCallback((percentageInputs: PercentageMacroInputs) => {
-    setState(prev => ({
-      ...prev,
-      inputs: { ...prev.inputs, percentageInputs, macroInputs: undefined },
-      error: null
-    }));
-  }, []);
-
-  // Validate inputs before calculation (uses official validation)
-  const validateInputs = useCallback((inputs: Partial<CalculationInputs>) => {
-    return validateCalculationInputs(inputs);
-  }, []);
-
-  // Perform official calculation
-  const calculate = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
-
+  /**
+   * Função para executar o pipeline completo de cálculo.
+   * É chamada quando o formulário é submetido.
+   */
+  const runCalculation = useCallback((formData: OfficialCalculatorFormData) => {
+    setError(null);
     try {
-      // Validate inputs using official validation
-      const validation = validateInputs(state.inputs);
-      if (!validation.isValid) {
-        throw new Error(validation.errors.join('. '));
-      }
+      // Mapeia os dados do formulário para o formato esperado pelo motor de cálculo
+      const calculationInputs: CalculationInputs = {
+        weight: formData.weight,
+        height: formData.height,
+        age: formData.age,
+        gender: formData.sex,
+        formula: formData.formula as CalculationInputs['formula'],
+        activityLevel: formData.activityLevel as CalculationInputs['activityLevel'],
+        objective: formData.objective as CalculationInputs['objective'],
+        macroInputs: {
+          proteinPerKg: formData.proteinPerKg,
+          fatPerKg: formData.fatPerKg,
+        },
+      };
 
-      // Ensure we have complete inputs
-      const completeInputs = state.inputs as CalculationInputs;
-
-      // Perform calculation using official formulas
-      const results = calculateComplete_Official(completeInputs);
-
-      setState(prev => ({
-        ...prev,
-        results,
-        loading: false,
-        error: null
-      }));
-
-      toast({
-        title: "Cálculo Concluído",
-        description: `TMB: ${results.tmb.value} kcal | VET: ${results.vet} kcal`,
-      });
-
-      return results;
-
-    } catch (error: any) {
-      const errorMessage = error.message || 'Erro desconhecido no cálculo';
-      
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: errorMessage
-      }));
-
-      toast({
-        title: "Erro no Cálculo",
-        description: errorMessage,
-        variant: "destructive"
-      });
-
-      throw error;
+      const result = calculateComplete_Official(calculationInputs);
+      setCalculationResult(result);
+    } catch (e: any) {
+      setError(e.message || 'Ocorreu um erro ao realizar o cálculo.');
+      setCalculationResult(null);
+      console.error('Calculation Error:', e);
     }
-  }, [state.inputs, validateInputs, toast]);
-
-  // Reset all state
-  const reset = useCallback(() => {
-    setState(initialState);
   }, []);
 
-  // Get calculation preview (without full calculation)
-  const getPreview = useCallback(() => {
-    const { weight, macroInputs, percentageInputs } = state.inputs;
-    
-    if (!weight) return null;
+  /**
+   * Limpa os resultados e reseta o formulário para um novo cálculo.
+   */
+  const resetCalculator = useCallback(() => {
+    form.reset();
+    setCalculationResult(null);
+    setError(null);
+  }, [form]);
 
-    if (macroInputs) {
-      return {
-        proteinGrams: Math.round(macroInputs.proteinPerKg * weight * 10) / 10,
-        proteinKcal: Math.round(macroInputs.proteinPerKg * weight * 4),
-        fatGrams: Math.round(macroInputs.fatPerKg * weight * 10) / 10,
-        fatKcal: Math.round(macroInputs.fatPerKg * weight * 9),
-        inputMethod: 'grams_per_kg' as const
-      };
-    }
+  /**
+   * Pré-preenche o formulário com dados de um paciente selecionado.
+   */
+  const loadPatientData = useCallback(
+    (patient: Patient) => {
+      const age = patient.birthDate
+        ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
+        : 0;
+      form.setValue('sex', patient.sex);
+      form.setValue('age', age);
+      // Futuramente, pode-se pré-preencher peso e altura da última consulta
+    },
+    [form]
+  );
 
-    if (percentageInputs) {
-      // Rough preview based on estimated VET of 2000 kcal
-      const estimatedVet = 2000;
-      return {
-        proteinKcal: Math.round((estimatedVet * percentageInputs.proteinPercent) / 100),
-        fatKcal: Math.round((estimatedVet * percentageInputs.fatPercent) / 100),
-        inputMethod: 'percentages' as const
-      };
-    }
-
-    return null;
-  }, [state.inputs]);
-
-  // Validate meal distribution
-  const validateMealDist = useCallback((distribution: Record<string, number>) => {
-    return validateMealDistribution(distribution);
-  }, []);
-
-  // Check if ready to calculate
-  const canCalculate = useCallback(() => {
-    const validation = validateInputs(state.inputs);
-    return validation.isValid && !state.loading;
-  }, [state.inputs, state.loading, validateInputs]);
-
-  // Get current validation status
-  const getValidation = useCallback(() => {
-    return validateInputs(state.inputs);
-  }, [state.inputs, validateInputs]);
+  // Expõe as fórmulas disponíveis para serem usadas na UI (ex: no seletor)
+  const availableFormulas = useMemo(() => AVAILABLE_FORMULAS, []);
 
   return {
-    // State
-    inputs: state.inputs,
-    results: state.results,
-    loading: state.loading,
-    error: state.error,
-
-    // Actions
-    updateInputs,
-    updateMacroInputs,
-    updatePercentageInputs,
-    calculate,
-    reset,
-
-    // Utilities
-    getPreview,
-    validateMealDist,
-    canCalculate,
-    getValidation,
-    validateInputs: (inputs?: Partial<CalculationInputs>) => 
-      validateInputs(inputs || state.inputs),
-    
-    // Formula metadata for dynamic UI
-    availableFormulas: AVAILABLE_FORMULAS
+    form,
+    runCalculation,
+    calculationResult,
+    error,
+    resetCalculator,
+    loadPatientData,
+    availableFormulas,
   };
-};
+}
