@@ -16,7 +16,7 @@ function App() {
       <Router>
         <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
           <AuthProvider>
-            {/* O ClinicalWorkflowProvider gerencia a sessão clínica ativa */}
+            {/* O ClinicalWorkflowProvider agora gerencia a sessão clínica ativa em todo o app */}
             <ClinicalWorkflowProvider>
               <AppRoutes />
             </ClinicalWorkflowProvider>
