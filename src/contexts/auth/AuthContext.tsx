@@ -8,28 +8,24 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { AuthSession } from '@supabase/supabase-js';
 
-// Define a estrutura do que será compartilhado pelo contexto
 interface AuthContextType {
   session: AuthSession | null;
-  user: any; // Pode ser tipado de forma mais específica com o perfil do usuário
+  user: any;
   isLoading: boolean;
-  initialLoad: boolean; // <-- NOVA PROPRIEDADE CRÍTICA
+  initialLoad: boolean; // Novo estado para controlar o carregamento inicial
 }
 
-// Cria o contexto
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
-// Cria o provedor que gerencia e fornece o estado de autenticação
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true); // <-- NOVO ESTADO
+  const [initialLoad, setInitialLoad] = useState(true); // Inicia como true
 
   useEffect(() => {
-    // Tenta obter a sessão inicial já existente
     const getInitialSession = async () => {
       const {
         data: { session },
@@ -37,12 +33,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
-      setInitialLoad(false); // <-- AVISA QUE A PRIMEIRA VERIFICAÇÃO TERMINOU
+      setInitialLoad(false); // A verificação inicial terminou
     };
 
     getInitialSession();
 
-    // Escuta por mudanças no estado de autenticação (login, logout)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -50,27 +45,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
       if (initialLoad) {
-        setInitialLoad(false); // Garante que o estado seja atualizado no primeiro evento também
+        setInitialLoad(false); // Garante que termine no primeiro evento
       }
     });
 
-    // Limpa o listener quando o componente é desmontado
     return () => {
       subscription?.unsubscribe();
     };
-  }, [initialLoad]); // Adicionado initialLoad aqui para garantir a lógica
+  }, [initialLoad]);
 
   const value = {
     session,
     user,
     isLoading,
-    initialLoad, // <-- EXPOR O NOVO ESTADO
+    initialLoad,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Hook customizado para facilitar o uso do contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
