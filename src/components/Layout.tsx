@@ -1,4 +1,5 @@
 import React from "react";
+import { Outlet } from "react-router-dom";
 import {useAuth} from "@/contexts/auth/AuthContext";
 import {usePatient} from "@/contexts/patient/PatientContext";
 import Navbar from "@/components/Navbar";
@@ -7,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import {BreadcrumbNav} from "@/components/ui/breadcrumb-nav";
 import {TourGuide} from "@/components/tour-guide/TourGuide";
 
-const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
+const Layout: React.FC<{children?: React.ReactNode}> = ({children}) => {
 	const {user} = useAuth();
 	const {activePatient, sessionData} = usePatient();
 
@@ -34,7 +35,7 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 			<main className="flex-1 bg-background">
 				<div className="container mx-auto px-4 py-6">
 					<BreadcrumbNav />
-					{children}
+					{children || <Outlet />}
 				</div>
 			</main>
 

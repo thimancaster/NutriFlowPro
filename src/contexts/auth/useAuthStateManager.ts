@@ -9,6 +9,7 @@ import { usePremiumCheck } from '@/hooks/premium';
 export const useAuthStateManager = () => {
   const [authState, setState] = useState<AuthState>({
     isLoading: true,
+    initialLoad: true,
     isAuthenticated: false,
     user: null,
     session: null,
@@ -46,6 +47,7 @@ export const useAuthStateManager = () => {
   const setAuthenticated = (user: SupabaseUser | null, session: Session | null, isPremium: boolean = false) => {
     setState({
       isLoading: false,
+      initialLoad: false,
       isAuthenticated: !!user,
       user: user ? convertSupabaseUser(user) : null,
       session,

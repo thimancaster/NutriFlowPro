@@ -6,6 +6,7 @@ export interface AuthState {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  initialLoad: boolean;
   isAuthenticated: boolean;
   isPremium: boolean;
   loading: boolean;
