@@ -1,39 +1,28 @@
-
-import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import AuthLoadingScreen from './auth/AuthLoadingScreen';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requirePremium?: boolean;
-}
+/**
+ * Componente de Rota Protegida.
+ * Garante que apenas usuários autenticados possam acessar as rotas filhas.
+ * Agora, ele aguarda a verificação inicial de sessão antes de tomar uma decisão.
+ */
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, initialLoad } = useAuth(); // <-- OBTÉM O NOVO ESTADO initialLoad
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requirePremium = false 
-}) => {
-  const { user, loading, isPremium } = useAuth();
-
-  // Show loading while checking auth state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    );
+  // Se a verificação inicial ainda não terminou, exibe uma tela de carregamento.
+  // Esta é a correção principal para o loop de redirecionamento.
+  if (initialLoad) {
+    return <AuthLoadingScreen message="Verificando sua sessão..." />;
   }
 
-  // Redirect to login if not authenticated
+  // Se a verificação terminou e não há usuário, redireciona para o login.
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect to pricing if premium required but user is not premium
-  if (requirePremium && !isPremium) {
-    return <Navigate to="/pricing" replace />;
-  }
-
-  return <>{children}</>;
+  // Se a verificação terminou e há um usuário, permite o acesso.
+  return children;
 };
 
 export default ProtectedRoute;
