@@ -9,7 +9,6 @@ import MealPlanGenerator from '@/pages/MealPlanGenerator';
 import Appointments from '@/pages/Appointments';
 import Settings from '@/pages/Settings';
 import AddTestimonial from '@/pages/AddTestimonial';
-import Atendimento from '@/pages/Atendimento';
 import Clinical from '@/pages/Clinical';
 
 const AppRoutes: React.FC = () => {
@@ -20,8 +19,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/patients" element={<Patients />} />
       <Route path="/patient/:id" element={<PatientProfile />} />
       
-      <Route path="/atendimento" element={<Atendimento />} />
-      <Route path="/atendimento/:patientId" element={<Atendimento />} />
+      {/* Rotas clínicas unificadas */}
+      <Route path="/clinical" element={<Clinical />} />
       <Route path="/clinico" element={<Clinical />} />
       
       <Route path="/calculator" element={<Calculator />} />
