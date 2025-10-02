@@ -22,7 +22,7 @@ const Settings = lazy(() => import('@/pages/SettingsPage'));
 const Subscription = lazy(() => import('@/pages/Subscription'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const SystemDebug = lazy(() => import('@/pages/SystemDebug'));
-
+const Calculator = lazy(() => import('@/pages/Calculator'));
 
 export default function AppRoutes() {
   return (
@@ -83,6 +83,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="calculator"
+          element={
+            <SuspenseLoading>
+              <Calculator />
+            </SuspenseLoading>
+          }
+        />
+        <Route
           path="meal-plans"
           element={
             <SuspenseLoading>
@@ -114,7 +122,7 @@ export default function AppRoutes() {
             </SuspenseLoading>
           }
         />
-         <Route
+        <Route
           path="debug"
           element={
             <SuspenseLoading>
