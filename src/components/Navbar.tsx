@@ -17,15 +17,25 @@ import {Button} from "@/components/ui/button";
 import {ThemeToggle} from "@/components/ui/theme-toggle";
 import {NavbarDesktopNavigation, NavbarUserMenu, NavbarMobileMenu} from "./navbar/index";
 
-// Memoize navigation items to prevent recreation on every render
+/**
+ * NAVIGATION ITEMS - UNIFIED ARCHITECTURE
+ * 
+ * ⚠️  DEPRECATED ROUTES REMOVED:
+ * - "Consulta" link removed (unified with "Clínico" workflow)
+ * 
+ * The clinical workflow is now unified under "/app/clinical" route.
+ * Old consultation routes redirect to the new unified flow.
+ * 
+ * @see src/contexts/ClinicalWorkflowContext.tsx - Unified workflow
+ * @see src/pages/Consultation.tsx - Redirect stub (legacy compatibility)
+ */
 const navigationItems = [
-	{name: "Dashboard", href: "/dashboard", icon: LayoutDashboard},
-	{name: "Pacientes", href: "/patients", icon: Users},
-	{name: "Agendamentos", href: "/appointments", icon: Calendar},
-	{name: "Calculadora", href: "/calculator", icon: Calculator},
-	{name: "Plano Alimentar", href: "/meal-plan-generator", icon: Utensils},
-	{name: "Consulta", href: "/consultation", icon: Stethoscope},
-	{name: "Clínico", href: "/clinical", icon: Activity},
+	{name: "Dashboard", href: "/app", icon: LayoutDashboard},
+	{name: "Pacientes", href: "/app/patients", icon: Users},
+	{name: "Agendamentos", href: "/app/appointments", icon: Calendar},
+	{name: "Calculadora", href: "/app/calculator", icon: Calculator},
+	{name: "Plano Alimentar", href: "/app/meal-plans", icon: Utensils},
+	{name: "Clínico", href: "/app/clinical", icon: Activity},
 ];
 
 const Navbar = memo(() => {
