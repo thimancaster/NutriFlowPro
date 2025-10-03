@@ -53,7 +53,7 @@ class GlobalErrorBoundary extends Component<Props, State> {
   };
 
   private handleGoHome = () => {
-    window.location.href = '/dashboard';
+    window.location.href = '/app';
   };
 
   public render() {

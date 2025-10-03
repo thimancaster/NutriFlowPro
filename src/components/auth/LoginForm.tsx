@@ -38,8 +38,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGoogleLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the redirect path from location state or default to dashboard
-  const from = (location.state as any)?.from?.pathname || "/dashboard";
+  // Get the redirect path from location state or default to app
+  const from = (location.state as any)?.from?.pathname || "/app";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

@@ -34,14 +34,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userTier, setUserTier] = useState<'free' | 'premium'>('free');
 
   useEffect(() => {
+    // Safety timeout: ensure initialLoad doesn't hang forever
+    const safetyTimeout = setTimeout(() => {
+      if (initialLoad) {
+        console.warn('Auth initialization timeout - forcing completion');
+        setInitialLoad(false);
+        setIsLoading(false);
+      }
+    }, 10000); // 10 second safety net
+
     const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-      setInitialLoad(false); // A verificação inicial terminou
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+        setInitialLoad(false);
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        setIsLoading(false);
+        setInitialLoad(false);
+      }
     };
 
     getInitialSession();
@@ -53,11 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
       if (initialLoad) {
-        setInitialLoad(false); // Garante que termine no primeiro evento
+        setInitialLoad(false);
       }
     });
 
     return () => {
+      clearTimeout(safetyTimeout);
       subscription?.unsubscribe();
     };
   }, [initialLoad]);

@@ -60,11 +60,11 @@ const Navbar = memo(() => {
 
 	const logoElement = useMemo(
 		() => (
-			<Link to="/dashboard" className="flex items-center">
-				<span className="text-nutri-green font-bold text-xl sm:text-2xl">Nutri</span>
-				<span className="text-nutri-blue font-bold text-xl sm:text-2xl">Flow</span>
-				<span className="text-nutri-blue font-bold text-xl sm:text-2xl ml-1">Pro</span>
-			</Link>
+		<Link to="/app" className="flex items-center">
+			<span className="text-nutri-green font-bold text-xl sm:text-2xl">Nutri</span>
+			<span className="text-nutri-blue font-bold text-xl sm:text-2xl">Flow</span>
+			<span className="text-nutri-blue font-bold text-xl sm:text-2xl ml-1">Pro</span>
+		</Link>
 		),
 		[]
 	);
