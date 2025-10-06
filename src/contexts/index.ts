@@ -1,13 +1,11 @@
-/**
- * CONTEXTOS UNIFICADOS - ARQUITETURA PÓS-REFATORAÇÃO
- * 
- * Sistema de contextos limpo e organizado após unificação completa.
- * Todos os workflows antigos foram consolidados em ClinicalWorkflowContext.
- */
 
-// Contextos ativos do sistema unificado
+// Re-export components from the contexts
 export { AuthProvider, useAuth } from './auth/AuthContext';
 export { PatientProvider, usePatient } from './patient/PatientContext';
-export { MealPlanProvider, useMealPlan } from './MealPlanContext';
+export { MealPlanProvider } from './MealPlanContext';
+export { ConsultationProvider } from './ConsultationContext'; 
 export { ConsultationDataProvider, useConsultationData } from './ConsultationDataContext';
-export { ClinicalWorkflowProvider, useClinicalWorkflow } from './ClinicalWorkflowContext';
+// export { ThemeProvider } from '@/contexts/theme/ThemeProvider';
+
+// Re-export types for convenience
+export type { AuthContextType, AuthState } from './auth/types';

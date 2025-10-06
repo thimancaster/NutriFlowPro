@@ -30,12 +30,6 @@ interface ClinicalWorkflowContextType {
   setCurrentStep: (step: ClinicalWorkflowStep) => void;
   nextStep: () => void;
   previousStep: () => void;
-  goToNextStep: () => void;
-  goToPreviousStep: () => void;
-  // Legacy properties for backward compatibility
-  currentStep: ClinicalWorkflowStep;
-  activeSession: ClinicalSession | null;
-  activePatient: Patient | null;
   // Reset
   resetWorkflow: () => void;
 }
@@ -237,7 +231,6 @@ export const ClinicalWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     }
   }, [state.activeSession, toast]);
 
-  // Navigation methods with aliases for backward compatibility
   const setCurrentStep = useCallback((step: ClinicalWorkflowStep) => {
     setState(prev => ({ ...prev, currentStep: step }));
   }, []);
@@ -262,10 +255,6 @@ export const ClinicalWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     }
   }, [state.currentStep]);
 
-  // Aliases for backward compatibility
-  const goToNextStep = nextStep;
-  const goToPreviousStep = previousStep;
-
   const resetWorkflow = useCallback(() => {
     localStorage.removeItem('activeSessionId');
     setState({
@@ -286,12 +275,6 @@ export const ClinicalWorkflowProvider: React.FC<{ children: React.ReactNode }> =
     setCurrentStep,
     nextStep,
     previousStep,
-    goToNextStep,
-    goToPreviousStep,
-    // Legacy properties for backward compatibility
-    currentStep: state.currentStep,
-    activeSession: state.activeSession,
-    activePatient: state.activePatient,
     resetWorkflow
   };
 

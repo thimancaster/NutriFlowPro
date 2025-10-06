@@ -1,19 +1,53 @@
-import { Outlet } from 'react-router-dom';
-import Navbar from './Navbar';
-import { Toaster } from './ui/sonner';
+import React from "react";
+import {useAuth} from "@/contexts/auth/AuthContext";
+import {usePatient} from "@/contexts/patient/PatientContext";
+import Navbar from "@/components/Navbar";
 
-/**
- * Componente principal de Layout para a área logada da aplicação.
- * Inclui a barra de navegação e renderiza o conteúdo da rota ativa através do <Outlet />.
- */
-export default function Layout({ children }: { children?: React.ReactNode }) {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children || <Outlet />}
-      </main>
-      <Toaster />
-    </div>
-  );
-}
+// Import our components
+import {BreadcrumbNav} from "@/components/ui/breadcrumb-nav";
+import {TourGuide} from "@/components/tour-guide/TourGuide";
+
+const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
+	const {user} = useAuth();
+	const {activePatient, sessionData} = usePatient();
+
+	return (
+		<div className="flex flex-col min-h-screen bg-background text-foreground">
+			<TourGuide />
+
+			{/* Header with Navbar */}
+			<Navbar />
+
+			{/* Active Patient Indicator */}
+			{activePatient && sessionData.consultationActive && (
+				<div className="bg-nutri-green text-white px-4 py-2 text-sm">
+					<div className="container mx-auto flex items-center justify-between">
+						<span>
+							🩺 Atendimento ativo: <strong>{activePatient.name}</strong>
+						</span>
+						<span className="text-xs opacity-75">Etapa: {sessionData.currentStep}</span>
+					</div>
+				</div>
+			)}
+
+			{/* Main content */}
+			<main className="flex-1 bg-background">
+				<div className="container mx-auto px-4 py-6">
+					<BreadcrumbNav />
+					{children}
+				</div>
+			</main>
+
+			{/* Footer */}
+			<footer className="border-t border-border py-6 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-md">
+				<div className="container mx-auto px-4">
+					<p className="text-muted-foreground">
+						© {new Date().getFullYear()} NutriFlow Pro. Todos os direitos reservados.
+					</p>
+				</div>
+			</footer>
+		</div>
+	);
+};
+
+export default Layout;

@@ -25,7 +25,7 @@ import MealPlanGenerator from "@/pages/MealPlanGenerator";
 import MealPlanWorkflowPage from "@/pages/MealPlanWorkflowPage";
 import MealPlanEditor from "@/pages/MealPlanEditor";
 import Appointments from "@/pages/Appointments";
-import ConsolidatedConsultationPage from "@/pages/ConsolidatedConsultationPage";
+import Clinical from "@/pages/Clinical";
 import Consultation from "@/pages/Consultation";
 import FoodDatabase from "@/pages/FoodDatabase";
 import Settings from "@/pages/Settings";
@@ -51,7 +51,6 @@ const AppRoutes = () => {
 			<Route path="/reset-password" element={<ResetPassword />} />
 			<Route path="/pricing" element={<Pricing />} />
 			<Route path="/recursos" element={<Recursos />} />
-			<Route path="/auth" element={<AuthHandler />} />
 			<Route path="/auth/callback" element={<AuthHandler />} />
 
 			{/* Replace old signup routes with unified version */}
@@ -108,15 +107,21 @@ const AppRoutes = () => {
 					}
 				/>
 				<Route path="appointments" element={<Appointments />} />
-				{/* CLINICAL - UNIFIED WORKFLOW */}
-				<Route path="clinical" element={<ConsolidatedConsultationPage />} />
-				<Route path="clinical/:patientId" element={<ConsolidatedConsultationPage />} />
-				
-				{/* DEPRECATED: Old consultation routes - redirect to unified clinical */}
-				<Route path="consultation" element={<Navigate to="/clinical" replace />} />
-				<Route path="consultation/:patientId" element={<Navigate to="/clinical" replace />} />
+				<Route path="clinical" element={<Clinical />} />
+				<Route path="clinical/:patientId" element={<Clinical />} />
+				<Route
+					path="clinical/consultation/:patientId?"
+					element={
+						<Suspense fallback={<LoadingSpinner />}>
+							<ClinicalConsultation />
+						</Suspense>
+					}
+				/>
 				<Route path="patient-history/:id" element={<PatientHistory />} />
 				<Route path="patient-anthropometry/:id" element={<PatientAnthropometry />} />
+				<Route path="consultation" element={<Consultation />} />
+				<Route path="consultation/:patientId" element={<Consultation />} />
+				<Route path="food-database" element={<FoodDatabase />} />
 				<Route path="settings" element={<Settings />} />
 				<Route path="subscription" element={<Subscription />} />
 				<Route path="add-testimonial" element={<AddTestimonial />} />

@@ -13,7 +13,7 @@ const Index = () => {
   // Effect to redirect authenticated users to dashboard
   React.useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigate('/app');
+      navigate('/dashboard');
     }
   }, [isAuthenticated, isLoading, navigate]);
   

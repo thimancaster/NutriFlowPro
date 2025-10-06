@@ -12,8 +12,8 @@ const Login = () => {
   const location = useLocation();
   const { isAuthenticated, isLoading, signInWithGoogle } = useAuth();
   
-  // Get the redirect path from location state or default to app
-  const from = (location.state as any)?.from?.pathname || "/app";
+  // Get the redirect path from location state or default to dashboard
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
