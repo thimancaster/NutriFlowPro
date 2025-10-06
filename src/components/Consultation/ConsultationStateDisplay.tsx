@@ -18,7 +18,7 @@ export const ConsultationError: React.FC<ConsultationErrorProps> = ({ error }) =
           <p>{error.message || "Ocorreu um erro ao carregar os dados da consulta"}</p>
           <button 
             className="mt-4 px-4 py-2 bg-nutri-blue text-white rounded hover:bg-blue-700"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/app')}
           >
             Voltar para o Dashboard
           </button>
@@ -50,7 +50,7 @@ export const ConsultationNotFound: React.FC = () => {
           <p>A consulta solicitada não foi encontrada ou você não tem permissão para acessá-la.</p>
           <button 
             className="mt-4 px-4 py-2 bg-nutri-blue text-white rounded hover:bg-blue-700"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/app')}
           >
             Voltar para o Dashboard
           </button>
