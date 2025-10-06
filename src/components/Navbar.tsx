@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { navigationItems } from '@/config/navigation';
 import NavbarDesktopNavigation from './navbar/NavbarDesktopNavigation';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import NavbarUserMenu from './navbar/NavbarUserMenu';
 import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 const authLinks = [
   { name: 'Recursos', href: '/recursos' },
@@ -12,7 +15,20 @@ const authLinks = [
 ];
 
 export default function Navbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logout realizado com sucesso');
+      navigate('/login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toast.error('Erro ao fazer logout');
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -26,7 +42,16 @@ export default function Navbar() {
 
         <div className="flex flex-1 items-center justify-end space-x-2">
           {user ? (
-            <NavbarUserMenu />
+            <>
+              <NavbarUserMenu onLogout={handleLogout} />
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </>
           ) : (
             <nav className="hidden md:flex items-center space-x-1">
               {authLinks.map((item) => (
@@ -39,17 +64,19 @@ export default function Navbar() {
                 </Link>
               ))}
               <Button asChild>
-                {/* ESTA É A CORREÇÃO PRINCIPAL */}
                 <Link to="/login">Logar</Link>
               </Button>
             </nav>
           )}
-          <NavbarMobileMenu
-            mainNavItems={user ? navigationItems : authLinks}
-            isLoggedIn={!!user}
-          />
         </div>
       </div>
+      {user && (
+        <NavbarMobileMenu
+          navigationItems={navigationItems}
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
+      )}
     </header>
   );
 }
