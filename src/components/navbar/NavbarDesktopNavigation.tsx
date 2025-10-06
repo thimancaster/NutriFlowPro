@@ -47,7 +47,7 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
             <Link
               to={item.href}
               className={`flex items-center px-2 py-2 text-sm w-full ${
-                isActive ? 'bg-nutri-green/10 text-nutri-green' : 'hover:bg-muted'
+                isActive ? 'bg-accent text-accent-foreground' : ''
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -63,8 +63,8 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
           to={item.href}
           className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
             isActive
-              ? 'bg-nutri-green text-white'
-              : 'text-gray-700 hover:bg-gray-100 hover:text-nutri-blue dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-nutri-blue'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-foreground hover:bg-accent hover:text-accent-foreground'
           }`}
         >
           <Icon className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -90,8 +90,8 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
                 size="sm"
                 className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                   isClinicalActive
-                    ? 'bg-nutri-green text-white'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-nutri-blue dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-nutri-blue'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <span>Clínico</span>

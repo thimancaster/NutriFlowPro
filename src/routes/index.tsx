@@ -11,6 +11,7 @@ const Login = lazy(() => import('@/pages/Login'));
 const Signup = lazy(() => import('@/pages/UnifiedSignup'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const Pricing = lazy(() => import('@/pages/Pricing'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Patients = lazy(() => import('@/pages/Patients'));
 const PatientProfile = lazy(() => import('@/pages/PatientProfile'));
@@ -30,6 +31,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/pricing" element={<Pricing />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/callback" element={<AuthHandler />} />
