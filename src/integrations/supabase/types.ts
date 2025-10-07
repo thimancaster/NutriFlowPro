@@ -495,51 +495,6 @@ export type Database = {
           },
         ]
       }
-      clinical_sessions: {
-        Row: {
-          completed_at: string | null
-          consultation_data: Json
-          created_at: string | null
-          id: string
-          meal_plan_draft: Json | null
-          notes: string | null
-          nutritional_results: Json | null
-          patient_id: string
-          session_type: string
-          status: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          consultation_data?: Json
-          created_at?: string | null
-          id?: string
-          meal_plan_draft?: Json | null
-          notes?: string | null
-          nutritional_results?: Json | null
-          patient_id: string
-          session_type?: string
-          status?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          consultation_data?: Json
-          created_at?: string | null
-          id?: string
-          meal_plan_draft?: Json | null
-          notes?: string | null
-          nutritional_results?: Json | null
-          patient_id?: string
-          session_type?: string
-          status?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       consultations: {
         Row: {
           calculation_id: string | null
@@ -1561,7 +1516,7 @@ export type Database = {
     Functions: {
       check_premium_access_secure: {
         Args: Record<PropertyKey, never> | { feature_name: string }
-        Returns: Json
+        Returns: undefined
       }
       check_premium_quota: {
         Args:
@@ -1758,13 +1713,13 @@ export type Database = {
               p_name: string
               p_phone?: string
             }
-        Returns: Json
+        Returns: undefined
       }
       validate_premium_access_secure: {
         Args:
           | Record<PropertyKey, never>
           | { action_type?: string; feature_name: string }
-        Returns: Json
+        Returns: undefined
       }
     }
     Enums: {
