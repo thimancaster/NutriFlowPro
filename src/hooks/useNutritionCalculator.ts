@@ -1,23 +1,26 @@
-
 import { useState, useCallback } from 'react';
-import { calculateCompleteNutrition, CalculationInputs, CalculationResults, Profile, Gender, Objective } from '@/utils/calculations/core';
+import { 
+  calculateComplete_Official, 
+  type CalculationInputs, 
+  type CalculationResult 
+} from '@/utils/nutrition/official/officialCalculations';
 import { useToast } from '@/hooks/use-toast';
 
 export interface UseNutritionCalculatorReturn {
-  results: CalculationResults | null;
+  results: CalculationResult | null;
   isCalculating: boolean;
   error: string | null;
-  calculate: (inputs: CalculationInputs) => Promise<CalculationResults | null>;
+  calculate: (inputs: CalculationInputs) => Promise<CalculationResult | null>;
   reset: () => void;
 }
 
 export const useNutritionCalculator = (): UseNutritionCalculatorReturn => {
-  const [results, setResults] = useState<CalculationResults | null>(null);
+  const [results, setResults] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const calculate = useCallback(async (inputs: CalculationInputs): Promise<CalculationResults | null> => {
+  const calculate = useCallback(async (inputs: CalculationInputs): Promise<CalculationResult | null> => {
     console.log('🧮 Iniciando cálculo nutricional:', inputs);
     
     setIsCalculating(true);
@@ -35,21 +38,20 @@ export const useNutritionCalculator = (): UseNutritionCalculatorReturn => {
         throw new Error('Idade deve ser maior que zero');
       }
 
-      // Realizar cálculo usando sistema único
-      const calculationResults = calculateCompleteNutrition(inputs);
+      // Usar motor oficial
+      const calculationResults = calculateComplete_Official(inputs);
 
       console.log('✅ Cálculo concluído:', {
-        tmb: calculationResults.tmb,
+        tmb: calculationResults.tmb.value,
         get: calculationResults.get,
-        vet: calculationResults.vet,
-        totalCalories: calculationResults.totalCalories
+        vet: calculationResults.vet
       });
 
       setResults(calculationResults);
 
       toast({
         title: "Cálculo Realizado",
-        description: `TMB: ${calculationResults.tmb} kcal | VET: ${calculationResults.vet} kcal`,
+        description: `TMB: ${calculationResults.tmb.value} kcal | VET: ${calculationResults.vet} kcal`,
       });
 
       return calculationResults;
@@ -86,23 +88,5 @@ export const useNutritionCalculator = (): UseNutritionCalculatorReturn => {
   };
 };
 
-// Wrapper para compatibilidade com código existente
-export const useCalculator = () => {
-  const nutrition = useNutritionCalculator();
-  
-  return {
-    ...nutrition,
-    formData: {
-      weight: 0,
-      height: 0,
-      age: 0,
-      sex: 'F' as Gender,
-      activityLevel: 'moderado',
-      objective: 'manutencao' as Objective,
-      profile: 'eutrofico' as Profile
-    },
-    updateFormData: (data: Partial<any>) => {
-      console.log('📝 Atualizando dados do formulário:', data);
-    }
-  };
-};
+// Alias para compatibilidade
+export const useCalculator = useNutritionCalculator;

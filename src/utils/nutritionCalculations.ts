@@ -1,57 +1,37 @@
 /**
- * [DEPRECATED] Sistema de Cálculos Nutricionais - LEGACY
+ * NUTRITION CALCULATIONS - REDIRECT TO OFFICIAL ENGINE
  * 
- * ⚠️  AVISO: Este sistema está sendo descontinuado.
+ * This file serves as a compatibility layer, redirecting all calculation
+ * requests to the official calculation engine in officialCalculations.ts
  * 
- * Para novos desenvolvimentos, use:
- * import { calculateCompleteNutrition } from '@/utils/nutrition/centralMotor';
- * 
- * Este arquivo mantém compatibilidade com código existente mas redireciona
- * internamente para o novo motor nutricional que é 100% fiel à planilha.
+ * All new code should import directly from:
+ * @/utils/nutrition/official/officialCalculations
  */
 
-console.warn(`
-🔄 SISTEMA NUTRICIONAL EM MIGRAÇÃO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export {
+  calculateComplete_Official as calculateCompleteNutrition,
+  calculateTMB_Official as calculateTMB,
+  calculateGET_Official as calculateGET,
+  calculateVET_Official as calculateVET,
+  calculateMacros_ByGramsPerKg as calculateMacros,
+  validateCalculationInputs as validateInputs,
+  validateCalculationInputs as validateENPData,
+  validateCalculationInputs as validateAllParameters,
+  type CalculationInputs,
+  type CalculationResult,
+  type CalculationResult as CompleteNutritionResult,
+  type MacroResult,
+  ACTIVITY_FACTORS,
+  CALORIC_VALUES,
+  OBJECTIVE_ADJUSTMENTS
+} from './nutrition/official/officialCalculations';
 
-Este arquivo (nutritionCalculations.ts) está DEPRECATED.
+// Re-export types for backward compatibility
+export type { 
+  ActivityLevel, 
+  Objective, 
+  PatientProfile 
+} from './nutrition/official/officialCalculations';
 
-✅ PARA NOVOS DESENVOLVIMENTOS:
-   import { calculateCompleteNutrition } from '@/utils/nutrition/centralMotor';
-
-⚠️  PARA CÓDIGO LEGADO:
-   Este arquivo mantém compatibilidade mas redireciona para o motor atualizado.
-
-📋 MIGRAÇÃO RECOMENDADA:
-   Substitua as chamadas antigas pelo novo motor nutricional centralizado.
-`);
-
-// Redirecionar para motor nutricional centralizado
-export * from './nutrition/centralMotor';
-
-// Manter exports legados com wrappers
-export { 
-  calculateCompleteNutritionLegacy as calculateCompleteNutrition,
-  calculateTMBLegacy as calculateTMB
-} from './nutrition/centralMotor/wrappers';
-
-// Exportar funções de antropometria
+// Anthropometry calculations
 export * from './nutrition/anthropometryCalculations';
-
-// Legacy compatibility exports
-export { 
-  validateLegacyParameters as validateAllParameters,
-  type LegacyCalculationResult as CompleteNutritionResult
-} from './nutrition/legacyCalculations';
-
-// Modern calculation exports (recommended)
-export { calculateComplete, validateCompleteInputs } from './nutrition/completeCalculation';
-
-// Re-exports organizados para compatibilidade
-export { calculateGET } from './nutrition/getCalculations';
-export { calculateVET } from './nutrition/vetCalculations';
-
-// Função principal recomendada (ENP)
-export { 
-  validateCalculationInputs as validateENPData 
-} from './nutrition/cleanCalculations';

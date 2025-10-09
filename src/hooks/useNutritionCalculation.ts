@@ -1,16 +1,15 @@
-
 import { useState } from 'react';
-import { calculateCompleteNutritionLegacy, LegacyCalculationResult, validateLegacyParameters } from '@/utils/nutrition/legacyCalculations';
-import { profileToLegacy, stringToProfile } from '@/components/calculator/utils/profileUtils';
+import { 
+  calculateComplete_Official, 
+  type CalculationInputs,
+  type CalculationResult
+} from '@/utils/nutrition/official/officialCalculations';
 import { ActivityLevel, Objective } from '@/types/consultation';
-import { CalculationCache } from '@/utils/performance/calculationCache';
 
 export interface NutritionCalculationState {
-  results: LegacyCalculationResult | null;
+  results: CalculationResult | null;
   isCalculating: boolean;
   error: string | null;
-  fromCache?: boolean;
-  cacheAge?: number;
 }
 
 export const useNutritionCalculation = () => {
@@ -27,109 +26,49 @@ export const useNutritionCalculation = () => {
     sex: 'M' | 'F',
     activityLevel: ActivityLevel,
     objective: Objective,
-    profile: 'magro' | 'obeso' | 'atleta' | 'eutrofico' | 'sobrepeso_obesidade',
-    customMacroPercentages?: {
-      protein: number;
-      carbs: number;
-      fat: number;
-    }
-  ): Promise<LegacyCalculationResult | null> => {
+    profile: 'magro' | 'obeso' | 'atleta' | 'eutrofico' | 'sobrepeso_obesidade'
+  ): Promise<CalculationResult | null> => {
     setState(prev => ({ ...prev, isCalculating: true, error: null }));
 
     try {
-      // Create cache key from calculation inputs
-      const cacheInputs = {
+      // Normalize profile
+      const normalizedProfile = 
+        profile === 'magro' ? 'eutrofico' :
+        profile === 'obeso' ? 'sobrepeso_obesidade' :
+        profile === 'eutrofico' ? 'eutrofico' :
+        profile === 'sobrepeso_obesidade' ? 'sobrepeso_obesidade' :
+        'atleta';
+
+      const inputs: CalculationInputs = {
         weight,
         height,
         age,
-        sex,
+        gender: sex,
+        profile: normalizedProfile,
         activityLevel,
         objective,
-        profile,
-        customMacroPercentages
+        macroInputs: {
+          proteinPerKg: normalizedProfile === 'atleta' ? 2.0 : 1.6,
+          fatPerKg: 1.0
+        }
       };
 
-      // Check cache first
-      const cachedResult = CalculationCache.get(cacheInputs);
-      if (cachedResult) {
-        console.log('Using cached nutrition calculation result', {
-          cacheAge: cachedResult.cacheAge,
-          fromCache: true
-        });
-
-        const resultWithCache: LegacyCalculationResult = {
-          ...cachedResult,
-          fromCache: true,
-          cacheAge: cachedResult.cacheAge
-        };
-
-        setState({
-          results: resultWithCache,
-          isCalculating: false,
-          error: null,
-          fromCache: true,
-          cacheAge: cachedResult.cacheAge
-        });
-
-        return resultWithCache;
-      }
-
-      // Normalizar profile se necessário
-      let normalizedProfile: 'magro' | 'obeso' | 'atleta';
-      
-      if (profile === 'eutrofico' || profile === 'sobrepeso_obesidade') {
-        const profileType = stringToProfile(profile);
-        normalizedProfile = profileToLegacy(profileType);
-      } else {
-        normalizedProfile = profile as 'magro' | 'obeso' | 'atleta';
-      }
-
-      console.log('Profile normalization:', { original: profile, normalized: normalizedProfile });
-
-      // Validar parâmetros using legacy function
-      const validation = validateLegacyParameters(weight, height, age, sex, activityLevel, objective, normalizedProfile);
-      
-      if (!validation.isValid) {
-        throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
-      }
-
-      // Use legacy calculation function with 7 parameters
-      const results = calculateCompleteNutritionLegacy(
-        weight,
-        height,
-        age,
-        sex,
-        activityLevel,
-        objective,
-        normalizedProfile
-      );
-
-      // Add cache properties
-      const resultsWithCache: LegacyCalculationResult = {
-        ...results,
-        fromCache: false
-      };
-
-      // Cache the results for future use
-      CalculationCache.set(cacheInputs, resultsWithCache, 30 * 60 * 1000); // 30 minutes TTL
+      const results = calculateComplete_Official(inputs);
 
       setState({
-        results: resultsWithCache,
+        results,
         isCalculating: false,
-        error: null,
-        fromCache: false
+        error: null
       });
 
       console.log('Cálculo nutricional concluído:', {
-        formulaUsed: results.formulaUsed,
-        tmb: results.tmb,
+        formulaUsed: results.tmb.formula,
+        tmb: results.tmb.value,
         vet: results.vet,
-        profile: normalizedProfile,
-        recommendations: results.recommendations,
-        cached: true
+        profile: normalizedProfile
       });
 
-      return resultsWithCache;
+      return results;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro no cálculo nutricional';
       

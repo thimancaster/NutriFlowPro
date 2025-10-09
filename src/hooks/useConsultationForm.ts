@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { 
   ConsultationFormState, 
@@ -8,12 +7,12 @@ import {
   Profile,
   ActivityLevel,
   ConsultationType,
-  ConsultationStatus,
-  PROTEIN_RATIOS,
-  LIPID_RATIOS,
-  CALORIE_VALUES
+  ConsultationStatus
 } from '@/types/consultation';
-import { calculateMacrosByProfile } from '@/utils/macronutrientCalculations';
+import { 
+  calculateComplete_Official, 
+  type CalculationInputs 
+} from '@/utils/nutrition/official/officialCalculations';
 
 export interface UseConsultationFormReturn {
   formData: ConsultationFormState;
@@ -57,26 +56,22 @@ export const useConsultationForm = (
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const [consultationId, setConsultationId] = useState<string | null>(null);
 
-  // Handle input changes
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  // Handle select changes
   const handleSelectChange = useCallback((name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  // Calculate BMR and macros whenever weight, height, age, sex changes
+  // Calculate using official engine
   useEffect(() => {
     const calculateNutritionValues = () => {
-      // Only calculate if all required fields are filled
       if (!formData.weight || !formData.height || !formData.age) {
         return;
       }
 
-      // Parse values
       const weight = parseFloat(formData.weight);
       const height = parseFloat(formData.height);
       const age = parseInt(formData.age);
@@ -85,32 +80,30 @@ export const useConsultationForm = (
         return;
       }
 
-      // Calculate BMR based on sex (Mifflin-St Jeor equation)
-      let bmr: number;
-      if (formData.sex === 'M') {
-        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-      } else {
-        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-      }
+      const inputs: CalculationInputs = {
+        weight,
+        height,
+        age,
+        gender: formData.sex as 'M' | 'F',
+        profile: formData.profile as any,
+        activityLevel: formData.activityLevel,
+        objective: formData.objective,
+        macroInputs: {
+          proteinPerKg: formData.profile === 'atleta' ? 2.0 : 1.6,
+          fatPerKg: 1.0
+        }
+      };
 
-      // Calculate TDEE based on activity level
-      const activityFactor = getActivityFactor(formData.activityLevel);
-      const get = bmr * activityFactor;
-      
-      // Apply objective adjustment to get VET
-      const vet = applyObjectiveAdjustment(get, formData.objective);
-
-      // Calculate macros using the weight-based approach
-      const macroResults = calculateMacrosByProfile(formData.profile, weight, vet);
+      const calculation = calculateComplete_Official(inputs);
 
       setResults({
-        tmb: Math.round(bmr),
-        fa: activityFactor,
-        get: Math.round(get),
+        tmb: calculation.tmb.value,
+        fa: 0, // Activity factor is internal to GET calculation
+        get: calculation.get,
         macros: {
-          protein: macroResults.protein.grams,
-          carbs: macroResults.carbs.grams,
-          fat: macroResults.fat.grams
+          protein: calculation.macros.protein.grams,
+          carbs: calculation.macros.carbs.grams,
+          fat: calculation.macros.fat.grams
         }
       });
     };
@@ -129,35 +122,4 @@ export const useConsultationForm = (
     consultationId,
     setConsultationId
   };
-};
-
-// Helper function to get activity factor
-const getActivityFactor = (activityLevel: ActivityLevel): number => {
-  switch (activityLevel) {
-    case 'sedentario':
-      return 1.2;
-    case 'leve':
-      return 1.375;
-    case 'moderado':
-      return 1.55;
-    case 'intenso':
-      return 1.725;
-    case 'muito_intenso':
-      return 1.9;
-    default:
-      return 1.2;
-  }
-};
-
-// Helper function to apply objective adjustment to GET
-const applyObjectiveAdjustment = (get: number, objective: Objective): number => {
-  switch (objective) {
-    case 'emagrecimento':
-      return get * 0.8; // 20% deficit
-    case 'hipertrofia':
-      return get * 1.15; // 15% surplus
-    case 'manutenção':
-    default:
-      return get; // No adjustment
-  }
 };
