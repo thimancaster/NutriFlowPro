@@ -1,5 +1,37 @@
 import {supabase} from "./client";
 
+/**
+ * Get Activity Factors from Supabase (spreadsheet fidelity)
+ * Fetches FA values from parametros_get_planilha table
+ */
+export async function getParametrosGETPlanilha(
+  perfil: 'eutrofico' | 'sobrepeso_obesidade' | 'atleta',
+  sexo: 'M' | 'F'
+): Promise<{ fa_valor: number; formula_tmb: string; formula_get: string } | null> {
+  try {
+    const { data, error } = await supabase
+      .from('parametros_get_planilha')
+      .select('fa_valor, formula_tmb_detalhe, formula_get_detalhe')
+      .eq('perfil', perfil)
+      .eq('sexo', sexo)
+      .single();
+
+    if (error) {
+      console.error('Error fetching parametros_get_planilha:', error);
+      return null;
+    }
+    
+    return {
+      fa_valor: data.fa_valor,
+      formula_tmb: data.formula_tmb_detalhe,
+      formula_get: data.formula_get_detalhe
+    };
+  } catch (error) {
+    console.error('Exception in getParametrosGETPlanilha:', error);
+    return null;
+  }
+}
+
 // Function to get all food categories from the new standardized table
 export const getFoodCategories = async () => {
 	const {data, error} = await supabase

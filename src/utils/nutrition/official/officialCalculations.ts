@@ -70,11 +70,11 @@ export function calculateTMB_HarrisBenedict(
   gender: Gender
 ): number {
   if (gender === 'M') {
-    // Men: TMB = 66 + (13.7 × weight) + (5.0 × height) – (6.8 × age)
-    return 66 + (13.7 * weight) + (5.0 * height) - (6.8 * age);
+    // Men: TMB = 66 + (13.8 × weight) + (5.0 × height) – (6.8 × age)
+    return 66 + (13.8 * weight) + (5.0 * height) - (6.8 * age);
   } else {
-    // Women: TMB = 655 + (9.6 × weight) + (1.8 × height) – (4.7 × age)  
-    return 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
+    // Women: TMB = 655 + (9.6 × weight) + (1.9 × height) – (4.7 × age)  
+    return 655 + (9.6 * weight) + (1.9 * height) - (4.7 * age);
   }
 }
 
@@ -158,9 +158,9 @@ export function calculateGET_Official(tmb: number, activityLevel: ActivityLevel)
  * VET CALCULATION - GET with Objective Adjustment (Ground Truth)
  * Applies caloric surplus/deficit based on objective
  */
-export function calculateVET_Official(get: number, objective: Objective): number {
-  if (objective === 'personalizado') {
-    return get; // No automatic adjustment for custom objectives
+export function calculateVET_Official(get: number, objective: Objective, customAdjustment?: number): number {
+  if (objective === 'personalizado' && customAdjustment !== undefined) {
+    return Math.round(get + customAdjustment); // Use user's custom adjustment
   }
   
   const adjustment = OBJECTIVE_ADJUSTMENTS[objective as Exclude<Objective, 'personalizado'>];
@@ -326,6 +326,7 @@ export interface CalculationInputs {
   profile: PatientProfile;
   activityLevel: ActivityLevel;
   objective: Objective;
+  customAdjustment?: number; // For personalizado objective
   // One of these macro input methods:
   macroInputs?: ManualMacroInputs;      // g/kg method
   percentageInputs?: PercentageMacroInputs; // percentage method
@@ -374,7 +375,7 @@ export function calculateComplete_Official(inputs: CalculationInputs): Calculati
   const get = calculateGET_Official(tmb.value, inputs.activityLevel);
   
   // Step 3: Apply Objective Adjustment → VET
-  const vet = calculateVET_Official(get, inputs.objective);
+  const vet = calculateVET_Official(get, inputs.objective, inputs.customAdjustment);
   
   // Step 4: Calculate Macronutrients (method depends on input type)
   let macros: MacroResult;
