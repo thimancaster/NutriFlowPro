@@ -77,6 +77,17 @@ export interface ConsultationData {
     name: string;
     age?: number;
   };
+  
+  // Meal plan data (FASE 3)
+  mealPlan?: {
+    refeicoes: any[];
+    dailyTotals: {
+      kcal: number;
+      ptn_g: number;
+      cho_g: number;
+      lip_g: number;
+    };
+  };
 }
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
