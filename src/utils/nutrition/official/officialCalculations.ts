@@ -148,9 +148,47 @@ export function calculateTMB_Official(
 /**
  * GET CALCULATION - TMB × Activity Factor (Ground Truth)
  * EXACT as specified: GET = TMB × FA
+ * Priority: 1) Manual F.A., 2) Supabase, 3) Hardcoded fallback
  */
-export function calculateGET_Official(tmb: number, activityLevel: ActivityLevel): number {
-  const activityFactor = ACTIVITY_FACTORS[activityLevel];
+export async function calculateGET_Official(
+  tmb: number, 
+  activityLevel: ActivityLevel,
+  manualFactor?: number,
+  profile?: PatientProfile,
+  gender?: Gender
+): Promise<number> {
+  let activityFactor: number;
+  
+  // PRIORITY 1: Manual input
+  if (manualFactor !== undefined && manualFactor > 0) {
+    activityFactor = manualFactor;
+    console.log('[GET] Using manual F.A.:', activityFactor);
+  } 
+  // PRIORITY 2: Supabase (requires dynamic import to avoid circular dependency)
+  else if (profile && gender) {
+    try {
+      const { getParametrosGETPlanilha } = await import('@/integrations/supabase/functions');
+      const supabaseData = await getParametrosGETPlanilha(profile, gender);
+      
+      if (supabaseData?.fa_valor) {
+        activityFactor = supabaseData.fa_valor;
+        console.log('[GET] Using Supabase F.A.:', activityFactor);
+      } else {
+        // PRIORITY 3: Fallback to hardcoded
+        activityFactor = ACTIVITY_FACTORS[activityLevel];
+        console.log('[GET] Supabase returned null, using fallback F.A.:', activityFactor);
+      }
+    } catch (error) {
+      console.error('[GET] Error fetching from Supabase, using fallback:', error);
+      activityFactor = ACTIVITY_FACTORS[activityLevel];
+    }
+  } 
+  // PRIORITY 3: Fallback
+  else {
+    activityFactor = ACTIVITY_FACTORS[activityLevel];
+    console.log('[GET] Using fallback F.A.:', activityFactor);
+  }
+  
   return Math.round(tmb * activityFactor);
 }
 
@@ -327,6 +365,7 @@ export interface CalculationInputs {
   activityLevel: ActivityLevel;
   objective: Objective;
   customAdjustment?: number; // For personalizado objective
+  manualActivityFactor?: number; // Manual F.A. input (PRIORITY 1)
   // One of these macro input methods:
   macroInputs?: ManualMacroInputs;      // g/kg method
   percentageInputs?: PercentageMacroInputs; // percentage method
@@ -343,7 +382,7 @@ export interface CalculationResult {
   inputMethod: 'grams_per_kg' | 'percentages';
 }
 
-export function calculateComplete_Official(inputs: CalculationInputs): CalculationResult {
+export async function calculateComplete_Official(inputs: CalculationInputs): Promise<CalculationResult> {
   // Validation
   if (inputs.weight <= 0 || inputs.height <= 0 || inputs.age <= 0) {
     throw new Error('Weight, height, and age must be greater than zero');
@@ -371,8 +410,14 @@ export function calculateComplete_Official(inputs: CalculationInputs): Calculati
     inputs.profile
   );
   
-  // Step 2: Apply Activity Factor → GET
-  const get = calculateGET_Official(tmb.value, inputs.activityLevel);
+  // Step 2: Apply Activity Factor → GET (with priority logic)
+  const get = await calculateGET_Official(
+    tmb.value, 
+    inputs.activityLevel,
+    inputs.manualActivityFactor,
+    inputs.profile,
+    inputs.gender
+  );
   
   // Step 3: Apply Objective Adjustment → VET
   const vet = calculateVET_Official(get, inputs.objective, inputs.customAdjustment);

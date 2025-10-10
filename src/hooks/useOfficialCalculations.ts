@@ -83,8 +83,8 @@ export const useOfficialCalculations = () => {
       // Ensure we have complete inputs
       const completeInputs = state.inputs as CalculationInputs;
 
-      // Perform calculation using official formulas
-      const results = calculateComplete_Official(completeInputs);
+      // Perform calculation using official formulas (now async)
+      const results = await calculateComplete_Official(completeInputs);
 
       setState(prev => ({
         ...prev,

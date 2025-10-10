@@ -168,7 +168,7 @@ export class PlanWorkflowService {
       const { calculateComplete_Official } = await import('@/utils/nutrition/official/officialCalculations');
       
       // Use official calculation engine
-      const officialResult = calculateComplete_Official({
+      const officialResult = await calculateComplete_Official({
         weight,
         height,
         age,

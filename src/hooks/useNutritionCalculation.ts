@@ -53,7 +53,7 @@ export const useNutritionCalculation = () => {
         }
       };
 
-      const results = calculateComplete_Official(inputs);
+      const results = await calculateComplete_Official(inputs);
 
       setState({
         results,

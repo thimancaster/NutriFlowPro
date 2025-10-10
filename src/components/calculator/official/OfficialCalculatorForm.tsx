@@ -52,7 +52,8 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
     gender: '' as Gender,
     profile: '' as PatientProfile,
     activityLevel: '' as ActivityLevel,
-    objective: '' as Objective
+    objective: '' as Objective,
+    manualActivityFactor: '' // NEW: Manual F.A. input
   });
 
   const [macroInputMethod, setMacroInputMethod] = useState<'grams_per_kg' | 'percentages'>('grams_per_kg');
@@ -97,7 +98,8 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
       gender: formData.gender,
       profile: formData.profile,
       activityLevel: formData.activityLevel,
-      objective: formData.objective
+      objective: formData.objective,
+      manualActivityFactor: formData.manualActivityFactor ? parseFloat(formData.manualActivityFactor) : undefined
     };
 
     if (macroInputMethod === 'grams_per_kg') {
@@ -271,6 +273,24 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="manualActivityFactor">Fator de Atividade (F.A.) - Manual (Opcional)</Label>
+            <Input
+              id="manualActivityFactor"
+              type="number"
+              step="0.01"
+              value={formData.manualActivityFactor}
+              onChange={(e) => setFormData(prev => ({ ...prev, manualActivityFactor: e.target.value }))}
+              placeholder="Ex: 1.55 (deixe vazio para usar automático)"
+            />
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Se preenchido, este valor terá prioridade sobre o nível de atividade selecionado.
+              </AlertDescription>
+            </Alert>
           </div>
         </div>
 

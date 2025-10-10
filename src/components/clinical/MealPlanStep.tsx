@@ -42,6 +42,12 @@ const MealPlanStep: React.FC = () => {
   const [activeRefeicaoIndex, setActiveRefeicaoIndex] = useState<number | null>(null);
   const [selectedAlimento, setSelectedAlimento] = useState<AlimentoV2 | null>(null);
   const [quantidade, setQuantidade] = useState<string>('1');
+  const [editingDistribution, setEditingDistribution] = useState(false);
+  const [macroDistribution, setMacroDistribution] = useState({
+    ptn: [...DISTRIBUICAO_PADRAO],
+    lip: [...DISTRIBUICAO_PADRAO],
+    cho: [...DISTRIBUICAO_PADRAO]
+  });
 
   // Inicializar refeições com alvos baseados no VET
   useEffect(() => {
@@ -52,15 +58,80 @@ const MealPlanStep: React.FC = () => {
       const initialRefeicoes: Refeicao[] = REFEICOES_TEMPLATE.map((template, idx) => ({
         ...template,
         itens: [],
-        alvo_kcal: Math.round(vet * DISTRIBUICAO_PADRAO[idx]),
-        alvo_ptn_g: Math.round(macros.protein * DISTRIBUICAO_PADRAO[idx]),
-        alvo_cho_g: Math.round(macros.carbs * DISTRIBUICAO_PADRAO[idx]),
-        alvo_lip_g: Math.round(macros.fat * DISTRIBUICAO_PADRAO[idx])
+        alvo_kcal: Math.round(vet * macroDistribution.ptn[idx]), // Use VET distribution
+        alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
+        alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
+        alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx])
       }));
 
       setRefeicoes(initialRefeicoes);
     }
-  }, [consultationData?.results, refeicoes.length]);
+  }, [consultationData?.results, refeicoes.length, macroDistribution]);
+
+  // Recalcular alvos quando distribuição mudar
+  const updateMealTargets = () => {
+    if (!consultationData?.results) return;
+
+    const vet = consultationData.results.vet;
+    const macros = consultationData.results.macros;
+
+    setRefeicoes(prev => prev.map((ref, idx) => ({
+      ...ref,
+      alvo_kcal: Math.round(vet * macroDistribution.ptn[idx]),
+      alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
+      alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
+      alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx])
+    })));
+  };
+
+  // Validar distribuição (soma = 100%)
+  const validateDistribution = (macro: 'ptn' | 'lip' | 'cho'): boolean => {
+    const sum = macroDistribution[macro].reduce((acc, val) => acc + val, 0);
+    return Math.abs(sum - 1.0) < 0.01; // Tolerance for floating point
+  };
+
+  const getDistributionError = (macro: 'ptn' | 'lip' | 'cho'): string | null => {
+    const sum = macroDistribution[macro].reduce((acc, val) => acc + val, 0);
+    const percent = sum * 100;
+    if (Math.abs(percent - 100) > 0.5) {
+      return `${percent.toFixed(1)}% (deve somar 100%)`;
+    }
+    return null;
+  };
+
+  const handleDistributionChange = (macro: 'ptn' | 'lip' | 'cho', refeicaoIdx: number, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    const percentValue = numValue / 100; // Convert % to decimal
+    
+    setMacroDistribution(prev => ({
+      ...prev,
+      [macro]: prev[macro].map((v, idx) => idx === refeicaoIdx ? percentValue : v)
+    }));
+  };
+
+  const applyDistribution = () => {
+    // Validate all distributions
+    const ptnValid = validateDistribution('ptn');
+    const lipValid = validateDistribution('lip');
+    const choValid = validateDistribution('cho');
+
+    if (!ptnValid || !lipValid || !choValid) {
+      toast({
+        title: 'Distribuição Inválida',
+        description: 'Todos os macronutrientes devem somar 100%',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    updateMealTargets();
+    setEditingDistribution(false);
+    
+    toast({
+      title: 'Distribuição Aplicada',
+      description: 'Alvos de cada refeição recalculados'
+    });
+  };
 
   // Buscar alimentos quando o usuário digita
   useEffect(() => {
@@ -190,6 +261,132 @@ const MealPlanStep: React.FC = () => {
             </div>
             <Progress value={Math.min(progressPercent, 100)} className="h-2" />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Distribuição de Macros por Refeição */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg">Distribuição de Macros por Refeição</CardTitle>
+            <Button 
+              variant={editingDistribution ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEditingDistribution(!editingDistribution)}
+            >
+              {editingDistribution ? 'Cancelar' : 'Editar Distribuição'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {editingDistribution ? (
+            <div className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Ajuste as porcentagens de cada macro para cada refeição. A soma de cada macro deve ser 100%.
+                </AlertDescription>
+              </Alert>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">Refeição</th>
+                      <th className="text-center py-2">Proteína (%)</th>
+                      <th className="text-center py-2">Lipídios (%)</th>
+                      <th className="text-center py-2">Carboidratos (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {REFEICOES_TEMPLATE.map((template, idx) => (
+                      <tr key={idx} className="border-b">
+                        <td className="py-2 font-medium">{template.nome}</td>
+                        <td className="text-center">
+                          <Input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={(macroDistribution.ptn[idx] * 100).toFixed(1)}
+                            onChange={(e) => handleDistributionChange('ptn', idx, e.target.value)}
+                            className="w-20 mx-auto text-center"
+                          />
+                        </td>
+                        <td className="text-center">
+                          <Input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={(macroDistribution.lip[idx] * 100).toFixed(1)}
+                            onChange={(e) => handleDistributionChange('lip', idx, e.target.value)}
+                            className="w-20 mx-auto text-center"
+                          />
+                        </td>
+                        <td className="text-center">
+                          <Input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={(macroDistribution.cho[idx] * 100).toFixed(1)}
+                            onChange={(e) => handleDistributionChange('cho', idx, e.target.value)}
+                            className="w-20 mx-auto text-center"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="font-bold">
+                      <td className="py-2">TOTAL</td>
+                      <td className="text-center">
+                        <Badge variant={validateDistribution('ptn') ? "default" : "destructive"}>
+                          {(macroDistribution.ptn.reduce((a, b) => a + b, 0) * 100).toFixed(1)}%
+                        </Badge>
+                      </td>
+                      <td className="text-center">
+                        <Badge variant={validateDistribution('lip') ? "default" : "destructive"}>
+                          {(macroDistribution.lip.reduce((a, b) => a + b, 0) * 100).toFixed(1)}%
+                        </Badge>
+                      </td>
+                      <td className="text-center">
+                        <Badge variant={validateDistribution('cho') ? "default" : "destructive"}>
+                          {(macroDistribution.cho.reduce((a, b) => a + b, 0) * 100).toFixed(1)}%
+                        </Badge>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Validation Errors */}
+              {(!validateDistribution('ptn') || !validateDistribution('lip') || !validateDistribution('cho')) && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-1">
+                      {getDistributionError('ptn') && <div>• Proteína: {getDistributionError('ptn')}</div>}
+                      {getDistributionError('lip') && <div>• Lipídios: {getDistributionError('lip')}</div>}
+                      {getDistributionError('cho') && <div>• Carboidratos: {getDistributionError('cho')}</div>}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Button 
+                onClick={applyDistribution}
+                className="w-full"
+                disabled={!validateDistribution('ptn') || !validateDistribution('lip') || !validateDistribution('cho')}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Aplicar Distribuição
+              </Button>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground text-center py-4">
+              Clique em "Editar Distribuição" para personalizar a distribuição de macros por refeição
+            </div>
+          )}
         </CardContent>
       </Card>
 

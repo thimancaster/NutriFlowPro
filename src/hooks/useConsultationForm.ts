@@ -67,7 +67,7 @@ export const useConsultationForm = (
 
   // Calculate using official engine
   useEffect(() => {
-    const calculateNutritionValues = () => {
+    const calculateNutritionValues = async () => {
       if (!formData.weight || !formData.height || !formData.age) {
         return;
       }
@@ -94,7 +94,7 @@ export const useConsultationForm = (
         }
       };
 
-      const calculation = calculateComplete_Official(inputs);
+      const calculation = await calculateComplete_Official(inputs);
 
       setResults({
         tmb: calculation.tmb.value,

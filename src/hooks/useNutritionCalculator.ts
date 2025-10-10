@@ -39,7 +39,7 @@ export const useNutritionCalculator = (): UseNutritionCalculatorReturn => {
       }
 
       // Usar motor oficial
-      const calculationResults = calculateComplete_Official(inputs);
+      const calculationResults = await calculateComplete_Official(inputs);
 
       console.log('✅ Cálculo concluído:', {
         tmb: calculationResults.tmb.value,
