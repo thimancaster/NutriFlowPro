@@ -7,7 +7,10 @@ import { Progress } from '@/components/ui/progress';
 import { Utensils, Search, Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMealPlanCalculations, Refeicao, ItemRefeicao, AlimentoV2 } from '@/hooks/useMealPlanCalculations';
+import { useMealPlanExport } from '@/hooks/useMealPlanExport';
+import { persistCompleteMealPlan } from '@/services/mealPlanPersistenceService';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,6 +30,7 @@ const REFEICOES_TEMPLATE = [
 const MealPlanStep: React.FC = () => {
   const { consultationData, updateConsultationData } = useConsultationData();
   const { activePatient } = usePatient();
+  const { user } = useAuth();
   const { toast } = useToast();
   const {
     alimentos,
@@ -36,6 +40,7 @@ const MealPlanStep: React.FC = () => {
     calculateRefeicaoTotals,
     calculateDailyTotals
   } = useMealPlanCalculations();
+  const { exportToPDF } = useMealPlanExport();
 
   const [refeicoes, setRefeicoes] = useState<Refeicao[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +53,7 @@ const MealPlanStep: React.FC = () => {
     lip: [...DISTRIBUICAO_PADRAO],
     cho: [...DISTRIBUICAO_PADRAO]
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Inicializar refeições com alvos baseados no VET
   useEffect(() => {
@@ -191,17 +197,88 @@ const MealPlanStep: React.FC = () => {
     });
   };
 
-  const handleSaveMealPlan = () => {
-    updateConsultationData({
-      mealPlan: {
-        refeicoes,
-        dailyTotals: calculateDailyTotals(refeicoes)
-      }
-    });
+  const handleSaveMealPlan = async () => {
+    if (!consultationData?.results || !activePatient || !user?.id) {
+      toast({
+        title: '❌ Erro',
+        description: 'Dados insuficientes para salvar o plano.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-    toast({
-      title: 'Plano Salvo',
-      description: 'Plano alimentar salvo com sucesso!'
+    setIsSaving(true);
+    try {
+      // Calculate percentages
+      const totalCalories = consultationData.results.vet;
+      const ptnPercentual = ((consultationData.results.macros.protein * 4) / totalCalories) * 100;
+      const choPercentual = ((consultationData.results.macros.carbs * 4) / totalCalories) * 100;
+      const lipPercentual = ((consultationData.results.macros.fat * 9) / totalCalories) * 100;
+
+      // Save to Supabase
+      await persistCompleteMealPlan({
+        user_id: user.id,
+        patient_id: activePatient.id,
+        calculation_id: consultationData.id,
+        vet_kcal: consultationData.results.vet,
+        ptn_g_dia: consultationData.results.macros.protein,
+        ptn_kcal: consultationData.results.macros.protein * 4,
+        ptn_valor: 1.6, // Default value or from input
+        ptn_tipo_definicao: 'g_kg',
+        ptn_percentual: ptnPercentual,
+        cho_g_dia: consultationData.results.macros.carbs,
+        cho_kcal: consultationData.results.macros.carbs * 4,
+        cho_percentual: choPercentual,
+        lip_g_dia: consultationData.results.macros.fat,
+        lip_kcal: consultationData.results.macros.fat * 9,
+        lip_valor: 1.0, // Default value or from input
+        lip_tipo_definicao: 'g_kg',
+        lip_percentual: lipPercentual,
+        refeicoes: refeicoes.map((ref, idx) => ({
+          nome_refeicao: ref.nome,
+          numero_refeicao: ref.numero,
+          horario_sugerido: ref.horario_sugerido,
+          ptn_percentual: macroDistribution.ptn[idx] * 100,
+          cho_percentual: macroDistribution.cho[idx] * 100,
+          lip_percentual: macroDistribution.lip[idx] * 100,
+          itens: ref.itens
+        }))
+      });
+
+      // Update context
+      updateConsultationData({
+        mealPlan: {
+          refeicoes,
+          dailyTotals: calculateDailyTotals(refeicoes)
+        }
+      });
+
+      toast({
+        title: '✅ Plano Salvo',
+        description: 'Plano alimentar salvo com sucesso no Supabase!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao salvar plano:', error);
+      toast({
+        title: '❌ Erro ao salvar',
+        description: 'Não foi possível salvar o plano no banco de dados.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!activePatient) return;
+
+    await exportToPDF({
+      refeicoes,
+      patientName: activePatient.name,
+      patientAge: activePatient.age,
+      patientGender: activePatient.gender === 'male' ? 'male' : activePatient.gender === 'female' ? 'female' : undefined,
+      nutritionistName: user?.email || undefined,
+      notes: consultationData?.notes
     });
   };
 
@@ -558,11 +635,25 @@ const MealPlanStep: React.FC = () => {
         );
       })}
 
-      {/* Botão Salvar */}
+      {/* Botões de Ação */}
       <div className="flex justify-end gap-4">
-        <Button onClick={handleSaveMealPlan} size="lg" className="w-full md:w-auto">
+        <Button 
+          onClick={handleExportPDF} 
+          size="lg" 
+          variant="outline"
+          className="w-full md:w-auto"
+        >
+          <Utensils className="mr-2 h-4 w-4" />
+          Exportar PDF
+        </Button>
+        <Button 
+          onClick={handleSaveMealPlan} 
+          size="lg" 
+          disabled={isSaving}
+          className="w-full md:w-auto"
+        >
           <CheckCircle2 className="mr-2 h-4 w-4" />
-          Salvar Plano Alimentar
+          {isSaving ? 'Salvando...' : 'Salvar Plano Alimentar'}
         </Button>
       </div>
     </div>
