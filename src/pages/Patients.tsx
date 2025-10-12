@@ -6,6 +6,7 @@ import {Patient, PatientFilters} from "@/types/patient";
 import PatientLoadingState from "@/components/patients/PatientLoadingState";
 import PatientErrorState from "@/components/patients/PatientErrorState";
 import {useToast} from "@/hooks/use-toast";
+import {useActivePatient} from "@/hooks/patient/useActivePatient";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {
 	DropdownMenu,
@@ -37,12 +38,14 @@ import {
 	Calendar,
 	Calculator,
 	X,
+	UserCheck,
 } from "lucide-react";
 
 const Patients = () => {
 	const {user} = useAuth();
 	const navigate = useNavigate();
 	const {toast} = useToast();
+	const {selectPatient, activePatient} = useActivePatient();
 	const [patients, setPatients] = useState<Patient[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -262,6 +265,37 @@ const Patients = () => {
 		navigate("/patients/new");
 	};
 
+	const handleSelectPatientAndReturn = async (patient: Patient) => {
+		try {
+			await selectPatient(patient);
+			toast({
+				title: "Paciente Selecionado",
+				description: `${patient.name} está agora ativo para consulta`,
+			});
+			// Voltar para a página anterior (calculadora)
+			navigate(-1);
+		} catch (error) {
+			toast({
+				title: "Erro",
+				description: "Não foi possível selecionar o paciente",
+				variant: "destructive",
+			});
+		}
+	};
+
+	const handleOpenCalculator = async (patient: Patient) => {
+		try {
+			await selectPatient(patient);
+			navigate("/calculator");
+		} catch (error) {
+			toast({
+				title: "Erro",
+				description: "Não foi possível abrir a calculadora",
+				variant: "destructive",
+			});
+		}
+	};
+
 	const clearFilters = () => {
 		setSearchTerm("");
 		setStatusFilter("all");
@@ -451,9 +485,18 @@ const Patients = () => {
 													className="h-8 w-8 p-0"
 													onClick={(e) => {
 														e.stopPropagation();
-														navigate(
-															`/calculator?patientId=${patient.id}`
-														);
+														handleSelectPatientAndReturn(patient);
+													}}
+													title="Selecionar Paciente">
+													<UserCheck className="h-4 w-4 text-green-600" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-8 w-8 p-0"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleOpenCalculator(patient);
 													}}
 													title="Abrir Calculadora">
 													<Calculator className="h-4 w-4 text-primary" />

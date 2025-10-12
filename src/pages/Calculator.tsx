@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {CalculatorTool} from "@/components/calculator";
 import {usePatient} from "@/contexts/patient/PatientContext";
 import {Card, CardContent, CardHeader, CardTitle, CardDescription} from "@/components/ui/card";
@@ -10,12 +10,14 @@ import {CalculatorProvider} from "@/contexts/calculator/CalculatorContext";
 import PatientBanner from "@/components/patient/PatientBanner";
 import ContextualNavigation from "@/components/patient/ContextualNavigation";
 import {clearCalculatorDataOnStart} from "@/components/calculator/storageUtils";
+import {PatientSelectorModal} from "@/components/calculator/PatientSelectorModal";
 
 const CalculatorPage = () => {
 	const {activePatient, loadPatientById} = usePatient();
 	const [searchParams] = useSearchParams();
 	const patientId = searchParams.get("patientId");
 	const navigate = useNavigate();
+	const [showPatientSelector, setShowPatientSelector] = useState(false);
 
 	// Clear calculator data on page load to ensure empty fields
 	useEffect(() => {
@@ -49,12 +51,13 @@ const CalculatorPage = () => {
 
 				<div className="flex space-x-2">
 					{!activePatient && (
-						<Link to="/patients">
-							<Button variant="outline" className="flex items-center gap-1">
-								<User className="h-4 w-4" />
-								<span>Selecionar Paciente</span>
-							</Button>
-						</Link>
+						<Button
+							variant="outline"
+							className="flex items-center gap-1"
+							onClick={() => setShowPatientSelector(true)}>
+							<User className="h-4 w-4" />
+							<span>Selecionar Paciente</span>
+						</Button>
 					)}
 
 					{activePatient && (
@@ -124,8 +127,17 @@ const CalculatorPage = () => {
 			</Card>
 
 			<CalculatorProvider>
-				<CalculatorTool />
+				<CalculatorTool key={activePatient?.id || "no-patient"} />
 			</CalculatorProvider>
+
+			{/* Patient Selector Modal */}
+			<PatientSelectorModal
+				open={showPatientSelector}
+				onOpenChange={setShowPatientSelector}
+				onPatientSelected={(patient) => {
+					console.log("[CALCULATOR PAGE] Patient selected from modal:", patient);
+				}}
+			/>
 		</div>
 	);
 };

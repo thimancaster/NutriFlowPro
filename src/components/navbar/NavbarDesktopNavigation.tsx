@@ -26,34 +26,12 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
 		const [visibleItems, setVisibleItems] = useState<NavigationItem[]>(navigationItems);
 		const [overflowItems, setOverflowItems] = useState<NavigationItem[]>([]);
 
-		// Define item groups for better organization
-		const itemGroups = useMemo(() => {
-			const primary = ["Dashboard", "Pacientes", "Agendamentos", "Calculadora"]; // Core tools always visible
-			const clinical = ["Plano Alimentar", "Consulta", "Clínico"]; // Clinical workflow group
-
-			return {
-				primary: navigationItems.filter((item) => primary.includes(item.name)),
-				clinical: navigationItems.filter((item) => clinical.includes(item.name)),
-			};
-		}, [navigationItems]);
-
-		// Check for overflow and adjust visible items
+		// Show all navigation items without grouping
 		useEffect(() => {
-			const checkOverflow = () => {
-				// For now, let's force the dropdown to always show to test it
-				setVisibleItems(itemGroups.primary);
-				setOverflowItems([...itemGroups.clinical]);
-
-				console.log("Primary items:", itemGroups.primary);
-				console.log("Clinical items:", itemGroups.clinical);
-				console.log("Overflow items set to:", itemGroups.clinical);
-			};
-
-			checkOverflow();
-			window.addEventListener("resize", checkOverflow);
-			return () => window.removeEventListener("resize", checkOverflow);
-		}, [navigationItems, itemGroups]);
-
+			// Display all items as regular navigation items
+			setVisibleItems(navigationItems);
+			setOverflowItems([]);
+		}, [navigationItems]);
 		const renderNavigationItem = (item: NavigationItem, isInDropdown = false) => {
 			const Icon = item.icon;
 			const isActive =
