@@ -495,6 +495,51 @@ export type Database = {
           },
         ]
       }
+      clinical_sessions: {
+        Row: {
+          completed_at: string | null
+          consultation_data: Json
+          created_at: string | null
+          id: string
+          meal_plan_draft: Json | null
+          notes: string | null
+          nutritional_results: Json | null
+          patient_id: string
+          session_type: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          consultation_data?: Json
+          created_at?: string | null
+          id?: string
+          meal_plan_draft?: Json | null
+          notes?: string | null
+          nutritional_results?: Json | null
+          patient_id: string
+          session_type?: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          consultation_data?: Json
+          created_at?: string | null
+          id?: string
+          meal_plan_draft?: Json | null
+          notes?: string | null
+          nutritional_results?: Json | null
+          patient_id?: string
+          session_type?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       consultations: {
         Row: {
           calculation_id: string | null
@@ -1432,6 +1477,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           business_settings: Json | null
@@ -1516,7 +1582,7 @@ export type Database = {
     Functions: {
       check_premium_access_secure: {
         Args: Record<PropertyKey, never> | { feature_name: string }
-        Returns: undefined
+        Returns: Json
       }
       check_premium_quota: {
         Args:
@@ -1609,6 +1675,13 @@ export type Database = {
       get_user_role_safe: {
         Args: { user_id: string }
         Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_admin_user: {
         Args: Record<PropertyKey, never>
@@ -1713,17 +1786,17 @@ export type Database = {
               p_name: string
               p_phone?: string
             }
-        Returns: undefined
+        Returns: Json
       }
       validate_premium_access_secure: {
         Args:
           | Record<PropertyKey, never>
           | { action_type?: string; feature_name: string }
-        Returns: undefined
+        Returns: Json
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1850,6 +1923,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

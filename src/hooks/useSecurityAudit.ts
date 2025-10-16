@@ -10,13 +10,9 @@ export const useSecurityAudit = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Check if user is admin
-    const checkAdminStatus = () => {
-      const adminEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
-      setIsAdmin(!!user?.email && adminEmails.includes(user.email));
-    };
-
-    checkAdminStatus();
+    // Admin status is now determined server-side via user_roles table
+    // This client-side check is for UI purposes only
+    setIsAdmin(false);
   }, [user]);
 
   const fetchSecurityEvents = async (limit: number = 50) => {

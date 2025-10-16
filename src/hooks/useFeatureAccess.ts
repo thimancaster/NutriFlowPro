@@ -11,17 +11,11 @@ export const useFeatureAccess = () => {
   const { isPremiumUser, data: subscriptionData } = useUserSubscription();
   const { isPremium: authPremium, user } = useAuthState();
   
-  // Check if user is a developer (special privilege)
+  // Developer privileges are now managed via user_roles table
   const isDeveloper = useMemo(() => {
     // Check if user has developer role from subscription data
-    const hasDeveloperRole = subscriptionData?.role === 'developer';
-    
-    // Check if user's email is in the developer list (from subscriptionData or user object)
-    const email = subscriptionData?.email || user?.email;
-    const isDeveloperEmail = email === 'thimancaster@hotmail.com';
-    
-    return hasDeveloperRole || isDeveloperEmail;
-  }, [subscriptionData?.role, subscriptionData?.email, user?.email]);
+    return subscriptionData?.role === 'developer';
+  }, [subscriptionData?.role]);
   
   // Combine the different checks for premium status
   const isPremium = useMemo(() => {

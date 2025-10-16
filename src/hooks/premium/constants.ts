@@ -22,8 +22,9 @@ export const PREMIUM_CHECK_CONSTANTS = {
   RETRY_DELAY: 2000,
 };
 
-// List of email addresses that have developer access (full system access)
-export const DEVELOPER_EMAILS = ['thimancaster@hotmail.com'];
+// Developer and premium access is now managed via user_roles table
+// These constants are deprecated and should not be used for authorization
+export const DEVELOPER_EMAILS: string[] = [];
 
-// List of email addresses that have premium access
-export const PREMIUM_EMAILS = ['thiago@nutriflowpro.com'];
+// Premium status is managed via subscribers table
+export const PREMIUM_EMAILS: string[] = [];

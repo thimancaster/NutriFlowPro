@@ -1,6 +1,7 @@
 
-// List of email addresses that have premium access
-export const PREMIUM_EMAILS = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
+// Premium access is now managed via subscribers table
+// This constant is deprecated and should not be used
+export const PREMIUM_EMAILS: string[] = [];
 
 // Auth storage keys
 export const AUTH_STORAGE_KEYS = {

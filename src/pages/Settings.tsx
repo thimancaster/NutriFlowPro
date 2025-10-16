@@ -15,18 +15,10 @@ const Settings = () => {
   // TODO: Implement premium status check via user context or separate hook
   const isPremium = false; // Placeholder until premium logic is implemented
   
-  // Check if user is admin
-  const isAdmin = user?.email && ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'].includes(user.email);
+  // Admin status is now determined server-side via user_roles table
+  const isAdmin = false; // Client-side admin checks are deprecated
 
-  // Add console logs to help with debugging
-  console.log("Settings page rendering, isPremium:", isPremium);
-
-  useEffect(() => {
-    console.log("Settings page mounted");
-    return () => {
-      console.log("Settings page unmounted");
-    };
-  }, []);
+  // Removed debug logging - security best practice
   
   return (
     <div className="min-h-screen bg-background">

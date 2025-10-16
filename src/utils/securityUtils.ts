@@ -6,32 +6,14 @@ import DOMPurify from 'dompurify';
  */
 
 /**
- * Check if current user is admin (simplified version until types are updated)
+ * Check if current user is admin - DEPRECATED
+ * Admin status is now determined server-side via user_roles table
  */
 export const isCurrentUserAdmin = async (): Promise<boolean> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return false;
-    
-    // Check for developer emails
-    const developerEmails = ['thimancaster@hotmail.com', 'thiago@nutriflowpro.com'];
-    if (developerEmails.includes(user.email || '')) {
-      return true;
-    }
-    
-    // Check subscriber role
-    const { data: subscriber } = await supabase
-      .from('subscribers')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-    
-    return subscriber?.role === 'admin';
-  } catch (error) {
-    console.error('Error checking admin status:', error);
-    return false;
-  }
+  // This function is deprecated and always returns false
+  // Admin checks should be done server-side via has_role() function
+  // or by checking the user_roles table directly
+  return false;
 };
 
 /**

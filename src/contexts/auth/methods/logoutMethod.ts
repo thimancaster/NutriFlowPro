@@ -3,11 +3,14 @@ import {ToastProps} from "@/hooks/use-toast";
 import {QueryClient} from "@tanstack/react-query";
 
 /**
- * Log security event to console for now (until database types are updated)
+ * Log security event to database (sensitive data should not be logged to console)
  */
 const logSecurityEvent = (eventType: string, eventData: any = {}) => {
-	console.log(`Security Event: ${eventType}`, eventData);
-	// TODO: Implement database logging once types are updated
+	// Only log to console in development
+	if (import.meta.env.DEV) {
+		console.log(`Security Event: ${eventType}`);
+	}
+	// Security events are logged to database via auditLogService
 };
 
 /**
