@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/select";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Calculator, Activity, Target, Scale, Ruler, User} from "lucide-react";
+import {Calculator, Activity, Target, Scale, Ruler, User, Utensils} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
+import {useToast} from "@/hooks/use-toast";
 
 interface OfficialCalculatorFormProps {
 	onCalculationComplete?: (results: any) => void;
@@ -47,6 +48,7 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 	} = useOfficialCalculations();
 
 	const {activePatient} = useActivePatient();
+	const {toast} = useToast();
 
 	console.log("🔍 [OFFICIAL FORM] RENDER - activePatient:", {
 		id: activePatient?.id,
@@ -483,7 +485,8 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 				</Card>
 			)}
 
-			{/* Submit Button */}
+		{/* Submit Button - Changes based on results */}
+		{!results ? (
 			<Button
 				type="submit"
 				disabled={!canCalculate() || loading}
@@ -498,6 +501,39 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 					</>
 				)}
 			</Button>
+		) : (
+			<div className="space-y-3">
+				<Button
+					type="submit"
+					disabled={loading}
+					variant="outline"
+					className="w-full"
+					size="lg">
+					{loading ? (
+						<>Calculando...</>
+					) : (
+						<>
+							<Calculator className="mr-2 h-5 w-5" />
+							Recalcular
+						</>
+					)}
+				</Button>
+				<Button
+					type="button"
+					variant="default"
+					className="w-full"
+					size="lg"
+					onClick={() => {
+						toast({
+							title: "Em Desenvolvimento",
+							description: "Funcionalidade de geração de plano alimentar em breve!",
+						});
+					}}>
+					<Utensils className="mr-2 h-5 w-5" />
+					Gerar Plano Alimentar
+				</Button>
+			</div>
+		)}
 
 			{error && (
 				<div className="p-4 bg-destructive/10 text-destructive rounded-lg">
