@@ -254,20 +254,24 @@ export const persistCompleteMealPlan = async (
 }> => {
 	try {
 		console.log("[PERSISTENCE] Starting complete meal plan save...");
+		console.log("[PERSISTENCE] Plano data:", JSON.stringify(planoData, null, 2));
 
 		const {refeicoes, ...planoDataOnly} = planoData;
 
 		// Step 1: Save plano_nutricional_diario
+		console.log("[PERSISTENCE] Step 1: Saving plano_nutricional_diario...");
 		const planoId = await savePlanoNutricionalDiario(planoDataOnly);
-		console.log("[PERSISTENCE] Plano saved:", planoId);
+		console.log("[PERSISTENCE] ✅ Plano saved with ID:", planoId);
 
 		const refeicaoIds: Record<number, string> = {};
 
 		if (!refeicoes || refeicoes.length === 0) {
+			console.log("[PERSISTENCE] ⚠️ No refeicoes to save");
 			return {planoId, success: true, refeicaoIds};
 		}
 
 		// Step 2: Prepare distribuicoes
+		console.log("[PERSISTENCE] Step 2: Preparing distribuicoes for", refeicoes.length, "meals...");
 		const distribuicoes: RefeicaoDistribuicaoData[] = refeicoes.map((ref) => ({
 			plano_nutricional_id: planoId,
 			nome_refeicao: ref.nome_refeicao,
@@ -283,15 +287,18 @@ export const persistCompleteMealPlan = async (
 		}));
 
 		// Step 3: Save distribuicoes
+		console.log("[PERSISTENCE] Step 3: Saving distribuicoes...");
 		const createdRefeicoes = await saveRefeicaoDistribuicao(distribuicoes);
-		console.log("[PERSISTENCE] Distribuicoes saved:", createdRefeicoes.length);
+		console.log("[PERSISTENCE] ✅ Distribuicoes saved:", createdRefeicoes.length);
 
 		// Build refeicaoIds map
 		createdRefeicoes.forEach((ref) => {
 			refeicaoIds[ref.numero_refeicao] = ref.id;
+			console.log(`[PERSISTENCE] Mapped refeicao ${ref.numero_refeicao} -> ${ref.id}`);
 		});
 
 		// Step 4: Save meal items with refeicao_id
+		console.log("[PERSISTENCE] Step 4: Preparing meal items...");
 		const allItens: ItemRefeicaoData[] = [];
 		createdRefeicoes.forEach((ref) => {
 			const refData = refeicoes.find((r) => r.numero_refeicao === ref.numero_refeicao);
@@ -307,13 +314,17 @@ export const persistCompleteMealPlan = async (
 		});
 
 		if (allItens.length > 0) {
+			console.log("[PERSISTENCE] Step 5: Saving", allItens.length, "meal items...");
 			await saveItensRefeicao(allItens);
+			console.log("[PERSISTENCE] ✅ All items saved");
+		} else {
+			console.log("[PERSISTENCE] ⚠️ No items to save");
 		}
 
-		console.log("[PERSISTENCE] Complete meal plan saved successfully:", planoId);
+		console.log("[PERSISTENCE] ✅ Complete meal plan saved successfully:", planoId);
 		return {planoId, success: true, refeicaoIds};
 	} catch (error) {
-		console.error("[PERSISTENCE] Error in complete workflow:", error);
+		console.error("[PERSISTENCE] ❌ Error in complete workflow:", error);
 		throw error;
 	}
 };

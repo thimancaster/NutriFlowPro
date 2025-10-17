@@ -255,6 +255,16 @@ const MealPlanStep: React.FC = () => {
 			return;
 		}
 
+		const totalItens = refeicoes.reduce((sum, ref) => sum + ref.itens.length, 0);
+
+		console.log('[SAVE] Starting meal plan save:', {
+			user_id: user.id,
+			patient_id: activePatient.id,
+			refeicoes_count: refeicoes.length,
+			total_itens: totalItens,
+			vet: consultationData.results.vet
+		});
+
 		setIsSaving(true);
 		try {
 			// Calculate percentages
@@ -266,6 +276,7 @@ const MealPlanStep: React.FC = () => {
 			const lipPercentual = ((consultationData.results.macros.fat * 9) / totalCalories) * 100;
 
 			// Save to Supabase
+			console.log('[SAVE] Calling persistCompleteMealPlan...');
 			const result = await persistCompleteMealPlan({
 				user_id: user.id,
 				patient_id: activePatient.id,
@@ -295,6 +306,8 @@ const MealPlanStep: React.FC = () => {
 				})),
 			});
 
+			console.log('[SAVE] Persistence successful:', result);
+
 			// Store refeicao IDs for future operations
 			setSavedRefeicaoIds(result.refeicaoIds);
 
@@ -307,14 +320,14 @@ const MealPlanStep: React.FC = () => {
 			});
 
 			toast({
-				title: "✅ Plano Salvo",
-				description: "Plano alimentar salvo com sucesso no Supabase!",
+				title: "✅ Plano Alimentar Salvo",
+				description: `${refeicoes.length} refeições e ${totalItens} alimentos salvos com sucesso!`,
 			});
 		} catch (error) {
-			console.error("❌ Erro ao salvar plano:", error);
+			console.error("❌ [SAVE] Error saving meal plan:", error);
 			toast({
 				title: "❌ Erro ao salvar",
-				description: "Não foi possível salvar o plano no banco de dados.",
+				description: error instanceof Error ? error.message : "Não foi possível salvar o plano no banco de dados.",
 				variant: "destructive",
 			});
 		} finally {
@@ -436,9 +449,30 @@ const MealPlanStep: React.FC = () => {
 									<thead>
 										<tr className="border-b">
 											<th className="text-left py-2">Refeição</th>
-											<th className="text-center py-2">Proteína (%)</th>
-											<th className="text-center py-2">Lipídios (%)</th>
-											<th className="text-center py-2">Carboidratos (%)</th>
+											<th className="text-center py-2">
+												<div className="flex items-center justify-center gap-2">
+													Proteína (%)
+													<Badge variant={validateDistribution("ptn") ? "default" : "destructive"} className="text-xs">
+														{getDistributionError("ptn") || "✓ 100%"}
+													</Badge>
+												</div>
+											</th>
+											<th className="text-center py-2">
+												<div className="flex items-center justify-center gap-2">
+													Lipídios (%)
+													<Badge variant={validateDistribution("lip") ? "default" : "destructive"} className="text-xs">
+														{getDistributionError("lip") || "✓ 100%"}
+													</Badge>
+												</div>
+											</th>
+											<th className="text-center py-2">
+												<div className="flex items-center justify-center gap-2">
+													Carboidratos (%)
+													<Badge variant={validateDistribution("cho") ? "default" : "destructive"} className="text-xs">
+														{getDistributionError("cho") || "✓ 100%"}
+													</Badge>
+												</div>
+											</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -806,8 +840,17 @@ const MealPlanStep: React.FC = () => {
 					size="lg"
 					disabled={isSaving}
 					className="w-full md:w-auto">
-					<CheckCircle2 className="mr-2 h-4 w-4" />
-					{isSaving ? "Salvando..." : "Salvar Plano Alimentar"}
+					{isSaving ? (
+						<>
+							<span className="mr-2 h-4 w-4 animate-spin">⏳</span>
+							Salvando...
+						</>
+					) : (
+						<>
+							<CheckCircle2 className="mr-2 h-4 w-4" />
+							Salvar Plano Alimentar
+						</>
+					)}
 				</Button>
 			</div>
 		</div>

@@ -248,6 +248,30 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 					</div>
 
 					<div className="space-y-2">
+						<Label htmlFor="manualActivityFactor" className="flex items-center gap-2">
+							<Activity className="h-4 w-4" />
+							Fator de Atividade Manual (Opcional)
+						</Label>
+						<Input
+							id="manualActivityFactor"
+							type="number"
+							step="0.01"
+							min="1.0"
+							max="2.5"
+							placeholder="Ex: 1.65"
+							value={inputs.manualActivityFactor || ""}
+							onChange={(e) =>
+								updateInputs({
+									manualActivityFactor: e.target.value ? Number(e.target.value) : undefined
+								})
+							}
+						/>
+						<p className="text-xs text-muted-foreground">
+							⚠️ Se preenchido, este valor terá prioridade sobre o nível de atividade selecionado
+						</p>
+					</div>
+
+					<div className="space-y-2">
 						<Label htmlFor="objective" className="flex items-center gap-2">
 							<Target className="h-4 w-4" />
 							Objetivo

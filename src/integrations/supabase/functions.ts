@@ -9,6 +9,8 @@ export async function getParametrosGETPlanilha(
   sexo: 'M' | 'F'
 ): Promise<{ fa_valor: number; formula_tmb: string; formula_get: string } | null> {
   try {
+    console.log('[SUPABASE] Fetching parametros_get_planilha:', { perfil, sexo });
+    
     const { data, error } = await supabase
       .from('parametros_get_planilha')
       .select('fa_valor, formula_tmb_detalhe, formula_get_detalhe')
@@ -17,9 +19,11 @@ export async function getParametrosGETPlanilha(
       .single();
 
     if (error) {
-      console.error('Error fetching parametros_get_planilha:', error);
+      console.error('[SUPABASE] Error fetching parametros_get_planilha:', error);
       return null;
     }
+
+    console.log('[SUPABASE] ✅ Retrieved parametros:', data);
     
     return {
       fa_valor: data.fa_valor,
@@ -27,7 +31,7 @@ export async function getParametrosGETPlanilha(
       formula_get: data.formula_get_detalhe
     };
   } catch (error) {
-    console.error('Exception in getParametrosGETPlanilha:', error);
+    console.error('[SUPABASE] Exception in getParametrosGETPlanilha:', error);
     return null;
   }
 }
