@@ -3,8 +3,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { usePatient } from '@/contexts/patient/PatientContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { Calculator, History, User } from 'lucide-react';
 import { OfficialCalculatorForm } from '@/components/calculator/OfficialCalculatorForm';
+import { saveCalculationResults } from '@/services/calculationService';
+import { useToast } from '@/hooks/use-toast';
 
 interface AnthropometryStepProps {
   onCalculationsComplete?: () => void;
@@ -18,26 +21,76 @@ const AnthropometryStep: React.FC<AnthropometryStepProps> = ({ onCalculationsCom
   } = useConsultationData();
   
   const { activePatient } = usePatient();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   // Handle calculation completion
-  const handleCalculationComplete = (results: any) => {
+  const handleCalculationComplete = async (results: any) => {
     console.log('[ANTHRO] Calculation completed:', results);
+    
+    if (!activePatient || !user?.id) {
+      console.error('[ANTHRO] Missing patient or user');
+      return;
+    }
     
     // Update consultation data with results
     updateConsultationData({
-      bmr: results.tmb.value,
+      bmr: results.tmb,
       results: {
-        bmr: results.tmb.value,
+        bmr: results.tmb,
         get: results.get,
         vet: results.vet,
         adjustment: results.vet - results.get,
         macros: {
-          protein: results.macros.protein.grams,
-          carbs: results.macros.carbs.grams,
-          fat: results.macros.fat.grams
+          protein: results.macros.protein,
+          carbs: results.macros.carbs,
+          fat: results.macros.fat
         }
       }
     });
+
+    // Save to Supabase
+    try {
+      const saveResult = await saveCalculationResults({
+        patient_id: activePatient.id,
+        user_id: user.id,
+        weight: consultationData?.weight || activePatient.weight || 0,
+        height: consultationData?.height || activePatient.height || 0,
+        age: consultationData?.age || activePatient.age || 0,
+        gender: activePatient.gender === 'male' ? 'M' : 'F',
+        activity_level: consultationData?.activity_level || 'moderado',
+        goal: consultationData?.objective || 'manutenção',
+        bmr: results.tmb,
+        tdee: results.get,
+        protein: results.macros.protein,
+        carbs: results.macros.carbs,
+        fats: results.macros.fat,
+        tipo: 'oficial',
+        status: 'concluida'
+      });
+
+      if (saveResult.success) {
+        console.log('[ANTHRO] Calculation saved to Supabase:', saveResult.data);
+        toast({
+          title: "✅ Cálculo Salvo",
+          description: "Resultados salvos com sucesso no histórico.",
+        });
+      } else {
+        console.error('[ANTHRO] Error saving to Supabase:', saveResult.error);
+        toast({
+          title: "⚠️ Aviso",
+          description: "Cálculo realizado, mas erro ao salvar no histórico.",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error('[ANTHRO] Exception saving to Supabase:', error);
+      toast({
+        title: "⚠️ Aviso",
+        description: "Cálculo realizado, mas erro ao salvar no histórico.",
+        variant: "default"
+      });
+    }
 
     // Notify parent that calculations are complete
     onCalculationsComplete?.();

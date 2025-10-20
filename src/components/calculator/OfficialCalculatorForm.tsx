@@ -249,66 +249,71 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 						</Select>
 					</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="manualActivityFactor" className="flex items-center gap-2">
-							<Activity className="h-4 w-4" />
-							Fator de Atividade Manual (Opcional)
-						</Label>
-						<Input
-							id="manualActivityFactor"
-							type="number"
-							step="0.01"
-							min="1.0"
-							max="2.5"
-							placeholder="Ex: 1.65"
-							value={inputs.manualActivityFactor || ""}
-							onChange={(e) =>
-								updateInputs({
-									manualActivityFactor: e.target.value ? Number(e.target.value) : undefined
-								})
-							}
-						/>
-						<p className="text-xs text-muted-foreground">
-							⚠️ Se preenchido, este valor terá prioridade sobre o nível de atividade selecionado
-						</p>
-					</div>
+				<div className="space-y-2">
+					<Label htmlFor="manualActivityFactor" className="flex items-center gap-2">
+						<Activity className="h-4 w-4" />
+						Fator de Atividade Manual (Opcional)
+					</Label>
+					<Input
+						id="manualActivityFactor"
+						type="number"
+						step="0.01"
+						min="1.0"
+						max="2.5"
+						placeholder="Ex: 1.65"
+						value={inputs.manualActivityFactor || ""}
+						onChange={(e) =>
+							updateInputs({
+								manualActivityFactor: e.target.value ? Number(e.target.value) : undefined
+							})
+						}
+					/>
+					<p className="text-xs text-muted-foreground">
+						⚠️ Se preenchido, este valor terá prioridade sobre o nível de atividade selecionado
+					</p>
+				</div>
+
+				{/* Superávit/Déficit Calórico - Always Visible */}
+				<div className="space-y-2">
+					<Label htmlFor="customAdjustmentAlways" className="flex items-center gap-2">
+						<Target className="h-4 w-4" />
+						Superávit/Déficit Calórico (kcal)
+					</Label>
+					<Input
+						id="customAdjustmentAlways"
+						type="number"
+						placeholder="Ex: +400 ou -500"
+						value={inputs.customAdjustment || ''}
+						onChange={(e) => updateInputs({
+							customAdjustment: e.target.value ? Number(e.target.value) : undefined
+						})}
+					/>
+					<p className="text-xs text-muted-foreground">
+						⚠️ Ajuste personalizado ao GET. Use + para superávit (hipertrofia) ou - para déficit (emagrecimento)
+					</p>
+				</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="objective" className="flex items-center gap-2">
-							<Target className="h-4 w-4" />
-							Objetivo
-						</Label>
-						<Select
-							value={inputs.objective}
-							onValueChange={(value) => updateInputs({objective: value as any})}>
-							<SelectTrigger id="objective">
-								<SelectValue placeholder="Selecione" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="emagrecimento">
-									Emagrecimento (-500 kcal)
-								</SelectItem>
-								<SelectItem value="manutenção">Manutenção (0 kcal)</SelectItem>
-								<SelectItem value="hipertrofia">Hipertrofia (+400 kcal)</SelectItem>
-								<SelectItem value="personalizado">Personalizado</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-
-					{inputs.objective === "personalizado" && (
-						<div className="space-y-2">
-							<Label htmlFor="customAdjustment">Ajuste Personalizado (kcal)</Label>
-							<Input
-								id="customAdjustment"
-								type="number"
-								placeholder="Ex: -300 ou +200"
-								value={inputs.customAdjustment || ""}
-								onChange={(e) =>
-									updateInputs({customAdjustment: Number(e.target.value)})
-								}
-							/>
-						</div>
-					)}
+				<Label htmlFor="objective" className="flex items-center gap-2">
+					<Target className="h-4 w-4" />
+					Objetivo
+				</Label>
+				<Select
+					value={inputs.objective}
+					onValueChange={(value) => updateInputs({objective: value as any})}>
+					<SelectTrigger id="objective">
+						<SelectValue placeholder="Selecione" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="emagrecimento">
+							Emagrecimento (-500 kcal)
+						</SelectItem>
+						<SelectItem value="manutenção">Manutenção (0 kcal)</SelectItem>
+						<SelectItem value="hipertrofia">Hipertrofia (+400 kcal)</SelectItem>
+						<SelectItem value="personalizado">Personalizado</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
 				</CardContent>
 			</Card>
 
@@ -518,20 +523,55 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 						</>
 					)}
 				</Button>
-				<Button
-					type="button"
-					variant="default"
-					className="w-full"
-					size="lg"
-					onClick={() => {
+			<Button
+				type="button"
+				variant="default"
+				className="w-full"
+				size="lg"
+				onClick={async () => {
+					if (!results || !activePatient) {
 						toast({
-							title: "Em Desenvolvimento",
-							description: "Funcionalidade de geração de plano alimentar em breve!",
+							title: "Erro",
+							description: "Complete o cálculo e selecione um paciente primeiro.",
+							variant: "destructive"
 						});
-					}}>
-					<Utensils className="mr-2 h-5 w-5" />
-					Gerar Plano Alimentar
-				</Button>
+						return;
+					}
+
+					try {
+						// Notify parent if callback exists
+						if (onCalculationComplete) {
+							await onCalculationComplete({
+								tmb: results.tmb.value,
+								get: results.get,
+								vet: results.vet,
+								macros: {
+									protein: results.macros.protein.grams,
+									carbs: results.macros.carbs.grams,
+									fat: results.macros.fat.grams,
+								}
+							});
+						}
+
+						toast({
+							title: "✅ Cálculos Salvos",
+							description: "Avançando para o plano alimentar...",
+						});
+
+						// Navigate to meal plan (if in clinical flow, parent handles it)
+						// If standalone, we can add navigation here
+					} catch (error) {
+						console.error("Error advancing to meal plan:", error);
+						toast({
+							title: "❌ Erro",
+							description: "Não foi possível avançar para o plano alimentar.",
+							variant: "destructive"
+						});
+					}
+				}}>
+				<Utensils className="mr-2 h-5 w-5" />
+				Gerar Plano Alimentar
+			</Button>
 			</div>
 		)}
 

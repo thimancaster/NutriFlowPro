@@ -68,14 +68,19 @@ const MealPlanStep: React.FC = () => {
 			const vet = consultationData.results.vet;
 			const macros = consultationData.results.macros;
 
-			const initialRefeicoes: Refeicao[] = REFEICOES_TEMPLATE.map((template, idx) => ({
-				...template,
-				itens: [],
-				alvo_kcal: Math.round(vet * macroDistribution.ptn[idx]), // Use VET distribution
-				alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
-				alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
-				alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx]),
-			}));
+		const initialRefeicoes: Refeicao[] = REFEICOES_TEMPLATE.map((template, idx) => ({
+			...template,
+			itens: [],
+			// CORRECT CALCULATION: Sum of all macros with their distributions
+			alvo_kcal: Math.round(
+				(macros.protein * 4 * macroDistribution.ptn[idx]) +
+				(macros.carbs * 4 * macroDistribution.cho[idx]) +
+				(macros.fat * 9 * macroDistribution.lip[idx])
+			),
+			alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
+			alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
+			alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx]),
+		}));
 
 			setRefeicoes(initialRefeicoes);
 		}
@@ -88,15 +93,20 @@ const MealPlanStep: React.FC = () => {
 		const vet = consultationData.results.vet;
 		const macros = consultationData.results.macros;
 
-		setRefeicoes((prev) =>
-			prev.map((ref, idx) => ({
-				...ref,
-				alvo_kcal: Math.round(vet * macroDistribution.ptn[idx]),
-				alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
-				alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
-				alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx]),
-			}))
-		);
+	setRefeicoes((prev) =>
+		prev.map((ref, idx) => ({
+			...ref,
+			// CORRECT CALCULATION: Sum of all macros with their distributions
+			alvo_kcal: Math.round(
+				(macros.protein * 4 * macroDistribution.ptn[idx]) +
+				(macros.carbs * 4 * macroDistribution.cho[idx]) +
+				(macros.fat * 9 * macroDistribution.lip[idx])
+			),
+			alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
+			alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
+			alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx]),
+		}))
+	);
 	};
 
 	// Validar distribuição (soma = 100%)
