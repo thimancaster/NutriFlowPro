@@ -3,7 +3,6 @@ import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {BrowserRouter} from "react-router-dom";
 import {AuthProvider} from "@/contexts/auth/AuthContext";
 import {PatientProvider} from "@/contexts/patient/PatientContext";
-import {ConsultationProvider} from "@/contexts/ConsultationContext";
 import {MealPlanWorkflowProvider} from "@/contexts/MealPlanWorkflowContext";
 import {ThemeProvider} from "@/components/theme-provider";
 
@@ -37,11 +36,9 @@ const OptimizedProviders: React.FC<OptimizedProvidersProps> = memo(({children}) 
 				<BrowserRouter>
 					<AuthProvider>
 						<PatientProvider>
-							<ConsultationProvider>
-								<MealPlanWorkflowProvider>
-									{memoizedChildren}
-								</MealPlanWorkflowProvider>
-							</ConsultationProvider>
+							<MealPlanWorkflowProvider>
+								{memoizedChildren}
+							</MealPlanWorkflowProvider>
 						</PatientProvider>
 					</AuthProvider>
 				</BrowserRouter>

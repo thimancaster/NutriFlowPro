@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import StepIndicator from '@/components/StepWizard/StepIndicator';
-import { useConsultation } from '@/contexts/ConsultationContext';
-import { usePatient } from '@/contexts/patient/PatientContext';
+import { useActivePatient } from '@/hooks/useActivePatient';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useAsyncOperation } from '@/hooks/useAsyncOperation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-states';
@@ -50,8 +50,8 @@ const ConsultationWizard: React.FC<ConsultationWizardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { consultationData } = useConsultation();
-  const { activePatient } = usePatient();
+  const { consultationData } = useConsultationData();
+  const { patient: activePatient } = useActivePatient();
   
   const navigationOperation = useAsyncOperation({
     errorMessage: 'Erro ao navegar entre etapas'

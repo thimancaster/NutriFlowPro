@@ -2,11 +2,11 @@
 import React from 'react';
 import { Home, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useConsultation } from '@/contexts/ConsultationContext';
+import { useActivePatient } from '@/hooks/useActivePatient';
 
 const BreadcrumbNav = () => {
   const location = useLocation();
-  const { activePatient } = useConsultation();
+  const { patient: activePatient } = useActivePatient();
   
   // Determine current page
   let currentPage = 'Plano Alimentar';

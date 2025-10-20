@@ -6,7 +6,6 @@ import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Link, useSearchParams, useNavigate} from "react-router-dom";
 import {User, Plus, Database, Eye} from "lucide-react";
-import {CalculatorProvider} from "@/contexts/calculator/CalculatorContext";
 import PatientBanner from "@/components/patient/PatientBanner";
 import ContextualNavigation from "@/components/patient/ContextualNavigation";
 import {clearCalculatorDataOnStart} from "@/components/calculator/storageUtils";
@@ -124,13 +123,11 @@ const CalculatorPage = () => {
 						<li>Salve o paciente ou gere o plano alimentar a partir dos resultados</li>
 					</ol>
 				</CardContent>
-			</Card>
+		</Card>
 
-			<CalculatorProvider>
-				<CalculatorTool key={activePatient?.id || "no-patient"} />
-			</CalculatorProvider>
+		<CalculatorTool key={activePatient?.id || "no-patient"} />
 
-			{/* Patient Selector Modal */}
+		{/* Patient Selector Modal */}
 			<PatientSelectorModal
 				open={showPatientSelector}
 				onOpenChange={setShowPatientSelector}

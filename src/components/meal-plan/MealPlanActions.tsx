@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useConsultation } from '@/contexts/ConsultationContext';
+import { useActivePatient } from '@/hooks/useActivePatient';
 import PdfActionButtons from './PdfActionButtons';
 import ShareActionButtons from './ShareActionButtons';
 import SaveActionButton from './SaveActionButton';
@@ -10,7 +10,10 @@ interface MealPlanActionsProps {
 }
 
 const MealPlanActions: React.FC<MealPlanActionsProps> = ({ onSave }) => {
-  const { activePatient, mealPlan } = useConsultation();
+  const { patient: activePatient } = useActivePatient();
+  
+  // TODO: Get mealPlan from appropriate context when needed
+  const mealPlan = null;
   
   if (!mealPlan || !activePatient) {
     return null;
