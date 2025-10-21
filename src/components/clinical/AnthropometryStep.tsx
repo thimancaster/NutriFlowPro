@@ -35,6 +35,9 @@ const AnthropometryStep: React.FC<AnthropometryStepProps> = ({ onCalculationsCom
     
     // Update consultation data with results
     updateConsultationData({
+      weight: results.weight,
+      height: results.height,
+      age: results.age,
       bmr: results.tmb,
       results: {
         bmr: results.tmb,
@@ -48,15 +51,23 @@ const AnthropometryStep: React.FC<AnthropometryStepProps> = ({ onCalculationsCom
         }
       }
     });
+    
+    console.log('[ANTHRO] Context updated with results:', {
+      bmr: results.tmb,
+      vet: results.vet,
+      weight: results.weight,
+      height: results.height,
+      age: results.age
+    });
 
-    // Save to Supabase
+    // Save to Supabase with data from results
     try {
       const saveResult = await saveCalculationResults({
         patient_id: activePatient.id,
         user_id: user.id,
-        weight: consultationData?.weight || activePatient.weight || 0,
-        height: consultationData?.height || activePatient.height || 0,
-        age: consultationData?.age || activePatient.age || 0,
+        weight: results.weight,
+        height: results.height,
+        age: results.age,
         gender: activePatient.gender === 'male' ? 'M' : 'F',
         activity_level: consultationData?.activity_level || 'moderado',
         goal: consultationData?.objective || 'manutenção',
@@ -92,8 +103,11 @@ const AnthropometryStep: React.FC<AnthropometryStepProps> = ({ onCalculationsCom
       });
     }
 
-    // Notify parent that calculations are complete
-    onCalculationsComplete?.();
+    // Notify parent that calculations are complete (with delay to ensure context update)
+    setTimeout(() => {
+      console.log('[ANTHRO] Notifying parent - calculations complete');
+      onCalculationsComplete?.();
+    }, 100);
   };
 
   // Prepare initial data from patient and consultation context

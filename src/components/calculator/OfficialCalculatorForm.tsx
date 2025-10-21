@@ -545,6 +545,9 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								tmb: results.tmb.value,
 								get: results.get,
 								vet: results.vet,
+								weight: inputs.weight || 0,
+								height: inputs.height || 0,
+								age: inputs.age || 0,
 								macros: {
 									protein: results.macros.protein.grams,
 									carbs: results.macros.carbs.grams,

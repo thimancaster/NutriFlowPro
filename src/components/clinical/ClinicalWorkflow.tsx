@@ -67,7 +67,8 @@ const ClinicalWorkflow: React.FC = () => {
 			newCompletedSteps.push("patient-info");
 		}
 
-		if (consultationData?.results && consultationData.results.vet > 0) {
+		if ((consultationData?.results && consultationData.results.vet > 0) || 
+		    (consultationData?.bmr && consultationData.bmr > 0)) {
 			newCompletedSteps.push("anthropometry");
 		}
 
@@ -88,7 +89,9 @@ const ClinicalWorkflow: React.FC = () => {
 			setCurrentStep(stepId);
 		} else if (stepId === "anthropometry" && activePatient && consultationData) {
 			setCurrentStep(stepId);
-		} else if (stepId === "meal-plan" && completedSteps.includes("anthropometry")) {
+		} else if (stepId === "meal-plan" && 
+		           (completedSteps.includes("anthropometry") || 
+		            (consultationData?.results && consultationData.results.vet > 0))) {
 			setCurrentStep(stepId);
 		}
 	};

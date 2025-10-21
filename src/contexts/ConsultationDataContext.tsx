@@ -112,8 +112,31 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
   }, [consultationData, activePatient, user?.id]);
 
   const updateConsultationData = useCallback((data: Partial<ConsultationData>) => {
-    setConsultationData(prev => prev ? { ...prev, ...data } : null);
-  }, []);
+    setConsultationData(prev => {
+      if (prev) {
+        return { ...prev, ...data };
+      } else if (activePatient) {
+        // Create minimal consultation data if it doesn't exist
+        return {
+          id: crypto.randomUUID(),
+          patient_id: activePatient.id,
+          weight: 0,
+          height: 0,
+          age: 0,
+          gender: 'male',
+          activity_level: 'moderado',
+          objective: 'manutenção',
+          bmr: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          totalCalories: 0,
+          ...data
+        } as ConsultationData;
+      }
+      return null;
+    });
+  }, [activePatient]);
 
   const startNewConsultation = useCallback(async (patient: Patient) => {
     startPatientSession(patient);
