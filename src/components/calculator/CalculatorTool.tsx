@@ -87,22 +87,31 @@ const CalculatorTool: React.FC = () => {
 			if (!saveResult.success) {
 				console.error("[CALCULATOR TOOL] Failed to save calculation:", saveResult.error);
 				toast({
-					title: "Aviso",
-					description: "Cálculo realizado mas não foi salvo no histórico",
+					title: "Erro ao Salvar",
+					description: saveResult.error || "Não foi possível salvar o cálculo. Tente novamente.",
 					variant: "destructive",
 				});
+				return; // ← NÃO AVANÇAR SE FALHOU
 			}
+
+			console.log("[CALCULATOR TOOL] Calculation saved successfully");
 		} catch (error) {
 			console.error("[CALCULATOR TOOL] Error saving calculation:", error);
+			toast({
+				title: "Erro ao Salvar",
+				description: "Não foi possível salvar o cálculo. Tente novamente.",
+				variant: "destructive",
+			});
+			return; // ← NÃO AVANÇAR SE ERRO
 		}
 
-		// Set current step to meal plan
+		// SÓ avançar se salvamento OK
 		setCurrentStep("meal-plan");
 
 		// Navigate to clinical flow
 		toast({
 			title: "Sucesso",
-			description: "Navegando para o plano alimentar...",
+			description: "Cálculo salvo! Navegando para o plano alimentar...",
 		});
 
 		setTimeout(() => {

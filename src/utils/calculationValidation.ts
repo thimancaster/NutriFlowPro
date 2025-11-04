@@ -191,6 +191,14 @@ export function validateCalculationForMealPlan(calculation: any): CalculationWor
  * Sanitizes calculation data before database insertion
  */
 export function sanitizeCalculationData(data: any) {
+  const age = Number(data.age) || 0;
+  
+  // 🛡️ CRITICAL: Validate age > 0 (database constraint check_age_positive)
+  if (age <= 0) {
+    console.error('[VALIDATION] Invalid age:', data.age);
+    throw new Error('Idade inválida. Por favor, forneça uma idade válida (maior que 0).');
+  }
+  
   return {
     ...data,
     status: normalizeCalculationStatus(data.status),
@@ -198,7 +206,7 @@ export function sanitizeCalculationData(data: any) {
     // Ensure numeric fields are properly typed
     weight: Number(data.weight) || 0,
     height: Number(data.height) || 0,
-    age: Number(data.age) || 0,
+    age: age, // Already validated above
     bmr: Number(data.bmr) || 0,
     tdee: Number(data.tdee) || 0,
     protein: Number(data.protein) || 0,

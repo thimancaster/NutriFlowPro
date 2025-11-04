@@ -6,13 +6,12 @@ import {ChevronRight, User, Calculator, FileText, Utensils} from "lucide-react";
 import {useConsultationData} from "@/contexts/ConsultationDataContext";
 import {usePatient} from "@/contexts/patient/PatientContext";
 import PatientSelectionStep from "./PatientSelectionStep";
-import PatientInfoStep from "./PatientInfoStep";
 import AnthropometryStep from "./AnthropometryStep";
 import MealPlanStep from "./MealPlanStep";
+import {AlertCircle} from "lucide-react";
 
 export type ClinicalWorkflowStep =
 	| "patient-selection"
-	| "patient-info"
 	| "anthropometry"
 	| "meal-plan";
 
@@ -37,16 +36,10 @@ const ClinicalWorkflow: React.FC = () => {
 			description: "Escolha o paciente para atendimento",
 		},
 		{
-			id: "patient-info",
-			title: "Informações do Paciente",
-			icon: <FileText className="h-5 w-5" />,
-			description: "Revisar dados pessoais e objetivos",
-		},
-		{
 			id: "anthropometry",
-			title: "Avaliação Antropométrica",
+			title: "Cálculo Nutricional",
 			icon: <Calculator className="h-5 w-5" />,
-			description: "Medidas corporais e cálculos nutricionais",
+			description: "Dados antropométricos e cálculos",
 		},
 		{
 			id: "meal-plan",
@@ -61,10 +54,6 @@ const ClinicalWorkflow: React.FC = () => {
 
 		if (activePatient) {
 			newCompletedSteps.push("patient-selection");
-		}
-
-		if (activePatient && consultationData) {
-			newCompletedSteps.push("patient-info");
 		}
 
 		if ((consultationData?.results && consultationData.results.vet > 0) || 
@@ -85,9 +74,7 @@ const ClinicalWorkflow: React.FC = () => {
 	const handleStepClick = (stepId: ClinicalWorkflowStep) => {
 		if (stepId === "patient-selection") {
 			setCurrentStep(stepId);
-		} else if (stepId === "patient-info" && activePatient) {
-			setCurrentStep(stepId);
-		} else if (stepId === "anthropometry" && activePatient && consultationData) {
+		} else if (stepId === "anthropometry" && activePatient) {
 			setCurrentStep(stepId);
 		} else if (stepId === "meal-plan" && 
 		           (completedSteps.includes("anthropometry") || 
@@ -108,8 +95,6 @@ const ClinicalWorkflow: React.FC = () => {
 		switch (currentStep) {
 			case "patient-selection":
 				return <PatientSelectionStep onPatientSelected={handleNextStep} />;
-			case "patient-info":
-				return <PatientInfoStep onInfoConfirmed={handleNextStep} />;
 			case "anthropometry":
 				return <AnthropometryStep onCalculationsComplete={handleNextStep} />;
 			case "meal-plan":

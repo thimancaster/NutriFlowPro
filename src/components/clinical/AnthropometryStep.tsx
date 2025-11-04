@@ -80,30 +80,32 @@ const AnthropometryStep: React.FC<AnthropometryStepProps> = ({ onCalculationsCom
         status: 'concluida'
       });
 
-      if (saveResult.success) {
-        console.log('[ANTHRO] Calculation saved to Supabase:', saveResult.data);
-        toast({
-          title: "✅ Cálculo Salvo",
-          description: "Resultados salvos com sucesso no histórico.",
-        });
-      } else {
+      if (!saveResult.success) {
         console.error('[ANTHRO] Error saving to Supabase:', saveResult.error);
         toast({
-          title: "⚠️ Aviso",
-          description: "Cálculo realizado, mas erro ao salvar no histórico.",
-          variant: "default"
+          title: "Erro ao Salvar",
+          description: saveResult.error || "Não foi possível salvar o cálculo. Tente novamente.",
+          variant: "destructive"
         });
+        return; // ← NÃO AVANÇAR SE FALHOU
       }
+
+      console.log('[ANTHRO] Calculation saved to Supabase:', saveResult.data);
+      toast({
+        title: "✅ Cálculo Salvo",
+        description: "Resultados salvos com sucesso no histórico.",
+      });
     } catch (error) {
       console.error('[ANTHRO] Exception saving to Supabase:', error);
       toast({
-        title: "⚠️ Aviso",
-        description: "Cálculo realizado, mas erro ao salvar no histórico.",
-        variant: "default"
+        title: "Erro ao Salvar",
+        description: "Não foi possível salvar o cálculo. Tente novamente.",
+        variant: "destructive"
       });
+      return; // ← NÃO AVANÇAR SE ERRO
     }
 
-    // Notify parent that calculations are complete (with delay to ensure context update)
+    // SÓ notificar parent se salvamento OK
     setTimeout(() => {
       console.log('[ANTHRO] Notifying parent - calculations complete');
       onCalculationsComplete?.();
