@@ -23,8 +23,7 @@ const navigationItems = [
 	{name: "Pacientes", href: "/patients", icon: Users},
 	{name: "Agendamentos", href: "/appointments", icon: Calendar},
 	{name: "Calculadora", href: "/calculator", icon: Calculator},
-	{name: "Plano Alimentar", href: "/meal-plan-generator", icon: Utensils},
-	{name: "Consulta", href: "/consultation", icon: Stethoscope},
+	{name: "Plano Alimentar", href: "/clinical", icon: Utensils},
 	{name: "Clínico", href: "/clinical", icon: Activity},
 ];
 

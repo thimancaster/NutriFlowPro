@@ -4,9 +4,18 @@ import {Badge} from "@/components/ui/badge";
 import {Calculator, CheckCircle2} from "lucide-react";
 import {OfficialCalculatorForm} from "./OfficialCalculatorForm";
 import {useActivePatient} from "@/hooks/useActivePatient";
+import {useConsultationData} from "@/contexts/ConsultationDataContext";
+import {useAuth} from "@/contexts/auth/AuthContext";
+import {useNavigate} from "react-router-dom";
+import {useToast} from "@/hooks/use-toast";
+import {saveCalculationResults} from "@/services/calculationService";
 
 const CalculatorTool: React.FC = () => {
 	const {activePatient} = useActivePatient();
+	const {updateConsultationData, setCurrentStep} = useConsultationData();
+	const {user} = useAuth();
+	const navigate = useNavigate();
+	const {toast} = useToast();
 
 	console.log("[CALCULATOR TOOL] Rendering, activePatient:", {
 		id: activePatient?.id,
@@ -14,6 +23,92 @@ const CalculatorTool: React.FC = () => {
 		weight: activePatient?.weight,
 		height: activePatient?.height,
 	});
+
+	const handleCalculationComplete = async (results: any) => {
+		if (!activePatient) {
+			toast({
+				title: "Erro",
+				description: "Nenhum paciente selecionado",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (!user?.id) {
+			toast({
+				title: "Erro",
+				description: "Usuário não autenticado",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		console.log("[CALCULATOR TOOL] Calculation complete, updating context:", results);
+
+		// Update consultation data with calculation results
+		updateConsultationData({
+			weight: results.weight,
+			height: results.height,
+			age: results.age,
+			bmr: results.tmb,
+			results: {
+				bmr: results.tmb,
+				get: results.get,
+				vet: results.vet,
+				adjustment: results.vet - results.get,
+				macros: {
+					protein: results.macros.protein,
+					carbs: results.macros.carbs,
+					fat: results.macros.fat,
+				},
+			},
+		});
+
+		// Save calculation to Supabase
+		try {
+			const saveResult = await saveCalculationResults({
+				patient_id: activePatient.id,
+				user_id: user.id,
+				weight: results.weight,
+				height: results.height,
+				age: results.age,
+				gender: activePatient.gender === "male" ? "M" : "F",
+				activity_level: results.activityLevel || "moderado",
+				goal: results.goal || "manutenção",
+				bmr: results.tmb,
+				tdee: results.vet,
+				protein: results.macros.protein,
+				carbs: results.macros.carbs,
+				fats: results.macros.fat,
+				tipo: "oficial",
+				status: "concluida",
+			});
+
+			if (!saveResult.success) {
+				console.error("[CALCULATOR TOOL] Failed to save calculation:", saveResult.error);
+				toast({
+					title: "Aviso",
+					description: "Cálculo realizado mas não foi salvo no histórico",
+					variant: "destructive",
+				});
+			}
+		} catch (error) {
+			console.error("[CALCULATOR TOOL] Error saving calculation:", error);
+		}
+
+		// Set current step to meal plan
+		setCurrentStep("meal-plan");
+
+		// Navigate to clinical flow
+		toast({
+			title: "Sucesso",
+			description: "Navegando para o plano alimentar...",
+		});
+
+		setTimeout(() => {
+			navigate("/clinical");
+		}, 500);
+	};
 
 	return (
 		<div className="space-y-6">
@@ -34,11 +129,11 @@ const CalculatorTool: React.FC = () => {
 							Motor Oficial Ativo
 						</Badge>
 					</div>
-				</CardHeader>
-				<CardContent>
-					<OfficialCalculatorForm />
-				</CardContent>
-			</Card>
+			</CardHeader>
+			<CardContent>
+				<OfficialCalculatorForm onCalculationComplete={handleCalculationComplete} />
+			</CardContent>
+		</Card>
 		</div>
 	);
 };
