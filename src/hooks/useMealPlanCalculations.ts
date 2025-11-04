@@ -13,6 +13,7 @@ export interface AlimentoV2 {
 	lip_g_por_referencia: number;
 	fibra_g_por_referencia?: number;
 	sodio_mg_por_referencia?: number;
+	usage_count?: number; // For most used foods tracking
 }
 
 export interface ItemRefeicao {
@@ -48,8 +49,32 @@ export interface RefeicaoTotals {
 
 export const useMealPlanCalculations = () => {
 	const [alimentos, setAlimentos] = useState<AlimentoV2[]>([]);
+	const [mostUsedAlimentos, setMostUsedAlimentos] = useState<AlimentoV2[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	/**
+	 * Buscar alimentos mais utilizados (sugestões)
+	 */
+	const loadMostUsedAlimentos = useCallback(async (limit: number = 15) => {
+		setLoading(true);
+		setError(null);
+
+		try {
+			const {data, error: supabaseError} = await supabase
+				.rpc("get_most_used_foods", {search_limit: limit});
+
+			if (supabaseError) throw supabaseError;
+
+			setMostUsedAlimentos(data as AlimentoV2[]);
+		} catch (err) {
+			console.error("Erro ao buscar alimentos mais usados:", err);
+			setError("Erro ao buscar sugestões de alimentos");
+			setMostUsedAlimentos([]);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
 	/**
 	 * Buscar alimentos do Supabase (tabela alimentos_v2)
@@ -143,9 +168,11 @@ export const useMealPlanCalculations = () => {
 
 	return {
 		alimentos,
+		mostUsedAlimentos,
 		loading,
 		error,
 		searchAlimentos,
+		loadMostUsedAlimentos,
 		calculateItemRefeicao,
 		calculateRefeicaoTotals,
 		calculateDailyTotals,

@@ -1580,16 +1580,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_premium_access_secure: {
-        Args: Record<PropertyKey, never> | { feature_name: string }
-        Returns: Json
-      }
-      check_premium_quota: {
-        Args:
-          | Record<PropertyKey, never>
-          | { p_action?: string; p_feature: string; p_user_id: string }
-        Returns: Json
-      }
+      check_premium_access_secure:
+        | { Args: { feature_name: string }; Returns: Json }
+        | { Args: never; Returns: undefined }
+      check_premium_quota:
+        | {
+            Args: { p_action?: string; p_feature: string; p_user_id: string }
+            Returns: Json
+          }
+        | { Args: never; Returns: undefined }
       check_rate_limit_secure: {
         Args: {
           identifier: string
@@ -1598,10 +1597,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_user_premium_status: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      check_user_premium_status: { Args: { user_id: string }; Returns: boolean }
       generate_meal_plan: {
         Args: {
           p_date?: string
@@ -1626,9 +1622,23 @@ export type Database = {
         }
         Returns: string
       }
-      get_calculation_quota_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
+      get_calculation_quota_status: { Args: never; Returns: Json }
+      get_most_used_foods: {
+        Args: { search_limit?: number }
+        Returns: {
+          categoria: string
+          cho_g_por_referencia: number
+          fibra_g_por_referencia: number
+          id: string
+          kcal_por_referencia: number
+          lip_g_por_referencia: number
+          medida_padrao_referencia: string
+          nome: string
+          peso_referencia_g: number
+          ptn_g_por_referencia: number
+          sodio_mg_por_referencia: number
+          usage_count: number
+        }[]
       }
       get_subscriber_by_customer_id: {
         Args: { customer_id: string }
@@ -1668,14 +1678,8 @@ export type Database = {
           subscription_start: string
         }[]
       }
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: string
-      }
-      get_user_role_safe: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      get_user_role: { Args: { user_id: string }; Returns: string }
+      get_user_role_safe: { Args: { user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1683,42 +1687,33 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_user_premium: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_user_premium_safe: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      log_security_event: {
-        Args:
-          | Record<PropertyKey, never>
-          | {
+      is_admin_user: { Args: never; Returns: boolean }
+      is_user_premium: { Args: { user_id: string }; Returns: boolean }
+      is_user_premium_safe: { Args: { user_id: string }; Returns: boolean }
+      log_security_event:
+        | {
+            Args: {
               p_event_data?: Json
               p_event_type: string
               p_ip_address?: string
               p_user_agent?: string
               p_user_id: string
             }
-        Returns: undefined
-      }
-      log_security_event_safe: {
-        Args:
-          | Record<PropertyKey, never>
-          | {
+            Returns: undefined
+          }
+        | { Args: never; Returns: undefined }
+      log_security_event_safe:
+        | {
+            Args: {
               p_event_data?: Json
               p_event_type: string
               p_ip_address?: string
               p_user_agent?: string
               p_user_id: string
             }
-        Returns: undefined
-      }
+            Returns: undefined
+          }
+        | { Args: never; Returns: undefined }
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
@@ -1777,23 +1772,23 @@ export type Database = {
         }
         Returns: undefined
       }
-      validate_patient_data: {
-        Args:
-          | Record<PropertyKey, never>
-          | {
+      validate_patient_data:
+        | {
+            Args: {
               p_cpf?: string
               p_email?: string
               p_name: string
               p_phone?: string
             }
-        Returns: Json
-      }
-      validate_premium_access_secure: {
-        Args:
-          | Record<PropertyKey, never>
-          | { action_type?: string; feature_name: string }
-        Returns: Json
-      }
+            Returns: Json
+          }
+        | { Args: never; Returns: undefined }
+      validate_premium_access_secure:
+        | {
+            Args: { action_type?: string; feature_name: string }
+            Returns: Json
+          }
+        | { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -48,13 +48,16 @@ const MealPlanStep: React.FC = () => {
 	const {toast} = useToast();
 	const {
 		alimentos,
+		mostUsedAlimentos,
 		loading: searchingAlimentos,
 		searchAlimentos,
+		loadMostUsedAlimentos,
 		calculateItemRefeicao,
 		calculateRefeicaoTotals,
 		calculateDailyTotals,
 	} = useMealPlanCalculations();
 	const {exportToPDF} = useMealPlanExport();
+	const [showSuggestions, setShowSuggestions] = useState(true);
 
 	const [refeicoes, setRefeicoes] = useState<Refeicao[]>([]);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -100,6 +103,11 @@ const MealPlanStep: React.FC = () => {
 			setRefeicoes(initialRefeicoes);
 		}
 	}, [consultationData?.results, refeicoes.length, macroDistribution]);
+
+	// Carregar alimentos mais usados ao montar o componente
+	useEffect(() => {
+		loadMostUsedAlimentos(15);
+	}, [loadMostUsedAlimentos]);
 
 	// Recalcular alvos quando distribuição mudar
 	const updateMealTargets = () => {
@@ -742,6 +750,75 @@ const MealPlanStep: React.FC = () => {
 									))}
 								</div>
 							</ScrollArea>
+						)}
+
+						{/* Sugestões de alimentos mais usados */}
+						{showSuggestions && mostUsedAlimentos.length > 0 && searchQuery.length < 2 && (
+							<div className="space-y-2">
+								<div className="flex items-center justify-between">
+									<p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+										<Utensils className="h-4 w-4" />
+										Alimentos mais utilizados
+									</p>
+									<Button 
+										variant="ghost" 
+										size="sm"
+										onClick={() => setShowSuggestions(false)}
+									>
+										Ocultar
+									</Button>
+								</div>
+								<ScrollArea className="h-64 border rounded-lg bg-accent/30">
+									<div className="p-2 space-y-1">
+										{mostUsedAlimentos.map((alimento) => (
+											<div
+												key={alimento.id}
+												onClick={() => setSelectedAlimento(alimento)}
+												className={`p-3 rounded-lg cursor-pointer transition-colors ${
+													selectedAlimento?.id === alimento.id
+														? "bg-primary text-primary-foreground"
+														: "hover:bg-accent"
+												}`}>
+												<div className="flex justify-between items-start">
+													<div className="flex-1">
+														<p className="font-medium">{alimento.nome}</p>
+														<p className="text-xs opacity-80">
+															{alimento.medida_padrao_referencia} (
+															{alimento.peso_referencia_g}g)
+														</p>
+													</div>
+													<div className="text-right text-sm">
+														<p className="font-bold">
+															{alimento.kcal_por_referencia} kcal
+														</p>
+														<p className="text-xs opacity-80">
+															P:{alimento.ptn_g_por_referencia}g C:
+															{alimento.cho_g_por_referencia}g L:
+															{alimento.lip_g_por_referencia}g
+														</p>
+														{alimento.usage_count && alimento.usage_count > 0 && (
+															<Badge variant="secondary" className="text-xs mt-1">
+																Usado {alimento.usage_count}x
+															</Badge>
+														)}
+													</div>
+												</div>
+											</div>
+										))}
+									</div>
+								</ScrollArea>
+							</div>
+						)}
+
+						{!showSuggestions && searchQuery.length < 2 && (
+							<Button 
+								variant="outline" 
+								size="sm"
+								onClick={() => setShowSuggestions(true)}
+								className="w-full"
+							>
+								Mostrar sugestões de alimentos mais utilizados
+							</Button>
 						)}
 					</CardContent>
 				</Card>
