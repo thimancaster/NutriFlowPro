@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Utensils, Loader2, ArrowLeft, CheckCircle, AlertCircle, FileText, Printer } from 'lucide-react';
-import { useConsolidatedMealPlan } from '@/hooks/useConsolidatedMealPlan';
+import { Utensils, Loader2, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
+import { useMealPlanExport } from '@/hooks/useMealPlanExport';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import ConsolidatedMealPlanEditor from '@/components/meal-plan/ConsolidatedMealPlanEditor';
 
 interface MealPlanGenerationStepProps {
@@ -38,13 +40,13 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
   onBack,
   onComplete
 }) => {
+  const { user } = useAuth();
   const { 
     generateMealPlan, 
     isGenerating, 
-    currentMealPlan,
-    downloadPDF,
-    printPDF
-  } = useConsolidatedMealPlan();
+    mealPlan: currentMealPlan
+  } = useMealPlanGeneration();
+  const { exportToPDF } = useMealPlanExport();
   
   const [generationAttempted, setGenerationAttempted] = useState(false);
 
@@ -57,7 +59,7 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
                        patientData?.gender === 'female' ? 'female' : undefined;
 
   const handleGenerateMealPlan = async () => {
-    if (!calculationResults || !patientData) {
+    if (!calculationResults || !patientData || !user) {
       console.error('❌ Dados insuficientes para gerar plano');
       return;
     }
@@ -72,44 +74,50 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
       fats: calculationResults.fats
     });
 
-    try {
-      // Use the new orchestrated workflow
-      const { PlanWorkflowService } = await import('@/services/workflow/planWorkflow');
-      
-      const result = await PlanWorkflowService.gerarPlanoAlimentar({
-        patientData: {
-          id: patientData.id,
-          name: patientData.name,
-          weight: patientData.weight || 70,
-          height: patientData.height || 170,
-          age: patientAge,
-          gender: patientGender as 'male' | 'female',
-          birth_date: patientData.birth_date
-        },
-        calculationResults: {
-          id: calculationResults.id || `calc-${Date.now()}`,
-          patient_id: patientData.id,
-          user_id: 'current-user', // This should come from auth context
-          totalCalories: calculationResults.totalCalories,
-          protein: calculationResults.protein,
-          carbs: calculationResults.carbs,
-          fats: calculationResults.fats,
-          tmb: calculationResults.tmb || calculationResults.totalCalories * 0.7,
-          get: calculationResults.get || calculationResults.totalCalories * 0.85,
-          vet: calculationResults.vet || calculationResults.totalCalories,
-          objective: calculationResults.objective || 'manutencao',
-          status: 'concluida'
-        },
-        userId: 'current-user' // This should come from auth context
-      });
+    await generateMealPlan({
+      totalCalories: calculationResults.totalCalories,
+      protein: calculationResults.protein,
+      carbs: calculationResults.carbs,
+      fats: calculationResults.fats
+    }, patientData.id, user.id);
+  };
 
-      if (result) {
-        console.log('✅ [MealPlanGenerationStep] Plano gerado com sucesso:', result.id);
-      }
-    } catch (error: any) {
-      console.error('❌ [MealPlanGenerationStep] Erro na geração:', error);
-      // Error will be handled by the UI state
-    }
+  const handleDownloadPDF = () => {
+    if (!currentMealPlan) return;
+    
+    // Convert meal plan format to refeicoes format expected by export
+    const refeicoes = currentMealPlan.meals.map((meal, index) => {
+      const mealItems = meal.items || [];
+      const totalMealCalories = meal.total_calories || meal.totalCalories || 0;
+      
+      return {
+        nome: meal.name,
+        numero: index + 1,
+        horario_sugerido: meal.time || '',
+        alvo_kcal: totalMealCalories,
+        alvo_ptn_g: meal.total_protein || meal.totalProtein || 0,
+        alvo_cho_g: meal.total_carbs || meal.totalCarbs || 0,
+        alvo_lip_g: meal.total_fats || meal.totalFats || 0,
+        itens: mealItems.map(item => ({
+          alimento_id: item.food_id || '',
+          alimento_nome: item.food_name,
+          quantidade: item.quantity,
+          medida_utilizada: item.unit,
+          peso_total_g: 0,
+          kcal_calculado: item.calories,
+          ptn_g_calculado: item.protein,
+          cho_g_calculado: item.carbs,
+          lip_g_calculado: item.fats
+        }))
+      };
+    });
+    
+    exportToPDF({
+      refeicoes,
+      patientName: patientData?.name || 'Paciente',
+      patientAge,
+      patientGender
+    });
   };
 
   if (!patientData || !calculationResults) {
@@ -254,24 +262,13 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription className="flex items-center justify-between">
                   <span>✅ Plano alimentar gerado com sucesso!</span>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => downloadPDF(currentMealPlan, patientData.name, patientAge, patientGender)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Baixar PDF
-                    </Button>
-                    <Button
-                      onClick={() => printPDF(currentMealPlan, patientData.name, patientAge, patientGender)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <Printer className="h-4 w-4 mr-2" />
-                      Imprimir
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleDownloadPDF}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Baixar PDF
+                  </Button>
                 </AlertDescription>
               </Alert>
             </div>
