@@ -40,6 +40,7 @@ const PatientProfile = React.lazy(() => import("@/pages/PatientProfile"));
 const MealPlans = React.lazy(() => import("@/pages/MealPlans"));
 const MealPlanView = React.lazy(() => import("@/pages/MealPlanView"));
 const ClinicalConsultation = React.lazy(() => import("@/pages/ClinicalConsultation"));
+const MealPlanBuilder = React.lazy(() => import("@/pages/MealPlanBuilder"));
 
 const AppRoutes = () => {
 	return (
@@ -99,6 +100,14 @@ const AppRoutes = () => {
 				<Route path="meal-plan-generator" element={<MealPlanGenerator />} />
 				<Route path="meal-plan-workflow" element={<MealPlanWorkflowPage />} />
 				<Route path="meal-plan-editor/:id" element={<MealPlanEditor />} />
+				<Route
+					path="meal-plan-builder"
+					element={
+						<Suspense fallback={<LoadingSpinner />}>
+							<MealPlanBuilder />
+						</Suspense>
+					}
+				/>
 				<Route
 					path="meal-plan/:id"
 					element={

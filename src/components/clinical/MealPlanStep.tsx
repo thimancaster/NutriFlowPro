@@ -33,6 +33,14 @@ const REFEICOES_TEMPLATE = [
 
 type MacroType = "ptn" | "lip" | "cho";
 
+// Helper to safely extract number from macro (handles both objects and numbers)
+const getMacroNumber = (v: any): number => {
+	if (!v) return 0;
+	if (typeof v === 'object' && 'grams' in v) return v.grams ?? 0;
+	if (typeof v === 'number') return v;
+	return 0;
+};
+
 const MealPlanStep: React.FC = () => {
 	const {consultationData, updateConsultationData} = useConsultationData();
 	const {activePatient} = usePatient();
@@ -68,18 +76,25 @@ const MealPlanStep: React.FC = () => {
 			const vet = consultationData.results.vet;
 			const macros = consultationData.results.macros;
 
+			// Extract numbers safely from macros
+			const ptnG = getMacroNumber(macros.protein);
+			const choG = getMacroNumber(macros.carbs);
+			const lipG = getMacroNumber(macros.fat);
+
+			console.log('[MEAL_PLAN] Initializing with macros:', { ptnG, choG, lipG });
+
 		const initialRefeicoes: Refeicao[] = REFEICOES_TEMPLATE.map((template, idx) => ({
 			...template,
 			itens: [],
 			// CORRECT CALCULATION: Sum of all macros with their distributions
 			alvo_kcal: Math.round(
-				(macros.protein * 4 * macroDistribution.ptn[idx]) +
-				(macros.carbs * 4 * macroDistribution.cho[idx]) +
-				(macros.fat * 9 * macroDistribution.lip[idx])
+				(ptnG * 4 * macroDistribution.ptn[idx]) +
+				(choG * 4 * macroDistribution.cho[idx]) +
+				(lipG * 9 * macroDistribution.lip[idx])
 			),
-			alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
-			alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
-			alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx]),
+			alvo_ptn_g: Math.round(ptnG * macroDistribution.ptn[idx]),
+			alvo_cho_g: Math.round(choG * macroDistribution.cho[idx]),
+			alvo_lip_g: Math.round(lipG * macroDistribution.lip[idx]),
 		}));
 
 			setRefeicoes(initialRefeicoes);
@@ -93,18 +108,23 @@ const MealPlanStep: React.FC = () => {
 		const vet = consultationData.results.vet;
 		const macros = consultationData.results.macros;
 
+		// Extract numbers safely from macros
+		const ptnG = getMacroNumber(macros.protein);
+		const choG = getMacroNumber(macros.carbs);
+		const lipG = getMacroNumber(macros.fat);
+
 	setRefeicoes((prev) =>
 		prev.map((ref, idx) => ({
 			...ref,
 			// CORRECT CALCULATION: Sum of all macros with their distributions
 			alvo_kcal: Math.round(
-				(macros.protein * 4 * macroDistribution.ptn[idx]) +
-				(macros.carbs * 4 * macroDistribution.cho[idx]) +
-				(macros.fat * 9 * macroDistribution.lip[idx])
+				(ptnG * 4 * macroDistribution.ptn[idx]) +
+				(choG * 4 * macroDistribution.cho[idx]) +
+				(lipG * 9 * macroDistribution.lip[idx])
 			),
-			alvo_ptn_g: Math.round(macros.protein * macroDistribution.ptn[idx]),
-			alvo_cho_g: Math.round(macros.carbs * macroDistribution.cho[idx]),
-			alvo_lip_g: Math.round(macros.fat * macroDistribution.lip[idx]),
+			alvo_ptn_g: Math.round(ptnG * macroDistribution.ptn[idx]),
+			alvo_cho_g: Math.round(choG * macroDistribution.cho[idx]),
+			alvo_lip_g: Math.round(lipG * macroDistribution.lip[idx]),
 		}))
 	);
 	};
@@ -277,13 +297,15 @@ const MealPlanStep: React.FC = () => {
 
 		setIsSaving(true);
 		try {
-			// Calculate percentages
+			// Calculate percentages - safely extract numbers
 			const totalCalories = consultationData.results.vet;
-			const ptnPercentual =
-				((consultationData.results.macros.protein * 4) / totalCalories) * 100;
-			const choPercentual =
-				((consultationData.results.macros.carbs * 4) / totalCalories) * 100;
-			const lipPercentual = ((consultationData.results.macros.fat * 9) / totalCalories) * 100;
+			const ptnG = getMacroNumber(consultationData.results.macros.protein);
+			const choG = getMacroNumber(consultationData.results.macros.carbs);
+			const lipG = getMacroNumber(consultationData.results.macros.fat);
+			
+			const ptnPercentual = ((ptnG * 4) / totalCalories) * 100;
+			const choPercentual = ((choG * 4) / totalCalories) * 100;
+			const lipPercentual = ((lipG * 9) / totalCalories) * 100;
 
 			// Save to Supabase
 			console.log('[SAVE] Calling persistCompleteMealPlan...');
@@ -292,16 +314,16 @@ const MealPlanStep: React.FC = () => {
 				patient_id: activePatient.id,
 				calculation_id: consultationData.id,
 				vet_kcal: consultationData.results.vet,
-				ptn_g_dia: consultationData.results.macros.protein,
-				ptn_kcal: consultationData.results.macros.protein * 4,
+				ptn_g_dia: ptnG,
+				ptn_kcal: ptnG * 4,
 				ptn_valor: 1.6, // Default value or from input
 				ptn_tipo_definicao: "g_kg",
 				ptn_percentual: ptnPercentual,
-				cho_g_dia: consultationData.results.macros.carbs,
-				cho_kcal: consultationData.results.macros.carbs * 4,
+				cho_g_dia: choG,
+				cho_kcal: choG * 4,
 				cho_percentual: choPercentual,
-				lip_g_dia: consultationData.results.macros.fat,
-				lip_kcal: consultationData.results.macros.fat * 9,
+				lip_g_dia: lipG,
+				lip_kcal: lipG * 9,
 				lip_valor: 1.0, // Default value or from input
 				lip_tipo_definicao: "g_kg",
 				lip_percentual: lipPercentual,
@@ -399,21 +421,21 @@ const MealPlanStep: React.FC = () => {
 							<p className="text-sm text-muted-foreground">Proteína</p>
 							<p className="text-2xl font-bold">{Math.round(dailyTotals.ptn_g)}g</p>
 							<p className="text-xs text-muted-foreground">
-								/ {consultationData.results.macros.protein}g
+								/ {getMacroNumber(consultationData.results.macros.protein)}g
 							</p>
 						</div>
 						<div>
 							<p className="text-sm text-muted-foreground">Carboidratos</p>
 							<p className="text-2xl font-bold">{Math.round(dailyTotals.cho_g)}g</p>
 							<p className="text-xs text-muted-foreground">
-								/ {consultationData.results.macros.carbs}g
+								/ {getMacroNumber(consultationData.results.macros.carbs)}g
 							</p>
 						</div>
 						<div>
 							<p className="text-sm text-muted-foreground">Gorduras</p>
 							<p className="text-2xl font-bold">{Math.round(dailyTotals.lip_g)}g</p>
 							<p className="text-xs text-muted-foreground">
-								/ {consultationData.results.macros.fat}g
+								/ {getMacroNumber(consultationData.results.macros.fat)}g
 							</p>
 						</div>
 					</div>

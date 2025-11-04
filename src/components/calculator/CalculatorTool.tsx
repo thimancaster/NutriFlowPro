@@ -115,7 +115,8 @@ const CalculatorTool: React.FC = () => {
 		});
 
 		setTimeout(() => {
-			navigate("/clinical");
+				// Navigate to meal plan builder instead of clinical to avoid loop
+				navigate("/meal-plan-builder");
 		}, 500);
 	};
 

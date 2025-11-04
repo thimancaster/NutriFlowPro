@@ -539,6 +539,21 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 					}
 
 					try {
+						// Sanity check: ensure macros are numbers
+						const macros = {
+							protein: results.macros.protein.grams,
+							carbs: results.macros.carbs.grams,
+							fat: results.macros.fat.grams,
+						};
+						
+						console.log('[CALCULATOR] Sending macros to parent:', macros, {
+							types: {
+								protein: typeof macros.protein,
+								carbs: typeof macros.carbs,
+								fat: typeof macros.fat
+							}
+						});
+						
 						// Notify parent if callback exists
 						if (onCalculationComplete) {
 							await onCalculationComplete({
@@ -548,11 +563,7 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								weight: inputs.weight || 0,
 								height: inputs.height || 0,
 								age: inputs.age || 0,
-								macros: {
-									protein: results.macros.protein.grams,
-									carbs: results.macros.carbs.grams,
-									fat: results.macros.fat.grams,
-								}
+								macros
 							});
 						}
 

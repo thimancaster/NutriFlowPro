@@ -38,6 +38,17 @@ interface ConsultationDataContextType {
 
 const ConsultationDataContext = createContext<ConsultationDataContextType | undefined>(undefined);
 
+// Helper to normalize macros (extract grams if object, or use number directly)
+const normalizeMacros = (m: any) => {
+	if (!m) return m;
+	const isObj = (x: any) => x && typeof x === 'object' && 'grams' in x;
+	return {
+		protein: isObj(m.protein) ? m.protein.grams ?? 0 : m.protein ?? 0,
+		carbs: isObj(m.carbs) ? m.carbs.grams ?? 0 : m.carbs ?? 0,
+		fat: isObj(m.fat) ? m.fat.grams ?? 0 : m.fat ?? 0
+	};
+};
+
 export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -112,9 +123,36 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
   }, [consultationData, activePatient, user?.id]);
 
   const updateConsultationData = useCallback((data: Partial<ConsultationData>) => {
+    console.log('[CONTEXT] updateConsultationData called with:', data);
+    
+    // Normalize macros if they exist in results
+    const normalizedData = { ...data };
+    if (data.results?.macros) {
+      const normalized = normalizeMacros(data.results.macros);
+      console.log('[CONTEXT] Normalized macros:', normalized);
+      normalizedData.results = {
+        ...data.results,
+        macros: normalized
+      };
+      // Also update root-level macro fields
+      normalizedData.protein = normalized.protein;
+      normalizedData.carbs = normalized.carbs;
+      normalizedData.fats = normalized.fat;
+    }
+    
     setConsultationData(prev => {
       if (prev) {
-        return { ...prev, ...data };
+        const updated = { ...prev, ...normalizedData };
+        console.log('[CONTEXT] Updated consultationData:', {
+          vet: updated.results?.vet,
+          macros: updated.results?.macros,
+          macroTypes: updated.results?.macros ? {
+            protein: typeof updated.results.macros.protein,
+            carbs: typeof updated.results.macros.carbs,
+            fat: typeof updated.results.macros.fat
+          } : null
+        });
+        return updated;
       } else if (activePatient) {
         // Create minimal consultation data if it doesn't exist
         return {
@@ -131,7 +169,7 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
           carbs: 0,
           fats: 0,
           totalCalories: 0,
-          ...data
+          ...normalizedData
         } as ConsultationData;
       }
       return null;
