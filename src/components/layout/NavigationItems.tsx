@@ -52,8 +52,8 @@ export const navigationItems = [
   {
     title: 'Relatórios',
     icon: BarChart3,
-    href: '/analytics',
-    description: 'Análises e relatórios'
+    href: '/reports',
+    description: 'Evolução e análises comparativas'
   },
   {
     title: 'Configurações',

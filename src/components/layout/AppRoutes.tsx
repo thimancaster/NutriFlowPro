@@ -12,6 +12,7 @@ import Settings from '@/pages/Settings';
 import AddTestimonial from '@/pages/AddTestimonial';
 import NutritionWorkflow from '@/pages/NutritionWorkflow';
 import Atendimento from '@/pages/Atendimento';
+import Reports from '@/pages/Reports';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -31,6 +32,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/meal-plans" element={<MealPlans />} />
       <Route path="/meal-plan-generator" element={<MealPlanGenerator />} />
       <Route path="/appointments" element={<Appointments />} />
+      <Route path="/reports" element={<Reports />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/testimonials" element={<AddTestimonial />} />
     </Routes>
