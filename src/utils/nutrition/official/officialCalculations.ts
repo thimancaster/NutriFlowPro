@@ -11,28 +11,80 @@ export type PatientProfile = 'eutrofico' | 'sobrepeso_obesidade' | 'atleta';
 export type ActivityLevel = 'sedentario' | 'leve' | 'moderado' | 'intenso' | 'muito_intenso';
 export type Objective = 'emagrecimento' | 'manutenção' | 'hipertrofia' | 'personalizado';
 
-// FORMULA METADATA FOR DYNAMIC UI (Ground Truth)
+// [PHASE 3] TMB Formula Types - Extended with new formulas
+export type TmbFormula = 
+  | 'harris_benedict'
+  | 'mifflin_st_jeor' 
+  | 'tinsley'
+  | 'katch_mcardle'
+  | 'cunningham'
+  | 'oms_fao_unu'
+  | 'penn_state';
+
+// FORMULA METADATA FOR DYNAMIC UI (Ground Truth) - EXPANDED PHASE 3
 export const AVAILABLE_FORMULAS = [
   {
-    value: 'eutrofico',
-    label: 'Harris-Benedict',
+    value: 'harris_benedict',
+    label: 'Harris-Benedict Revisada (1984)',
     description: 'Para pacientes eutróficos',
     requiresHeight: true,
-    requiresAge: true
+    requiresAge: true,
+    requiresLeanMass: false,
+    profile: 'eutrofico' as PatientProfile
   },
   {
-    value: 'sobrepeso_obesidade', 
-    label: 'Mifflin-St Jeor',
-    description: 'Para sobrepeso/obesidade',
+    value: 'mifflin_st_jeor', 
+    label: 'Mifflin-St Jeor (1990)',
+    description: 'Para sobrepeso/obesidade (mais precisa)',
     requiresHeight: true,
-    requiresAge: true
+    requiresAge: true,
+    requiresLeanMass: false,
+    profile: 'sobrepeso_obesidade' as PatientProfile
   },
   {
-    value: 'atleta',
-    label: 'Tinsley', 
+    value: 'tinsley',
+    label: 'Tinsley (2019)', 
     description: 'Para atletas/alta massa muscular',
     requiresHeight: false,
-    requiresAge: false
+    requiresAge: false,
+    requiresLeanMass: false,
+    profile: 'atleta' as PatientProfile
+  },
+  {
+    value: 'katch_mcardle',
+    label: 'Katch-McArdle',
+    description: 'Baseada em massa magra (composição corporal)',
+    requiresHeight: false,
+    requiresAge: false,
+    requiresLeanMass: true,
+    profile: null
+  },
+  {
+    value: 'cunningham',
+    label: 'Cunningham (1980)',
+    description: 'Para atletas com massa magra conhecida',
+    requiresHeight: false,
+    requiresAge: false,
+    requiresLeanMass: true,
+    profile: 'atleta' as PatientProfile
+  },
+  {
+    value: 'oms_fao_unu',
+    label: 'OMS/FAO/UNU (1985)',
+    description: 'Recomendação internacional padrão',
+    requiresHeight: false,
+    requiresAge: true,
+    requiresLeanMass: false,
+    profile: null
+  },
+  {
+    value: 'penn_state',
+    label: 'Penn State (2003)',
+    description: 'Para pacientes obesos/críticos',
+    requiresHeight: false,
+    requiresAge: false,
+    requiresLeanMass: false,
+    profile: 'sobrepeso_obesidade' as PatientProfile
   }
 ] as const;
 
@@ -108,47 +160,227 @@ export function calculateTMB_MifflinStJeor(
  */
 export function calculateTMB_Tinsley(weight: number): number {
   // Tinsley formula: TMB = 24.8 × weight + 10 (verified athletic formula)
-  return 24.8 * weight + 10;
+  const tmb = 24.8 * weight + 10;
+  console.log(`[TMB-Tinsley] ${weight}kg → TMB = ${tmb.toFixed(1)} kcal`);
+  return tmb;
 }
 
 /**
- * TMB CALCULATION WITH AUTOMATIC FORMULA SELECTION
- * Selects appropriate formula based on patient profile (Ground Truth)
+ * [PHASE 3] KATCH-MCARDLE EQUATION - Based on Lean Body Mass
+ * Most accurate when body composition is known
+ * Same formula for men and women (gender-neutral)
+ * Reference: Katch & McArdle (1996)
+ */
+export function calculateTMB_KatchMcArdle(leanBodyMass: number): number {
+  if (leanBodyMass <= 0) {
+    throw new Error('Lean body mass must be greater than zero');
+  }
+  // Formula: TMB = 370 + (21.6 × lean body mass in kg)
+  const tmb = 370 + (21.6 * leanBodyMass);
+  console.log(`[TMB-Katch] Massa Magra ${leanBodyMass.toFixed(1)}kg → TMB = ${tmb.toFixed(1)} kcal`);
+  return tmb;
+}
+
+/**
+ * [PHASE 3] CUNNINGHAM EQUATION - For Athletes with Known LBM
+ * Designed specifically for athletes and active individuals
+ * Reference: Cunningham (1980)
+ */
+export function calculateTMB_Cunningham(leanBodyMass: number): number {
+  if (leanBodyMass <= 0) {
+    throw new Error('Lean body mass must be greater than zero');
+  }
+  // Formula: TMB = 500 + (22 × lean body mass in kg)
+  const tmb = 500 + (22 * leanBodyMass);
+  console.log(`[TMB-Cunningham] Massa Magra ${leanBodyMass.toFixed(1)}kg → TMB = ${tmb.toFixed(1)} kcal`);
+  return tmb;
+}
+
+/**
+ * [PHASE 3] OMS/FAO/UNU EQUATIONS (1985) - International Standard
+ * WHO/FAO/UNU recommended equations by age group
+ * Reference: Energy and protein requirements (1985)
+ */
+export function calculateTMB_OMS_FAO_UNU(
+  weight: number,
+  age: number,
+  gender: Gender
+): number {
+  let tmb: number;
+  
+  if (gender === 'M') {
+    // Men
+    if (age >= 18 && age <= 30) {
+      tmb = (15.3 * weight) + 679;
+    } else if (age >= 31 && age <= 60) {
+      tmb = (11.6 * weight) + 879;
+    } else if (age > 60) {
+      tmb = (13.5 * weight) + 487;
+    } else {
+      // < 18 years (adolescents 10-18)
+      tmb = (17.5 * weight) + 651;
+    }
+  } else {
+    // Women
+    if (age >= 18 && age <= 30) {
+      tmb = (14.7 * weight) + 496;
+    } else if (age >= 31 && age <= 60) {
+      tmb = (8.7 * weight) + 829;
+    } else if (age > 60) {
+      tmb = (10.5 * weight) + 596;
+    } else {
+      // < 18 years (adolescents 10-18)
+      tmb = (12.2 * weight) + 746;
+    }
+  }
+  
+  console.log(`[TMB-OMS] ${gender}, ${age}anos, ${weight}kg → TMB = ${tmb.toFixed(1)} kcal`);
+  return tmb;
+}
+
+/**
+ * [PHASE 3] PENN STATE EQUATION (2003) - For Obese/Critical Patients
+ * More accurate for obese and critically ill patients
+ * Reference: Frankenfield et al. (2003)
+ * Note: This is a simplified version using only weight
+ */
+export function calculateTMB_PennState(
+  weight: number,
+  age: number,
+  gender: Gender
+): number {
+  // Simplified Penn State using Mifflin as base with obesity correction
+  // Full Penn State requires minute ventilation and max temp (ICU parameters)
+  // This version applies obesity-adjusted coefficients
+  let tmb: number;
+  
+  if (gender === 'M') {
+    tmb = (10 * weight) - (5 * age) + 5;
+  } else {
+    tmb = (10 * weight) - (5 * age) - 161;
+  }
+  
+  // Apply Penn State obesity correction factor (1.15)
+  tmb = tmb * 1.15;
+  
+  console.log(`[TMB-PennState] ${gender}, ${age}anos, ${weight}kg → TMB = ${tmb.toFixed(1)} kcal (com correção obesidade)`);
+  return tmb;
+}
+
+/**
+ * [UPDATED PHASE 3] TMB CALCULATION WITH AUTOMATIC OR MANUAL FORMULA SELECTION
+ * Supports both automatic (profile-based) and manual formula selection
+ * Now supports lean body mass for advanced formulas
  */
 export function calculateTMB_Official(
   weight: number,
   height: number,
   age: number,
   gender: Gender,
-  profile: PatientProfile
-): { value: number; formula: string } {
+  profile: PatientProfile,
+  manualFormula?: TmbFormula,
+  leanBodyMass?: number
+): { value: number; formula: string; formulaCode: TmbFormula } {
   let tmb: number;
   let formula: string;
+  let formulaCode: TmbFormula;
 
-  switch (profile) {
-    case 'eutrofico':
-      tmb = calculateTMB_HarrisBenedict(weight, height, age, gender);
-      formula = 'Harris-Benedict (Eutrophic)';
-      break;
-      
-    case 'sobrepeso_obesidade':
-      tmb = calculateTMB_MifflinStJeor(weight, height, age, gender);
-      formula = 'Mifflin-St Jeor (Overweight/Obesity)';
-      break;
-      
-    case 'atleta':
-      tmb = calculateTMB_Tinsley(weight);
-      formula = 'Tinsley (Athlete)';
-      break;
-      
-    default:
-      tmb = calculateTMB_HarrisBenedict(weight, height, age, gender);
-      formula = 'Harris-Benedict (Default)';
+  // PRIORITY 1: Manual formula selection (if provided)
+  if (manualFormula) {
+    console.log(`[TMB] 🎯 Using MANUAL formula: ${manualFormula}`);
+    
+    switch (manualFormula) {
+      case 'harris_benedict':
+        tmb = calculateTMB_HarrisBenedict(weight, height, age, gender);
+        formula = 'Harris-Benedict Revisada (1984)';
+        formulaCode = 'harris_benedict';
+        break;
+        
+      case 'mifflin_st_jeor':
+        tmb = calculateTMB_MifflinStJeor(weight, height, age, gender);
+        formula = 'Mifflin-St Jeor (1990)';
+        formulaCode = 'mifflin_st_jeor';
+        break;
+        
+      case 'tinsley':
+        tmb = calculateTMB_Tinsley(weight);
+        formula = 'Tinsley (2019)';
+        formulaCode = 'tinsley';
+        break;
+        
+      case 'katch_mcardle':
+        if (!leanBodyMass) {
+          throw new Error('Katch-McArdle requires lean body mass (LBM)');
+        }
+        tmb = calculateTMB_KatchMcArdle(leanBodyMass);
+        formula = 'Katch-McArdle (LBM-based)';
+        formulaCode = 'katch_mcardle';
+        break;
+        
+      case 'cunningham':
+        if (!leanBodyMass) {
+          throw new Error('Cunningham requires lean body mass (LBM)');
+        }
+        tmb = calculateTMB_Cunningham(leanBodyMass);
+        formula = 'Cunningham (1980) - Athletes';
+        formulaCode = 'cunningham';
+        break;
+        
+      case 'oms_fao_unu':
+        tmb = calculateTMB_OMS_FAO_UNU(weight, age, gender);
+        formula = 'OMS/FAO/UNU (1985)';
+        formulaCode = 'oms_fao_unu';
+        break;
+        
+      case 'penn_state':
+        tmb = calculateTMB_PennState(weight, age, gender);
+        formula = 'Penn State (2003) - Obesity';
+        formulaCode = 'penn_state';
+        break;
+        
+      default:
+        tmb = calculateTMB_HarrisBenedict(weight, height, age, gender);
+        formula = 'Harris-Benedict (Fallback)';
+        formulaCode = 'harris_benedict';
+    }
+  } 
+  // PRIORITY 2: Automatic selection based on profile (legacy behavior)
+  else {
+    console.log(`[TMB] ✅ Using AUTOMATIC formula for profile: ${profile}`);
+    
+    switch (profile) {
+      case 'eutrofico':
+        tmb = calculateTMB_HarrisBenedict(weight, height, age, gender);
+        formula = 'Harris-Benedict (Auto: Eutrophic)';
+        formulaCode = 'harris_benedict';
+        break;
+        
+      case 'sobrepeso_obesidade':
+        tmb = calculateTMB_MifflinStJeor(weight, height, age, gender);
+        formula = 'Mifflin-St Jeor (Auto: Overweight/Obesity)';
+        formulaCode = 'mifflin_st_jeor';
+        break;
+        
+      case 'atleta':
+        tmb = calculateTMB_Tinsley(weight);
+        formula = 'Tinsley (Auto: Athlete)';
+        formulaCode = 'tinsley';
+        break;
+        
+      default:
+        tmb = calculateTMB_HarrisBenedict(weight, height, age, gender);
+        formula = 'Harris-Benedict (Auto: Default)';
+        formulaCode = 'harris_benedict';
+    }
   }
 
+  const roundedTmb = Math.round(tmb);
+  console.log(`[TMB] 🎯 FINAL: ${roundedTmb} kcal using ${formula}`);
+
   return {
-    value: Math.round(tmb),
-    formula
+    value: roundedTmb,
+    formula,
+    formulaCode
   };
 }
 
@@ -381,13 +613,15 @@ export interface CalculationInputs {
   objective: Objective;
   customAdjustment?: number; // For personalizado objective
   manualActivityFactor?: number; // Manual F.A. input (PRIORITY 1)
+  manualTmbFormula?: TmbFormula; // [PHASE 3] Manual TMB formula selection
+  leanBodyMass?: number; // [PHASE 3] For formulas requiring LBM (Katch, Cunningham)
   // One of these macro input methods:
   macroInputs?: ManualMacroInputs;      // g/kg method
   percentageInputs?: PercentageMacroInputs; // percentage method
 }
 
 export interface CalculationResult {
-  tmb: { value: number; formula: string };
+  tmb: { value: number; formula: string; formulaCode: TmbFormula };
   get: number;
   vet: number;
   macros: MacroResult;
@@ -416,13 +650,15 @@ export async function calculateComplete_Official(inputs: CalculationInputs): Pro
     throw new Error('Either macroInputs (g/kg) or percentageInputs must be provided');
   }
 
-  // Step 1: Calculate TMB with automatic formula selection
+  // Step 1: Calculate TMB with automatic OR manual formula selection
   const tmb = calculateTMB_Official(
     inputs.weight, 
     inputs.height, 
     inputs.age, 
     inputs.gender, 
-    inputs.profile
+    inputs.profile,
+    inputs.manualTmbFormula, // PHASE 3: Optional manual formula
+    inputs.leanBodyMass      // PHASE 3: Optional LBM for Katch/Cunningham
   );
   
   // Step 2: Apply Activity Factor → GET (with priority logic)

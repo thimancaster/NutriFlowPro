@@ -13,7 +13,8 @@ import {
   type CalculationInputs,
   type CalculationResult,
   type ManualMacroInputs,
-  type PercentageMacroInputs
+  type PercentageMacroInputs,
+  type TmbFormula
 } from '@/utils/nutrition/official/officialCalculations';
 import { useToast } from '@/hooks/use-toast';
 
