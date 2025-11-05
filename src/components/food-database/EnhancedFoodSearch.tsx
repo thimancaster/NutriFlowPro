@@ -195,15 +195,15 @@ const EnhancedFoodSearch: React.FC<EnhancedFoodSearchProps> = ({onFoodSelect}) =
 									Categoria
 								</label>
 								<Select
-									value={filters.category}
+									value={filters.category || 'all'}
 									onValueChange={(value) =>
-										setFilters((prev) => ({...prev, category: value}))
+										setFilters((prev) => ({...prev, category: value === 'all' ? '' : value}))
 									}>
 									<SelectTrigger id="category-select">
 										<SelectValue placeholder="Todas as categorias" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="">Todas as categorias</SelectItem>
+										<SelectItem value="all">Todas as categorias</SelectItem>
 										{categories.map((category) => (
 											<SelectItem key={category.id} value={category.id}>
 												{category.name}

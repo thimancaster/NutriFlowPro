@@ -205,15 +205,15 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 							Fórmula TMB (Sobrescreve seleção automática)
 						</Label>
 						<Select
-							value={inputs.manualTmbFormula || ''}
+							value={inputs.manualTmbFormula || 'auto'}
 							onValueChange={(value) => updateInputs({ 
-								manualTmbFormula: value ? value as any : undefined 
+								manualTmbFormula: value === 'auto' ? undefined : value as any 
 							})}>
 							<SelectTrigger id="manualTmbFormula">
 								<SelectValue placeholder="Automático (baseado no perfil)" />
 							</SelectTrigger>
 							<SelectContent className="bg-background z-50">
-								<SelectItem value="">Automático</SelectItem>
+								<SelectItem value="auto">Automático</SelectItem>
 								<SelectItem value="harris_benedict">Harris-Benedict Revisada</SelectItem>
 								<SelectItem value="mifflin_st_jeor">Mifflin-St Jeor</SelectItem>
 								<SelectItem value="tinsley">Tinsley (Atletas)</SelectItem>
