@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/select";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Calculator, Activity, Target, Scale, Ruler, User, Utensils} from "lucide-react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
+import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {useToast} from "@/hooks/use-toast";
+import SkinfoldForm from "./SkinfoldForm";
 
 interface OfficialCalculatorFormProps {
 	onCalculationComplete?: (results: any) => void;
@@ -184,6 +186,98 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 							</SelectContent>
 						</Select>
 					</div>
+				</CardContent>
+			</Card>
+
+			{/* Advanced TMB Options */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="flex items-center gap-2 text-lg">
+						<Calculator className="h-5 w-5" />
+						Opções Avançadas de Cálculo (Opcional)
+					</CardTitle>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					{/* Manual TMB Formula Selection */}
+					<div className="space-y-2">
+						<Label htmlFor="manualTmbFormula" className="flex items-center gap-2">
+							<Calculator className="h-4 w-4" />
+							Fórmula TMB (Sobrescreve seleção automática)
+						</Label>
+						<Select
+							value={inputs.manualTmbFormula || ''}
+							onValueChange={(value) => updateInputs({ 
+								manualTmbFormula: value ? value as any : undefined 
+							})}>
+							<SelectTrigger id="manualTmbFormula">
+								<SelectValue placeholder="Automático (baseado no perfil)" />
+							</SelectTrigger>
+							<SelectContent className="bg-background z-50">
+								<SelectItem value="">Automático</SelectItem>
+								<SelectItem value="harris_benedict">Harris-Benedict Revisada</SelectItem>
+								<SelectItem value="mifflin_st_jeor">Mifflin-St Jeor</SelectItem>
+								<SelectItem value="tinsley">Tinsley (Atletas)</SelectItem>
+								<SelectItem value="katch_mcardle">Katch-McArdle (requer MM)</SelectItem>
+								<SelectItem value="cunningham">Cunningham (requer MM)</SelectItem>
+								<SelectItem value="who_fao_unu">OMS/FAO/UNU</SelectItem>
+								<SelectItem value="penn_state">Penn State</SelectItem>
+							</SelectContent>
+						</Select>
+						<p className="text-xs text-muted-foreground">
+							💡 Se não selecionado, o sistema escolherá automaticamente baseado no perfil corporal
+						</p>
+					</div>
+
+					{/* Lean Body Mass Input - Conditional */}
+					{(inputs.manualTmbFormula === 'katch_mcardle' || 
+					  inputs.manualTmbFormula === 'cunningham') && (
+						<div className="space-y-2">
+							<Label htmlFor="leanBodyMass" className="flex items-center gap-2 text-orange-600">
+								<Dumbbell className="h-4 w-4" />
+								Massa Magra (kg) - Obrigatório para esta fórmula
+							</Label>
+							<Input
+								id="leanBodyMass"
+								type="number"
+								step="0.1"
+								placeholder="Ex: 65.5"
+								value={inputs.leanBodyMass || ''}
+								onChange={(e) => updateInputs({ 
+									leanBodyMass: e.target.value ? Number(e.target.value) : undefined 
+								})}
+							/>
+							<div className="flex items-center justify-between gap-2">
+								<p className="text-xs text-muted-foreground">
+									💡 Use a calculadora de composição corporal para obter este valor
+								</p>
+								<Dialog>
+									<DialogTrigger asChild>
+										<Button type="button" variant="outline" size="sm">
+											<Calculator className="h-4 w-4 mr-2" />
+											Calcular MM
+										</Button>
+									</DialogTrigger>
+									<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+										<DialogHeader>
+											<DialogTitle>Calculadora de Composição Corporal</DialogTitle>
+										</DialogHeader>
+										<SkinfoldForm
+											weight={inputs.weight || 0}
+											age={inputs.age || 0}
+											gender={inputs.gender || 'M'}
+											onLeanMassCalculated={(leanMass) => {
+												updateInputs({ leanBodyMass: leanMass });
+												toast({
+													title: "Massa Magra Calculada",
+													description: `${leanMass.toFixed(1)} kg foi preenchido automaticamente`,
+												});
+											}}
+										/>
+									</DialogContent>
+								</Dialog>
+							</div>
+						</div>
+					)}
 				</CardContent>
 			</Card>
 
