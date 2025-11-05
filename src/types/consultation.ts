@@ -18,13 +18,48 @@ export type ConsultationType = 'primeira_consulta' | 'retorno';
 // Consultation status
 export type ConsultationStatus = 'em_andamento' | 'completo';
 
-// Activity factors for TDEE calculation - EXATOS DA PLANILHA
+// [UPDATED] Activity factors differentiated by profile - SSOT V2.0
+// Fatores de Atividade agora diferenciados para Eutróficos vs Obesos/Sobrepeso
+export function getActivityFactor(
+  level: ActivityLevel, 
+  profile: Profile
+): number {
+  const FACTORS_BY_PROFILE: Record<Profile, Record<ActivityLevel, number>> = {
+    eutrofico: {
+      sedentario: 1.20,
+      leve: 1.375,
+      moderado: 1.55,
+      intenso: 1.725,
+      muito_intenso: 1.90
+    },
+    sobrepeso_obesidade: {
+      sedentario: 1.30,
+      leve: 1.50,
+      moderado: 1.60,
+      intenso: 1.80,
+      muito_intenso: 2.00
+    },
+    atleta: {
+      sedentario: 1.20,
+      leve: 1.375,
+      moderado: 1.55,
+      intenso: 1.725,
+      muito_intenso: 1.90
+    }
+  };
+  
+  const factor = FACTORS_BY_PROFILE[profile][level];
+  console.log(`[FA] Perfil: ${profile}, Nível: ${level} → F.A. = ${factor}`);
+  return factor;
+}
+
+// [DEPRECATED] Mantido para compatibilidade temporária - Use getActivityFactor() instead
 export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   sedentario: 1.2,
   leve: 1.375,
   moderado: 1.55,
-  intenso: 1.725,        // Mapeado para "muito_ativo" 
-  muito_intenso: 1.9     // Mapeado para "extremamente_ativo"
+  intenso: 1.725,
+  muito_intenso: 1.9
 };
 
 // Objective adjustment factors - EXATOS DA PLANILHA (convertidos para fatores multiplicativos)
@@ -43,11 +78,11 @@ export const PROTEIN_RATIOS: Record<Profile, number> = {
   atleta: 2.2                  // CORRIGIDO: era 1.8, agora 2.2 g/kg conforme planilha
 };
 
-// [UPDATED] Lipídios corrigidos para 25% padrão da planilha
+// [OFFICIAL] Lipídios por perfil (g/kg) - SSOT V2.0
 export const LIPID_RATIOS: Record<Profile, number> = {
-  eutrofico: 0.8,              // DEPRECATED: Use 25% do GET conforme planilha
-  sobrepeso_obesidade: 0.5,    // DEPRECATED: Use 25% do GET conforme planilha
-  atleta: 1.0                  // DEPRECATED: Use 25% do GET conforme planilha
+  eutrofico: 0.8,              // ✅ OFICIAL: 0.8 g/kg conforme NUTRIFLOW_PRO_SPEC_V2.0.md
+  sobrepeso_obesidade: 0.5,    // ✅ OFICIAL: 0.5 g/kg conforme NUTRIFLOW_PRO_SPEC_V2.0.md
+  atleta: 1.0                  // ✅ OFICIAL: 1.0 g/kg conforme NUTRIFLOW_PRO_SPEC_V2.0.md
 };
 
 // Valores calóricos por grama de macronutriente - PADRÃO INTERNACIONAL (CORRETO)

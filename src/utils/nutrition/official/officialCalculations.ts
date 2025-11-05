@@ -60,8 +60,11 @@ export const OBJECTIVE_ADJUSTMENTS: Record<Exclude<Objective, 'personalizado'>, 
 } as const;
 
 /**
- * HARRIS-BENEDICT EQUATION (ORIGINAL) - For Eutrophic Patients
- * EXACT implementation as specified in official spreadsheet
+ * HARRIS-BENEDICT REVISADA (1984) - For Eutrophic Patients
+ * Source: Roza and Shizgal (1984)
+ * SSOT: NUTRIFLOW_PRO_SPEC_V2.0.md Section 2.1
+ * 
+ * CORRECTED COEFFICIENTS (exact precision required for clinical accuracy)
  */
 export function calculateTMB_HarrisBenedict(
   weight: number,
@@ -70,11 +73,15 @@ export function calculateTMB_HarrisBenedict(
   gender: Gender
 ): number {
   if (gender === 'M') {
-    // Men: TMB = 66 + (13.8 × weight) + (5.0 × height) – (6.8 × age)
-    return 66 + (13.8 * weight) + (5.0 * height) - (6.8 * age);
+    // Men: TMB = 66.5 + (13.75 × weight) + (5.003 × height) – (6.75 × age)
+    const tmb = 66.5 + (13.75 * weight) + (5.003 * height) - (6.75 * age);
+    console.log(`[TMB-HB] Homem: 66.5 + (13.75×${weight}) + (5.003×${height}) - (6.75×${age}) = ${tmb.toFixed(1)} kcal`);
+    return tmb;
   } else {
-    // Women: TMB = 655 + (9.6 × weight) + (1.9 × height) – (4.7 × age)  
-    return 655 + (9.6 * weight) + (1.9 * height) - (4.7 * age);
+    // Women: TMB = 655.1 + (9.563 × weight) + (1.850 × height) – (4.676 × age)
+    const tmb = 655.1 + (9.563 * weight) + (1.850 * height) - (4.676 * age);
+    console.log(`[TMB-HB] Mulher: 655.1 + (9.563×${weight}) + (1.850×${height}) - (4.676×${age}) = ${tmb.toFixed(1)} kcal`);
+    return tmb;
   }
 }
 
@@ -147,8 +154,8 @@ export function calculateTMB_Official(
 
 /**
  * GET CALCULATION - TMB × Activity Factor (Ground Truth)
- * EXACT as specified: GET = TMB × FA
- * Priority: 1) Manual F.A., 2) Supabase, 3) Hardcoded fallback
+ * UPDATED: Now uses profile-differentiated activity factors (SSOT V2.0)
+ * Priority: 1) Manual F.A., 2) Profile-based F.A., 3) Supabase, 4) Hardcoded fallback
  */
 export async function calculateGET_Official(
   tmb: number, 
@@ -159,37 +166,45 @@ export async function calculateGET_Official(
 ): Promise<number> {
   let activityFactor: number;
   
-  // PRIORITY 1: Manual input
+  // PRIORITY 1: Manual input (highest priority)
   if (manualFactor !== undefined && manualFactor > 0) {
     activityFactor = manualFactor;
-    console.log('[GET] Using manual F.A.:', activityFactor);
+    console.log('[GET] 🎯 Using manual F.A.:', activityFactor);
   } 
-  // PRIORITY 2: Supabase (requires dynamic import to avoid circular dependency)
-  else if (profile && gender) {
+  // PRIORITY 2: Profile-differentiated factors (NEW - SSOT V2.0)
+  else if (profile) {
+    const { getActivityFactor } = await import('@/types/consultation');
+    activityFactor = getActivityFactor(activityLevel, profile);
+    console.log(`[GET] ✅ Using profile-based F.A.: ${activityFactor} (Profile: ${profile}, Level: ${activityLevel})`);
+  }
+  // PRIORITY 3: Supabase (requires dynamic import to avoid circular dependency)
+  else if (gender) {
     try {
       const { getParametrosGETPlanilha } = await import('@/integrations/supabase/functions');
-      const supabaseData = await getParametrosGETPlanilha(profile, gender);
+      const supabaseData = await getParametrosGETPlanilha(profile || 'eutrofico', gender);
       
       if (supabaseData?.fa_valor) {
         activityFactor = supabaseData.fa_valor;
-        console.log('[GET] Using Supabase F.A.:', activityFactor);
+        console.log('[GET] 📊 Using Supabase F.A.:', activityFactor);
       } else {
-        // PRIORITY 3: Fallback to hardcoded
+        // PRIORITY 4: Fallback to hardcoded
         activityFactor = ACTIVITY_FACTORS[activityLevel];
-        console.log('[GET] Supabase returned null, using fallback F.A.:', activityFactor);
+        console.log('[GET] ⚠️ Supabase returned null, using fallback F.A.:', activityFactor);
       }
     } catch (error) {
-      console.error('[GET] Error fetching from Supabase, using fallback:', error);
+      console.error('[GET] ❌ Error fetching from Supabase, using fallback:', error);
       activityFactor = ACTIVITY_FACTORS[activityLevel];
     }
   } 
-  // PRIORITY 3: Fallback
+  // PRIORITY 4: Fallback
   else {
     activityFactor = ACTIVITY_FACTORS[activityLevel];
-    console.log('[GET] Using fallback F.A.:', activityFactor);
+    console.log('[GET] ⚠️ Using fallback F.A.:', activityFactor);
   }
   
-  return Math.round(tmb * activityFactor);
+  const get = Math.round(tmb * activityFactor);
+  console.log(`[GET] 🎯 FINAL: TMB ${tmb} × F.A. ${activityFactor} = ${get} kcal`);
+  return get;
 }
 
 /**
