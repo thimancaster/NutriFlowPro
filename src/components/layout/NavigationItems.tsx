@@ -26,10 +26,10 @@ export const navigationItems = [
     description: 'Gerenciar pacientes'
   },
   {
-    title: 'Consulta',
+    title: 'Atendimento',
     icon: FileText,
-    href: '/consultation',
-    description: 'Fluxo completo de consulta nutricional'
+    href: '/atendimento',
+    description: 'Fluxo completo de atendimento nutricional'
   },
   {
     title: 'Calculadora',
