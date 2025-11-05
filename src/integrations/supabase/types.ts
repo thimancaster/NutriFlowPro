@@ -1810,14 +1810,22 @@ export type Database = {
         Returns: {
           categoria: string
           cho_g_por_referencia: number
+          descricao_curta: string
+          fibra_g_por_referencia: number
           id: string
           is_favorite: boolean
           kcal_por_referencia: number
+          keywords: string[]
           lip_g_por_referencia: number
           medida_padrao_referencia: string
           nome: string
           peso_referencia_g: number
+          popularidade: number
+          preparo_sugerido: string
           ptn_g_por_referencia: number
+          sodio_mg_por_referencia: number
+          subcategoria: string
+          tipo_refeicao_sugerida: string[]
           usage_count: number
         }[]
       }

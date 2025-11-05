@@ -41,6 +41,7 @@ const MealPlans = React.lazy(() => import("@/pages/MealPlans"));
 const MealPlanView = React.lazy(() => import("@/pages/MealPlanView"));
 const ClinicalConsultation = React.lazy(() => import("@/pages/ClinicalConsultation"));
 const MealPlanBuilder = React.lazy(() => import("@/pages/MealPlanBuilder"));
+const MealPlanBuilderV2 = React.lazy(() => import("@/pages/MealPlanBuilderV2"));
 
 const AppRoutes = () => {
 	return (
@@ -105,6 +106,14 @@ const AppRoutes = () => {
 					element={
 						<Suspense fallback={<LoadingSpinner />}>
 							<MealPlanBuilder />
+						</Suspense>
+					}
+				/>
+				<Route
+					path="meal-plan-builder-v2"
+					element={
+						<Suspense fallback={<LoadingSpinner />}>
+							<MealPlanBuilderV2 />
 						</Suspense>
 					}
 				/>

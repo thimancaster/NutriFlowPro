@@ -141,7 +141,7 @@ export async function getUserMostUsedFoods(
     });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as AlimentoV2[];
   } catch (error) {
     console.error('Error getting most used foods:', error);
     return [];
