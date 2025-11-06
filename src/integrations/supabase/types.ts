@@ -657,14 +657,14 @@ export type Database = {
             foreignKeyName: "food_substitutions_food_id_fkey"
             columns: ["food_id"]
             isOneToOne: false
-            referencedRelation: "foods"
+            referencedRelation: "foods_legacy"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "food_substitutions_substitute_id_fkey"
             columns: ["substitute_id"]
             isOneToOne: false
-            referencedRelation: "foods"
+            referencedRelation: "foods_legacy"
             referencedColumns: ["id"]
           },
         ]
@@ -698,7 +698,7 @@ export type Database = {
           },
         ]
       }
-      foods: {
+      foods_legacy: {
         Row: {
           allergens: string[] | null
           availability: string | null
@@ -932,7 +932,7 @@ export type Database = {
             foreignKeyName: "meal_plan_items_food_id_fkey"
             columns: ["food_id"]
             isOneToOne: false
-            referencedRelation: "foods"
+            referencedRelation: "foods_legacy"
             referencedColumns: ["id"]
           },
           {
