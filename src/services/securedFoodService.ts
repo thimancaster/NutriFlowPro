@@ -82,7 +82,7 @@ export const getFoodDetailsSecurely = async (foodId: string) => {
 
   try {
     const { data, error } = await supabase
-      .from('foods')
+      .from('foods_legacy')
       .select('*')
       .eq('id', foodId)
       .single();

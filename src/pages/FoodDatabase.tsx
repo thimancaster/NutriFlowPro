@@ -7,7 +7,6 @@ import { Database, Search, TrendingUp, Award, Brain } from 'lucide-react';
 import EnhancedFoodSearch from '@/components/food-database/EnhancedFoodSearch';
 import FoodDetails from '@/components/food-database/FoodDetails';
 import NutritionalAnalysis from '@/components/food-database/NutritionalAnalysis';
-import RecommendationEngine from '@/components/food-database/RecommendationEngine';
 import TrendAnalysisDashboard from '@/components/food-database/TrendAnalysisDashboard';
 import GamificationSystem from '@/components/food-database/GamificationSystem';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -98,10 +97,19 @@ const FoodDatabase = () => {
             </TabsContent>
 
             <TabsContent value="recommendations" className="space-y-6">
-              <RecommendationEngine 
-                patientProfile={mockPatientProfile}
-                onFoodSelect={handleFoodSelect}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Sistema de Recomendações
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">
+                    Sistema de recomendações em desenvolvimento. Em breve você terá sugestões inteligentes baseadas no perfil do paciente.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="trends" className="space-y-6">

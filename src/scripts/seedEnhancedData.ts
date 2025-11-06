@@ -1,16 +1,16 @@
 
 import { supabase } from '../integrations/supabase/client';
-import { seedEnhancedFoodData } from '../utils/seedDataUtils';
+import { seedAllFoods } from '../utils/seedFoodsData';
 
 /**
- * Script to seed enhanced food data with new nutritional information
+ * Script to seed enhanced food data with TACO nutritional information
  */
 const seedEnhancedDatabase = async (): Promise<void> => {
   try {
     console.log('Starting enhanced database seeding...');
     
-    // Seed enhanced food data
-    await seedEnhancedFoodData();
+    // Seed all foods including 200+ TACO foods
+    await seedAllFoods();
     
     console.log('Enhanced database seeding completed successfully');
   } catch (error) {

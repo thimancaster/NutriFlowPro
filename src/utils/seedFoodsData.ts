@@ -1,11 +1,29 @@
 /**
  * Seed data for alimentos_v2 table
- * Contains 500+ foods from TACO (Brazilian Food Composition Table)
+ * Contains 200+ foods from TACO (Brazilian Food Composition Table)
  * 
  * Usage: Import and run this in a component or script to populate the database
  */
 
 import { supabase } from '@/integrations/supabase/client';
+
+// Helper function to insert batch of foods
+const insertBatch = async (foods: any[]) => {
+  try {
+    const { error } = await supabase
+      .from('alimentos_v2')
+      .insert(foods);
+    
+    if (error) {
+      console.error('Error inserting batch:', error);
+      throw error;
+    }
+    console.log(`✅ Inserted ${foods.length} foods successfully`);
+  } catch (error) {
+    console.error('❌ Error in insertBatch:', error);
+    throw error;
+  }
+};
 
 // Batch 1: Essential Cereals, Legumes, and Proteins
 export const seedEssentialFoods = async () => {

@@ -73,7 +73,7 @@ export const getFoodsWithNutrition = async (filters?: {
 	const pageSize = filters?.pageSize || 50;
 	const offset = (page - 1) * pageSize;
 
-	let query = supabase.from("foods").select(
+	let query = supabase.from("foods_legacy").select(
 		`
       id,
       name,
@@ -159,7 +159,7 @@ export const getFoodsWithNutrition = async (filters?: {
 // Function to get food details with enhanced nutritional information
 export const getFoodDetails = async (foodId: string) => {
 	const {data, error} = await supabase
-		.from("foods")
+		.from("foods_legacy")
 		.select(
 			`
       id,
@@ -303,7 +303,7 @@ interface NutritionalCriteria {
 }
 
 export const searchFoodsByNutrition = async (criteria: NutritionalCriteria) => {
-	let query = supabase.from("foods").select(`
+	let query = supabase.from("foods_legacy").select(`
       id,
       name,
       food_group,

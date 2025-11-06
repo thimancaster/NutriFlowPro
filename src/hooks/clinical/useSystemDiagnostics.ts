@@ -36,6 +36,9 @@ export const useSystemDiagnostics = () => {
 
   const testTableAccess = async (tableName: KnownTable): Promise<boolean> => {
     try {
+      // Skip legacy 'foods' table - use 'alimentos_v2' instead
+      if (tableName === 'foods') return true;
+      
       const { error } = await supabase
         .from(tableName)
         .select('count')

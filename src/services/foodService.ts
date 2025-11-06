@@ -1,3 +1,11 @@
+/**
+ * ⚠️ DEPRECATED - Use enhancedFoodSearchService.ts instead
+ * This service is kept for backward compatibility with legacy code
+ * All new code should use: @/services/enhancedFoodSearchService
+ * 
+ * This service now queries foods_legacy table for compatibility
+ */
+
 import {supabase} from "@/integrations/supabase/client";
 
 export interface Food {
@@ -67,7 +75,7 @@ export class FoodService {
 	 * Helper function to build the Supabase query with filters
 	 */
 	private static buildQuery(filters: FoodSearchFilters) {
-		let query = supabase.from("foods").select("*");
+		let query = supabase.from("foods_legacy").select("*");
 		console.log("🔨 Building query with filters:", filters);
 
 		// Filtro por nome
@@ -280,7 +288,7 @@ export class FoodService {
 	 */
 	static async getFoodById(id: string): Promise<Food | null> {
 		try {
-			const {data, error} = await supabase.from("foods").select("*").eq("id", id).single();
+			const {data, error} = await supabase.from("foods_legacy").select("*").eq("id", id).single();
 
 			if (error) {
 				throw error;
@@ -315,7 +323,7 @@ export class FoodService {
 	static async getPopularFoods(limit: number = 20): Promise<Food[]> {
 		try {
 			const {data, error} = await supabase
-				.from("foods")
+		.from("foods_legacy")
 				.select("*")
 				.in("food_group", ["proteinas", "frutas", "cereais_e_graos", "vegetais"])
 				.order("sustainability_score", {ascending: false})

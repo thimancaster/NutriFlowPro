@@ -14,10 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Utensils, ArrowLeft, Plus, Minus, Search } from 'lucide-react';
 import { useNutritionWorkflow } from '@/contexts/NutritionWorkflowContext';
 import { calculateMealNutrition } from '@/utils/calculations';
-import { supabase } from '@/integrations/supabase/client';
+import { searchFoodsEnhanced, type AlimentoV2 } from '@/services/enhancedFoodSearchService';
 
 // Types
-interface Food {
+interface MealFood {
   id: string;
   name: string;
   calories: number;
@@ -26,9 +26,6 @@ interface Food {
   fats: number;
   portion_size: number;
   portion_unit: string;
-}
-
-interface MealFood extends Food {
   portion: number; // Multiplicador da porção padrão
 }
 
@@ -44,7 +41,7 @@ export const MealCompositionStep: React.FC = () => {
   } = useNutritionWorkflow();
 
   // State
-  const [foods, setFoods] = useState<Food[]>([]);
+  const [foods, setFoods] = useState<AlimentoV2[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMealIndex, setSelectedMealIndex] = useState(0);
   const [mealFoods, setMealFoods] = useState<MealFood[][]>([]);
@@ -58,27 +55,18 @@ export const MealCompositionStep: React.FC = () => {
     }
   }, [macroDefinition, mealFoods.length]);
 
-  // Load foods from Supabase
+  // Load foods using enhanced search
   const loadFoods = async (query = '') => {
     setIsLoadingFoods(true);
     try {
-      let queryBuilder = supabase
-        .from('foods')
-        .select('id, name, calories, protein, carbs, fats, portion_size, portion_unit');
-
-      if (query.trim()) {
-        queryBuilder = queryBuilder.ilike('name', `%${query}%`);
-      }
-
-      const { data, error } = await queryBuilder
-        .order('name')
-        .limit(50);
-
-      if (error) throw error;
-      
-      setFoods(data || []);
+      const result = await searchFoodsEnhanced({ 
+        query: query || undefined,
+        limit: 50 
+      });
+      setFoods(result.foods);
     } catch (error) {
       console.error('Erro ao carregar alimentos:', error);
+      setFoods([]);
     } finally {
       setIsLoadingFoods(false);
     }
@@ -90,9 +78,16 @@ export const MealCompositionStep: React.FC = () => {
   }, [searchQuery]);
 
   // Add food to current meal
-  const addFoodToMeal = (food: Food) => {
+  const addFoodToMeal = (food: AlimentoV2) => {
     const mealFood: MealFood = {
-      ...food,
+      id: food.id,
+      name: food.nome,
+      calories: food.kcal_por_referencia,
+      protein: food.ptn_g_por_referencia,
+      carbs: food.cho_g_por_referencia,
+      fats: food.lip_g_por_referencia,
+      portion_size: food.peso_referencia_g,
+      portion_unit: food.medida_padrao_referencia,
       portion: 1 // Porção padrão
     };
 
@@ -224,11 +219,11 @@ export const MealCompositionStep: React.FC = () => {
                 {foods.map((food) => (
                   <div key={food.id} className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50">
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{food.name}</p>
+                      <p className="font-medium text-sm">{food.nome}</p>
                       <p className="text-xs text-gray-500">
-                        {food.calories} kcal | P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
+                        {food.kcal_por_referencia} kcal | P: {food.ptn_g_por_referencia}g | C: {food.cho_g_por_referencia}g | G: {food.lip_g_por_referencia}g
                         <br />
-                        Porção: {food.portion_size}{food.portion_unit}
+                        Porção: {food.peso_referencia_g}g ({food.medida_padrao_referencia})
                       </p>
                     </div>
                     <Button
