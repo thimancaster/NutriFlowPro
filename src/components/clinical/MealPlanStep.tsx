@@ -10,11 +10,6 @@ import {usePatient} from "@/contexts/patient/PatientContext";
 import {useAuth} from "@/contexts/auth/AuthContext";
 import {useMealPlanCalculations, Refeicao, AlimentoV2} from "@/hooks/useMealPlanCalculations";
 import {useMealPlanExport} from "@/hooks/useMealPlanExport";
-import {
-	persistCompleteMealPlan,
-	addItemToRefeicao,
-	deleteItemRefeicao,
-} from "@/services/mealPlanPersistenceService";
 import {useToast} from "@/hooks/use-toast";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {ScrollArea} from "@/components/ui/scroll-area";
@@ -230,10 +225,11 @@ const MealPlanStep: React.FC = () => {
 		const refeicaoId = savedRefeicaoIds[activeRefeicaoIndex];
 		if (refeicaoId) {
 			try {
-				await addItemToRefeicao(refeicaoId, item);
-				console.log("[MEAL_PLAN] Item added to Supabase");
+				// TODO: Migrate to new meal_plans/meal_plan_items structure
+				// await addItemToRefeicao(refeicaoId, item);
+				console.log("[MEAL_PLAN] Item added locally (DB sync disabled)");
 			} catch (error) {
-				console.error("[MEAL_PLAN] Error adding item to Supabase:", error);
+				console.error("[MEAL_PLAN] Error adding item:", error);
 				toast({
 					title: "Aviso",
 					description: "Item adicionado localmente, mas não foi salvo no banco.",
@@ -266,14 +262,15 @@ const MealPlanStep: React.FC = () => {
 		// If item has an ID (was saved), delete from Supabase
 		if (item.id) {
 			try {
-				await deleteItemRefeicao(item.id);
-				console.log("[MEAL_PLAN] Item deleted from Supabase");
+				// TODO: Migrate to new meal_plans/meal_plan_items structure
+				// await deleteItemRefeicao(item.id);
+				console.log("[MEAL_PLAN] Item deleted locally (DB sync disabled)");
 				toast({
 					title: "Item Removido",
 					description: "Item removido do plano",
 				});
 			} catch (error) {
-				console.error("[MEAL_PLAN] Error deleting item from Supabase:", error);
+				console.error("[MEAL_PLAN] Error deleting item:", error);
 				toast({
 					title: "Aviso",
 					description: "Item removido localmente, mas erro ao deletar do banco.",
@@ -315,41 +312,12 @@ const MealPlanStep: React.FC = () => {
 			const choPercentual = ((choG * 4) / totalCalories) * 100;
 			const lipPercentual = ((lipG * 9) / totalCalories) * 100;
 
-			// Save to Supabase
-			console.log('[SAVE] Calling persistCompleteMealPlan...');
-			const result = await persistCompleteMealPlan({
-				user_id: user.id,
-				patient_id: activePatient.id,
-				calculation_id: consultationData.id,
-				vet_kcal: consultationData.results.vet,
-				ptn_g_dia: ptnG,
-				ptn_kcal: ptnG * 4,
-				ptn_valor: 1.6, // Default value or from input
-				ptn_tipo_definicao: "g_kg",
-				ptn_percentual: ptnPercentual,
-				cho_g_dia: choG,
-				cho_kcal: choG * 4,
-				cho_percentual: choPercentual,
-				lip_g_dia: lipG,
-				lip_kcal: lipG * 9,
-				lip_valor: 1.0, // Default value or from input
-				lip_tipo_definicao: "g_kg",
-				lip_percentual: lipPercentual,
-				refeicoes: refeicoes.map((ref, idx) => ({
-					nome_refeicao: ref.nome,
-					numero_refeicao: ref.numero,
-					horario_sugerido: ref.horario_sugerido,
-					ptn_percentual: macroDistribution.ptn[idx] * 100,
-					cho_percentual: macroDistribution.cho[idx] * 100,
-					lip_percentual: macroDistribution.lip[idx] * 100,
-					itens: ref.itens,
-				})),
-			});
-
-			console.log('[SAVE] Persistence successful:', result);
-
-			// Store refeicao IDs for future operations
-			setSavedRefeicaoIds(result.refeicaoIds);
+			// TODO: Migrate to new meal_plans/meal_plan_items structure
+			// Save to Supabase (disabled - needs migration)
+			console.log('[SAVE] Meal plan saved locally (DB sync disabled)');
+			
+			// Store empty IDs for now
+			setSavedRefeicaoIds([]);
 
 			// Update context
 			updateConsultationData({

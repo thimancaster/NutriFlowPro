@@ -32,6 +32,7 @@ import Settings from "@/pages/Settings";
 import PatientAnthropometry from "@/pages/PatientAnthropometry";
 import PatientHistory from "@/pages/PatientHistory";
 import SystemDebug from "@/pages/SystemDebug";
+import AdminPanel from "@/pages/AdminPanel";
 
 // Lazy load some other pages
 const PatientNew = React.lazy(() => import("@/pages/PatientNew"));
@@ -145,6 +146,7 @@ const AppRoutes = () => {
 				<Route path="subscription" element={<Subscription />} />
 				<Route path="add-testimonial" element={<AddTestimonial />} />
 				<Route path="system-debug" element={<SystemDebug />} />
+				<Route path="admin" element={<AdminPanel />} />
 			</Route>
 
 			{/* Default fallback - always last */}

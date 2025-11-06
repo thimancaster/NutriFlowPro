@@ -31,3 +31,7 @@ site_url = "http://localhost:8080"
 # O webhook do Stripe não precisa de autenticação JWT
 [functions.stripe-webhook]
 verify_jwt = false
+
+# Edge function para seed de alimentos TACO (requer autenticação)
+[functions.seed-taco-foods]
+verify_jwt = true

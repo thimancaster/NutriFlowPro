@@ -19,7 +19,8 @@ import {
   Settings,
   FileText,
   MessageSquare,
-  Stethoscope // New icon for unified consultation
+  Stethoscope, // New icon for unified consultation
+  Shield // Admin icon
 } from "lucide-react";
 
 const menuItems = [
@@ -41,6 +42,12 @@ const menuItems = [
   { icon: Calendar, label: "Consultas", path: "/appointments" },
   { icon: Settings, label: "Configurações", path: "/settings" },
   { icon: MessageSquare, label: "Depoimentos", path: "/testimonials" },
+  { 
+    icon: Shield, 
+    label: "Admin", 
+    path: "/admin",
+    description: "Painel administrativo"
+  },
 ];
 
 export function AppSidebar() {
