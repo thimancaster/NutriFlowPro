@@ -1,46 +1,56 @@
 /**
  * UNIFIED MEAL PLAN EDITOR
- * Editor completo com drag & drop, busca inline e auto-save
+ * Editor unificado de plano alimentar com drag & drop, validação inteligente e auto-save
+ * 
+ * FASE 2 - SPRINT U1: Refatorado para usar UnifiedNutritionContext
  */
 
 import React, { useState } from 'react';
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, X, Plus, Sparkles } from 'lucide-react';
-import { ConsolidatedMealPlan, ConsolidatedMeal, MealAssemblyFood } from '@/types/mealPlanTypes';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAutoSave } from '@/hooks/meal-plan/useAutoSave';
+import { Progress } from '@/components/ui/progress';
+import { ConsolidatedMeal, MealAssemblyFood } from '@/types/mealPlanTypes';
 import DraggableFoodItem from './DraggableFoodItem';
 import InlineFoodSearch from './InlineFoodSearch';
-import { Progress } from '@/components/ui/progress';
+import { Plus, Save, X, Sparkles } from 'lucide-react';
+import { useAutoSave } from '@/hooks/meal-plan/useAutoSave';
 import IntelligentValidationPanel from './IntelligentValidationPanel';
+import { useUnifiedNutrition } from '@/contexts/UnifiedNutritionContext';
 
 interface UnifiedMealPlanEditorProps {
-  mealPlan: ConsolidatedMealPlan;
-  onUpdate: (updatedPlan: ConsolidatedMealPlan) => void;
   onSave?: () => void;
   onCancel?: () => void;
-  autoSaveEnabled?: boolean;
-  targets?: { calories: number; protein: number; carbs: number; fats: number };
+  targets?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
 }
 
 const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
-  mealPlan,
-  onUpdate,
   onSave,
   onCancel,
-  autoSaveEnabled = true,
   targets
 }) => {
-  const [editingPlan, setEditingPlan] = useState<ConsolidatedMealPlan>(mealPlan);
+  const { currentPlan, updatePlan, isSaving } = useUnifiedNutrition();
   const [searchingMealId, setSearchingMealId] = useState<string | null>(null);
 
-  // Auto-save
-  const { isSaving } = useAutoSave(editingPlan, { enabled: autoSaveEnabled });
+  if (!currentPlan) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Nenhum plano para editar
+      </div>
+    );
+  }
 
-  // Drag & drop sensors
+  // Auto-save
+  const { isSaving: autoSaving } = useAutoSave(currentPlan, { enabled: true });
+
+  // Sensors para drag & drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -49,81 +59,93 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
     })
   );
 
-  // Atualiza o plano e notifica o pai
-  const updatePlan = (updated: ConsolidatedMealPlan) => {
-    setEditingPlan(updated);
-    onUpdate(updated);
+  // Função para atualizar o plano no contexto
+  const updateLocalPlan = (updatedPlan: typeof currentPlan) => {
+    updatePlan(updatedPlan);
   };
 
-  // Recalcula totais de uma refeição
+  // Recalcular totais de uma refeição
   const recalculateMealTotals = (meal: ConsolidatedMeal): ConsolidatedMeal => {
-    const totalCalories = meal.foods.reduce((sum, f) => sum + f.calories, 0);
-    const totalProtein = meal.foods.reduce((sum, f) => sum + f.protein, 0);
-    const totalCarbs = meal.foods.reduce((sum, f) => sum + f.carbs, 0);
-    const totalFats = meal.foods.reduce((sum, f) => sum + f.fat, 0);
+    const totals = meal.foods.reduce(
+      (acc, food) => ({
+        calories: acc.calories + (food.calories || 0),
+        protein: acc.protein + (food.protein || 0),
+        carbs: acc.carbs + (food.carbs || 0),
+        fat: acc.fat + (food.fat || 0),
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
 
     return {
       ...meal,
-      totalCalories,
-      totalProtein,
-      totalCarbs,
-      totalFats,
-      total_calories: totalCalories,
-      total_protein: totalProtein,
-      total_carbs: totalCarbs,
-      total_fats: totalFats,
+      totalCalories: totals.calories,
+      totalProtein: totals.protein,
+      totalCarbs: totals.carbs,
+      totalFats: totals.fat,
     };
   };
 
-  // Recalcula totais do plano
-  const recalculatePlanTotals = (meals: ConsolidatedMeal[]): Partial<ConsolidatedMealPlan> => {
-    const total_calories = meals.reduce((sum, m) => sum + m.totalCalories, 0);
-    const total_protein = meals.reduce((sum, m) => sum + m.totalProtein, 0);
-    const total_carbs = meals.reduce((sum, m) => sum + m.totalCarbs, 0);
-    const total_fats = meals.reduce((sum, m) => sum + m.totalFats, 0);
+  // Recalcular totais do plano
+  const recalculatePlanTotals = (plan: typeof currentPlan) => {
+    const totals = plan.meals.reduce(
+      (acc, meal) => ({
+        calories: acc.calories + meal.totalCalories,
+        protein: acc.protein + meal.totalProtein,
+        carbs: acc.carbs + meal.totalCarbs,
+        fats: acc.fats + meal.totalFats,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
 
-    return { total_calories, total_protein, total_carbs, total_fats };
+    return {
+      ...plan,
+      total_calories: totals.calories,
+      total_protein: totals.protein,
+      total_carbs: totals.carbs,
+      total_fats: totals.fats,
+    };
   };
 
-  // Handler: Alterar quantidade
+  // Handler para mudar quantidade de um alimento
   const handleQuantityChange = (mealId: string, foodId: string, newQuantity: number) => {
-    const updatedMeals = editingPlan.meals.map(meal => {
+    const updatedMeals = currentPlan.meals.map((meal) => {
       if (meal.id !== mealId) return meal;
 
-      const updatedFoods = meal.foods.map(food => {
+      const updatedFoods = meal.foods.map((food) => {
         if (food.id !== foodId) return food;
 
-        const factor = newQuantity / food.quantity;
+        // Proporcionalmente atualizar os macros
+        const ratio = newQuantity / food.quantity;
         return {
           ...food,
           quantity: newQuantity,
-          calories: Math.round(food.calories * factor),
-          protein: Math.round(food.protein * factor * 10) / 10,
-          carbs: Math.round(food.carbs * factor * 10) / 10,
-          fat: Math.round(food.fat * factor * 10) / 10,
+          calories: food.calories * ratio,
+          protein: food.protein * ratio,
+          carbs: food.carbs * ratio,
+          fat: food.fat * ratio,
         };
       });
 
       return recalculateMealTotals({ ...meal, foods: updatedFoods });
     });
 
-    const totals = recalculatePlanTotals(updatedMeals);
-    updatePlan({ ...editingPlan, meals: updatedMeals, ...totals });
+    const updatedPlan = recalculatePlanTotals({ ...currentPlan, meals: updatedMeals });
+    updateLocalPlan(updatedPlan);
   };
 
-  // Handler: Remover alimento
+  // Handler para remover alimento
   const handleRemoveFood = (mealId: string, foodId: string) => {
-    const updatedMeals = editingPlan.meals.map(meal => {
+    const updatedMeals = currentPlan.meals.map((meal) => {
       if (meal.id !== mealId) return meal;
-      const updatedFoods = meal.foods.filter(f => f.id !== foodId);
+      const updatedFoods = meal.foods.filter((food) => food.id !== foodId);
       return recalculateMealTotals({ ...meal, foods: updatedFoods });
     });
 
-    const totals = recalculatePlanTotals(updatedMeals);
-    updatePlan({ ...editingPlan, meals: updatedMeals, ...totals });
+    const updatedPlan = recalculatePlanTotals({ ...currentPlan, meals: updatedMeals });
+    updateLocalPlan(updatedPlan);
   };
 
-  // Handler: Adicionar alimento
+  // Handler para adicionar alimento
   const handleAddFood = (mealId: string, food: any, quantity: number) => {
     const newFood: MealAssemblyFood = {
       id: `food-${Date.now()}-${Math.random()}`,
@@ -136,41 +158,37 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
       fat: Math.round((food.lipidios_g || 0) * quantity / 100 * 10) / 10,
     };
 
-    const updatedMeals = editingPlan.meals.map(meal => {
+    const updatedMeals = currentPlan.meals.map((meal) => {
       if (meal.id !== mealId) return meal;
       const updatedFoods = [...meal.foods, newFood];
       return recalculateMealTotals({ ...meal, foods: updatedFoods });
     });
 
-    const totals = recalculatePlanTotals(updatedMeals);
-    updatePlan({ ...editingPlan, meals: updatedMeals, ...totals });
+    const updatedPlan = recalculatePlanTotals({ ...currentPlan, meals: updatedMeals });
+    updateLocalPlan(updatedPlan);
     setSearchingMealId(null);
   };
 
-  // Handler: Drag & drop
+  // Handler para drag & drop
   const handleDragEnd = (event: DragEndEvent, mealId: string) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const updatedMeals = editingPlan.meals.map(meal => {
+    const updatedMeals = currentPlan.meals.map((meal) => {
       if (meal.id !== mealId) return meal;
 
-      const oldIndex = meal.foods.findIndex(f => f.id === active.id);
-      const newIndex = meal.foods.findIndex(f => f.id === over.id);
+      const oldIndex = meal.foods.findIndex((f) => f.id === active.id);
+      const newIndex = meal.foods.findIndex((f) => f.id === over.id);
 
-      if (oldIndex === -1 || newIndex === -1) return meal;
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedFoods = arrayMove(meal.foods, oldIndex, newIndex);
+        return { ...meal, foods: reorderedFoods };
+      }
 
-      const reorderedFoods = arrayMove(meal.foods, oldIndex, newIndex);
-      return { ...meal, foods: reorderedFoods };
+      return meal;
     });
 
-    updatePlan({ ...editingPlan, meals: updatedMeals });
-  };
-
-  // Calcula progresso em relação aos targets
-  const calculateProgress = (current: number, target: number) => {
-    if (!target) return 0;
-    return Math.min((current / target) * 100, 100);
+    updateLocalPlan({ ...currentPlan, meals: updatedMeals });
   };
 
   return (
@@ -178,18 +196,18 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
       {/* Validação Inteligente */}
       {targets && (
         <IntelligentValidationPanel
-          mealPlan={editingPlan}
+          mealPlan={currentPlan}
           targets={targets}
         />
       )}
 
-      {/* Totais do Plano com Progress Bars */}
+      {/* Totais Gerais */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              Totais do Plano
-              {isSaving && (
+              Resumo Nutricional Total
+              {(isSaving || autoSaving) && (
                 <Badge variant="secondary" className="gap-1">
                   <Sparkles className="h-3 w-3 animate-pulse" />
                   Salvando...
@@ -200,48 +218,52 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Calorias</p>
-                <p className="text-lg font-bold">{Math.round(editingPlan.total_calories)} kcal</p>
-              </div>
-              {editingPlan.targets?.kcal && (
-                <Progress value={calculateProgress(editingPlan.total_calories, editingPlan.targets.kcal)} />
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Calorias</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_calories)} kcal</p>
+              {targets && (
+                <Progress
+                  value={(currentPlan.total_calories / targets.calories) * 100}
+                  className="mt-2 h-2"
+                />
               )}
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Proteína</p>
-                <p className="text-lg font-bold">{Math.round(editingPlan.total_protein)}g</p>
-              </div>
-              {editingPlan.targets?.protein_g && (
-                <Progress value={calculateProgress(editingPlan.total_protein, editingPlan.targets.protein_g)} />
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Proteína</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_protein)}g</p>
+              {targets && (
+                <Progress
+                  value={(currentPlan.total_protein / targets.protein) * 100}
+                  className="mt-2 h-2"
+                />
               )}
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Carboidrato</p>
-                <p className="text-lg font-bold">{Math.round(editingPlan.total_carbs)}g</p>
-              </div>
-              {editingPlan.targets?.carb_g && (
-                <Progress value={calculateProgress(editingPlan.total_carbs, editingPlan.targets.carb_g)} />
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Carboidrato</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_carbs)}g</p>
+              {targets && (
+                <Progress
+                  value={(currentPlan.total_carbs / targets.carbs) * 100}
+                  className="mt-2 h-2"
+                />
               )}
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Gordura</p>
-                <p className="text-lg font-bold">{Math.round(editingPlan.total_fats)}g</p>
-              </div>
-              {editingPlan.targets?.fat_g && (
-                <Progress value={calculateProgress(editingPlan.total_fats, editingPlan.targets.fat_g)} />
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Gordura</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_fats)}g</p>
+              {targets && (
+                <Progress
+                  value={(currentPlan.total_fats / targets.fats) * 100}
+                  className="mt-2 h-2"
+                />
               )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Refeições com Drag & Drop */}
-      {editingPlan.meals.map(meal => (
+      {/* Refeições */}
+      {currentPlan.meals.map((meal) => (
         <Card key={meal.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -261,9 +283,9 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
               collisionDetection={closestCenter}
               onDragEnd={(event) => handleDragEnd(event, meal.id)}
             >
-              <SortableContext items={meal.foods.map(f => f.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={meal.foods.map((f) => f.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
-                  {meal.foods.map(food => (
+                  {meal.foods.map((food) => (
                     <DraggableFoodItem
                       key={food.id}
                       food={food}

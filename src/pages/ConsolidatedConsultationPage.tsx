@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { MealPlanWorkflowProvider } from '@/contexts/MealPlanWorkflowContext';
+import { UnifiedNutritionProvider } from '@/contexts/UnifiedNutritionContext';
 import UnifiedClinicalWorkflow from '@/components/workflow/UnifiedClinicalWorkflow';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -28,13 +29,15 @@ const ConsolidatedConsultationPage: React.FC = () => {
   };
 
   return (
-    <MealPlanWorkflowProvider>
-      <div className="container mx-auto p-6 max-w-7xl">
-        <UnifiedClinicalWorkflow 
-          onComplete={handleWorkflowComplete}
-        />
-      </div>
-    </MealPlanWorkflowProvider>
+    <UnifiedNutritionProvider>
+      <MealPlanWorkflowProvider>
+        <div className="container mx-auto p-6 max-w-7xl">
+          <UnifiedClinicalWorkflow 
+            onComplete={handleWorkflowComplete}
+          />
+        </div>
+      </MealPlanWorkflowProvider>
+    </UnifiedNutritionProvider>
   );
 };
 

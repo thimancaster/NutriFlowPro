@@ -1,9 +1,11 @@
 /**
  * UNIFIED MEAL PLAN INTERFACE
  * Interface unificada para geração automática + edição de planos alimentares
+ * 
+ * FASE 2 - SPRINT U1: Refatorado para usar UnifiedNutritionContext
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import AutoGenerationPanel from './AutoGenerationPanel';
@@ -13,6 +15,7 @@ import MealPlanHistory from './MealPlanHistory';
 import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
 import { Wand2, Edit, Eye, History } from 'lucide-react';
+import { useUnifiedNutrition } from '@/contexts/UnifiedNutritionContext';
 
 interface UnifiedMealPlanInterfaceProps {
   patientId: string;
@@ -29,19 +32,22 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
   onSave,
   onCancel
 }) => {
-  const [currentPlan, setCurrentPlan] = useState<ConsolidatedMealPlan | null>(null);
+  const { currentPlan, initializeSession } = useUnifiedNutrition();
   const [activeTab, setActiveTab] = useState<'generate' | 'edit' | 'preview' | 'history'>('generate');
 
-  const handlePlanGenerated = (plan: ConsolidatedMealPlan) => {
-    setCurrentPlan(plan);
+  // Inicializar sessão quando o componente montar
+  useEffect(() => {
+    initializeSession(
+      { id: patientId, name: patientName },
+      calculationResults
+    );
+  }, [patientId, patientName, calculationResults, initializeSession]);
+
+  const handlePlanGenerated = () => {
     setActiveTab('edit');
   };
 
-  const handlePlanUpdated = (updatedPlan: ConsolidatedMealPlan) => {
-    setCurrentPlan(updatedPlan);
-  };
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (currentPlan && onSave) {
       onSave(currentPlan);
     }
@@ -78,9 +84,6 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
 
         <TabsContent value="generate" className="p-6">
           <AutoGenerationPanel
-            patientId={patientId}
-            patientName={patientName}
-            calculationResults={calculationResults}
             onPlanGenerated={handlePlanGenerated}
           />
         </TabsContent>
@@ -88,8 +91,6 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
         <TabsContent value="edit" className="p-6">
           {currentPlan ? (
             <UnifiedMealPlanEditor
-              mealPlan={currentPlan}
-              onUpdate={handlePlanUpdated}
               onSave={handleSave}
               onCancel={onCancel}
               targets={targets}
@@ -104,8 +105,6 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
         <TabsContent value="preview" className="p-6">
           {currentPlan ? (
             <MealPlanPreview
-              mealPlan={currentPlan}
-              patientName={patientName}
               onEdit={() => setActiveTab('edit')}
               onSave={handleSave}
             />
@@ -118,13 +117,7 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
 
         <TabsContent value="history" className="p-6">
           {currentPlan?.id ? (
-            <MealPlanHistory
-              mealPlanId={currentPlan.id}
-              onVersionRestore={() => {
-                // Recarregar o plano após restauração
-                setActiveTab('edit');
-              }}
-            />
+            <MealPlanHistory onVersionRestore={() => setActiveTab('edit')} />
           ) : (
             <div className="text-center text-muted-foreground py-12">
               <History className="h-12 w-12 mx-auto mb-2 opacity-50" />

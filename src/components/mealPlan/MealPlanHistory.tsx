@@ -1,6 +1,8 @@
 /**
  * MEAL PLAN HISTORY
  * Visualização de histórico e versionamento de planos alimentares
+ * 
+ * FASE 2 - SPRINT U1: Refatorado para usar UnifiedNutritionContext
  */
 
 import React from 'react';
@@ -8,20 +10,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { History, RotateCcw, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { History, RotateCcw, Clock } from 'lucide-react';
 import { useMealPlanVersioning } from '@/hooks/meal-plan/useMealPlanVersioning';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useUnifiedNutrition } from '@/contexts/UnifiedNutritionContext';
 
 interface MealPlanHistoryProps {
-  mealPlanId: string;
   onVersionRestore?: () => void;
 }
 
 const MealPlanHistory: React.FC<MealPlanHistoryProps> = ({
-  mealPlanId,
   onVersionRestore
 }) => {
+  const { currentPlan } = useUnifiedNutrition();
+  
   const {
     versions,
     changes,
@@ -32,7 +35,16 @@ const MealPlanHistory: React.FC<MealPlanHistoryProps> = ({
     isRestoring,
     setSelectedVersion,
     restoreVersion,
-  } = useMealPlanVersioning(mealPlanId);
+  } = useMealPlanVersioning(currentPlan?.id || '');
+
+  if (!currentPlan?.id) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
+        <p>Salve o plano para ver o histórico de versões</p>
+      </div>
+    );
+  }
 
   const handleRestore = (versionNumber: number) => {
     restoreVersion(versionNumber);

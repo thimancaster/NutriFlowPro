@@ -1,6 +1,8 @@
 /**
  * AUTO GENERATION PANEL
  * Painel para geração automática de planos alimentares
+ * 
+ * FASE 2 - SPRINT U1: Refatorado para usar UnifiedNutritionContext
  */
 
 import React, { useState } from 'react';
@@ -10,31 +12,25 @@ import { Progress } from '@/components/ui/progress';
 import { Wand2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
-import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
-import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useUnifiedNutrition } from '@/contexts/UnifiedNutritionContext';
 import PatientPreferencesPanel from './PatientPreferencesPanel';
 import SmartTemplatesPanel from './SmartTemplatesPanel';
 
 interface AutoGenerationPanelProps {
-  patientId: string;
-  patientName: string;
-  calculationResults: CalculationResult;
-  onPlanGenerated: (plan: ConsolidatedMealPlan) => void;
+  onPlanGenerated?: () => void;
 }
 
 const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
-  patientId,
-  patientName,
-  calculationResults,
   onPlanGenerated
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { calculationResults, activePatientData, setCurrentPlan } = useUnifiedNutrition();
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
-  const [generatedPlan, setGeneratedPlan] = useState<ConsolidatedMealPlan | null>(null);
+  const [generationComplete, setGenerationComplete] = useState(false);
 
   const steps = [
     { label: 'Analisando necessidades nutricionais...', duration: 500 },
@@ -45,10 +41,10 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
   ];
 
   const handleGenerate = async () => {
-    if (!user?.id) {
+    if (!user?.id || !calculationResults || !activePatientData) {
       toast({
         title: 'Erro',
-        description: 'Usuário não autenticado',
+        description: 'Dados insuficientes para gerar plano',
         variant: 'destructive'
       });
       return;
@@ -56,7 +52,7 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
 
     setIsGenerating(true);
     setProgress(0);
-    setGeneratedPlan(null);
+    setGenerationComplete(false);
 
     try {
       // Simular progresso com as etapas
@@ -71,16 +67,19 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
       // Gerar plano
       const plan = await MealPlanOrchestrator.generateAutomaticPlan({
         userId: user.id,
-        patientId,
+        patientId: activePatientData.id,
         calculationResults,
         patientData: {
-          name: patientName
+          name: activePatientData.name
         }
       });
 
       setProgress(100);
       setCurrentStep('Plano gerado com sucesso!');
-      setGeneratedPlan(plan);
+      setGenerationComplete(true);
+      
+      // Atualizar o contexto com o plano gerado
+      setCurrentPlan(plan);
 
       toast({
         title: 'Sucesso!',
@@ -89,7 +88,7 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
 
       // Chamar callback após um delay
       setTimeout(() => {
-        onPlanGenerated(plan);
+        onPlanGenerated?.();
       }, 1000);
       
     } catch (error: any) {
@@ -103,6 +102,14 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
     }
   };
 
+  if (!calculationResults || !activePatientData) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Dados insuficientes para gerar plano alimentar
+      </div>
+    );
+  }
+
   const targets = {
     calories: calculationResults.vet || 2000,
     protein: calculationResults.macros.protein.grams || 100,
@@ -114,7 +121,7 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
     <div className="space-y-6">
       {/* Preferências do Paciente */}
       <PatientPreferencesPanel
-        patientId={patientId}
+        patientId={activePatientData.id}
         onPreferencesLoaded={(prefs) => console.log('Preferências carregadas:', prefs)}
       />
 
@@ -169,7 +176,7 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
           )}
 
           {/* Sucesso */}
-          {generatedPlan && !isGenerating && (
+          {generationComplete && !isGenerating && (
             <div className="flex items-center justify-center gap-2 text-green-600">
               <CheckCircle2 className="h-5 w-5" />
               <p className="font-medium">Plano gerado com sucesso!</p>

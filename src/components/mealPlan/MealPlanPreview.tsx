@@ -1,30 +1,38 @@
 /**
  * MEAL PLAN PREVIEW
  * Visualização final do plano alimentar
+ * 
+ * FASE 2 - SPRINT U1: Refatorado para usar UnifiedNutritionContext
  */
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { Edit, Save, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useUnifiedNutrition } from '@/contexts/UnifiedNutritionContext';
 
 interface MealPlanPreviewProps {
-  mealPlan: ConsolidatedMealPlan;
-  patientName: string;
   onEdit?: () => void;
   onSave?: () => void;
   onDownload?: () => void;
 }
 
 const MealPlanPreview: React.FC<MealPlanPreviewProps> = ({
-  mealPlan,
-  patientName,
   onEdit,
   onSave,
   onDownload
 }) => {
+  const { currentPlan, activePatientData } = useUnifiedNutrition();
+
+  if (!currentPlan || !activePatientData) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Nenhum plano para visualizar
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -32,9 +40,9 @@ const MealPlanPreview: React.FC<MealPlanPreviewProps> = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Plano Alimentar - {patientName}</CardTitle>
+              <CardTitle>Plano Alimentar - {activePatientData.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {new Date(mealPlan.date || '').toLocaleDateString('pt-BR')}
+                {new Date(currentPlan.date || '').toLocaleDateString('pt-BR')}
               </p>
             </div>
             <div className="flex gap-2">
@@ -70,26 +78,26 @@ const MealPlanPreview: React.FC<MealPlanPreviewProps> = ({
           <div className="grid grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Total de Calorias</p>
-              <p className="text-2xl font-bold">{Math.round(mealPlan.total_calories)} kcal</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_calories)} kcal</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Proteína</p>
-              <p className="text-2xl font-bold">{Math.round(mealPlan.total_protein)}g</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_protein)}g</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Carboidrato</p>
-              <p className="text-2xl font-bold">{Math.round(mealPlan.total_carbs)}g</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_carbs)}g</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Gordura</p>
-              <p className="text-2xl font-bold">{Math.round(mealPlan.total_fats)}g</p>
+              <p className="text-2xl font-bold">{Math.round(currentPlan.total_fats)}g</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Refeições */}
-      {mealPlan.meals.map(meal => (
+      {currentPlan.meals.map(meal => (
         <Card key={meal.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -130,13 +138,13 @@ const MealPlanPreview: React.FC<MealPlanPreviewProps> = ({
       ))}
 
       {/* Notas */}
-      {mealPlan.notes && (
+      {currentPlan.notes && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Observações</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">{mealPlan.notes}</p>
+            <p className="text-sm text-muted-foreground">{currentPlan.notes}</p>
           </CardContent>
         </Card>
       )}
