@@ -5,6 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AutoGenerationService } from './AutoGenerationService';
+import { PersistenceService, SaveOptions } from './PersistenceService';
 import { ConsolidatedMealPlan, MealPlanGenerationParams } from '@/types/mealPlanTypes';
 import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
 
@@ -82,63 +83,15 @@ export class MealPlanOrchestrator {
   }
 
   /**
-   * Salva um plano alimentar no banco de dados
+   * Salva um plano alimentar no banco de dados (usa PersistenceService)
    */
-  static async saveMealPlan(plan: ConsolidatedMealPlan): Promise<string> {
+  static async saveMealPlan(
+    plan: ConsolidatedMealPlan,
+    options: SaveOptions = {}
+  ): Promise<string> {
     try {
-      console.log('💾 Orchestrator: Salvando plano...');
-
-      // 1. Salvar meal_plan
-      const { data: mealPlanData, error: mealPlanError } = await supabase
-        .from('meal_plans')
-        .insert({
-          user_id: plan.user_id,
-          patient_id: plan.patient_id,
-          calculation_id: plan.calculation_id,
-          date: plan.date || new Date().toISOString().split('T')[0],
-          total_calories: plan.total_calories,
-          total_protein: plan.total_protein,
-          total_carbs: plan.total_carbs,
-          total_fats: plan.total_fats,
-          notes: plan.notes,
-          meals: {}, // Campo JSONB vazio por enquanto
-        })
-        .select()
-        .single();
-
-      if (mealPlanError) throw mealPlanError;
-      if (!mealPlanData) throw new Error('Nenhum plano criado');
-
-      const mealPlanId = mealPlanData.id;
-
-      // 2. Salvar meal_plan_items
-      const items = plan.meals.flatMap((meal, mealIndex) =>
-        meal.foods.map((food, foodIndex) => ({
-          meal_plan_id: mealPlanId,
-          meal_type: meal.type || `meal_${mealIndex}`,
-          food_id: food.id || null,
-          food_name: food.name,
-          quantity: food.quantity,
-          unit: food.unit,
-          calories: food.calories,
-          protein: food.protein,
-          carbs: food.carbs,
-          fats: food.fat,
-          order_index: foodIndex,
-        }))
-      );
-
-      if (items.length > 0) {
-        const { error: itemsError } = await supabase
-          .from('meal_plan_items')
-          .insert(items);
-
-        if (itemsError) throw itemsError;
-      }
-
-      console.log('✅ Orchestrator: Plano salvo com sucesso', mealPlanId);
-      return mealPlanId;
-      
+      console.log('💾 Orchestrator: Delegando salvamento para PersistenceService...');
+      return await PersistenceService.saveMealPlan(plan, options);
     } catch (error) {
       console.error('❌ Orchestrator: Erro ao salvar plano', error);
       throw error;

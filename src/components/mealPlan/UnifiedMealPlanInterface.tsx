@@ -7,11 +7,12 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import AutoGenerationPanel from './AutoGenerationPanel';
-import FluidMealEditor from './FluidMealEditor';
+import UnifiedMealPlanEditor from './UnifiedMealPlanEditor';
 import MealPlanPreview from './MealPlanPreview';
+import MealPlanHistory from './MealPlanHistory';
 import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
-import { Wand2, Edit, Eye } from 'lucide-react';
+import { Wand2, Edit, Eye, History } from 'lucide-react';
 
 interface UnifiedMealPlanInterfaceProps {
   patientId: string;
@@ -29,7 +30,7 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
   onCancel
 }) => {
   const [currentPlan, setCurrentPlan] = useState<ConsolidatedMealPlan | null>(null);
-  const [activeTab, setActiveTab] = useState<'generate' | 'edit' | 'preview'>('generate');
+  const [activeTab, setActiveTab] = useState<'generate' | 'edit' | 'preview' | 'history'>('generate');
 
   const handlePlanGenerated = (plan: ConsolidatedMealPlan) => {
     setCurrentPlan(plan);
@@ -49,7 +50,7 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
   return (
     <Card className="w-full">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="generate" className="gap-2">
             <Wand2 className="h-4 w-4" />
             Gerar Automático
@@ -61,6 +62,10 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
           <TabsTrigger value="preview" disabled={!currentPlan} className="gap-2">
             <Eye className="h-4 w-4" />
             Visualizar
+          </TabsTrigger>
+          <TabsTrigger value="history" disabled={!currentPlan?.id} className="gap-2">
+            <History className="h-4 w-4" />
+            Histórico
           </TabsTrigger>
         </TabsList>
 
@@ -75,7 +80,7 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
 
         <TabsContent value="edit" className="p-6">
           {currentPlan ? (
-            <FluidMealEditor
+            <UnifiedMealPlanEditor
               mealPlan={currentPlan}
               onUpdate={handlePlanUpdated}
               onSave={handleSave}
@@ -99,6 +104,23 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
           ) : (
             <div className="text-center text-muted-foreground py-12">
               Nenhum plano para visualizar
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history" className="p-6">
+          {currentPlan?.id ? (
+            <MealPlanHistory
+              mealPlanId={currentPlan.id}
+              onVersionRestore={() => {
+                // Recarregar o plano após restauração
+                setActiveTab('edit');
+              }}
+            />
+          ) : (
+            <div className="text-center text-muted-foreground py-12">
+              <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Salve o plano para ver o histórico de versões</p>
             </div>
           )}
         </TabsContent>

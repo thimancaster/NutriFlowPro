@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
+import { PersistenceService } from '@/services/mealPlan/PersistenceService';
 import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,26 +25,10 @@ export const useAutoSave = (
 
   const saveMutation = useMutation({
     mutationFn: async (plan: ConsolidatedMealPlan) => {
-      if (plan.id) {
-        // Atualizar plano existente através do Supabase diretamente
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { error } = await supabase
-          .from('meal_plans')
-          .update({
-            total_calories: plan.total_calories,
-            total_protein: plan.total_protein,
-            total_carbs: plan.total_carbs,
-            total_fats: plan.total_fats,
-            notes: plan.notes,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', plan.id);
-        
-        if (error) throw error;
-        return plan.id;
-      } else {
-        return await MealPlanOrchestrator.saveMealPlan(plan);
-      }
+      return await PersistenceService.saveMealPlan(plan, {
+        createVersion: true,
+        changeSummary: 'Auto-save',
+      });
     },
     onSuccess: () => {
       toast({
