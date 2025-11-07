@@ -125,21 +125,36 @@ export class AlimentoServiceUnified {
   }
 
   /**
-   * Busca alimentos culturalmente apropriados para uma refeição
+   * Busca alimentos culturalmente apropriados para uma refeição com variedade
    */
   static async getCulturallyAppropriate(mealType: MealType): Promise<AlimentoV2[]> {
     try {
-      // Buscar alimentos apropriados para o tipo de refeição
+      // Buscar alimentos apropriados com diversidade de categorias
       const { data, error } = await supabase
         .from('alimentos_v2')
         .select('*')
         .eq('ativo', true)
         .contains('tipo_refeicao_sugerida', [mealType])
         .order('popularidade', { ascending: false })
-        .limit(50); // Buscar mais opções para variedade
+        .limit(100); // Buscar pool maior para variedade
 
       if (error) throw error;
-      return data || [];
+      
+      // Distribuir por categoria para garantir variedade
+      const byCategory = (data || []).reduce((acc, food) => {
+        if (!acc[food.categoria]) acc[food.categoria] = [];
+        acc[food.categoria].push(food);
+        return acc;
+      }, {} as Record<string, AlimentoV2[]>);
+
+      // Selecionar os melhores de cada categoria
+      const selected: AlimentoV2[] = [];
+      Object.values(byCategory).forEach(foods => {
+        // Pegar os 3 melhores de cada categoria
+        selected.push(...foods.slice(0, 3));
+      });
+
+      return selected;
       
     } catch (error) {
       console.error('❌ Erro ao buscar alimentos culturais:', error);
