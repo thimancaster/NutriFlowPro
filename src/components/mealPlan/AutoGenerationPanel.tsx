@@ -13,6 +13,8 @@ import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import PatientPreferencesPanel from './PatientPreferencesPanel';
+import SmartTemplatesPanel from './SmartTemplatesPanel';
 
 interface AutoGenerationPanelProps {
   patientId: string;
@@ -101,8 +103,33 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
     }
   };
 
+  const targets = {
+    calories: calculationResults.vet || 2000,
+    protein: calculationResults.macros.protein.grams || 100,
+    carbs: calculationResults.macros.carbs.grams || 250,
+    fats: calculationResults.macros.fat.grams || 60,
+  };
+
   return (
     <div className="space-y-6">
+      {/* Preferências do Paciente */}
+      <PatientPreferencesPanel
+        patientId={patientId}
+        onPreferencesLoaded={(prefs) => console.log('Preferências carregadas:', prefs)}
+      />
+
+      {/* Templates Inteligentes */}
+      <SmartTemplatesPanel
+        targets={targets}
+        onSelectTemplate={(template) => {
+          toast({
+            title: "Template selecionado",
+            description: `Gerando plano baseado em: ${template.name}`,
+          });
+          // TODO: Integrar com geração usando template
+        }}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Geração Automática de Plano Alimentar</CardTitle>

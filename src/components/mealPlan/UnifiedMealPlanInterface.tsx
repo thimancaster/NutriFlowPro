@@ -47,6 +47,13 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
     }
   };
 
+  const targets = {
+    calories: calculationResults.vet || 2000,
+    protein: calculationResults.macros.protein.grams || 100,
+    carbs: calculationResults.macros.carbs.grams || 250,
+    fats: calculationResults.macros.fat.grams || 60,
+  };
+
   return (
     <Card className="w-full">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
@@ -85,6 +92,7 @@ const UnifiedMealPlanInterface: React.FC<UnifiedMealPlanInterfaceProps> = ({
               onUpdate={handlePlanUpdated}
               onSave={handleSave}
               onCancel={onCancel}
+              targets={targets}
             />
           ) : (
             <div className="text-center text-muted-foreground py-12">

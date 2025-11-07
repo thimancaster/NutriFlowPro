@@ -15,6 +15,7 @@ import { useAutoSave } from '@/hooks/meal-plan/useAutoSave';
 import DraggableFoodItem from './DraggableFoodItem';
 import InlineFoodSearch from './InlineFoodSearch';
 import { Progress } from '@/components/ui/progress';
+import IntelligentValidationPanel from './IntelligentValidationPanel';
 
 interface UnifiedMealPlanEditorProps {
   mealPlan: ConsolidatedMealPlan;
@@ -22,6 +23,7 @@ interface UnifiedMealPlanEditorProps {
   onSave?: () => void;
   onCancel?: () => void;
   autoSaveEnabled?: boolean;
+  targets?: { calories: number; protein: number; carbs: number; fats: number };
 }
 
 const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
@@ -29,7 +31,8 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
   onUpdate,
   onSave,
   onCancel,
-  autoSaveEnabled = true
+  autoSaveEnabled = true,
+  targets
 }) => {
   const [editingPlan, setEditingPlan] = useState<ConsolidatedMealPlan>(mealPlan);
   const [searchingMealId, setSearchingMealId] = useState<string | null>(null);
@@ -172,6 +175,14 @@ const UnifiedMealPlanEditor: React.FC<UnifiedMealPlanEditorProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Validação Inteligente */}
+      {targets && (
+        <IntelligentValidationPanel
+          mealPlan={editingPlan}
+          targets={targets}
+        />
+      )}
+
       {/* Totais do Plano com Progress Bars */}
       <Card>
         <CardHeader>

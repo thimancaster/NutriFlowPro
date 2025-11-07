@@ -35,3 +35,13 @@ verify_jwt = false
 # Edge function para seed de alimentos TACO (requer autenticação)
 [functions.seed-taco-foods]
 verify_jwt = true
+
+# Edge functions de IA para planos alimentares (requerem autenticação)
+[functions.analyze-patient-preferences]
+verify_jwt = true
+
+[functions.validate-meal-plan]
+verify_jwt = true
+
+[functions.suggest-meal-templates]
+verify_jwt = true
