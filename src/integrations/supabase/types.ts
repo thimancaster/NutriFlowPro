@@ -815,6 +815,47 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_plan_changes: {
+        Row: {
+          change_data: Json
+          change_type: string
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          meal_plan_id: string
+          version_from: number
+          version_to: number
+        }
+        Insert: {
+          change_data: Json
+          change_type: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          meal_plan_id: string
+          version_from: number
+          version_to: number
+        }
+        Update: {
+          change_data?: Json
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          meal_plan_id?: string
+          version_from?: number
+          version_to?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_changes_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_plan_items: {
         Row: {
           calories: number
@@ -881,6 +922,44 @@ export type Database = {
           },
         ]
       }
+      meal_plan_versions: {
+        Row: {
+          change_summary: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          meal_plan_id: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          meal_plan_id: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Update: {
+          change_summary?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          meal_plan_id?: string
+          snapshot_data?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_versions_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_plans: {
         Row: {
           calculation_id: string | null
@@ -888,9 +967,11 @@ export type Database = {
           date: string
           day_of_week: number | null
           id: string
+          is_active: boolean | null
           is_template: boolean | null
           meals: Json
           notes: string | null
+          parent_version_id: string | null
           patient_id: string | null
           total_calories: number
           total_carbs: number
@@ -898,6 +979,7 @@ export type Database = {
           total_protein: number
           updated_at: string | null
           user_id: string
+          version: number | null
         }
         Insert: {
           calculation_id?: string | null
@@ -905,9 +987,11 @@ export type Database = {
           date: string
           day_of_week?: number | null
           id?: string
+          is_active?: boolean | null
           is_template?: boolean | null
           meals: Json
           notes?: string | null
+          parent_version_id?: string | null
           patient_id?: string | null
           total_calories: number
           total_carbs: number
@@ -915,6 +999,7 @@ export type Database = {
           total_protein: number
           updated_at?: string | null
           user_id: string
+          version?: number | null
         }
         Update: {
           calculation_id?: string | null
@@ -922,9 +1007,11 @@ export type Database = {
           date?: string
           day_of_week?: number | null
           id?: string
+          is_active?: boolean | null
           is_template?: boolean | null
           meals?: Json
           notes?: string | null
+          parent_version_id?: string | null
           patient_id?: string | null
           total_calories?: number
           total_carbs?: number
@@ -932,6 +1019,7 @@ export type Database = {
           total_protein?: number
           updated_at?: string | null
           user_id?: string
+          version?: number | null
         }
         Relationships: [
           {
@@ -939,6 +1027,13 @@ export type Database = {
             columns: ["calculation_id"]
             isOneToOne: false
             referencedRelation: "calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_plans_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
             referencedColumns: ["id"]
           },
           {
@@ -1666,6 +1761,10 @@ export type Database = {
       register_calculation_attempt: {
         Args: { p_calculation_data?: Json; p_patient_id?: string }
         Returns: Json
+      }
+      restore_meal_plan_version: {
+        Args: { p_meal_plan_id: string; p_version_number: number }
+        Returns: boolean
       }
       search_foods_secure: {
         Args: {
