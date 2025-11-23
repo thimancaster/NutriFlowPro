@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { MoreVertical, CheckCircle, XCircle, Calendar, MessageSquare, Phone, Mail, User, Clock } from 'lucide-react';
 import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { useToast } from '@/hooks/use-toast';
-import { appointmentService } from '@/services/appointmentService';
+import { useUnifiedAppointmentMutations } from '@/hooks/appointments/useUnifiedAppointmentMutations';
 import { usePatientContact } from '@/hooks/appointments/usePatientContact';
 import { format, parseISO } from 'date-fns';
 
@@ -33,18 +33,21 @@ const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
   
   // Fetch patient contact information
   const { data: patientContact, isLoading: isLoadingContact } = usePatientContact(appointment.patient_id);
+  const { updateAppointment } = useUnifiedAppointmentMutations();
 
   const updateStatus = async (status: AppointmentStatus) => {
     try {
-      const result = await appointmentService.updateAppointment(appointment.id, { status });
+      await updateAppointment({
+        id: appointment.id,
+        data: { status }
+      });
       
-      if (result.success) {
-        onUpdate({ ...appointment, status });
-        toast({
-          title: 'Status Atualizado',
-          description: `Agendamento marcado como ${getStatusLabel(status)}`,
-        });
-      }
+      onUpdate({ ...appointment, status });
+      
+      toast({
+        title: 'Status Atualizado',
+        description: `Agendamento marcado como ${getStatusLabel(status)}`,
+      });
     } catch (error) {
       toast({
         title: 'Erro',
@@ -59,29 +62,31 @@ const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
 
     try {
       const newDateTime = `${newDate}T${newTime}:00`;
-      const result = await appointmentService.updateAppointment(appointment.id, {
+      
+      await updateAppointment({
+        id: appointment.id,
+        data: {
+          date: newDate,
+          start_time: newDateTime,
+          status: 'rescheduled' as AppointmentStatus
+        }
+      });
+
+      onUpdate({
+        ...appointment,
         date: newDate,
         start_time: newDateTime,
         status: 'rescheduled' as AppointmentStatus
       });
-
-      if (result.success) {
-        onUpdate({
-          ...appointment,
-          date: newDate,
-          start_time: newDateTime,
-          status: 'rescheduled' as AppointmentStatus
-        });
-        
-        toast({
-          title: 'Reagendado',
-          description: `Agendamento reagendado para ${format(new Date(newDateTime), 'dd/MM/yyyy')} às ${newTime}`,
-        });
-        
-        setIsRescheduleOpen(false);
-        setNewDate('');
-        setNewTime('');
-      }
+      
+      toast({
+        title: 'Reagendado',
+        description: `Agendamento reagendado para ${format(new Date(newDateTime), 'dd/MM/yyyy')} às ${newTime}`,
+      });
+      
+      setIsRescheduleOpen(false);
+      setNewDate('');
+      setNewTime('');
     } catch (error) {
       toast({
         title: 'Erro',
@@ -93,18 +98,18 @@ const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
 
   const handleQuickNotes = async () => {
     try {
-      const result = await appointmentService.updateAppointment(appointment.id, {
-        notes: quickNotes
+      await updateAppointment({
+        id: appointment.id,
+        data: { notes: quickNotes }
       });
 
-      if (result.success) {
-        onUpdate({ ...appointment, notes: quickNotes });
-        toast({
-          title: 'Notas Atualizadas',
-          description: 'Observações do agendamento foram salvas',
-        });
-        setIsNotesOpen(false);
-      }
+      onUpdate({ ...appointment, notes: quickNotes });
+      
+      toast({
+        title: 'Notas Atualizadas',
+        description: 'Observações do agendamento foram salvas',
+      });
+      setIsNotesOpen(false);
     } catch (error) {
       toast({
         title: 'Erro',
