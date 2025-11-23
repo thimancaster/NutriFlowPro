@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,41 +27,55 @@ const AppointmentCalendarView: React.FC<AppointmentCalendarViewProps> = ({
 }) => {
   const [currentDate, setCurrentDate] = useState<Date>(selectedDate || new Date());
 
-  const getAppointmentsForDate = (date: Date) => {
-    return appointments.filter(appointment => 
-      isSameDay(parseISO(appointment.date), date)
-    );
-  };
+  // Memoize getAppointmentsForDate to avoid recalculating on every render
+  const getAppointmentsForDate = useCallback(
+    (date: Date) => {
+      return appointments.filter(appointment => 
+        isSameDay(parseISO(appointment.date), date)
+      );
+    },
+    [appointments]
+  );
 
-  const hasConflicts = (date: Date) => {
-    const dayAppointments = getAppointmentsForDate(date);
-    if (dayAppointments.length <= 1) return false;
+  // Memoize hasConflicts calculation
+  const hasConflicts = useCallback(
+    (date: Date) => {
+      const dayAppointments = getAppointmentsForDate(date);
+      if (dayAppointments.length <= 1) return false;
 
-    // Check for time overlaps
-    const sortedAppointments = dayAppointments
-      .filter(app => app.start_time && app.status !== 'cancelled')
-      .sort((a, b) => a.start_time!.localeCompare(b.start_time!));
+      // Check for time overlaps
+      const sortedAppointments = dayAppointments
+        .filter(app => app.start_time && app.status !== 'cancelled')
+        .sort((a, b) => a.start_time!.localeCompare(b.start_time!));
 
-    for (let i = 0; i < sortedAppointments.length - 1; i++) {
-      const current = new Date(sortedAppointments[i].start_time!);
-      const next = new Date(sortedAppointments[i + 1].start_time!);
-      const currentEnd = new Date(current.getTime() + 60 * 60 * 1000); // Assume 1 hour duration
+      for (let i = 0; i < sortedAppointments.length - 1; i++) {
+        const current = new Date(sortedAppointments[i].start_time!);
+        const next = new Date(sortedAppointments[i + 1].start_time!);
+        const currentEnd = new Date(current.getTime() + 60 * 60 * 1000); // Assume 1 hour duration
 
-      if (currentEnd > next) {
-        return true;
+        if (currentEnd > next) {
+          return true;
+        }
       }
-    }
-    return false;
-  };
+      return false;
+    },
+    [getAppointmentsForDate]
+  );
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setCurrentDate(date);
-      onDateSelect(date);
-    }
-  };
+  const handleDateSelect = useCallback(
+    (date: Date | undefined) => {
+      if (date) {
+        setCurrentDate(date);
+        onDateSelect(date);
+      }
+    },
+    [onDateSelect]
+  );
 
-  const appointmentsForSelectedDate = getAppointmentsForDate(currentDate);
+  const appointmentsForSelectedDate = useMemo(
+    () => getAppointmentsForDate(currentDate),
+    [currentDate, getAppointmentsForDate]
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

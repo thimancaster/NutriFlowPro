@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Calendar, TrendingUp, Users, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useAppointmentAnalytics } from '@/hooks/appointments/useAppointmentAnalytics';
@@ -14,7 +15,8 @@ const COLORS = ['#3B82F6', '#EF4444', '#F59E0B', '#10B981', '#8B5CF6'];
 const AppointmentAnalyticsDashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   
-  const getDateRange = () => {
+  // Memoize dateRange calculation to prevent unnecessary re-renders
+  const calculatedDateRange = useMemo(() => {
     const now = new Date();
     switch (dateRange) {
       case 'week':
@@ -28,14 +30,44 @@ const AppointmentAnalyticsDashboard: React.FC = () => {
       default:
         return { start: subMonths(now, 1), end: now };
     }
-  };
+  }, [dateRange]);
 
-  const { metrics, isLoading } = useAppointmentAnalytics(getDateRange());
+  const { metrics, isLoading } = useAppointmentAnalytics(calculatedDateRange);
 
+  // Use skeleton UI instead of spinner for smoother loading experience
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-48" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[300px] w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }

@@ -1,12 +1,12 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { format, parseISO, isSameDay, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Clock, User, Grip } from 'lucide-react';
+import { Clock, User, Grip, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { appointmentService } from '@/services/appointmentService';
 
@@ -60,10 +60,38 @@ const DragDropAppointmentCalendar: React.FC<DragDropAppointmentCalendarProps> = 
     setDragOverSlot(null);
   };
 
+  // Check if slot already has an appointment (conflict validation)
+  const hasConflictAtSlot = useCallback(
+    (date: string, time: string, excludeId?: string) => {
+      return appointments.some(appointment => {
+        if (appointment.id === excludeId) return false;
+        if (!appointment.start_time) return false;
+        
+        const appointmentDate = format(parseISO(appointment.start_time), 'yyyy-MM-dd');
+        const appointmentTime = format(parseISO(appointment.start_time), 'HH:mm');
+        
+        return appointmentDate === date && appointmentTime === time;
+      });
+    },
+    [appointments]
+  );
+
   const handleDrop = async (e: React.DragEvent, date: string, time: string) => {
     e.preventDefault();
     
     if (!draggedAppointment) return;
+
+    // Validate for conflicts before allowing drop
+    if (hasConflictAtSlot(date, time, draggedAppointment.id)) {
+      toast({
+        title: 'Conflito de Horário',
+        description: 'Já existe um agendamento neste horário.',
+        variant: 'destructive',
+      });
+      setDraggedAppointment(null);
+      setDragOverSlot(null);
+      return;
+    }
 
     try {
       const newDateTime = `${date}T${time}:00`;
@@ -159,12 +187,19 @@ const DragDropAppointmentCalendar: React.FC<DragDropAppointmentCalendarProps> = 
                 {currentWeek.map((day) => {
                   const appointment = getAppointmentForSlot(day.date, time);
                   const isDropZone = dragOverSlot?.date === day.date && dragOverSlot?.time === time;
+                  const hasConflict = hasConflictAtSlot(day.date, time) && !appointment;
                   
                   return (
                     <div
                       key={`${day.date}-${time}`}
                       className={`border-r p-2 transition-colors ${
-                        isDropZone ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'
+                        isDropZone 
+                          ? hasConflict 
+                            ? 'bg-red-50 border-red-300' 
+                            : 'bg-blue-50 border-blue-300'
+                          : hasConflict
+                          ? 'bg-red-50/30'
+                          : 'hover:bg-gray-50'
                       }`}
                       onDragOver={(e) => handleDragOver(e, day.date, time)}
                       onDragLeave={handleDragLeave}
@@ -195,10 +230,21 @@ const DragDropAppointmentCalendar: React.FC<DragDropAppointmentCalendarProps> = 
                           </Badge>
                         </div>
                       ) : (
-                        <div className="h-full min-h-[60px] rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
+                        <div className={`h-full min-h-[60px] rounded-lg border-2 border-dashed flex items-center justify-center ${
+                          hasConflict ? 'border-red-300' : 'border-gray-200'
+                        }`}>
                           {isDropZone && (
-                            <span className="text-xs text-blue-600 font-medium">
-                              Soltar aqui
+                            <span className={`text-xs font-medium ${
+                              hasConflict ? 'text-red-600' : 'text-blue-600'
+                            }`}>
+                              {hasConflict ? (
+                                <span className="flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Conflito
+                                </span>
+                              ) : (
+                                'Soltar aqui'
+                              )}
                             </span>
                           )}
                         </div>
