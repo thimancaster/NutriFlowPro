@@ -8,7 +8,7 @@ import { format, parseISO, isSameDay, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, User, Grip, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { appointmentService } from '@/services/appointmentService';
+import { useUnifiedAppointmentMutations } from '@/hooks/appointments/useUnifiedAppointmentMutations';
 
 interface DragDropAppointmentCalendarProps {
   appointments: Appointment[];
@@ -24,6 +24,7 @@ const DragDropAppointmentCalendar: React.FC<DragDropAppointmentCalendarProps> = 
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<{ date: string; time: string } | null>(null);
   const { toast } = useToast();
+  const { updateAppointment } = useUnifiedAppointmentMutations();
 
   // Generate time slots (9 AM to 6 PM, 1-hour intervals)
   const timeSlots = Array.from({ length: 10 }, (_, i) => {
@@ -93,46 +94,25 @@ const DragDropAppointmentCalendar: React.FC<DragDropAppointmentCalendarProps> = 
       return;
     }
 
-    try {
-      const newDateTime = `${date}T${time}:00`;
-      
-      const updatedAppointment = {
-        ...draggedAppointment,
+    const newDateTime = `${date}T${time}:00`;
+    const endDateTime = `${date}T${(parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0')}:00:00`;
+
+    await updateAppointment({
+      id: draggedAppointment.id,
+      data: {
         date,
         start_time: newDateTime,
-        end_time: `${date}T${(parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0')}:00:00`
-      };
-
-      const result = await appointmentService.updateAppointment(
-        draggedAppointment.id,
-        {
-          date,
-          start_time: newDateTime,
-          end_time: updatedAppointment.end_time
-        }
-      );
-
-      if (result.success) {
-        onAppointmentUpdate(updatedAppointment);
-        toast({
-          title: 'Agendamento Reagendado',
-          description: `${draggedAppointment.patientName} reagendado para ${format(parseISO(date), 'dd/MM/yyyy')} às ${time}`,
-        });
-      } else {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível reagendar o agendamento',
-          variant: 'destructive',
-        });
+        end_time: endDateTime
       }
-    } catch (error) {
-      console.error('Error rescheduling appointment:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao reagendar agendamento',
-        variant: 'destructive',
-      });
-    }
+    });
+
+    // Atualiza localmente também para feedback imediato
+    onAppointmentUpdate({
+      ...draggedAppointment,
+      date,
+      start_time: newDateTime,
+      end_time: endDateTime
+    });
 
     setDraggedAppointment(null);
     setDragOverSlot(null);
