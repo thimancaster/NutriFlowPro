@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { useAppointmentQuery } from '@/hooks/appointments/useAppointmentQuery';
-import { useToast } from '@/hooks/use-toast';
-import { appointmentService } from '@/services/appointmentService';
+import { useUnifiedAppointmentMutations } from '@/hooks/appointments/useUnifiedAppointmentMutations';
 import AppointmentFormWrapper from '@/components/appointment/form/AppointmentFormWrapper';
 import AppointmentErrorBoundary from '@/components/appointment/AppointmentErrorBoundary';
 import EnhancedAppointmentList from '@/components/appointment/EnhancedAppointmentList';
@@ -14,10 +13,12 @@ const Appointments = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const { user } = useAuth();
-  const { toast } = useToast();
   
   // Fetch appointments with the improved query hook
-  const { data: appointments, isLoading, error, refetch } = useAppointmentQuery();
+  const { data: appointments, isLoading, error } = useAppointmentQuery();
+  
+  // Unified mutations - garante sincronização em TODAS as abas
+  const { createAppointment, updateAppointment, deleteAppointment } = useUnifiedAppointmentMutations();
   
   // Notification system
   const { scheduleNotification } = useAppointmentNotifications();
@@ -32,102 +33,32 @@ const Appointments = () => {
   };
   
   const handleCreateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
-    try {
-      if (!user) return;
-      
-      const result = await appointmentService.createAppointment({
-        ...appointmentData,
-        user_id: user.id
-      });
-      
-      if (result.success && result.data) {
-        toast({
-          title: 'Sucesso',
-          description: 'Agendamento criado com sucesso!',
-        });
-        
-        // Schedule notification for the new appointment
-        const normalizedAppointment = normalizeAppointment(result.data);
-        await scheduleNotification(normalizedAppointment);
-        
-        setIsFormOpen(false);
-        await refetch();
-      } else {
-        toast({
-          title: 'Erro',
-          description: `Falha ao criar agendamento: ${result.message}`,
-          variant: 'destructive',
-        });
-      }
-    } catch (err) {
-      console.error('Error creating appointment:', err);
-      toast({
-        title: 'Erro',
-        description: `Erro inesperado: ${(err as Error).message}`,
-        variant: 'destructive',
-      });
+    if (!user) return;
+    
+    const result = await createAppointment(appointmentData);
+    
+    if (result) {
+      // Schedule notification for the new appointment
+      const normalizedAppointment = normalizeAppointment(result);
+      await scheduleNotification(normalizedAppointment);
+      setIsFormOpen(false);
     }
   };
   
   const handleUpdateAppointment = async (appointmentData: Partial<Appointment>): Promise<void> => {
-    try {
-      if (!user || !selectedAppointment) return;
-      
-      const result = await appointmentService.updateAppointment(
-        selectedAppointment.id,
-        appointmentData
-      );
-      
-      if (result.success) {
-        toast({
-          title: 'Sucesso',
-          description: 'Agendamento atualizado com sucesso!',
-        });
-        setIsFormOpen(false);
-        setSelectedAppointment(null);
-        await refetch();
-      } else {
-        toast({
-          title: 'Erro',
-          description: `Falha ao atualizar agendamento: ${result.message}`,
-          variant: 'destructive',
-        });
-      }
-    } catch (err) {
-      console.error('Error updating appointment:', err);
-      toast({
-        title: 'Erro',
-        description: `Erro inesperado: ${(err as Error).message}`,
-        variant: 'destructive',
-      });
-    }
+    if (!user || !selectedAppointment) return;
+    
+    await updateAppointment({
+      id: selectedAppointment.id,
+      data: appointmentData
+    });
+    
+    setIsFormOpen(false);
+    setSelectedAppointment(null);
   };
   
   const handleDeleteAppointment = async (id: string): Promise<void> => {
-    try {
-      const result = await appointmentService.deleteAppointment(id);
-      
-      if (result.success) {
-        toast({
-          title: 'Sucesso',
-          description: 'Agendamento excluído com sucesso!',
-        });
-        await refetch();
-      } else {
-        toast({
-          title: 'Erro',
-          description: `Falha ao excluir agendamento: ${result.message}`,
-          variant: 'destructive',
-        });
-      }
-    } catch (err) {
-      console.error('Error deleting appointment:', err);
-      toast({
-        title: 'Erro',
-        description: `Erro inesperado: ${(err as Error).message}`,
-        variant: 'destructive',
-      });
-    }
+    await deleteAppointment(id);
   };
   
   const handleEditAppointment = (appointment: Appointment) => {
@@ -149,7 +80,7 @@ const Appointments = () => {
   };
 
   const handleRefresh = async (): Promise<void> => {
-    await refetch();
+    // Não precisa mais - as mutations já invalidam automaticamente
   };
   
   // Normalize appointments for type safety
