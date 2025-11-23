@@ -42,7 +42,8 @@ const MealPlans = React.lazy(() => import("@/pages/MealPlans"));
 const MealPlanView = React.lazy(() => import("@/pages/MealPlanView"));
 const ClinicalConsultation = React.lazy(() => import("@/pages/ClinicalConsultation"));
 const MealPlanBuilder = React.lazy(() => import("@/pages/MealPlanBuilder"));
-const MealPlanBuilderV2 = React.lazy(() => import("@/pages/MealPlanBuilderV2"));
+import MealPlanBuilderV2 from "@/pages/MealPlanBuilderV2";
+import TestE2E from "@/pages/TestE2E";
 
 const AppRoutes = () => {
 	return (
@@ -118,6 +119,7 @@ const AppRoutes = () => {
 						</Suspense>
 					}
 				/>
+				<Route path="test-e2e" element={<TestE2E />} />
 				<Route
 					path="meal-plan/:id"
 					element={
