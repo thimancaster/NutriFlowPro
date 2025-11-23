@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { useAppointmentQuery } from '@/hooks/appointments/useAppointmentQuery';
@@ -13,6 +14,7 @@ const Appointments = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   // Fetch appointments with the improved query hook
   const { data: appointments, isLoading, error } = useAppointmentQuery();
@@ -80,7 +82,8 @@ const Appointments = () => {
   };
 
   const handleRefresh = async (): Promise<void> => {
-    // Não precisa mais - as mutations já invalidam automaticamente
+    await queryClient.invalidateQueries({ queryKey: ['appointments'], refetchType: 'active' });
+    await queryClient.invalidateQueries({ queryKey: ['appointment-analytics'], refetchType: 'active' });
   };
   
   // Normalize appointments for type safety
