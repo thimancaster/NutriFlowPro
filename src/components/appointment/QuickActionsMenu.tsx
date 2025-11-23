@@ -10,6 +10,7 @@ import { MoreVertical, CheckCircle, XCircle, Calendar, MessageSquare, Phone, Mai
 import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { useToast } from '@/hooks/use-toast';
 import { appointmentService } from '@/services/appointmentService';
+import { usePatientContact } from '@/hooks/appointments/usePatientContact';
 import { format, parseISO } from 'date-fns';
 
 interface QuickActionsMenuProps {
@@ -29,6 +30,9 @@ const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
   const [newTime, setNewTime] = useState('');
   const [quickNotes, setQuickNotes] = useState(appointment.notes || '');
   const { toast } = useToast();
+  
+  // Fetch patient contact information
+  const { data: patientContact, isLoading: isLoadingContact } = usePatientContact(appointment.patient_id);
 
   const updateStatus = async (status: AppointmentStatus) => {
     try {
@@ -119,6 +123,47 @@ const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
       rescheduled: 'Reagendado'
     };
     return labels[status] || status;
+  };
+
+  const handleCallPatient = () => {
+    if (!patientContact?.phone) {
+      toast({
+        title: 'Telefone não disponível',
+        description: 'Este paciente não possui telefone cadastrado.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Use tel: protocol to open phone dialer
+    window.location.href = `tel:${patientContact.phone}`;
+    toast({
+      title: 'Abrindo discador',
+      description: `Ligando para ${patientContact.name}...`,
+    });
+  };
+
+  const handleEmailPatient = () => {
+    if (!patientContact?.email) {
+      toast({
+        title: 'Email não disponível',
+        description: 'Este paciente não possui email cadastrado.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Use mailto: protocol to open email client
+    const subject = encodeURIComponent(`Consulta - ${appointment.type}`);
+    const body = encodeURIComponent(
+      `Olá ${patientContact.name},\n\nEm relação à sua consulta agendada para ${new Date(appointment.date).toLocaleDateString('pt-BR')}...\n\nAtenciosamente,`
+    );
+    window.location.href = `mailto:${patientContact.email}?subject=${subject}&body=${body}`;
+    
+    toast({
+      title: 'Abrindo cliente de email',
+      description: `Enviando email para ${patientContact.name}...`,
+    });
   };
 
   const getStatusColor = (status: AppointmentStatus) => {
@@ -270,12 +315,12 @@ const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
             </DialogContent>
           </Dialog>
           
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleCallPatient} disabled={isLoadingContact || !patientContact?.phone}>
             <Phone className="h-4 w-4 mr-2" />
             Ligar para Paciente
           </DropdownMenuItem>
           
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEmailPatient} disabled={isLoadingContact || !patientContact?.email}>
             <Mail className="h-4 w-4 mr-2" />
             Enviar Email
           </DropdownMenuItem>
