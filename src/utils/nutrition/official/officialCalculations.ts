@@ -97,6 +97,122 @@ export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   muito_intenso: 1.9
 } as const;
 
+// FORMULA-SPECIFIC ACTIVITY FACTORS (Ground Truth from Scientific Literature)
+// Each TMB formula has its own validated activity factors based on research
+export const FORMULA_SPECIFIC_ACTIVITY_FACTORS: Record<
+  TmbFormula, 
+  {
+    default: Record<ActivityLevel, number>;
+    byGender?: {
+      M: Record<ActivityLevel, number>;
+      F: Record<ActivityLevel, number>;
+    };
+  }
+> = {
+  harris_benedict: {
+    default: {
+      sedentario: 1.2,
+      leve: 1.375,
+      moderado: 1.55,
+      intenso: 1.725,
+      muito_intenso: 1.9
+    }
+  },
+  mifflin_st_jeor: {
+    default: {
+      sedentario: 1.2,
+      leve: 1.375,
+      moderado: 1.55,
+      intenso: 1.725,
+      muito_intenso: 1.9
+    }
+  },
+  oms_fao_unu: {
+    default: {
+      sedentario: 1.4,
+      leve: 1.6,
+      moderado: 1.7,
+      intenso: 1.9,
+      muito_intenso: 2.1
+    },
+    byGender: {
+      M: {
+        sedentario: 1.4,
+        leve: 1.6,
+        moderado: 1.7,
+        intenso: 1.9,
+        muito_intenso: 2.1
+      },
+      F: {
+        sedentario: 1.4,
+        leve: 1.56,
+        moderado: 1.64,
+        intenso: 1.82,
+        muito_intenso: 2.0
+      }
+    }
+  },
+  tinsley: {
+    default: {
+      sedentario: 1.3,
+      leve: 1.5,
+      moderado: 1.7,
+      intenso: 1.9,
+      muito_intenso: 2.2
+    }
+  },
+  katch_mcardle: {
+    default: {
+      sedentario: 1.2,
+      leve: 1.4,
+      moderado: 1.6,
+      intenso: 1.8,
+      muito_intenso: 2.0
+    }
+  },
+  cunningham: {
+    default: {
+      sedentario: 1.2,
+      leve: 1.4,
+      moderado: 1.6,
+      intenso: 1.8,
+      muito_intenso: 2.0
+    }
+  },
+  penn_state: {
+    default: {
+      sedentario: 1.2,
+      leve: 1.3,
+      moderado: 1.5,
+      intenso: 1.7,
+      muito_intenso: 1.85
+    }
+  }
+} as const;
+
+/**
+ * Get formula-specific activity factor based on scientific literature
+ * @param formula - The TMB formula being used
+ * @param activityLevel - Patient's activity level
+ * @param gender - Patient's gender (M/F)
+ * @returns The appropriate activity factor
+ */
+export function getFormulaActivityFactor(
+  formula: TmbFormula,
+  activityLevel: ActivityLevel,
+  gender: Gender
+): number {
+  const formulaFactors = FORMULA_SPECIFIC_ACTIVITY_FACTORS[formula];
+  
+  // Check if formula has gender-specific factors (e.g., OMS/FAO/UNU)
+  if (formulaFactors.byGender) {
+    return formulaFactors.byGender[gender][activityLevel];
+  }
+  
+  // Otherwise use default factors
+  return formulaFactors.default[activityLevel];
+}
+
 // OFFICIAL CALORIC VALUES PER GRAM (Ground Truth)
 export const CALORIC_VALUES = {
   protein: 4, // kcal/g

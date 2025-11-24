@@ -47,6 +47,7 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 		error,
 		canCalculate,
 		getValidation,
+		getSuggestedActivityFactor,
 	} = useOfficialCalculations();
 
 	const {activePatient} = useActivePatient();
@@ -112,6 +113,26 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 			onCalculationComplete(results);
 		}
 	}, [results, onCalculationComplete]);
+
+	// Auto-fill activity factor based on formula, gender and activity level
+	useEffect(() => {
+		const suggestedFactor = getSuggestedActivityFactor();
+		
+		// Only auto-fill if:
+		// 1. There's a suggested factor
+		// 2. User hasn't manually entered a value yet
+		if (suggestedFactor && !inputs.manualActivityFactor) {
+			console.log(`🎯 [AUTO-FILL] Setting activity factor to ${suggestedFactor} based on formula, gender and activity level`);
+			updateInputs({ manualActivityFactor: suggestedFactor });
+		}
+	}, [
+		inputs.manualTmbFormula, 
+		inputs.profile, 
+		inputs.activityLevel, 
+		inputs.gender,
+		getSuggestedActivityFactor
+		// Note: NOT including inputs.manualActivityFactor to avoid infinite loop
+	]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -346,7 +367,12 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 				<div className="space-y-2">
 					<Label htmlFor="manualActivityFactor" className="flex items-center gap-2">
 						<Activity className="h-4 w-4" />
-						Fator de Atividade Manual (Opcional)
+						Fator de Atividade Manual
+						{inputs.manualActivityFactor && getSuggestedActivityFactor() === inputs.manualActivityFactor && (
+							<Badge variant="secondary" className="text-xs">
+								Auto-preenchido
+							</Badge>
+						)}
 					</Label>
 					<Input
 						id="manualActivityFactor"
@@ -363,7 +389,12 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 						}
 					/>
 					<p className="text-xs text-muted-foreground">
-						⚠️ Se preenchido, este valor terá prioridade sobre o nível de atividade selecionado
+						💡 Valor auto-preenchido baseado na fórmula TMB, sexo e nível de atividade (editável)
+						{inputs.manualActivityFactor && (
+							<span className="block text-primary mt-1">
+								✓ Fator atual: {inputs.manualActivityFactor}
+							</span>
+						)}
 					</p>
 				</div>
 
