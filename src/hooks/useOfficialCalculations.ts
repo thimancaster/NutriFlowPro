@@ -10,6 +10,7 @@ import {
   validateMealDistribution,
   validateCalculationInputs,
   AVAILABLE_FORMULAS,
+  getFormulaActivityFactor,
   type CalculationInputs,
   type CalculationResult,
   type ManualMacroInputs,
@@ -170,6 +171,32 @@ export const useOfficialCalculations = () => {
     return validateInputs(state.inputs);
   }, [state.inputs, validateInputs]);
 
+  // Get suggested activity factor based on formula, gender and activity level
+  const getSuggestedActivityFactor = useCallback((): number | undefined => {
+    const { manualTmbFormula, profile, activityLevel, gender } = state.inputs;
+    
+    if (!activityLevel || !gender) return undefined;
+    
+    // Determine which formula will be used
+    let effectiveFormula: TmbFormula;
+    
+    if (manualTmbFormula) {
+      effectiveFormula = manualTmbFormula;
+    } else if (profile) {
+      // Auto-select based on profile (same logic as calculation)
+      const profileMap: Record<string, TmbFormula> = {
+        'eutrofico': 'harris_benedict',
+        'sobrepeso_obesidade': 'mifflin_st_jeor',
+        'atleta': 'tinsley'
+      };
+      effectiveFormula = profileMap[profile] || 'harris_benedict';
+    } else {
+      return undefined;
+    }
+    
+    return getFormulaActivityFactor(effectiveFormula, activityLevel, gender);
+  }, [state.inputs]);
+
   return {
     // State
     inputs: state.inputs,
@@ -191,6 +218,7 @@ export const useOfficialCalculations = () => {
     getValidation,
     validateInputs: (inputs?: Partial<CalculationInputs>) => 
       validateInputs(inputs || state.inputs),
+    getSuggestedActivityFactor,
     
     // Formula metadata for dynamic UI
     availableFormulas: AVAILABLE_FORMULAS
