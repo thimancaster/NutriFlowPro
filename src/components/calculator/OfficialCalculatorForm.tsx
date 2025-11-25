@@ -15,13 +15,31 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
-import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell} from "lucide-react";
+import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {useToast} from "@/hooks/use-toast";
 import SkinfoldForm from "./SkinfoldForm";
+import { cn } from "@/lib/utils";
+
+// TMB Formula descriptions for tooltips
+const TMB_FORMULA_INFO: Record<string, string> = {
+	harris_benedict: "Ideal para adultos saudáveis com peso normal. Fórmula clássica e amplamente validada.",
+	mifflin_st_jeor: "Recomendada para pessoas com sobrepeso ou obesidade. Mais precisa que Harris-Benedict nestes casos.",
+	tinsley: "Desenvolvida especificamente para atletas e praticantes de musculação com alta massa muscular.",
+	katch_mcardle: "Baseada em massa magra. Ideal quando há dados precisos de composição corporal disponíveis.",
+	cunningham: "Similar à Katch-McArdle, mas com ajuste para atletas. Requer medição de massa magra.",
+	who_fao_unu: "Fórmula da OMS validada internacionalmente. Boa para populações diversas e estudos científicos.",
+	penn_state: "Desenvolvida para pacientes hospitalizados, críticos ou com obesidade severa."
+};
 
 interface OfficialCalculatorFormProps {
 	onCalculationComplete?: (results: any) => void;
@@ -234,14 +252,116 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								<SelectValue placeholder="Automático (baseado no perfil)" />
 							</SelectTrigger>
 							<SelectContent className="bg-background z-50">
-								<SelectItem value="auto">Automático</SelectItem>
-								<SelectItem value="harris_benedict">Harris-Benedict Revisada</SelectItem>
-								<SelectItem value="mifflin_st_jeor">Mifflin-St Jeor</SelectItem>
-								<SelectItem value="tinsley">Tinsley (Atletas)</SelectItem>
-								<SelectItem value="katch_mcardle">Katch-McArdle (requer MM)</SelectItem>
-								<SelectItem value="cunningham">Cunningham (requer MM)</SelectItem>
-								<SelectItem value="who_fao_unu">OMS/FAO/UNU</SelectItem>
-								<SelectItem value="penn_state">Penn State</SelectItem>
+								<SelectItem value="auto">
+									<div className="flex items-start gap-2">
+										<span>Automático</span>
+									</div>
+								</SelectItem>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="harris_benedict">
+												<div className="flex items-center gap-2">
+													<span>Harris-Benedict Revisada</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.harris_benedict}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="mifflin_st_jeor">
+												<div className="flex items-center gap-2">
+													<span>Mifflin-St Jeor</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.mifflin_st_jeor}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="tinsley">
+												<div className="flex items-center gap-2">
+													<span>Tinsley (Atletas)</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.tinsley}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="katch_mcardle">
+												<div className="flex items-center gap-2">
+													<span>Katch-McArdle (requer MM)</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.katch_mcardle}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="cunningham">
+												<div className="flex items-center gap-2">
+													<span>Cunningham (requer MM)</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.cunningham}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="who_fao_unu">
+												<div className="flex items-center gap-2">
+													<span>OMS/FAO/UNU</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.who_fao_unu}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<SelectItem value="penn_state">
+												<div className="flex items-center gap-2">
+													<span>Penn State</span>
+													<Info className="h-3 w-3 text-muted-foreground" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p>{TMB_FORMULA_INFO.penn_state}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
 							</SelectContent>
 						</Select>
 						<p className="text-xs text-muted-foreground">
