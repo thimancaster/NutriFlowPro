@@ -3,14 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { FoodSearchPanel } from '@/components/meal-plan/FoodSearchPanel';
-import { MealPlanPanel } from '@/components/meal-plan/MealPlanPanel';
+import { MealContentPanel } from '@/components/meal-plan/MealContentPanel';
+import { FloatingMealSummary } from '@/components/meal-plan/FloatingMealSummary';
 import { useConsultationData } from '@/contexts/ConsultationDataContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { AlimentoV2 } from '@/services/enhancedFoodSearchService';
 import type { MealItemData } from '@/components/meal-plan/MealItemCard';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface Meal {
   id: string;
@@ -176,11 +182,11 @@ const MealPlanBuilderV2: React.FC = () => {
     });
   };
 
-  // Remove item from meal
-  const handleRemoveItem = (mealIndex: number, itemIndex: number) => {
+  // Remove item from active meal
+  const handleRemoveItem = (itemIndex: number) => {
     setMeals((prev) => {
       const updated = [...prev];
-      const meal = { ...updated[mealIndex] };
+      const meal = { ...updated[activeMealIndex] };
       const removedItem = meal.items[itemIndex];
 
       meal.items = meal.items.filter((_, i) => i !== itemIndex);
@@ -189,20 +195,16 @@ const MealPlanBuilderV2: React.FC = () => {
       meal.cho_g -= removedItem.cho_g_calculado;
       meal.lip_g -= removedItem.lip_g_calculado;
 
-      updated[mealIndex] = meal;
+      updated[activeMealIndex] = meal;
       return updated;
     });
   };
 
-  // Edit item quantity
-  const handleEditItem = (
-    mealIndex: number,
-    itemIndex: number,
-    newQuantity: number
-  ) => {
+  // Edit item quantity in active meal
+  const handleEditItem = (itemIndex: number, newQuantity: number) => {
     setMeals((prev) => {
       const updated = [...prev];
-      const meal = { ...updated[mealIndex] };
+      const meal = { ...updated[activeMealIndex] };
       const item = { ...meal.items[itemIndex] };
       
       const oldQuantity = item.quantidade;
@@ -224,7 +226,7 @@ const MealPlanBuilderV2: React.FC = () => {
       meal.lip_g += item.lip_g_calculado - oldItem.lip_g_calculado;
 
       meal.items[itemIndex] = item;
-      updated[mealIndex] = meal;
+      updated[activeMealIndex] = meal;
       return updated;
     });
   };
@@ -264,44 +266,140 @@ const MealPlanBuilderV2: React.FC = () => {
     );
   }
 
+  // Calculate totals for header
+  const totals = meals.reduce(
+    (acc, meal) => ({
+      kcal: acc.kcal + meal.kcal_total,
+      ptn: acc.ptn + meal.ptn_g,
+      cho: acc.cho + meal.cho_g,
+      lip: acc.lip + meal.lip_g,
+    }),
+    { kcal: 0, ptn: 0, cho: 0, lip: 0 }
+  );
+
+  const progressPercent = targets ? (totals.kcal / targets.kcal) * 100 : 0;
+
   return (
-    <div className="container mx-auto p-4 lg:p-6 h-screen flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => navigate('/calculator')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Construtor de Plano Alimentar</h1>
-          <p className="text-sm text-muted-foreground">
-            Clique em um alimento para adicionar 1 porção ou ajuste a quantidade
-          </p>
-        </div>
-      </div>
-
-      {/* Two-Panel Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-hidden">
-        {/* Left Panel: Food Search (40%) */}
-        <div className="lg:col-span-2 h-full">
-          <FoodSearchPanel
-            onFoodSelect={handleFoodSelect}
-            activeMealType={meals[activeMealIndex].tipo}
-          />
+    <div className="container mx-auto p-4 lg:p-6 min-h-screen flex flex-col">
+      {/* Sticky Header with Progress */}
+      <div className="sticky top-0 z-40 bg-background pb-4 space-y-4">
+        {/* Navigation */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" onClick={() => navigate('/calculator')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Construtor de Plano Alimentar</h1>
+              <p className="text-sm text-muted-foreground">
+                Selecione a refeição e adicione os alimentos
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Right Panel: Meal Plan (60%) */}
-        <div className="lg:col-span-3 h-full">
-          <MealPlanPanel
-            meals={meals}
-            targets={targets}
-            onRemoveItem={handleRemoveItem}
-            onEditItem={handleEditItem}
-            onMealActivate={setActiveMealIndex}
-            activeMealIndex={activeMealIndex}
-          />
-        </div>
+        {/* Daily Progress Bar */}
+        {targets && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-2"
+          >
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Progresso Diário</span>
+              <div className="flex items-center gap-4">
+                <span className="font-semibold">
+                  {Math.round(totals.kcal)} / {Math.round(targets.kcal)} kcal
+                </span>
+                <div className="flex items-center gap-3 text-xs">
+                  <span>P: <span className="font-semibold">{totals.ptn.toFixed(0)}g</span></span>
+                  <span>C: <span className="font-semibold">{totals.cho.toFixed(0)}g</span></span>
+                  <span>G: <span className="font-semibold">{totals.lip.toFixed(0)}g</span></span>
+                </div>
+              </div>
+            </div>
+            <Progress 
+              value={Math.min(progressPercent, 100)} 
+              className={cn(
+                "h-2",
+                progressPercent > 110 && "bg-destructive/20"
+              )}
+            />
+          </motion.div>
+        )}
       </div>
+
+      {/* Meal Tabs */}
+      <Tabs 
+        value={meals[activeMealIndex].id} 
+        onValueChange={(value) => {
+          const index = meals.findIndex(m => m.id === value);
+          if (index !== -1) setActiveMealIndex(index);
+        }}
+        className="flex-1 flex flex-col"
+      >
+        <TabsList className="w-full justify-start overflow-x-auto mb-4">
+          {meals.map((meal) => {
+            const hasItems = meal.items.length > 0;
+            return (
+              <TabsTrigger
+                key={meal.id}
+                value={meal.id}
+                className="relative flex items-center gap-2"
+              >
+                <span>{meal.nome_refeicao}</span>
+                {hasItems && (
+                  <Badge variant="secondary" className="h-5 min-w-5 flex items-center justify-center">
+                    {meal.items.length}
+                  </Badge>
+                )}
+                {/* Status Indicator */}
+                <div
+                  className={cn(
+                    'absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full transition-colors',
+                    hasItems ? 'bg-primary' : 'bg-transparent'
+                  )}
+                />
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {/* Tab Content - Two Panel Layout */}
+        {meals.map((meal, index) => (
+          <TabsContent 
+            key={meal.id} 
+            value={meal.id}
+            className="flex-1 mt-0 data-[state=active]:flex data-[state=inactive]:hidden"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] xl:grid-cols-[480px_1fr] gap-6 h-[calc(100vh-280px)]">
+              {/* Left Panel: Food Search */}
+              <div className="h-full">
+                <FoodSearchPanel
+                  onFoodSelect={handleFoodSelect}
+                  activeMealType={meal.tipo}
+                />
+              </div>
+
+              {/* Right Panel: Meal Content */}
+              <div className="h-full">
+                <MealContentPanel
+                  activeMeal={meal}
+                  onRemoveItem={handleRemoveItem}
+                  onEditItem={handleEditItem}
+                />
+              </div>
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      {/* Floating Summary */}
+      <FloatingMealSummary
+        meals={meals}
+        targets={targets}
+      />
     </div>
   );
 };

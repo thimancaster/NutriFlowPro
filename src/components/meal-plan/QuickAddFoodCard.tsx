@@ -25,15 +25,14 @@ export const QuickAddFoodCard: React.FC<QuickAddFoodCardProps> = ({
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
+      exit={{ opacity: 0, y: -5 }}
+      transition={{ duration: 0.15 }}
     >
-      <Card
+      <div
         className={cn(
-          'group relative overflow-hidden border-border/50 hover:border-primary/50 transition-all cursor-pointer',
+          'group relative overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 bg-card hover:shadow-sm transition-all cursor-pointer',
           compact ? 'p-3' : 'p-4',
           isPopular && 'border-primary/30 bg-primary/5'
         )}
@@ -53,51 +52,30 @@ export const QuickAddFoodCard: React.FC<QuickAddFoodCardProps> = ({
               {food.nome}
             </h4>
 
-            {/* Category */}
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">
-              {food.categoria}
-              {food.subcategoria && ` • ${food.subcategoria}`}
-            </p>
-
-            {/* Nutritional Info */}
-            <div className="flex items-center gap-3 mt-2 text-xs">
-              <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground">
-                  {Math.round(food.kcal_por_referencia)}
-                </span>{' '}
-                kcal
-              </span>
-              <span className="text-muted-foreground">
-                P: <span className="font-semibold text-foreground">{food.ptn_g_por_referencia.toFixed(1)}</span>g
-              </span>
-              <span className="text-muted-foreground">
-                C: <span className="font-semibold text-foreground">{food.cho_g_por_referencia.toFixed(1)}</span>g
-              </span>
-              <span className="text-muted-foreground">
-                G: <span className="font-semibold text-foreground">{food.lip_g_por_referencia.toFixed(1)}</span>g
-              </span>
+            {/* Portion & Nutritional Info in one line */}
+            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
+              <span className="font-semibold text-foreground">{Math.round(food.kcal_por_referencia)} kcal</span>
+              <span>•</span>
+              <span>P: {food.ptn_g_por_referencia.toFixed(1)}g</span>
+              <span>•</span>
+              <span>C: {food.cho_g_por_referencia.toFixed(1)}g</span>
+              <span>•</span>
+              <span>G: {food.lip_g_por_referencia.toFixed(1)}g</span>
             </div>
 
-            {/* Portion */}
+            {/* Portion Size */}
             <p className="text-xs text-muted-foreground mt-1">
-              Porção: {food.peso_referencia_g}g ({food.medida_padrao_referencia})
+              {food.peso_referencia_g}g • {food.medida_padrao_referencia}
             </p>
-
-            {/* Description */}
-            {!compact && food.descricao_curta && (
-              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                {food.descricao_curta}
-              </p>
-            )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-1">
+          {/* Action Buttons - Vertical Stack */}
+          <div className="flex flex-col gap-1 shrink-0">
             {/* Quick Add Button */}
             <Button
               size="icon"
               variant="default"
-              className="h-8 w-8 shrink-0"
+              className="h-8 w-8"
               onClick={(e) => {
                 e.stopPropagation();
                 onQuickAdd(food);
@@ -111,7 +89,7 @@ export const QuickAddFoodCard: React.FC<QuickAddFoodCardProps> = ({
             <Button
               size="icon"
               variant="outline"
-              className="h-8 w-8 shrink-0"
+              className="h-8 w-8"
               onClick={(e) => {
                 e.stopPropagation();
                 onDetailedAdd(food);
@@ -126,7 +104,7 @@ export const QuickAddFoodCard: React.FC<QuickAddFoodCardProps> = ({
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 shrink-0"
+                className="h-8 w-8"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(food);
@@ -143,7 +121,7 @@ export const QuickAddFoodCard: React.FC<QuickAddFoodCardProps> = ({
             )}
           </div>
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 };

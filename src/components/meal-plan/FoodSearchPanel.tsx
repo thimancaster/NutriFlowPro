@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { QuickAddFoodCard } from './QuickAddFoodCard';
@@ -79,8 +80,9 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
   return (
     <>
       <Card className="h-full flex flex-col">
-        <CardHeader className="space-y-4">
-          <CardTitle className="flex items-center gap-2">
+        {/* Sticky Search Header */}
+        <CardHeader className="sticky top-0 z-10 bg-card border-b space-y-3 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Search className="h-5 w-5" />
             Buscar Alimentos
           </CardTitle>
@@ -92,23 +94,39 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
               placeholder="Digite o nome do alimento..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="pl-10 pr-10 h-11 text-base"
             />
             {searchQuery && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                 onClick={() => setSearchQuery('')}
               >
                 <X className="h-4 w-4" />
               </Button>
             )}
           </div>
+
+          {/* Quick Category Filters */}
+          {!showSearchResults && categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+              {categories.slice(0, 5).map((cat) => (
+                <Badge
+                  key={cat.name}
+                  variant={selectedCategory === cat.name ? "default" : "outline"}
+                  className="cursor-pointer whitespace-nowrap hover:bg-accent transition-colors"
+                  onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}
+                >
+                  {cat.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardHeader>
 
-        <CardContent className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full pr-4">
+        <CardContent className="flex-1 overflow-hidden p-4">
+          <ScrollArea className="h-full pr-2">
             <div className="space-y-6">
               {/* Category Filters */}
               {!showSearchResults && (
@@ -142,7 +160,7 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
                   {isSearching ? (
                     <div className="space-y-2">
                       {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-32 w-full" />
+                        <Skeleton key={i} className="h-28 w-full" />
                       ))}
                     </div>
                   ) : foods.length > 0 ? (

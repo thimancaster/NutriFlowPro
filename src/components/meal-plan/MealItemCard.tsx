@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, Edit2, Check } from 'lucide-react';
+import { X, Edit2, Check, Plus, Minus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -30,127 +30,79 @@ export const MealItemCard: React.FC<MealItemCardProps> = ({
   onRemove,
   onEdit,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editQuantity, setEditQuantity] = useState(item.quantidade);
-
-  const handleSaveEdit = () => {
-    if (editQuantity > 0 && editQuantity !== item.quantidade) {
-      onEdit(editQuantity);
-    }
-    setIsEditing(false);
+  const handleIncrement = () => {
+    onEdit(item.quantidade + 0.5);
   };
 
-  const handleCancelEdit = () => {
-    setEditQuantity(item.quantidade);
-    setIsEditing(false);
+  const handleDecrement = () => {
+    if (item.quantidade > 0.5) {
+      onEdit(item.quantidade - 0.5);
+    }
   };
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="p-3 border-border/50 hover:border-primary/50 transition-colors">
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            {/* Food Name */}
-            <h4 className="font-medium text-sm text-foreground truncate">
-              {item.nome}
-            </h4>
-
-            {/* Quantity */}
-            <div className="flex items-center gap-2 mt-1">
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="0.1"
-                    step="0.5"
-                    value={editQuantity}
-                    onChange={(e) => setEditQuantity(parseFloat(e.target.value) || 0)}
-                    className="h-7 w-20 text-xs"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveEdit();
-                      if (e.key === 'Escape') handleCancelEdit();
-                    }}
-                  />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7"
-                    onClick={handleSaveEdit}
-                  >
-                    <Check className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <span className="text-xs text-muted-foreground">
-                    {item.quantidade} {item.medida_utilizada} ({item.peso_total_g}g)
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {/* Nutritional Info */}
-            <div className="flex items-center gap-3 mt-2 text-xs">
-              <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground">
-                  {Math.round(item.kcal_calculado)}
-                </span>{' '}
-                kcal
-              </span>
-              <span className="text-muted-foreground">
-                P:{' '}
-                <span className="font-semibold text-foreground">
-                  {item.ptn_g_calculado.toFixed(1)}
-                </span>
-                g
-              </span>
-              <span className="text-muted-foreground">
-                C:{' '}
-                <span className="font-semibold text-foreground">
-                  {item.cho_g_calculado.toFixed(1)}
-                </span>
-                g
-              </span>
-              <span className="text-muted-foreground">
-                G:{' '}
-                <span className="font-semibold text-foreground">
-                  {item.lip_g_calculado.toFixed(1)}
-                </span>
-                g
-              </span>
-            </div>
+      <div className="group flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow">
+        {/* Info Principal */}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">{item.nome}</p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+            <span>{item.quantidade} {item.medida_utilizada}</span>
+            <span>•</span>
+            <span>{Math.round(item.kcal_calculado)} kcal</span>
+            <span>•</span>
+            <span>P: {item.ptn_g_calculado.toFixed(1)}g</span>
+            <span>•</span>
+            <span>C: {item.cho_g_calculado.toFixed(1)}g</span>
+            <span>•</span>
+            <span>G: {item.lip_g_calculado.toFixed(1)}g</span>
           </div>
+        </div>
 
-          {/* Remove Button */}
+        {/* Controles de Quantidade Inline */}
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             size="icon"
             variant="ghost"
-            className={cn(
-              'h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive',
-              'transition-colors'
-            )}
-            onClick={onRemove}
-            title="Remover item"
+            className="h-7 w-7"
+            onClick={handleDecrement}
+            disabled={item.quantidade <= 0.5}
           >
-            <X className="h-4 w-4" />
+            <Minus className="h-3 w-3" />
+          </Button>
+          <span className="w-10 text-center text-sm font-medium">
+            {item.quantidade}
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={handleIncrement}
+          >
+            <Plus className="h-3 w-3" />
           </Button>
         </div>
-      </Card>
+
+        {/* Remover (aparece no hover) */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className={cn(
+            'h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100',
+            'text-muted-foreground hover:text-destructive transition-all'
+          )}
+          onClick={onRemove}
+          title="Remover item"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
     </motion.div>
   );
 };
