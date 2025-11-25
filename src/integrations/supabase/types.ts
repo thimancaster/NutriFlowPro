@@ -1266,6 +1266,115 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_evolution_metrics: {
+        Row: {
+          arm_circumference: number | null
+          bmi: number | null
+          body_fat_percentage: number | null
+          calculation_id: string | null
+          carbs_target_g: number | null
+          consultation_id: string | null
+          created_at: string | null
+          fat_target_g: number | null
+          get_value: number | null
+          height: number | null
+          hip_circumference: number | null
+          id: string
+          lean_mass_percentage: number | null
+          measurement_date: string
+          muscle_mass_kg: number | null
+          notes: string | null
+          patient_id: string
+          protein_target_g: number | null
+          thigh_circumference: number | null
+          tmb: number | null
+          updated_at: string | null
+          user_id: string
+          vet: number | null
+          waist_circumference: number | null
+          water_percentage: number | null
+          weight: number
+        }
+        Insert: {
+          arm_circumference?: number | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          calculation_id?: string | null
+          carbs_target_g?: number | null
+          consultation_id?: string | null
+          created_at?: string | null
+          fat_target_g?: number | null
+          get_value?: number | null
+          height?: number | null
+          hip_circumference?: number | null
+          id?: string
+          lean_mass_percentage?: number | null
+          measurement_date?: string
+          muscle_mass_kg?: number | null
+          notes?: string | null
+          patient_id: string
+          protein_target_g?: number | null
+          thigh_circumference?: number | null
+          tmb?: number | null
+          updated_at?: string | null
+          user_id: string
+          vet?: number | null
+          waist_circumference?: number | null
+          water_percentage?: number | null
+          weight: number
+        }
+        Update: {
+          arm_circumference?: number | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          calculation_id?: string | null
+          carbs_target_g?: number | null
+          consultation_id?: string | null
+          created_at?: string | null
+          fat_target_g?: number | null
+          get_value?: number | null
+          height?: number | null
+          hip_circumference?: number | null
+          id?: string
+          lean_mass_percentage?: number | null
+          measurement_date?: string
+          muscle_mass_kg?: number | null
+          notes?: string | null
+          patient_id?: string
+          protein_target_g?: number | null
+          thigh_circumference?: number | null
+          tmb?: number | null
+          updated_at?: string | null
+          user_id?: string
+          vet?: number | null
+          waist_circumference?: number | null
+          water_percentage?: number | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_evolution_metrics_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_evolution_metrics_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_evolution_metrics_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null

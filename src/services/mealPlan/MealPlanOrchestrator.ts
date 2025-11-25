@@ -8,6 +8,9 @@ import { AutoGenerationService } from './AutoGenerationService';
 import { PersistenceService, SaveOptions } from './PersistenceService';
 import { ConsolidatedMealPlan, MealPlanGenerationParams } from '@/types/mealPlanTypes';
 import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
+import { generateMealPlanPDF } from '@/utils/pdf/pdfExport';
+import { MealPlanExportOptions } from '@/utils/pdf/types';
+import { jsPDF } from 'jspdf';
 
 export interface AutoGenParams {
   userId: string;
@@ -223,6 +226,72 @@ export class MealPlanOrchestrator {
     } catch (error) {
       console.error('❌ Orchestrator: Erro ao listar planos', error);
       return [];
+    }
+  }
+
+  /**
+   * Exporta um plano alimentar para PDF
+   * FASE 1 - Centralização de exportação
+   */
+  static async exportToPDF(
+    plan: ConsolidatedMealPlan,
+    patientData: {
+      name: string;
+      age?: number;
+      gender?: 'male' | 'female';
+    },
+    options?: {
+      nutritionistName?: string;
+      clinicName?: string;
+      clinicAddress?: string;
+      clinicPhone?: string;
+      notes?: string;
+      autoDownload?: boolean;
+    }
+  ): Promise<jsPDF> {
+    try {
+      console.log('📄 Orchestrator: Gerando PDF do plano alimentar...');
+
+      // Transformar plano para formato de exportação
+      const exportOptions: MealPlanExportOptions = {
+        patientName: patientData.name,
+        patientAge: patientData.age,
+        patientGender: patientData.gender,
+        totalCalories: plan.total_calories,
+        totalProtein: plan.total_protein,
+        totalCarbs: plan.total_carbs,
+        totalFats: plan.total_fats,
+        meals: plan.meals.map(meal => ({
+          name: meal.name || meal.type,
+          calories: meal.total_calories || meal.totalCalories || 0,
+          protein: meal.total_protein || meal.totalProtein || 0,
+          carbs: meal.total_carbs || meal.totalCarbs || 0,
+          fat: meal.total_fats || meal.totalFats || 0,
+          percent: ((meal.total_calories || meal.totalCalories || 0) / plan.total_calories) * 100,
+          suggestions: meal.foods?.map(f => `${f.quantity}${f.unit} ${f.name}`) || []
+        })),
+        nutritionistName: options?.nutritionistName,
+        clinicName: options?.clinicName,
+        clinicAddress: options?.clinicAddress,
+        clinicPhone: options?.clinicPhone,
+        date: new Date(plan.date).toLocaleDateString('pt-BR'),
+        notes: options?.notes || plan.notes
+      };
+
+      const pdf = generateMealPlanPDF(exportOptions);
+
+      // Auto-download se solicitado
+      if (options?.autoDownload !== false) {
+        const fileName = `plano-alimentar-${patientData.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(fileName);
+      }
+
+      console.log('✅ Orchestrator: PDF gerado com sucesso');
+      return pdf;
+
+    } catch (error) {
+      console.error('❌ Orchestrator: Erro ao gerar PDF', error);
+      throw error;
     }
   }
 }

@@ -9,11 +9,14 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
 import { useToast } from '@/hooks/use-toast';
-import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
+import { MealPlanOrchestrator, AutoGenParams } from '@/services/mealPlan/MealPlanOrchestrator';
+import { useAuth } from './auth/AuthContext';
 
 interface PatientData {
   id: string;
   name: string;
+  age?: number;
+  gender?: string;
 }
 
 interface UnifiedNutritionState {
@@ -25,8 +28,9 @@ interface UnifiedNutritionState {
   // Estados de loading
   isLoading: boolean;
   isSaving: boolean;
+  isReadyForMealPlan: boolean;
   
-  // Ações
+  // Ações existentes
   setCurrentPlan: (plan: ConsolidatedMealPlan | null) => void;
   setCalculationResults: (results: CalculationResult | null) => void;
   setActivePatientData: (patient: PatientData | null) => void;
@@ -34,6 +38,20 @@ interface UnifiedNutritionState {
   savePlan: (options?: SaveOptions) => Promise<string | null>;
   resetPlan: () => void;
   initializeSession: (patient: PatientData, calculations: CalculationResult) => void;
+  
+  // FASE 2 - Novas ações de integração automática
+  setCalculationAndPrepare: (results: CalculationResult, patient: PatientData) => void;
+  generateAutomaticPlanFromContext: () => Promise<ConsolidatedMealPlan | null>;
+  exportCurrentPlanToPDF: (options?: ExportPDFOptions) => Promise<void>;
+}
+
+interface ExportPDFOptions {
+  nutritionistName?: string;
+  clinicName?: string;
+  clinicAddress?: string;
+  clinicPhone?: string;
+  notes?: string;
+  autoDownload?: boolean;
 }
 
 interface SaveOptions {
@@ -44,12 +62,14 @@ const UnifiedNutritionContext = createContext<UnifiedNutritionState | undefined>
 
 export const UnifiedNutritionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [currentPlan, setCurrentPlanState] = useState<ConsolidatedMealPlan | null>(null);
   const [calculationResults, setCalculationResultsState] = useState<CalculationResult | null>(null);
   const [activePatientData, setActivePatientDataState] = useState<PatientData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReadyForMealPlan, setIsReadyForMealPlan] = useState(false);
 
   const setCurrentPlan = useCallback((plan: ConsolidatedMealPlan | null) => {
     setCurrentPlanState(plan);
@@ -119,7 +139,112 @@ export const UnifiedNutritionProvider: React.FC<{ children: React.ReactNode }> =
     setActivePatientDataState(patient);
     setCalculationResultsState(calculations);
     setCurrentPlanState(null);
+    setIsReadyForMealPlan(false);
   }, []);
+
+  /**
+   * FASE 2 - Prepara o contexto para geração automática de plano
+   */
+  const setCalculationAndPrepare = useCallback((results: CalculationResult, patient: PatientData) => {
+    console.log('🎯 UnifiedNutrition: Preparando para geração automática de plano...');
+    setCalculationResultsState(results);
+    setActivePatientDataState(patient);
+    setIsReadyForMealPlan(true);
+  }, []);
+
+  /**
+   * FASE 2 - Gera plano automático usando dados do contexto
+   */
+  const generateAutomaticPlanFromContext = useCallback(async (): Promise<ConsolidatedMealPlan | null> => {
+    if (!calculationResults || !activePatientData || !user?.id) {
+      toast({
+        title: 'Dados Insuficientes',
+        description: 'Complete o cálculo nutricional antes de gerar o plano',
+        variant: 'destructive'
+      });
+      return null;
+    }
+
+    setIsLoading(true);
+    try {
+      console.log('🚀 UnifiedNutrition: Gerando plano automático...');
+
+      const params: AutoGenParams = {
+        userId: user.id,
+        patientId: activePatientData.id,
+        calculationResults,
+        patientData: {
+          name: activePatientData.name,
+          age: activePatientData.age,
+          gender: activePatientData.gender
+        }
+      };
+
+      const plan = await MealPlanOrchestrator.generateAutomaticPlan(params);
+      setCurrentPlanState(plan);
+      setIsReadyForMealPlan(false);
+
+      toast({
+        title: 'Plano Gerado',
+        description: 'Plano alimentar criado com sucesso!'
+      });
+
+      console.log('✅ UnifiedNutrition: Plano gerado e armazenado no contexto');
+      return plan;
+
+    } catch (error: any) {
+      console.error('❌ UnifiedNutrition: Erro ao gerar plano', error);
+      toast({
+        title: 'Erro ao gerar plano',
+        description: error.message || 'Erro desconhecido',
+        variant: 'destructive'
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [calculationResults, activePatientData, user?.id, toast]);
+
+  /**
+   * FASE 1 - Exporta plano atual para PDF
+   */
+  const exportCurrentPlanToPDF = useCallback(async (options?: ExportPDFOptions): Promise<void> => {
+    if (!currentPlan || !activePatientData) {
+      toast({
+        title: 'Sem Plano',
+        description: 'Gere um plano alimentar antes de exportar',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      console.log('📄 UnifiedNutrition: Exportando plano para PDF...');
+
+      await MealPlanOrchestrator.exportToPDF(
+        currentPlan,
+        {
+          name: activePatientData.name,
+          age: activePatientData.age,
+          gender: activePatientData.gender as 'male' | 'female'
+        },
+        options
+      );
+
+      toast({
+        title: 'PDF Gerado',
+        description: 'Plano alimentar exportado com sucesso!'
+      });
+
+    } catch (error: any) {
+      console.error('❌ UnifiedNutrition: Erro ao exportar PDF', error);
+      toast({
+        title: 'Erro ao exportar PDF',
+        description: error.message || 'Erro desconhecido',
+        variant: 'destructive'
+      });
+    }
+  }, [currentPlan, activePatientData, toast]);
 
   const value: UnifiedNutritionState = {
     currentPlan,
@@ -127,13 +252,17 @@ export const UnifiedNutritionProvider: React.FC<{ children: React.ReactNode }> =
     activePatientData,
     isLoading,
     isSaving,
+    isReadyForMealPlan,
     setCurrentPlan,
     setCalculationResults,
     setActivePatientData,
     updatePlan,
     savePlan,
     resetPlan,
-    initializeSession
+    initializeSession,
+    setCalculationAndPrepare,
+    generateAutomaticPlanFromContext,
+    exportCurrentPlanToPDF
   };
 
   return (

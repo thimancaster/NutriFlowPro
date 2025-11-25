@@ -12,6 +12,8 @@ import ConsolidatedPatientSelector from './ConsolidatedPatientSelector';
 import ConsolidatedCalculationPanel from './ConsolidatedCalculationPanel';
 import { useConsolidatedMealPlan } from '@/hooks/useConsolidatedMealPlan';
 import { Patient } from '@/types';
+import { patientEvolutionService, CreateEvolutionMetrics } from '@/services/patientEvolutionService';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 type WorkflowStep = 'patient' | 'calculation' | 'meal-plan' | 'evolution';
 
@@ -26,6 +28,7 @@ const UnifiedConsultationFlow: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // State management
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('patient');
@@ -67,9 +70,36 @@ const UnifiedConsultationFlow: React.FC = () => {
     setWorkflowData(prev => ({ ...prev, patient }));
   };
 
-  const handleCalculationComplete = (results: any) => {
+  const handleCalculationComplete = async (results: any) => {
     setCalculationResults(results);
     setWorkflowData(prev => ({ ...prev, calculation: results }));
+
+    // FASE 3 - Salvar métricas de evolução automaticamente
+    if (selectedPatient && user?.id) {
+      try {
+        const metricsData: CreateEvolutionMetrics = {
+          patient_id: selectedPatient.id,
+          user_id: user.id,
+          weight: results.weight || 0,
+          height: results.height,
+          bmi: results.bmi,
+          vet: results.vet || results.get,
+          tmb: results.bmr,
+          get_value: results.get,
+          protein_target_g: results.macros?.protein?.grams,
+          carbs_target_g: results.macros?.carbs?.grams,
+          fat_target_g: results.macros?.fat?.grams,
+          measurement_date: new Date().toISOString().split('T')[0],
+        };
+
+        console.log('💾 Salvando métricas de evolução...', metricsData);
+        await patientEvolutionService.saveMetrics(metricsData);
+        console.log('✅ Métricas de evolução salvas com sucesso');
+      } catch (error) {
+        console.error('❌ Erro ao salvar métricas de evolução:', error);
+        // Não bloqueia o fluxo se houver erro nas métricas
+      }
+    }
   };
 
   const handleGenerateMealPlan = async () => {
