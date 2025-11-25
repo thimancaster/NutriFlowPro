@@ -24,11 +24,51 @@ import {
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
-import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info, AlertTriangle, HelpCircle} from "lucide-react";
+import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info, AlertTriangle, HelpCircle, CheckCircle, AlertCircle, XCircle, Calendar} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {useToast} from "@/hooks/use-toast";
 import SkinfoldForm from "./SkinfoldForm";
 import { cn } from "@/lib/utils";
+
+// Informações educativas para campos básicos
+const FIELD_INFO = {
+	weight: {
+		title: "Peso Corporal",
+		description: "O peso é fundamental para calcular a TMB (Taxa Metabólica Basal). Afeta diretamente todos os cálculos de necessidades energéticas e macronutrientes.",
+		range: "Range recomendado: 40 - 200 kg",
+		tip: "💡 Use o peso atual, não o peso ideal ou desejado."
+	},
+	height: {
+		title: "Altura",
+		description: "A altura é usada no cálculo da TMB e do IMC. Pessoas mais altas geralmente têm maior gasto energético basal.",
+		range: "Range recomendado: 100 - 250 cm",
+		tip: "💡 Meça descalço(a), de manhã, para maior precisão."
+	},
+	age: {
+		title: "Idade",
+		description: "A idade influencia diretamente o metabolismo. Após os 30 anos, há redução gradual de ~3-5% por década na TMB devido à perda de massa muscular.",
+		range: "Range válido: 1 - 120 anos",
+		tip: "💡 Idosos (>60) e crianças (<18) podem precisar de ajustes especiais."
+	},
+	gender: {
+		title: "Sexo Biológico",
+		description: "Homens geralmente têm TMB ~10% maior que mulheres devido à maior massa muscular e menor percentual de gordura.",
+		tip: "💡 Afeta os fatores de atividade e fórmulas de cálculo."
+	},
+	objective: {
+		emagrecimento: "Déficit de 500 kcal/dia (perda de ~0.5 kg/semana). Ideal para perda de gordura gradual e sustentável.",
+		manutencao: "Sem alteração calórica. Para manter o peso atual e composição corporal.",
+		hipertrofia: "Superávit de 400 kcal/dia. Ideal para ganho de massa muscular com treino de força.",
+		personalizado: "Permite definir um ajuste calórico específico baseado nas necessidades individuais do paciente."
+	}
+};
+
+// Ranges para validação visual
+const INPUT_RANGES = {
+	weight: { min: 40, max: 200, warningMin: 30, warningMax: 250 },
+	height: { min: 100, max: 250, warningMin: 80, warningMax: 280 },
+	age: { min: 1, max: 120, warningMin: 1, warningMax: 130 }
+};
 
 // TMB Formula descriptions for tooltips
 const TMB_FORMULA_INFO: Record<string, string> = {
@@ -55,6 +95,17 @@ const PROFILE_INFO: Record<string, string> = {
 	eutrofico: "Eutrófico: Peso adequado para altura (IMC 18.5-24.9). Composição corporal equilibrada. Usa fórmula Harris-Benedict (padrão ouro para adultos saudáveis).",
 	sobrepeso_obesidade: "Sobrepeso/Obesidade: IMC ≥ 25 ou excesso de gordura corporal. Usa Mifflin-St Jeor (mais precisa para este perfil, evita superestimação).",
 	atleta: "Atleta: Alta massa muscular e baixo percentual de gordura. Praticantes de musculação/esportes de alta intensidade. Usa Tinsley (considera massa muscular elevada)."
+};
+
+// Função para determinar status de validação
+const getValidationStatus = (field: keyof typeof INPUT_RANGES, value: number | undefined) => {
+	if (!value) return 'empty';
+	const range = INPUT_RANGES[field];
+	if (!range) return 'valid';
+	
+	if (value < range.warningMin || value > range.warningMax) return 'error';
+	if (value < range.min || value > range.max) return 'warning';
+	return 'valid';
 };
 
 interface OfficialCalculatorFormProps {
@@ -191,49 +242,221 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					{/* Peso */}
 					<div className="space-y-2">
 						<Label htmlFor="weight" className="flex items-center gap-2">
 							<Scale className="h-4 w-4" />
 							Peso (kg)
+							<TooltipProvider>
+								<Tooltip delayDuration={200}>
+									<TooltipTrigger asChild>
+										<span className="cursor-help">
+											<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+										</span>
+									</TooltipTrigger>
+									<TooltipContent side="top" className="max-w-xs">
+										<div className="space-y-1">
+											<p className="font-semibold">{FIELD_INFO.weight.title}</p>
+											<p className="text-xs">{FIELD_INFO.weight.description}</p>
+											<p className="text-xs text-muted-foreground">{FIELD_INFO.weight.range}</p>
+											<p className="text-xs text-primary">{FIELD_INFO.weight.tip}</p>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 						</Label>
-						<Input
-							id="weight"
-							type="number"
-							step="0.1"
-							placeholder="Ex: 70.5"
-							value={inputs.weight || ""}
-							onChange={(e) => updateInputs({weight: Number(e.target.value)})}
-						/>
+						<div className="relative">
+							<Input
+								id="weight"
+								type="number"
+								step="0.1"
+								placeholder="Ex: 70.5"
+								value={inputs.weight || ""}
+								onChange={(e) => updateInputs({weight: Number(e.target.value)})}
+								className={cn(
+									getValidationStatus('weight', inputs.weight) === 'valid' && "border-green-500 focus-visible:ring-green-500/20",
+									getValidationStatus('weight', inputs.weight) === 'warning' && "border-yellow-500 focus-visible:ring-yellow-500/20",
+									getValidationStatus('weight', inputs.weight) === 'error' && "border-red-500 focus-visible:ring-red-500/20"
+								)}
+							/>
+							{inputs.weight && (
+								<span className="absolute right-3 top-1/2 -translate-y-1/2">
+									{getValidationStatus('weight', inputs.weight) === 'valid' && (
+										<CheckCircle className="h-4 w-4 text-green-500" />
+									)}
+									{getValidationStatus('weight', inputs.weight) === 'warning' && (
+										<AlertCircle className="h-4 w-4 text-yellow-500" />
+									)}
+									{getValidationStatus('weight', inputs.weight) === 'error' && (
+										<XCircle className="h-4 w-4 text-red-500" />
+									)}
+								</span>
+							)}
+						</div>
+						<div className="flex items-center justify-between text-xs text-muted-foreground">
+							<span>40 kg</span>
+							<span className={cn(
+								"font-medium",
+								getValidationStatus('weight', inputs.weight) === 'valid' && "text-green-600",
+								getValidationStatus('weight', inputs.weight) === 'warning' && "text-yellow-600",
+								getValidationStatus('weight', inputs.weight) === 'error' && "text-red-600"
+							)}>
+								{inputs.weight ? `${inputs.weight} kg` : 'Não informado'}
+							</span>
+							<span>200 kg</span>
+						</div>
 					</div>
 
+					{/* Altura */}
 					<div className="space-y-2">
 						<Label htmlFor="height" className="flex items-center gap-2">
 							<Ruler className="h-4 w-4" />
 							Altura (cm)
+							<TooltipProvider>
+								<Tooltip delayDuration={200}>
+									<TooltipTrigger asChild>
+										<span className="cursor-help">
+											<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+										</span>
+									</TooltipTrigger>
+									<TooltipContent side="top" className="max-w-xs">
+										<div className="space-y-1">
+											<p className="font-semibold">{FIELD_INFO.height.title}</p>
+											<p className="text-xs">{FIELD_INFO.height.description}</p>
+											<p className="text-xs text-muted-foreground">{FIELD_INFO.height.range}</p>
+											<p className="text-xs text-primary">{FIELD_INFO.height.tip}</p>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 						</Label>
-						<Input
-							id="height"
-							type="number"
-							step="0.1"
-							placeholder="Ex: 170"
-							value={inputs.height || ""}
-							onChange={(e) => updateInputs({height: Number(e.target.value)})}
-						/>
+						<div className="relative">
+							<Input
+								id="height"
+								type="number"
+								placeholder="Ex: 170"
+								value={inputs.height || ""}
+								onChange={(e) => updateInputs({height: Number(e.target.value)})}
+								className={cn(
+									getValidationStatus('height', inputs.height) === 'valid' && "border-green-500 focus-visible:ring-green-500/20",
+									getValidationStatus('height', inputs.height) === 'warning' && "border-yellow-500 focus-visible:ring-yellow-500/20",
+									getValidationStatus('height', inputs.height) === 'error' && "border-red-500 focus-visible:ring-red-500/20"
+								)}
+							/>
+							{inputs.height && (
+								<span className="absolute right-3 top-1/2 -translate-y-1/2">
+									{getValidationStatus('height', inputs.height) === 'valid' && (
+										<CheckCircle className="h-4 w-4 text-green-500" />
+									)}
+									{getValidationStatus('height', inputs.height) === 'warning' && (
+										<AlertCircle className="h-4 w-4 text-yellow-500" />
+									)}
+									{getValidationStatus('height', inputs.height) === 'error' && (
+										<XCircle className="h-4 w-4 text-red-500" />
+									)}
+								</span>
+							)}
+						</div>
+						<div className="flex items-center justify-between text-xs text-muted-foreground">
+							<span>100 cm</span>
+							<span className={cn(
+								"font-medium",
+								getValidationStatus('height', inputs.height) === 'valid' && "text-green-600",
+								getValidationStatus('height', inputs.height) === 'warning' && "text-yellow-600",
+								getValidationStatus('height', inputs.height) === 'error' && "text-red-600"
+							)}>
+								{inputs.height ? `${inputs.height} cm` : 'Não informado'}
+							</span>
+							<span>250 cm</span>
+						</div>
 					</div>
 
+					{/* Idade */}
 					<div className="space-y-2">
-						<Label htmlFor="age">Idade (anos)</Label>
-						<Input
-							id="age"
-							type="number"
-							placeholder="Ex: 30"
-							value={inputs.age || ""}
-							onChange={(e) => updateInputs({age: Number(e.target.value)})}
-						/>
+						<Label htmlFor="age" className="flex items-center gap-2">
+							<Calendar className="h-4 w-4" />
+							Idade (anos)
+							<TooltipProvider>
+								<Tooltip delayDuration={200}>
+									<TooltipTrigger asChild>
+										<span className="cursor-help">
+											<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+										</span>
+									</TooltipTrigger>
+									<TooltipContent side="top" className="max-w-xs">
+										<div className="space-y-1">
+											<p className="font-semibold">{FIELD_INFO.age.title}</p>
+											<p className="text-xs">{FIELD_INFO.age.description}</p>
+											<p className="text-xs text-muted-foreground">{FIELD_INFO.age.range}</p>
+											<p className="text-xs text-primary">{FIELD_INFO.age.tip}</p>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						</Label>
+						<div className="relative">
+							<Input
+								id="age"
+								type="number"
+								placeholder="Ex: 30"
+								value={inputs.age || ""}
+								onChange={(e) => updateInputs({age: Number(e.target.value)})}
+								className={cn(
+									getValidationStatus('age', inputs.age) === 'valid' && "border-green-500 focus-visible:ring-green-500/20",
+									getValidationStatus('age', inputs.age) === 'warning' && "border-yellow-500 focus-visible:ring-yellow-500/20",
+									getValidationStatus('age', inputs.age) === 'error' && "border-red-500 focus-visible:ring-red-500/20"
+								)}
+							/>
+							{inputs.age && (
+								<span className="absolute right-3 top-1/2 -translate-y-1/2">
+									{getValidationStatus('age', inputs.age) === 'valid' && (
+										<CheckCircle className="h-4 w-4 text-green-500" />
+									)}
+									{getValidationStatus('age', inputs.age) === 'warning' && (
+										<AlertCircle className="h-4 w-4 text-yellow-500" />
+									)}
+									{getValidationStatus('age', inputs.age) === 'error' && (
+										<XCircle className="h-4 w-4 text-red-500" />
+									)}
+								</span>
+							)}
+						</div>
+						<div className="flex items-center justify-between text-xs text-muted-foreground">
+							<span>1 ano</span>
+							<span className={cn(
+								"font-medium",
+								getValidationStatus('age', inputs.age) === 'valid' && "text-green-600",
+								getValidationStatus('age', inputs.age) === 'warning' && "text-yellow-600",
+								getValidationStatus('age', inputs.age) === 'error' && "text-red-600"
+							)}>
+								{inputs.age ? `${inputs.age} anos` : 'Não informado'}
+							</span>
+							<span>120 anos</span>
+						</div>
 					</div>
 
+					{/* Sexo */}
 					<div className="space-y-2">
-						<Label htmlFor="gender">Sexo</Label>
+						<Label htmlFor="gender" className="flex items-center gap-2">
+							<User className="h-4 w-4" />
+							Sexo
+							<TooltipProvider>
+								<Tooltip delayDuration={200}>
+									<TooltipTrigger asChild>
+										<span className="cursor-help">
+											<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+										</span>
+									</TooltipTrigger>
+									<TooltipContent side="top" className="max-w-xs">
+										<div className="space-y-1">
+											<p className="font-semibold">{FIELD_INFO.gender.title}</p>
+											<p className="text-xs">{FIELD_INFO.gender.description}</p>
+											<p className="text-xs text-primary">{FIELD_INFO.gender.tip}</p>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						</Label>
 						<Select
 							value={inputs.gender}
 							onValueChange={(value) => updateInputs({gender: value as "M" | "F"})}>
@@ -863,11 +1086,73 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="emagrecimento">
-							Emagrecimento (-500 kcal)
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Emagrecimento (-500 kcal)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="cursor-help">
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p className="text-xs">{FIELD_INFO.objective.emagrecimento}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
 						</SelectItem>
-						<SelectItem value="manutenção">Manutenção (0 kcal)</SelectItem>
-						<SelectItem value="hipertrofia">Hipertrofia (+400 kcal)</SelectItem>
-						<SelectItem value="personalizado">Personalizado</SelectItem>
+						<SelectItem value="manutenção">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Manutenção (0 kcal)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="cursor-help">
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p className="text-xs">{FIELD_INFO.objective.manutencao}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
+						<SelectItem value="hipertrofia">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Hipertrofia (+400 kcal)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="cursor-help">
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p className="text-xs">{FIELD_INFO.objective.hipertrofia}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
+						<SelectItem value="personalizado">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Personalizado</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="cursor-help">
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs">
+											<p className="text-xs">{FIELD_INFO.objective.personalizado}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>
