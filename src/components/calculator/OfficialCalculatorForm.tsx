@@ -278,111 +278,167 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 										<span>Automático</span>
 									</div>
 								</SelectItem>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="harris_benedict">
-												<div className="flex items-center gap-2">
-													<span>Harris-Benedict Revisada</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.harris_benedict}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="mifflin_st_jeor">
-												<div className="flex items-center gap-2">
-													<span>Mifflin-St Jeor</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.mifflin_st_jeor}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="tinsley">
-												<div className="flex items-center gap-2">
-													<span>Tinsley (Atletas)</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.tinsley}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="katch_mcardle">
-												<div className="flex items-center gap-2">
-													<span>Katch-McArdle (requer MM)</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.katch_mcardle}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="cunningham">
-												<div className="flex items-center gap-2">
-													<span>Cunningham (requer MM)</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.cunningham}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="who_fao_unu">
-												<div className="flex items-center gap-2">
-													<span>OMS/FAO/UNU</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.who_fao_unu}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-								<TooltipProvider>
-									<Tooltip delayDuration={200}>
-										<TooltipTrigger asChild>
-											<SelectItem value="penn_state">
-												<div className="flex items-center gap-2">
-													<span>Penn State</span>
-													<Info className="h-3 w-3 text-muted-foreground" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs">
-											<p>{TMB_FORMULA_INFO.penn_state}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
+							<SelectItem value="harris_benedict">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>Harris-Benedict Revisada</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.harris_benedict}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
+							<SelectItem value="mifflin_st_jeor">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>Mifflin-St Jeor</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.mifflin_st_jeor}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
+							<SelectItem value="tinsley">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>Tinsley (Atletas)</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.tinsley}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
+							<SelectItem value="katch_mcardle">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>Katch-McArdle (requer MM)</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.katch_mcardle}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
+							<SelectItem value="cunningham">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>Cunningham (requer MM)</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.cunningham}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
+							<SelectItem value="who_fao_unu">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>OMS/FAO/UNU</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.who_fao_unu}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
+							<SelectItem value="penn_state">
+								<div className="flex items-center justify-between w-full gap-2">
+									<span>Penn State</span>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p>{TMB_FORMULA_INFO.penn_state}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
 							</SelectContent>
 						</Select>
 						<p className="text-xs text-muted-foreground">
@@ -461,62 +517,86 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								<SelectValue placeholder="Selecione" />
 							</SelectTrigger>
 							<SelectContent>
-								<TooltipProvider>
-									<Tooltip delayDuration={300}>
-										<TooltipTrigger asChild>
-											<SelectItem value="eutrofico">
-												<div className="flex items-center justify-between w-full">
-													<div className="flex flex-col">
-														<span className="font-medium">Eutrófico</span>
-														<span className="text-xs text-muted-foreground">Harris-Benedict</span>
-													</div>
-													<Info className="h-3 w-3 text-muted-foreground ml-2 shrink-0" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs z-[60]">
-											<p className="text-sm">{PROFILE_INFO.eutrofico}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
+							<SelectItem value="eutrofico">
+								<div className="flex items-center justify-between w-full gap-2">
+									<div className="flex flex-col">
+										<span className="font-medium">Eutrófico</span>
+										<span className="text-xs text-muted-foreground">Harris-Benedict</span>
+									</div>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p className="text-sm">{PROFILE_INFO.eutrofico}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
 								
-								<TooltipProvider>
-									<Tooltip delayDuration={300}>
-										<TooltipTrigger asChild>
-											<SelectItem value="sobrepeso_obesidade">
-												<div className="flex items-center justify-between w-full">
-													<div className="flex flex-col">
-														<span className="font-medium">Sobrepeso/Obesidade</span>
-														<span className="text-xs text-muted-foreground">Mifflin-St Jeor</span>
-													</div>
-													<Info className="h-3 w-3 text-muted-foreground ml-2 shrink-0" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs z-[60]">
-											<p className="text-sm">{PROFILE_INFO.sobrepeso_obesidade}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
+							<SelectItem value="sobrepeso_obesidade">
+								<div className="flex items-center justify-between w-full gap-2">
+									<div className="flex flex-col">
+										<span className="font-medium">Sobrepeso/Obesidade</span>
+										<span className="text-xs text-muted-foreground">Mifflin-St Jeor</span>
+									</div>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p className="text-sm">{PROFILE_INFO.sobrepeso_obesidade}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
 								
-								<TooltipProvider>
-									<Tooltip delayDuration={300}>
-										<TooltipTrigger asChild>
-											<SelectItem value="atleta">
-												<div className="flex items-center justify-between w-full">
-													<div className="flex flex-col">
-														<span className="font-medium">Atleta</span>
-														<span className="text-xs text-muted-foreground">Tinsley</span>
-													</div>
-													<Info className="h-3 w-3 text-muted-foreground ml-2 shrink-0" />
-												</div>
-											</SelectItem>
-										</TooltipTrigger>
-										<TooltipContent side="right" className="max-w-xs z-[60]">
-											<p className="text-sm">{PROFILE_INFO.atleta}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
+							<SelectItem value="atleta">
+								<div className="flex items-center justify-between w-full gap-2">
+									<div className="flex flex-col">
+										<span className="font-medium">Atleta</span>
+										<span className="text-xs text-muted-foreground">Tinsley</span>
+									</div>
+									<TooltipProvider>
+										<Tooltip delayDuration={200}>
+											<TooltipTrigger asChild>
+												<span
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													className="cursor-help"
+												>
+													<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent side="right" className="max-w-xs z-[100]">
+												<p className="text-sm">{PROFILE_INFO.atleta}</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+							</SelectItem>
 							</SelectContent>
 						</Select>
 
@@ -540,85 +620,125 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								<SelectValue placeholder="Selecione" />
 							</SelectTrigger>
 						<SelectContent>
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<SelectItem value="sedentario">
-											<div className="flex items-center gap-2">
-												Sedentário (1.2)
-												<Info className="h-3 w-3 text-muted-foreground" />
-											</div>
-										</SelectItem>
-									</TooltipTrigger>
-									<TooltipContent side="right" className="max-w-xs">
-										<p className="text-sm">{ACTIVITY_LEVEL_INFO.sedentario}</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+						<SelectItem value="sedentario">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Sedentário (1.2)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span
+												onClick={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												className="cursor-help"
+											>
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[100]">
+											<p className="text-sm">{ACTIVITY_LEVEL_INFO.sedentario}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
 							
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<SelectItem value="leve">
-											<div className="flex items-center gap-2">
-												Leve (1.375)
-												<Info className="h-3 w-3 text-muted-foreground" />
-											</div>
-										</SelectItem>
-									</TooltipTrigger>
-									<TooltipContent side="right" className="max-w-xs">
-										<p className="text-sm">{ACTIVITY_LEVEL_INFO.leve}</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+						<SelectItem value="leve">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Leve (1.375)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span
+												onClick={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												className="cursor-help"
+											>
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[100]">
+											<p className="text-sm">{ACTIVITY_LEVEL_INFO.leve}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
 							
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<SelectItem value="moderado">
-											<div className="flex items-center gap-2">
-												Moderado (1.55)
-												<Info className="h-3 w-3 text-muted-foreground" />
-											</div>
-										</SelectItem>
-									</TooltipTrigger>
-									<TooltipContent side="right" className="max-w-xs">
-										<p className="text-sm">{ACTIVITY_LEVEL_INFO.moderado}</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+						<SelectItem value="moderado">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Moderado (1.55)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span
+												onClick={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												className="cursor-help"
+											>
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[100]">
+											<p className="text-sm">{ACTIVITY_LEVEL_INFO.moderado}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
 							
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<SelectItem value="intenso">
-											<div className="flex items-center gap-2">
-												Intenso (1.725)
-												<Info className="h-3 w-3 text-muted-foreground" />
-											</div>
-										</SelectItem>
-									</TooltipTrigger>
-									<TooltipContent side="right" className="max-w-xs">
-										<p className="text-sm">{ACTIVITY_LEVEL_INFO.intenso}</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+						<SelectItem value="intenso">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Intenso (1.725)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span
+												onClick={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												className="cursor-help"
+											>
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[100]">
+											<p className="text-sm">{ACTIVITY_LEVEL_INFO.intenso}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
 							
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<SelectItem value="muito_intenso">
-											<div className="flex items-center gap-2">
-												Muito Intenso (1.9)
-												<Info className="h-3 w-3 text-muted-foreground" />
-											</div>
-										</SelectItem>
-									</TooltipTrigger>
-									<TooltipContent side="right" className="max-w-xs">
-										<p className="text-sm">{ACTIVITY_LEVEL_INFO.muito_intenso}</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+						<SelectItem value="muito_intenso">
+							<div className="flex items-center justify-between w-full gap-2">
+								<span>Muito Intenso (1.9)</span>
+								<TooltipProvider>
+									<Tooltip delayDuration={200}>
+										<TooltipTrigger asChild>
+											<span
+												onClick={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												className="cursor-help"
+											>
+												<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors shrink-0" />
+											</span>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[100]">
+											<p className="text-sm">{ACTIVITY_LEVEL_INFO.muito_intenso}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</SelectItem>
 						</SelectContent>
 						</Select>
 					</div>
