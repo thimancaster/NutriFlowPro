@@ -17,7 +17,6 @@ import {
   PatientAppointmentsTab,
   PatientEvaluationsTab,
   PatientEvolutionTab,
-  PatientMealPlansTab,
   PatientNotesTab,
   PatientCalculationHistoryTab,
   PatientComparisonTab,
@@ -199,10 +198,6 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({
               
               <TabsContent value="reports" className="mt-0 h-full">
                 <PatientReportsTab patient={patient} />
-              </TabsContent>
-              
-              <TabsContent value="meal-plans" className="mt-0 h-full">
-                <PatientMealPlansTab patientId={patient.id} />
               </TabsContent>
               
               <TabsContent value="appointments" className="mt-0 h-full">

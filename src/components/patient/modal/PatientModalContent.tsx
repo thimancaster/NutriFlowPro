@@ -6,7 +6,6 @@ import PatientBasicInfoTab from '../tabs/PatientBasicInfoTab';
 import PatientAppointmentsTab from '../tabs/PatientAppointmentsTab';
 import PatientEvaluationsTab from '../tabs/PatientEvaluationsTab';
 import PatientEvolutionTab from '../tabs/PatientEvolutionTab';
-import PatientMealPlansTab from '../tabs/PatientMealPlansTab';
 import PatientNotesTab from '../tabs/PatientNotesTab';
 
 interface PatientModalContentProps {
@@ -36,10 +35,6 @@ const PatientModalContent: React.FC<PatientModalContentProps> = ({
         
       <TabsContent value="evolution" className="m-0 h-full">
         <PatientEvolutionTab patientId={patient.id} />
-      </TabsContent>
-        
-      <TabsContent value="mealplans" className="m-0 h-full">
-        <PatientMealPlansTab patientId={patient.id} />
       </TabsContent>
         
       <TabsContent value="notes" className="m-0 h-full">

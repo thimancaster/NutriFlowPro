@@ -125,5 +125,4 @@ export const useMealPlanQuery = (mealPlanId: string | undefined) => {
 };
 
 // Export additional hooks for backward compatibility
-export { useMealPlans } from './useMealPlans';
-export { useMealPlanMutations } from './useMealPlanMutations';
+// These have been removed - use MealPlanOrchestrator directly instead
