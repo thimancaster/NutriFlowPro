@@ -41,6 +41,15 @@ const TMB_FORMULA_INFO: Record<string, string> = {
 	penn_state: "Desenvolvida para pacientes hospitalizados, críticos ou com obesidade severa."
 };
 
+// Activity level descriptions with practical examples
+const ACTIVITY_LEVEL_INFO: Record<string, string> = {
+	sedentario: "Sedentário: Pouca ou nenhuma atividade física. Ex: trabalho de escritório sentado, sem exercícios regulares, deslocamento de carro.",
+	leve: "Leve: Exercícios leves 1-3x/semana. Ex: caminhadas ocasionais, yoga, pilates, trabalho que exige ficar em pé.",
+	moderado: "Moderado: Exercícios moderados 3-5x/semana. Ex: academia regular, corrida 3x/semana, natação, trabalho físico moderado.",
+	intenso: "Intenso: Exercícios intensos 6-7x/semana. Ex: treinos diários de musculação, corrida 5x/semana, esportes competitivos.",
+	muito_intenso: "Muito Intenso: Exercícios muito intensos 2x/dia ou atletas profissionais. Ex: preparação para competições, crossfit diário, trabalho físico pesado."
+};
+
 interface OfficialCalculatorFormProps {
 	onCalculationComplete?: (results: any) => void;
 	initialData?: {
@@ -474,13 +483,87 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 							<SelectTrigger id="activityLevel">
 								<SelectValue placeholder="Selecione" />
 							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="sedentario">Sedentário (1.2)</SelectItem>
-								<SelectItem value="leve">Leve (1.375)</SelectItem>
-								<SelectItem value="moderado">Moderado (1.55)</SelectItem>
-								<SelectItem value="intenso">Intenso (1.725)</SelectItem>
-								<SelectItem value="muito_intenso">Muito Intenso (1.9)</SelectItem>
-							</SelectContent>
+						<SelectContent>
+							<TooltipProvider>
+								<Tooltip delayDuration={300}>
+									<TooltipTrigger asChild>
+										<SelectItem value="sedentario">
+											<div className="flex items-center gap-2">
+												Sedentário (1.2)
+												<Info className="h-3 w-3 text-muted-foreground" />
+											</div>
+										</SelectItem>
+									</TooltipTrigger>
+									<TooltipContent side="right" className="max-w-xs">
+										<p className="text-sm">{ACTIVITY_LEVEL_INFO.sedentario}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+							
+							<TooltipProvider>
+								<Tooltip delayDuration={300}>
+									<TooltipTrigger asChild>
+										<SelectItem value="leve">
+											<div className="flex items-center gap-2">
+												Leve (1.375)
+												<Info className="h-3 w-3 text-muted-foreground" />
+											</div>
+										</SelectItem>
+									</TooltipTrigger>
+									<TooltipContent side="right" className="max-w-xs">
+										<p className="text-sm">{ACTIVITY_LEVEL_INFO.leve}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+							
+							<TooltipProvider>
+								<Tooltip delayDuration={300}>
+									<TooltipTrigger asChild>
+										<SelectItem value="moderado">
+											<div className="flex items-center gap-2">
+												Moderado (1.55)
+												<Info className="h-3 w-3 text-muted-foreground" />
+											</div>
+										</SelectItem>
+									</TooltipTrigger>
+									<TooltipContent side="right" className="max-w-xs">
+										<p className="text-sm">{ACTIVITY_LEVEL_INFO.moderado}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+							
+							<TooltipProvider>
+								<Tooltip delayDuration={300}>
+									<TooltipTrigger asChild>
+										<SelectItem value="intenso">
+											<div className="flex items-center gap-2">
+												Intenso (1.725)
+												<Info className="h-3 w-3 text-muted-foreground" />
+											</div>
+										</SelectItem>
+									</TooltipTrigger>
+									<TooltipContent side="right" className="max-w-xs">
+										<p className="text-sm">{ACTIVITY_LEVEL_INFO.intenso}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+							
+							<TooltipProvider>
+								<Tooltip delayDuration={300}>
+									<TooltipTrigger asChild>
+										<SelectItem value="muito_intenso">
+											<div className="flex items-center gap-2">
+												Muito Intenso (1.9)
+												<Info className="h-3 w-3 text-muted-foreground" />
+											</div>
+										</SelectItem>
+									</TooltipTrigger>
+									<TooltipContent side="right" className="max-w-xs">
+										<p className="text-sm">{ACTIVITY_LEVEL_INFO.muito_intenso}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						</SelectContent>
 						</Select>
 					</div>
 
