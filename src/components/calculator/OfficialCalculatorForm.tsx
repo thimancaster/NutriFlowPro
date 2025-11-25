@@ -24,7 +24,7 @@ import {
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
-import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info} from "lucide-react";
+import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info, AlertTriangle, HelpCircle} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {useToast} from "@/hooks/use-toast";
 import SkinfoldForm from "./SkinfoldForm";
@@ -48,6 +48,13 @@ const ACTIVITY_LEVEL_INFO: Record<string, string> = {
 	moderado: "Moderado: Exercícios moderados 3-5x/semana. Ex: academia regular, corrida 3x/semana, natação, trabalho físico moderado.",
 	intenso: "Intenso: Exercícios intensos 6-7x/semana. Ex: treinos diários de musculação, corrida 5x/semana, esportes competitivos.",
 	muito_intenso: "Muito Intenso: Exercícios muito intensos 2x/dia ou atletas profissionais. Ex: preparação para competições, crossfit diário, trabalho físico pesado."
+};
+
+// Profile descriptions with clinical characteristics
+const PROFILE_INFO: Record<string, string> = {
+	eutrofico: "Eutrófico: Peso adequado para altura (IMC 18.5-24.9). Composição corporal equilibrada. Usa fórmula Harris-Benedict (padrão ouro para adultos saudáveis).",
+	sobrepeso_obesidade: "Sobrepeso/Obesidade: IMC ≥ 25 ou excesso de gordura corporal. Usa Mifflin-St Jeor (mais precisa para este perfil, evita superestimação).",
+	atleta: "Atleta: Alta massa muscular e baixo percentual de gordura. Praticantes de musculação/esportes de alta intensidade. Usa Tinsley (considera massa muscular elevada)."
 };
 
 interface OfficialCalculatorFormProps {
@@ -160,6 +167,11 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 		getSuggestedActivityFactor
 		// Note: NOT including inputs.manualActivityFactor to avoid infinite loop
 	]);
+
+	// Check if selected formula is incompatible (requires lean body mass)
+	const isFormulaIncompatible = 
+		(inputs.manualTmbFormula === 'katch_mcardle' || inputs.manualTmbFormula === 'cunningham') 
+		&& !inputs.leanBodyMass;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -449,30 +461,74 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								<SelectValue placeholder="Selecione" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="eutrofico">
-									<div>
-										<div className="font-medium">Eutrófico</div>
-										<div className="text-xs text-muted-foreground">
-											Harris-Benedict
-										</div>
-									</div>
-								</SelectItem>
-								<SelectItem value="sobrepeso_obesidade">
-									<div>
-										<div className="font-medium">Sobrepeso/Obesidade</div>
-										<div className="text-xs text-muted-foreground">
-											Mifflin-St Jeor
-										</div>
-									</div>
-								</SelectItem>
-								<SelectItem value="atleta">
-									<div>
-										<div className="font-medium">Atleta</div>
-										<div className="text-xs text-muted-foreground">Tinsley</div>
-									</div>
-								</SelectItem>
+								<TooltipProvider>
+									<Tooltip delayDuration={300}>
+										<TooltipTrigger asChild>
+											<SelectItem value="eutrofico">
+												<div className="flex items-center justify-between w-full">
+													<div className="flex flex-col">
+														<span className="font-medium">Eutrófico</span>
+														<span className="text-xs text-muted-foreground">Harris-Benedict</span>
+													</div>
+													<Info className="h-3 w-3 text-muted-foreground ml-2 shrink-0" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[60]">
+											<p className="text-sm">{PROFILE_INFO.eutrofico}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								
+								<TooltipProvider>
+									<Tooltip delayDuration={300}>
+										<TooltipTrigger asChild>
+											<SelectItem value="sobrepeso_obesidade">
+												<div className="flex items-center justify-between w-full">
+													<div className="flex flex-col">
+														<span className="font-medium">Sobrepeso/Obesidade</span>
+														<span className="text-xs text-muted-foreground">Mifflin-St Jeor</span>
+													</div>
+													<Info className="h-3 w-3 text-muted-foreground ml-2 shrink-0" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[60]">
+											<p className="text-sm">{PROFILE_INFO.sobrepeso_obesidade}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								
+								<TooltipProvider>
+									<Tooltip delayDuration={300}>
+										<TooltipTrigger asChild>
+											<SelectItem value="atleta">
+												<div className="flex items-center justify-between w-full">
+													<div className="flex flex-col">
+														<span className="font-medium">Atleta</span>
+														<span className="text-xs text-muted-foreground">Tinsley</span>
+													</div>
+													<Info className="h-3 w-3 text-muted-foreground ml-2 shrink-0" />
+												</div>
+											</SelectItem>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-xs z-[60]">
+											<p className="text-sm">{PROFILE_INFO.atleta}</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
 							</SelectContent>
 						</Select>
+
+						{/* Incompatible Formula Alert */}
+						{isFormulaIncompatible && (
+							<div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg mt-2">
+								<AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0" />
+								<span className="text-sm text-orange-700 dark:text-orange-300">
+									<strong>Atenção:</strong> A fórmula {inputs.manualTmbFormula === 'katch_mcardle' ? 'Katch-McArdle' : 'Cunningham'} requer a Massa Magra (MM) para calcular corretamente. Preencha o campo abaixo ou use o botão "Calcular MM".
+								</span>
+							</div>
+						)}
 					</div>
 
 					<div className="space-y-2">
@@ -571,6 +627,59 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 					<Label htmlFor="manualActivityFactor" className="flex items-center gap-2">
 						<Activity className="h-4 w-4" />
 						Fator de Atividade Manual
+						
+						{/* Helper Modal */}
+						<Dialog>
+							<DialogTrigger asChild>
+								<button 
+									type="button" 
+									className="inline-flex items-center justify-center h-5 w-5 rounded-full hover:bg-muted transition-colors"
+								>
+									<HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+								</button>
+							</DialogTrigger>
+							<DialogContent className="max-w-lg">
+								<DialogHeader>
+									<DialogTitle>📊 Entendendo o Fator de Atividade</DialogTitle>
+								</DialogHeader>
+								<div className="space-y-4 text-sm">
+									<div>
+										<h4 className="font-semibold text-primary mb-1">O que é?</h4>
+										<p className="text-muted-foreground">
+											O Fator de Atividade (FA) é um multiplicador aplicado à Taxa Metabólica Basal (TMB) 
+											para estimar o Gasto Energético Total (GET) do paciente.
+										</p>
+									</div>
+									
+									<div>
+										<h4 className="font-semibold text-primary mb-1">🤖 Auto-preenchimento</h4>
+										<p className="text-muted-foreground">
+											O sistema preenche automaticamente baseado na <strong>fórmula TMB selecionada</strong>, 
+											<strong> sexo</strong> e <strong>nível de atividade</strong>. Cada fórmula tem fatores 
+											específicos validados na literatura científica.
+										</p>
+									</div>
+									
+									<div>
+										<h4 className="font-semibold text-primary mb-1">✏️ Quando editar manualmente?</h4>
+										<ul className="text-muted-foreground list-disc list-inside space-y-1">
+											<li>Paciente com condições especiais (gestantes, idosos, doenças)</li>
+											<li>Atividade física não convencional (trabalho braçal intenso)</li>
+											<li>Ajuste fino baseado em resultados anteriores</li>
+											<li>Protocolos específicos da sua prática clínica</li>
+										</ul>
+									</div>
+									
+									<div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+										<p className="text-blue-700 dark:text-blue-300 text-xs">
+											💡 <strong>Dica:</strong> Mesmo editando manualmente, o valor permanece vinculado 
+											ao cálculo. Você pode redefinir limpando o campo e alterando o nível de atividade.
+										</p>
+									</div>
+								</div>
+							</DialogContent>
+						</Dialog>
+						
 						{inputs.manualActivityFactor && getSuggestedActivityFactor() === inputs.manualActivityFactor && (
 							<Badge variant="secondary" className="text-xs">
 								Auto-preenchido
