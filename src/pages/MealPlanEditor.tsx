@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Download } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { MealPlanServiceV3 } from '@/services/mealPlan/MealPlanServiceV3';
+import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
 import ConsolidatedMealPlanEditor from '@/components/meal-plan/ConsolidatedMealPlanEditor';
 
@@ -26,7 +25,7 @@ const MealPlanEditor: React.FC = () => {
   const loadMealPlan = async (planId: string) => {
     try {
       setIsLoading(true);
-      const result = await MealPlanServiceV3.getMealPlanById(planId);
+      const result = await MealPlanOrchestrator.getMealPlan(planId);
       setMealPlan(result);
     } catch (error: any) {
       console.error('Erro ao carregar plano:', error);
@@ -45,7 +44,7 @@ const MealPlanEditor: React.FC = () => {
     
     try {
       setIsSaving(true);
-      // For now, just return true to avoid errors
+      await MealPlanOrchestrator.saveMealPlan(updatedPlan);
       setMealPlan(updatedPlan);
       toast({
         title: 'Sucesso',
@@ -78,7 +77,7 @@ const MealPlanEditor: React.FC = () => {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-red-600">Plano alimentar não encontrado</p>
+            <p className="text-destructive">Plano alimentar não encontrado</p>
             <Button onClick={() => navigate(-1)} className="mt-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar

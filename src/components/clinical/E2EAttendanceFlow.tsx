@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useConsolidatedNutrition } from '@/hooks/useConsolidatedNutrition';
-import { MealPlanService } from '@/services/mealPlanService';
+import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { ConsultationService } from '@/services/consultationService';
 import { PatientInput } from '@/types';
 
@@ -62,15 +62,15 @@ const E2EAttendanceFlow: React.FC<E2EAttendanceFlowProps> = ({ patientId, onComp
     console.log('[ATTEND:E2E] Generating meal plan');
     
     try {
-      const result = await MealPlanService.generateMealPlan({
+      const userId = '';
+      const result = await MealPlanOrchestrator.generateAutomaticPlan({
         patientId,
-        calculationId: nutritionState.calculationId,
-        targets: nutritionState.targets,
-        date: new Date().toISOString().split('T')[0]
+        userId,
+        calculationResults: nutritionState as any
       });
 
-      if (result.success && result.data) {
-        setMealPlanId(result.data.id);
+      if (result && result.id) {
+        setMealPlanId(result.id);
         setCurrentStep('finalization');
         
         toast({
@@ -78,7 +78,7 @@ const E2EAttendanceFlow: React.FC<E2EAttendanceFlowProps> = ({ patientId, onComp
           description: "Plano alimentar gerado com sucesso!",
         });
       } else {
-        throw new Error(result.error || 'Erro ao gerar plano');
+        throw new Error('Erro ao gerar plano');
       }
     } catch (error: any) {
       console.error('[ATTEND:E2E] Error generating meal plan:', error);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { MealPlanService } from '@/services/mealPlanService';
-import { ConsolidatedMealPlan, MealPlanFilters } from '@/types/mealPlan';
+import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
+import { ConsolidatedMealPlan } from '@/types/mealPlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const MealPlans: React.FC = () => {
   const { user } = useAuth();
@@ -17,20 +18,12 @@ const MealPlans: React.FC = () => {
   const [mealPlans, setMealPlans] = useState<ConsolidatedMealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [filters, setFilters] = useState<MealPlanFilters>({
-    patient_id: undefined,
-    date_from: undefined,
-    date_to: undefined,
-    is_template: false,
-    limit: 50
-  });
 
   useEffect(() => {
     if (user?.id) {
       loadMealPlans();
     }
-  }, [user?.id, filters]);
+  }, [user?.id]);
 
   const loadMealPlans = async () => {
     if (!user?.id) return;
@@ -39,13 +32,36 @@ const MealPlans: React.FC = () => {
     setError(null);
     
     try {
-      const result = await MealPlanService.getMealPlans(user.id);
-      
-      if (result.success && result.data) {
-        setMealPlans(result.data as any);
-      } else {
-        setError(result.error || 'Erro ao carregar planos alimentares');
-      }
+      // Load meal plans from database
+      const { data, error: fetchError } = await supabase
+        .from('meal_plans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      // Transform to ConsolidatedMealPlan format
+      const plans: ConsolidatedMealPlan[] = (data || []).map(plan => ({
+        id: plan.id,
+        name: `Plano - ${new Date(plan.date).toLocaleDateString('pt-BR')}`,
+        user_id: plan.user_id,
+        patient_id: plan.patient_id || '',
+        calculation_id: plan.calculation_id,
+        date: plan.date,
+        meals: [],
+        total_calories: plan.total_calories,
+        total_protein: plan.total_protein,
+        total_carbs: plan.total_carbs,
+        total_fats: plan.total_fats,
+        notes: plan.notes,
+        is_template: plan.is_template,
+        day_of_week: plan.day_of_week,
+        created_at: plan.created_at,
+        updated_at: plan.updated_at
+      }));
+
+      setMealPlans(plans);
     } catch (err: any) {
       setError(err.message || 'Erro inesperado');
     } finally {
@@ -59,36 +75,37 @@ const MealPlans: React.FC = () => {
     }
 
     try {
-      const result = await MealPlanService.deleteMealPlan(id);
-      
-      if (result.success) {
-        setMealPlans(prev => prev.filter(plan => plan.id !== id));
-        toast.success('Plano alimentar excluído com sucesso');
-      } else {
-        toast.error(result.error || 'Erro ao excluir plano alimentar');
-      }
+      const { error: deleteError } = await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
+
+      setMealPlans(prev => prev.filter(plan => plan.id !== id));
+      toast.success('Plano alimentar excluído com sucesso');
     } catch (err: any) {
       toast.error(err.message || 'Erro inesperado');
     }
   };
 
   const handleViewMealPlan = (id: string) => {
-    navigate(`/meal-plans/${id}`);
+    navigate(`/meal-plan/${id}`);
   };
 
   const handleEditMealPlan = (id: string) => {
-    navigate(`/meal-plans/${id}/edit`);
+    navigate(`/meal-plan-editor/${id}`);
   };
 
   const handleCreateMealPlan = () => {
-    navigate('/meal-plan-workflow');
+    navigate('/meal-plan-builder');
   };
 
   if (loading) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-nutri-blue"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </div>
     );
@@ -99,7 +116,7 @@ const MealPlans: React.FC = () => {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="p-6">
-            <div className="text-center text-red-600">
+            <div className="text-center text-destructive">
               <p>Erro: {error}</p>
               <Button onClick={loadMealPlans} className="mt-4">
                 Tentar novamente
@@ -115,10 +132,10 @@ const MealPlans: React.FC = () => {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-nutri-blue mb-2">Planos Alimentares</h1>
-          <p className="text-gray-600">Gerencie seus planos alimentares criados</p>
+          <h1 className="text-3xl font-bold mb-2">Planos Alimentares</h1>
+          <p className="text-muted-foreground">Gerencie seus planos alimentares criados</p>
         </div>
-        <Button onClick={handleCreateMealPlan} className="bg-nutri-green hover:bg-nutri-green-dark">
+        <Button onClick={handleCreateMealPlan}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Novo Plano
         </Button>
@@ -127,14 +144,14 @@ const MealPlans: React.FC = () => {
       {mealPlans.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               Nenhum plano alimentar encontrado
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               Comece criando seu primeiro plano alimentar personalizado.
             </p>
-            <Button onClick={handleCreateMealPlan} className="bg-nutri-green hover:bg-nutri-green-dark">
+            <Button onClick={handleCreateMealPlan}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Criar Primeiro Plano
             </Button>
@@ -161,7 +178,7 @@ const MealPlans: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteMealPlan(plan.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -170,7 +187,7 @@ const MealPlans: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
+                  <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" />
                     Criado em {format(new Date(plan.created_at), 'dd/MM/yyyy', { locale: ptBR })}
                   </div>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { PatientProvider } from '@/contexts/patient/PatientContext';
-import { MealPlanProvider } from '@/contexts/MealPlanContext';
+import { UnifiedNutritionProvider } from '@/contexts/UnifiedNutritionContext';
 import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
@@ -16,13 +16,13 @@ const ProtectedLayout: React.FC = () => {
   return (
     <ProtectedRoute>
       <PatientProvider>
-        <MealPlanProvider>
+        <UnifiedNutritionProvider>
           <ConsultationDataProvider>
             <Layout>
               <Outlet />
             </Layout>
           </ConsultationDataProvider>
-        </MealPlanProvider>
+        </UnifiedNutritionProvider>
       </PatientProvider>
     </ProtectedRoute>
   );
