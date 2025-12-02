@@ -112,7 +112,7 @@ export const useEcosystemBridge = () => {
       return;
     }
 
-    navigate('/meal-plan-generator', {
+    navigate('/meal-plan-builder', {
       state: {
         patientData: targetPatient,
         calculationData: calculationData || convertToConsultationData(),

@@ -1,4 +1,7 @@
 
+// Alimento types (central definition)
+export type { AlimentoV2 } from './alimento';
+
 // Patient types
 export type { Patient, PatientGoals, AddressDetails } from './patient';
 export type { PatientFilters } from './patient';

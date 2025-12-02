@@ -92,7 +92,7 @@ const ConsultationWizard: React.FC<ConsultationWizardProps> = ({
           }
           break;
         case 3:
-          navigate('/meal-plan-generator');
+          navigate('/meal-plan-builder');
           break;
         default:
           navigate('/dashboard');
@@ -129,7 +129,7 @@ const ConsultationWizard: React.FC<ConsultationWizardProps> = ({
             });
             return;
           }
-          navigate('/meal-plan-generator');
+          navigate('/meal-plan-builder');
           break;
         case 2:
           if (activePatient?.id) {
@@ -169,7 +169,7 @@ const ConsultationWizard: React.FC<ConsultationWizardProps> = ({
           navigate('/consultation');
           break;
         case 2:
-          navigate('/meal-plan-generator');
+          navigate('/meal-plan-builder');
           break;
         case 3:
           if (activePatient?.id) {

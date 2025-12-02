@@ -49,7 +49,7 @@ export const useConsultation = () => {
       description: "Os resultados foram calculados e estão prontos para gerar um plano alimentar.",
     });
     
-    navigate('/meal-plan-generator');
+    navigate('/meal-plan-builder');
   };
   
   const saveAutoChanges = useCallback(async (
