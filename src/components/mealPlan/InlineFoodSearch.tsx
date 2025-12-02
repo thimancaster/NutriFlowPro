@@ -12,17 +12,7 @@ import { Card } from '@/components/ui/card';
 import { AlimentoServiceUnified } from '@/services/mealPlan/AlimentoServiceUnified';
 import { MealType } from '@/types/mealPlanTypes';
 import { Badge } from '@/components/ui/badge';
-
-interface AlimentoV2 {
-  id: string;
-  nome: string;
-  grupo?: string;
-  energia_kcal?: number;
-  proteina_g?: number;
-  carboidrato_g?: number;
-  lipidios_g?: number;
-  porcao_padrao?: string;
-}
+import { AlimentoV2 } from '@/types/alimento';
 
 interface InlineFoodSearchProps {
   mealType: MealType;
@@ -40,7 +30,7 @@ const InlineFoodSearch: React.FC<InlineFoodSearchProps> = ({
   const [suggestions, setSuggestions] = useState<AlimentoV2[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFood, setSelectedFood] = useState<AlimentoV2 | null>(null);
-  const [quantity, setQuantity] = useState(100);
+  const [quantity, setQuantity] = useState(1);
 
   // Busca inicial de sugestões
   useEffect(() => {
@@ -81,7 +71,7 @@ const InlineFoodSearch: React.FC<InlineFoodSearchProps> = ({
     if (selectedFood && quantity > 0) {
       onSelectFood(selectedFood, quantity);
       setSelectedFood(null);
-      setQuantity(100);
+      setQuantity(1);
       setQuery('');
       onClose?.();
     }
@@ -121,17 +111,11 @@ const InlineFoodSearch: React.FC<InlineFoodSearchProps> = ({
                   >
                     <div className="font-medium">{food.nome}</div>
                     <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-                      {food.energia_kcal && (
-                        <Badge variant="secondary" className="text-xs">
-                          {Math.round(food.energia_kcal)} kcal
-                        </Badge>
-                      )}
-                      {food.proteina_g && (
-                        <span>{food.proteina_g.toFixed(1)}g PTN</span>
-                      )}
-                      {food.grupo && (
-                        <span className="text-muted-foreground">• {food.grupo}</span>
-                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {Math.round(food.kcal_por_referencia)} kcal
+                      </Badge>
+                      <span>{food.ptn_g_por_referencia.toFixed(1)}g PTN</span>
+                      <span className="text-muted-foreground">• {food.categoria}</span>
                     </div>
                   </button>
                 ))
@@ -149,22 +133,26 @@ const InlineFoodSearch: React.FC<InlineFoodSearchProps> = ({
           <div className="space-y-4">
             <div>
               <p className="font-medium mb-2">{selectedFood.nome}</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {selectedFood.medida_padrao_referencia} ({selectedFood.peso_referencia_g}g)
+              </p>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <label className="text-sm text-muted-foreground mb-1 block">
-                    Quantidade (g)
+                    Quantidade (porções)
                   </label>
                   <Input
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    min={1}
+                    min={0.5}
+                    step={0.5}
                     autoFocus
                   />
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  <div>{Math.round((selectedFood.energia_kcal || 0) * quantity / 100)} kcal</div>
-                  <div>{((selectedFood.proteina_g || 0) * quantity / 100).toFixed(1)}g PTN</div>
+                  <div>{Math.round(selectedFood.kcal_por_referencia * quantity)} kcal</div>
+                  <div>{(selectedFood.ptn_g_por_referencia * quantity).toFixed(1)}g PTN</div>
                 </div>
               </div>
             </div>

@@ -44,8 +44,8 @@ export const handleGenerateMealPlan = (
   // Set consultation data in context
   setConsultationData(consultationData);
   
-  // Navigate to meal plan generator with the data
-  navigate('/meal-plan-generator', {
+  // Navigate to meal plan builder with the data
+  navigate('/meal-plan-builder', {
     state: {
       consultation: consultationData,
       patient: patientData

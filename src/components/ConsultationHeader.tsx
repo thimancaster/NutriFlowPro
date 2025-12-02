@@ -61,7 +61,7 @@ const ConsultationHeader = ({ currentStep = 'dashboard' }: ConsultationHeaderPro
           navigate('/consultation');
           break;
         case 2:
-          navigate('/meal-plan-generator');
+          navigate('/meal-plan-builder');
           break;
         default:
           break;

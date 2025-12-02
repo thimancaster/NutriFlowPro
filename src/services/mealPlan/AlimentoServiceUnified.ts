@@ -5,22 +5,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { MealType } from '@/types/mealPlanTypes';
+import { AlimentoV2 } from '@/types/alimento';
 
-export interface AlimentoV2 {
-  id: string;
-  nome: string;
-  categoria: string;
-  subcategoria?: string;
-  kcal_por_referencia: number;
-  ptn_g_por_referencia: number;
-  cho_g_por_referencia: number;
-  lip_g_por_referencia: number;
-  peso_referencia_g: number;
-  medida_padrao_referencia: string;
-  tipo_refeicao_sugerida?: string[];
-  keywords?: string[];
-  popularidade?: number;
-}
+// Re-exportar para compatibilidade
+export type { AlimentoV2 };
 
 export interface SearchFilters {
   categoria?: string;
@@ -193,7 +181,7 @@ export class AlimentoServiceUnified {
         .from('alimentos_v2')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

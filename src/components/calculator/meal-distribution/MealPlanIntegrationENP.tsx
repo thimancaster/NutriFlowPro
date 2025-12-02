@@ -50,8 +50,8 @@ export const MealPlanIntegrationENP: React.FC<MealPlanIntegrationENPProps> = ({
       }
     });
     
-    // Navigate to meal plan workflow with calculation data
-    navigate('/meal-plan-workflow', {
+    // Navigate to meal plan builder with calculation data
+    navigate('/meal-plan-builder', {
       state: {
         patientData: activePatient,
         calculationData: {
