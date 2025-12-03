@@ -65,6 +65,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     sex: convertGenderToSex(editPatient?.gender) || initialData?.sex || undefined,
     objective: (editPatient?.goals as any)?.objective || initialData?.objective || '',
     profile: (editPatient?.goals as any)?.profile || initialData?.profile || '',
+    activityLevel: (editPatient?.goals as any)?.activityLevel || '',
   });
 
   const [birthDate, setBirthDate] = useState<Date | undefined>(
@@ -101,8 +102,16 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   // Load address data if editing
   useEffect(() => {
-    if (editPatient?.address && typeof editPatient.address === 'object') {
-      setAddress(editPatient.address as any);
+    if (editPatient?.address) {
+      if (typeof editPatient.address === 'object') {
+        setAddress(editPatient.address as any);
+      } else if (typeof editPatient.address === 'string' && editPatient.address.startsWith('{')) {
+        try {
+          setAddress(JSON.parse(editPatient.address));
+        } catch {
+          // Keep default empty address
+        }
+      }
     }
   }, [editPatient]);
 
@@ -196,6 +205,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         goals: {
           objective: formData.objective || '',
           profile: formData.profile || '',
+          activityLevel: formData.activityLevel || '',
         },
         status: 'active',
         user_id: user.id,
@@ -222,7 +232,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         form.reset();
         setFormData({
           name: '', email: '', phone: '', secondaryPhone: '', 
-          cpf: '', sex: undefined, objective: '', profile: ''
+          cpf: '', sex: undefined, objective: '', profile: '', activityLevel: ''
         });
         setBirthDate(undefined);
         setAddress({
