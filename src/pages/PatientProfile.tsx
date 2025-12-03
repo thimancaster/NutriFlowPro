@@ -204,12 +204,16 @@ const PatientProfile = () => {
 							</div>
 						)}
 
-						{patient.gender && (
-							<div>
-								<label className="text-sm font-medium text-gray-500">Gênero</label>
-								<p className="text-sm capitalize">{patient.gender}</p>
-							</div>
-						)}
+					{patient.gender && (
+						<div>
+							<label className="text-sm font-medium text-gray-500">Gênero</label>
+							<p className="text-sm">
+								{patient.gender === 'male' && 'Masculino'}
+								{patient.gender === 'female' && 'Feminino'}
+								{patient.gender === 'other' && 'Outro'}
+							</p>
+						</div>
+					)}
 
 						{patient.cpf && (
 							<div>

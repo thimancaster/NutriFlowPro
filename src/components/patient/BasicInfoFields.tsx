@@ -29,6 +29,7 @@ interface BasicInfoFieldsProps {
 		sex?: "M" | "F" | "O";
 		objective: string;
 		profile: string;
+		activityLevel?: string;
 	};
 	birthDate?: Date;
 	setBirthDate: (date: Date | undefined) => void;
@@ -157,24 +158,55 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({
 
 				<div className="space-y-2">
 					<Label htmlFor="objective">Objetivo</Label>
-					<Input
-						id="objective"
-						name="objective"
-						value={formData.objective}
-						onChange={handleChange}
-						placeholder="Ex: Perda de peso, Ganho de massa muscular"
-					/>
+					<Select
+						value={formData.objective || ""}
+						onValueChange={(value) => handleSelectChange("objective", value)}>
+						<SelectTrigger className={errors.objective ? "border-red-500" : ""}>
+							<SelectValue placeholder="Selecione o objetivo" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+							<SelectItem value="manutencao">Manutenção</SelectItem>
+							<SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+						</SelectContent>
+					</Select>
+					{errors.objective && <p className="text-red-500 text-sm">{errors.objective}</p>}
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="profile">Perfil</Label>
-					<Input
-						id="profile"
-						name="profile"
-						value={formData.profile}
-						onChange={handleChange}
-						placeholder="Ex: Sedentário, Ativo, Atleta"
-					/>
+					<Label htmlFor="profile">Perfil Corporal</Label>
+					<Select
+						value={formData.profile || ""}
+						onValueChange={(value) => handleSelectChange("profile", value)}>
+						<SelectTrigger className={errors.profile ? "border-red-500" : ""}>
+							<SelectValue placeholder="Selecione o perfil" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="eutrofico">Eutrófico (Normal)</SelectItem>
+							<SelectItem value="obeso_sobrepeso">Sobrepeso/Obesidade</SelectItem>
+							<SelectItem value="atleta">Atleta</SelectItem>
+						</SelectContent>
+					</Select>
+					{errors.profile && <p className="text-red-500 text-sm">{errors.profile}</p>}
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor="activityLevel">Nível de Atividade</Label>
+					<Select
+						value={formData.activityLevel || ""}
+						onValueChange={(value) => handleSelectChange("activityLevel", value)}>
+						<SelectTrigger className={errors.activityLevel ? "border-red-500" : ""}>
+							<SelectValue placeholder="Selecione o nível de atividade" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="sedentario">Sedentário</SelectItem>
+							<SelectItem value="leve">Leve</SelectItem>
+							<SelectItem value="moderado">Moderado</SelectItem>
+							<SelectItem value="muito_ativo">Muito Ativo</SelectItem>
+							<SelectItem value="extremamente_ativo">Extremamente Ativo</SelectItem>
+						</SelectContent>
+					</Select>
+					{errors.activityLevel && <p className="text-red-500 text-sm">{errors.activityLevel}</p>}
 				</div>
 			</div>
 		</div>
