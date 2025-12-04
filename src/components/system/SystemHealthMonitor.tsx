@@ -32,10 +32,10 @@ const SystemHealthMonitor: React.FC = () => {
     }
   }, [autoRefresh, runFullDiagnostics]);
 
-  // Show dev mode only in development or for admin users
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const isAdmin = user?.email?.includes('admin') || user?.email?.includes('thiago');
-  const shouldShow = isDevelopment || isAdmin;
+  // Show dev mode only in development environment
+  // Note: This is a dev-only tool, not an admin feature requiring server-side checks
+  const isDevelopment = import.meta.env.DEV;
+  const shouldShow = isDevelopment;
 
   if (!shouldShow) return null;
 
