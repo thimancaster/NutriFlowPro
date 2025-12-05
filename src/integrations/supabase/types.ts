@@ -1897,8 +1897,6 @@ export type Database = {
         Args: { is_admin: boolean; target_user_id: string }
         Returns: undefined
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       upsert_subscriber: {
         Args: {
           p_email: string
