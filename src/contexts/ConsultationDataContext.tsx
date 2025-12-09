@@ -83,29 +83,43 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
     }))
   };
 
+  // Helper to extract numeric value from potential {value, formula} objects
+  const extractNumericValue = (val: any): number => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'object' && 'value' in val) return Number(val.value) || 0;
+    return Number(val) || 0;
+  };
+
   const autoSave = useCallback(async () => {
     if (!consultationData || !activePatient || !user?.id) return;
     
     setIsSaving(true);
     try {
+      // Extract numeric values safely (handles {value, formula} objects)
+      const bmrValue = extractNumericValue(consultationData.bmr);
+      const tdeeValue = extractNumericValue(consultationData.results?.vet) || bmrValue;
+      
       // Transform data to match Supabase schema exactly
       const saveData = {
         id: consultationData.id,
         user_id: user.id,
         patient_id: activePatient.id,
-        age: consultationData.age || activePatient.age || 0,
-        weight: consultationData.weight || 0,
-        height: consultationData.height || 0,
-        gender: consultationData.gender === 'male' ? 'M' : consultationData.gender === 'female' ? 'F' : 'M', // Normalize to database format
+        age: Number(consultationData.age) || Number(activePatient.age) || 0,
+        weight: Number(consultationData.weight) || 0,
+        height: Number(consultationData.height) || 0,
+        gender: consultationData.gender === 'male' ? 'M' : consultationData.gender === 'female' ? 'F' : 'M',
         activity_level: consultationData.activity_level || 'moderado',
         goal: consultationData.objective || consultationData.goal || 'manutenção',
-        bmr: consultationData.bmr || 0,
-        tdee: consultationData.results?.vet || consultationData.bmr || 0,
-        protein: consultationData.protein || 0,
-        carbs: consultationData.carbs || 0,
-        fats: consultationData.fats || 0,
+        bmr: bmrValue,
+        tdee: tdeeValue,
+        protein: Number(consultationData.protein) || 0,
+        carbs: Number(consultationData.carbs) || 0,
+        fats: Number(consultationData.fats) || 0,
         updated_at: new Date().toISOString()
       };
+
+      console.log('[AUTO-SAVE] Prepared data:', saveData);
 
       const { error } = await supabase
         .from('calculations')
@@ -114,9 +128,9 @@ export const ConsultationDataProvider: React.FC<{ children: React.ReactNode }> =
       if (error) throw error;
       
       setLastSaved(new Date());
-      console.log('Auto-save completed');
+      console.log('[AUTO-SAVE] Completed successfully');
     } catch (error) {
-      console.error('Auto-save failed:', error);
+      console.error('[AUTO-SAVE] Failed:', error);
     } finally {
       setIsSaving(false);
     }
