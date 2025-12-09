@@ -566,6 +566,7 @@ export type Database = {
           notes: string | null
           patient_id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           calculation_id?: string | null
@@ -577,6 +578,7 @@ export type Database = {
           notes?: string | null
           patient_id: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           calculation_id?: string | null
@@ -588,6 +590,7 @@ export type Database = {
           notes?: string | null
           patient_id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
