@@ -4,11 +4,12 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Badge} from "@/components/ui/badge";
 import {Progress} from "@/components/ui/progress";
-import {Utensils, Search, Plus, Trash2, AlertCircle, CheckCircle2} from "lucide-react";
+import {Utensils, Search, Plus, Trash2, AlertCircle, CheckCircle2, Wand2, RefreshCw} from "lucide-react";
 import {useConsultationData} from "@/contexts/ConsultationDataContext";
 import {usePatient} from "@/contexts/patient/PatientContext";
 import {useAuth} from "@/contexts/auth/AuthContext";
 import {useMealPlanCalculations, Refeicao, AlimentoV2} from "@/hooks/useMealPlanCalculations";
+import {useMealPlanGeneration} from "@/hooks/useMealPlanGeneration";
 import {useMealPlanExport} from "@/hooks/useMealPlanExport";
 import {useToast} from "@/hooks/use-toast";
 import {Alert, AlertDescription} from "@/components/ui/alert";
@@ -52,6 +53,7 @@ const MealPlanStep: React.FC = () => {
 		calculateDailyTotals,
 	} = useMealPlanCalculations();
 	const {exportToPDF} = useMealPlanExport();
+	const {isGenerating, generateMealPlan} = useMealPlanGeneration();
 	const [showSuggestions, setShowSuggestions] = useState(true);
 
 	const [refeicoes, setRefeicoes] = useState<Refeicao[]>([]);
@@ -179,6 +181,35 @@ const MealPlanStep: React.FC = () => {
 			title: "Distribuição Aplicada",
 			description: "Alvos de cada refeição recalculados",
 		});
+	};
+
+	// Função para gerar plano automático
+	const handleAutoGenerate = async () => {
+		if (!activePatient?.id) {
+			toast({
+				title: "Erro",
+				description: "Paciente não identificado",
+				variant: "destructive"
+			});
+			return;
+		}
+
+		// Atualiza alvos antes de gerar
+		updateMealTargets();
+
+		// Chama o serviço de geração
+		const generatedRefeicoes = await generateMealPlan(refeicoes, activePatient.id);
+		
+		if (generatedRefeicoes) {
+			setRefeicoes(generatedRefeicoes);
+			// Salva no contexto global
+			updateConsultationData({
+				mealPlan: {
+					refeicoes: generatedRefeicoes,
+					dailyTotals: calculateDailyTotals(generatedRefeicoes)
+				}
+			});
+		}
 	};
 
 	// Buscar alimentos quando o usuário digita
@@ -640,9 +671,34 @@ const MealPlanStep: React.FC = () => {
 							</Button>
 						</div>
 					) : (
-						<div className="text-sm text-muted-foreground text-center py-4">
-							Clique em "Editar Distribuição" para personalizar a distribuição de
-							macros por refeição
+						<div className="space-y-4">
+							<div className="text-sm text-muted-foreground text-center py-2">
+								Clique em "Editar Distribuição" para personalizar a distribuição de
+								macros por refeição
+							</div>
+							
+							{/* Botão de Geração Automática */}
+							<Button
+								onClick={handleAutoGenerate}
+								disabled={isGenerating}
+								className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+								size="lg"
+							>
+								{isGenerating ? (
+									<>
+										<RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+										Gerando Sugestões...
+									</>
+								) : (
+									<>
+										<Wand2 className="mr-2 h-4 w-4" />
+										Gerar Sugestão Automática
+									</>
+								)}
+							</Button>
+							<p className="text-xs text-muted-foreground text-center">
+								Preenche refeições vazias com alimentos do banco de dados baseado nas metas calóricas
+							</p>
 						</div>
 					)}
 				</CardContent>

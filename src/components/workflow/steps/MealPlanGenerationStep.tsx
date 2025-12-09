@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Utensils, Loader2, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
-import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
+import { Utensils, Loader2, ArrowLeft, CheckCircle, AlertCircle, Wand2 } from 'lucide-react';
 import { useMealPlanExport } from '@/hooks/useMealPlanExport';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import ConsolidatedMealPlanEditor from '@/components/meal-plan/ConsolidatedMealPlanEditor';
+import { ConsolidatedMealPlan } from '@/types';
 
 interface MealPlanGenerationStepProps {
   patientData?: {
@@ -41,13 +42,11 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
   onComplete
 }) => {
   const { user } = useAuth();
-  const { 
-    generateMealPlan, 
-    isGenerating, 
-    mealPlan: currentMealPlan
-  } = useMealPlanGeneration();
   const { exportToPDF } = useMealPlanExport();
+  const { toast } = useToast();
   
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [currentMealPlan, setCurrentMealPlan] = useState<ConsolidatedMealPlan | null>(null);
   const [generationAttempted, setGenerationAttempted] = useState(false);
 
   // Calcular idade do paciente se birth_date disponível
@@ -58,12 +57,14 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
   const patientGender = patientData?.gender === 'male' ? 'male' : 
                        patientData?.gender === 'female' ? 'female' : undefined;
 
+  // Generate a simple meal plan locally (without database)
   const handleGenerateMealPlan = async () => {
     if (!calculationResults || !patientData || !user) {
       console.error('❌ Dados insuficientes para gerar plano');
       return;
     }
 
+    setIsGenerating(true);
     setGenerationAttempted(true);
 
     console.log('🚀 [MealPlanGenerationStep] Iniciando geração:', {
@@ -74,12 +75,116 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
       fats: calculationResults.fats
     });
 
-    await generateMealPlan({
-      totalCalories: calculationResults.totalCalories,
-      protein: calculationResults.protein,
-      carbs: calculationResults.carbs,
-      fats: calculationResults.fats
-    }, patientData.id, user.id);
+    try {
+      // Simulate generation delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create a simple meal plan structure
+      const generatedPlan: ConsolidatedMealPlan = {
+        id: `meal-plan-${Date.now()}`,
+        patient_id: patientData.id,
+        user_id: user.id,
+        name: `Plano Alimentar - ${new Date().toLocaleDateString('pt-BR')}`,
+        description: 'Plano gerado automaticamente pelo sistema ENP',
+        date: new Date().toISOString().split('T')[0],
+        total_calories: calculationResults.totalCalories,
+        total_protein: calculationResults.protein,
+        total_carbs: calculationResults.carbs,
+        total_fats: calculationResults.fats,
+        meals: [
+          {
+            id: 'breakfast',
+            name: 'Café da Manhã',
+            time: '08:00',
+            type: 'breakfast' as any,
+            foods: [],
+            items: [],
+            total_calories: Math.round(calculationResults.totalCalories * 0.25),
+            total_protein: Math.round(calculationResults.protein * 0.25),
+            total_carbs: Math.round(calculationResults.carbs * 0.25),
+            total_fats: Math.round(calculationResults.fats * 0.25),
+            totalCalories: Math.round(calculationResults.totalCalories * 0.25),
+            totalProtein: Math.round(calculationResults.protein * 0.25),
+            totalCarbs: Math.round(calculationResults.carbs * 0.25),
+            totalFats: Math.round(calculationResults.fats * 0.25)
+          },
+          {
+            id: 'lunch',
+            name: 'Almoço',
+            time: '12:00',
+            type: 'lunch' as any,
+            foods: [],
+            items: [],
+            total_calories: Math.round(calculationResults.totalCalories * 0.35),
+            total_protein: Math.round(calculationResults.protein * 0.35),
+            total_carbs: Math.round(calculationResults.carbs * 0.35),
+            total_fats: Math.round(calculationResults.fats * 0.35),
+            totalCalories: Math.round(calculationResults.totalCalories * 0.35),
+            totalProtein: Math.round(calculationResults.protein * 0.35),
+            totalCarbs: Math.round(calculationResults.carbs * 0.35),
+            totalFats: Math.round(calculationResults.fats * 0.35)
+          },
+          {
+            id: 'dinner',
+            name: 'Jantar',
+            time: '19:00',
+            type: 'dinner' as any,
+            foods: [],
+            items: [],
+            total_calories: Math.round(calculationResults.totalCalories * 0.30),
+            total_protein: Math.round(calculationResults.protein * 0.30),
+            total_carbs: Math.round(calculationResults.carbs * 0.30),
+            total_fats: Math.round(calculationResults.fats * 0.30),
+            totalCalories: Math.round(calculationResults.totalCalories * 0.30),
+            totalProtein: Math.round(calculationResults.protein * 0.30),
+            totalCarbs: Math.round(calculationResults.carbs * 0.30),
+            totalFats: Math.round(calculationResults.fats * 0.30)
+          },
+          {
+            id: 'snacks',
+            name: 'Lanches',
+            time: '15:00',
+            type: 'snack' as any,
+            foods: [],
+            items: [],
+            total_calories: Math.round(calculationResults.totalCalories * 0.10),
+            total_protein: Math.round(calculationResults.protein * 0.10),
+            total_carbs: Math.round(calculationResults.carbs * 0.10),
+            total_fats: Math.round(calculationResults.fats * 0.10),
+            totalCalories: Math.round(calculationResults.totalCalories * 0.10),
+            totalProtein: Math.round(calculationResults.protein * 0.10),
+            totalCarbs: Math.round(calculationResults.carbs * 0.10),
+            totalFats: Math.round(calculationResults.fats * 0.10)
+          }
+        ],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        notes: 'Plano gerado automaticamente',
+        targets: {
+          calories: calculationResults.totalCalories,
+          protein: calculationResults.protein,
+          carbs: calculationResults.carbs,
+          fats: calculationResults.fats
+        }
+      };
+
+      setCurrentMealPlan(generatedPlan);
+      
+      toast({
+        title: "Plano gerado",
+        description: "Plano alimentar criado com sucesso!"
+      });
+
+    } catch (error) {
+      console.error('[MEALPLAN:GENERATION] ❌ Erro ao gerar plano:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o plano alimentar",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleDownloadPDF = () => {
@@ -234,7 +339,7 @@ export const MealPlanGenerationStep: React.FC<MealPlanGenerationStepProps> = ({
                   </>
                 ) : (
                   <>
-                    <Utensils className="mr-2 h-4 w-4" />
+                    <Wand2 className="mr-2 h-4 w-4" />
                     Gerar Plano Alimentar Brasileiro
                   </>
                 )}

@@ -1,150 +1,177 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { ConsolidatedMealPlan } from '@/types';
+import { supabase } from "@/integrations/supabase/client";
+import { Refeicao, ItemRefeicao, AlimentoV2 } from '@/hooks/useMealPlanCalculations';
 
-interface MealPlanGenerationData {
-  totalCalories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-}
+// Mapeamento de nomes de refeições para tipos no banco (tipo_refeicao_sugerida)
+const MEAL_TYPE_MAP: Record<string, string[]> = {
+  "Café da Manhã": ["cafe_da_manha", "any"],
+  "Lanche da Manhã": ["lanche_manha", "lanche", "any"],
+  "Almoço": ["almoco", "any"],
+  "Lanche da Tarde": ["lanche_tarde", "lanche", "any"],
+  "Jantar": ["jantar", "any"],
+  "Ceia": ["lanche", "any"]
+};
+
+// Limites do algoritmo greedy
+const MAX_ITEMS_PER_MEAL = 4;
+const MIN_KCAL_PERCENT = 0.85;
+const MAX_KCAL_PERCENT = 1.15;
 
 export const useMealPlanGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [mealPlan, setMealPlan] = useState<ConsolidatedMealPlan | null>(null);
   const { toast } = useToast();
 
+  /**
+   * Gera sugestões automáticas de alimentos para refeições vazias
+   * Usa o campo tipo_refeicao_sugerida do banco alimentos_v2
+   */
   const generateMealPlan = useCallback(async (
-    data: MealPlanGenerationData,
-    patientId: string,
-    userId: string
-  ): Promise<ConsolidatedMealPlan | null> => {
-    console.log('[MEALPLAN:GENERATION] 🍽️ Iniciando geração de plano alimentar');
+    currentRefeicoes: Refeicao[],
+    patientId: string
+  ): Promise<Refeicao[]> => {
+    console.log('[MEALPLAN:GENERATION] 🚀 Iniciando geração inteligente...');
+    console.log('[MEALPLAN:GENERATION] Refeições recebidas:', currentRefeicoes.length);
     setIsGenerating(true);
     
     try {
-      // Geração simplificada local
-      const generatedPlan: ConsolidatedMealPlan = {
-        id: `meal-plan-${Date.now()}`,
-        patient_id: patientId,
-        user_id: userId,
-        name: `Plano Alimentar - ${new Date().toLocaleDateString('pt-BR')}`,
-        description: 'Plano gerado automaticamente pelo sistema ENP',
-        date: new Date().toISOString().split('T')[0],
-        total_calories: data.totalCalories,
-        total_protein: data.protein,
-        total_carbs: data.carbs,
-        total_fats: data.fats,
-        meals: [
-          {
-            id: 'breakfast',
-            name: 'Café da Manhã',
-            time: '08:00',
-            type: 'breakfast' as any,
-            foods: [],
-            items: [],
-            total_calories: Math.round(data.totalCalories * 0.25),
-            total_protein: Math.round(data.protein * 0.25),
-            total_carbs: Math.round(data.carbs * 0.25),
-            total_fats: Math.round(data.fats * 0.25),
-            totalCalories: Math.round(data.totalCalories * 0.25),
-            totalProtein: Math.round(data.protein * 0.25),
-            totalCarbs: Math.round(data.carbs * 0.25),
-            totalFats: Math.round(data.fats * 0.25)
-          },
-          {
-            id: 'lunch',
-            name: 'Almoço',
-            time: '12:00',
-            type: 'lunch' as any,
-            foods: [],
-            items: [],
-            total_calories: Math.round(data.totalCalories * 0.35),
-            total_protein: Math.round(data.protein * 0.35),
-            total_carbs: Math.round(data.carbs * 0.35),
-            total_fats: Math.round(data.fats * 0.35),
-            totalCalories: Math.round(data.totalCalories * 0.35),
-            totalProtein: Math.round(data.protein * 0.35),
-            totalCarbs: Math.round(data.carbs * 0.35),
-            totalFats: Math.round(data.fats * 0.35)
-          },
-          {
-            id: 'dinner',
-            name: 'Jantar',
-            time: '19:00',
-            type: 'dinner' as any,
-            foods: [],
-            items: [],
-            total_calories: Math.round(data.totalCalories * 0.30),
-            total_protein: Math.round(data.protein * 0.30),
-            total_carbs: Math.round(data.carbs * 0.30),
-            total_fats: Math.round(data.fats * 0.30),
-            totalCalories: Math.round(data.totalCalories * 0.30),
-            totalProtein: Math.round(data.protein * 0.30),
-            totalCarbs: Math.round(data.carbs * 0.30),
-            totalFats: Math.round(data.fats * 0.30)
-          },
-          {
-            id: 'snacks',
-            name: 'Lanches',
-            time: '15:00',
-            type: 'snack' as any,
-            foods: [],
-            items: [],
-            total_calories: Math.round(data.totalCalories * 0.10),
-            total_protein: Math.round(data.protein * 0.10),
-            total_carbs: Math.round(data.carbs * 0.10),
-            total_fats: Math.round(data.fats * 0.10),
-            totalCalories: Math.round(data.totalCalories * 0.10),
-            totalProtein: Math.round(data.protein * 0.10),
-            totalCarbs: Math.round(data.carbs * 0.10),
-            totalFats: Math.round(data.fats * 0.10)
-          }
-        ],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        notes: 'Plano gerado automaticamente',
-        targets: {
-          calories: data.totalCalories,
-          protein: data.protein,
-          carbs: data.carbs,
-          fats: data.fats
+      // Cria uma cópia profunda das refeições para não mutar o estado diretamente
+      const newRefeicoes: Refeicao[] = JSON.parse(JSON.stringify(currentRefeicoes));
+      let mealsGenerated = 0;
+
+      // Para cada refeição, buscar sugestões se ela estiver vazia
+      for (const refeicao of newRefeicoes) {
+        // Pula se já tiver itens (preserva escolhas manuais)
+        if (refeicao.itens.length > 0) {
+          console.log(`[MEALPLAN:GENERATION] Pulando ${refeicao.nome} - já tem ${refeicao.itens.length} itens`);
+          continue;
         }
-      };
 
-      setMealPlan(generatedPlan);
-      
-      console.log('[MEALPLAN:GENERATION] ✅ Plano gerado com sucesso:', generatedPlan.id);
-      
-      toast({
-        title: "Plano gerado",
-        description: "Plano alimentar criado com sucesso!"
-      });
+        const targetKcal = refeicao.alvo_kcal;
+        if (targetKcal <= 0) {
+          console.log(`[MEALPLAN:GENERATION] Pulando ${refeicao.nome} - alvo kcal = ${targetKcal}`);
+          continue;
+        }
 
-      return generatedPlan;
+        // 1. Buscar alimentos candidatos usando tipo_refeicao_sugerida
+        const mealTypes = MEAL_TYPE_MAP[refeicao.nome] || ["any"];
+        console.log(`[MEALPLAN:GENERATION] Buscando alimentos para ${refeicao.nome} com tipos:`, mealTypes);
+        
+        const { data: foods, error } = await supabase
+          .from('alimentos_v2')
+          .select('*')
+          .eq('ativo', true)
+          .overlaps('tipo_refeicao_sugerida', mealTypes)
+          .limit(30);
+
+        if (error) {
+          console.error(`[MEALPLAN:GENERATION] Erro ao buscar alimentos para ${refeicao.nome}:`, error);
+          continue;
+        }
+
+        if (!foods || foods.length === 0) {
+          console.log(`[MEALPLAN:GENERATION] Nenhum alimento encontrado para ${refeicao.nome}`);
+          continue;
+        }
+
+        console.log(`[MEALPLAN:GENERATION] ${foods.length} alimentos candidatos para ${refeicao.nome}`);
+
+        // 2. Algoritmo Greedy de Preenchimento
+        const selectedItems = greedyFillMeal(foods as AlimentoV2[], targetKcal);
+        
+        if (selectedItems.length > 0) {
+          refeicao.itens = selectedItems;
+          mealsGenerated++;
+          console.log(`[MEALPLAN:GENERATION] ✅ ${refeicao.nome}: ${selectedItems.length} itens adicionados`);
+        }
+      }
+      
+      if (mealsGenerated > 0) {
+        toast({
+          title: "Sugestão Gerada",
+          description: `${mealsGenerated} refeição(ões) preenchida(s) com sugestões automáticas.`,
+        });
+      } else {
+        toast({
+          title: "Nenhuma refeição gerada",
+          description: "Todas as refeições já possuem itens ou não há alimentos compatíveis.",
+          variant: "default"
+        });
+      }
+
+      console.log('[MEALPLAN:GENERATION] ✅ Geração concluída');
+      return newRefeicoes;
+
     } catch (error: any) {
-      console.error('[MEALPLAN:GENERATION] ❌ Erro ao gerar plano:', error);
-      
+      console.error('[MEALPLAN:GENERATION] ❌ Erro crítico:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o plano alimentar",
+        description: "Falha ao gerar sugestões automáticas.",
         variant: "destructive"
       });
-
-      return null;
+      return currentRefeicoes;
     } finally {
       setIsGenerating(false);
     }
   }, [toast]);
 
-  const clearMealPlan = useCallback(() => {
-    setMealPlan(null);
-  }, []);
-
   return {
     isGenerating,
-    mealPlan,
-    generateMealPlan,
-    clearMealPlan
+    generateMealPlan
   };
 };
+
+/**
+ * Algoritmo Greedy para preencher uma refeição até atingir a meta calórica
+ */
+function greedyFillMeal(foods: AlimentoV2[], targetKcal: number): ItemRefeicao[] {
+  const selectedItems: ItemRefeicao[] = [];
+  let currentKcal = 0;
+
+  // Embaralha os alimentos para variedade
+  const shuffledFoods = [...foods].sort(() => 0.5 - Math.random());
+
+  for (const food of shuffledFoods) {
+    // Se já atingiu a meta mínima, para
+    if (currentKcal >= targetKcal * MIN_KCAL_PERCENT) break;
+    
+    // Limite de itens por refeição automática
+    if (selectedItems.length >= MAX_ITEMS_PER_MEAL) break;
+
+    const foodKcal = food.kcal_por_referencia || 0;
+    if (foodKcal === 0) continue;
+
+    // Calcula quanto falta para a meta
+    const remaining = targetKcal - currentKcal;
+    
+    // Calcula quantidade ideal
+    let qtd = remaining / foodKcal;
+    
+    // Arredonda para 0.5, 1, 1.5 ou 2 (porções razoáveis)
+    qtd = Math.round(qtd * 2) / 2;
+    if (qtd < 0.5) qtd = 0.5;
+    if (qtd > 2) qtd = 2; // Teto de segurança
+
+    // Calcula valores do item
+    const kcalItem = foodKcal * qtd;
+    
+    // Só adiciona se não estourar muito a meta
+    if ((currentKcal + kcalItem) <= targetKcal * MAX_KCAL_PERCENT) {
+      selectedItems.push({
+        id: crypto.randomUUID(),
+        alimento_id: food.id,
+        alimento_nome: food.nome,
+        medida_utilizada: food.medida_padrao_referencia,
+        quantidade: qtd,
+        peso_total_g: (food.peso_referencia_g || 0) * qtd,
+        kcal_calculado: kcalItem,
+        ptn_g_calculado: (food.ptn_g_por_referencia || 0) * qtd,
+        cho_g_calculado: (food.cho_g_por_referencia || 0) * qtd,
+        lip_g_calculado: (food.lip_g_por_referencia || 0) * qtd,
+      });
+      currentKcal += kcalItem;
+    }
+  }
+
+  return selectedItems;
+}
