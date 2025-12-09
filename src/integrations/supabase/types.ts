@@ -1706,14 +1706,14 @@ export type Database = {
     }
     Functions: {
       check_premium_access_secure:
-        | { Args: { feature_name: string }; Returns: Json }
         | { Args: never; Returns: undefined }
+        | { Args: { feature_name: string }; Returns: Json }
       check_premium_quota:
+        | { Args: never; Returns: undefined }
         | {
             Args: { p_action?: string; p_feature: string; p_user_id: string }
             Returns: Json
           }
-        | { Args: never; Returns: undefined }
       check_rate_limit_secure: {
         Args: {
           identifier: string
@@ -1840,6 +1840,7 @@ export type Database = {
       is_user_premium: { Args: { user_id: string }; Returns: boolean }
       is_user_premium_safe: { Args: { user_id: string }; Returns: boolean }
       log_security_event:
+        | { Args: never; Returns: undefined }
         | {
             Args: {
               p_event_data?: Json
@@ -1850,8 +1851,8 @@ export type Database = {
             }
             Returns: undefined
           }
-        | { Args: never; Returns: undefined }
       log_security_event_safe:
+        | { Args: never; Returns: undefined }
         | {
             Args: {
               p_event_data?: Json
@@ -1862,7 +1863,6 @@ export type Database = {
             }
             Returns: undefined
           }
-        | { Args: never; Returns: undefined }
       recalculate_meal_plan_totals: {
         Args: { p_meal_plan_id: string }
         Returns: undefined
@@ -1926,6 +1926,7 @@ export type Database = {
         Returns: undefined
       }
       validate_patient_data:
+        | { Args: never; Returns: undefined }
         | {
             Args: {
               p_cpf?: string
@@ -1935,13 +1936,12 @@ export type Database = {
             }
             Returns: Json
           }
-        | { Args: never; Returns: undefined }
       validate_premium_access_secure:
+        | { Args: never; Returns: undefined }
         | {
             Args: { action_type?: string; feature_name: string }
             Returns: Json
           }
-        | { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
