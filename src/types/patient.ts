@@ -5,6 +5,9 @@ export interface PatientGoals {
   target_weight?: number;
   notes?: string;
   customGoals?: string;
+  // Macro preferences (g/kg)
+  proteinPerKg?: number;
+  fatPerKg?: number;
 }
 
 export interface AddressDetails {
