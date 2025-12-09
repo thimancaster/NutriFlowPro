@@ -3,7 +3,7 @@
  * Uses useOfficialCalculations hook for all calculations
  */
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useCallback} from "react";
 import {useOfficialCalculations} from "@/hooks/useOfficialCalculations";
 import {useActivePatient} from "@/hooks/useActivePatient";
 import {Input} from "@/components/ui/input";
@@ -24,11 +24,12 @@ import {
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
-import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info, AlertTriangle, HelpCircle, CheckCircle, AlertCircle, XCircle, Calendar} from "lucide-react";
+import {Calculator, Activity, Target, Scale, Ruler, User, Utensils, Dumbbell, Info, AlertTriangle, HelpCircle, CheckCircle, AlertCircle, XCircle, Calendar, RotateCcw, Save} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {useToast} from "@/hooks/use-toast";
 import SkinfoldForm from "./SkinfoldForm";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Informações educativas para campos básicos
 const FIELD_INFO = {
@@ -176,6 +177,10 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 		goals: activePatient?.goals,
 	});
 
+	// State for tracking if macros were modified
+	const [macrosModified, setMacrosModified] = useState(false);
+	const [savingMacros, setSavingMacros] = useState(false);
+
 	// Auto-fill from active patient
 	useEffect(() => {
 		console.log("⚡ [OFFICIAL FORM] useEffect triggered");
@@ -194,6 +199,10 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 			  )
 			: 0;
 
+		// Load saved macros from patient goals
+		const savedProteinPerKg = activePatient.goals?.proteinPerKg as number | undefined;
+		const savedFatPerKg = activePatient.goals?.fatPerKg as number | undefined;
+
 		const patientData = {
 			weight: activePatient.weight || 0,
 			height: activePatient.height || 0,
@@ -206,11 +215,80 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 			profile: activePatient.goals?.profile as any,
 			activityLevel: activePatient.goals?.activityLevel as any,
 			objective: activePatient.goals?.objective as any,
+			// Load saved macros or use defaults
+			macroInputs: {
+				proteinPerKg: savedProteinPerKg ?? MACRO_DEFAULTS.proteinPerKg,
+				fatPerKg: savedFatPerKg ?? MACRO_DEFAULTS.fatPerKg,
+			}
 		};
 
 		console.log("   📝 Updating inputs with:", patientData);
 		updateInputs(patientData);
+		setMacrosModified(false);
 	}, [activePatient?.id, updateInputs]);
+
+	// Function to reset macros to defaults
+	const handleResetMacros = useCallback(() => {
+		updateMacroInputs({
+			proteinPerKg: MACRO_DEFAULTS.proteinPerKg,
+			fatPerKg: MACRO_DEFAULTS.fatPerKg,
+		});
+		setMacrosModified(true);
+		toast({
+			title: "Macros Resetados",
+			description: `Proteína: ${MACRO_DEFAULTS.proteinPerKg} g/kg | Gordura: ${MACRO_DEFAULTS.fatPerKg} g/kg`,
+		});
+	}, [updateMacroInputs, toast]);
+
+	// Function to save macros to patient
+	const handleSaveMacros = useCallback(async () => {
+		if (!activePatient?.id) {
+			toast({
+				title: "Erro",
+				description: "Nenhum paciente selecionado",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		setSavingMacros(true);
+		try {
+			const currentGoals = activePatient.goals || {};
+			const updatedGoals = {
+				...currentGoals,
+				proteinPerKg: inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg,
+				fatPerKg: inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg,
+			};
+
+			const { error } = await supabase
+				.from('patients')
+				.update({ goals: updatedGoals })
+				.eq('id', activePatient.id);
+
+			if (error) throw error;
+
+			setMacrosModified(false);
+			toast({
+				title: "Macros Salvos",
+				description: `Preferências de macros salvas para ${activePatient.name}`,
+			});
+		} catch (error) {
+			console.error("Error saving macros:", error);
+			toast({
+				title: "Erro ao Salvar",
+				description: "Não foi possível salvar os macros do paciente",
+				variant: "destructive",
+			});
+		} finally {
+			setSavingMacros(false);
+		}
+	}, [activePatient, inputs.macroInputs, toast]);
+
+	// Track macro changes
+	const handleMacroChange = useCallback((updates: { proteinPerKg: number; fatPerKg: number }) => {
+		updateMacroInputs(updates);
+		setMacrosModified(true);
+	}, [updateMacroInputs]);
 
 	// Load initial data (fallback if no active patient)
 	useEffect(() => {
@@ -1189,8 +1267,33 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 
 		{/* Macros Input (g/kg method) */}
 			<Card>
-				<CardHeader>
+				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="text-lg">Macronutrientes (g/kg)</CardTitle>
+					<div className="flex items-center gap-2">
+						{activePatient && macrosModified && (
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={handleSaveMacros}
+								disabled={savingMacros}
+								className="h-8 text-xs"
+							>
+								<Save className="h-3 w-3 mr-1" />
+								{savingMacros ? "Salvando..." : "Salvar para Paciente"}
+							</Button>
+						)}
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={handleResetMacros}
+							className="h-8 text-xs text-muted-foreground hover:text-foreground"
+						>
+							<RotateCcw className="h-3 w-3 mr-1" />
+							Resetar Padrão
+						</Button>
+					</div>
 				</CardHeader>
 				<CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div className="space-y-2">
@@ -1205,7 +1308,7 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								placeholder="Ex: 1.6"
 								value={inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg}
 								onChange={(e) =>
-									updateMacroInputs({
+									handleMacroChange({
 										proteinPerKg: e.target.value ? Number(e.target.value) : MACRO_DEFAULTS.proteinPerKg,
 										fatPerKg: inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg,
 									})
@@ -1244,7 +1347,7 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 								placeholder="Ex: 1.0"
 								value={inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg}
 								onChange={(e) =>
-									updateMacroInputs({
+									handleMacroChange({
 										proteinPerKg: inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg,
 										fatPerKg: e.target.value ? Number(e.target.value) : MACRO_DEFAULTS.fatPerKg,
 									})
