@@ -70,6 +70,34 @@ const INPUT_RANGES = {
 	age: { min: 1, max: 120, warningMin: 1, warningMax: 130 }
 };
 
+// Ranges para macronutrientes (g/kg) - apenas avisos, não bloqueia
+const MACRO_RANGES = {
+	protein: { min: 0.5, max: 4.0, warningMin: 0.8, warningMax: 3.0 },
+	fat: { min: 0.2, max: 2.5, warningMin: 0.6, warningMax: 1.2 }
+};
+
+// Default values for macros
+const MACRO_DEFAULTS = {
+	proteinPerKg: 1.6,
+	fatPerKg: 1.0
+};
+
+// Dicas de proteína por perfil
+const PROTEIN_TIPS_BY_PROFILE: Record<string, string> = {
+	atleta: "Sugestão literatura: 1.6 a 2.4 g/kg",
+	eutrofico: "Sugestão literatura: 1.2 a 1.8 g/kg",
+	sobrepeso_obesidade: "Sugestão literatura: 1.2 a 1.5 g/kg (peso ajustado) ou conforme conduta."
+};
+
+// Função para verificar se macro está fora da faixa de aviso
+const getMacroValidationStatus = (type: 'protein' | 'fat', value: number | undefined) => {
+	if (!value) return 'empty';
+	const range = MACRO_RANGES[type];
+	if (value < range.min || value > range.max) return 'error';
+	if (value < range.warningMin || value > range.warningMax) return 'warning';
+	return 'valid';
+};
+
 // TMB Formula descriptions for tooltips
 const TMB_FORMULA_INFO: Record<string, string> = {
 	harris_benedict: "Ideal para adultos saudáveis com peso normal. Fórmula clássica e amplamente validada.",
@@ -1159,7 +1187,7 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 				</CardContent>
 			</Card>
 
-			{/* Macros Input (g/kg method) */}
+		{/* Macros Input (g/kg method) */}
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-lg">Macronutrientes (g/kg)</CardTitle>
@@ -1167,36 +1195,80 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 				<CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div className="space-y-2">
 						<Label htmlFor="proteinPerKg">Proteína (g/kg)</Label>
-						<Input
-							id="proteinPerKg"
-							type="number"
-							step="0.1"
-							placeholder="Ex: 1.6"
-							value={inputs.macroInputs?.proteinPerKg || ""}
-							onChange={(e) =>
-								updateMacroInputs({
-									proteinPerKg: Number(e.target.value),
-									fatPerKg: inputs.macroInputs?.fatPerKg || 1.0,
-								})
-							}
-						/>
+						<div className="relative">
+							<Input
+								id="proteinPerKg"
+								type="number"
+								step="0.1"
+								min="0.5"
+								max="4.0"
+								placeholder="Ex: 1.6"
+								value={inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg}
+								onChange={(e) =>
+									updateMacroInputs({
+										proteinPerKg: e.target.value ? Number(e.target.value) : MACRO_DEFAULTS.proteinPerKg,
+										fatPerKg: inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg,
+									})
+								}
+								className={cn(
+									getMacroValidationStatus('protein', inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg) === 'warning' && "border-yellow-500 focus-visible:ring-yellow-500/20",
+									getMacroValidationStatus('protein', inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg) === 'error' && "border-red-500 focus-visible:ring-red-500/20"
+								)}
+							/>
+							{(inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg) && getMacroValidationStatus('protein', inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg) === 'warning' && (
+								<span className="absolute right-3 top-1/2 -translate-y-1/2">
+									<AlertCircle className="h-4 w-4 text-yellow-500" />
+								</span>
+							)}
+						</div>
+						{/* Smart Tip baseado no perfil */}
+						<p className={cn(
+							"text-xs",
+							getMacroValidationStatus('protein', inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg) === 'warning' 
+								? "text-yellow-600 dark:text-yellow-400" 
+								: "text-muted-foreground"
+						)}>
+							{PROTEIN_TIPS_BY_PROFILE[inputs.profile] || PROTEIN_TIPS_BY_PROFILE.eutrofico}
+						</p>
 					</div>
 
 					<div className="space-y-2">
 						<Label htmlFor="fatPerKg">Gordura (g/kg)</Label>
-						<Input
-							id="fatPerKg"
-							type="number"
-							step="0.1"
-							placeholder="Ex: 1.0"
-							value={inputs.macroInputs?.fatPerKg || ""}
-							onChange={(e) =>
-								updateMacroInputs({
-									proteinPerKg: inputs.macroInputs?.proteinPerKg || 1.6,
-									fatPerKg: Number(e.target.value),
-								})
-							}
-						/>
+						<div className="relative">
+							<Input
+								id="fatPerKg"
+								type="number"
+								step="0.1"
+								min="0.2"
+								max="2.5"
+								placeholder="Ex: 1.0"
+								value={inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg}
+								onChange={(e) =>
+									updateMacroInputs({
+										proteinPerKg: inputs.macroInputs?.proteinPerKg ?? MACRO_DEFAULTS.proteinPerKg,
+										fatPerKg: e.target.value ? Number(e.target.value) : MACRO_DEFAULTS.fatPerKg,
+									})
+								}
+								className={cn(
+									getMacroValidationStatus('fat', inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg) === 'warning' && "border-yellow-500 focus-visible:ring-yellow-500/20",
+									getMacroValidationStatus('fat', inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg) === 'error' && "border-red-500 focus-visible:ring-red-500/20"
+								)}
+							/>
+							{(inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg) && getMacroValidationStatus('fat', inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg) === 'warning' && (
+								<span className="absolute right-3 top-1/2 -translate-y-1/2">
+									<AlertCircle className="h-4 w-4 text-yellow-500" />
+								</span>
+							)}
+						</div>
+						{/* Dica fixa para gordura */}
+						<p className={cn(
+							"text-xs",
+							getMacroValidationStatus('fat', inputs.macroInputs?.fatPerKg ?? MACRO_DEFAULTS.fatPerKg) === 'warning' 
+								? "text-yellow-600 dark:text-yellow-400" 
+								: "text-muted-foreground"
+						)}>
+							Faixa usual: 0.6 a 1.2 g/kg
+						</p>
 					</div>
 				</CardContent>
 			</Card>
