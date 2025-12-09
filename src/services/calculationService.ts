@@ -1,100 +1,75 @@
+import { supabase } from "@/integrations/supabase/client";
 
-import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
-import { normalizeCalculationStatus, normalizeGender, sanitizeCalculationData, getCalculationErrorMessage } from '@/utils/calculationValidation';
+export const calculationService = {
+  async saveCalculation(data: any) {
+    console.log("💾 [SERVICE] Saving calculation:", data);
 
-interface CalculationData {
-  patient_id: string;
-  weight: number;
-  height: number;
-  age: number;
-  gender: string;
-  activity_level: string;
-  goal: string;
-  bmr: number;
-  tdee: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  tipo: string;
-  status: string;
-  user_id: string;
-}
+    try {
+      // 1. Validação básica
+      if (!data.patientId) {
+        throw new Error("ID do paciente é obrigatório para salvar o cálculo.");
+      }
 
-export async function saveCalculationResults(data: CalculationData) {
-  try {
-    console.log('Saving calculation data:', data);
-    
-    // Validate required fields
-    if (!data.user_id || !data.patient_id) {
-      console.error('Missing required fields:', { user_id: data.user_id, patient_id: data.patient_id });
-      return { success: false, error: 'Campos obrigatórios faltando' };
+      // 2. Extração e Tratamento de Dados (A CORREÇÃO ESTÁ AQUI)
+      // O banco espera um número, mas o cálculo pode retornar um objeto { value, formula }
+      const tmbValue = typeof data.results?.tmb === 'object' 
+        ? data.results.tmb.value 
+        : data.results?.tmb;
+
+      // Mesma coisa para o GET, se necessário
+      const getValue = typeof data.results?.get === 'object'
+        ? data.results.get.value // caso venha como objeto
+        : data.results?.get;
+
+      // Prepara o objeto limpo para o Supabase
+      const payload = {
+        patient_id: data.patientId,
+        date: new Date().toISOString(),
+        weight: data.inputs.weight,
+        height: data.inputs.height,
+        age: data.inputs.age, // Certifique-se de que isso é um número
+        gender: data.inputs.gender,
+        activity_level: data.inputs.activityLevel,
+        goal: data.inputs.objective,
+        
+        // Valores extraídos corretamente
+        basal_metabolic_rate: parseFloat(tmbValue || 0), 
+        total_energy_expenditure: parseFloat(getValue || 0),
+        
+        // Calorias finais (VET)
+        caloric_intake_goal: parseFloat(data.results?.vet || 0),
+        
+        // Macros (Garantindo que são números)
+        protein_grams: parseFloat(data.results?.macros?.protein?.grams || 0),
+        carbs_grams: parseFloat(data.results?.macros?.carbs?.grams || 0),
+        fats_grams: parseFloat(data.results?.macros?.fat?.grams || 0),
+        
+        // Metadados adicionais (opcional, mas bom para debug)
+        notes: `Fórmula TMB: ${typeof data.results?.tmb === 'object' ? data.results.tmb.formula : 'Auto'} | Fator Ativ: ${data.inputs.manualActivityFactor || 'Auto'}`
+      };
+
+      console.log("📤 [SERVICE] Payload preparado para Supabase:", payload);
+
+      // 3. Envio para o Supabase
+      const { data: savedData, error } = await supabase
+        .from('calculations')
+        .insert(payload)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("❌ [SERVICE] Erro Supabase:", error);
+        throw error;
+      }
+
+      console.log("✅ [SERVICE] Salvo com sucesso:", savedData);
+      return savedData;
+
+    } catch (error: any) {
+      console.error("❌ [SERVICE] Falha ao salvar:", error.message);
+      throw error;
     }
-    
-    // Sanitize and normalize all data before database insertion
-    const sanitizedData = sanitizeCalculationData(data);
-    console.log('Data sanitized:', { 
-      originalStatus: data.status, 
-      sanitizedStatus: sanitizedData.status,
-      originalGender: data.gender,
-      sanitizedGender: sanitizedData.gender
-    });
-    
-    // Insert calculation record
-    const { data: calculation, error } = await supabase
-      .from('calculations')
-      .insert({
-        ...sanitizedData,
-        created_at: new Date().toISOString()
-      })
-      .select('*')
-      .single();
-    
-    if (error) {
-      console.error('Database error saving calculation:', error);
-      const userFriendlyMessage = getCalculationErrorMessage(error);
-      return { success: false, error: userFriendlyMessage };
-    }
-    
-    return { success: true, data: calculation };
-  } catch (error: any) {
-    console.error('Error saving calculation results:', error);
-    const userFriendlyMessage = getCalculationErrorMessage(error);
-    return { success: false, error: userFriendlyMessage };
-  }
-}
+  },
 
-// Remove old validation functions - now imported from utils
-export async function getPatientCalculations(patientId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('calculations')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error fetching patient calculations:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-export async function getCalculationById(calculationId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('calculations')
-      .select('*')
-      .eq('id', calculationId)
-      .single();
-    
-    if (error) throw error;
-    
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error fetching calculation:', error);
-    return { success: false, error: error.message };
-  }
-}
+  // ... (mantenha outras funções como getHistory se existirem)
+};
