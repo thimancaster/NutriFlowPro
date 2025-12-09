@@ -1159,151 +1159,47 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 				</CardContent>
 			</Card>
 
-		{/* Macros Input (g/kg method) */}
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-lg flex items-center gap-2">
-					<Utensils className="h-5 w-5" />
-					Macronutrientes (g/kg)
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				{/* Proteína Input */}
-				<div className="space-y-2">
-					<Label htmlFor="proteinPerKg" className="flex items-center gap-2">
-						Proteína (g/kg)
-						<TooltipProvider>
-							<Tooltip delayDuration={200}>
-								<TooltipTrigger asChild>
-									<span className="cursor-help">
-										<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-									</span>
-								</TooltipTrigger>
-								<TooltipContent side="top" className="max-w-xs">
-									<div className="space-y-1">
-										<p className="font-semibold">Proteína por kg de peso corporal</p>
-										<p className="text-xs">Faixa usual: 0.8 a 2.5 g/kg para a maioria dos pacientes.</p>
-										<p className="text-xs text-muted-foreground">Atletas podem usar até 3.0+ g/kg em fases específicas.</p>
-									</div>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
-					</Label>
-					<Input
-						id="proteinPerKg"
-						type="number"
-						step="0.1"
-						min="0.5"
-						max="4.0"
-						placeholder="Ex: 1.6"
-						value={inputs.macroInputs?.proteinPerKg ?? ""}
-						onChange={(e) =>
-							updateMacroInputs({
-								proteinPerKg: e.target.value ? Number(e.target.value) : 1.6,
-								fatPerKg: inputs.macroInputs?.fatPerKg ?? 1.0,
-							})
-						}
-						className={cn(
-							(inputs.macroInputs?.proteinPerKg && (inputs.macroInputs.proteinPerKg > 3.0 || inputs.macroInputs.proteinPerKg < 0.8)) 
-								&& "border-amber-500 focus-visible:ring-amber-500/20"
-						)}
-					/>
-					{/* Smart Tip baseado no perfil */}
-					<p className={cn(
-						"text-xs",
-						(inputs.macroInputs?.proteinPerKg && (inputs.macroInputs.proteinPerKg > 3.0 || inputs.macroInputs.proteinPerKg < 0.8))
-							? "text-amber-600"
-							: "text-muted-foreground"
-					)}>
-						{(inputs.macroInputs?.proteinPerKg && inputs.macroInputs.proteinPerKg > 3.0) && (
-							<span className="flex items-center gap-1">
-								<AlertTriangle className="h-3 w-3" />
-								Valor acima do usual - confirme a indicação clínica
-							</span>
-						)}
-						{(inputs.macroInputs?.proteinPerKg && inputs.macroInputs.proteinPerKg < 0.8) && (
-							<span className="flex items-center gap-1">
-								<AlertTriangle className="h-3 w-3" />
-								Valor abaixo do recomendado - verifique se adequado
-							</span>
-						)}
-						{(!inputs.macroInputs?.proteinPerKg || (inputs.macroInputs.proteinPerKg >= 0.8 && inputs.macroInputs.proteinPerKg <= 3.0)) && (
-							<>
-								{inputs.profile === 'atleta' && "📚 Sugestão literatura: 1.6 a 2.4 g/kg"}
-								{inputs.profile === 'eutrofico' && "📚 Sugestão literatura: 1.2 a 1.8 g/kg"}
-								{inputs.profile === 'sobrepeso_obesidade' && "📚 Sugestão literatura: 1.2 a 1.5 g/kg (peso ajustado) ou conforme conduta"}
-								{!inputs.profile && "💡 Selecione um perfil para ver sugestões da literatura"}
-							</>
-						)}
-					</p>
-				</div>
+			{/* Macros Input (g/kg method) */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-lg">Macronutrientes (g/kg)</CardTitle>
+				</CardHeader>
+				<CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div className="space-y-2">
+						<Label htmlFor="proteinPerKg">Proteína (g/kg)</Label>
+						<Input
+							id="proteinPerKg"
+							type="number"
+							step="0.1"
+							placeholder="Ex: 1.6"
+							value={inputs.macroInputs?.proteinPerKg || ""}
+							onChange={(e) =>
+								updateMacroInputs({
+									proteinPerKg: Number(e.target.value),
+									fatPerKg: inputs.macroInputs?.fatPerKg || 1.0,
+								})
+							}
+						/>
+					</div>
 
-				{/* Gordura Input */}
-				<div className="space-y-2">
-					<Label htmlFor="fatPerKg" className="flex items-center gap-2">
-						Gordura (g/kg)
-						<TooltipProvider>
-							<Tooltip delayDuration={200}>
-								<TooltipTrigger asChild>
-									<span className="cursor-help">
-										<Info className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-									</span>
-								</TooltipTrigger>
-								<TooltipContent side="top" className="max-w-xs">
-									<div className="space-y-1">
-										<p className="font-semibold">Gordura por kg de peso corporal</p>
-										<p className="text-xs">Faixa usual: 0.6 a 1.2 g/kg para a maioria dos pacientes.</p>
-										<p className="text-xs text-muted-foreground">Valores muito baixos podem afetar hormônios e absorção de vitaminas.</p>
-									</div>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
-					</Label>
-					<Input
-						id="fatPerKg"
-						type="number"
-						step="0.1"
-						min="0.2"
-						max="2.5"
-						placeholder="Ex: 1.0"
-						value={inputs.macroInputs?.fatPerKg ?? ""}
-						onChange={(e) =>
-							updateMacroInputs({
-								proteinPerKg: inputs.macroInputs?.proteinPerKg ?? 1.6,
-								fatPerKg: e.target.value ? Number(e.target.value) : 1.0,
-							})
-						}
-						className={cn(
-							(inputs.macroInputs?.fatPerKg && (inputs.macroInputs.fatPerKg > 1.5 || inputs.macroInputs.fatPerKg < 0.4)) 
-								&& "border-amber-500 focus-visible:ring-amber-500/20"
-						)}
-					/>
-					{/* Smart Tip fixo para gordura */}
-					<p className={cn(
-						"text-xs",
-						(inputs.macroInputs?.fatPerKg && (inputs.macroInputs.fatPerKg > 1.5 || inputs.macroInputs.fatPerKg < 0.4))
-							? "text-amber-600"
-							: "text-muted-foreground"
-					)}>
-						{(inputs.macroInputs?.fatPerKg && inputs.macroInputs.fatPerKg > 1.5) && (
-							<span className="flex items-center gap-1">
-								<AlertTriangle className="h-3 w-3" />
-								Valor acima do usual - confirme a indicação clínica
-							</span>
-						)}
-						{(inputs.macroInputs?.fatPerKg && inputs.macroInputs.fatPerKg < 0.4) && (
-							<span className="flex items-center gap-1">
-								<AlertTriangle className="h-3 w-3" />
-								Valor muito baixo - pode afetar funções hormonais
-							</span>
-						)}
-						{(!inputs.macroInputs?.fatPerKg || (inputs.macroInputs.fatPerKg >= 0.4 && inputs.macroInputs.fatPerKg <= 1.5)) && (
-							"📚 Faixa usual: 0.6 a 1.2 g/kg"
-						)}
-					</p>
-				</div>
-			</CardContent>
-		</Card>
+					<div className="space-y-2">
+						<Label htmlFor="fatPerKg">Gordura (g/kg)</Label>
+						<Input
+							id="fatPerKg"
+							type="number"
+							step="0.1"
+							placeholder="Ex: 1.0"
+							value={inputs.macroInputs?.fatPerKg || ""}
+							onChange={(e) =>
+								updateMacroInputs({
+									proteinPerKg: inputs.macroInputs?.proteinPerKg || 1.6,
+									fatPerKg: Number(e.target.value),
+								})
+							}
+						/>
+					</div>
+				</CardContent>
+			</Card>
 
 			{/* Validation Errors/Warnings */}
 			{!validation.isValid && validation.errors.length > 0 && (
