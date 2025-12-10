@@ -28,7 +28,7 @@ export const useIntelligentValidation = (
       setValidation(data);
       
       if (data.warnings && data.warnings.length > 0) {
-        const highSeverityWarnings = data.warnings.filter(w => w.severity === 'alta');
+        const highSeverityWarnings = data.warnings.filter(w => w.severity === 'high');
         if (highSeverityWarnings.length > 0) {
           toast({
             title: "Atenção: Validação encontrou problemas",

@@ -94,7 +94,7 @@ const PatientPreferencesPanel: React.FC<PatientPreferencesPanelProps> = ({
                 <div className="flex flex-wrap gap-2">
                   {preferences.foodCategories.map((cat, idx) => (
                     <Badge key={idx} variant="secondary">
-                      {cat}
+                      {typeof cat === 'string' ? cat : cat.name}
                     </Badge>
                   ))}
                 </div>

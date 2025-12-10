@@ -99,9 +99,7 @@ export const UnifiedNutritionProvider: React.FC<{ children: React.ReactNode }> =
 
     setIsSaving(true);
     try {
-      const planId = await MealPlanOrchestrator.saveMealPlan(currentPlan, {
-        createVersion: true
-      });
+      const planId = await MealPlanOrchestrator.saveMealPlan(currentPlan);
 
       if (!options?.skipNotification) {
         toast({
@@ -221,15 +219,12 @@ export const UnifiedNutritionProvider: React.FC<{ children: React.ReactNode }> =
     try {
       console.log('📄 UnifiedNutrition: Exportando plano para PDF...');
 
-      await MealPlanOrchestrator.exportToPDF(
-        currentPlan,
-        {
-          name: activePatientData.name,
-          age: activePatientData.age,
-          gender: activePatientData.gender as 'male' | 'female'
-        },
-        options
-      );
+      await MealPlanOrchestrator.exportToPDF(currentPlan, {
+        ...options,
+        patientName: activePatientData.name,
+        patientAge: activePatientData.age,
+        patientGender: activePatientData.gender
+      });
 
       toast({
         title: 'PDF Gerado',
