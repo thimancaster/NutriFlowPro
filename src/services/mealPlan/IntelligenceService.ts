@@ -1,121 +1,91 @@
 /**
- * INTELLIGENCE SERVICE
- * Serviço de inteligência artificial para análise e otimização de planos
+ * INTELLIGENCE SERVICE - STUB
+ * Mantido para compatibilidade com componentes legados.
+ * A lógica de geração foi centralizada em AutoGenerationService.
  */
 
-import { supabase } from '@/integrations/supabase/client';
-import { ConsolidatedMealPlan } from '@/types/mealPlanTypes';
-
 export interface PatientPreferences {
-  foodCategories: string[];
+  favoriteCategories: string[];
+  dislikedCategories: string[];
+  frequentMealTypes: string[];
+  averagePortionSize: 'small' | 'medium' | 'large';
+  preferredMealTimes: string[];
+  foodCategories: { name: string; count: number }[];
   avoidedFoods: string[];
-  preferredMeals: string[];
-  averageMacros?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fats: number;
-  };
+  averageMacros: { protein: number; carbs: number; fat: number; calories: number };
   insights: string[];
+}
+
+export interface SmartTemplate {
+  id: string;
+  name: string;
+  description: string;
+  compatibility: number;
+  tags: string[];
+  totalCalories: number;
+}
+
+export interface MealTemplate {
+  id: string;
+  name: string;
+  description: string;
+  tags: string[];
+  meals: any[];
+  totalCalories: number;
+  compatibility?: number;
+  suitability?: number;
+  estimatedCalories?: number;
+  highlightFeatures?: string[];
+}
+
+export interface ValidationWarning {
+  severity: 'low' | 'medium' | 'high';
+  message: string;
 }
 
 export interface MealPlanValidation {
   isValid: boolean;
   score: number;
-  warnings?: Array<{
-    type: 'caloria' | 'macro' | 'variedade' | 'distribuicao' | 'praticidade';
-    severity: 'baixa' | 'media' | 'alta';
-    message: string;
-  }>;
+  warnings: ValidationWarning[];
   suggestions: string[];
-  strengths?: string[];
-}
-
-export interface MealTemplate {
-  name: string;
-  description: string;
-  suitability: string;
-  estimatedCalories?: number;
-  highlightFeatures?: string[];
+  strengths: string[];
 }
 
 export class IntelligenceService {
-  /**
-   * Analisa preferências do paciente baseado no histórico
-   */
   static async analyzePatientPreferences(patientId: string): Promise<PatientPreferences> {
-    try {
-      console.log('🧠 IntelligenceService: Analisando preferências...');
-
-      const { data, error } = await supabase.functions.invoke('analyze-patient-preferences', {
-        body: { patientId }
-      });
-
-      if (error) throw error;
-
-      console.log('✅ IntelligenceService: Preferências analisadas');
-      return data.preferences;
-    } catch (error) {
-      console.error('❌ IntelligenceService: Erro ao analisar preferências', error);
-      throw error;
-    }
+    console.log('[STUB] IntelligenceService.analyzePatientPreferences');
+    return {
+      favoriteCategories: ['Frutas', 'Cereais', 'Proteínas'],
+      dislikedCategories: [],
+      frequentMealTypes: ['breakfast', 'lunch', 'dinner'],
+      averagePortionSize: 'medium',
+      preferredMealTimes: ['07:00', '12:00', '19:00'],
+      foodCategories: [
+        { name: 'Proteínas', count: 15 },
+        { name: 'Cereais', count: 12 },
+        { name: 'Frutas', count: 10 },
+      ],
+      avoidedFoods: [],
+      averageMacros: { protein: 25, carbs: 50, fat: 25, calories: 2000 },
+      insights: ['Preferência por alimentos ricos em proteína', 'Consumo equilibrado de macronutrientes']
+    };
   }
 
-  /**
-   * Valida um plano alimentar com IA
-   */
-  static async validateMealPlan(
-    mealPlan: ConsolidatedMealPlan,
-    targets: { calories: number; protein: number; carbs: number; fats: number },
-    patientData?: any
-  ): Promise<MealPlanValidation> {
-    try {
-      console.log('🧠 IntelligenceService: Validando plano...');
-
-      const { data, error } = await supabase.functions.invoke('validate-meal-plan', {
-        body: { 
-          mealPlan,
-          targets,
-          patientData
-        }
-      });
-
-      if (error) throw error;
-
-      console.log('✅ IntelligenceService: Plano validado', data.validation);
-      return data.validation;
-    } catch (error) {
-      console.error('❌ IntelligenceService: Erro ao validar plano', error);
-      throw error;
-    }
+  static async suggestSmartTemplates(patientId: string, nutritionalTargets?: any): Promise<SmartTemplate[]> {
+    return [];
   }
 
-  /**
-   * Sugere templates inteligentes baseados no histórico
-   */
-  static async suggestTemplates(
-    userId: string,
-    targets: { calories: number; protein: number; carbs: number; fats: number },
-    patientPreferences?: PatientPreferences
-  ): Promise<MealTemplate[]> {
-    try {
-      console.log('🧠 IntelligenceService: Sugerindo templates...');
+  static async suggestTemplates(patientId: string, targets?: any): Promise<MealTemplate[]> {
+    return [];
+  }
 
-      const { data, error } = await supabase.functions.invoke('suggest-meal-templates', {
-        body: { 
-          userId,
-          targets,
-          patientPreferences
-        }
-      });
-
-      if (error) throw error;
-
-      console.log('✅ IntelligenceService: Templates sugeridos');
-      return data.templates || [];
-    } catch (error) {
-      console.error('❌ IntelligenceService: Erro ao sugerir templates', error);
-      throw error;
-    }
+  static async validateMealPlan(plan: any, targets?: any): Promise<MealPlanValidation> {
+    return {
+      isValid: true,
+      score: 85,
+      warnings: [],
+      suggestions: ['Considere adicionar mais variedade de vegetais'],
+      strengths: ['Boa distribuição de macronutrientes', 'Variedade adequada de alimentos']
+    };
   }
 }

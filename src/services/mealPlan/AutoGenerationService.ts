@@ -1,418 +1,264 @@
 /**
- * AUTO GENERATION SERVICE
- * Gera planos alimentares automaticamente com inteligência cultural brasileira
+ * AUTO GENERATION SERVICE - MOTOR ÚNICO DE GERAÇÃO DE PLANOS ALIMENTARES
+ * 
+ * REGRA DE OURO: Toda lógica de decisão sobre "qual alimento escolher" ou 
+ * "quanto colocar" deve residir EXCLUSIVAMENTE nesta classe.
  */
 
-import { AlimentoServiceUnified } from './AlimentoServiceUnified';
-import { NutritionalValidator } from './NutritionalValidator';
-import { ConsolidatedMealPlan, ConsolidatedMeal, MealType, MEAL_TYPES, MEAL_TIMES, DEFAULT_MEAL_DISTRIBUTION } from '@/types/mealPlanTypes';
-import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
+import { supabase } from "@/integrations/supabase/client";
+import { Refeicao, ItemRefeicao, AlimentoV2 } from "@/hooks/useMealPlanCalculations";
 
-interface MacroTargets {
-  kcal: number;
-  protein_g: number;
-  carb_g: number;
-  fat_g: number;
+// --- 1. CONFIGURAÇÕES DO MOTOR (SOT - Source of Truth) ---
+
+// Mapeamento: Nome da Refeição (UI) -> Tags no Banco (tipo_refeicao_sugerida)
+const MEAL_TYPE_MAP: Record<string, string[]> = {
+  "Café da Manhã": ["cafe_da_manha", "any"],
+  "Lanche da Manhã": ["lanche_manha", "lanche", "any"],
+  "Almoço": ["almoco", "any"],
+  "Lanche da Tarde": ["lanche_tarde", "lanche", "any"],
+  "Jantar": ["jantar", "any"],
+  "Ceia": ["ceia", "lanche", "any"]
+};
+
+// Fallback com CATEGORIAS REAIS do banco alimentos_v2
+const CATEGORY_FALLBACK: Record<string, string[]> = {
+  "Café da Manhã": ["Cereais", "Cereais e Derivados", "Laticínios", "Frutas"],
+  "Lanche da Manhã": ["Frutas", "Laticínios"],
+  "Almoço": ["Carnes", "Proteínas", "Cereais", "Leguminosas", "Tubérculos"],
+  "Lanche da Tarde": ["Frutas", "Laticínios", "Cereais"],
+  "Jantar": ["Carnes", "Proteínas", "Cereais", "Leguminosas"],
+  "Ceia": ["Laticínios", "Frutas"]
+};
+
+// Filtros de Exclusão (Segurança Clínica)
+const RESTRICTION_MAP: Record<string, string[]> = {
+  "vegetariano": ["Carnes", "Proteínas"],
+  "vegano": ["Carnes", "Proteínas", "Laticínios"],
+  "intolerante_lactose": ["Laticínios"],
+  "low_carb": ["Cereais", "Cereais e Derivados", "Tubérculos"]
+};
+
+// Limites do Algoritmo
+const MAX_ITEMS_PER_MEAL = 4;
+const MIN_KCAL_PERCENT = 0.85;
+const MAX_KCAL_PERCENT = 1.15;
+const MAX_PORTION = 3.0;
+const MIN_PORTION = 0.5;
+
+export interface PatientProfile {
+  objective: string;
+  restrictions: string[];
+  gender: string;
 }
 
 export class AutoGenerationService {
+  
   /**
-   * Gera um plano alimentar completo automaticamente
+   * ÚNICO PONTO DE ENTRADA para gerar dietas no sistema.
    */
-  static async generateMealPlan(
-    calculationResults: CalculationResult,
-    patientData?: any
-  ): Promise<Omit<ConsolidatedMealPlan, 'id' | 'patient_id' | 'user_id' | 'date' | 'created_at' | 'updated_at'>> {
-    try {
-      console.log('🤖 AutoGen: Iniciando geração automática...');
+  static async generatePlan(
+    currentRefeicoes: Refeicao[], 
+    patientProfile: PatientProfile
+  ): Promise<Refeicao[]> {
+    console.log("🦾 [MOTOR ÚNICO] Iniciando geração para:", patientProfile);
+    
+    // 1. Clona para não mutar estado
+    const newRefeicoes: Refeicao[] = JSON.parse(JSON.stringify(currentRefeicoes));
+    const usedFoodIds = new Set<string>(); // Evita repetição de alimentos no mesmo dia
+    let mealsGenerated = 0;
 
-      // 1. Extrair metas nutricionais
-      const targets: MacroTargets = {
-        kcal: calculationResults.vet,
-        protein_g: calculationResults.macros.protein.grams,
-        carb_g: calculationResults.macros.carbs.grams,
-        fat_g: calculationResults.macros.fat.grams,
-      };
+    // 2. Processa cada refeição
+    for (const refeicao of newRefeicoes) {
+      // Regra: Se o nutri já colocou algo, respeitamos e não tocamos.
+      if (refeicao.itens.length > 0) {
+        console.log(`⏭️ [MOTOR] Pulando ${refeicao.nome} - já tem ${refeicao.itens.length} itens`);
+        continue;
+      }
 
-      console.log('🎯 Metas:', targets);
+      const targetKcal = refeicao.alvo_kcal;
+      if (!targetKcal || targetKcal <= 50) {
+        console.log(`⏭️ [MOTOR] Pulando ${refeicao.nome} - alvo kcal inválido: ${targetKcal}`);
+        continue;
+      }
 
-      // 2. Distribuir metas por refeição
-      const mealDistribution = this.distributeMealTargets(targets);
-      console.log('📊 Distribuição:', mealDistribution);
+      try {
+        // A. BUSCA HÍBRIDA (Tipo -> Categoria)
+        let candidates = await this.fetchCandidates(refeicao.nome);
+        console.log(`📦 [MOTOR] ${refeicao.nome}: ${candidates.length} candidatos encontrados`);
 
-      // 3. Gerar cada refeição
-      const meals: ConsolidatedMeal[] = [];
-      
-      for (const [mealType, mealTargets] of Object.entries(mealDistribution)) {
-        console.log(`🍽️ Gerando ${mealType}...`);
+        // B. FILTRAGEM DE SEGURANÇA (Restrições)
+        candidates = this.filterRestrictions(candidates, patientProfile.restrictions);
+        console.log(`🔒 [MOTOR] ${refeicao.nome}: ${candidates.length} após filtro de restrições`);
+
+        if (candidates.length === 0) {
+          console.warn(`⚠️ [MOTOR] Sem candidatos para ${refeicao.nome} após filtros.`);
+          continue;
+        }
+
+        // C. SCORING INTELIGENTE (Objetivo)
+        candidates = this.rankFoodsByGoal(candidates, patientProfile.objective);
+
+        // D. ALGORITMO GULOSO (Preenchimento)
+        refeicao.itens = this.fillMealSlots(candidates, targetKcal, usedFoodIds);
         
-        const meal = await this.generateMeal(
-          mealType as MealType,
-          mealTargets,
-          patientData
-        );
+        if (refeicao.itens.length > 0) {
+          mealsGenerated++;
+          console.log(`✅ [MOTOR] ${refeicao.nome}: ${refeicao.itens.length} itens adicionados`);
+        }
         
-        meals.push(meal);
+      } catch (error) {
+        console.error(`❌ [MOTOR] Erro crítico em ${refeicao.nome}:`, error);
       }
+    }
 
-      // 4. Calcular totais
-      const totals = this.calculateTotals(meals);
+    console.log(`🏁 [MOTOR] Geração concluída: ${mealsGenerated} refeições preenchidas`);
+    return newRefeicoes;
+  }
 
-      const plan = {
-        name: 'Plano Automático',
-        total_calories: totals.calories,
-        total_protein: totals.protein,
-        total_carbs: totals.carbs,
-        total_fats: totals.fats,
-        meals,
-        notes: 'Plano gerado automaticamente com base nas metas nutricionais calculadas.',
-      };
+  // --- MÉTODOS INTERNOS (Privados) ---
 
-      // 5. Validar qualidade nutricional
-      const validation = NutritionalValidator.validateMealPlan(plan, calculationResults);
+  private static async fetchCandidates(mealName: string): Promise<AlimentoV2[]> {
+    const mealTypes = MEAL_TYPE_MAP[mealName] || ["any"];
+    
+    // Estratégia 1: Busca Precisa (pelo tipo de refeição sugerida no cadastro)
+    let { data: foods, error } = await supabase
+      .from('alimentos_v2')
+      .select('*')
+      .eq('ativo', true)
+      .overlaps('tipo_refeicao_sugerida', mealTypes)
+      .limit(60);
+
+    if (error) {
+      console.error(`❌ [MOTOR] Erro na busca por tipo:`, error);
+    }
+
+    // Estratégia 2: Fallback (se a busca precisa falhar ou trouxer poucos itens)
+    if (!foods || foods.length < 10) {
+      console.log(`⚠️ [MOTOR] Fallback para categorias em: ${mealName}`);
+      const fallbackCats = CATEGORY_FALLBACK[mealName] || ["Frutas"];
       
-      console.log('📊 Validação:', {
-        score: validation.score,
-        isValid: validation.isValid,
-        warnings: validation.warnings.length,
-        recommendations: validation.recommendations.length
-      });
+      const { data: fallbackFoods, error: fallbackError } = await supabase
+        .from('alimentos_v2')
+        .select('*')
+        .eq('ativo', true)
+        .in('categoria', fallbackCats)
+        .limit(60);
 
-      if (validation.warnings.length > 0) {
-        console.warn('⚠️ Avisos:', validation.warnings);
+      if (fallbackError) {
+        console.error(`❌ [MOTOR] Erro no fallback:`, fallbackError);
       }
+        
+      // Merge evitando duplicatas
+      const existingIds = new Set(foods?.map(f => f.id));
+      const newFoods = (fallbackFoods || []).filter(f => !existingIds.has(f.id));
+      foods = [...(foods || []), ...newFoods];
+    }
 
-      if (validation.score < 80) {
-        console.log('💡 Sugestões de melhoria:', NutritionalValidator.suggestImprovements(validation));
+    return (foods as AlimentoV2[]) || [];
+  }
+
+  private static filterRestrictions(foods: AlimentoV2[], restrictions: string[]): AlimentoV2[] {
+    if (!restrictions || restrictions.length === 0) return foods;
+
+    const forbiddenCats = new Set<string>();
+    restrictions.forEach(r => {
+      const cats = RESTRICTION_MAP[r.toLowerCase()];
+      if (cats) cats.forEach(c => forbiddenCats.add(c));
+    });
+
+    if (forbiddenCats.size === 0) return foods;
+
+    return foods.filter(f => !forbiddenCats.has(f.categoria));
+  }
+
+  private static rankFoodsByGoal(foods: AlimentoV2[], objective: string): AlimentoV2[] {
+    const obj = (objective || '').toLowerCase();
+    const isHypertrophy = obj.includes('hipertrofia') || obj.includes('ganho') || obj.includes('massa');
+    const isWeightLoss = obj.includes('emagrecimento') || obj.includes('perda') || obj.includes('definicao');
+
+    // Se não tem objetivo claro, retorna aleatório para variar
+    if (!isHypertrophy && !isWeightLoss) {
+      return foods.sort(() => 0.5 - Math.random());
+    }
+
+    return foods.sort((a, b) => {
+      const scoreA = this.calculateScore(a, isHypertrophy, isWeightLoss);
+      const scoreB = this.calculateScore(b, isHypertrophy, isWeightLoss);
+      return scoreB - scoreA; // Maior score primeiro
+    });
+  }
+
+  private static calculateScore(food: AlimentoV2, isHyper: boolean, isLoss: boolean): number {
+    const ptn = food.ptn_g_por_referencia || 0;
+    const cho = food.cho_g_por_referencia || 0;
+    const lip = food.lip_g_por_referencia || 0;
+    const kcal = food.kcal_por_referencia || 1;
+
+    // Fórmula de Scoring Nutricional
+    if (isHyper) {
+      // Valoriza proteína e carboidrato, não pune tanto caloria
+      return (ptn * 3) + (cho * 1.5) + (kcal / 100);
+    } 
+    
+    if (isLoss) {
+      // Valoriza proteína (saciedade), pune gordura excessiva e densidade calórica alta
+      return (ptn * 4) - (lip * 2) - (kcal / 30);
+    }
+    
+    return 0;
+  }
+
+  private static fillMealSlots(
+    foods: AlimentoV2[], 
+    targetKcal: number, 
+    usedIds: Set<string>
+  ): ItemRefeicao[] {
+    let currentKcal = 0;
+    const selectedItems: ItemRefeicao[] = [];
+    
+    // Pega os top 20 melhores alimentos para o objetivo e embaralha levemente para variedade
+    const topCandidates = foods.slice(0, 20).sort(() => 0.5 - Math.random());
+
+    for (const food of topCandidates) {
+      // Travas de Segurança
+      if (usedIds.has(food.id)) continue;
+      if (currentKcal >= targetKcal * MIN_KCAL_PERCENT) break; 
+      if (selectedItems.length >= MAX_ITEMS_PER_MEAL) break; 
+
+      const foodKcal = food.kcal_por_referencia || 0;
+      if (foodKcal === 0) continue;
+
+      const remaining = targetKcal - currentKcal;
+      
+      // Cálculo Inteligente de Porção (arredonda para 0.5, 1.0, 1.5, 2.0...)
+      let qtd = Math.round((remaining / foodKcal) * 2) / 2;
+      
+      // Limites fisiológicos de porção
+      if (qtd < MIN_PORTION) qtd = MIN_PORTION;
+      if (qtd > MAX_PORTION) qtd = MAX_PORTION;
+
+      const itemKcal = foodKcal * qtd;
+
+      // Aceita se não estourar grosseiramente a meta (115%)
+      if ((currentKcal + itemKcal) <= targetKcal * MAX_KCAL_PERCENT) {
+        selectedItems.push({
+          id: crypto.randomUUID(),
+          alimento_id: food.id,
+          alimento_nome: food.nome,
+          medida_utilizada: food.medida_padrao_referencia,
+          quantidade: qtd,
+          peso_total_g: (food.peso_referencia_g || 0) * qtd,
+          kcal_calculado: itemKcal,
+          ptn_g_calculado: (food.ptn_g_por_referencia || 0) * qtd,
+          cho_g_calculado: (food.cho_g_por_referencia || 0) * qtd,
+          lip_g_calculado: (food.lip_g_por_referencia || 0) * qtd,
+        });
+        
+        currentKcal += itemKcal;
+        usedIds.add(food.id); // Registra uso global
       }
-
-      console.log('✅ AutoGen: Plano gerado com sucesso!');
-      return plan;
-      
-    } catch (error) {
-      console.error('❌ AutoGen: Erro na geração', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Distribui metas nutricionais por refeição
-   */
-  private static distributeMealTargets(targets: MacroTargets): Record<MealType, MacroTargets> {
-    const distribution: Record<MealType, MacroTargets> = {} as any;
-
-    for (const [mealType, percentage] of Object.entries(DEFAULT_MEAL_DISTRIBUTION)) {
-      const factor = percentage / 100;
-      distribution[mealType as MealType] = {
-        kcal: Math.round(targets.kcal * factor),
-        protein_g: Math.round(targets.protein_g * factor * 10) / 10,
-        carb_g: Math.round(targets.carb_g * factor * 10) / 10,
-        fat_g: Math.round(targets.fat_g * factor * 10) / 10,
-      };
-    }
-
-    return distribution;
-  }
-
-  /**
-   * Gera uma refeição específica
-   */
-  private static async generateMeal(
-    mealType: MealType,
-    targets: MacroTargets,
-    patientData?: any
-  ): Promise<ConsolidatedMeal> {
-    try {
-      // 1. Buscar alimentos culturalmente apropriados
-      const foods = await AlimentoServiceUnified.getCulturallyAppropriate(mealType);
-      
-      if (foods.length === 0) {
-        console.warn(`⚠️ Nenhum alimento encontrado para ${mealType}`);
-        return this.createEmptyMeal(mealType);
-      }
-
-      // 2. Selecionar alimentos e calcular porções
-      const selectedFoods = this.selectFoodsForMeal(foods, targets, mealType);
-
-      // 3. Calcular totais
-      const totalCalories = selectedFoods.reduce((sum, f) => sum + f.calories, 0);
-      const totalProtein = selectedFoods.reduce((sum, f) => sum + f.protein, 0);
-      const totalCarbs = selectedFoods.reduce((sum, f) => sum + f.carbs, 0);
-      const totalFats = selectedFoods.reduce((sum, f) => sum + f.fat, 0);
-
-      return {
-        id: `meal_${mealType}`,
-        name: MEAL_TYPES[mealType],
-        type: mealType,
-        time: MEAL_TIMES[mealType],
-        foods: selectedFoods,
-        totalCalories,
-        totalProtein,
-        totalCarbs,
-        totalFats,
-        total_calories: totalCalories,
-        total_protein: totalProtein,
-        total_carbs: totalCarbs,
-        total_fats: totalFats,
-      };
-      
-    } catch (error) {
-      console.error(`❌ Erro ao gerar ${mealType}`, error);
-      return this.createEmptyMeal(mealType);
-    }
-  }
-
-  /**
-   * Seleciona alimentos e calcula porções otimizadas com inteligência nutricional
-   */
-  private static selectFoodsForMeal(
-    availableFoods: any[],
-    targets: MacroTargets,
-    mealType: MealType
-  ): any[] {
-    const selected: any[] = [];
-    const strategy = this.getMealStrategy(mealType);
-
-    // Rastrear macros acumulados
-    let totalKcal = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFat = 0;
-
-    // Selecionar alimentos por categoria respeitando prioridades
-    for (const category of strategy.categories) {
-      const foodsInCategory = availableFoods.filter(f => 
-        f.tipo_refeicao_sugerida?.includes(mealType) &&
-        f.categoria === category
-      );
-
-      if (foodsInCategory.length === 0) continue;
-
-      // Ordenar por densidade nutricional
-      const sortedFoods = foodsInCategory.sort((a, b) => {
-        const scoreA = this.calculateNutritionalScore(a, targets);
-        const scoreB = this.calculateNutritionalScore(b, targets);
-        return scoreB - scoreA;
-      });
-
-      // Selecionar melhor alimento da categoria
-      const food = sortedFoods[0];
-
-      // Calcular porção baseada em:
-      // 1. Calorias alvo
-      // 2. Limite da categoria
-      // 3. Balanço de macros
-      const categoryTargetKcal = targets.kcal * (strategy.categoryWeights[category] || 0.3);
-      const portionFactor = Math.min(
-        strategy.portionLimits[category] || 1,
-        categoryTargetKcal / food.kcal_por_referencia
-      );
-
-      if (portionFactor <= 0) continue;
-
-      let quantity = Math.round(food.peso_referencia_g * portionFactor);
-      
-      // Ajustar para unidades mais práticas
-      quantity = this.adjustToRealisticPortion(quantity, food.medida_padrao_referencia);
-
-      const actualFactor = quantity / food.peso_referencia_g;
-
-      const selectedFood = {
-        id: food.id,
-        name: food.nome,
-        quantity,
-        unit: food.medida_padrao_referencia || 'g',
-        calories: Math.round(food.kcal_por_referencia * actualFactor),
-        protein: Math.round(food.ptn_g_por_referencia * actualFactor * 10) / 10,
-        carbs: Math.round(food.cho_g_por_referencia * actualFactor * 10) / 10,
-        fat: Math.round(food.lip_g_por_referencia * actualFactor * 10) / 10,
-      };
-
-      selected.push(selectedFood);
-      
-      totalKcal += selectedFood.calories;
-      totalProtein += selectedFood.protein;
-      totalCarbs += selectedFood.carbs;
-      totalFat += selectedFood.fat;
-    }
-
-    // Ajuste fino para aproximar das metas
-    return this.fineTunePortions(selected, targets, { totalKcal, totalProtein, totalCarbs, totalFat });
-  }
-
-  /**
-   * Calcula score nutricional de um alimento baseado nas metas
-   */
-  private static calculateNutritionalScore(food: any, targets: MacroTargets): number {
-    // Densidade de proteína (importante para todos os objetivos)
-    const proteinDensity = food.ptn_g_por_referencia / food.kcal_por_referencia;
-    
-    // Balanço de macros
-    const proteinRatio = food.ptn_g_por_referencia / targets.protein_g;
-    const carbRatio = food.cho_g_por_referencia / targets.carb_g;
-    const fatRatio = food.lip_g_por_referencia / targets.fat_g;
-    
-    // Fibra (bonus)
-    const fiberBonus = (food.fibra_g_por_referencia || 0) * 2;
-    
-    // Popularidade
-    const popularityScore = (food.popularidade || 0) / 10;
-    
-    return (proteinDensity * 30) + (proteinRatio * 20) + (carbRatio * 20) + 
-           (fatRatio * 20) + fiberBonus + popularityScore;
-  }
-
-  /**
-   * Ajusta porção para valores realistas
-   */
-  private static adjustToRealisticPortion(quantity: number, unit: string): number {
-    // Arredondar para valores práticos
-    if (unit === 'g' || unit === 'ml') {
-      if (quantity < 30) return Math.round(quantity / 5) * 5; // 5g
-      if (quantity < 100) return Math.round(quantity / 10) * 10; // 10g
-      if (quantity < 500) return Math.round(quantity / 25) * 25; // 25g
-      return Math.round(quantity / 50) * 50; // 50g
-    }
-    return Math.max(1, Math.round(quantity));
-  }
-
-  /**
-   * Ajuste fino de porções para aproximar das metas
-   */
-  private static fineTunePortions(
-    foods: any[],
-    targets: MacroTargets,
-    currentTotals: { totalKcal: number; totalProtein: number; totalCarbs: number; totalFat: number }
-  ): any[] {
-    const kcalDiff = targets.kcal - currentTotals.totalKcal;
-    
-    // Se diferença < 10%, ajustar proporcionalmente
-    if (Math.abs(kcalDiff / targets.kcal) < 0.1) {
-      const adjustmentFactor = targets.kcal / currentTotals.totalKcal;
-      
-      return foods.map(food => ({
-        ...food,
-        quantity: Math.round(food.quantity * adjustmentFactor),
-        calories: Math.round(food.calories * adjustmentFactor),
-        protein: Math.round(food.protein * adjustmentFactor * 10) / 10,
-        carbs: Math.round(food.carbs * adjustmentFactor * 10) / 10,
-        fat: Math.round(food.fat * adjustmentFactor * 10) / 10,
-      }));
     }
     
-    return foods;
-  }
-
-  /**
-   * Define estratégia inteligente de seleção por tipo de refeição
-   */
-  private static getMealStrategy(mealType: MealType): {
-    categories: string[];
-    portionLimits: Record<string, number>;
-    categoryWeights: Record<string, number>;
-  } {
-    const strategies: Record<MealType, any> = {
-      breakfast: {
-        categories: ['Cereais e derivados', 'Leite e derivados', 'Frutas', 'Gorduras e óleos'],
-        portionLimits: { 
-          'Cereais e derivados': 2, 
-          'Leite e derivados': 1.5, 
-          'Frutas': 1,
-          'Gorduras e óleos': 0.3
-        },
-        categoryWeights: {
-          'Cereais e derivados': 0.4,
-          'Leite e derivados': 0.3,
-          'Frutas': 0.2,
-          'Gorduras e óleos': 0.1
-        }
-      },
-      morning_snack: {
-        categories: ['Frutas', 'Oleaginosas', 'Leite e derivados'],
-        portionLimits: { 'Frutas': 1, 'Oleaginosas': 0.5, 'Leite e derivados': 1 },
-        categoryWeights: { 'Frutas': 0.5, 'Oleaginosas': 0.3, 'Leite e derivados': 0.2 }
-      },
-      lunch: {
-        categories: ['Carnes e ovos', 'Cereais e derivados', 'Leguminosas', 'Hortaliças', 'Gorduras e óleos'],
-        portionLimits: { 
-          'Carnes e ovos': 1.5, 
-          'Cereais e derivados': 2, 
-          'Leguminosas': 1, 
-          'Hortaliças': 2,
-          'Gorduras e óleos': 0.5
-        },
-        categoryWeights: {
-          'Carnes e ovos': 0.3,
-          'Cereais e derivados': 0.25,
-          'Leguminosas': 0.15,
-          'Hortaliças': 0.2,
-          'Gorduras e óleos': 0.1
-        }
-      },
-      afternoon_snack: {
-        categories: ['Frutas', 'Leite e derivados', 'Cereais e derivados'],
-        portionLimits: { 'Frutas': 1, 'Leite e derivados': 1, 'Cereais e derivados': 0.5 },
-        categoryWeights: { 'Frutas': 0.4, 'Leite e derivados': 0.4, 'Cereais e derivados': 0.2 }
-      },
-      dinner: {
-        categories: ['Carnes e ovos', 'Cereais e derivados', 'Hortaliças', 'Leguminosas'],
-        portionLimits: { 
-          'Carnes e ovos': 1.2, 
-          'Cereais e derivados': 1.5, 
-          'Hortaliças': 2,
-          'Leguminosas': 0.8
-        },
-        categoryWeights: {
-          'Carnes e ovos': 0.35,
-          'Cereais e derivados': 0.25,
-          'Hortaliças': 0.25,
-          'Leguminosas': 0.15
-        }
-      },
-      evening_snack: {
-        categories: ['Leite e derivados', 'Frutas'],
-        portionLimits: { 'Leite e derivados': 1, 'Frutas': 0.5 },
-        categoryWeights: { 'Leite e derivados': 0.6, 'Frutas': 0.4 }
-      }
-    };
-
-    return strategies[mealType] || { 
-      categories: [], 
-      portionLimits: {},
-      categoryWeights: {}
-    };
-  }
-
-  /**
-   * Cria uma refeição vazia
-   */
-  private static createEmptyMeal(mealType: MealType): ConsolidatedMeal {
-    return {
-      id: `meal_${mealType}`,
-      name: MEAL_TYPES[mealType],
-      type: mealType,
-      time: MEAL_TIMES[mealType],
-      foods: [],
-      totalCalories: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFats: 0,
-      total_calories: 0,
-      total_protein: 0,
-      total_carbs: 0,
-      total_fats: 0,
-    };
-  }
-
-  /**
-   * Calcula totais do plano
-   */
-  private static calculateTotals(meals: ConsolidatedMeal[]) {
-    return {
-      calories: meals.reduce((sum, m) => sum + m.totalCalories, 0),
-      protein: meals.reduce((sum, m) => sum + m.totalProtein, 0),
-      carbs: meals.reduce((sum, m) => sum + m.totalCarbs, 0),
-      fats: meals.reduce((sum, m) => sum + m.totalFats, 0),
-    };
+    return selectedItems;
   }
 }

@@ -1,297 +1,211 @@
 /**
- * MEAL PLAN ORCHESTRATOR - SINGLE SOURCE OF TRUTH
- * Coordena todo o fluxo de criação, edição e persistência de planos alimentares
+ * MEAL PLAN ORCHESTRATOR - STUB
+ * Mantido para compatibilidade com componentes legados.
+ * A lógica de geração foi centralizada em AutoGenerationService.
  */
 
+import { AutoGenerationService, PatientProfile } from './AutoGenerationService';
+import { ConsolidatedMealPlan, ConsolidatedMeal, MealType, MEAL_TYPES, MEAL_TIMES, DEFAULT_MEAL_DISTRIBUTION } from '@/types/mealPlanTypes';
 import { supabase } from '@/integrations/supabase/client';
-import { AutoGenerationService } from './AutoGenerationService';
-import { PersistenceService, SaveOptions } from './PersistenceService';
-import { ConsolidatedMealPlan, MealPlanGenerationParams } from '@/types/mealPlanTypes';
-import { CalculationResult } from '@/utils/nutrition/official/officialCalculations';
-import { generateMealPlanPDF } from '@/utils/pdf/pdfExport';
-import { MealPlanExportOptions } from '@/utils/pdf/types';
-import { jsPDF } from 'jspdf';
 
 export interface AutoGenParams {
-  userId: string;
   patientId: string;
-  calculationResults: CalculationResult;
-  patientData?: {
-    name: string;
-    age?: number;
-    gender?: string;
-    preferences?: string[];
+  userId: string;
+  calculationResults: any;
+  patientData?: any;
+  preferences?: {
+    objective?: string;
     restrictions?: string[];
-  };
-}
-
-export interface MealPlanChanges {
-  mealId: string;
-  itemId?: string;
-  changes: {
-    quantity?: number;
-    foodId?: string;
-    action?: 'add' | 'remove' | 'update';
   };
 }
 
 export class MealPlanOrchestrator {
   /**
-   * Gera um plano alimentar automático completo
+   * Gera um plano alimentar automático (método principal)
+   * @deprecated - Usar AutoGenerationService.generatePlan diretamente
    */
   static async generateAutomaticPlan(params: AutoGenParams): Promise<ConsolidatedMealPlan> {
-    try {
-      console.log('🎯 Orchestrator: Iniciando geração automática...');
-      
-      // Delega para o serviço de geração automática
-      const mealPlan = await AutoGenerationService.generateMealPlan(
-        params.calculationResults,
-        params.patientData
-      );
+    return this.autoGenerate(params);
+  }
 
-      // Adiciona IDs e metadados
-      const completePlan: ConsolidatedMealPlan = {
-        ...mealPlan,
-        id: crypto.randomUUID(),
-        patient_id: params.patientId,
-        user_id: params.userId,
-        date: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+  /**
+   * Gera um plano alimentar automático
+   * @deprecated - Usar AutoGenerationService.generatePlan diretamente
+   */
+  static async autoGenerate(params: AutoGenParams): Promise<ConsolidatedMealPlan> {
+    console.log('[DEPRECATED] MealPlanOrchestrator.autoGenerate - migrar para AutoGenerationService');
+    
+    const { calculationResults, preferences } = params;
+    
+    // Extrai metas calóricas
+    const vet = calculationResults?.vet || 2000;
+    const protein_g = calculationResults?.macros?.protein?.grams || calculationResults?.macros?.protein || 100;
+    const carb_g = calculationResults?.macros?.carbs?.grams || calculationResults?.macros?.carbs || 250;
+    const fat_g = calculationResults?.macros?.fat?.grams || calculationResults?.macros?.fat || 70;
+
+    // Cria estrutura de refeições com distribuição padrão
+    const refeicoes = Object.entries(DEFAULT_MEAL_DISTRIBUTION).map(([type, percentage], index) => ({
+      nome: MEAL_TYPES[type as MealType],
+      numero: index + 1,
+      horario_sugerido: MEAL_TIMES[type as MealType],
+      itens: [],
+      alvo_kcal: Math.round(vet * (percentage / 100)),
+      alvo_ptn_g: Math.round(protein_g * (percentage / 100)),
+      alvo_cho_g: Math.round(carb_g * (percentage / 100)),
+      alvo_lip_g: Math.round(fat_g * (percentage / 100)),
+    }));
+
+    // Usa o novo motor
+    const profile: PatientProfile = {
+      objective: preferences?.objective || 'manutencao',
+      restrictions: preferences?.restrictions || [],
+      gender: 'male'
+    };
+
+    const generatedRefeicoes = await AutoGenerationService.generatePlan(refeicoes, profile);
+
+    // Converte para formato ConsolidatedMealPlan
+    const meals: ConsolidatedMeal[] = generatedRefeicoes.map((ref, idx) => {
+      const mealTypes: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
+      const mealType = mealTypes[idx] || 'lunch';
+      
+      const totalCalories = ref.itens.reduce((sum, item) => sum + item.kcal_calculado, 0);
+      const totalProtein = ref.itens.reduce((sum, item) => sum + item.ptn_g_calculado, 0);
+      const totalCarbs = ref.itens.reduce((sum, item) => sum + item.cho_g_calculado, 0);
+      const totalFats = ref.itens.reduce((sum, item) => sum + item.lip_g_calculado, 0);
+
+      return {
+        id: `meal_${mealType}`,
+        name: ref.nome,
+        type: mealType,
+        time: ref.horario_sugerido || MEAL_TIMES[mealType],
+        foods: ref.itens.map(item => ({
+          id: item.alimento_id,
+          name: item.alimento_nome,
+          quantity: Math.round(item.peso_total_g),
+          unit: 'g',
+          calories: Math.round(item.kcal_calculado),
+          protein: Math.round(item.ptn_g_calculado * 10) / 10,
+          carbs: Math.round(item.cho_g_calculado * 10) / 10,
+          fat: Math.round(item.lip_g_calculado * 10) / 10,
+        })),
+        totalCalories: Math.round(totalCalories),
+        totalProtein: Math.round(totalProtein * 10) / 10,
+        totalCarbs: Math.round(totalCarbs * 10) / 10,
+        totalFats: Math.round(totalFats * 10) / 10,
+        total_calories: Math.round(totalCalories),
+        total_protein: Math.round(totalProtein * 10) / 10,
+        total_carbs: Math.round(totalCarbs * 10) / 10,
+        total_fats: Math.round(totalFats * 10) / 10,
       };
+    });
 
-      console.log('✅ Orchestrator: Plano gerado com sucesso');
-      return completePlan;
+    const totalCalories = meals.reduce((sum, m) => sum + m.totalCalories, 0);
+    const totalProtein = meals.reduce((sum, m) => sum + m.totalProtein, 0);
+    const totalCarbs = meals.reduce((sum, m) => sum + m.totalCarbs, 0);
+    const totalFats = meals.reduce((sum, m) => sum + m.totalFats, 0);
+
+    return {
+      id: crypto.randomUUID(),
+      patient_id: params.patientId,
+      user_id: params.userId,
+      date: new Date().toISOString().split('T')[0],
+      name: 'Plano Automático',
+      total_calories: totalCalories,
+      total_protein: totalProtein,
+      total_carbs: totalCarbs,
+      total_fats: totalFats,
+      meals,
+      notes: 'Plano gerado automaticamente pelo AutoGenerationService',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Salva um plano no banco
+   */
+  static async savePlan(plan: ConsolidatedMealPlan): Promise<string> {
+    return this.saveMealPlan(plan);
+  }
+
+  /**
+   * Salva um plano alimentar no banco de dados
+   */
+  static async saveMealPlan(plan: ConsolidatedMealPlan): Promise<string> {
+    console.log('[ORCHESTRATOR] Salvando plano alimentar...');
+    
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .upsert({
+          id: plan.id || undefined,
+          patient_id: plan.patient_id,
+          user_id: plan.user_id,
+          date: plan.date,
+          total_calories: plan.total_calories,
+          total_protein: plan.total_protein,
+          total_carbs: plan.total_carbs,
+          total_fats: plan.total_fats,
+          meals: plan.meals as any,
+          notes: plan.notes,
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
       
+      return data?.id || plan.id || '';
     } catch (error) {
-      console.error('❌ Orchestrator: Erro na geração automática', error);
+      console.error('[ORCHESTRATOR] Erro ao salvar:', error);
       throw error;
     }
   }
 
   /**
-   * Edita um plano alimentar existente
+   * Busca um plano alimentar por ID
    */
-  static async editMealPlan(planId: string, changes: MealPlanChanges): Promise<void> {
+  static async getMealPlan(planId: string): Promise<ConsolidatedMealPlan | null> {
+    console.log('[ORCHESTRATOR] Buscando plano:', planId);
+    
     try {
-      console.log('✏️ Orchestrator: Editando plano...', changes);
-      
-      // TODO: Implementar lógica de edição
-      // Por enquanto, apenas log
-      
-    } catch (error) {
-      console.error('❌ Orchestrator: Erro na edição', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Salva um plano alimentar no banco de dados (usa PersistenceService)
-   */
-  static async saveMealPlan(
-    plan: ConsolidatedMealPlan,
-    options: SaveOptions = {}
-  ): Promise<string> {
-    try {
-      console.log('💾 Orchestrator: Delegando salvamento para PersistenceService...');
-      return await PersistenceService.saveMealPlan(plan, options);
-    } catch (error) {
-      console.error('❌ Orchestrator: Erro ao salvar plano', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Carrega um plano alimentar completo
-   */
-  static async getMealPlan(planId: string): Promise<ConsolidatedMealPlan> {
-    try {
-      console.log('📖 Orchestrator: Carregando plano...', planId);
-
-      // 1. Buscar meal_plan
-      const { data: planData, error: planError } = await supabase
+      const { data, error } = await supabase
         .from('meal_plans')
         .select('*')
         .eq('id', planId)
         .single();
 
-      if (planError) throw planError;
-      if (!planData) throw new Error('Plano não encontrado');
-
-      // 2. Buscar meal_plan_items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('meal_plan_items')
-        .select('*')
-        .eq('meal_plan_id', planId)
-        .order('meal_type')
-        .order('order_index');
-
-      if (itemsError) throw itemsError;
-
-      // 3. Agrupar por meal_type
-      const mealsByType = (itemsData || []).reduce((acc, item) => {
-        if (!acc[item.meal_type]) {
-          acc[item.meal_type] = [];
-        }
-        acc[item.meal_type].push(item);
-        return acc;
-      }, {} as Record<string, any[]>);
-
-      // 4. Criar meals
-      const meals = Object.entries(mealsByType).map(([type, items]) => {
-        const totalCalories = items.reduce((sum, i) => sum + (i.calories || 0), 0);
-        const totalProtein = items.reduce((sum, i) => sum + (i.protein || 0), 0);
-        const totalCarbs = items.reduce((sum, i) => sum + (i.carbs || 0), 0);
-        const totalFats = items.reduce((sum, i) => sum + (i.fats || 0), 0);
-
-        return {
-          id: `meal_${type}`,
-          name: type,
-          type: type as any,
-          foods: items.map(i => ({
-            id: i.food_id || i.id,
-            name: i.food_name,
-            quantity: i.quantity,
-            unit: i.unit,
-            calories: i.calories,
-            protein: i.protein,
-            carbs: i.carbs,
-            fat: i.fats,
-          })),
-          totalCalories,
-          totalProtein,
-          totalCarbs,
-          totalFats,
-          total_calories: totalCalories,
-          total_protein: totalProtein,
-          total_carbs: totalCarbs,
-          total_fats: totalFats,
-        };
-      });
-
-      const result: ConsolidatedMealPlan = {
-        id: planData.id,
-        patient_id: planData.patient_id,
-        user_id: planData.user_id,
-        calculation_id: planData.calculation_id,
-        name: `Plano - ${new Date(planData.date).toLocaleDateString('pt-BR')}`,
-        date: planData.date,
-        total_calories: planData.total_calories,
-        total_protein: planData.total_protein,
-        total_carbs: planData.total_carbs,
-        total_fats: planData.total_fats,
-        meals,
-        notes: planData.notes,
-        created_at: planData.created_at,
-        updated_at: planData.updated_at,
-      };
-
-      console.log('✅ Orchestrator: Plano carregado com sucesso');
-      return result;
-      
-    } catch (error) {
-      console.error('❌ Orchestrator: Erro ao carregar plano', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Lista planos de um paciente
-   */
-  static async listPatientMealPlans(patientId: string): Promise<ConsolidatedMealPlan[]> {
-    try {
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false });
-
       if (error) throw error;
+      
+      if (!data) return null;
 
-      return (data || []).map(plan => ({
-        id: plan.id,
-        patient_id: plan.patient_id,
-        user_id: plan.user_id,
-        name: `Plano - ${new Date(plan.date).toLocaleDateString('pt-BR')}`,
-        date: plan.date,
-        total_calories: plan.total_calories,
-        total_protein: plan.total_protein,
-        total_carbs: plan.total_carbs,
-        total_fats: plan.total_fats,
-        meals: [],
-        notes: plan.notes,
-        created_at: plan.created_at,
-        updated_at: plan.updated_at,
-      }));
+      return {
+        id: data.id,
+        patient_id: data.patient_id || '',
+        user_id: data.user_id,
+        date: data.date,
+        name: 'Plano Alimentar',
+        total_calories: data.total_calories,
+        total_protein: data.total_protein,
+        total_carbs: data.total_carbs,
+        total_fats: data.total_fats,
+        meals: (data.meals as any[]) || [],
+        notes: data.notes || '',
+        created_at: data.created_at || '',
+        updated_at: data.updated_at || '',
+      };
     } catch (error) {
-      console.error('❌ Orchestrator: Erro ao listar planos', error);
-      return [];
+      console.error('[ORCHESTRATOR] Erro ao buscar plano:', error);
+      return null;
     }
   }
 
   /**
-   * Exporta um plano alimentar para PDF
-   * FASE 1 - Centralização de exportação
+   * Exporta plano para PDF
+   * @stub - Não implementado neste stub
    */
-  static async exportToPDF(
-    plan: ConsolidatedMealPlan,
-    patientData: {
-      name: string;
-      age?: number;
-      gender?: 'male' | 'female';
-    },
-    options?: {
-      nutritionistName?: string;
-      clinicName?: string;
-      clinicAddress?: string;
-      clinicPhone?: string;
-      notes?: string;
-      autoDownload?: boolean;
-    }
-  ): Promise<jsPDF> {
-    try {
-      console.log('📄 Orchestrator: Gerando PDF do plano alimentar...');
-
-      // Transformar plano para formato de exportação
-      const exportOptions: MealPlanExportOptions = {
-        patientName: patientData.name,
-        patientAge: patientData.age,
-        patientGender: patientData.gender,
-        totalCalories: plan.total_calories,
-        totalProtein: plan.total_protein,
-        totalCarbs: plan.total_carbs,
-        totalFats: plan.total_fats,
-        meals: plan.meals.map(meal => ({
-          name: meal.name || meal.type,
-          calories: meal.total_calories || meal.totalCalories || 0,
-          protein: meal.total_protein || meal.totalProtein || 0,
-          carbs: meal.total_carbs || meal.totalCarbs || 0,
-          fat: meal.total_fats || meal.totalFats || 0,
-          percent: ((meal.total_calories || meal.totalCalories || 0) / plan.total_calories) * 100,
-          suggestions: meal.foods?.map(f => `${f.quantity}${f.unit} ${f.name}`) || []
-        })),
-        nutritionistName: options?.nutritionistName,
-        clinicName: options?.clinicName,
-        clinicAddress: options?.clinicAddress,
-        clinicPhone: options?.clinicPhone,
-        date: new Date(plan.date).toLocaleDateString('pt-BR'),
-        notes: options?.notes || plan.notes
-      };
-
-      const pdf = generateMealPlanPDF(exportOptions);
-
-      // Auto-download se solicitado
-      if (options?.autoDownload !== false) {
-        const fileName = `plano-alimentar-${patientData.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
-        pdf.save(fileName);
-      }
-
-      console.log('✅ Orchestrator: PDF gerado com sucesso');
-      return pdf;
-
-    } catch (error) {
-      console.error('❌ Orchestrator: Erro ao gerar PDF', error);
-      throw error;
-    }
+  static async exportToPDF(plan: ConsolidatedMealPlan, options?: any): Promise<Blob | null> {
+    console.log('[STUB] MealPlanOrchestrator.exportToPDF - usar serviço de PDF dedicado');
+    return null;
   }
 }
