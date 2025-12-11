@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Calculator, CalendarCheck, UserPlus, FileText, User, ChevronRight } from 'lucide-react';
+import { Calculator, CalendarCheck, UserPlus, FileText, User, ChevronRight, BarChart3 } from 'lucide-react';
 
 const DashboardQuickActions = () => {
   const actions = [
@@ -34,6 +34,13 @@ const DashboardQuickActions = () => {
       icon: <Calculator className="h-5 w-5 mr-2" />,
       link: '/calculator',
       color: 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-800 dark:from-amber-900/30 dark:to-amber-800/30 dark:text-amber-300'
+    },
+    {
+      title: 'Relatórios',
+      description: 'Evolução dos pacientes',
+      icon: <BarChart3 className="h-5 w-5 mr-2" />,
+      link: '/reports',
+      color: 'bg-gradient-to-br from-cyan-100 to-cyan-200 text-cyan-800 dark:from-cyan-900/30 dark:to-cyan-800/30 dark:text-cyan-300'
     },
     {
       title: 'Pacientes',

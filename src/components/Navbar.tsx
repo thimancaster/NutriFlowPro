@@ -5,12 +5,12 @@ import {
 	Users,
 	Calculator,
 	Utensils,
-	Stethoscope,
 	Activity,
 	Calendar,
-	Settings,
 	Menu,
 	X,
+	FileText,
+	Trophy,
 } from "lucide-react";
 import {useAuth} from "@/contexts/auth/AuthContext";
 import {Button} from "@/components/ui/button";
@@ -22,9 +22,9 @@ const navigationItems = [
 	{name: "Dashboard", href: "/dashboard", icon: LayoutDashboard},
 	{name: "Pacientes", href: "/patients", icon: Users},
 	{name: "Agendamentos", href: "/appointments", icon: Calendar},
-	{name: "Calculadora", href: "/calculator", icon: Calculator},
-	{name: "Plano Alimentar", href: "/clinical", icon: Utensils},
-	{name: "Clínico", href: "/clinical", icon: Activity},
+	{name: "Atendimento", href: "/clinical", icon: Activity},
+	{name: "Relatórios", href: "/reports", icon: FileText},
+	{name: "Conquistas", href: "/gamification", icon: Trophy},
 ];
 
 const Navbar = memo(() => {

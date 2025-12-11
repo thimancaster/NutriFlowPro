@@ -5,6 +5,7 @@ import DashboardRecentPatients from "./DashboardRecentPatients";
 import DashboardQuickActions from "./DashboardQuickActions";
 import DashboardTestimonials from "./DashboardTestimonials";
 import ConsultationHeader from "./ConsultationHeader";
+import GamificationWidget from "./dashboard/GamificationWidget";
 import {motion} from "framer-motion";
 import {Skeleton} from "@/components/ui/skeleton";
 import {useConsultationData} from "@/contexts/ConsultationDataContext";
@@ -99,6 +100,11 @@ const Dashboard = () => {
 							isLoading={isLoading}
 						/>
 					</Suspense>
+				</motion.div>
+
+			{/* Gamification Widget - Novo! */}
+				<motion.div variants={itemVariants} className="hover-lift">
+					<GamificationWidget userId={user?.id} />
 				</motion.div>
 
 				{/* Pacientes recentes com animação de entrada */}
