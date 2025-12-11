@@ -57,13 +57,14 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
 				<Link
 					key={item.name}
 					to={item.href}
-					className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+					className={`inline-flex items-center px-2 lg:px-3 py-1.5 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
 						isActive
 							? "bg-nutri-green text-white"
 							: "text-gray-700 hover:bg-gray-100 hover:text-nutri-blue dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-nutri-blue"
 					}`}>
-					<Icon className="h-4 w-4 mr-2 flex-shrink-0" />
-					<span>{item.name}</span>
+					<Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-1 lg:mr-2 flex-shrink-0" />
+					<span className="hidden lg:inline">{item.name}</span>
+					<span className="lg:hidden">{item.name.length > 8 ? item.name.slice(0, 6) + '...' : item.name}</span>
 				</Link>
 			);
 		};
@@ -78,7 +79,7 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
 		return (
 			<div
 				ref={navRef}
-				className="hidden md:ml-2 lg:ml-4 md:flex items-center md:space-x-1 lg:space-x-3 xl:space-x-4 overflow-hidden max-w-full">
+				className="hidden md:ml-2 lg:ml-4 md:flex items-center md:space-x-0.5 lg:space-x-1 xl:space-x-2 flex-shrink-0">
 				{visibleItems.map((item) => renderNavigationItem(item))}
 
 				{overflowItems.length > 0 && (
