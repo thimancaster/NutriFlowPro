@@ -1,7 +1,7 @@
 /**
  * REPORTS PAGE
  * Comparative reports showing evolution of TMB, GET, VET and macros across consultations
- * Features: Patient selection, evolution charts, metrics comparison, PDF export
+ * Features: Patient selection, evolution charts, metrics comparison, PDF export, Trend Analysis
  */
 
 import React, { useState } from 'react';
@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, TrendingUp, TrendingDown, Minus, FileText, Users, Calendar } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Minus, FileText, Users, Calendar, BarChart3 } from 'lucide-react';
 import EvolutionChart from '@/components/reports/EvolutionChart';
+import TrendAnalysisDashboard from '@/components/food-database/TrendAnalysisDashboard';
 import { 
   fetchAllPatientsCalculationHistory, 
   calculateEvolution,
@@ -209,9 +210,10 @@ const Reports: React.FC = () => {
 
       {/* Main Content */}
       <Tabs defaultValue="individual" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="individual">Análise Individual</TabsTrigger>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="trends">Tendências</TabsTrigger>
         </TabsList>
 
         {/* Individual Patient Analysis */}
@@ -425,6 +427,27 @@ const Reports: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Trend Analysis */}
+        <TabsContent value="trends" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Análise de Tendências
+              </CardTitle>
+              <CardDescription>
+                Visualize padrões e tendências nutricionais ao longo do tempo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TrendAnalysisDashboard 
+                patientId={user?.id}
+                timeRange="month"
+              />
             </CardContent>
           </Card>
         </TabsContent>

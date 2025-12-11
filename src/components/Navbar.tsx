@@ -4,7 +4,6 @@ import {
 	LayoutDashboard,
 	Users,
 	Calculator,
-	Utensils,
 	Activity,
 	Calendar,
 	Menu,
@@ -16,6 +15,8 @@ import {useAuth} from "@/contexts/auth/AuthContext";
 import {Button} from "@/components/ui/button";
 import {ThemeToggle} from "@/components/ui/theme-toggle";
 import {NavbarDesktopNavigation, NavbarUserMenu, NavbarMobileMenu} from "./navbar/index";
+import NotificationBell from "./notifications/NotificationBell";
+import GlobalSearch from "./search/GlobalSearch";
 
 // Memoize navigation items to prevent recreation on every render
 const navigationItems = [
@@ -71,8 +72,14 @@ const Navbar = memo(() => {
 						<NavbarDesktopNavigation navigationItems={navigationItems} />
 					</div>
 
-					{/* Right side - Theme toggle and User menu */}
+					{/* Right side - Search, Notifications, Theme toggle and User menu */}
 					<div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+						{/* Global Search */}
+						<GlobalSearch />
+
+						{/* Notifications */}
+						<NotificationBell />
+
 						<div className="hidden md:flex items-center h-9">
 							<ThemeToggle />
 						</div>
