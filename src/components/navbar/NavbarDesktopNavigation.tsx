@@ -1,7 +1,6 @@
-import React, {memo, useMemo, useState, useEffect, useRef} from "react";
+import React, {memo, useMemo} from "react";
 import {Link, useLocation} from "react-router-dom";
 import {LucideIcon, ChevronDown} from "lucide-react";
-import {Button} from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,26 +16,31 @@ interface NavigationItem {
 
 interface NavbarDesktopNavigationProps {
 	navigationItems: NavigationItem[];
+	maxVisible?: number;
 }
 
 const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
-	({navigationItems}) => {
+	({navigationItems, maxVisible = 4}) => {
 		const location = useLocation();
-		const navRef = useRef<HTMLDivElement>(null);
-		const [visibleItems, setVisibleItems] = useState<NavigationItem[]>(navigationItems);
-		const [overflowItems, setOverflowItems] = useState<NavigationItem[]>([]);
 
-		// Show all navigation items without grouping
-		useEffect(() => {
-			// Display all items as regular navigation items
-			setVisibleItems(navigationItems);
-			setOverflowItems([]);
-		}, [navigationItems]);
+		// Split items into visible and overflow
+		const {visibleItems, overflowItems} = useMemo(() => {
+			if (navigationItems.length <= maxVisible) {
+				return {visibleItems: navigationItems, overflowItems: []};
+			}
+			return {
+				visibleItems: navigationItems.slice(0, maxVisible),
+				overflowItems: navigationItems.slice(maxVisible),
+			};
+		}, [navigationItems, maxVisible]);
+
+		const isItemActive = (href: string) =>
+			location.pathname === href ||
+			(href !== "/dashboard" && location.pathname.startsWith(href));
+
 		const renderNavigationItem = (item: NavigationItem, isInDropdown = false) => {
 			const Icon = item.icon;
-			const isActive =
-				location.pathname === item.href ||
-				(item.href !== "/dashboard" && location.pathname.startsWith(item.href));
+			const isActive = isItemActive(item.href);
 
 			if (isInDropdown) {
 				return (
@@ -64,63 +68,37 @@ const NavbarDesktopNavigation: React.FC<NavbarDesktopNavigationProps> = memo(
 					}`}>
 					<Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-1 lg:mr-2 flex-shrink-0" />
 					<span className="hidden lg:inline">{item.name}</span>
-					<span className="lg:hidden">{item.name.length > 8 ? item.name.slice(0, 6) + '...' : item.name}</span>
+					<span className="lg:hidden">
+						{item.name.length > 8 ? item.name.slice(0, 6) + "..." : item.name}
+					</span>
 				</Link>
 			);
 		};
 
 		// Check if any overflow item is active
-		const hasActiveOverflow = overflowItems.some(
-			(item) =>
-				location.pathname === item.href ||
-				(item.href !== "/dashboard" && location.pathname.startsWith(item.href))
-		);
+		const hasActiveOverflow = overflowItems.some((item) => isItemActive(item.href));
 
 		return (
-			<div
-				ref={navRef}
-				className="hidden md:ml-2 lg:ml-4 md:flex items-center md:space-x-0.5 lg:space-x-1 xl:space-x-2 flex-shrink-0">
+			<div className="hidden md:ml-2 lg:ml-4 md:flex items-center md:space-x-0.5 lg:space-x-1 xl:space-x-2 flex-shrink-0">
 				{visibleItems.map((item) => renderNavigationItem(item))}
 
 				{overflowItems.length > 0 && (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button
-								variant="ghost"
-								size="sm"
-								className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=open]:outline-none data-[state=open]:ring-0 ${
+							<button
+								className={`inline-flex items-center px-2 lg:px-3 py-1.5 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors duration-200 ${
 									hasActiveOverflow
 										? "bg-nutri-green text-white"
 										: "text-gray-700 hover:bg-gray-100 hover:text-nutri-blue dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-nutri-blue"
-								}`}
-								onMouseEnter={(e) => {
-									// Trigger dropdown on hover
-									const trigger = e.currentTarget;
-									setTimeout(() => trigger.click(), 100);
-								}}
-								onBlur={(e) => {
-									// Remove focus after interaction
-									e.currentTarget.blur();
-								}}
-								style={{boxShadow: "none"}}>
-								<span>Clínico</span>
-								<ChevronDown className="h-4 w-4 ml-1" />
-							</Button>
+								}`}>
+								<span className="hidden lg:inline">Mais</span>
+								<span className="lg:hidden">+</span>
+								<ChevronDown className="h-3.5 w-3.5 lg:h-4 lg:w-4 ml-1" />
+							</button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
 							align="end"
-							className="w-48"
-							onMouseLeave={(e) => {
-								// Close dropdown when mouse leaves
-								const trigger = e.currentTarget.closest(
-									"[data-radix-dropdown-menu-content]"
-								);
-								if (trigger) {
-									document.dispatchEvent(
-										new KeyboardEvent("keydown", {key: "Escape"})
-									);
-								}
-							}}>
+							className="w-48 bg-background border shadow-lg z-50">
 							{overflowItems.map((item) => renderNavigationItem(item, true))}
 						</DropdownMenuContent>
 					</DropdownMenu>
