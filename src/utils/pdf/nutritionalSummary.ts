@@ -1,5 +1,5 @@
-
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { MealPlanExportOptions } from './types';
 
 export const addNutritionalSummary = (
@@ -18,7 +18,7 @@ export const addNutritionalSummary = (
     [`${totalCalories} kcal`, `${totalProtein}g`, `${totalCarbs}g`, `${totalFats}g`]
   ];
   
-  doc.autoTable({
+  autoTable(doc, {
     startY: 100,
     head: [summaryData[0]],
     body: [summaryData[1]],
