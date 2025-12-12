@@ -1,22 +1,28 @@
-
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { MealPlanExportOptions } from './types';
+
+// Type for accessing lastAutoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable?: { finalY: number };
+}
 
 export const addMealsSection = (
   doc: jsPDF, 
   options: MealPlanExportOptions
 ): number => {
   const { meals } = options;
+  const docWithTable = doc as jsPDFWithAutoTable;
   
   // Add meal plan table
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  let currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 20 : 150;
+  let currentY = docWithTable.lastAutoTable?.finalY ? docWithTable.lastAutoTable.finalY + 20 : 150;
   doc.text('PLANO ALIMENTAR', 20, currentY);
   currentY += 10;
   
   // For each meal, add a table
-  meals.forEach((meal, index) => {
+  meals.forEach((meal) => {
     // Check if we need a new page
     if (currentY > doc.internal.pageSize.getHeight() - 40) {
       doc.addPage();
@@ -36,7 +42,7 @@ export const addMealsSection = (
       [`${meal.protein}g`, `${meal.carbs}g`, `${meal.fat}g`]
     ];
     
-    doc.autoTable({
+    autoTable(doc, {
       startY: currentY,
       head: [mealMacros[0]],
       body: [mealMacros[1]],
@@ -52,13 +58,13 @@ export const addMealsSection = (
       margin: { left: 20 }
     });
     
-    currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 5 : currentY + 25;
+    currentY = docWithTable.lastAutoTable?.finalY ? docWithTable.lastAutoTable.finalY + 5 : currentY + 25;
     
     // Add food suggestions
     if (meal.suggestions && meal.suggestions.length > 0) {
       const suggestionRows = meal.suggestions.map((suggestion: string) => [suggestion]);
       
-      doc.autoTable({
+      autoTable(doc, {
         startY: currentY,
         head: [['Sugestões de Alimentos']],
         body: suggestionRows,
@@ -74,7 +80,7 @@ export const addMealsSection = (
         margin: { left: 20 }
       });
       
-      currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : currentY + 35;
+      currentY = docWithTable.lastAutoTable?.finalY ? docWithTable.lastAutoTable.finalY + 10 : currentY + 35;
     } else {
       currentY += 10;
     }

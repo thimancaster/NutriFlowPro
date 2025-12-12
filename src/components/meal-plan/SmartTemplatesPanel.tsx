@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Loader2, Lightbulb } from 'lucide-react';
 import { IntelligenceService, MealTemplate } from '@/services/mealPlan/IntelligenceService';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface SmartTemplatesPanelProps {

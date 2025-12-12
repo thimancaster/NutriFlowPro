@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateMealPlanPDF } from '@/utils/pdfExport';
+import { generateMealPlanPDF } from '@/utils/pdf/pdfExport';
 import { Patient } from '@/types';
 import { MealPlan } from '@/types/meal';
 
@@ -17,15 +16,11 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
   const [isPrinting, setIsPrinting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   
-  // Helper function to convert gender type
   const getValidGender = (gender?: string): 'male' | 'female' | undefined => {
-    if (gender === 'male' || gender === 'female') {
-      return gender;
-    }
+    if (gender === 'male' || gender === 'female') return gender;
     return undefined;
   };
 
-  // Helper function to convert meals to PDF format
   const convertMealsForPdf = (meals: any[]) => {
     return meals.map((meal, index) => ({
       name: meal.name || `Refeição ${index + 1}`,
@@ -39,6 +34,23 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
                    meal.foodSuggestions || 
                    []
     }));
+  };
+
+  const getPdfOptions = () => {
+    const patientAge = activePatient.birth_date 
+      ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
+      : undefined;
+    
+    return {
+      patientName: activePatient.name,
+      patientAge,
+      patientGender: getValidGender(activePatient.gender),
+      meals: convertMealsForPdf(mealPlan.meals),
+      totalCalories: mealPlan.total_calories || 0,
+      totalProtein: mealPlan.total_protein || 0,
+      totalCarbs: mealPlan.total_carbs || 0,
+      totalFats: mealPlan.total_fats || 0
+    };
   };
   
   const handlePrint = () => {
@@ -54,27 +66,24 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
     setIsPrinting(true);
 
     try {
-      const patientAge = activePatient.birth_date 
-        ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
-        : undefined;
+      const doc = generateMealPlanPDF(getPdfOptions());
       
-      const doc = generateMealPlanPDF({
-        patientName: activePatient.name,
-        patientAge,
-        patientGender: getValidGender(activePatient.gender),
-        meals: convertMealsForPdf(mealPlan.meals),
-        totalCalories: mealPlan.total_calories || 0,
-        totalProtein: mealPlan.total_protein || 0,
-        totalCarbs: mealPlan.total_carbs || 0,
-        totalFats: mealPlan.total_fats || 0
-      });
-
-      // Open PDF in a new tab for printing
-      window.open(URL.createObjectURL(doc.output('blob')));
+      // Open PDF in new window for printing
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const printWindow = window.open(pdfUrl);
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 250);
+        };
+      }
       
       toast({
-        title: "PDF gerado",
-        description: "O plano alimentar foi aberto em uma nova aba para impressão"
+        title: "Impressão iniciada",
+        description: "O plano alimentar foi aberto para impressão"
       });
     } catch (error: any) {
       console.error('Error generating PDF:', error);
@@ -101,22 +110,7 @@ const PdfActionButtons: React.FC<PdfActionButtonsProps> = ({ activePatient, meal
     setIsDownloading(true);
 
     try {
-      const patientAge = activePatient.birth_date 
-        ? Math.floor((new Date().getTime() - new Date(activePatient.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
-        : undefined;
-      
-      const doc = generateMealPlanPDF({
-        patientName: activePatient.name,
-        patientAge,
-        patientGender: getValidGender(activePatient.gender),
-        meals: convertMealsForPdf(mealPlan.meals),
-        totalCalories: mealPlan.total_calories || 0,
-        totalProtein: mealPlan.total_protein || 0,
-        totalCarbs: mealPlan.total_carbs || 0,
-        totalFats: mealPlan.total_fats || 0
-      });
-
-      // Download the PDF file
+      const doc = generateMealPlanPDF(getPdfOptions());
       doc.save(`Plano_Alimentar_${activePatient.name.replace(/\s+/g, '_')}.pdf`);
       
       toast({
