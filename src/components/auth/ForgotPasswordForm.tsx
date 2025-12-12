@@ -65,7 +65,7 @@ const ForgotPasswordForm = ({ onSuccess }: ForgotPasswordFormProps) => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white focus-visible:ring-2"
+            className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white focus-visible:ring-2 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
             placeholder="seu@email.com"
             required
           />

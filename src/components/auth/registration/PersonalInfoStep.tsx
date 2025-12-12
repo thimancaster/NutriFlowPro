@@ -55,7 +55,7 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         </label>
         <Input
           {...form.register('name')}
-          className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
+          className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
           placeholder="Seu nome completo"
           autoComplete="name"
         />
@@ -73,7 +73,7 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         <Input
           {...form.register('email')}
           type="email"
-          className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
+          className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
           placeholder="seu@email.com"
           autoComplete="email"
         />
@@ -91,7 +91,7 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         <Input
           {...form.register('phone')}
           type="tel"
-          className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
+          className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
           placeholder="(11) 99999-9999"
           autoComplete="tel"
         />
@@ -108,7 +108,7 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         </label>
         <Input
           {...form.register('crn')}
-          className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white"
+          className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
           placeholder="Ex: CRN-1 12345"
         />
         {form.formState.errors.crn && (

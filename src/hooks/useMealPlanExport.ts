@@ -20,9 +20,50 @@ export const useMealPlanExport = () => {
   const { toast } = useToast();
 
   const exportToPDF = useCallback(async (params: ExportParams) => {
+    console.log('[PDF_EXPORT] Starting PDF export with params:', {
+      patientName: params.patientName,
+      refeicoesCount: params.refeicoes?.length,
+      hasRefeicoes: !!params.refeicoes,
+    });
+
+    // Validate required params
+    if (!params.refeicoes || !Array.isArray(params.refeicoes)) {
+      console.error('[PDF_EXPORT] ❌ Invalid refeicoes:', params.refeicoes);
+      toast({
+        title: '❌ Erro ao gerar PDF',
+        description: 'Dados do plano alimentar inválidos ou não encontrados.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (params.refeicoes.length === 0) {
+      console.error('[PDF_EXPORT] ❌ Empty refeicoes array');
+      toast({
+        title: '❌ Erro ao gerar PDF',
+        description: 'O plano alimentar não possui refeições. Adicione refeições antes de exportar.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!params.patientName) {
+      console.error('[PDF_EXPORT] ❌ Missing patient name');
+      toast({
+        title: '❌ Erro ao gerar PDF',
+        description: 'Nome do paciente não informado.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     try {
-      // Calculate totals from items
+      // Calculate totals from items with validation
       const calculateRefTotals = (ref: Refeicao) => {
+        if (!ref.itens || !Array.isArray(ref.itens)) {
+          console.warn('[PDF_EXPORT] Refeição sem itens:', ref.nome);
+          return { kcal: 0, ptn: 0, cho: 0, lip: 0 };
+        }
         return ref.itens.reduce(
           (acc, item) => ({
             kcal: acc.kcal + (item.kcal_calculado || 0),
@@ -48,22 +89,25 @@ export const useMealPlanExport = () => {
       );
 
       const totalCalories = dailyTotals.kcal;
+      console.log('[PDF_EXPORT] Daily totals calculated:', dailyTotals);
 
       // Transform refeicoes to PDF format
       const meals = params.refeicoes.map(ref => {
         const refTotals = calculateRefTotals(ref);
         return {
-          name: ref.nome,
+          name: ref.nome || 'Refeição',
           calories: refTotals.kcal,
           protein: refTotals.ptn,
           carbs: refTotals.cho,
           fat: refTotals.lip,
           percent: totalCalories > 0 ? (refTotals.kcal / totalCalories) * 100 : 0,
-          suggestions: ref.itens.map(item => 
-            `${item.quantidade}x ${item.medida_utilizada} de ${item.alimento_nome} (${Math.round(item.kcal_calculado)}kcal)`
+          suggestions: (ref.itens || []).map(item => 
+            `${item.quantidade}x ${item.medida_utilizada || 'porção'} de ${item.alimento_nome || 'Alimento'} (${Math.round(item.kcal_calculado || 0)}kcal)`
           )
         };
       });
+
+      console.log('[PDF_EXPORT] Meals prepared for PDF:', meals.length);
 
       const exportOptions: MealPlanExportOptions = {
         patientName: params.patientName,
@@ -82,8 +126,17 @@ export const useMealPlanExport = () => {
         notes: params.notes
       };
 
+      console.log('[PDF_EXPORT] Generating PDF with options:', {
+        patientName: exportOptions.patientName,
+        mealsCount: exportOptions.meals.length,
+        totalCalories: exportOptions.totalCalories
+      });
+
       const doc = generateMealPlanPDF(exportOptions);
-      doc.save(`Plano_Alimentar_${params.patientName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      const fileName = `Plano_Alimentar_${params.patientName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+
+      console.log('[PDF_EXPORT] ✅ PDF generated successfully:', fileName);
 
       toast({
         title: '✅ PDF gerado com sucesso!',
@@ -92,10 +145,10 @@ export const useMealPlanExport = () => {
 
       return true;
     } catch (error) {
-      console.error('❌ Erro ao gerar PDF:', error);
+      console.error('[PDF_EXPORT] ❌ Error generating PDF:', error);
       toast({
         title: '❌ Erro ao gerar PDF',
-        description: 'Não foi possível exportar o plano alimentar.',
+        description: error instanceof Error ? error.message : 'Não foi possível exportar o plano alimentar.',
         variant: 'destructive',
       });
       return false;
