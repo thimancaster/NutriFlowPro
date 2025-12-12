@@ -4,7 +4,7 @@ import {lazy} from "react";
 export const LazyDashboard = lazy(() => import("@/pages/Dashboard"));
 export const LazyPatients = lazy(() => import("@/pages/Patients"));
 export const LazyCalculator = lazy(() => import("@/pages/Calculator"));
-export const LazyMealPlanEditor = lazy(() => import("@/pages/MealPlanEditor"));
+export const LazyMealPlanBuilder = lazy(() => import("@/pages/MealPlanBuilder"));
 export const LazyAppointments = lazy(() => import("@/pages/Appointments"));
 export const LazyClinical = lazy(() => import("@/pages/Clinical"));
 export const LazyConsultation = lazy(() => import("@/pages/Consultation"));

@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useUnifiedNutrition } from '@/contexts/UnifiedNutritionContext';
-import PatientPreferencesPanel from './PatientPreferencesPanel';
 import SmartTemplatesPanel from './SmartTemplatesPanel';
 
 interface AutoGenerationPanelProps {
@@ -119,12 +118,6 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Preferências do Paciente */}
-      <PatientPreferencesPanel
-        patientId={activePatientData.id}
-        onPreferencesLoaded={(prefs) => console.log('Preferências carregadas:', prefs)}
-      />
-
       {/* Templates Inteligentes */}
       <SmartTemplatesPanel
         targets={targets}
@@ -133,7 +126,6 @@ const AutoGenerationPanel: React.FC<AutoGenerationPanelProps> = ({
             title: "Template selecionado",
             description: `Gerando plano baseado em: ${template.name}`,
           });
-          // TODO: Integrar com geração usando template
         }}
       />
 
