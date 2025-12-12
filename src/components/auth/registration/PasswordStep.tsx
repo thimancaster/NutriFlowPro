@@ -68,7 +68,7 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
           <Input
             {...form.register('password')}
             type={showPassword ? 'text' : 'password'}
-            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pr-10"
+            className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white pr-10 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
             placeholder="Mínimo 8 caracteres"
             autoComplete="new-password"
           />
@@ -100,7 +100,7 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
           <Input
             {...form.register('confirmPassword')}
             type={showConfirmPassword ? 'text' : 'password'}
-            className="bg-white/20 border-0 text-white placeholder:text-blue-200 focus-visible:ring-white pr-10"
+            className="bg-white/20 border-0 !text-white placeholder:!text-white/60 focus-visible:ring-white pr-10 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white]"
             placeholder="Digite a senha novamente"
             autoComplete="new-password"
           />
