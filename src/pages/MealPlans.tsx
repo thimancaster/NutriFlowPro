@@ -90,11 +90,11 @@ const MealPlans: React.FC = () => {
   };
 
   const handleViewMealPlan = (id: string) => {
-    navigate(`/meal-plan/${id}`);
+    navigate(`/meal-plan-builder/${id}`);
   };
 
   const handleEditMealPlan = (id: string) => {
-    navigate(`/meal-plan-editor/${id}`);
+    navigate(`/meal-plan-builder/${id}`);
   };
 
   const handleCreateMealPlan = () => {

@@ -21,7 +21,6 @@ import Subscription from "@/pages/Subscription";
 import Dashboard from "@/pages/Dashboard";
 import Patients from "@/pages/Patients";
 import Calculator from "@/pages/Calculator";
-import MealPlanEditor from "@/pages/MealPlanEditor";
 import Appointments from "@/pages/Appointments";
 import Clinical from "@/pages/Clinical";
 import Consultation from "@/pages/Consultation";
@@ -41,7 +40,7 @@ const PatientProfile = React.lazy(() => import("@/pages/PatientProfile"));
 const MealPlans = React.lazy(() => import("@/pages/MealPlans"));
 const MealPlanView = React.lazy(() => import("@/pages/MealPlanView"));
 const ClinicalConsultation = React.lazy(() => import("@/pages/ClinicalConsultation"));
-import MealPlanBuilderV2 from "@/pages/MealPlanBuilderV2";
+import MealPlanBuilder from "@/pages/MealPlanBuilder";
 import TestE2E from "@/pages/TestE2E";
 
 const AppRoutes = () => {
@@ -99,8 +98,8 @@ const AppRoutes = () => {
 						</Suspense>
 					}
 				/>
-				<Route path="meal-plan-editor/:id" element={<MealPlanEditor />} />
-				<Route path="meal-plan-builder" element={<MealPlanBuilderV2 />} />
+				<Route path="meal-plan-builder" element={<MealPlanBuilder />} />
+				<Route path="meal-plan-builder/:planId" element={<MealPlanBuilder />} />
 				<Route path="test-e2e" element={<TestE2E />} />
 				<Route
 					path="meal-plan/:id"
