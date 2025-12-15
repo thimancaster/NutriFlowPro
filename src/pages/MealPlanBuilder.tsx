@@ -29,7 +29,8 @@ import {
   AlertCircle,
   Sparkles,
   RefreshCw,
-  CheckCircle2
+  CheckCircle2,
+  Bookmark
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -44,6 +45,9 @@ import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { FoodSearchPanel } from '@/components/meal-plan/FoodSearchPanel';
 import { MealContentPanel } from '@/components/meal-plan/MealContentPanel';
 import { FloatingMealSummary } from '@/components/meal-plan/FloatingMealSummary';
+import { SaveTemplateDialog } from '@/components/meal-plan/SaveTemplateDialog';
+import { TemplatesPicker } from '@/components/meal-plan/TemplatesPicker';
+import { MealTemplateItem } from '@/hooks/meal-plan/useMealPlanTemplates';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
 import { cn } from '@/lib/utils';
 
@@ -113,6 +117,7 @@ const MealPlanBuilder: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
 
   // Targets from consultation data
   const hasCalculations = consultationData?.results?.vet && consultationData?.results?.macros;
@@ -678,6 +683,16 @@ const MealPlanBuilder: React.FC = () => {
             <Button 
               variant="outline" 
               size="sm" 
+              onClick={() => setShowSaveTemplateDialog(true)}
+              disabled={meals[activeMealIndex]?.items.length === 0}
+              title="Salvar refeição como template"
+            >
+              <Bookmark className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
               onClick={handlePrint}
               disabled={totals.kcal === 0}
             >
@@ -971,6 +986,25 @@ const MealPlanBuilder: React.FC = () => {
       <FloatingMealSummary
         meals={meals}
         targets={targets}
+      />
+
+      {/* Save Template Dialog */}
+      <SaveTemplateDialog
+        open={showSaveTemplateDialog}
+        onOpenChange={setShowSaveTemplateDialog}
+        mealType={meals[activeMealIndex]?.tipo || 'almoco'}
+        mealName={meals[activeMealIndex]?.nome_refeicao || 'Refeição'}
+        items={meals[activeMealIndex]?.items.map(i => ({
+          alimento_id: i.alimento_id,
+          alimento_nome: i.nome,
+          quantidade: i.quantidade,
+          medida_utilizada: i.medida_utilizada,
+          peso_total_g: i.peso_total_g,
+          kcal: i.kcal_calculado,
+          ptn_g: i.ptn_g_calculado,
+          cho_g: i.cho_g_calculado,
+          lip_g: i.lip_g_calculado,
+        })) || []}
       />
     </div>
   );
