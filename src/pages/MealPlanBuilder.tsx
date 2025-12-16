@@ -47,6 +47,7 @@ import { MealContentPanel } from '@/components/meal-plan/MealContentPanel';
 import { FloatingMealSummary } from '@/components/meal-plan/FloatingMealSummary';
 import { SaveTemplateDialog } from '@/components/meal-plan/SaveTemplateDialog';
 import { TemplatesPicker } from '@/components/meal-plan/TemplatesPicker';
+import { NutritionalValidationIndicator } from '@/components/meal-plan/NutritionalValidationIndicator';
 import { MealTemplateItem } from '@/hooks/meal-plan/useMealPlanTemplates';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
 import { cn } from '@/lib/utils';
@@ -750,6 +751,14 @@ const MealPlanBuilder: React.FC = () => {
                 progressPercent > 110 && "bg-destructive/20"
               )}
             />
+            {/* Compact Validation Indicator */}
+            <div className="flex items-center justify-end">
+              <NutritionalValidationIndicator
+                targets={{ kcal: targets.kcal, ptn_g: targets.ptn_g, cho_g: targets.cho_g, lip_g: targets.lip_g }}
+                actuals={{ kcal: totals.kcal, ptn_g: totals.ptn, cho_g: totals.cho, lip_g: totals.lip }}
+                compact
+              />
+            </div>
           </motion.div>
         )}
       </div>
@@ -967,7 +976,13 @@ const MealPlanBuilder: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Summary */}
+                  {/* Nutritional Validation Panel */}
+                  <NutritionalValidationIndicator
+                    targets={{ kcal: targets?.kcal || 0, ptn_g: targets?.ptn_g || 0, cho_g: targets?.cho_g || 0, lip_g: targets?.lip_g || 0 }}
+                    actuals={{ kcal: totals.kcal, ptn_g: totals.ptn, cho_g: totals.cho, lip_g: totals.lip }}
+                  />
+
+                  {/* Summary Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card className="p-4 text-center">
                       <p className="text-sm text-muted-foreground">Total Calorias</p>

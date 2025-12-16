@@ -96,45 +96,60 @@ Após a unificação do sistema de plano alimentar, foram identificados **pontos
 
 ## 📋 ROADMAP DE IMPLEMENTAÇÃO
 
-### FASE 1: Limpeza (1-2 dias)
+### FASE 1: Limpeza ✅ CONCLUÍDA (16/12/2024)
 ```
-□ Deletar contextos obsoletos:
-  - src/contexts/NutritionWorkflowContext.tsx
+✅ Deletar contextos obsoletos:
+  - src/contexts/NutritionWorkflowContext.tsx - DELETADO
   
-□ Deletar componentes não utilizados:
-  - src/components/meal-plan/UnifiedMealPlanInterface.tsx
-  - src/components/meal-plan/UnifiedMealPlanEditor.tsx
-  - src/components/meal-plan/IntelligentValidationPanel.tsx
+✅ Deletar componentes não utilizados:
+  - src/components/meal-plan/UnifiedMealPlanInterface.tsx - DELETADO
+  - src/components/meal-plan/UnifiedMealPlanEditor.tsx - DELETADO
+  - src/components/workflow/EnergyCalculationStep.tsx - DELETADO
+  - src/components/workflow/MacroDefinitionStep.tsx - DELETADO
+  - src/components/workflow/MealCompositionStep.tsx - DELETADO
   
-□ Deletar serviços obsoletos:
-  - src/services/mealPlan/IntelligenceService.ts
+✅ Deletar serviços obsoletos:
+  - src/services/mealPlan/IntelligenceService.ts - DELETADO
   
-□ Deletar hooks redundantes:
-  - src/hooks/useConsolidatedMealPlan.ts (após migrar dependências)
+✅ Deletar hooks redundantes:
+  - src/hooks/useConsolidatedMealPlan.ts - DELETADO
+  
+✅ Refatorar dependentes:
+  - SmartTemplatesPanel - Migrado para TemplateService
+  - useIntelligentValidation - Validação local implementada
 ```
 
-### FASE 2: Consolidação (2-3 dias)
+### FASE 2: Validação Visual ✅ CONCLUÍDA (16/12/2024)
+```
+✅ Implementar validação visual em tempo real:
+  - NutritionalValidationIndicator criado
+  - Integrado no header do MealPlanBuilder (versão compacta)
+  - Integrado na aba Preview (versão completa)
+  - Progress bars com cores dinâmicas (verde/amarelo/vermelho)
+  - Warnings e sugestões automáticas
+  
+✅ Hooks analisados (MANTIDOS - ainda em uso ativo):
+  - useConsolidatedNutrition → ConsolidatedCalculationPanel, E2EAttendanceFlow
+  - useMealPlanGeneration → MealPlanStep no ClinicalWorkflow
+```
+
+### FASE 3: Consolidação (Próxima)
 ```
 □ Unificar tipos de dados:
   - Criar src/types/meal-plan/index.ts
   - Migrar componentes para usar tipos unificados
   
-□ Refatorar componentes workflow:
-  - Atualizar EnergyCalculationStep para usar ConsultationDataContext
-  - Atualizar MacroDefinitionStep para usar ConsultationDataContext
-  - Atualizar MealCompositionStep para usar ConsultationDataContext
-  
 □ Simplificar rotas:
   - Redirecionar /meal-plan/:id para /meal-plan-builder/:planId
   - Consolidar fluxo clínico
+  
+□ Avaliar remoção de hooks:
+  - useMealDistribution.ts - Verificar uso
+  - useMealPlanQuery.ts - Verificar se duplica MealPlanOrchestrator
 ```
 
-### FASE 3: Otimização (3-5 dias)
+### FASE 4: Otimização
 ```
-□ Implementar funcionalidades pendentes:
-  - Integrar TemplatesPicker no MealPlanBuilder
-  - Adicionar botão "Salvar como Template" no editor
-  
 □ Melhorias de performance:
   - Virtualização de listas
   - Memoização de componentes pesados
@@ -144,7 +159,7 @@ Após a unificação do sistema de plano alimentar, foram identificados **pontos
   - Drag-and-drop entre refeições
 ```
 
-### FASE 4: Qualidade (Contínuo)
+### FASE 5: Qualidade (Contínuo)
 ```
 □ Adicionar testes:
   - Unitários para serviços
