@@ -1,3 +1,8 @@
+/**
+ * UNIFIED CONSULTATION FLOW
+ * Fluxo unificado de consulta nutricional
+ * Refatorado para remover dependência do hook obsoleto useConsolidatedMealPlan
+ */
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,10 +15,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import ConsolidatedPatientSelector from './ConsolidatedPatientSelector';
 import ConsolidatedCalculationPanel from './ConsolidatedCalculationPanel';
-import { useConsolidatedMealPlan } from '@/hooks/useConsolidatedMealPlan';
 import { Patient } from '@/types';
 import { patientEvolutionService, CreateEvolutionMetrics } from '@/services/patientEvolutionService';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useConsultationData } from '@/contexts/ConsultationDataContext';
 
 type WorkflowStep = 'patient' | 'calculation' | 'meal-plan' | 'evolution';
 
@@ -29,6 +34,7 @@ const UnifiedConsultationFlow: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { consultationData, updateConsultationData } = useConsultationData();
   
   // State management
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('patient');
@@ -40,12 +46,6 @@ const UnifiedConsultationFlow: React.FC = () => {
     mealPlan: null as any,
     consultation: null as any
   });
-
-  const {
-    generateMealPlan,
-    isGenerating,
-    currentMealPlan
-  } = useConsolidatedMealPlan();
 
   // Calculate progress
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -60,8 +60,8 @@ const UnifiedConsultationFlow: React.FC = () => {
 
   useEffect(() => {
     if (calculationResults && currentStep === 'calculation') {
-      // Auto-generate meal plan when calculation is complete
-      handleGenerateMealPlan();
+      // Avançar para o editor de plano alimentar
+      setCurrentStep('meal-plan');
     }
   }, [calculationResults, currentStep]);
 
@@ -74,7 +74,22 @@ const UnifiedConsultationFlow: React.FC = () => {
     setCalculationResults(results);
     setWorkflowData(prev => ({ ...prev, calculation: results }));
 
-    // FASE 3 - Salvar métricas de evolução automaticamente
+    // Atualizar contexto de consulta
+    updateConsultationData({
+      results: {
+        bmr: results.bmr,
+        get: results.get,
+        vet: results.vet || results.get,
+        adjustment: results.adjustment || 0,
+        macros: {
+          protein: results.macros?.protein?.grams || results.macros?.protein || 0,
+          carbs: results.macros?.carbs?.grams || results.macros?.carbs || 0,
+          fat: results.macros?.fat?.grams || results.macros?.fat || 0
+        }
+      }
+    });
+
+    // Salvar métricas de evolução automaticamente
     if (selectedPatient && user?.id) {
       try {
         const metricsData: CreateEvolutionMetrics = {
@@ -97,12 +112,11 @@ const UnifiedConsultationFlow: React.FC = () => {
         console.log('✅ Métricas de evolução salvas com sucesso');
       } catch (error) {
         console.error('❌ Erro ao salvar métricas de evolução:', error);
-        // Não bloqueia o fluxo se houver erro nas métricas
       }
     }
   };
 
-  const handleGenerateMealPlan = async () => {
+  const handleGoToMealPlanBuilder = () => {
     if (!selectedPatient || !calculationResults) {
       toast({
         title: 'Dados Insuficientes',
@@ -112,22 +126,8 @@ const UnifiedConsultationFlow: React.FC = () => {
       return;
     }
 
-    try {
-      const mealPlan = await generateMealPlan(
-        calculationResults.vet || calculationResults.get,
-        calculationResults.macros.protein.grams,
-        calculationResults.macros.carbs.grams,
-        calculationResults.macros.fat.grams,
-        selectedPatient.id
-      );
-
-      if (mealPlan) {
-        setWorkflowData(prev => ({ ...prev, mealPlan }));
-        setCurrentStep('meal-plan');
-      }
-    } catch (error: any) {
-      console.error('Error generating meal plan:', error);
-    }
+    // Navegar para o MealPlanBuilder unificado
+    navigate('/meal-plan-builder');
   };
 
   const handleStepChange = (step: WorkflowStep) => {
@@ -173,7 +173,6 @@ const UnifiedConsultationFlow: React.FC = () => {
   };
 
   const handleCompleteWorkflow = async () => {
-    // TODO: Save consultation record
     toast({
       title: 'Consulta Finalizada',
       description: 'Atendimento registrado com sucesso!',
@@ -272,49 +271,44 @@ const UnifiedConsultationFlow: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {isGenerating ? (
-                      <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p className="text-muted-foreground">Gerando plano alimentar inteligente...</p>
-                      </div>
-                    ) : currentMealPlan ? (
+                    {calculationResults ? (
                       <div className="space-y-4">
                         <div className="bg-accent/50 rounded-lg p-4">
-                          <h4 className="font-semibold mb-2">Plano Alimentar Gerado</h4>
+                          <h4 className="font-semibold mb-2">Metas Nutricionais Calculadas</h4>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="text-center">
-                              <p className="text-lg font-bold">{Math.round(currentMealPlan.total_calories)}</p>
-                              <p className="text-sm text-muted-foreground">kcal totais</p>
+                              <p className="text-lg font-bold">{Math.round(calculationResults.vet || calculationResults.get)}</p>
+                              <p className="text-sm text-muted-foreground">kcal/dia</p>
                             </div>
                             <div className="text-center">
-                              <p className="text-lg font-bold">{Math.round(currentMealPlan.total_protein)}g</p>
+                              <p className="text-lg font-bold">{Math.round(calculationResults.macros?.protein?.grams || 0)}g</p>
                               <p className="text-sm text-muted-foreground">Proteína</p>
                             </div>
                             <div className="text-center">
-                              <p className="text-lg font-bold">{Math.round(currentMealPlan.total_carbs)}g</p>
+                              <p className="text-lg font-bold">{Math.round(calculationResults.macros?.carbs?.grams || 0)}g</p>
                               <p className="text-sm text-muted-foreground">Carboidratos</p>
                             </div>
                             <div className="text-center">
-                              <p className="text-lg font-bold">{Math.round(currentMealPlan.total_fats)}g</p>
+                              <p className="text-lg font-bold">{Math.round(calculationResults.macros?.fat?.grams || 0)}g</p>
                               <p className="text-sm text-muted-foreground">Gorduras</p>
                             </div>
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-muted-foreground mb-4">Plano alimentar com {currentMealPlan.meals?.length || 0} refeições</p>
-                          <Button onClick={() => setCurrentStep('evolution')}>
-                            Continuar para Evolução
+                          <Button onClick={handleGoToMealPlanBuilder} size="lg">
+                            <Utensils className="h-4 w-4 mr-2" />
+                            Abrir Editor de Plano Alimentar
                           </Button>
                         </div>
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-muted-foreground mb-4">Complete o cálculo nutricional para gerar o plano</p>
+                        <p className="text-muted-foreground mb-4">Complete o cálculo nutricional para criar o plano</p>
                         <Button 
-                          onClick={handleGenerateMealPlan}
-                          disabled={!calculationResults}
+                          onClick={() => setCurrentStep('calculation')}
+                          variant="outline"
                         >
-                          Gerar Plano Alimentar
+                          Ir para Cálculo
                         </Button>
                       </div>
                     )}

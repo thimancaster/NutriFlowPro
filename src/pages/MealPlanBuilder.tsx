@@ -840,61 +840,114 @@ const MealPlanBuilder: React.FC = () => {
 
         {/* Auto Generation Mode */}
         <TabsContent value="auto" className="flex-1 mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wand2 className="h-5 w-5 text-primary" />
-                Geração Automática de Plano Alimentar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <Alert>
-                <Sparkles className="h-4 w-4" />
-                <AlertDescription>
-                  O sistema irá preencher automaticamente as refeições vazias com alimentos 
-                  apropriados, respeitando as metas calóricas e de macronutrientes definidas.
-                </AlertDescription>
-              </Alert>
+          <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+            {/* Left Panel: Templates */}
+            <div className="h-[calc(100vh-320px)] overflow-auto">
+              <TemplatesPicker
+                targets={targets ? {
+                  kcal: targets.kcal,
+                  ptn_g: targets.ptn_g,
+                  cho_g: targets.cho_g,
+                  lip_g: targets.lip_g
+                } : undefined}
+                onSelectTemplate={(items) => {
+                  // Aplica items do template à refeição ativa
+                  setMeals((prev) => {
+                    const updated = [...prev];
+                    const meal = { ...updated[activeMealIndex] };
+                    
+                    const newItems: MealItem[] = items.map(item => ({
+                      id: `item-${Date.now()}-${Math.random()}`,
+                      alimento_id: item.alimento_id,
+                      nome: item.alimento_nome,
+                      quantidade: item.quantidade,
+                      medida_utilizada: item.medida_utilizada,
+                      peso_total_g: item.peso_total_g,
+                      kcal_calculado: item.kcal,
+                      ptn_g_calculado: item.ptn_g,
+                      cho_g_calculado: item.cho_g,
+                      lip_g_calculado: item.lip_g,
+                    }));
+                    
+                    // Adiciona items e recalcula totais
+                    meal.items = [...meal.items, ...newItems];
+                    meal.kcal_total = meal.items.reduce((sum, i) => sum + i.kcal_calculado, 0);
+                    meal.ptn_g = meal.items.reduce((sum, i) => sum + i.ptn_g_calculado, 0);
+                    meal.cho_g = meal.items.reduce((sum, i) => sum + i.cho_g_calculado, 0);
+                    meal.lip_g = meal.items.reduce((sum, i) => sum + i.lip_g_calculado, 0);
+                    
+                    updated[activeMealIndex] = meal;
+                    return updated;
+                  });
+                  
+                  setHasUnsavedChanges(true);
+                  setActiveTab('edit');
+                  toast({
+                    title: 'Template aplicado',
+                    description: `${items.length} alimentos adicionados à ${meals[activeMealIndex]?.nome_refeicao}`,
+                  });
+                }}
+                mealType={meals[activeMealIndex]?.tipo}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">Meta Calórica</p>
-                  <p className="text-2xl font-bold">{targets?.kcal} kcal</p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">Proteínas</p>
-                  <p className="text-2xl font-bold">{targets?.ptn_g}g</p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">Carboidratos</p>
-                  <p className="text-2xl font-bold">{targets?.cho_g}g</p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">Gorduras</p>
-                  <p className="text-2xl font-bold">{targets?.lip_g}g</p>
-                </Card>
-              </div>
+            {/* Right Panel: Auto Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wand2 className="h-5 w-5 text-primary" />
+                  Geração Automática de Plano Alimentar
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert>
+                  <Sparkles className="h-4 w-4" />
+                  <AlertDescription>
+                    O sistema irá preencher automaticamente as refeições vazias com alimentos 
+                    apropriados, respeitando as metas calóricas e de macronutrientes definidas.
+                  </AlertDescription>
+                </Alert>
 
-              <Button 
-                onClick={handleAutoGenerate} 
-                disabled={isGenerating}
-                className="w-full"
-                size="lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                    Gerando Plano...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="h-5 w-5 mr-2" />
-                    Gerar Plano Automático
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">Meta Calórica</p>
+                    <p className="text-2xl font-bold">{targets?.kcal} kcal</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">Proteínas</p>
+                    <p className="text-2xl font-bold">{targets?.ptn_g}g</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">Carboidratos</p>
+                    <p className="text-2xl font-bold">{targets?.cho_g}g</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">Gorduras</p>
+                    <p className="text-2xl font-bold">{targets?.lip_g}g</p>
+                  </Card>
+                </div>
+
+                <Button 
+                  onClick={handleAutoGenerate} 
+                  disabled={isGenerating}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                      Gerando Plano...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-5 w-5 mr-2" />
+                      Gerar Plano Automático
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Preview Mode */}
