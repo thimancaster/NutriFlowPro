@@ -12,6 +12,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,10 +44,14 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useMealPlanCalculations, Refeicao, ItemRefeicao, AlimentoV2 } from '@/hooks/useMealPlanCalculations';
 import { useMealPlanExport } from '@/hooks/useMealPlanExport';
+import { useMealPlanHistory } from '@/hooks/useMealPlanHistory';
+import { useMealDragDrop } from '@/hooks/useMealDragDrop';
 import { AutoGenerationService, PatientProfile } from '@/services/mealPlan/AutoGenerationService';
 import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { FoodSearchPanel } from '@/components/meal-plan/FoodSearchPanel';
 import { MealContentPanel } from '@/components/meal-plan/MealContentPanel';
+import { DroppableMealContainer } from '@/components/meal-plan/DroppableMealContainer';
+import { DragOverlayItem } from '@/components/meal-plan/DraggableMealItem';
 import { FloatingMealSummary } from '@/components/meal-plan/FloatingMealSummary';
 import { SaveTemplateDialog } from '@/components/meal-plan/SaveTemplateDialog';
 import { TemplatesPicker } from '@/components/meal-plan/TemplatesPicker';
@@ -53,7 +59,6 @@ import { NutritionalValidationIndicator } from '@/components/meal-plan/Nutrition
 import { MealTemplateItem } from '@/hooks/meal-plan/useMealPlanTemplates';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
 import { cn } from '@/lib/utils';
-import { useMealPlanHistory } from '@/hooks/useMealPlanHistory';
 import type { Meal, MealItem, MealType } from '@/types/meal-plan';
 import { 
   MEAL_ORDER, 
@@ -81,8 +86,47 @@ const MealPlanBuilder: React.FC = () => {
   const { exportToPDF, printMealPlan } = useMealPlanExport();
   const { calculateItemRefeicao, calculateDailyTotals } = useMealPlanCalculations();
 
-  const [meals, setMeals] = useState<Meal[]>([]);
-  const [activeMealIndex, setActiveMealIndex] = useState(0);
+  // Use history hook for undo/redo support
+  const {
+    meals,
+    activeMealIndex,
+    setMeals,
+    setActiveMealIndex,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    resetHistory,
+  } = useMealPlanHistory([], 0);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Drag and drop hook
+  const {
+    activeId,
+    activeItem,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleDragCancel,
+  } = useMealDragDrop({
+    meals,
+    onMealsChange: (newMeals) => {
+      setMeals(newMeals);
+      setHasUnsavedChanges(true);
+    },
+  });
+
   const [activeTab, setActiveTab] = useState<'edit' | 'auto' | 'preview'>('edit');
   const [isSeeding, setIsSeeding] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -104,9 +148,9 @@ const MealPlanBuilder: React.FC = () => {
   useEffect(() => {
     if (targets && meals.length === 0) {
       const initialMeals = createInitialMeals(targets);
-      setMeals(initialMeals);
+      resetHistory(initialMeals, 0);
     }
-  }, [targets, meals.length]);
+  }, [targets, meals.length, resetHistory]);
 
   // Check and seed database if needed
   useEffect(() => {
@@ -136,6 +180,23 @@ const MealPlanBuilder: React.FC = () => {
       loadExistingPlan(planId);
     }
   }, [planId]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        if (canRedo) redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canUndo, canRedo, undo, redo]);
 
   const loadExistingPlan = async (id: string) => {
     try {
@@ -641,13 +702,14 @@ const MealPlanBuilder: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            {/* Undo/Redo buttons - future integration with useMealPlanHistory */}
+            {/* Undo/Redo buttons - integrated with useMealPlanHistory */}
             <div className="flex items-center border rounded-md">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                disabled
-                title="Desfazer (em breve)"
+                disabled={!canUndo}
+                onClick={undo}
+                title="Desfazer (Ctrl+Z)"
                 className="rounded-r-none border-r"
               >
                 <Undo2 className="h-4 w-4" />
@@ -655,8 +717,9 @@ const MealPlanBuilder: React.FC = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                disabled
-                title="Refazer (em breve)"
+                disabled={!canRedo}
+                onClick={redo}
+                title="Refazer (Ctrl+Y)"
                 className="rounded-l-none"
               >
                 <Redo2 className="h-4 w-4" />
@@ -761,71 +824,87 @@ const MealPlanBuilder: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Edit Mode */}
+        {/* Edit Mode with Drag and Drop */}
         <TabsContent value="edit" className="flex-1 mt-0">
-          {/* Meal Tabs */}
-          <Tabs 
-            value={meals[activeMealIndex]?.id || ''} 
-            onValueChange={(value) => {
-              const index = meals.findIndex(m => m.id === value);
-              if (index !== -1) setActiveMealIndex(index);
-            }}
-            className="flex-1 flex flex-col"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
           >
-            <TabsList className="w-full justify-start overflow-x-auto mb-4">
-              {meals.map((meal) => {
-                const hasItems = meal.items.length > 0;
-                return (
-                  <TabsTrigger
-                    key={meal.id}
-                    value={meal.id}
-                    className="relative flex items-center gap-2"
-                  >
-                    <span>{meal.nome_refeicao}</span>
-                    {hasItems && (
-                      <Badge variant="secondary" className="h-5 min-w-5 flex items-center justify-center">
-                        {meal.items.length}
-                      </Badge>
-                    )}
-                    <div
-                      className={cn(
-                        'absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full transition-colors',
-                        hasItems ? 'bg-primary' : 'bg-transparent'
+            {/* Meal Tabs */}
+            <Tabs 
+              value={meals[activeMealIndex]?.id || ''} 
+              onValueChange={(value) => {
+                const index = meals.findIndex(m => m.id === value);
+                if (index !== -1) setActiveMealIndex(index);
+              }}
+              className="flex-1 flex flex-col"
+            >
+              <TabsList className="w-full justify-start overflow-x-auto mb-4">
+                {meals.map((meal) => {
+                  const hasItems = meal.items.length > 0;
+                  return (
+                    <TabsTrigger
+                      key={meal.id}
+                      value={meal.id}
+                      className="relative flex items-center gap-2"
+                    >
+                      <span>{meal.nome_refeicao}</span>
+                      {hasItems && (
+                        <Badge variant="secondary" className="h-5 min-w-5 flex items-center justify-center">
+                          {meal.items.length}
+                        </Badge>
                       )}
-                    />
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+                      <div
+                        className={cn(
+                          'absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full transition-colors',
+                          hasItems ? 'bg-primary' : 'bg-transparent'
+                        )}
+                      />
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
 
-            {/* Tab Content - Two Panel Layout */}
-            {meals.map((meal, index) => (
-              <TabsContent 
-                key={meal.id} 
-                value={meal.id}
-                className="flex-1 mt-0 data-[state=active]:flex data-[state=inactive]:hidden"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] xl:grid-cols-[480px_1fr] gap-6 h-[calc(100vh-320px)]">
-                  {/* Left Panel: Food Search */}
-                  <div className="h-full">
-                    <FoodSearchPanel
-                      onFoodSelect={handleFoodSelect}
-                      activeMealType={meal.tipo}
-                    />
-                  </div>
+              {/* Tab Content - Two Panel Layout */}
+              {meals.map((meal, index) => (
+                <TabsContent 
+                  key={meal.id} 
+                  value={meal.id}
+                  className="flex-1 mt-0 data-[state=active]:flex data-[state=inactive]:hidden"
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] xl:grid-cols-[480px_1fr] gap-6 h-[calc(100vh-320px)]">
+                    {/* Left Panel: Food Search */}
+                    <div className="h-full">
+                      <FoodSearchPanel
+                        onFoodSelect={handleFoodSelect}
+                        activeMealType={meal.tipo}
+                      />
+                    </div>
 
-                  {/* Right Panel: Meal Content */}
-                  <div className="h-full">
-                    <MealContentPanel
-                      activeMeal={activeMeal}
-                      onRemoveItem={handleRemoveItem}
-                      onEditItem={handleEditItem}
-                    />
+                    {/* Right Panel: Meal Content with Drag-and-Drop */}
+                    <div className="h-full">
+                      <DroppableMealContainer
+                        meal={meal}
+                        isActive={index === activeMealIndex}
+                        onItemQuantityChange={(itemIndex, newQuantity) => handleEditItem(itemIndex, newQuantity)}
+                        onItemRemove={(itemIndex) => handleRemoveItem(itemIndex)}
+                        activeItemId={activeId as string | null}
+                      />
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+                </TabsContent>
+              ))}
+            </Tabs>
+
+            {/* Drag Overlay */}
+            <DragOverlay>
+              {activeItem && <DragOverlayItem item={activeItem} />}
+            </DragOverlay>
+          </DndContext>
         </TabsContent>
 
         {/* Auto Generation Mode */}
