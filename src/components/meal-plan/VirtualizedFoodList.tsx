@@ -7,6 +7,8 @@ import React, { CSSProperties, ReactElement } from 'react';
 import { List } from 'react-window';
 import { QuickAddFoodCard } from './QuickAddFoodCard';
 import type { AlimentoV2 } from '@/services/enhancedFoodSearchService';
+import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface VirtualizedFoodListProps {
   foods: AlimentoV2[];
@@ -15,9 +17,10 @@ interface VirtualizedFoodListProps {
   onToggleFavorite: (food: AlimentoV2) => void;
   height?: number;
   itemHeight?: number;
+  totalCount?: number;
+  onClearSearch?: () => void;
 }
 
-// Row props type for react-window v2
 interface RowProps {
   foods: AlimentoV2[];
   onQuickAdd: (food: AlimentoV2) => void;
@@ -67,13 +70,34 @@ export const VirtualizedFoodList: React.FC<VirtualizedFoodListProps> = ({
   onDetailedAdd,
   onToggleFavorite,
   height = 400,
-  itemHeight = 100,
+  itemHeight = 72,
+  onClearSearch,
 }) => {
+  // Empty state
   if (foods.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p className="text-sm">Nenhum alimento encontrado</p>
-        <p className="text-xs mt-1">Tente outro termo de busca</p>
+      <div className="text-center py-12 space-y-3">
+        <div className="w-16 h-16 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
+          <Search className="h-8 w-8 text-muted-foreground/50" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">
+            Nenhum alimento encontrado
+          </p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Tente buscar por outro termo ou categoria
+          </p>
+        </div>
+        {onClearSearch && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClearSearch}
+            className="mt-2"
+          >
+            Limpar busca
+          </Button>
+        )}
       </div>
     );
   }
@@ -96,6 +120,7 @@ export const VirtualizedFoodList: React.FC<VirtualizedFoodListProps> = ({
     );
   }
 
+  // Virtualized list using react-window v2 API
   return (
     <List
       rowComponent={FoodRow}

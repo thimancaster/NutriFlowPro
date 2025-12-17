@@ -45,3 +45,7 @@ verify_jwt = true
 
 [functions.suggest-meal-templates]
 verify_jwt = true
+
+# Edge function para reclassificação de alimentos (requer autenticação)
+[functions.reclassify-foods]
+verify_jwt = true
