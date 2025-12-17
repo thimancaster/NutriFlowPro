@@ -1135,17 +1135,17 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 							</Badge>
 						)}
 					</Label>
-					<Input
+				<Input
 						id="manualActivityFactor"
 						type="number"
-						step="0.01"
+						step="0.001"
 						min="1.0"
 						max="2.5"
-						placeholder="Ex: 1.65"
+						placeholder="Ex: 1.375"
 						value={inputs.manualActivityFactor || ""}
 						onChange={(e) =>
 							updateInputs({
-								manualActivityFactor: e.target.value ? Number(e.target.value) : undefined
+								manualActivityFactor: e.target.value ? parseFloat(e.target.value) : undefined
 							})
 						}
 					/>
