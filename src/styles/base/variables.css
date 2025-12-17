@@ -49,15 +49,15 @@
     --nutri-blue-light: 217 80% 70%; /* #60a5fa */
     --nutri-blue-dark: 217 91% 50%; /* #2563eb */
 
-    /* Sidebar - Tema Claro */
-    --sidebar-background: 142 70% 45%; /* Verde NutriFlow */
-    --sidebar-foreground: 0 0% 100%; /* Branco */
-    --sidebar-primary: 210 40% 96.1%; /* Azul claro */
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%; /* Grafite */
-    --sidebar-accent: 142 50% 40%; /* Verde accent */
-    --sidebar-accent-foreground: 0 0% 100%; /* Branco */
-    --sidebar-border: 142 60% 40%; /* Verde borda */
-    --sidebar-ring: 217.2 91.2% 59.8%; /* Azul anel */
+    /* Sidebar - Tema Claro (neutra para ícones coloridos) */
+    --sidebar-background: 210 40% 98%; /* Igual ao background */
+    --sidebar-foreground: 222.2 84% 4.9%; /* Grafite escuro */
+    --sidebar-primary: 142 70% 45%; /* Verde NutriFlow */
+    --sidebar-primary-foreground: 210 40% 98%; /* Branco */
+    --sidebar-accent: 210 40% 96.1%; /* Azul claro hover */
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%; /* Grafite */
+    --sidebar-border: 214.3 31.8% 91.4%; /* Igual ao border */
+    --sidebar-ring: 142 70% 45%; /* Verde NutriFlow para focus */
   }
 }
 
