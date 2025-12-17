@@ -97,7 +97,7 @@ export const VirtualizedFoodList: React.FC<VirtualizedFoodListProps> = ({
   }
 
   return (
-    <List<RowProps>
+    <List
       rowComponent={FoodRow}
       rowCount={foods.length}
       rowHeight={itemHeight}
