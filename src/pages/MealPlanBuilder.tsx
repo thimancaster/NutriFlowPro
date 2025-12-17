@@ -20,6 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   ArrowLeft, 
   Wand2, 
@@ -703,28 +709,48 @@ const MealPlanBuilder: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             {/* Undo/Redo buttons - integrated with useMealPlanHistory */}
-            <div className="flex items-center border rounded-md">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                disabled={!canUndo}
-                onClick={undo}
-                title="Desfazer (Ctrl+Z)"
-                className="rounded-r-none border-r"
-              >
-                <Undo2 className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                disabled={!canRedo}
-                onClick={redo}
-                title="Refazer (Ctrl+Y)"
-                className="rounded-l-none"
-              >
-                <Redo2 className="h-4 w-4" />
-              </Button>
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <div className="flex items-center border rounded-md">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled={!canUndo}
+                      onClick={undo}
+                      className="rounded-r-none border-r"
+                    >
+                      <Undo2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="flex items-center gap-2">
+                    <span>Desfazer</span>
+                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                      <span className="text-xs">⌘</span>Z
+                    </kbd>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled={!canRedo}
+                      onClick={redo}
+                      className="rounded-l-none"
+                    >
+                      <Redo2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="flex items-center gap-2">
+                    <span>Refazer</span>
+                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                      <span className="text-xs">⌘</span>Y
+                    </kbd>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
             <Button
               variant="outline" 
               size="sm" 

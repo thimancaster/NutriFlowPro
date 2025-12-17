@@ -1,10 +1,15 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, Plus, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { AlimentoV2 } from '@/services/enhancedFoodSearchService';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface QuickAddFoodCardProps {
   food: AlimentoV2;
@@ -24,104 +29,147 @@ export const QuickAddFoodCard: React.FC<QuickAddFoodCardProps> = ({
   compact = false,
 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -5 }}
-      transition={{ duration: 0.15 }}
-    >
-      <div
-        className={cn(
-          'group relative overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 bg-card hover:shadow-sm transition-all cursor-pointer',
-          compact ? 'p-3' : 'p-4',
-          isPopular && 'border-primary/30 bg-primary/5'
-        )}
-        onClick={() => onQuickAdd(food)}
+    <TooltipProvider delayDuration={300}>
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.12 }}
+        layout
       >
-        {/* Popular Badge */}
-        {isPopular && (
-          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-            Popular
-          </div>
-        )}
+        <div
+          className={cn(
+            'group relative flex items-center gap-3 rounded-lg border border-border/60',
+            'bg-card hover:bg-accent/50 hover:border-primary/40 transition-all duration-150',
+            'cursor-pointer select-none',
+            compact ? 'p-2' : 'p-3',
+            isPopular && 'ring-1 ring-primary/20 bg-primary/5'
+          )}
+          onClick={() => onQuickAdd(food)}
+        >
+          {/* Popular Badge */}
+          {isPopular && (
+            <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full font-medium shadow-sm">
+              Popular
+            </div>
+          )}
 
-        <div className="flex items-start justify-between gap-3">
+          {/* Food Info - Flex grow */}
           <div className="flex-1 min-w-0">
             {/* Food Name */}
-            <h4 className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+            <h4 className={cn(
+              'font-medium text-foreground truncate group-hover:text-primary transition-colors',
+              compact ? 'text-xs' : 'text-sm'
+            )}>
               {food.nome}
             </h4>
 
-            {/* Portion & Nutritional Info in one line */}
-            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
-              <span className="font-semibold text-foreground">{Math.round(food.kcal_por_referencia)} kcal</span>
-              <span>•</span>
-              <span>P: {food.ptn_g_por_referencia.toFixed(1)}g</span>
-              <span>•</span>
-              <span>C: {food.cho_g_por_referencia.toFixed(1)}g</span>
-              <span>•</span>
-              <span>G: {food.lip_g_por_referencia.toFixed(1)}g</span>
+            {/* Nutritional Info - Inline compact */}
+            <div className={cn(
+              'flex items-center gap-1.5 text-muted-foreground',
+              compact ? 'text-[10px]' : 'text-xs'
+            )}>
+              <span className="font-semibold text-foreground">
+                {Math.round(food.kcal_por_referencia)} kcal
+              </span>
+              <span className="opacity-40">•</span>
+              <span>P:{food.ptn_g_por_referencia.toFixed(0)}g</span>
+              <span className="opacity-40">•</span>
+              <span>C:{food.cho_g_por_referencia.toFixed(0)}g</span>
+              <span className="opacity-40">•</span>
+              <span>G:{food.lip_g_por_referencia.toFixed(0)}g</span>
             </div>
 
-            {/* Portion Size */}
-            <p className="text-xs text-muted-foreground mt-1">
+            {/* Portion Info */}
+            <p className={cn(
+              'text-muted-foreground/70 truncate',
+              compact ? 'text-[10px]' : 'text-xs'
+            )}>
               {food.peso_referencia_g}g • {food.medida_padrao_referencia}
             </p>
           </div>
 
-          {/* Action Buttons - Vertical Stack */}
-          <div className="flex flex-col gap-1 shrink-0">
+          {/* Action Buttons - Horizontal */}
+          <div className="flex items-center gap-1 shrink-0">
             {/* Quick Add Button */}
-            <Button
-              size="icon"
-              variant="default"
-              className="h-8 w-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickAdd(food);
-              }}
-              title="Adicionar 1 porção"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="default"
+                  className={cn(
+                    'shrink-0 shadow-sm',
+                    compact ? 'h-7 w-7' : 'h-8 w-8'
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAdd(food);
+                  }}
+                >
+                  <Plus className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Adicionar 1 porção</p>
+              </TooltipContent>
+            </Tooltip>
 
             {/* Detailed Add Button */}
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDetailedAdd(food);
-              }}
-              title="Ajustar quantidade"
-            >
-              <Info className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className={cn(
+                    'shrink-0',
+                    compact ? 'h-7 w-7' : 'h-8 w-8'
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDetailedAdd(food);
+                  }}
+                >
+                  <Info className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Ajustar quantidade</p>
+              </TooltipContent>
+            </Tooltip>
 
             {/* Favorite Button */}
             {onToggleFavorite && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite(food);
-                }}
-                title={food.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-              >
-                <Star
-                  className={cn(
-                    'h-4 w-4 transition-colors',
-                    food.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
-                  )}
-                />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className={cn(
+                      'shrink-0',
+                      compact ? 'h-7 w-7' : 'h-8 w-8'
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(food);
+                    }}
+                  >
+                    <Star
+                      className={cn(
+                        'transition-colors',
+                        compact ? 'h-3.5 w-3.5' : 'h-4 w-4',
+                        food.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
+                      )}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{food.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </TooltipProvider>
   );
 };

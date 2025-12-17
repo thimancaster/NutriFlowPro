@@ -19,8 +19,8 @@ export function useFoodSearch(initialFilters: EnhancedSearchFilters = {}) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<EnhancedSearchFilters>(initialFilters);
   
-  // Debounce search query for better performance
-  const debouncedQuery = useDebounce(filters.query, 300);
+  // Debounce search query for better performance (reduced to 150ms for faster response)
+  const debouncedQuery = useDebounce(filters.query, 150);
 
   const debouncedFilters = {
     ...filters,
