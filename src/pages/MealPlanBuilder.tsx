@@ -30,7 +30,9 @@ import {
   Sparkles,
   RefreshCw,
   CheckCircle2,
-  Bookmark
+  Bookmark,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -51,18 +53,15 @@ import { NutritionalValidationIndicator } from '@/components/meal-plan/Nutrition
 import { MealTemplateItem } from '@/hooks/meal-plan/useMealPlanTemplates';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
 import { cn } from '@/lib/utils';
-
-// Distribuição padrão de calorias por refeição (%)
-const DISTRIBUICAO_PADRAO = [0.25, 0.10, 0.30, 0.10, 0.20, 0.05];
-
-const REFEICOES_TEMPLATE = [
-  { id: 'cafe_manha', nome: 'Café da Manhã', tipo: 'cafe_manha', horario_sugerido: '07:00' },
-  { id: 'lanche_manha', nome: 'Lanche da Manhã', tipo: 'lanche_manha', horario_sugerido: '10:00' },
-  { id: 'almoco', nome: 'Almoço', tipo: 'almoco', horario_sugerido: '12:30' },
-  { id: 'lanche_tarde', nome: 'Lanche da Tarde', tipo: 'lanche_tarde', horario_sugerido: '15:30' },
-  { id: 'jantar', nome: 'Jantar', tipo: 'jantar', horario_sugerido: '19:00' },
-  { id: 'ceia', nome: 'Ceia', tipo: 'ceia', horario_sugerido: '21:30' },
-];
+import { useMealPlanHistory } from '@/hooks/useMealPlanHistory';
+import type { Meal, MealItem, MealType } from '@/types/meal-plan';
+import { 
+  MEAL_ORDER, 
+  MEAL_TYPE_LABELS, 
+  MEAL_SCHEDULES, 
+  DEFAULT_MEAL_DISTRIBUTION,
+  createInitialMeals 
+} from '@/types/meal-plan';
 
 // Helper para extrair número de macros
 const getMacroNumber = (v: any): number => {
@@ -71,35 +70,6 @@ const getMacroNumber = (v: any): number => {
   if (typeof v === 'number') return v;
   return 0;
 };
-
-interface MealItem {
-  id: string;
-  alimento_id: string;
-  nome: string;
-  quantidade: number;
-  medida_utilizada: string;
-  peso_total_g: number;
-  kcal_calculado: number;
-  ptn_g_calculado: number;
-  cho_g_calculado: number;
-  lip_g_calculado: number;
-}
-
-interface Meal {
-  id: string;
-  nome_refeicao: string;
-  tipo: string;
-  horario_sugerido?: string;
-  items: MealItem[];
-  kcal_total: number;
-  ptn_g: number;
-  cho_g: number;
-  lip_g: number;
-  alvo_kcal: number;
-  alvo_ptn_g: number;
-  alvo_cho_g: number;
-  alvo_lip_g: number;
-}
 
 const MealPlanBuilder: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
@@ -133,21 +103,7 @@ const MealPlanBuilder: React.FC = () => {
   // Initialize meals with targets from VET
   useEffect(() => {
     if (targets && meals.length === 0) {
-      const initialMeals: Meal[] = REFEICOES_TEMPLATE.map((template, idx) => ({
-        id: template.id,
-        nome_refeicao: template.nome,
-        tipo: template.tipo,
-        horario_sugerido: template.horario_sugerido,
-        items: [],
-        kcal_total: 0,
-        ptn_g: 0,
-        cho_g: 0,
-        lip_g: 0,
-        alvo_kcal: Math.round(targets.kcal * DISTRIBUICAO_PADRAO[idx]),
-        alvo_ptn_g: Math.round(targets.ptn_g * DISTRIBUICAO_PADRAO[idx]),
-        alvo_cho_g: Math.round(targets.cho_g * DISTRIBUICAO_PADRAO[idx]),
-        alvo_lip_g: Math.round(targets.lip_g * DISTRIBUICAO_PADRAO[idx]),
-      }));
+      const initialMeals = createInitialMeals(targets);
       setMeals(initialMeals);
     }
   }, [targets, meals.length]);
@@ -186,32 +142,35 @@ const MealPlanBuilder: React.FC = () => {
       const plan = await MealPlanOrchestrator.getMealPlan(id);
       if (plan && plan.meals) {
         // Convert to local format
-        const loadedMeals: Meal[] = (plan.meals as any[]).map((m: any, idx: number) => ({
-          id: m.id || `meal_${idx}`,
-          nome_refeicao: m.name || m.nome_refeicao || REFEICOES_TEMPLATE[idx]?.nome || 'Refeição',
-          tipo: m.type || m.tipo || REFEICOES_TEMPLATE[idx]?.tipo || 'almoco',
-          horario_sugerido: m.time || m.horario_sugerido || REFEICOES_TEMPLATE[idx]?.horario_sugerido,
-          items: (m.foods || m.items || []).map((f: any) => ({
-            id: f.id || crypto.randomUUID(),
-            alimento_id: f.id || f.alimento_id || '',
-            nome: f.name || f.nome || f.alimento_nome || '',
-            quantidade: f.quantity || f.quantidade || 1,
-            medida_utilizada: f.unit || f.medida_utilizada || 'g',
-            peso_total_g: f.quantity || f.peso_total_g || 0,
-            kcal_calculado: f.calories || f.kcal_calculado || 0,
-            ptn_g_calculado: f.protein || f.ptn_g_calculado || 0,
-            cho_g_calculado: f.carbs || f.cho_g_calculado || 0,
-            lip_g_calculado: f.fat || f.lip_g_calculado || 0,
-          })),
-          kcal_total: m.totalCalories || m.total_calories || 0,
-          ptn_g: m.totalProtein || m.total_protein || 0,
-          cho_g: m.totalCarbs || m.total_carbs || 0,
-          lip_g: m.totalFats || m.total_fats || 0,
-          alvo_kcal: Math.round((targets?.kcal || 2000) * DISTRIBUICAO_PADRAO[idx]),
-          alvo_ptn_g: Math.round((targets?.ptn_g || 100) * DISTRIBUICAO_PADRAO[idx]),
-          alvo_cho_g: Math.round((targets?.cho_g || 250) * DISTRIBUICAO_PADRAO[idx]),
-          alvo_lip_g: Math.round((targets?.lip_g || 70) * DISTRIBUICAO_PADRAO[idx]),
-        }));
+        const loadedMeals: Meal[] = (plan.meals as any[]).map((m: any, idx: number) => {
+          const mealType = MEAL_ORDER[idx] || 'almoco';
+          return {
+            id: m.id || `meal_${idx}`,
+            nome_refeicao: m.name || m.nome_refeicao || MEAL_TYPE_LABELS[mealType] || 'Refeição',
+            tipo: m.type || m.tipo || mealType,
+            horario_sugerido: m.time || m.horario_sugerido || MEAL_SCHEDULES[mealType],
+            items: (m.foods || m.items || []).map((f: any) => ({
+              id: f.id || crypto.randomUUID(),
+              alimento_id: f.id || f.alimento_id || '',
+              nome: f.name || f.nome || f.alimento_nome || '',
+              quantidade: f.quantity || f.quantidade || 1,
+              medida_utilizada: f.unit || f.medida_utilizada || 'g',
+              peso_total_g: f.quantity || f.peso_total_g || 0,
+              kcal_calculado: f.calories || f.kcal_calculado || 0,
+              ptn_g_calculado: f.protein || f.ptn_g_calculado || 0,
+              cho_g_calculado: f.carbs || f.cho_g_calculado || 0,
+              lip_g_calculado: f.fat || f.lip_g_calculado || 0,
+            })),
+            kcal_total: m.totalCalories || m.total_calories || 0,
+            ptn_g: m.totalProtein || m.total_protein || 0,
+            cho_g: m.totalCarbs || m.total_carbs || 0,
+            lip_g: m.totalFats || m.total_fats || 0,
+            alvo_kcal: Math.round((targets?.kcal || 2000) * (DEFAULT_MEAL_DISTRIBUTION[mealType] || 0.2)),
+            alvo_ptn_g: Math.round((targets?.ptn_g || 100) * (DEFAULT_MEAL_DISTRIBUTION[mealType] || 0.2)),
+            alvo_cho_g: Math.round((targets?.cho_g || 250) * (DEFAULT_MEAL_DISTRIBUTION[mealType] || 0.2)),
+            alvo_lip_g: Math.round((targets?.lip_g || 70) * (DEFAULT_MEAL_DISTRIBUTION[mealType] || 0.2)),
+          };
+        });
         setMeals(loadedMeals);
       }
     } catch (error) {
@@ -366,10 +325,11 @@ const MealPlanBuilder: React.FC = () => {
           lip: acc.lip + item.lip_g_calculado,
         }), { kcal: 0, ptn: 0, cho: 0, lip: 0 });
 
+        const mealType = MEAL_ORDER[idx] || 'almoco';
         return {
-          id: REFEICOES_TEMPLATE[idx].id,
+          id: mealType,
           nome_refeicao: ref.nome,
-          tipo: REFEICOES_TEMPLATE[idx].tipo,
+          tipo: mealType,
           horario_sugerido: ref.horario_sugerido,
           items,
           kcal_total: totals.kcal,
@@ -477,9 +437,9 @@ const MealPlanBuilder: React.FC = () => {
       // Update context
       updateConsultationData({
         mealPlan: {
-          refeicoes: meals.map(m => ({
+          refeicoes: meals.map((m, idx) => ({
             nome: m.nome_refeicao,
-            numero: REFEICOES_TEMPLATE.findIndex(t => t.id === m.id) + 1,
+            numero: idx + 1,
             horario_sugerido: m.horario_sugerido,
             itens: m.items.map(i => ({
               alimento_id: i.alimento_id,
@@ -681,7 +641,28 @@ const MealPlanBuilder: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <Button 
+            {/* Undo/Redo buttons - future integration with useMealPlanHistory */}
+            <div className="flex items-center border rounded-md">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                disabled
+                title="Desfazer (em breve)"
+                className="rounded-r-none border-r"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                disabled
+                title="Refazer (em breve)"
+                className="rounded-l-none"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
               variant="outline" 
               size="sm" 
               onClick={() => setShowSaveTemplateDialog(true)}
