@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
-import { QuickAddFoodCard } from './QuickAddFoodCard';
 import { PopularFoodsSuggestions } from './PopularFoodsSuggestions';
 import { CategoryFilterGrid } from './CategoryFilterGrid';
 import { QuickAddDialog } from './QuickAddDialog';
+import { VirtualizedFoodList } from './VirtualizedFoodList';
 import type { AlimentoV2 } from '@/services/enhancedFoodSearchService';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDebounce } from '@/hooks/useDebounce';
 import { getFoodCategories } from '@/services/enhancedFoodSearchService';
 import { useQuery } from '@tanstack/react-query';
 
@@ -163,31 +162,19 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
                         <Skeleton key={i} className="h-28 w-full" />
                       ))}
                     </div>
-                  ) : foods.length > 0 ? (
-                    <div className="grid gap-2">
-                      {foods.map((food) => (
-                        <QuickAddFoodCard
-                          key={food.id}
-                          food={food}
-                          onQuickAdd={handleQuickAdd}
-                          onDetailedAdd={handleDetailedAdd}
-                          onToggleFavorite={(f) =>
-                            toggleFavorite({
-                              alimentoId: f.id,
-                              isFavorite: f.is_favorite || false,
-                            })
-                          }
-                          compact
-                        />
-                      ))}
-                    </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p className="text-sm">Nenhum alimento encontrado</p>
-                      <p className="text-xs mt-1">
-                        Tente outro termo de busca
-                      </p>
-                    </div>
+                    <VirtualizedFoodList
+                      foods={foods}
+                      onQuickAdd={handleQuickAdd}
+                      onDetailedAdd={handleDetailedAdd}
+                      onToggleFavorite={(food) =>
+                        toggleFavorite({
+                          alimentoId: food.id,
+                          isFavorite: food.is_favorite || false,
+                        })
+                      }
+                      height={Math.min(400, Math.max(200, foods.length * 100))}
+                    />
                   )}
                 </div>
               )}
