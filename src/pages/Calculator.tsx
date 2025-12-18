@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle, CardDescription} from "@/compo
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Link, useSearchParams, useNavigate} from "react-router-dom";
-import {User, Plus, Database, Eye} from "lucide-react";
+import {User, Plus, Eye} from "lucide-react";
 import PatientBanner from "@/components/patient/PatientBanner";
 import ContextualNavigation from "@/components/patient/ContextualNavigation";
 import {clearCalculatorDataOnStart} from "@/components/calculator/storageUtils";
@@ -68,13 +68,6 @@ const CalculatorPage = () => {
 							<span>Ver Perfil</span>
 						</Button>
 					)}
-
-					<Link to="/food-database">
-						<Button variant="outline" className="flex items-center gap-1">
-							<Database className="h-4 w-4" />
-							<span>Base de Alimentos</span>
-						</Button>
-					</Link>
 				</div>
 			</div>
 

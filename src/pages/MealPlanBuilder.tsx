@@ -41,7 +41,8 @@ import {
   Bookmark,
   Undo2,
   Redo2,
-  Brain
+  Brain,
+  Database
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -64,6 +65,7 @@ import { FloatingMealSummary } from '@/components/meal-plan/FloatingMealSummary'
 import { SaveTemplateDialog } from '@/components/meal-plan/SaveTemplateDialog';
 import { TemplatesPicker } from '@/components/meal-plan/TemplatesPicker';
 import { NutritionalValidationIndicator } from '@/components/meal-plan/NutritionalValidationIndicator';
+import { FoodDatabaseManager } from '@/components/meal-plan/FoodDatabaseManager';
 import { MealTemplateItem } from '@/hooks/meal-plan/useMealPlanTemplates';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
 import { cn } from '@/lib/utils';
@@ -136,7 +138,7 @@ const MealPlanBuilder: React.FC = () => {
     },
   });
 
-  const [activeTab, setActiveTab] = useState<'edit' | 'auto' | 'preview'>('edit');
+  const [activeTab, setActiveTab] = useState<'edit' | 'auto' | 'preview' | 'database'>('edit');
   const [isSeeding, setIsSeeding] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -901,7 +903,7 @@ const MealPlanBuilder: React.FC = () => {
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
-        <TabsList className="w-full max-w-md mx-auto mb-4">
+        <TabsList className="w-full max-w-xl mx-auto mb-4">
           <TabsTrigger value="edit" className="flex-1 gap-2">
             <Edit className="h-4 w-4" />
             Editar
@@ -913,6 +915,10 @@ const MealPlanBuilder: React.FC = () => {
           <TabsTrigger value="preview" className="flex-1 gap-2">
             <Eye className="h-4 w-4" />
             Preview
+          </TabsTrigger>
+          <TabsTrigger value="database" className="flex-1 gap-2">
+            <Database className="h-4 w-4" />
+            Base de Dados
           </TabsTrigger>
         </TabsList>
 
@@ -1243,6 +1249,25 @@ const MealPlanBuilder: React.FC = () => {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Database Management Mode */}
+        <TabsContent value="database" className="flex-1 mt-0">
+          <Card className="h-[calc(100vh-320px)]">
+            <CardContent className="p-6 h-full overflow-auto">
+              <FoodDatabaseManager
+                onSelectFood={(food, quantity) => {
+                  handleFoodSelect(food, quantity);
+                  setActiveTab('edit');
+                  toast({
+                    title: 'Alimento adicionado',
+                    description: `${food.nome} adicionado à refeição ativa.`,
+                  });
+                }}
+                showSelectButton={true}
+              />
             </CardContent>
           </Card>
         </TabsContent>
