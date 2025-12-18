@@ -30,6 +30,7 @@ import PatientAnthropometry from "@/pages/PatientAnthropometry";
 import PatientHistory from "@/pages/PatientHistory";
 import SystemDebug from "@/pages/SystemDebug";
 import AdminPanel from "@/pages/AdminPanel";
+import AdminFoods from "@/pages/AdminFoods";
 import Reports from "@/pages/Reports";
 import Gamification from "@/pages/Gamification";
 
@@ -130,6 +131,7 @@ const AppRoutes = () => {
 				<Route path="add-testimonial" element={<AddTestimonial />} />
 				<Route path="system-debug" element={<SystemDebug />} />
 				<Route path="admin" element={<AdminPanel />} />
+				<Route path="admin/foods" element={<AdminFoods />} />
 				<Route path="reports" element={<Reports />} />
 				<Route path="gamification" element={<Gamification />} />
 			</Route>
