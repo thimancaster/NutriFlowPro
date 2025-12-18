@@ -1726,6 +1726,9 @@ export type Database = {
         Returns: boolean
       }
       check_user_premium_status: { Args: { user_id: string }; Returns: boolean }
+      count_user_active_patients: { Args: never; Returns: number }
+      count_user_calculations: { Args: never; Returns: number }
+      count_user_meal_plans: { Args: never; Returns: number }
       generate_meal_plan: {
         Args: {
           p_date?: string
@@ -1956,6 +1959,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      user_has_premium_access: { Args: never; Returns: boolean }
       validate_patient_data:
         | { Args: never; Returns: undefined }
         | {
