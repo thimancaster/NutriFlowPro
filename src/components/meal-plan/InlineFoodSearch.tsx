@@ -9,10 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
-import { AlimentoServiceUnified } from '@/services/mealPlan/AlimentoServiceUnified';
+import { searchFoodsEnhanced, getFoodsByMealType, AlimentoV2 } from '@/services/enhancedFoodSearchService';
 import { MealType } from '@/types/mealPlanTypes';
 import { Badge } from '@/components/ui/badge';
-import { AlimentoV2 } from '@/types/alimento';
 
 interface InlineFoodSearchProps {
   mealType: MealType;
@@ -36,7 +35,7 @@ const InlineFoodSearch: React.FC<InlineFoodSearchProps> = ({
   useEffect(() => {
     const loadSuggestions = async () => {
       try {
-        const foods = await AlimentoServiceUnified.getSuggestionsForMeal(mealType, 0);
+        const foods = await getFoodsByMealType(mealType, 20);
         setSuggestions(foods);
       } catch (error) {
         console.error('Erro ao carregar sugestões:', error);
@@ -55,14 +54,14 @@ const InlineFoodSearch: React.FC<InlineFoodSearchProps> = ({
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const foods = await AlimentoServiceUnified.searchAlimentos(query, {});
-        setResults(foods);
+        const result = await searchFoodsEnhanced({ query, limit: 30 });
+        setResults(result.foods);
       } catch (error) {
         console.error('Erro na busca:', error);
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 200);
 
     return () => clearTimeout(timer);
   }, [query]);

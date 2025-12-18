@@ -1,14 +1,63 @@
+/**
+ * ENHANCED FOOD SEARCH SERVICE - SERVIÇO ÚNICO DE BUSCA DE ALIMENTOS
+ * 
+ * Este é o ÚNICO ponto de entrada para busca de alimentos no sistema.
+ * Todas as outras partes do sistema devem usar este serviço.
+ * 
+ * Features:
+ * - Full-text search com pg_trgm
+ * - Cache local agressivo
+ * - Debounce otimizado
+ * - Paginação virtual
+ */
+
 import { supabase } from '@/integrations/supabase/client';
 import { AlimentoV2 } from '@/types/alimento';
-import { normalizeText, matchesQuery, calculateSimilarity } from '@/utils/textNormalization';
+import { normalizeText } from '@/utils/textNormalization';
 
 // Re-exportar para compatibilidade
 export type { AlimentoV2 };
 
+// ==================== CACHE CONFIGURATION ====================
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const searchCache = new Map<string, CacheEntry<SearchResult>>();
+const categoryCache = new Map<string, CacheEntry<Array<{ name: string; count: number }>>>();
+
+function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
+  const entry = cache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return entry.data;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setCache<T>(cache: Map<string, CacheEntry<T>>, key: string, data: T): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+// Clear old cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of searchCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) {
+      searchCache.delete(key);
+    }
+  }
+}, CACHE_TTL);
+
+// ==================== TYPES ====================
+
 export interface EnhancedSearchFilters {
   query?: string;
   category?: string;
-  mealTime?: string; // 'cafe_manha', 'almoco', 'jantar', 'lanche'
+  mealTime?: string; // 'cafe_da_manha', 'almoco', 'jantar', 'lanche'
   maxCalories?: number;
   minProtein?: number;
   favorites?: boolean;
@@ -24,30 +73,38 @@ export interface SearchResult {
   hasMore: boolean;
 }
 
+// ==================== MAIN SEARCH FUNCTION ====================
+
 /**
  * Enhanced food search using Full-Text Search with pg_trgm
- * Uses the search_alimentos_fulltext function for efficient searching
+ * Uses aggressive caching for performance
  */
 export async function searchFoodsEnhanced(
   filters: EnhancedSearchFilters,
   userId?: string
 ): Promise<SearchResult> {
+  const cacheKey = JSON.stringify({ ...filters, userId });
+  const cached = getCached(searchCache, cacheKey);
+  if (cached) {
+    console.log('[SEARCH] Cache hit:', cacheKey.slice(0, 50));
+    return cached;
+  }
+
   try {
-    const limit = filters.limit || 50;
+    const limit = filters.limit || 100;
     const offset = filters.offset || 0;
     const searchTerm = filters.query?.trim() || '';
     
-    // Use the new full-text search function
+    // Use the full-text search function with increased results
     const { data, error } = await supabase.rpc('search_alimentos_fulltext', {
       search_query: searchTerm || '',
       search_category: filters.category || null,
       search_meal_type: filters.mealTime || null,
-      max_results: Math.min(limit + offset + 50, 500) // Get extra for filtering
+      max_results: Math.min(limit + offset + 100, 1000) // Increased for better coverage
     });
 
     if (error) {
-      console.error('Full-text search error:', error);
-      // Fallback to basic search if full-text fails
+      console.error('[SEARCH] Full-text search error:', error);
       return fallbackSearch(filters, limit, offset);
     }
 
@@ -94,7 +151,7 @@ export async function searchFoodsEnhanced(
         foods.sort((a, b) => b.ptn_g_por_referencia - a.ptn_g_por_referencia);
         break;
       case 'name':
-        foods.sort((a, b) => a.nome.localeCompare(b.nome));
+        foods.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
         break;
       // 'relevance' and 'popularity' are already sorted by the function
     }
@@ -113,14 +170,19 @@ export async function searchFoodsEnhanced(
     const total = foods.length;
     const paginatedFoods = foods.slice(offset, offset + limit);
 
-    return {
+    const result: SearchResult = {
       foods: paginatedFoods,
       total,
       hasMore: total > offset + limit,
     };
+
+    // Cache the result
+    setCache(searchCache, cacheKey, result);
+
+    return result;
   } catch (error) {
-    console.error('Enhanced food search error:', error);
-    return fallbackSearch(filters, filters.limit || 50, filters.offset || 0);
+    console.error('[SEARCH] Enhanced food search error:', error);
+    return fallbackSearch(filters, filters.limit || 100, filters.offset || 0);
   }
 }
 
@@ -140,7 +202,9 @@ async function fallbackSearch(
     .eq('ativo', true);
 
   if (searchTerm) {
-    query = query.or(`nome.ilike.%${searchTerm}%,categoria.ilike.%${searchTerm}%`);
+    // Normalize for better matching
+    const normalizedTerm = searchTerm.toLowerCase();
+    query = query.or(`nome.ilike.%${normalizedTerm}%,categoria.ilike.%${normalizedTerm}%`);
   }
 
   if (filters.category) {
@@ -175,54 +239,7 @@ async function fallbackSearch(
   };
 }
 
-/**
- * Calculate relevance score for sorting search results
- */
-function calculateRelevanceScore(food: AlimentoV2, normalizedQuery: string): number {
-  let score = 0;
-  
-  const normalizedName = normalizeText(food.nome);
-  const normalizedCategory = normalizeText(food.categoria || '');
-  const normalizedSubcategory = normalizeText(food.subcategoria || '');
-  
-  // Exact name match
-  if (normalizedName === normalizedQuery) {
-    score += 100;
-  }
-  // Name starts with query
-  else if (normalizedName.startsWith(normalizedQuery)) {
-    score += 80;
-  }
-  // Name contains query as word
-  else if (normalizedName.split(' ').some(word => word === normalizedQuery)) {
-    score += 70;
-  }
-  // Name contains query
-  else if (normalizedName.includes(normalizedQuery)) {
-    score += 50;
-  }
-  
-  // Category match
-  if (normalizedCategory.includes(normalizedQuery)) {
-    score += 20;
-  }
-  
-  // Subcategory match
-  if (normalizedSubcategory.includes(normalizedQuery)) {
-    score += 15;
-  }
-  
-  // Keywords match
-  const normalizedKeywords = (food.keywords || []).map(k => normalizeText(k));
-  if (normalizedKeywords.some(k => k.includes(normalizedQuery))) {
-    score += 30;
-  }
-  
-  // Popularity boost
-  score += Math.min((food.popularidade || 0) / 10, 10);
-  
-  return score;
-}
+// ==================== ADDITIONAL FOOD FUNCTIONS ====================
 
 /**
  * Get user's most used foods
@@ -240,7 +257,7 @@ export async function getUserMostUsedFoods(
     if (error) throw error;
     return (data || []) as AlimentoV2[];
   } catch (error) {
-    console.error('Error getting most used foods:', error);
+    console.error('[SEARCH] Error getting most used foods:', error);
     return [];
   }
 }
@@ -260,7 +277,7 @@ export async function getPopularFoods(limit: number = 20): Promise<AlimentoV2[]>
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error getting popular foods:', error);
+    console.error('[SEARCH] Error getting popular foods:', error);
     return [];
   }
 }
@@ -297,7 +314,7 @@ export async function toggleFavoriteFood(
       return true;
     }
   } catch (error) {
-    console.error('Error toggling favorite:', error);
+    console.error('[SEARCH] Error toggling favorite:', error);
     throw error;
   }
 }
@@ -315,7 +332,7 @@ export async function trackFoodUsage(
       alimento_id: alimentoId,
     });
   } catch (error) {
-    console.error('Error tracking food usage:', error);
+    console.error('[SEARCH] Error tracking food usage:', error);
     // Don't throw - this is non-critical
   }
 }
@@ -345,7 +362,7 @@ export async function findSimilarFoods(
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error finding similar foods:', error);
+    console.error('[SEARCH] Error finding similar foods:', error);
     return [];
   }
 }
@@ -365,17 +382,21 @@ export async function getFoodsByCategory(category: string): Promise<AlimentoV2[]
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error getting foods by category:', error);
+    console.error('[SEARCH] Error getting foods by category:', error);
     return [];
   }
 }
 
 /**
- * Get all unique categories with counts
+ * Get all unique categories with counts - CACHED
  */
-export async function getFoodCategories(): Promise<
-  Array<{ name: string; count: number }>
-> {
+export async function getFoodCategories(): Promise<Array<{ name: string; count: number }>> {
+  const cacheKey = 'categories';
+  const cached = getCached(categoryCache, cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const { data, error } = await supabase
       .from('alimentos_v2')
@@ -390,11 +411,142 @@ export async function getFoodCategories(): Promise<
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(categoryCount)
+    const result = Object.entries(categoryCount)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
+
+    setCache(categoryCache, cacheKey, result);
+    return result;
   } catch (error) {
-    console.error('Error getting categories:', error);
+    console.error('[SEARCH] Error getting categories:', error);
     return [];
+  }
+}
+
+/**
+ * Get foods by meal type
+ */
+export async function getFoodsByMealType(
+  mealType: string,
+  limit: number = 50
+): Promise<AlimentoV2[]> {
+  try {
+    const { data, error } = await supabase
+      .from('alimentos_v2')
+      .select('*')
+      .eq('ativo', true)
+      .contains('tipo_refeicao_sugerida', [mealType])
+      .order('popularidade', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('[SEARCH] Error getting foods by meal type:', error);
+    return [];
+  }
+}
+
+/**
+ * Get a single food by ID
+ */
+export async function getFoodById(id: string): Promise<AlimentoV2 | null> {
+  try {
+    const { data, error } = await supabase
+      .from('alimentos_v2')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('[SEARCH] Error getting food by id:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear all caches (useful for testing or after data updates)
+ */
+export function clearFoodSearchCache(): void {
+  searchCache.clear();
+  categoryCache.clear();
+  console.log('[SEARCH] Cache cleared');
+}
+
+// ==================== ADMIN FUNCTIONS ====================
+
+/**
+ * Create a new food item (admin function)
+ */
+export async function createFood(food: Partial<AlimentoV2>): Promise<AlimentoV2 | null> {
+  try {
+    const { data, error } = await supabase
+      .from('alimentos_v2')
+      .insert({
+        nome: food.nome || '',
+        categoria: food.categoria || 'Outros',
+        medida_padrao_referencia: food.medida_padrao_referencia || 'unidade',
+        peso_referencia_g: food.peso_referencia_g || 100,
+        kcal_por_referencia: food.kcal_por_referencia || 0,
+        ptn_g_por_referencia: food.ptn_g_por_referencia || 0,
+        cho_g_por_referencia: food.cho_g_por_referencia || 0,
+        lip_g_por_referencia: food.lip_g_por_referencia || 0,
+        fibra_g_por_referencia: food.fibra_g_por_referencia || null,
+        sodio_mg_por_referencia: food.sodio_mg_por_referencia || null,
+        tipo_refeicao_sugerida: food.tipo_refeicao_sugerida || ['any'],
+        ativo: true,
+        popularidade: 0,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    clearFoodSearchCache();
+    return data;
+  } catch (error) {
+    console.error('[SEARCH] Error creating food:', error);
+    return null;
+  }
+}
+
+/**
+ * Update an existing food item (admin function)
+ */
+export async function updateFood(id: string, updates: Partial<AlimentoV2>): Promise<AlimentoV2 | null> {
+  try {
+    const { data, error } = await supabase
+      .from('alimentos_v2')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    clearFoodSearchCache();
+    return data;
+  } catch (error) {
+    console.error('[SEARCH] Error updating food:', error);
+    return null;
+  }
+}
+
+/**
+ * Delete (deactivate) a food item (admin function)
+ */
+export async function deleteFood(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('alimentos_v2')
+      .update({ ativo: false })
+      .eq('id', id);
+
+    if (error) throw error;
+    clearFoodSearchCache();
+    return true;
+  } catch (error) {
+    console.error('[SEARCH] Error deleting food:', error);
+    return false;
   }
 }
