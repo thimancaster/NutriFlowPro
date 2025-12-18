@@ -10,7 +10,7 @@
  * - Preview/Exportação: Visualiza e exporta o plano
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -65,7 +65,8 @@ import { FloatingMealSummary } from '@/components/meal-plan/FloatingMealSummary'
 import { SaveTemplateDialog } from '@/components/meal-plan/SaveTemplateDialog';
 import { TemplatesPicker } from '@/components/meal-plan/TemplatesPicker';
 import { NutritionalValidationIndicator } from '@/components/meal-plan/NutritionalValidationIndicator';
-import { FoodDatabaseManager } from '@/components/meal-plan/FoodDatabaseManager';
+// Lazy load heavy components for better initial load
+const FoodDatabaseManager = lazy(() => import('@/components/meal-plan/FoodDatabaseManager').then(m => ({ default: m.FoodDatabaseManager })));
 import { MealTemplateItem } from '@/hooks/meal-plan/useMealPlanTemplates';
 import { checkIfNeedsSeed, seedEssentialFoods } from '@/utils/seedFoodsData';
 import { cn } from '@/lib/utils';
@@ -1253,21 +1254,30 @@ const MealPlanBuilder: React.FC = () => {
           </Card>
         </TabsContent>
 
-        {/* Database Management Mode */}
+        {/* Database Management Mode - Lazy Loaded */}
         <TabsContent value="database" className="flex-1 mt-0">
           <Card className="h-[calc(100vh-320px)]">
             <CardContent className="p-6 h-full overflow-auto">
-              <FoodDatabaseManager
-                onSelectFood={(food, quantity) => {
-                  handleFoodSelect(food, quantity);
-                  setActiveTab('edit');
-                  toast({
-                    title: 'Alimento adicionado',
-                    description: `${food.nome} adicionado à refeição ativa.`,
-                  });
-                }}
-                showSelectButton={true}
-              />
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center space-y-4">
+                    <Database className="h-12 w-12 mx-auto animate-pulse text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Carregando base de dados...</p>
+                  </div>
+                </div>
+              }>
+                <FoodDatabaseManager
+                  onSelectFood={(food, quantity) => {
+                    handleFoodSelect(food, quantity);
+                    setActiveTab('edit');
+                    toast({
+                      title: 'Alimento adicionado',
+                      description: `${food.nome} adicionado à refeição ativa.`,
+                    });
+                  }}
+                  showSelectButton={true}
+                />
+              </Suspense>
             </CardContent>
           </Card>
         </TabsContent>
