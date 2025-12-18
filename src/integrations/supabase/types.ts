@@ -1883,7 +1883,7 @@ export type Database = {
           max_results?: number
           search_category?: string
           search_meal_type?: string
-          search_query: string
+          search_query?: string
         }
         Returns: {
           categoria: string

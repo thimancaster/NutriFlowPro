@@ -298,12 +298,20 @@ export const OfficialCalculatorForm: React.FC<OfficialCalculatorFormProps> = ({
 		}
 	}, [initialData, activePatient, updateInputs]);
 
-	// Notify parent when calculation completes
+	// Notify parent when calculation completes - include inputs for age
 	useEffect(() => {
 		if (results && onCalculationComplete) {
-			onCalculationComplete(results);
+			// Include age from inputs since results may not have it
+			onCalculationComplete({
+				...results,
+				age: inputs.age,
+				weight: inputs.weight,
+				height: inputs.height,
+				activityLevel: inputs.activityLevel,
+				goal: inputs.objective,
+			});
 		}
-	}, [results, onCalculationComplete]);
+	}, [results, onCalculationComplete, inputs.age, inputs.weight, inputs.height, inputs.activityLevel, inputs.objective]);
 
 	// Auto-fill activity factor based on formula, gender and activity level
 	useEffect(() => {
