@@ -25,7 +25,8 @@ export interface SearchResult {
 }
 
 /**
- * Enhanced food search with accent-insensitive matching and relevance scoring
+ * Enhanced food search using Full-Text Search with pg_trgm
+ * Uses the search_alimentos_fulltext function for efficient searching
  */
 export async function searchFoodsEnhanced(
   filters: EnhancedSearchFilters,
@@ -36,120 +37,81 @@ export async function searchFoodsEnhanced(
     const offset = filters.offset || 0;
     const searchTerm = filters.query?.trim() || '';
     
-    // If no search term, just fetch with filters
-    if (!searchTerm) {
-      let query = supabase
-        .from('alimentos_v2')
-        .select('*', { count: 'exact' })
-        .eq('ativo', true);
-
-      // Apply category filter
-      if (filters.category) {
-        query = query.eq('categoria', filters.category);
-      }
-
-      // Apply meal time filter
-      if (filters.mealTime) {
-        query = query.contains('tipo_refeicao_sugerida', [filters.mealTime]);
-      }
-
-      // Apply calorie filter
-      if (filters.maxCalories) {
-        query = query.lte('kcal_por_referencia', filters.maxCalories);
-      }
-
-      // Apply protein filter
-      if (filters.minProtein) {
-        query = query.gte('ptn_g_por_referencia', filters.minProtein);
-      }
-
-      // Sorting
-      switch (filters.sortBy) {
-        case 'calories':
-          query = query.order('kcal_por_referencia', { ascending: true });
-          break;
-        case 'protein':
-          query = query.order('ptn_g_por_referencia', { ascending: false });
-          break;
-        case 'popularity':
-          query = query.order('popularidade', { ascending: false, nullsFirst: false });
-          break;
-        case 'name':
-        default:
-          query = query.order('nome', { ascending: true });
-          break;
-      }
-
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-
-      return {
-        foods: data || [],
-        total: count || 0,
-        hasMore: (count || 0) > offset + limit,
-      };
-    }
-
-    // For text search, fetch more results and filter locally for accent-insensitive matching
-    const normalizedSearch = normalizeText(searchTerm);
-    
-    // Build multiple search patterns
-    let query = supabase
-      .from('alimentos_v2')
-      .select('*')
-      .eq('ativo', true);
-
-    // Apply category filter if present
-    if (filters.category) {
-      query = query.eq('categoria', filters.category);
-    }
-
-    // Get a larger set of results to filter locally
-    const { data: allData, error } = await query.limit(500);
-
-    if (error) throw error;
-
-    // Local filtering with accent-insensitive matching
-    let filteredFoods = (allData || []).filter(food => {
-      const searchableText = [
-        food.nome,
-        food.categoria,
-        food.subcategoria,
-        food.descricao_curta,
-        ...(food.keywords || []),
-      ].filter(Boolean).join(' ');
-
-      return matchesQuery(searchableText, searchTerm);
+    // Use the new full-text search function
+    const { data, error } = await supabase.rpc('search_alimentos_fulltext', {
+      search_query: searchTerm || '',
+      search_category: filters.category || null,
+      search_meal_type: filters.mealTime || null,
+      max_results: Math.min(limit + offset + 50, 500) // Get extra for filtering
     });
 
-    // Calculate relevance scores and sort
-    const scoredFoods = filteredFoods.map(food => ({
-      food: food as unknown as AlimentoV2,
-      relevance: calculateRelevanceScore(food as unknown as AlimentoV2, normalizedSearch),
-    }));
-    
-    scoredFoods.sort((a, b) => {
-      const relevanceDiff = b.relevance - a.relevance;
-      if (relevanceDiff !== 0) return relevanceDiff;
-      return (b.food.popularidade || 0) - (a.food.popularidade || 0);
-    });
-    
-    let sortedFoods = scoredFoods.map(({ food }) => food);
+    if (error) {
+      console.error('Full-text search error:', error);
+      // Fallback to basic search if full-text fails
+      return fallbackSearch(filters, limit, offset);
+    }
+
+    let foods = (data || []).map((item: any) => ({
+      id: item.id,
+      nome: item.nome,
+      categoria: item.categoria,
+      subcategoria: item.subcategoria,
+      medida_padrao_referencia: item.medida_padrao_referencia,
+      peso_referencia_g: Number(item.peso_referencia_g),
+      kcal_por_referencia: Number(item.kcal_por_referencia),
+      ptn_g_por_referencia: Number(item.ptn_g_por_referencia),
+      cho_g_por_referencia: Number(item.cho_g_por_referencia),
+      lip_g_por_referencia: Number(item.lip_g_por_referencia),
+      fibra_g_por_referencia: item.fibra_g_por_referencia ? Number(item.fibra_g_por_referencia) : null,
+      sodio_mg_por_referencia: item.sodio_mg_por_referencia ? Number(item.sodio_mg_por_referencia) : null,
+      popularidade: item.popularidade,
+      keywords: item.keywords,
+      tipo_refeicao_sugerida: item.tipo_refeicao_sugerida,
+      descricao_curta: item.descricao_curta,
+      preparo_sugerido: item.preparo_sugerido,
+      ativo: true,
+      created_at: '',
+      updated_at: '',
+      fonte: null,
+      observacoes: null,
+    })) as AlimentoV2[];
 
     // Apply additional filters
     if (filters.maxCalories) {
-      sortedFoods = sortedFoods.filter(f => f.kcal_por_referencia <= filters.maxCalories!);
+      foods = foods.filter(f => f.kcal_por_referencia <= filters.maxCalories!);
     }
 
     if (filters.minProtein) {
-      sortedFoods = sortedFoods.filter(f => f.ptn_g_por_referencia >= filters.minProtein!);
+      foods = foods.filter(f => f.ptn_g_por_referencia >= filters.minProtein!);
     }
 
-    const total = sortedFoods.length;
-    const paginatedFoods = sortedFoods.slice(offset, offset + limit);
+    // Apply sorting
+    switch (filters.sortBy) {
+      case 'calories':
+        foods.sort((a, b) => a.kcal_por_referencia - b.kcal_por_referencia);
+        break;
+      case 'protein':
+        foods.sort((a, b) => b.ptn_g_por_referencia - a.ptn_g_por_referencia);
+        break;
+      case 'name':
+        foods.sort((a, b) => a.nome.localeCompare(b.nome));
+        break;
+      // 'relevance' and 'popularity' are already sorted by the function
+    }
+
+    // Remove duplicates by nome (keeping the first occurrence)
+    const seen = new Set<string>();
+    foods = foods.filter(food => {
+      const normalizedName = food.nome.toLowerCase().trim();
+      if (seen.has(normalizedName)) {
+        return false;
+      }
+      seen.add(normalizedName);
+      return true;
+    });
+
+    const total = foods.length;
+    const paginatedFoods = foods.slice(offset, offset + limit);
 
     return {
       foods: paginatedFoods,
@@ -158,8 +120,59 @@ export async function searchFoodsEnhanced(
     };
   } catch (error) {
     console.error('Enhanced food search error:', error);
-    throw error;
+    return fallbackSearch(filters, filters.limit || 50, filters.offset || 0);
   }
+}
+
+/**
+ * Fallback search using ILIKE for cases where full-text search fails
+ */
+async function fallbackSearch(
+  filters: EnhancedSearchFilters,
+  limit: number,
+  offset: number
+): Promise<SearchResult> {
+  const searchTerm = filters.query?.trim() || '';
+  
+  let query = supabase
+    .from('alimentos_v2')
+    .select('*', { count: 'exact' })
+    .eq('ativo', true);
+
+  if (searchTerm) {
+    query = query.or(`nome.ilike.%${searchTerm}%,categoria.ilike.%${searchTerm}%`);
+  }
+
+  if (filters.category) {
+    query = query.eq('categoria', filters.category);
+  }
+
+  if (filters.mealTime) {
+    query = query.contains('tipo_refeicao_sugerida', [filters.mealTime]);
+  }
+
+  if (filters.maxCalories) {
+    query = query.lte('kcal_por_referencia', filters.maxCalories);
+  }
+
+  if (filters.minProtein) {
+    query = query.gte('ptn_g_por_referencia', filters.minProtein);
+  }
+
+  query = query
+    .order('popularidade', { ascending: false, nullsFirst: false })
+    .order('nome', { ascending: true })
+    .range(offset, offset + limit - 1);
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+
+  return {
+    foods: data || [],
+    total: count || 0,
+    hasMore: (count || 0) > offset + limit,
+  };
 }
 
 /**

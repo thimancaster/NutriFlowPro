@@ -40,7 +40,8 @@ import {
   CheckCircle2,
   Bookmark,
   Undo2,
-  Redo2
+  Redo2,
+  Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -52,6 +53,7 @@ import { useMealPlanCalculations, Refeicao, ItemRefeicao, AlimentoV2 } from '@/h
 import { useMealPlanExport } from '@/hooks/useMealPlanExport';
 import { useMealPlanHistory } from '@/hooks/useMealPlanHistory';
 import { useMealDragDrop } from '@/hooks/useMealDragDrop';
+import { useAIMealGeneration } from '@/hooks/useAIMealGeneration';
 import { AutoGenerationService, PatientProfile } from '@/services/mealPlan/AutoGenerationService';
 import { MealPlanOrchestrator } from '@/services/mealPlan/MealPlanOrchestrator';
 import { FoodSearchPanel } from '@/components/meal-plan/FoodSearchPanel';
@@ -91,6 +93,7 @@ const MealPlanBuilder: React.FC = () => {
   const { user } = useAuth();
   const { exportToPDF, printMealPlan } = useMealPlanExport();
   const { calculateItemRefeicao, calculateDailyTotals } = useMealPlanCalculations();
+  const { generateMealWithAI, generateFullPlanWithAI, isGenerating: isAIGenerating } = useAIMealGeneration();
 
   // Use history hook for undo/redo support
   const {
@@ -429,6 +432,69 @@ const MealPlanBuilder: React.FC = () => {
       setIsGenerating(false);
     }
   }, [meals, activePatient, consultationData, toast]);
+
+  // AI-powered meal plan generation
+  const handleAIGenerate = useCallback(async () => {
+    if (!activePatient?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Paciente não identificado',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const objective = consultationData?.objective || 'manutencao';
+      const results = await generateFullPlanWithAI(
+        meals.map(m => ({
+          tipo: m.tipo,
+          alvo_kcal: m.alvo_kcal,
+          alvo_ptn_g: m.alvo_ptn_g,
+          alvo_cho_g: m.alvo_cho_g,
+          alvo_lip_g: m.alvo_lip_g
+        })),
+        objective,
+        [], // restrictions
+        activePatient?.gender
+      );
+
+      if (results) {
+        const newMeals = meals.map(meal => {
+          const aiItems = results.get(meal.tipo);
+          if (aiItems && aiItems.length > 0) {
+            const totals = aiItems.reduce((acc, item) => ({
+              kcal: acc.kcal + item.kcal_calculado,
+              ptn: acc.ptn + item.ptn_g_calculado,
+              cho: acc.cho + item.cho_g_calculado,
+              lip: acc.lip + item.lip_g_calculado,
+            }), { kcal: 0, ptn: 0, cho: 0, lip: 0 });
+
+            return {
+              ...meal,
+              items: aiItems,
+              kcal_total: totals.kcal,
+              ptn_g: totals.ptn,
+              cho_g: totals.cho,
+              lip_g: totals.lip,
+            };
+          }
+          return meal;
+        });
+
+        setMeals(newMeals);
+        setHasUnsavedChanges(true);
+        setActiveTab('edit');
+        
+        toast({
+          title: 'Plano gerado com IA',
+          description: 'O plano foi gerado inteligentemente. Revise e ajuste conforme necessário.',
+        });
+      }
+    } catch (error) {
+      console.error('Error generating AI meal plan:', error);
+    }
+  }, [meals, activePatient, consultationData, generateFullPlanWithAI, toast]);
 
   // Save meal plan
   const handleSave = useCallback(async () => {
@@ -998,8 +1064,8 @@ const MealPlanBuilder: React.FC = () => {
                 <Alert>
                   <Sparkles className="h-4 w-4" />
                   <AlertDescription>
-                    O sistema irá preencher automaticamente as refeições vazias com alimentos 
-                    apropriados, respeitando as metas calóricas e de macronutrientes definidas.
+                    Escolha entre geração com IA (inteligente, considera contexto cultural) ou 
+                    geração automática básica baseada em regras.
                   </AlertDescription>
                 </Alert>
 
@@ -1022,24 +1088,70 @@ const MealPlanBuilder: React.FC = () => {
                   </Card>
                 </div>
 
-                <Button 
-                  onClick={handleAutoGenerate} 
-                  disabled={isGenerating}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                      Gerando Plano...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-5 w-5 mr-2" />
-                      Gerar Plano Automático
-                    </>
-                  )}
-                </Button>
+                {/* AI Generation - Recommended */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-gradient-to-r from-violet-500 to-purple-600 text-white">
+                      Recomendado
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">Geração Inteligente com IA</span>
+                  </div>
+                  <Button 
+                    onClick={handleAIGenerate} 
+                    disabled={isAIGenerating || isGenerating}
+                    className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                    size="lg"
+                  >
+                    {isAIGenerating ? (
+                      <>
+                        <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                        Gerando com IA...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-5 w-5 mr-2" />
+                        ✨ Gerar com IA
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Usa inteligência artificial para selecionar alimentos considerando contexto cultural brasileiro,
+                    horários das refeições e balanceamento nutricional inteligente.
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">ou</span>
+                  </div>
+                </div>
+
+                {/* Basic Auto Generation */}
+                <div className="space-y-3">
+                  <span className="text-sm text-muted-foreground">Geração Básica (baseada em regras)</span>
+                  <Button 
+                    onClick={handleAutoGenerate} 
+                    disabled={isGenerating || isAIGenerating}
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                        Gerando Plano...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-5 w-5 mr-2" />
+                        Gerar Plano Automático
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
