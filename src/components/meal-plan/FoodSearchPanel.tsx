@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X, Loader2 } from 'lucide-react';
-import { useFoodSearch } from '@/hooks/useFoodSearch';
+import { useFoodSearchOptimized } from '@/hooks/useFoodSearchOptimized';
 import { PopularFoodsSuggestions } from './PopularFoodsSuggestions';
 import { CategoryFilterGrid } from './CategoryFilterGrid';
 import { QuickAddDialog } from './QuickAddDialog';
@@ -12,8 +12,6 @@ import type { AlimentoV2 } from '@/services/enhancedFoodSearchService';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getFoodCategories } from '@/services/enhancedFoodSearchService';
-import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 interface FoodSearchPanelProps {
@@ -21,7 +19,10 @@ interface FoodSearchPanelProps {
   activeMealType: string;
 }
 
-export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
+// FIXED list height for consistent performance
+const SEARCH_LIST_HEIGHT = 400;
+
+export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = memo(({
   onFoodSelect,
   activeMealType,
 }) => {
@@ -30,26 +31,21 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
   const [dialogFood, setDialogFood] = useState<AlimentoV2 | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Using optimized hook with prefetching
   const {
     foods,
     mostUsedFoods,
     popularFoods,
+    categories,
     isSearching,
-    filters,
-    updateFilters,
+    isFetching,
     toggleFavorite,
     trackUsage,
-  } = useFoodSearch({
+    prefetchNextPage,
+  } = useFoodSearchOptimized({
     query: searchQuery,
     category: selectedCategory || undefined,
-    limit: 100, // Increased limit for better results
-  });
-
-  // Get categories
-  const { data: categories = [] } = useQuery({
-    queryKey: ['food-categories'],
-    queryFn: getFoodCategories,
-    staleTime: 1000 * 60 * 60, // 1 hour
+    limit: 100,
   });
 
   // Keyboard shortcuts
@@ -99,6 +95,13 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
 
   const showSearchResults = searchQuery.trim() || selectedCategory;
 
+  // Prefetch next page when scrolling near end
+  const handleScroll = useCallback(() => {
+    if (foods.length >= 50) {
+      prefetchNextPage();
+    }
+  }, [foods.length, prefetchNextPage]);
+
   return (
     <>
       <Card className="h-full flex flex-col overflow-hidden">
@@ -109,9 +112,14 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
               <Search className="h-4 w-4" />
               Buscar Alimentos
             </span>
-            <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-              <span className="text-xs">⌘</span>K
-            </kbd>
+            <div className="flex items-center gap-2">
+              {isFetching && !isSearching && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
+              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </div>
           </CardTitle>
 
           {/* Search Input - Larger and more prominent */}
@@ -222,8 +230,12 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
                           isFavorite: food.is_favorite || false,
                         })
                       }
-                      height={Math.min(500, Math.max(300, foods.length * 72))}
-                      itemHeight={72}
+                      height={SEARCH_LIST_HEIGHT}
+                      itemHeight={76}
+                      onClearSearch={() => {
+                        setSearchQuery('');
+                        setSelectedCategory(null);
+                      }}
                     />
                   )}
                 </div>
@@ -266,4 +278,6 @@ export const FoodSearchPanel: React.FC<FoodSearchPanelProps> = ({
       />
     </>
   );
-};
+});
+
+FoodSearchPanel.displayName = 'FoodSearchPanel';
