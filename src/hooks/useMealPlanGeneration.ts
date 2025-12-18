@@ -1,8 +1,8 @@
 /**
  * HOOK DE GERAÇÃO DE PLANO ALIMENTAR
  * 
- * Responsabilidade: Apenas orquestrar a chamada ao AutoGenerationService
- * e fornecer feedback ao usuário. NENHUMA lógica de escolha de alimentos aqui.
+ * Responsabilidade: Apenas preparar o perfil do paciente e chamar o motor.
+ * NENHUMA lógica de cálculo ou escolha de alimentos aqui.
  */
 
 import { useState, useCallback } from 'react';
@@ -20,14 +20,13 @@ export const useMealPlanGeneration = () => {
 
   const generateMealPlan = useCallback(async (
     currentRefeicoes: Refeicao[],
-    _patientId?: string // Mantido para compatibilidade, mas não usado
+    _patientId?: string
   ): Promise<Refeicao[]> => {
-    
     console.log('[HOOK] Iniciando geração de plano alimentar...');
     setIsGenerating(true);
     
     try {
-      // Extrai metadados do paciente/consulta para alimentar o motor
+      // Monta perfil do paciente a partir dos contextos
       const profile: PatientProfile = {
         objective: extractObjective(),
         restrictions: extractRestrictions(),
@@ -46,23 +45,22 @@ export const useMealPlanGeneration = () => {
       if (totalItens === 0) {
         toast({
           title: "Não foi possível gerar",
-          description: "Não encontramos alimentos compatíveis com as restrições e metas. Verifique se o banco de alimentos está populado.",
+          description: "Não encontramos alimentos compatíveis. Verifique se há alimentos cadastrados no banco.",
           variant: "destructive"
         });
       } else {
         toast({
-          title: "Sugestão Gerada!",
-          description: `${totalItens} alimentos selecionados em ${mealsWithItems} refeições.`,
-          variant: "default"
+          title: "Plano Gerado!",
+          description: `${totalItens} alimentos em ${mealsWithItems} refeições.`,
         });
       }
 
       return newPlan;
 
     } catch (error) {
-      console.error('[HOOK] Erro fatal na geração:', error);
+      console.error('[HOOK] Erro na geração:', error);
       toast({
-        title: "Erro no Sistema",
+        title: "Erro na Geração",
         description: "Falha ao comunicar com o motor de geração.",
         variant: "destructive"
       });
@@ -75,22 +73,13 @@ export const useMealPlanGeneration = () => {
   // --- Helpers para extrair dados do contexto ---
 
   const extractObjective = (): string => {
-    // Prioridade 1: Campo direto do consultationData
-    if (consultationData?.objective) {
-      return consultationData.objective;
-    }
+    if (consultationData?.objective) return consultationData.objective;
+    if (consultationData?.goal) return consultationData.goal;
     
-    // Prioridade 2: Campo goal do consultationData
-    if (consultationData?.goal) {
-      return consultationData.goal;
-    }
-    
-    // Prioridade 3: Tentar extrair dos goals do paciente
     const goals = activePatient?.goals;
     if (goals && typeof goals === 'object') {
       if ('objective' in goals && goals.objective) return String(goals.objective);
       
-      // Inferir objetivo pelo goal de peso
       if ('weight' in goals && goals.weight) {
         const currentWeight = activePatient?.weight;
         if (currentWeight && typeof goals.weight === 'number') {
@@ -106,7 +95,6 @@ export const useMealPlanGeneration = () => {
   const extractRestrictions = (): string[] => {
     const restrictions: string[] = [];
     
-    // Tentar extrair dos goals do paciente
     const goals = activePatient?.goals;
     if (goals && typeof goals === 'object' && 'restrictions' in goals) {
       const patientRestrictions = goals.restrictions;
@@ -117,7 +105,7 @@ export const useMealPlanGeneration = () => {
       }
     }
     
-    return [...new Set(restrictions)]; // Remove duplicatas
+    return [...new Set(restrictions)];
   };
 
   return {

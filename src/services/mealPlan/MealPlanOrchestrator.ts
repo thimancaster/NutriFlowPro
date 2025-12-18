@@ -1,10 +1,13 @@
 /**
- * MEAL PLAN ORCHESTRATOR - STUB
- * Mantido para compatibilidade com componentes legados.
+ * MEAL PLAN ORCHESTRATOR - FACADE PARA PERSISTÊNCIA
+ * 
+ * Mantido para compatibilidade com componentes existentes.
  * A lógica de geração foi centralizada em AutoGenerationService.
+ * A persistência foi centralizada em PersistenceService.
  */
 
 import { AutoGenerationService, PatientProfile } from './AutoGenerationService';
+import { PersistenceService } from './PersistenceService';
 import { ConsolidatedMealPlan, ConsolidatedMeal, MealType, MEAL_TYPES, MEAL_TIMES, DEFAULT_MEAL_DISTRIBUTION } from '@/types/mealPlanTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,29 +24,20 @@ export interface AutoGenParams {
 
 export class MealPlanOrchestrator {
   /**
-   * Gera um plano alimentar automático (método principal)
-   * @deprecated - Usar AutoGenerationService.generatePlan diretamente
-   */
-  static async generateAutomaticPlan(params: AutoGenParams): Promise<ConsolidatedMealPlan> {
-    return this.autoGenerate(params);
-  }
-
-  /**
    * Gera um plano alimentar automático
    * @deprecated - Usar AutoGenerationService.generatePlan diretamente
    */
-  static async autoGenerate(params: AutoGenParams): Promise<ConsolidatedMealPlan> {
-    console.log('[DEPRECATED] MealPlanOrchestrator.autoGenerate - migrar para AutoGenerationService');
+  static async generateAutomaticPlan(params: AutoGenParams): Promise<ConsolidatedMealPlan> {
+    console.log('[ORCHESTRATOR] Redirecionando para AutoGenerationService');
     
-    const { calculationResults, preferences } = params;
+    const { calculationResults, preferences, patientId, userId } = params;
     
-    // Extrai metas calóricas
     const vet = calculationResults?.vet || 2000;
     const protein_g = calculationResults?.macros?.protein?.grams || calculationResults?.macros?.protein || 100;
     const carb_g = calculationResults?.macros?.carbs?.grams || calculationResults?.macros?.carbs || 250;
     const fat_g = calculationResults?.macros?.fat?.grams || calculationResults?.macros?.fat || 70;
 
-    // Cria estrutura de refeições com distribuição padrão
+    // Cria estrutura de refeições
     const refeicoes = Object.entries(DEFAULT_MEAL_DISTRIBUTION).map(([type, percentage], index) => ({
       nome: MEAL_TYPES[type as MealType],
       numero: index + 1,
@@ -55,7 +49,6 @@ export class MealPlanOrchestrator {
       alvo_lip_g: Math.round(fat_g * (percentage / 100)),
     }));
 
-    // Usa o novo motor
     const profile: PatientProfile = {
       objective: preferences?.objective || 'manutencao',
       restrictions: preferences?.restrictions || [],
@@ -64,7 +57,7 @@ export class MealPlanOrchestrator {
 
     const generatedRefeicoes = await AutoGenerationService.generatePlan(refeicoes, profile);
 
-    // Converte para formato ConsolidatedMealPlan
+    // Converte para ConsolidatedMealPlan
     const meals: ConsolidatedMeal[] = generatedRefeicoes.map((ref, idx) => {
       const mealTypes: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
       const mealType = mealTypes[idx] || 'lunch';
@@ -107,8 +100,8 @@ export class MealPlanOrchestrator {
 
     return {
       id: crypto.randomUUID(),
-      patient_id: params.patientId,
-      user_id: params.userId,
+      patient_id: patientId,
+      user_id: userId,
       date: new Date().toISOString().split('T')[0],
       name: 'Plano Automático',
       total_calories: totalCalories,
@@ -116,7 +109,7 @@ export class MealPlanOrchestrator {
       total_carbs: totalCarbs,
       total_fats: totalFats,
       meals,
-      notes: 'Plano gerado automaticamente pelo AutoGenerationService',
+      notes: 'Plano gerado automaticamente',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -125,16 +118,7 @@ export class MealPlanOrchestrator {
   /**
    * Salva um plano no banco
    */
-  static async savePlan(plan: ConsolidatedMealPlan): Promise<string> {
-    return this.saveMealPlan(plan);
-  }
-
-  /**
-   * Salva um plano alimentar no banco de dados
-   */
   static async saveMealPlan(plan: ConsolidatedMealPlan): Promise<string> {
-    console.log('[ORCHESTRATOR] Salvando plano alimentar...');
-    
     try {
       const { data, error } = await supabase
         .from('meal_plans')
@@ -154,7 +138,6 @@ export class MealPlanOrchestrator {
         .single();
 
       if (error) throw error;
-      
       return data?.id || plan.id || '';
     } catch (error) {
       console.error('[ORCHESTRATOR] Erro ao salvar:', error);
@@ -166,8 +149,6 @@ export class MealPlanOrchestrator {
    * Busca um plano alimentar por ID
    */
   static async getMealPlan(planId: string): Promise<ConsolidatedMealPlan | null> {
-    console.log('[ORCHESTRATOR] Buscando plano:', planId);
-    
     try {
       const { data, error } = await supabase
         .from('meal_plans')
@@ -176,7 +157,6 @@ export class MealPlanOrchestrator {
         .single();
 
       if (error) throw error;
-      
       if (!data) return null;
 
       return {
@@ -202,10 +182,10 @@ export class MealPlanOrchestrator {
 
   /**
    * Exporta plano para PDF
-   * @stub - Não implementado neste stub
+   * @stub - Usar serviço de PDF dedicado
    */
   static async exportToPDF(plan: ConsolidatedMealPlan, options?: any): Promise<Blob | null> {
-    console.log('[STUB] MealPlanOrchestrator.exportToPDF - usar serviço de PDF dedicado');
+    console.log('[ORCHESTRATOR] exportToPDF não implementado - usar serviço dedicado');
     return null;
   }
 }
