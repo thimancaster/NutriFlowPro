@@ -1,4 +1,3 @@
-
 project_id = "lnyixnhsrovzdxybmjfa"
 
 [api]
@@ -48,4 +47,8 @@ verify_jwt = true
 
 # Edge function para reclassificação de alimentos (requer autenticação)
 [functions.reclassify-foods]
+verify_jwt = true
+
+# Edge function para geração de plano alimentar com IA
+[functions.generate-meal-plan-ai]
 verify_jwt = true

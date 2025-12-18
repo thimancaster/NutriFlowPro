@@ -1878,6 +1878,34 @@ export type Database = {
         Args: { p_meal_plan_id: string; p_version_number: number }
         Returns: boolean
       }
+      search_alimentos_fulltext: {
+        Args: {
+          max_results?: number
+          search_category?: string
+          search_meal_type?: string
+          search_query: string
+        }
+        Returns: {
+          categoria: string
+          cho_g_por_referencia: number
+          descricao_curta: string
+          fibra_g_por_referencia: number
+          id: string
+          kcal_por_referencia: number
+          keywords: string[]
+          lip_g_por_referencia: number
+          medida_padrao_referencia: string
+          nome: string
+          peso_referencia_g: number
+          popularidade: number
+          preparo_sugerido: string
+          ptn_g_por_referencia: number
+          similarity_score: number
+          sodio_mg_por_referencia: number
+          subcategoria: string
+          tipo_refeicao_sugerida: string[]
+        }[]
+      }
       search_foods_secure: {
         Args: {
           search_category?: string
