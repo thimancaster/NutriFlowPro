@@ -2,8 +2,6 @@ import React, {Suspense} from "react";
 import DashboardHero from "./DashboardHero";
 import DashboardSummaryCards from "./DashboardSummaryCards";
 import DashboardRecentPatients from "./DashboardRecentPatients";
-import DashboardQuickActions from "./DashboardQuickActions";
-import DashboardTestimonials from "./DashboardTestimonials";
 import ConsultationHeader from "./ConsultationHeader";
 import GamificationWidget from "./dashboard/GamificationWidget";
 import {motion} from "framer-motion";
@@ -102,7 +100,7 @@ const Dashboard = () => {
 					</Suspense>
 				</motion.div>
 
-			{/* Gamification Widget - Novo! */}
+				{/* Gamification Widget */}
 				<motion.div variants={itemVariants} className="hover-lift">
 					<GamificationWidget userId={user?.id} />
 				</motion.div>
@@ -112,16 +110,6 @@ const Dashboard = () => {
 					<Suspense fallback={<LoadingFallback />}>
 						<DashboardRecentPatients />
 					</Suspense>
-				</motion.div>
-
-				{/* Ações rápidas com efeito hover */}
-				<motion.div variants={itemVariants} className="hover-scale">
-					<DashboardQuickActions />
-				</motion.div>
-
-				{/* Depoimentos com design refinado */}
-				<motion.div variants={itemVariants} className="hover-lift">
-					<DashboardTestimonials />
 				</motion.div>
 			</motion.div>
 
