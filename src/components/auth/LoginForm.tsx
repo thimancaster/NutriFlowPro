@@ -154,14 +154,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
               </FormItem>} />
           
           <div className="space-y-4 pt-2">
-            <Button disabled={isSubmitting} variant="nutri-blue" animation="shimmer" className="w-full h-12 text-base font-semibold" type="submit">
+            <Button disabled={isSubmitting} variant="nutri-blue" animation="shimmer" type="submit" className="w-full h-12 text-base font-semibold rounded shadow-dark-lg">
               {isSubmitting ? <>
                   <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
                   Aguarde...
                 </> : "Entrar"}
             </Button>
             
-            {onGoogleLogin && <Button type="button" variant="outline" onClick={handleGoogleLogin} disabled={isSubmitting} className="w-full h-12 text-base font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-200 hover:scale-[1.02]">
+            {onGoogleLogin && <Button type="button" variant="outline" onClick={handleGoogleLogin} disabled={isSubmitting} className="w-full h-12 text-base font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-200 hover:scale-[1.02] shadow-dark-xl rounded">
                 <Icons.google className="mr-2 h-5 w-5" />
                 Continuar com Google
               </Button>}
