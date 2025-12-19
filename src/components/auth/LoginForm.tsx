@@ -137,7 +137,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                   </Link>
                 </div>
                 <FormControl>
-                  <Input type="password" autoComplete="current-password" disabled={isSubmitting} placeholder="Digite sua senha" className="h-12 text-base bg-white/10 border-white/20 !text-white placeholder:!text-white/60 focus:border-white focus:ring-white/50 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white" {...field} />
+                  <Input type="password" autoComplete="current-password" disabled={isSubmitting} placeholder="Digite sua senha" className="h-12 text-base bg-black/10 border-white/20 !text-black placeholder:!text-black/60 focus:border-white focus:ring-white/50 [&:-webkit-autofill]:!bg-blue/5 [&:-webkit-autofill]:!text-black" />
                 </FormControl>
                 <FormMessage className="text-red-200 text-sm font-medium" />
               </FormItem>} />
