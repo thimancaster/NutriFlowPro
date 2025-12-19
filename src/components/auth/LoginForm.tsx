@@ -137,14 +137,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
                   </Link>
                 </div>
                 <FormControl>
-                  <Input type="password" autoComplete="current-password" disabled={isSubmitting} placeholder="Digite sua senha" className="h-12 text-base bg-black/10 border-white/20 !text-black placeholder:!text-black/60 focus:border-white focus:ring-white/50 [&:-webkit-autofill]:!bg-blue/5 [&:-webkit-autofill]:!text-black" />
+                  <Input type="password" autoComplete="current-password" disabled={isSubmitting} placeholder="Digite sua senha" className="h-12 text-base bg-white/10 border-white/20 !text-white placeholder:!text-white/60 focus:border-white focus:ring-white/50 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white" {...field} />
                 </FormControl>
                 <FormMessage className="text-red-200 text-sm font-medium" />
               </FormItem>} />
           
           <FormField control={form.control} name="rememberMe" render={({
           field
-        }) => <FormItem className="flex flex-row items-center space-x-3 space-y-0 border-primary-foreground border-0 pr-0 mb-0">
+        }) => <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} className="border-white/30 data-[state=checked]:bg-white data-[state=checked]:text-nutri-blue" />
                 </FormControl>
@@ -154,15 +154,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
               </FormItem>} />
           
           <div className="space-y-4 pt-2">
-            <Button disabled={isSubmitting} variant="nutri-blue" animation="shimmer" type="submit" className="w-full h-12 text-base font-semibold rounded shadow-dark-xl border border-solid">
+            <Button disabled={isSubmitting} variant="nutri-blue" animation="shimmer" className="w-full h-12 text-base font-semibold" type="submit">
               {isSubmitting ? <>
                   <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
                   Aguarde...
                 </> : "Entrar"}
             </Button>
             
-            {onGoogleLogin && <Button type="button" variant="outline" onClick={handleGoogleLogin} disabled={isSubmitting} className="w-full h-12 text-base font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-200 hover:scale-[1.02] rounded shadow-dark-xl border border-solid opacity-100">
-                <Icons.google className="mr-2 h-5 w-5 border-sidebar-primary shadow-dark-xl opacity-100" />
+            {onGoogleLogin && <Button type="button" variant="outline" onClick={handleGoogleLogin} disabled={isSubmitting} className="w-full h-12 text-base font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-200 hover:scale-[1.02]">
+                <Icons.google className="mr-2 h-5 w-5" />
                 Continuar com Google
               </Button>}
           </div>
