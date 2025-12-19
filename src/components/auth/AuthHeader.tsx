@@ -7,7 +7,7 @@ const AuthHeader = ({
   title,
   subtitle
 }: AuthHeaderProps) => {
-  return <div className="text-center animate-fade-in">
+  return <div className="text-center animate-fade-in text-primary-foreground">
       <h1 className="text-5xl font-bold mb-3 animate-slide-in-from-top text-primary-foreground">
         {title}
       </h1>
