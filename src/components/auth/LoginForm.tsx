@@ -122,7 +122,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         }) => <FormItem>
                 <FormLabel className="text-base font-semibold text-white">Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="seuemail@exemplo.com" autoComplete="email" disabled={isSubmitting} className="h-12 text-base bg-white/10 border-white/20 !text-white placeholder:!text-white/60 focus:border-white focus:ring-white/50 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-white" {...field} />
+                  <Input placeholder="seuemail@exemplo.com" autoComplete="email" disabled={isSubmitting} className="h-12 text-base bg-white/10 border-white/20 !text-white placeholder:!text-white/60 focus:border-white focus:ring-white/50 [&:-webkit-autofill]:!bg-white/10 [&:-webkit-autofill]:!text-black" />
                 </FormControl>
                 <FormMessage className="text-red-200 text-sm font-medium" />
               </FormItem>} />
