@@ -1,6 +1,5 @@
 
 import { jsPDF } from 'jspdf';
-import { MealPlanSettings } from '@/utils/mealGeneratorUtils';
 
 // Extend the jsPDF type definition to include autoTable
 declare module 'jspdf' {
@@ -10,6 +9,18 @@ declare module 'jspdf' {
       finalY: number;
     };
   }
+}
+
+// MealPlanSettings interface - previously imported from mealGeneratorUtils
+export interface MealPlanSettings {
+  patientName?: string;
+  patientData?: any;
+  patientAge?: number;
+  patientGender?: string;
+  numMeals?: string;
+  totalCalories?: string;
+  dietType?: string;
+  restrictions?: string[];
 }
 
 export interface MealPlanPdfData {
