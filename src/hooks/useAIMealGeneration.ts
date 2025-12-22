@@ -12,6 +12,7 @@ interface AIGenerationParams {
   objective: string;
   restrictions?: string[];
   patientGender?: string;
+  patientId?: string;
   existingFoods?: string[];
 }
 
@@ -22,8 +23,20 @@ interface AIGenerationResult {
     protein: number;
     carbs: number;
     fat: number;
+    fiber?: number;
   };
   reasoning?: string;
+  culturalNotes?: string;
+  validation?: {
+    isValid: boolean;
+    warnings: string[];
+    adjustments: string[];
+  };
+  metadata?: {
+    foodsConsidered: number;
+    patientHistoryUsed: boolean;
+    restrictionsApplied: string[];
+  };
 }
 
 export function useAIMealGeneration() {
@@ -67,13 +80,22 @@ export function useAIMealGeneration() {
 
       toast({
         title: 'Refeição gerada com IA',
-        description: `${data.foods.length} alimentos selecionados inteligentemente.`,
+        description: `${data.foods.length} alimentos selecionados${data.validation?.warnings?.length ? ' (com avisos)' : ''}.`,
+        variant: data.validation?.warnings?.length > 0 ? 'default' : 'default'
       });
+
+      // Log validation warnings if any
+      if (data.validation?.warnings?.length > 0) {
+        console.log('AI generation warnings:', data.validation.warnings);
+      }
 
       return {
         foods: data.foods as MealItem[],
         totals: data.totals,
-        reasoning: data.reasoning
+        reasoning: data.reasoning,
+        culturalNotes: data.culturalNotes,
+        validation: data.validation,
+        metadata: data.metadata
       };
 
     } catch (err) {
