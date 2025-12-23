@@ -8,12 +8,14 @@ import {Utensils, Search, Plus, Trash2, AlertCircle, CheckCircle2, Wand2, Refres
 import {useConsultationData} from "@/contexts/ConsultationDataContext";
 import {usePatient} from "@/contexts/patient/PatientContext";
 import {useAuth} from "@/contexts/auth/AuthContext";
-import {useMealPlanCalculations, Refeicao, AlimentoV2} from "@/hooks/useMealPlanCalculations";
+import {useMealPlanCalculations, Refeicao} from "@/hooks/useMealPlanCalculations";
+import {useFoodSearchOptimized} from "@/hooks/useFoodSearchOptimized";
 import {useMealPlanGeneration} from "@/hooks/useMealPlanGeneration";
 import {useMealPlanExport} from "@/hooks/useMealPlanExport";
 import {useToast} from "@/hooks/use-toast";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {ScrollArea} from "@/components/ui/scroll-area";
+import {AlimentoV2} from "@/types/alimento";
 
 // Distribuição padrão de calorias por refeição (%)
 const DISTRIBUICAO_PADRAO = [0.25, 0.1, 0.3, 0.1, 0.2, 0.05]; // Café, Lanche AM, Almoço, Lanche PM, Jantar, Ceia
@@ -42,16 +44,23 @@ const MealPlanStep: React.FC = () => {
 	const {activePatient} = usePatient();
 	const {user} = useAuth();
 	const {toast} = useToast();
+	
+	// Hook de cálculos (apenas funções de cálculo)
 	const {
-		alimentos,
-		mostUsedAlimentos,
-		loading: searchingAlimentos,
-		searchAlimentos,
-		loadMostUsedAlimentos,
 		calculateItemRefeicao,
 		calculateRefeicaoTotals,
 		calculateDailyTotals,
 	} = useMealPlanCalculations();
+	
+	// Hook de busca unificado (via React Query)
+	const {
+		foods: alimentos,
+		mostUsedFoods: mostUsedAlimentos,
+		isSearching: searchingAlimentos,
+		filters,
+		updateFilters,
+	} = useFoodSearchOptimized();
+	
 	const {exportToPDF} = useMealPlanExport();
 	const {isGenerating, generateMealPlan} = useMealPlanGeneration();
 	const [showSuggestions, setShowSuggestions] = useState(true);
@@ -101,10 +110,7 @@ const MealPlanStep: React.FC = () => {
 		}
 	}, [consultationData?.results, refeicoes.length, macroDistribution]);
 
-	// Carregar alimentos mais usados ao montar o componente
-	useEffect(() => {
-		loadMostUsedAlimentos(15);
-	}, [loadMostUsedAlimentos]);
+	// Alimentos mais usados são carregados automaticamente pelo useFoodSearchOptimized
 
 	// Recalcular alvos quando distribuição mudar
 	const updateMealTargets = () => {
@@ -212,16 +218,18 @@ const MealPlanStep: React.FC = () => {
 		}
 	};
 
-	// Buscar alimentos quando o usuário digita
+	// Buscar alimentos quando o usuário digita (via React Query)
 	useEffect(() => {
 		const delaySearch = setTimeout(() => {
 			if (searchQuery.length >= 2) {
-				searchAlimentos(searchQuery);
+				updateFilters({ query: searchQuery });
+			} else if (searchQuery.length === 0) {
+				updateFilters({ query: '' });
 			}
 		}, 300);
 
 		return () => clearTimeout(delaySearch);
-	}, [searchQuery, searchAlimentos]);
+	}, [searchQuery, updateFilters]);
 
 	const handleAddAlimento = async () => {
 		if (!selectedAlimento || activeRefeicaoIndex === null) {
