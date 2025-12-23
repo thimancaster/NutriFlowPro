@@ -24,20 +24,28 @@ import { useDebounce } from '@/hooks/useDebounce';
 // Prefetch categories for instant filter switching
 const PREFETCH_CATEGORIES = ['Carnes Bovinas', 'Aves', 'Frutas', 'Cereais e Grãos', 'Laticínios'];
 
-export function useFoodSearchOptimized(initialFilters: EnhancedSearchFilters = {}) {
+export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<EnhancedSearchFilters>(initialFilters);
-  
+
+  // Controlled mode: when initialFilters is provided, treat it as the source of truth (used by FoodSearchPanel).
+  // Uncontrolled mode: when omitted, manage filters internally (used by other flows).
+  const [internalFilters, setInternalFilters] = useState<EnhancedSearchFilters>({});
+  const isControlled = initialFilters !== undefined;
+  const filters = isControlled ? initialFilters : internalFilters;
+
   // Smart debounce: 200ms for text search (balance between responsiveness and performance)
   const debouncedQuery = useDebounce(filters.query, 200);
 
   // Filters without query are applied instantly
-  const debouncedFilters = useMemo(() => ({
-    ...filters,
-    query: debouncedQuery,
-  }), [filters, debouncedQuery]);
+  const debouncedFilters = useMemo(
+    () => ({
+      ...filters,
+      query: debouncedQuery,
+    }),
+    [filters, debouncedQuery]
+  );
 
   // Prefetch popular categories on mount
   useEffect(() => {
