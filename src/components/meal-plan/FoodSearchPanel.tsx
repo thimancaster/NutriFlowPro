@@ -1,3 +1,19 @@
+/**
+ * ============================================================================
+ * FOOD SEARCH PANEL - COMPONENTE ÚNICO DE BUSCA DE ALIMENTOS
+ * ============================================================================
+ * 
+ * Este é o ÚNICO componente de UI para busca de alimentos no sistema.
+ * Todos os outros componentes que precisam buscar alimentos devem usar este.
+ * 
+ * Arquitetura de busca unificada:
+ * - UI: FoodSearchPanel (este arquivo)
+ * - Hook: useFoodSearchOptimized (src/hooks/useFoodSearchOptimized.ts)
+ * - Service: enhancedFoodSearchService (src/services/enhancedFoodSearchService.ts)
+ * 
+ * NÃO crie novos componentes de busca de alimentos.
+ * ============================================================================
+ */
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

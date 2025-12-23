@@ -1,9 +1,24 @@
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
 import { AlimentoV2 } from "@/types/alimento";
 
 // Re-exportar para compatibilidade
 export type { AlimentoV2 };
+
+/**
+ * ============================================================================
+ * HOOK DE CÁLCULOS PARA PLANOS ALIMENTARES
+ * ============================================================================
+ * 
+ * IMPORTANTE: Este hook contém APENAS lógica de cálculo nutricional.
+ * 
+ * Para busca de alimentos, use SEMPRE:
+ * - src/services/enhancedFoodSearchService.ts (camada de serviço)
+ * - src/hooks/useFoodSearchOptimized.ts (hook React Query)
+ * - src/components/meal-plan/FoodSearchPanel.tsx (componente UI)
+ * 
+ * NÃO adicione funções de busca aqui.
+ * ============================================================================
+ */
 
 export interface ItemRefeicao {
   id?: string; // ID from Supabase (optional, only present after saving)
@@ -37,69 +52,6 @@ export interface RefeicaoTotals {
 }
 
 export const useMealPlanCalculations = () => {
-  const [alimentos, setAlimentos] = useState<AlimentoV2[]>([]);
-  const [mostUsedAlimentos, setMostUsedAlimentos] = useState<AlimentoV2[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Buscar alimentos mais utilizados (sugestões)
-   */
-  const loadMostUsedAlimentos = useCallback(async (limit: number = 15) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: supabaseError } = await supabase.rpc(
-        "get_most_used_foods",
-        { search_limit: limit }
-      );
-
-      if (supabaseError) throw supabaseError;
-
-      setMostUsedAlimentos(data as AlimentoV2[]);
-    } catch (err) {
-      console.error("Erro ao buscar alimentos mais usados:", err);
-      setError("Erro ao buscar sugestões de alimentos");
-      setMostUsedAlimentos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Buscar alimentos do Supabase (tabela alimentos_v2)
-   */
-  const searchAlimentos = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setAlimentos([]);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: supabaseError } = await supabase
-        .from("alimentos_v2")
-        .select("*")
-        .ilike("nome", `%${query}%`)
-        .eq("ativo", true)
-        .order("nome")
-        .limit(20);
-
-      if (supabaseError) throw supabaseError;
-
-      setAlimentos(data as AlimentoV2[]);
-    } catch (err) {
-      console.error("Erro ao buscar alimentos:", err);
-      setError("Erro ao buscar alimentos");
-      setAlimentos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   /**
    * Calcular item de refeição (LÓGICA FIEL À PLANILHA)
    * Fórmula: valor_consumido = valor_por_referencia * quantidade
@@ -171,12 +123,6 @@ export const useMealPlanCalculations = () => {
   );
 
   return {
-    alimentos,
-    mostUsedAlimentos,
-    loading,
-    error,
-    searchAlimentos,
-    loadMostUsedAlimentos,
     calculateItemRefeicao,
     calculateRefeicaoTotals,
     calculateDailyTotals,
