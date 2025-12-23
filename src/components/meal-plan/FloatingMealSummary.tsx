@@ -76,7 +76,7 @@ export const FloatingMealSummary: React.FC<MealSummaryProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] shadow-2xl"
+      className="fixed bottom-20 right-4 z-40 w-80 max-w-[calc(100vw-2rem)] shadow-2xl"
     >
       <Card className="border-2 border-primary/20 bg-card/95 backdrop-blur-sm">
         <CardContent className="p-4 space-y-4">

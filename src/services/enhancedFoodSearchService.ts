@@ -76,8 +76,9 @@ export interface SearchResult {
 // ==================== MAIN SEARCH FUNCTION ====================
 
 /**
- * Enhanced food search using Full-Text Search with pg_trgm
+ * Enhanced food search using Full-Text Search with unaccent
  * Uses aggressive caching for performance
+ * A busca agora suporta acentos: "pao" encontra "Pão"
  */
 export async function searchFoodsEnhanced(
   filters: EnhancedSearchFilters,
@@ -93,14 +94,17 @@ export async function searchFoodsEnhanced(
   try {
     const limit = filters.limit || 100;
     const offset = filters.offset || 0;
-    const searchTerm = filters.query?.trim() || '';
+    // Normalizar a query client-side também para garantir consistência
+    const searchTerm = normalizeText(filters.query?.trim() || '');
     
-    // Use the full-text search function with increased results
+    console.log('[SEARCH] Searching for:', searchTerm || '(empty - showing popular)');
+    
+    // Use the full-text search function with unaccent support
     const { data, error } = await supabase.rpc('search_alimentos_fulltext', {
-      search_query: searchTerm || '',
+      search_query: filters.query?.trim() || '', // Enviar original, RPC normaliza
       search_category: filters.category || null,
       search_meal_type: filters.mealTime || null,
-      max_results: Math.min(limit + offset + 100, 1000) // Increased for better coverage
+      max_results: Math.min(limit + offset + 100, 1000)
     });
 
     if (error) {
@@ -188,6 +192,7 @@ export async function searchFoodsEnhanced(
 
 /**
  * Fallback search using ILIKE for cases where full-text search fails
+ * Usa normalização client-side para busca sem acentos
  */
 async function fallbackSearch(
   filters: EnhancedSearchFilters,
@@ -202,9 +207,10 @@ async function fallbackSearch(
     .eq('ativo', true);
 
   if (searchTerm) {
-    // Normalize for better matching
-    const normalizedTerm = searchTerm.toLowerCase();
-    query = query.or(`nome.ilike.%${normalizedTerm}%,categoria.ilike.%${normalizedTerm}%`);
+    // Normalizar para matching sem acentos
+    const normalizedTerm = normalizeText(searchTerm);
+    // Buscar tanto com termo original quanto normalizado
+    query = query.or(`nome.ilike.%${normalizedTerm}%,nome.ilike.%${searchTerm}%,categoria.ilike.%${normalizedTerm}%`);
   }
 
   if (filters.category) {
