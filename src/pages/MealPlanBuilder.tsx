@@ -759,7 +759,7 @@ const MealPlanBuilder: React.FC = () => {
   } : null;
 
   return (
-    <div className="container mx-auto p-4 lg:p-6 min-h-screen flex flex-col">
+    <div className="container mx-auto p-4 lg:p-6 min-h-screen flex flex-col pb-28">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background pb-4 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -976,7 +976,7 @@ const MealPlanBuilder: React.FC = () => {
                   value={meal.id}
                   className="flex-1 mt-0 data-[state=active]:flex data-[state=inactive]:hidden"
                 >
-                  <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] xl:grid-cols-[480px_1fr] gap-6 h-[calc(100vh-320px)]">
+                  <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] xl:grid-cols-[480px_1fr] gap-6 h-[calc(100vh-380px)] pb-4">
                     {/* Left Panel: Food Search */}
                     <div className="h-full">
                       <FoodSearchPanel
@@ -1011,7 +1011,7 @@ const MealPlanBuilder: React.FC = () => {
         <TabsContent value="auto" className="flex-1 mt-0">
           <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
             {/* Left Panel: Templates */}
-            <div className="h-[calc(100vh-320px)] overflow-auto">
+            <div className="h-[calc(100vh-380px)] overflow-auto pb-4">
               <TemplatesPicker
                 targets={targets ? {
                   kcal: targets.kcal,
@@ -1257,7 +1257,7 @@ const MealPlanBuilder: React.FC = () => {
 
         {/* Database Management Mode - Lazy Loaded */}
         <TabsContent value="database" className="flex-1 mt-0">
-          <Card className="h-[calc(100vh-320px)]">
+          <Card className="h-[calc(100vh-380px)]">
             <CardContent className="p-6 h-full overflow-auto">
               <Suspense fallback={
                 <div className="flex items-center justify-center h-full">
