@@ -165,12 +165,12 @@ export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
 
   // Update filters - instant for category, debounced for query
   const updateFilters = useCallback((newFilters: Partial<EnhancedSearchFilters>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    setInternalFilters((prev) => ({ ...prev, ...newFilters }));
   }, []);
 
   // Reset filters
   const resetFilters = useCallback(() => {
-    setFilters({});
+    setInternalFilters({});
   }, []);
 
   // Load more (pagination)
