@@ -23,7 +23,6 @@ import Patients from "@/pages/Patients";
 import Calculator from "@/pages/Calculator";
 import Appointments from "@/pages/Appointments";
 import Clinical from "@/pages/Clinical";
-import Consultation from "@/pages/Consultation";
 import FoodDatabase from "@/pages/FoodDatabase";
 import Settings from "@/pages/Settings";
 import PatientAnthropometry from "@/pages/PatientAnthropometry";

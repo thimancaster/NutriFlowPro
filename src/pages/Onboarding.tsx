@@ -50,17 +50,28 @@ const Onboarding = () => {
       // Register as a subscriber
       const { error: subError } = await supabase
         .from('subscribers')
-        .insert([
-          {
-            user_id: user.id,
-            email: user.email,
-            role: 'user',
-            is_premium: false
-          }
-        ]);
+        .upsert({
+          user_id: user.id,
+          email: user.email,
+          role: 'user',
+          is_premium: false
+        }, { onConflict: 'user_id' });
 
       if (subError) {
-        throw subError;
+        console.error('Subscriber error:', subError);
+      }
+
+      // Mark onboarding as completed in user_settings
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          onboarding_completed: true,
+          settings: {}
+        }, { onConflict: 'user_id' });
+
+      if (settingsError) {
+        console.error('Settings error:', settingsError);
       }
 
       toast({

@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Star, MessageSquareHeart } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ProfilePictureUpload from './ProfilePictureUpload';
 
 const ProfileSettings: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -86,6 +88,7 @@ const ProfileSettings: React.FC = () => {
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>Informações do Perfil</CardTitle>
@@ -177,6 +180,36 @@ const ProfileSettings: React.FC = () => {
         </form>
       </CardContent>
     </Card>
+
+    {/* Testimonial Card */}
+    <Card className="mt-6 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+          <MessageSquareHeart className="h-5 w-5" />
+          Compartilhe sua Experiência
+        </CardTitle>
+        <CardDescription className="text-amber-700 dark:text-amber-300">
+          Sua opinião é muito importante para nós e ajuda outros nutricionistas a conhecerem o NutriFlow Pro
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star key={star} className="h-5 w-5 fill-amber-400 text-amber-400" />
+            ))}
+          </div>
+          <Button 
+            onClick={() => navigate('/add-testimonial')}
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+          >
+            <Star className="h-4 w-4 mr-2" />
+            Deixar Depoimento
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+    </>
   );
 };
 

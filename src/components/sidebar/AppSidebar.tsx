@@ -5,11 +5,15 @@ import {
 	CalendarCheck,
 	UserPlus,
 	FileText,
-	User,
+	Users,
 	BarChart3,
 	LayoutDashboard,
 	Activity,
 	Trophy,
+	Settings,
+	HelpCircle,
+	Calendar,
+	Stethoscope,
 } from "lucide-react";
 import {
 	Sidebar,
@@ -22,22 +26,35 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
+	SidebarFooter,
+	SidebarSeparator,
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { usePatient } from "@/contexts/patient/PatientContext";
+import { Button } from "@/components/ui/button";
 
+// Main navigation items (previously in Navbar)
+const mainNavigation = [
+	{ title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+	{ title: "Pacientes", href: "/patients", icon: Users },
+	{ title: "Agendamentos", href: "/appointments", icon: Calendar },
+	{ title: "Atendimento Clínico", href: "/clinical", icon: Activity },
+	{ title: "Relatórios", href: "/reports", icon: BarChart3 },
+	{ title: "Conquistas", href: "/gamification", icon: Trophy },
+];
+
+// Quick actions
 const quickActions = [
 	{
 		title: "Nova Consulta",
-		description: "Iniciar atendimento",
 		icon: FileText,
 		link: "/clinical",
-		color: "text-green-600 dark:text-emerald-400",
-		bgColor: "bg-green-100 dark:bg-emerald-900/30",
+		color: "text-emerald-600 dark:text-emerald-400",
+		bgColor: "bg-emerald-100 dark:bg-emerald-900/30",
 	},
 	{
 		title: "Agendar",
-		description: "Compromissos",
 		icon: CalendarCheck,
 		link: "/appointments",
 		color: "text-blue-600 dark:text-blue-400",
@@ -45,7 +62,6 @@ const quickActions = [
 	},
 	{
 		title: "Novo Paciente",
-		description: "Cadastrar paciente",
 		icon: UserPlus,
 		link: "/patients/new",
 		color: "text-purple-600 dark:text-purple-400",
@@ -53,42 +69,29 @@ const quickActions = [
 	},
 	{
 		title: "Calculadora",
-		description: "Avaliação nutricional",
 		icon: Calculator,
 		link: "/calculator",
 		color: "text-amber-600 dark:text-amber-400",
 		bgColor: "bg-amber-100 dark:bg-amber-900/30",
 	},
-	{
-		title: "Relatórios",
-		description: "Evolução",
-		icon: BarChart3,
-		link: "/reports",
-		color: "text-cyan-600 dark:text-cyan-400",
-		bgColor: "bg-cyan-100 dark:bg-cyan-900/30",
-	},
-	{
-		title: "Pacientes",
-		description: "Gerenciar",
-		icon: User,
-		link: "/patients",
-		color: "text-rose-600 dark:text-rose-400",
-		bgColor: "bg-rose-100 dark:bg-rose-900/30",
-	},
 ];
 
-const navigationItems = [
-	{ title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-	{ title: "Atendimento", href: "/clinical", icon: Activity },
-	{ title: "Conquistas", href: "/gamification", icon: Trophy },
+// Footer links
+const footerLinks = [
+	{ title: "Configurações", href: "/settings", icon: Settings },
+	{ title: "Ajuda", href: "/recursos", icon: HelpCircle },
 ];
 
 export function AppSidebar() {
 	const location = useLocation();
 	const { state } = useSidebar();
+	const { activePatient, sessionData } = usePatient();
 	const isCollapsed = state === "collapsed";
 
-	const isActive = (path: string) => location.pathname === path;
+	const isActive = (path: string) => {
+		if (path === "/dashboard") return location.pathname === path;
+		return location.pathname.startsWith(path);
+	};
 
 	return (
 		<Sidebar collapsible="icon" className="border-r border-border">
@@ -98,13 +101,38 @@ export function AppSidebar() {
 						<span className="text-white font-bold text-sm">NF</span>
 					</div>
 					{!isCollapsed && (
-						<span className="font-semibold text-foreground">NutriFlow</span>
+						<span className="font-semibold text-foreground">NutriFlow Pro</span>
 					)}
 				</Link>
 			</SidebarHeader>
 
 			<SidebarContent>
-				{/* Ações Rápidas */}
+				{/* Main Navigation */}
+				<SidebarGroup>
+					<SidebarGroupLabel>Navegação</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<SidebarMenu>
+							{mainNavigation.map((item) => (
+								<SidebarMenuItem key={item.title}>
+									<SidebarMenuButton
+										asChild
+										isActive={isActive(item.href)}
+										tooltip={item.title}
+									>
+										<Link to={item.href}>
+											<item.icon className="h-4 w-4" />
+											<span>{item.title}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							))}
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+
+				<SidebarSeparator />
+
+				{/* Quick Actions */}
 				<SidebarGroup>
 					<SidebarGroupLabel>Ações Rápidas</SidebarGroupLabel>
 					<SidebarGroupContent>
@@ -134,29 +162,69 @@ export function AppSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 
-				{/* Navegação */}
-				<SidebarGroup>
-					<SidebarGroupLabel>Navegação</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<SidebarMenu>
-							{navigationItems.map((item) => (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton
-										asChild
-										isActive={isActive(item.href)}
-										tooltip={item.title}
-									>
-										<Link to={item.href}>
-											<item.icon className="h-4 w-4" />
-											<span>{item.title}</span>
+				{/* Active Patient Context */}
+				{activePatient && sessionData.consultationActive && (
+					<>
+						<SidebarSeparator />
+						<SidebarGroup>
+							<SidebarGroupLabel>Paciente Ativo</SidebarGroupLabel>
+							<SidebarGroupContent>
+								<div className={cn(
+									"mx-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800",
+									isCollapsed && "p-2"
+								)}>
+									{!isCollapsed ? (
+										<>
+											<div className="flex items-center gap-2 mb-2">
+												<Stethoscope className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+												<span className="font-medium text-sm text-emerald-800 dark:text-emerald-200 truncate">
+													{activePatient.name}
+												</span>
+											</div>
+											<p className="text-xs text-emerald-600 dark:text-emerald-400 mb-2">
+												Etapa: {sessionData.currentStep}
+											</p>
+											<Button 
+												asChild 
+												size="sm" 
+												className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+											>
+												<Link to="/clinical">
+													Continuar →
+												</Link>
+											</Button>
+										</>
+									) : (
+										<Link to="/clinical" className="flex justify-center">
+											<Stethoscope className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
 										</Link>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
-						</SidebarMenu>
-					</SidebarGroupContent>
-				</SidebarGroup>
+									)}
+								</div>
+							</SidebarGroupContent>
+						</SidebarGroup>
+					</>
+				)}
 			</SidebarContent>
+
+			{/* Footer */}
+			<SidebarFooter className="border-t border-border">
+				<SidebarMenu>
+					{footerLinks.map((item) => (
+						<SidebarMenuItem key={item.title}>
+							<SidebarMenuButton
+								asChild
+								isActive={isActive(item.href)}
+								tooltip={item.title}
+							>
+								<Link to={item.href}>
+									<item.icon className="h-4 w-4" />
+									<span>{item.title}</span>
+								</Link>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+					))}
+				</SidebarMenu>
+			</SidebarFooter>
 
 			<SidebarRail />
 		</Sidebar>
