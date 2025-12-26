@@ -30,6 +30,7 @@ import PatientAnthropometry from "@/pages/PatientAnthropometry";
 import PatientHistory from "@/pages/PatientHistory";
 import SystemDebug from "@/pages/SystemDebug";
 import AdminProtectedLayout from "@/components/layouts/AdminProtectedLayout";
+import AdminPanel from "@/pages/AdminPanel";
 import AdminFoods from "@/pages/AdminFoods";
 import Reports from "@/pages/Reports";
 import Gamification from "@/pages/Gamification";
@@ -134,7 +135,7 @@ const AppRoutes = () => {
 				
 				{/* Admin Protected Routes */}
 				<Route element={<AdminProtectedLayout />}>
-					<Route path="admin" element={<React.lazy(() => import("@/pages/AdminPanel")) />} />
+					<Route path="admin" element={<AdminPanel />} />
 					<Route path="admin/foods" element={<AdminFoods />} />
 					<Route path="admin/system-debug" element={<SystemDebug />} />
 					<Route path="admin/test-e2e" element={<TestE2E />} />
