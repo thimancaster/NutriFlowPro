@@ -29,7 +29,7 @@ import Settings from "@/pages/Settings";
 import PatientAnthropometry from "@/pages/PatientAnthropometry";
 import PatientHistory from "@/pages/PatientHistory";
 import SystemDebug from "@/pages/SystemDebug";
-import AdminPanel from "@/pages/AdminPanel";
+import AdminProtectedLayout from "@/components/layouts/AdminProtectedLayout";
 import AdminFoods from "@/pages/AdminFoods";
 import Reports from "@/pages/Reports";
 import Gamification from "@/pages/Gamification";
@@ -123,17 +123,22 @@ const AppRoutes = () => {
 				/>
 				<Route path="patient-history/:id" element={<PatientHistory />} />
 				<Route path="patient-anthropometry/:id" element={<PatientAnthropometry />} />
-				<Route path="consultation" element={<Consultation />} />
-				<Route path="consultation/:patientId" element={<Consultation />} />
+				<Route path="consultation" element={<Navigate to="/clinical" replace />} />
+				<Route path="consultation/:patientId" element={<Navigate to="/clinical" replace />} />
 				<Route path="food-database" element={<FoodDatabase />} />
 				<Route path="settings" element={<Settings />} />
 				<Route path="subscription" element={<Subscription />} />
 				<Route path="add-testimonial" element={<AddTestimonial />} />
-				<Route path="system-debug" element={<SystemDebug />} />
-				<Route path="admin" element={<AdminPanel />} />
-				<Route path="admin/foods" element={<AdminFoods />} />
 				<Route path="reports" element={<Reports />} />
 				<Route path="gamification" element={<Gamification />} />
+				
+				{/* Admin Protected Routes */}
+				<Route element={<AdminProtectedLayout />}>
+					<Route path="admin" element={<React.lazy(() => import("@/pages/AdminPanel")) />} />
+					<Route path="admin/foods" element={<AdminFoods />} />
+					<Route path="admin/system-debug" element={<SystemDebug />} />
+					<Route path="admin/test-e2e" element={<TestE2E />} />
+				</Route>
 			</Route>
 
 			{/* Default fallback - always last */}
