@@ -155,15 +155,15 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-primary/10 rounded-full">
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)] overflow-hidden">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-full flex-shrink-0">
               <MessageSquareHeart className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle>Sua opinião é valiosa!</DialogTitle>
+            <DialogTitle className="text-left">Sua opinião é valiosa!</DialogTitle>
           </div>
-          <DialogDescription className="text-left">
+          <DialogDescription className="text-left break-words">
             Você está usando o NutriFlow Pro há algum tempo. 
             Gostaríamos muito de saber sua experiência! 
             Seu depoimento ajuda outros profissionais a conhecerem nossa plataforma.
@@ -178,35 +178,35 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full">
           <Button 
             variant="default" 
-            className="flex-1 gap-2"
+            className="w-full sm:flex-1 gap-2"
             onClick={handleDoNow}
             disabled={isLoading}
           >
-            <Star className="h-4 w-4" />
-            Deixar Depoimento
+            <Star className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Deixar Depoimento</span>
           </Button>
           
           <Button 
             variant="outline" 
-            className="flex-1 gap-2"
+            className="w-full sm:flex-1 gap-2"
             onClick={handleLater}
             disabled={isLoading}
           >
-            <Clock className="h-4 w-4" />
-            Mais Tarde
+            <Clock className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Mais Tarde</span>
           </Button>
           
           <Button 
             variant="ghost" 
-            className="flex-1 gap-2 text-muted-foreground"
+            className="w-full sm:flex-1 gap-2 text-muted-foreground"
             onClick={handleCancel}
             disabled={isLoading}
           >
-            <XCircle className="h-4 w-4" />
-            Não Lembrar
+            <XCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Não Lembrar</span>
           </Button>
         </DialogFooter>
       </DialogContent>
