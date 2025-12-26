@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -13,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ReminderStatus = 'pending' | 'later' | 'cancelled' | 'completed';
 
@@ -55,12 +55,10 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
       const reminderDate = settingsData.testimonial_reminder_date ? new Date(settingsData.testimonial_reminder_date) : null;
       const accountCreated = user.created_at ? new Date(user.created_at) : new Date();
 
-      // Don't show if cancelled or completed
       if (reminderStatus === 'cancelled' || reminderStatus === 'completed') {
         return;
       }
 
-      // Check if enough days have passed since account creation
       const daysSinceCreation = Math.floor(
         (Date.now() - accountCreated.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -69,14 +67,12 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
         return;
       }
 
-      // If status is 'later', check if reminder date has passed
       if (reminderStatus === 'later' && reminderDate) {
         if (new Date() < reminderDate) {
           return;
         }
       }
 
-      // Show the dialog
       setIsOpen(true);
     } catch (err) {
       console.error('Error in checkShouldShowReminder:', err);
@@ -138,7 +134,7 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
   };
 
   const handleLater = () => {
-    updateReminderStatus('later', 7); // Remind in 7 days
+    updateReminderStatus('later', 7);
     toast({
       title: 'Tudo bem! 👍',
       description: 'Lembraremos você em 7 dias.'
@@ -155,61 +151,107 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)] overflow-hidden">
-        <DialogHeader className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-full flex-shrink-0">
-              <MessageSquareHeart className="h-6 w-6 text-primary" />
-            </div>
-            <DialogTitle className="text-left">Sua opinião é valiosa!</DialogTitle>
-          </div>
-          <DialogDescription className="text-left break-words">
-            Você está usando o NutriFlow Pro há algum tempo. 
-            Gostaríamos muito de saber sua experiência! 
-            Seu depoimento ajuda outros profissionais a conhecerem nossa plataforma.
-          </DialogDescription>
-        </DialogHeader>
+      <AnimatePresence>
+        {isOpen && (
+          <DialogContent 
+            className="sm:max-w-[420px] max-w-[calc(100vw-2rem)] p-0 overflow-hidden border-0 shadow-2xl"
+            onInteractOutside={() => setIsOpen(false)}
+            onEscapeKeyDown={() => setIsOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="bg-card rounded-lg"
+            >
+              {/* Header com gradiente */}
+              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 pb-4">
+                <DialogHeader className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      initial={{ rotate: -10 }}
+                      animate={{ rotate: 0 }}
+                      transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                      className="p-3 bg-primary/15 rounded-xl"
+                    >
+                      <MessageSquareHeart className="h-6 w-6 text-primary" />
+                    </motion.div>
+                    <DialogTitle className="text-xl font-semibold text-foreground">
+                      Sua opinião é valiosa!
+                    </DialogTitle>
+                  </div>
+                </DialogHeader>
+              </div>
 
-        <div className="flex justify-center py-4">
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} className="h-8 w-8 text-yellow-400 fill-yellow-400" />
-            ))}
-          </div>
-        </div>
+              {/* Conteúdo */}
+              <div className="px-6 pb-2">
+                <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
+                  Você está usando o NutriFlow Pro há algum tempo. Gostaríamos muito de saber sua experiência! Seu depoimento ajuda outros profissionais a conhecerem nossa plataforma.
+                </DialogDescription>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full">
-          <Button 
-            variant="default" 
-            className="w-full sm:flex-1 gap-2"
-            onClick={handleDoNow}
-            disabled={isLoading}
-          >
-            <Star className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">Deixar Depoimento</span>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="w-full sm:flex-1 gap-2"
-            onClick={handleLater}
-            disabled={isLoading}
-          >
-            <Clock className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">Mais Tarde</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            className="w-full sm:flex-1 gap-2 text-muted-foreground"
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
-            <XCircle className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">Não Lembrar</span>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+                {/* Estrelas animadas */}
+                <motion.div 
+                  className="flex justify-center py-5 gap-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  {[1, 2, 3, 4, 5].map((star, index) => (
+                    <motion.div
+                      key={star}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ 
+                        delay: 0.2 + index * 0.08, 
+                        type: "spring", 
+                        stiffness: 300 
+                      }}
+                    >
+                      <Star className="h-8 w-8 text-yellow-400 fill-yellow-400 drop-shadow-sm" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+
+              {/* Botões */}
+              <div className="p-6 pt-2 space-y-3">
+                <Button 
+                  variant="default" 
+                  className="w-full gap-2 h-11 font-medium shadow-md hover:shadow-lg transition-shadow"
+                  onClick={handleDoNow}
+                  disabled={isLoading}
+                >
+                  <Star className="h-4 w-4" />
+                  Deixar Depoimento
+                </Button>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 gap-2 h-10"
+                    onClick={handleLater}
+                    disabled={isLoading}
+                  >
+                    <Clock className="h-4 w-4" />
+                    Mais Tarde
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 gap-2 h-10 text-muted-foreground hover:text-foreground"
+                    onClick={handleCancel}
+                    disabled={isLoading}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Não Lembrar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </DialogContent>
+        )}
+      </AnimatePresence>
     </Dialog>
   );
 };
