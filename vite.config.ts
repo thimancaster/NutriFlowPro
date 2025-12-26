@@ -39,8 +39,8 @@ export default defineConfig(({mode}) => ({
 		},
 		// Increase chunk size warning limit
 		chunkSizeWarningLimit: 1000,
-		// Enable source maps in development only
-		sourcemap: mode === "development",
+		// Enable source maps for all builds (helps with debugging and Lighthouse audits)
+		sourcemap: true,
 	},
 	// Optimize dependencies
 	optimizeDeps: {
