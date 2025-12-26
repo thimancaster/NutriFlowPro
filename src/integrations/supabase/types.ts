@@ -1632,8 +1632,11 @@ export type Database = {
           created_at: string | null
           id: string
           notification_preferences: Json | null
+          onboarding_completed: boolean | null
           professional_settings: Json | null
           settings: Json
+          testimonial_reminder_date: string | null
+          testimonial_reminder_status: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1642,8 +1645,11 @@ export type Database = {
           created_at?: string | null
           id?: string
           notification_preferences?: Json | null
+          onboarding_completed?: boolean | null
           professional_settings?: Json | null
           settings?: Json
+          testimonial_reminder_date?: string | null
+          testimonial_reminder_status?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1652,8 +1658,11 @@ export type Database = {
           created_at?: string | null
           id?: string
           notification_preferences?: Json | null
+          onboarding_completed?: boolean | null
           professional_settings?: Json | null
           settings?: Json
+          testimonial_reminder_date?: string | null
+          testimonial_reminder_status?: string | null
           updated_at?: string | null
           user_id?: string
         }

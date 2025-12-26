@@ -1,6 +1,4 @@
 import React from "react";
-import {useAuth} from "@/contexts/auth/AuthContext";
-import {usePatient} from "@/contexts/patient/PatientContext";
 import Navbar from "@/components/Navbar";
 
 // Import our components
@@ -10,11 +8,8 @@ import {SidebarProvider, SidebarTrigger, SidebarInset} from "@/components/ui/sid
 import {AppSidebar} from "@/components/sidebar/AppSidebar";
 
 const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
-	const {user} = useAuth();
-	const {activePatient, sessionData} = usePatient();
-
 	return (
-		<SidebarProvider defaultOpen={false}>
+		<SidebarProvider defaultOpen={true}>
 			<div className="flex min-h-screen w-full bg-background text-foreground">
 				<AppSidebar />
 				
@@ -22,24 +17,12 @@ const Layout: React.FC<{children: React.ReactNode}> = ({children}) => {
 					<TourGuide />
 
 					{/* Header with Navbar and Sidebar Trigger */}
-					<div className="flex items-center">
+					<div className="flex items-center sticky top-0 z-40 bg-background">
 						<SidebarTrigger className="ml-2 md:ml-4" />
 						<div className="flex-1">
 							<Navbar />
 						</div>
 					</div>
-
-					{/* Active Patient Indicator */}
-					{activePatient && sessionData.consultationActive && (
-						<div className="bg-nutri-green text-white px-4 py-2 text-sm">
-							<div className="container mx-auto flex items-center justify-between">
-								<span>
-									🩺 Atendimento ativo: <strong>{activePatient.name}</strong>
-								</span>
-								<span className="text-xs opacity-75">Etapa: {sessionData.currentStep}</span>
-							</div>
-						</div>
-					)}
 
 					{/* Main content */}
 					<main className="flex-1 bg-background">
