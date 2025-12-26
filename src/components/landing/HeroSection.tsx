@@ -50,6 +50,7 @@ const HeroSection = () => {
                 width={615}
                 height={418}
                 fallbackSrc="/placeholder.svg"
+                priority
               />
             </div>
           </div>

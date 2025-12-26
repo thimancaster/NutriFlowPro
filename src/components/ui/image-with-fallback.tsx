@@ -4,10 +4,11 @@ import { cn } from "@/lib/utils";
 
 interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallbackSrc?: string;
+  priority?: boolean;
 }
 
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
-  ({ src, alt, className, fallbackSrc = "/placeholder.svg", ...props }, ref) => {
+  ({ src, alt, className, fallbackSrc = "/placeholder.svg", priority = false, ...props }, ref) => {
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -24,6 +25,8 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
           alt={alt}
           onError={() => setError(true)}
           onLoad={() => setLoading(false)}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
           className={cn("object-cover", loading ? "opacity-0" : "opacity-100", className)}
           {...props}
         />
