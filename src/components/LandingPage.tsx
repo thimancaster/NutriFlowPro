@@ -8,13 +8,13 @@ import CtaSection from "./landing/CtaSection";
 
 const LandingPage = () => {
 	return (
-		<div className="min-h-screen landing-page">
+		<main className="min-h-screen landing-page">
 			<HeroSection />
 			<FeaturesSection />
 			<PricingSection />
 			<TestimonialsSection />
 			<CtaSection />
-		</div>
+		</main>
 	);
 };
 
