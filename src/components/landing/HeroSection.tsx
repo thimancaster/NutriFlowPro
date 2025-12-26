@@ -44,9 +44,11 @@ const HeroSection = () => {
           <div className="md:w-1/2">
             <div className="rounded-2xl overflow-hidden shadow-lg">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80"
+                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=615&q=75"
                 alt="Prato saudável com alimentos nutritivos"
                 className="w-full h-auto"
+                width={615}
+                height={418}
                 fallbackSrc="/placeholder.svg"
               />
             </div>
