@@ -171,19 +171,23 @@ const TestimonialsSection = () => {
               </div>
             </div>
 
-            {/* Navigation dots */}
-            <div className="flex justify-center mt-8 gap-2">
+            {/* Navigation dots - min 24px touch target for WCAG 2.2 */}
+            <div className="flex justify-center mt-8 gap-1">
               {testimonials.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => emblaApi?.scrollTo(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === activeIndex 
-                      ? 'bg-nutri-blue scale-125' 
-                      : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
+                  className="w-6 h-6 flex items-center justify-center"
                   aria-label={`Ir para depoimento ${index + 1}`}
-                />
+                >
+                  <span 
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                      index === activeIndex 
+                        ? 'bg-nutri-blue scale-125' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           </div>
