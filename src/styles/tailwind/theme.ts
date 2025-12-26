@@ -46,12 +46,12 @@ export const themeExtensions = {
       ring: 'hsl(var(--sidebar-ring))'
     },
     nutri: {
-      'green-light': '#4ade80',
-      'green': '#22c55e',
-      'green-dark': '#16a34a',
-      'blue-light': '#60a5fa',
-      'blue': '#3b82f6',
-      'blue-dark': '#2563eb',
+      'green-light': '#22c55e',
+      'green': '#15803d',
+      'green-dark': '#166534',
+      'blue-light': '#3b82f6',
+      'blue': '#1d4ed8',
+      'blue-dark': '#1e40af',
       'teal': '#0d9488',
       'gray-light': '#f1f5f9',
       'gray': '#94a3b8',
