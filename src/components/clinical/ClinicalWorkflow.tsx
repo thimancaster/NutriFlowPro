@@ -88,6 +88,9 @@ const ClinicalWorkflow: React.FC = () => {
 		           (completedSteps.includes("anthropometry") || 
 		            (consultationData?.results && consultationData.results.vet > 0))) {
 			setCurrentStep(stepId);
+		} else if (stepId === "evolution" && activePatient) {
+			// Evolução pode ser acessada sempre que há um paciente ativo
+			setCurrentStep(stepId);
 		}
 	};
 

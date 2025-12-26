@@ -41,7 +41,7 @@ const PatientEdit = React.lazy(() => import("@/pages/PatientEdit"));
 const PatientProfile = React.lazy(() => import("@/pages/PatientProfile"));
 const MealPlans = React.lazy(() => import("@/pages/MealPlans"));
 const MealPlanView = React.lazy(() => import("@/pages/MealPlanView"));
-const ClinicalConsultation = React.lazy(() => import("@/pages/ClinicalConsultation"));
+// ClinicalConsultation removido - usar Clinical
 import MealPlanBuilder from "@/pages/MealPlanBuilder";
 import TestE2E from "@/pages/TestE2E";
 
@@ -102,7 +102,7 @@ const AppRoutes = () => {
 				/>
 				<Route path="meal-plan-builder" element={<MealPlanBuilder />} />
 				<Route path="meal-plan-builder/:planId" element={<MealPlanBuilder />} />
-				<Route path="test-e2e" element={<TestE2E />} />
+				{/* test-e2e movido para /admin/test-e2e */}
 				<Route
 					path="meal-plan/:id"
 					element={
@@ -114,14 +114,7 @@ const AppRoutes = () => {
 				<Route path="appointments" element={<Appointments />} />
 				<Route path="clinical" element={<Clinical />} />
 				<Route path="clinical/:patientId" element={<Clinical />} />
-				<Route
-					path="clinical/consultation/:patientId?"
-					element={
-						<Suspense fallback={<LoadingSpinner />}>
-							<ClinicalConsultation />
-						</Suspense>
-					}
-				/>
+			{/* Rota removida - usar /clinical/:patientId */}
 				<Route path="patient-history/:id" element={<PatientHistory />} />
 				<Route path="patient-anthropometry/:id" element={<PatientAnthropometry />} />
 				<Route path="consultation" element={<Navigate to="/clinical" replace />} />
