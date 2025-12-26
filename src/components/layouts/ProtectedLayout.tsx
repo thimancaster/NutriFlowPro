@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { PatientProvider } from '@/contexts/patient/PatientContext';
@@ -6,6 +5,7 @@ import { UnifiedNutritionProvider } from '@/contexts/UnifiedNutritionContext';
 import { ConsultationDataProvider } from '@/contexts/ConsultationDataContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
+import TestimonialReminder from '@/components/notifications/TestimonialReminder';
 
 /**
  * Layout component for protected routes
@@ -20,6 +20,8 @@ const ProtectedLayout: React.FC = () => {
           <ConsultationDataProvider>
             <Layout>
               <Outlet />
+              {/* Reminder para testimonials após 7 dias de uso */}
+              <TestimonialReminder minDaysBeforeShow={7} />
             </Layout>
           </ConsultationDataProvider>
         </UnifiedNutritionProvider>
