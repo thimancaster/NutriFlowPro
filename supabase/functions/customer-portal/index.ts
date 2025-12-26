@@ -62,17 +62,34 @@ serve(async (req) => {
       .maybeSingle();
       
     let customerId = subscriberData?.stripe_customer_id;
+    let needsDbUpdate = false;
     
-    // If not found in database, check Stripe
+    // Validate the stored customer ID with Stripe
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+        logStep("Validated existing Stripe customer", { customerId });
+      } catch (stripeError) {
+        logStep("Stored customer ID is invalid, will search by email", { invalidId: customerId });
+        customerId = null;
+        needsDbUpdate = true;
+      }
+    }
+    
+    // If no valid customer ID, search Stripe by email
     if (!customerId) {
-      logStep("No customer ID in database, checking Stripe directly");
+      logStep("Searching Stripe for customer by email");
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
       if (customers.data.length === 0) {
-        throw new Error("No Stripe customer found for this user");
+        throw new Error("Nenhum cliente Stripe encontrado para este usuário. Você precisa ter uma assinatura ativa.");
       }
       customerId = customers.data[0].id;
-      
-      // Update the database with the found customer ID
+      needsDbUpdate = true;
+    }
+    
+    // Update database if we found/corrected the customer ID
+    if (needsDbUpdate) {
+      logStep("Updating database with correct customer ID", { customerId });
       await supabaseClient.from("subscribers").upsert({
         email: user.email,
         user_id: user.id,
