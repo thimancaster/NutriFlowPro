@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Confetti } from '@/components/ui/confetti';
 
 type ReminderStatus = 'pending' | 'later' | 'cancelled' | 'completed';
 
@@ -25,6 +26,7 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -129,8 +131,11 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
   };
 
   const handleDoNow = () => {
-    setIsOpen(false);
-    navigate('/add-testimonial');
+    setShowConfetti(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      navigate('/add-testimonial');
+    }, 800);
   };
 
   const handleLater = () => {
@@ -150,109 +155,129 @@ const TestimonialReminder: React.FC<TestimonialReminderProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <AnimatePresence>
-        {isOpen && (
-          <DialogContent 
-            className="sm:max-w-[420px] max-w-[calc(100vw-2rem)] p-0 overflow-hidden border-0 shadow-2xl"
-            onInteractOutside={() => setIsOpen(false)}
-            onEscapeKeyDown={() => setIsOpen(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="bg-card rounded-lg"
+    <>
+      <Confetti isActive={showConfetti} />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <AnimatePresence>
+          {isOpen && (
+            <DialogContent 
+              className="sm:max-w-[420px] max-w-[calc(100vw-2rem)] p-0 overflow-hidden border-0 shadow-2xl"
+              onInteractOutside={() => setIsOpen(false)}
+              onEscapeKeyDown={() => setIsOpen(false)}
             >
-              {/* Header com gradiente */}
-              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 pb-4">
-                <DialogHeader className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      initial={{ rotate: -10 }}
-                      animate={{ rotate: 0 }}
-                      transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                      className="p-3 bg-primary/15 rounded-xl"
-                    >
-                      <MessageSquareHeart className="h-6 w-6 text-primary" />
-                    </motion.div>
-                    <DialogTitle className="text-xl font-semibold text-foreground">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="bg-card rounded-lg"
+              >
+                {/* Header com ícone centralizado */}
+                <div className="pt-6 px-6">
+                  <DialogHeader className="text-center space-y-4">
+                    <div className="flex justify-center">
+                      <motion.div 
+                        initial={{ rotate: -10, scale: 0.9 }}
+                        animate={{ rotate: 0, scale: 1 }}
+                        transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                        className="p-3 bg-primary/15 rounded-xl"
+                      >
+                        <MessageSquareHeart className="h-7 w-7 text-primary" />
+                      </motion.div>
+                    </div>
+                    <DialogTitle className="text-xl font-semibold text-foreground text-center">
                       Sua opinião é valiosa!
                     </DialogTitle>
-                  </div>
-                </DialogHeader>
-              </div>
-
-              {/* Conteúdo */}
-              <div className="px-6 pb-2">
-                <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                  Você está usando o NutriFlow Pro há algum tempo. Gostaríamos muito de saber sua experiência! Seu depoimento ajuda outros profissionais a conhecerem nossa plataforma.
-                </DialogDescription>
-
-                {/* Estrelas animadas */}
-                <motion.div 
-                  className="flex justify-center py-5 gap-1"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.15 }}
-                >
-                  {[1, 2, 3, 4, 5].map((star, index) => (
-                    <motion.div
-                      key={star}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ 
-                        delay: 0.2 + index * 0.08, 
-                        type: "spring", 
-                        stiffness: 300 
-                      }}
-                    >
-                      <Star className="h-8 w-8 text-yellow-400 fill-yellow-400 drop-shadow-sm" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-
-              {/* Botões */}
-              <div className="p-6 pt-2 space-y-3">
-                <Button 
-                  variant="default" 
-                  className="w-full gap-2 h-11 font-medium shadow-md hover:shadow-lg transition-shadow"
-                  onClick={handleDoNow}
-                  disabled={isLoading}
-                >
-                  <Star className="h-4 w-4" />
-                  Deixar Depoimento
-                </Button>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 gap-2 h-10"
-                    onClick={handleLater}
-                    disabled={isLoading}
-                  >
-                    <Clock className="h-4 w-4" />
-                    Mais Tarde
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    className="flex-1 gap-2 h-10 text-muted-foreground hover:text-foreground"
-                    onClick={handleCancel}
-                    disabled={isLoading}
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Não Lembrar
-                  </Button>
+                  </DialogHeader>
                 </div>
-              </div>
-            </motion.div>
-          </DialogContent>
-        )}
-      </AnimatePresence>
-    </Dialog>
+
+                {/* Conteúdo centralizado */}
+                <div className="px-6 pt-3 pb-2">
+                  <DialogDescription className="text-muted-foreground text-sm leading-relaxed text-center">
+                    Você está usando o NutriFlow Pro há algum tempo. Gostaríamos muito de saber sua experiência! Seu depoimento ajuda outros profissionais a conhecerem nossa plataforma.
+                  </DialogDescription>
+
+                  {/* Estrelas animadas */}
+                  <motion.div 
+                    className="flex justify-center py-5 gap-1.5"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                  >
+                    {[1, 2, 3, 4, 5].map((star, index) => (
+                      <motion.div
+                        key={star}
+                        initial={{ opacity: 0, scale: 0, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ 
+                          delay: 0.2 + index * 0.08, 
+                          type: "spring", 
+                          stiffness: 300 
+                        }}
+                      >
+                        <Star className="h-9 w-9 text-yellow-400 fill-yellow-400 drop-shadow-md" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+
+                {/* Botões com hover melhorado */}
+                <div className="p-6 pt-2 space-y-3">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button 
+                      variant="default" 
+                      className="w-full gap-2 h-12 font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:brightness-110"
+                      onClick={handleDoNow}
+                      disabled={isLoading}
+                    >
+                      <Star className="h-5 w-5" />
+                      Deixar Depoimento
+                    </Button>
+                  </motion.div>
+                  
+                  <div className="flex gap-3">
+                    <motion.div 
+                      className="flex-1"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button 
+                        variant="outline" 
+                        className="w-full gap-2 h-11 transition-all duration-200 hover:bg-accent hover:border-primary/30"
+                        onClick={handleLater}
+                        disabled={isLoading}
+                      >
+                        <Clock className="h-4 w-4" />
+                        Mais Tarde
+                      </Button>
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="flex-1"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button 
+                        variant="ghost" 
+                        className="w-full gap-2 h-11 text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-muted/50"
+                        onClick={handleCancel}
+                        disabled={isLoading}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Não Lembrar
+                      </Button>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            </DialogContent>
+          )}
+        </AnimatePresence>
+      </Dialog>
+    </>
   );
 };
 
