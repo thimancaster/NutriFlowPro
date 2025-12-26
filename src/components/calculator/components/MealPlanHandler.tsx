@@ -88,8 +88,8 @@ export const useMealPlanHandler = ({
       // Salvar no contexto para usar na geração do plano
       await onSaveCalculation();
       
-      // Navigate to meal plan with calculation data
-      navigate(`/meal-plans?patientId=${patientData.id}&createPlan=true`, {
+      // Navigate to unified meal plan builder
+      navigate('/meal-plan-builder', {
         state: {
           calculationData: {
             id: savedCalculation?.id || `temp-${Date.now()}`,

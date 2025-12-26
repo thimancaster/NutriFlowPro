@@ -3,6 +3,7 @@
  * - Smart debounce: instant for filters, 200ms for text
  * - Prefetching of popular categories
  * - Aggressive caching with React Query
+ * - Works in both controlled (FoodSearchPanel) and uncontrolled modes
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
@@ -36,16 +37,20 @@ export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
   const filters = isControlled ? initialFilters : internalFilters;
 
   // Smart debounce: 200ms for text search (balance between responsiveness and performance)
-  const debouncedQuery = useDebounce(filters.query, 200);
+  const debouncedQuery = useDebounce(filters.query || '', 200);
 
   // Filters without query are applied instantly
   const debouncedFilters = useMemo(
     () => ({
       ...filters,
-      query: debouncedQuery,
+      query: debouncedQuery || undefined,
+      limit: filters.limit || 100,
     }),
     [filters, debouncedQuery]
   );
+
+  // Check if there's an active search (query or category filter)
+  const hasActiveSearch = !!(debouncedQuery?.trim() || filters.category);
 
   // Prefetch popular categories on mount
   useEffect(() => {
@@ -58,7 +63,7 @@ export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
     });
   }, [queryClient, user?.id]);
 
-  // Main search query
+  // Main search query - only runs when there's an active search
   const {
     data: searchResults,
     isLoading: isSearching,
@@ -67,7 +72,7 @@ export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
   } = useQuery({
     queryKey: ['food-search', debouncedFilters, user?.id],
     queryFn: () => searchFoodsEnhanced(debouncedFilters, user?.id),
-    enabled: true,
+    enabled: hasActiveSearch, // Only search when there's query or category
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
     placeholderData: (previousData) => previousData, // Show stale data while fetching
@@ -194,9 +199,9 @@ export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
   }, [filters, debouncedFilters, user?.id, queryClient]);
 
   return {
-    // Search results
-    foods: searchResults?.foods || [],
-    total: searchResults?.total || 0,
+    // Search results - return popular foods when no active search
+    foods: hasActiveSearch ? (searchResults?.foods || []) : [],
+    total: hasActiveSearch ? (searchResults?.total || 0) : 0,
     hasMore: searchResults?.hasMore || false,
     
     // Most used & popular
@@ -205,8 +210,8 @@ export function useFoodSearchOptimized(initialFilters?: EnhancedSearchFilters) {
     categories: categories || [],
     
     // Loading states
-    isSearching: isSearching && !isFetching, // Only show spinner on initial load
-    isFetching, // Background fetch indicator
+    isSearching: hasActiveSearch && isSearching && !isFetching, // Only show spinner on initial load with active search
+    isFetching: hasActiveSearch && isFetching, // Background fetch indicator
     isLoadingMostUsed,
     isLoadingPopular,
     

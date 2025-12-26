@@ -260,14 +260,26 @@ export function AppSidebar() {
 	};
 
 	return (
-		<Sidebar collapsible="icon" className="border-r border-border">
-			<SidebarHeader className="border-b border-border">
+		<Sidebar 
+			collapsible="icon" 
+			className={cn(
+				"border-r border-border/40",
+				"bg-background/80 backdrop-blur-xl",
+				"supports-[backdrop-filter]:bg-background/60",
+				"shadow-xl shadow-black/5"
+			)}
+		>
+			<SidebarHeader className={cn(
+				"border-b border-border/30",
+				"bg-gradient-to-b from-background/95 to-transparent",
+				"backdrop-blur-sm"
+			)}>
 				<Link to="/dashboard" className="flex items-center gap-2 px-2 py-1">
 					<motion.div 
 						whileHover={{ scale: 1.05, rotate: -5 }}
 						whileTap={{ scale: 0.95 }}
 						transition={{ type: "spring", stiffness: 400, damping: 17 }}
-						className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-nutri-green to-nutri-blue shadow-lg"
+						className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-nutri-green to-nutri-blue shadow-lg shadow-nutri-green/20"
 					>
 						<span className="text-white font-bold text-sm">NF</span>
 					</motion.div>
@@ -344,8 +356,10 @@ export function AppSidebar() {
 										animate={{ scale: 1, opacity: 1 }}
 										transition={{ delay: 0.1 }}
 										className={cn(
-											"mx-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800",
-											"backdrop-blur-sm shadow-sm",
+											"mx-2 p-3 rounded-xl",
+											"bg-emerald-50/80 dark:bg-emerald-950/50",
+											"border border-emerald-200/60 dark:border-emerald-700/50",
+											"backdrop-blur-md shadow-lg shadow-emerald-500/10",
 											isCollapsed && "p-2"
 										)}
 									>
@@ -412,7 +426,11 @@ export function AppSidebar() {
 			</SidebarContent>
 
 			{/* Footer */}
-			<SidebarFooter className="border-t border-border">
+			<SidebarFooter className={cn(
+				"border-t border-border/30",
+				"bg-gradient-to-t from-background/95 to-transparent",
+				"backdrop-blur-sm"
+			)}>
 				<SidebarMenu>
 					{footerLinks.map((item, index) => (
 						<SidebarMenuItem key={item.title}>
