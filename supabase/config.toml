@@ -52,3 +52,7 @@ verify_jwt = true
 # Edge function para geração de plano alimentar com IA
 [functions.generate-meal-plan-ai]
 verify_jwt = true
+
+# Edge function para assistente IA Aura
+[functions.aura-assistant]
+verify_jwt = false

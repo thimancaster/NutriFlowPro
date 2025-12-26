@@ -8,12 +8,14 @@ import {usePatient} from "@/contexts/patient/PatientContext";
 import PatientSelectionStep from "./PatientSelectionStep";
 import AnthropometryStep from "./AnthropometryStep";
 import MealPlanStep from "./MealPlanStep";
-import {AlertCircle} from "lucide-react";
+import EvolutionStep from "./EvolutionStep";
+import {AlertCircle, TrendingUp} from "lucide-react";
 
 export type ClinicalWorkflowStep =
 	| "patient-selection"
 	| "anthropometry"
-	| "meal-plan";
+	| "meal-plan"
+	| "evolution";
 
 const ClinicalWorkflow: React.FC = () => {
 	const {consultationData, currentStep, setCurrentStep, isConsultationActive} =
@@ -46,6 +48,12 @@ const ClinicalWorkflow: React.FC = () => {
 			title: "Plano Alimentar",
 			icon: <Utensils className="h-5 w-5" />,
 			description: "Geração do plano alimentar personalizado",
+		},
+		{
+			id: "evolution",
+			title: "Evolução",
+			icon: <TrendingUp className="h-5 w-5" />,
+			description: "Gráficos e análise com IA Aura",
 		},
 	];
 
@@ -99,6 +107,8 @@ const ClinicalWorkflow: React.FC = () => {
 				return <AnthropometryStep onCalculationsComplete={handleNextStep} />;
 			case "meal-plan":
 				return <MealPlanStep />;
+			case "evolution":
+				return <EvolutionStep />;
 			default:
 				return <PatientSelectionStep onPatientSelected={handleNextStep} />;
 		}

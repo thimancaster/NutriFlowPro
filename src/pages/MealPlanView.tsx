@@ -75,7 +75,7 @@ const MealPlanView: React.FC = () => {
             {format(new Date(mealPlan.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </p>
         </div>
-        <Button onClick={() => navigate(`/meal-plan-editor/${mealPlan.id}`)}>
+        <Button onClick={() => navigate(`/meal-plan-builder/${mealPlan.id}`)}>
           <Edit className="h-4 w-4 mr-2" />
           Editar
         </Button>
