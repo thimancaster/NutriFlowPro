@@ -14,7 +14,8 @@ export const getAppointments = async (
   filters: AppointmentFilters = {}
 ) => {
   try {
-    console.log('Fetching appointments with filters:', filters);
+    // PHI-safe logging: only log filter keys, not values that might contain sensitive data
+    console.log('Fetching appointments with filter keys:', Object.keys(filters));
 
     // Otimização: Selecionar apenas as colunas necessárias
     let query = supabase

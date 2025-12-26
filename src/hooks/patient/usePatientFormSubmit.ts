@@ -98,7 +98,8 @@ export const usePatientFormSubmit = ({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		console.log("Form submission started with data:", {formData, birthDate, address, notes});
+		// PHI-safe logging: only log non-sensitive identifiers
+		console.log("Form submission started for patient:", formData.name ? "[REDACTED]" : "new patient");
 
 		// Rate limiting for patient creation/updates
 		const rateLimitKey = editPatient
